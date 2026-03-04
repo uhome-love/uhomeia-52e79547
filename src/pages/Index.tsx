@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Zap, Upload, Send } from "lucide-react";
+import { Sparkles, Zap, Upload, Send, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import CsvUploader from "@/components/CsvUploader";
@@ -10,10 +10,12 @@ import StatsCards from "@/components/StatsCards";
 import BulkWhatsAppDialog from "@/components/BulkWhatsAppDialog";
 import type { Lead, LeadCSVRow } from "@/types/lead";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 type Step = "upload" | "map" | "dashboard";
 
 export default function Index() {
+  const { user, signOut } = useAuth();
   const [step, setStep] = useState<Step>("upload");
   const [csvData, setCsvData] = useState<LeadCSVRow[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -180,32 +182,42 @@ export default function Index() {
               LeadRecovery<span className="text-primary">UhomeAI</span>
             </h1>
           </div>
-          {step === "dashboard" && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => { setStep("upload"); setLeads([]); setCsvData([]); setCsvHeaders([]); }}
-                className="gap-1.5"
-              >
-                <Upload className="h-4 w-4" /> Reimportar
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setBulkDialogOpen(true)}
-                className="gap-1.5"
-              >
-                <Send className="h-4 w-4" /> Disparo em Massa
-              </Button>
-              <Button
-                onClick={classifyAllLeads}
-                disabled={classifyingAll}
-                className="gap-2"
-              >
-                <Sparkles className={`h-4 w-4 ${classifyingAll ? "animate-pulse-soft" : ""}`} />
-                {classifyingAll ? "Classificando..." : "Classificar Todos"}
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {step === "dashboard" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => { setStep("upload"); setLeads([]); setCsvData([]); setCsvHeaders([]); }}
+                  className="gap-1.5"
+                >
+                  <Upload className="h-4 w-4" /> Reimportar
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setBulkDialogOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Send className="h-4 w-4" /> Disparo em Massa
+                </Button>
+                <Button
+                  onClick={classifyAllLeads}
+                  disabled={classifyingAll}
+                  className="gap-2"
+                >
+                  <Sparkles className={`h-4 w-4 ${classifyingAll ? "animate-pulse-soft" : ""}`} />
+                  {classifyingAll ? "Classificando..." : "Classificar Todos"}
+                </Button>
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={signOut}
+              className="gap-1.5 text-muted-foreground"
+            >
+              <LogOut className="h-4 w-4" /> Sair
+            </Button>
+          </div>
         </div>
       </header>
 
