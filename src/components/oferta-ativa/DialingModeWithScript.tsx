@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import AttemptModal from "./AttemptModal";
 import ScriptPanel from "./ScriptPanel";
 import AttemptHistory from "./AttemptHistory";
+import ScoringLegend from "./ScoringLegend";
 
 interface Props {
   lista: OALista;
@@ -135,10 +136,13 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         </div>
       </div>
 
-      {/* Progress */}
+      {/* Scoring Legend + Progress */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <ScoringLegend />
+        <span className="font-semibold text-primary">{lista.empreendimento} · Modo Missão</span>
+      </div>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>Lead {currentIndex + 1} de {fila.length}</span>
-        <span className="font-semibold text-primary">{lista.empreendimento} · Modo Missão</span>
       </div>
       <div className="w-full bg-muted rounded-full h-2">
         <div className="bg-primary rounded-full h-2 transition-all" style={{ width: `${((currentIndex + 1) / fila.length) * 100}%` }} />
