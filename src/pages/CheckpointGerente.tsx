@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClipboardCheck, Users, BarChart3, Bot, CheckSquare, FileText } from "lucide-react";
 import CheckpointDaily from "@/components/checkpoint/CheckpointDaily";
@@ -7,15 +7,30 @@ import CheckpointReports from "@/components/checkpoint/CheckpointReports";
 import CoachPanel from "@/components/checkpoint/CoachPanel";
 import ManagerChecklist from "@/components/checkpoint/ManagerChecklist";
 import JetimobPaste from "@/components/checkpoint/JetimobPaste";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CheckpointGerente() {
   const [activeTab, setActiveTab] = useState("checkpoint");
+  const { user } = useAuth();
+  const [nome, setNome] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("nome").eq("user_id", user.id).single().then(({ data }) => {
+      if (data?.nome) setNome(data.nome.split(" ")[0]);
+    });
+  }, [user]);
 
   return (
     <div className="p-6 space-y-4">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">
-          Checkpoint do <span className="text-primary">Gerente</span>
+          {nome ? (
+            <>Olá <span className="text-primary">{nome}</span>, bem-vindo(a) à sua ferramenta de IA da <span className="text-primary">UHome</span></>
+          ) : (
+            <>Checkpoint do <span className="text-primary">Gerente</span></>
+          )}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Gestão diária do time comercial com metas, resultados e IA
