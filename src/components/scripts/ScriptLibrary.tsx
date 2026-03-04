@@ -23,17 +23,19 @@ export default function ScriptLibrary() {
   const { user } = useAuth();
   const [scripts, setScripts] = useState<SavedScript[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterTipo, setFilterTipo] = useState<string>("");
-  const [filterEmpreendimento, setFilterEmpreendimento] = useState<string>("");
+  const [filterTipo, setFilterTipo] = useState<string>("all");
+  const [filterEmpreendimento, setFilterEmpreendimento] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const load = async () => {
     if (!user) return;
     setLoading(true);
     let query = supabase.from("saved_scripts").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-    if (filterTipo) query = query.eq("tipo", filterTipo);
-    if (filterEmpreendimento) query = query.eq("empreendimento", filterEmpreendimento);
-    const { data } = await query;
+    if (filterTipo && filterTipo !== "all") query = query.eq("tipo", filterTipo);
+    if (filterEmpreendimento && filterEmpreendimento !== "all") query = query.eq("empreendimento", filterEmpreendimento);
+    const { data, error } = await query;
+    if (error) console.error("Error loading scripts:", error);
+    setScripts((data as SavedScript[]) || []);
     setScripts((data as SavedScript[]) || []);
     setLoading(false);
   };
@@ -54,7 +56,7 @@ export default function ScriptLibrary() {
         <Select value={filterTipo} onValueChange={setFilterTipo}>
           <SelectTrigger className="w-44"><SelectValue placeholder="Todos os tipos" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os tipos</SelectItem>
+            <SelectItem value="all">Todos os tipos</SelectItem>
             <SelectItem value="ligacao">Scripts de Ligação</SelectItem>
             <SelectItem value="followup">Follow Ups</SelectItem>
           </SelectContent>
@@ -62,7 +64,7 @@ export default function ScriptLibrary() {
         <Select value={filterEmpreendimento} onValueChange={setFilterEmpreendimento}>
           <SelectTrigger className="w-52"><SelectValue placeholder="Todos empreendimentos" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos empreendimentos</SelectItem>
+            <SelectItem value="all">Todos empreendimentos</SelectItem>
             {empreendimentos.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
           </SelectContent>
         </Select>
