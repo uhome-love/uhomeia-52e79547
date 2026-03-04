@@ -62,14 +62,13 @@ export function AppSidebar() {
 
   const homeItems = [
     { title: "Início", url: "/", icon: Home },
-    { title: "Minha Área", url: "/corretor", icon: User },
+    { title: "Central do Corretor", url: "/corretor", icon: Phone },
   ];
 
   const gestorItems = isGestor
     ? [
         { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
         { title: "PDN", url: "/pdn", icon: FileSpreadsheet },
-        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
         { title: "Scripts & Follow Ups", url: "/scripts", icon: FileEdit },
         { title: "Recuperação de Leads", url: "/gestao", icon: LayoutDashboard },
@@ -81,6 +80,7 @@ export function AppSidebar() {
   const ceoItems = isAdmin
     ? [
         { title: "Dashboard CEO", url: "/ceo", icon: Crown },
+        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Inteligência Marketing", url: "/marketing", icon: BarChart3 },
         { title: "Auditoria & Saúde", url: "/auditoria", icon: Shield },
       ]

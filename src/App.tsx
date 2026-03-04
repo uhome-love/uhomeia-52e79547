@@ -80,7 +80,7 @@ const App = () => (
             <Route path="/gestao" element={<ProtectedPage roles={["gestor", "admin"]}><GestorDashboard /></ProtectedPage>} />
             <Route path="/relatorios" element={<ProtectedPage roles={["gestor", "admin"]}><RelatorioCorretor /></ProtectedPage>} />
             <Route path="/ranking" element={<ProtectedPage roles={["gestor", "admin"]}><RankingComercial /></ProtectedPage>} />
-            <Route path="/oferta-ativa" element={<ProtectedPage roles={["corretor", "gestor", "admin"]}><OfertaAtiva /></ProtectedPage>} />
+            <Route path="/oferta-ativa" element={<ProtectedPage roles={["admin"]}><OfertaAtiva /></ProtectedPage>} />
 
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><CorretorDashboard /></ProtectedPage>} />
