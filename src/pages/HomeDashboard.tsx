@@ -1,26 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useCeoData, pct, type CeoPeriod } from "@/hooks/useCeoData";
+import { useMarketing, getCanalLabel } from "@/hooks/useMarketing";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  LayoutDashboard,
-  ClipboardCheck,
-  Crown,
-  Shield,
-  ArrowRight,
-  FileText,
-  MessageSquare,
-  FileBarChart,
-  Filter,
-  Sparkles,
-} from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  Sparkles, TrendingUp, Users, Trophy, Target, BarChart3, AlertTriangle,
+  CalendarDays, RotateCcw, ArrowRight, Building2, FileText, Eye, DollarSign,
+  Megaphone, Flame, ArrowUpRight,
+} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import IaCoreAction from "@/components/IaCoreAction";
+
+type Period = "dia" | "semana" | "mes";
+const periodLabels: Record<Period, string> = { dia: "Hoje", semana: "Esta Semana", mes: "Este Mês" };
+const medals = ["🥇", "🥈", "🥉"];
 
 export default function HomeDashboard() {
   const { user } = useAuth();
-  const { isGestor, isAdmin } = useUserRole();
+  const { isAdmin, isGestor } = useUserRole();
+  const navigate = useNavigate();
   const [nome, setNome] = useState("");
+  const [period, setPeriod] = useState<Period>("semana");
+
+  const filterGerenteId = isAdmin ? undefined : user?.id;
+  const { gerentes, companyTotals, allCorretores, loading } = useCeoData(period as CeoPeriod, undefined, undefined, filterGerenteId);
+  const { channelStats, totals: mktTotals } = useMarketing();
+
+  // PDN hot deals
+  const [pdnHot, setPdnHot] = useState({ propostas: 0, docs: 0, visitaRecente: 0 });
+  // Lead recovery
+  const [recovery, setRecovery] = useState({ reativados: 0, respondidos: 0, visitas: 0 });
 
   useEffect(() => {
     if (!user) return;
@@ -29,83 +41,311 @@ export default function HomeDashboard() {
     });
   }, [user]);
 
-  const navigate = useNavigate();
+  // Fetch PDN summary
+  useEffect(() => {
+    if (!user) return;
+    const fetchPdn = async () => {
+      let q = supabase.from("pdn_entries").select("situacao, docs_status, data_visita");
+      if (!isAdmin) q = q.eq("gerente_id", user.id);
+      const { data } = await q;
+      if (!data) return;
+      const now = new Date();
+      const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+      setPdnHot({
+        propostas: data.filter(d => d.situacao === "gerado").length,
+        docs: data.filter(d => d.docs_status === "pendente" || d.docs_status === "em_analise").length,
+        visitaRecente: data.filter(d => d.data_visita && new Date(d.data_visita) >= fiveDaysAgo).length,
+      });
+    };
+    fetchPdn();
+  }, [user, isAdmin]);
 
-  const shortcuts = [
-    ...(isGestor ? [
-      { title: "Recuperação de Leads", description: "Gerencie e recupere leads com IA", icon: LayoutDashboard, url: "/gestao" },
-      { title: "Checkpoint do Gerente", description: "Metas diárias e resultados do time", icon: ClipboardCheck, url: "/checkpoint" },
-      { title: "Scripts de Ligação", description: "Gere roteiros de ligação com IA", icon: FileText, url: "/scripts" },
-      { title: "Follow Ups", description: "Mensagens de follow-up para WhatsApp", icon: MessageSquare, url: "/scripts" },
-      { title: "Relatórios 1:1", description: "Relatórios de performance por corretor", icon: FileBarChart, url: "/relatorios" },
-      { title: "Funil Comercial", description: "Leads → Propostas → Vendas (macro)", icon: Filter, url: "/funil" },
-    ] : []),
-    ...(isAdmin ? [
-      { title: "Dashboard CEO", description: "Visão macro consolidada da empresa", icon: Crown, url: "/ceo" },
-      { title: "Administração", description: "Gerenciar usuários e configurações", icon: Shield, url: "/admin" },
-    ] : []),
-  ];
+  // Fetch lead recovery
+  useEffect(() => {
+    if (!user) return;
+    const fetchRecovery = async () => {
+      const { data } = await supabase.from("leads").select("status_recuperacao, status").eq("user_id", user.id);
+      if (!data) return;
+      setRecovery({
+        reativados: data.filter(d => d.status_recuperacao === "contatado" || d.status_recuperacao === "reativado").length,
+        respondidos: data.filter(d => d.status === "respondido" || d.status === "reativado").length,
+        visitas: data.filter(d => d.status === "visita_agendada").length,
+      });
+    };
+    fetchRecovery();
+  }, [user]);
+
+  const sortedTimes = useMemo(() =>
+    [...gerentes].sort((a, b) => b.totals.real_vgv_assinado - a.totals.real_vgv_assinado),
+    [gerentes]
+  );
+
+  const topCorretores = useMemo(() =>
+    [...allCorretores].sort((a, b) => b.real_vgv_assinado - a.real_vgv_assinado).slice(0, 5),
+    [allCorretores]
+  );
+
+  // IA Alerts
+  const alerts = useMemo(() => {
+    const a: string[] = [];
+    const avgCpl = mktTotals.leads > 0 ? mktTotals.investimento / mktTotals.leads : 0;
+    channelStats.forEach(ch => {
+      if (ch.cpl && ch.cpl > avgCpl * 1.5) a.push(`CPL elevado em ${getCanalLabel(ch.canal)}: R$ ${ch.cpl.toFixed(0)} (média R$ ${avgCpl.toFixed(0)})`);
+    });
+    gerentes.forEach(g => {
+      if (g.totals.real_visitas_realizadas > 10 && g.totals.real_propostas < 2) {
+        a.push(`Equipe ${g.gerente_nome}: muitas visitas (${g.totals.real_visitas_realizadas}) e poucas propostas (${g.totals.real_propostas})`);
+      }
+    });
+    if (recovery.reativados > 0 && recovery.respondidos === 0) a.push("Leads reativados sem resposta — revisar abordagem");
+    return a.slice(0, 5);
+  }, [channelStats, mktTotals, gerentes, recovery]);
+
+  const iaContext = useMemo(() => {
+    const funnel = `Funil: Visitas Marcadas ${companyTotals.real_visitas_marcadas}, Visitas Realizadas ${companyTotals.real_visitas_realizadas}, Propostas ${companyTotals.real_propostas}, VGV Assinado R$ ${companyTotals.real_vgv_assinado.toLocaleString("pt-BR")}`;
+    const mkt = channelStats.map(c => `${getCanalLabel(c.canal)}: Inv R$ ${c.investimento.toLocaleString("pt-BR")}, Leads ${c.leads}, CPL R$ ${c.cpl?.toFixed(0) || "-"}`).join("; ");
+    const teams = sortedTimes.map((t, i) => `${i + 1}. Equipe ${t.gerente_nome}: VGV R$ ${t.totals.real_vgv_assinado.toLocaleString("pt-BR")}, Propostas ${t.totals.real_propostas}`).join("; ");
+    return `Período: ${periodLabels[period]}\n${funnel}\nMarketing: ${mkt}\nTimes: ${teams}\nNegócios quentes: ${pdnHot.propostas} propostas, ${pdnHot.docs} docs pendentes\nRecuperação: ${recovery.reativados} reativados, ${recovery.respondidos} respostas`;
+  }, [companyTotals, channelStats, sortedTimes, period, pdnHot, recovery]);
+
+  const card = "rounded-xl border border-border bg-card shadow-card";
 
   return (
-    <div className="p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
-      {/* Hero Welcome */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="relative overflow-hidden rounded-2xl gradient-hero p-8 lg:p-10"
-      >
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 w-48 h-48 bg-primary/5 rounded-full blur-2xl" />
-        
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-foreground/10 backdrop-blur-sm">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Sparkles className="h-4 w-4 text-primary" />
             </div>
-            <span className="text-xs font-semibold text-primary-foreground/60 uppercase tracking-widest">
-              Uhome IA
-            </span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Centro de Comando</span>
           </div>
-          <h1 className="font-display text-3xl lg:text-4xl font-bold text-primary-foreground">
+          <h1 className="font-display text-2xl lg:text-3xl font-bold text-foreground">
             Olá{nome ? `, ${nome}` : ""}! 👋
           </h1>
-          <p className="text-primary-foreground/70 mt-2 text-sm lg:text-base max-w-xl">
-            Bem-vindo(a) ao <strong>UHOME IA</strong> — sua plataforma de inteligência e gestão comercial imobiliária.
+          <p className="text-sm text-muted-foreground mt-1">
+            {isAdmin ? "Visão consolidada da empresa" : "Visão da sua equipe"} • {periodLabels[period]}
           </p>
-        </div>
-      </motion.div>
-
-      {/* Quick Access */}
-      <div>
-        <h2 className="font-display font-bold text-lg text-foreground mb-1">Acesso Rápido</h2>
-        <p className="text-sm text-muted-foreground mb-5">Navegue diretamente para seus módulos</p>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {shortcuts.map((s, i) => (
-            <motion.button
-              key={s.url + s.title}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.3 }}
-              onClick={() => navigate(s.url)}
-              className="group flex flex-col items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-card hover:shadow-elevated hover:border-primary/20 transition-all duration-200 text-left"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent">
-                <s.icon className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="font-display font-semibold text-sm text-foreground">{s.title}</p>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{s.description}</p>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-primary font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                Acessar <ArrowRight className="h-3 w-3" />
-              </div>
-            </motion.button>
-          ))}
-        </div>
+        </motion.div>
+        <Select value={period} onValueChange={v => setPeriod(v as Period)}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(periodLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
+
+      {loading ? (
+        <div className="text-center py-16 text-muted-foreground">Carregando dados...</div>
+      ) : (
+        <div className="space-y-6">
+          {/* 1. Funil Comercial */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={card}>
+            <SectionHeader icon={TrendingUp} title="Funil Comercial" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 p-4">
+              <MetricCard label="Ligações" value={companyTotals.real_ligacoes} meta={companyTotals.meta_ligacoes} />
+              <MetricCard label="Vis. Marcadas" value={companyTotals.real_visitas_marcadas} meta={companyTotals.meta_visitas_marcadas} />
+              <MetricCard label="Vis. Realizadas" value={companyTotals.real_visitas_realizadas} meta={companyTotals.meta_visitas_realizadas} />
+              <MetricCard label="Propostas" value={companyTotals.real_propostas} meta={companyTotals.meta_propostas} />
+              <MetricCard label="VGV Gerado" value={`R$ ${(companyTotals.real_vgv_gerado / 1000).toFixed(0)}k`} />
+              <MetricCard label="VGV Assinado" value={`R$ ${(companyTotals.real_vgv_assinado / 1000).toFixed(0)}k`} highlight />
+              <MetricCard label="Atingimento" value={`${pct(companyTotals.real_vgv_assinado, companyTotals.meta_vgv_assinado)}%`} highlight />
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 2. Performance de Equipe */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className={card}>
+              <SectionHeader icon={Users} title="Performance de Equipe" action={{ label: "Ver ranking", onClick: () => navigate("/ranking") }} />
+              <div className="divide-y divide-border">
+                {sortedTimes.slice(0, 5).map((t, i) => (
+                  <div key={t.gerente_id} className="flex items-center gap-3 px-4 py-2.5">
+                    <span className="w-6 text-center text-sm">{i < 3 ? medals[i] : `${i + 1}º`}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">Equipe {t.gerente_nome}</p>
+                      <p className="text-[10px] text-muted-foreground">{t.corretores.length} corretores</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-display font-bold">R$ {t.totals.real_vgv_assinado.toLocaleString("pt-BR")}</p>
+                      <p className="text-[10px] text-muted-foreground">{t.totals.real_propostas} propostas</p>
+                    </div>
+                  </div>
+                ))}
+                {sortedTimes.length === 0 && <p className="p-4 text-center text-sm text-muted-foreground">Sem dados</p>}
+              </div>
+            </motion.div>
+
+            {/* 3. Ranking Corretores */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={card}>
+              <SectionHeader icon={Trophy} title="Top Corretores" action={{ label: "Ver ranking", onClick: () => navigate("/ranking") }} />
+              <div className="divide-y divide-border">
+                {topCorretores.map((c, i) => (
+                  <div key={c.corretor_id} className="flex items-center gap-3 px-4 py-2.5">
+                    <span className="w-6 text-center text-sm">{i < 3 ? medals[i] : `${i + 1}º`}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{c.corretor_nome}</p>
+                      <p className="text-[10px] text-muted-foreground">Equipe {c.gerente_nome}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-display font-bold">R$ {c.real_vgv_assinado.toLocaleString("pt-BR")}</p>
+                      <p className="text-[10px] text-muted-foreground">Score {c.score}</p>
+                    </div>
+                  </div>
+                ))}
+                {topCorretores.length === 0 && <p className="p-4 text-center text-sm text-muted-foreground">Sem dados</p>}
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 4. Marketing */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className={card}>
+              <SectionHeader icon={Megaphone} title="Marketing" action={isAdmin ? { label: "Ver detalhes", onClick: () => navigate("/marketing") } : undefined} />
+              <div className="p-4 space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <MiniStat label="Investimento" value={`R$ ${(mktTotals.investimento / 1000).toFixed(0)}k`} />
+                  <MiniStat label="Leads" value={`${mktTotals.leads}`} />
+                  <MiniStat label="CPL" value={mktTotals.leads > 0 ? `R$ ${(mktTotals.investimento / mktTotals.leads).toFixed(0)}` : "—"} />
+                </div>
+                <div className="divide-y divide-border/50">
+                  {channelStats.slice(0, 4).map(ch => (
+                    <div key={ch.canal} className="flex items-center justify-between py-1.5 text-xs">
+                      <span className="text-muted-foreground">{getCanalLabel(ch.canal)}</span>
+                      <div className="flex items-center gap-3">
+                        <span>{ch.leads} leads</span>
+                        <span className="font-semibold">CPL R$ {ch.cpl?.toFixed(0) || "—"}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 5. Negócios Quentes */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={card}>
+              <SectionHeader icon={Flame} title="Negócios Quentes" action={{ label: "Ver PDN", onClick: () => navigate("/pdn") }} />
+              <div className="p-4 space-y-3">
+                <HotStat icon={FileText} label="Propostas enviadas" value={pdnHot.propostas} color="text-primary" />
+                <HotStat icon={Building2} label="Aguardando docs" value={pdnHot.docs} color="text-warning" />
+                <HotStat icon={Eye} label="Visita recente (5d)" value={pdnHot.visitaRecente} color="text-success" />
+                <div className="pt-2 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground">
+                    Total negócios quentes: <span className="font-bold text-foreground">{pdnHot.propostas + pdnHot.docs + pdnHot.visitaRecente}</span>
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 6. Recuperação de Leads */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className={card}>
+              <SectionHeader icon={RotateCcw} title="Recuperação de Leads" action={{ label: "Ver módulo", onClick: () => navigate("/gestao") }} />
+              <div className="p-4 space-y-3">
+                <HotStat icon={RotateCcw} label="Leads reativados" value={recovery.reativados} color="text-primary" />
+                <HotStat icon={ArrowUpRight} label="Respostas recebidas" value={recovery.respondidos} color="text-success" />
+                <HotStat icon={CalendarDays} label="Visitas geradas" value={recovery.visitas} color="text-warning" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* 7. Alertas da IA */}
+          {alerts.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className={`${card} border-warning/30`}>
+              <SectionHeader icon={AlertTriangle} title="Alertas da IA" iconColor="text-warning" />
+              <div className="p-4 space-y-2">
+                {alerts.map((a, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm">
+                    <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{a}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* 8. Análise IA do Dia */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className={card}>
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h3 className="font-display font-semibold text-sm">Análise do Dia</h3>
+              </div>
+              <IaCoreAction
+                label="Gerar Análise do Dia"
+                module="centro_comando"
+                prompt={`Analise os dados do Centro de Comando da Uhome e gere um resumo estratégico do dia:\n\n${iaContext}\n\nInclua: performance da equipe, campanhas de marketing, principais oportunidades, sugestões de ação prioritárias.`}
+              />
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ==================== Sub-components ==================== */
+
+function SectionHeader({ icon: Icon, title, action, iconColor }: {
+  icon: any; title: string; iconColor?: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center gap-2">
+        <Icon className={`h-4 w-4 ${iconColor || "text-primary"}`} />
+        <h3 className="font-display font-semibold text-sm">{title}</h3>
+      </div>
+      {action && (
+        <button onClick={action.onClick} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+          {action.label} <ArrowRight className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function MetricCard({ label, value, meta, highlight }: {
+  label: string; value: string | number; meta?: number; highlight?: boolean;
+}) {
+  const pctVal = meta && typeof value === "number" ? pct(value, meta) : null;
+  return (
+    <div className={`rounded-lg p-3 ${highlight ? "bg-primary/5 border border-primary/20" : "bg-muted/30"}`}>
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className={`text-lg font-display font-bold mt-0.5 ${highlight ? "text-primary" : "text-foreground"}`}>
+        {value}
+      </p>
+      {pctVal !== null && (
+        <p className={`text-[10px] font-medium ${pctVal >= 80 ? "text-success" : pctVal >= 50 ? "text-warning" : "text-destructive"}`}>
+          {pctVal}% da meta
+        </p>
+      )}
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="text-center">
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="text-sm font-display font-bold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function HotStat({ icon: Icon, label, value, color }: {
+  icon: any; label: string; value: number; color: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 ${color}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="flex-1">
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
+      <p className="text-lg font-display font-bold text-foreground">{value}</p>
     </div>
   );
 }
