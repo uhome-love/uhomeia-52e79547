@@ -7,6 +7,7 @@ import { Trophy, Medal, Star, Flame, Loader2, Phone, ThumbsUp, Percent } from "l
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import ScoringLegend from "./ScoringLegend";
 
 const BADGES_CONFIG = [
   { key: "discador", label: "Discador do Dia", icon: Phone, color: "text-blue-500", check: (r: any[]) => r[0] },
@@ -244,6 +245,11 @@ export default function RankingPanel() {
           </Card>
         </>
       )}
+
+      {/* Scoring Legend */}
+      <div className="mt-4">
+        <ScoringLegend />
+      </div>
     </div>
   );
 }
