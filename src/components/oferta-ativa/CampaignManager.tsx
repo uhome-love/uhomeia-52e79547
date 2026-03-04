@@ -1,13 +1,14 @@
 import { useOAListas, type OALista } from "@/hooks/useOfertaAtiva";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Settings, Play, Pause, StopCircle, Users, Loader2, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Settings, Play, Pause, StopCircle, Loader2, Trash2 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pendente: { label: "Pendente", color: "bg-muted text-muted-foreground", icon: <Settings className="h-3 w-3" /> },
@@ -50,6 +51,38 @@ function ListaStats({ listaId }: { listaId: string }) {
 export default function CampaignManager() {
   const { listas, isLoading, updateLista, deleteLista } = useOAListas();
   const { isAdmin } = useUserRole();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selected.size === listas.length) setSelected(new Set());
+    else setSelected(new Set(listas.map(l => l.id)));
+  };
+
+  const handleBulkDelete = useCallback(async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Excluir ${selected.size} lista(s) e todos os leads vinculados? Esta ação não pode ser desfeita.`)) return;
+    setBulkDeleting(true);
+    try {
+      for (const id of selected) {
+        await deleteLista(id);
+      }
+      setSelected(new Set());
+      toast.success(`${selected.size} lista(s) excluída(s)!`);
+    } catch {
+      toast.error("Erro ao excluir listas.");
+    } finally {
+      setBulkDeleting(false);
+    }
+  }, [selected, deleteLista]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -67,18 +100,57 @@ export default function CampaignManager() {
     );
   }
 
+  const allSelected = selected.size === listas.length && listas.length > 0;
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Campanhas / Listas ({listas.length})</h3>
       </div>
 
+      {/* Bulk actions bar */}
+      {isAdmin && (
+        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/40 border border-border">
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={toggleAll}
+            id="select-all-listas"
+          />
+          <label htmlFor="select-all-listas" className="text-sm font-medium cursor-pointer">
+            {allSelected ? "Desmarcar todas" : "Selecionar todas"}
+          </label>
+          <Badge variant="outline" className="text-xs">
+            {selected.size}/{listas.length}
+          </Badge>
+          {selected.size > 0 && (
+            <Button
+              size="sm"
+              variant="destructive"
+              className="ml-auto gap-1.5 text-xs h-7"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+            >
+              {bulkDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              Excluir {selected.size} selecionada(s)
+            </Button>
+          )}
+        </div>
+      )}
+
       {listas.map(lista => {
         const st = STATUS_CONFIG[lista.status] || STATUS_CONFIG.pendente;
+        const isSelected = selected.has(lista.id);
         return (
-          <Card key={lista.id} className="overflow-hidden">
+          <Card key={lista.id} className={`overflow-hidden transition-colors ${isSelected ? "border-primary/40 bg-primary/5" : ""}`}>
             <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                {isAdmin && (
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleSelect(lista.id)}
+                    className="mt-1 shrink-0"
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-semibold text-foreground truncate">{lista.nome}</h4>
@@ -122,6 +194,7 @@ export default function CampaignManager() {
                       onClick={() => {
                         if (confirm(`Excluir a lista "${lista.nome}" e todos os seus leads? Esta ação não pode ser desfeita.`)) {
                           deleteLista(lista.id);
+                          setSelected(prev => { const n = new Set(prev); n.delete(lista.id); return n; });
                         }
                       }}
                     >
