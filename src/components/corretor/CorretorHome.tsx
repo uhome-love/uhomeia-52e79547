@@ -36,7 +36,7 @@ export default function CorretorHome() {
       {/* Header */}
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary" /> Minha Área
+          <Zap className="h-6 w-6 text-primary" /> Central do Corretor
         </h1>
         <p className="text-sm text-muted-foreground">Foco, meta e execução. Seu dia começa aqui.</p>
       </div>
