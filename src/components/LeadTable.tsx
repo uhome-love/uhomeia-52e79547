@@ -1,14 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, MessageSquare, Mail, Phone, ChevronDown, ChevronUp, Home, MapPin, Clock, ExternalLink, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, MessageSquare, Mail, Phone, ChevronDown, ChevronUp, Home, MapPin, Clock, ExternalLink, Search, ChevronLeft, ChevronRight, Send, Loader2, Copy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import type { Lead } from "@/types/lead";
 import PriorityBadge from "@/components/PriorityBadge";
 import ScoreBadge from "@/components/ScoreBadge";
 import { getDaysSinceContact, getTimeSinceContactLabel, getTimeSinceContactColor } from "@/lib/leadUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadTableProps {
   leads: Lead[];
@@ -40,6 +41,7 @@ export default function LeadTable({ leads, onGenerateMessage, loadingLeadId }: L
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return leads;
@@ -59,7 +61,6 @@ export default function LeadTable({ leads, onGenerateMessage, loadingLeadId }: L
   const safePage = Math.min(page, totalPages - 1);
   const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
 
-  // Reset page when search or leads change
   const handleSearch = (val: string) => {
     setSearch(val);
     setPage(0);
@@ -71,6 +72,31 @@ export default function LeadTable({ leads, onGenerateMessage, loadingLeadId }: L
     window.open(buildWhatsAppLink(lead.telefone, lead.mensagemGerada), "_blank");
     toast.success(`WhatsApp aberto para ${lead.nome}!`);
   };
+
+  const handleSend360 = useCallback(async (lead: Lead) => {
+    if (!lead.mensagemGerada) { toast.error("Gere a mensagem antes de enviar."); return; }
+    if (!lead.telefone) { toast.error("Lead sem telefone cadastrado."); return; }
+    setSendingId(lead.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-360dialog", {
+        body: { action: "send_single", phone: lead.telefone, message: lead.mensagemGerada },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+      } else {
+        toast.success(`WhatsApp enviado para ${lead.nome} via 360dialog!`);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao enviar via 360dialog.");
+    } finally { setSendingId(null); }
+  }, []);
+
+  const handleCopyMessage = useCallback((lead: Lead) => {
+    if (!lead.mensagemGerada) return;
+    navigator.clipboard.writeText(lead.mensagemGerada);
+    toast.success("Mensagem copiada!");
+  }, []);
 
   return (
     <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
@@ -194,12 +220,16 @@ export default function LeadTable({ leads, onGenerateMessage, loadingLeadId }: L
                       <div className="rounded-lg border border-border bg-muted/30 p-4 text-left">
                         <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Mensagem gerada pela IA</p>
                         <p className="text-sm whitespace-pre-wrap text-foreground leading-relaxed">{lead.mensagemGerada}</p>
-                        <div className="mt-3 flex gap-2">
-                          <Button size="sm" className="gap-1.5 text-xs" onClick={() => handleOpenWhatsApp(lead)}>
-                            <ExternalLink className="h-3 w-3" /> Enviar WhatsApp
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button size="sm" className="gap-1.5 text-xs bg-success hover:bg-success/90 text-success-foreground" onClick={() => handleSend360(lead)} disabled={sendingId === lead.id}>
+                            {sendingId === lead.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                            {sendingId === lead.id ? "Enviando..." : "Enviar 360dialog"}
                           </Button>
-                          <Button size="sm" variant="outline" className="gap-1.5 text-xs">
-                            <Mail className="h-3 w-3" /> E-mail
+                          <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => handleOpenWhatsApp(lead)}>
+                            <ExternalLink className="h-3 w-3" /> wa.me
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => handleCopyMessage(lead)}>
+                            <Copy className="h-3 w-3" /> Copiar
                           </Button>
                         </div>
                       </div>
