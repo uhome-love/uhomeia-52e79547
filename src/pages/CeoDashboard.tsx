@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Trophy, FileText, Bot, AlertTriangle } from "lucide-react";
+import { BarChart3, Trophy, FileText, Bot, AlertTriangle, TrendingUp } from "lucide-react";
 import CeoOverview from "@/components/ceo/CeoOverview";
 import CeoRankings from "@/components/ceo/CeoRankings";
 import CeoReports from "@/components/ceo/CeoReports";
 import CeoAdvisor from "@/components/ceo/CeoAdvisor";
 import CeoAlerts from "@/components/ceo/CeoAlerts";
+import CeoForecastPanel from "@/components/forecast/CeoForecastPanel";
 
 export default function CeoDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -22,9 +23,12 @@ export default function CeoDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-auto">
+        <TabsList className="grid w-full grid-cols-6 h-auto">
           <TabsTrigger value="overview" className="gap-1.5 text-xs py-2">
             <BarChart3 className="h-3.5 w-3.5" /> Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="forecast" className="gap-1.5 text-xs py-2">
+            <TrendingUp className="h-3.5 w-3.5" /> Forecast
           </TabsTrigger>
           <TabsTrigger value="rankings" className="gap-1.5 text-xs py-2">
             <Trophy className="h-3.5 w-3.5" /> Rankings
@@ -41,6 +45,7 @@ export default function CeoDashboard() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-4"><CeoOverview /></TabsContent>
+        <TabsContent value="forecast" className="mt-4"><CeoForecastPanel /></TabsContent>
         <TabsContent value="rankings" className="mt-4"><CeoRankings /></TabsContent>
         <TabsContent value="reports" className="mt-4"><CeoReports /></TabsContent>
         <TabsContent value="advisor" className="mt-4"><CeoAdvisor /></TabsContent>
