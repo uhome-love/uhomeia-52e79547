@@ -1,11 +1,11 @@
 import {
   LayoutDashboard,
-  ClipboardList,
-  Shield,
   ClipboardCheck,
+  Shield,
   LogOut,
   User,
   Crown,
+  Home,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -33,6 +33,7 @@ export function AppSidebar() {
   const { isGestor, isAdmin } = useUserRole();
 
   const mainItems = [
+    { title: "Início", url: "/", icon: Home },
     ...(isGestor
       ? [
           { title: "Recuperação de Leads", url: "/gestao", icon: LayoutDashboard },
