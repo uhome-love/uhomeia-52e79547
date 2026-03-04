@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, Copy, Sparkles, TrendingUp, TrendingDown, Minus, BarChart3, History } from "lucide-react";
+import { Loader2, Save, Copy, Sparkles, TrendingUp, TrendingDown, Minus, BarChart3, History, Trash2, Eraser } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 type FunnelEntry = {
@@ -356,9 +356,21 @@ export default function FunilDashboard() {
                     {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     {analyzing ? "Analisando..." : "Gerar análise com IA"}
                   </Button>
-                  <Button variant="ghost" onClick={() => { setCurrentEntryId(null); setLeadsGerados(0); setPropostasGeradas(0); setVendasFechadas(0); setVgvVendido(0); setInvestimentoMidia(0); setCustoMedioLead(25); setObservacoes(""); setCurrentAnalysis(null); }}>
-                    Novo registro
+                  <Button variant="ghost" onClick={() => { setCurrentEntryId(null); setLeadsGerados(0); setPropostasGeradas(0); setVendasFechadas(0); setVgvVendido(0); setInvestimentoMidia(0); setCustoMedioLead(25); setObservacoes(""); setCurrentAnalysis(null); }} className="gap-1.5">
+                    <Eraser className="h-4 w-4" /> Limpar campos
                   </Button>
+                  {currentEntryId && (
+                    <Button variant="ghost" className="gap-1.5 text-destructive hover:text-destructive" onClick={async () => {
+                      if (!confirm("Tem certeza que deseja apagar este registro?")) return;
+                      const { error } = await supabase.from("funnel_entries").delete().eq("id", currentEntryId);
+                      if (error) { toast.error("Erro ao apagar."); return; }
+                      setCurrentEntryId(null); setLeadsGerados(0); setPropostasGeradas(0); setVendasFechadas(0); setVgvVendido(0); setInvestimentoMidia(0); setCustoMedioLead(25); setObservacoes(""); setCurrentAnalysis(null);
+                      await loadEntries();
+                      toast.success("Registro apagado!");
+                    }}>
+                      <Trash2 className="h-4 w-4" /> Apagar registro
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
