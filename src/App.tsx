@@ -15,6 +15,7 @@ import CeoDashboard from "./pages/CeoDashboard";
 import ScriptsGenerator from "./pages/ScriptsGenerator";
 import RelatorioCorretor from "./pages/RelatorioCorretor";
 import FunilDashboard from "./pages/FunilDashboard";
+import ForecastDashboard from "./pages/ForecastDashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -105,6 +106,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <FunilDashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/previsao"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ForecastDashboard />
                   </AppLayout>
                 </ProtectedRoute>
               }
