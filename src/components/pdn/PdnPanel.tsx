@@ -45,14 +45,10 @@ export default function PdnPanel({ filterGerenteId, readOnly }: PdnPanelProps) {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterTemp, setFilterTemp] = useState("");
-  const [filterDocs, setFilterDocs] = useState("");
-  const [filterEmpreendimento, setFilterEmpreendimento] = useState("");
   const [filterCorretor, setFilterCorretor] = useState("");
 
-  const uniqueEmpreendimentos = [...new Set(entries.map(e => e.empreendimento).filter(Boolean))];
   const uniqueCorretores = [...new Set(entries.map(e => e.corretor).filter(Boolean))];
-  
+
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -190,33 +186,6 @@ export default function PdnPanel({ filterGerenteId, readOnly }: PdnPanelProps) {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input className="pl-8 h-8 text-xs" placeholder="Buscar por nome..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
-        <Select value={filterTemp} onValueChange={v => setFilterTemp(v === "all" ? "" : v)}>
-          <SelectTrigger className="h-8 w-28 text-xs"><SelectValue placeholder="Temp." /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="quente">Quente</SelectItem>
-            <SelectItem value="morno">Morno</SelectItem>
-            <SelectItem value="frio">Frio</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterDocs} onValueChange={v => setFilterDocs(v === "all" ? "" : v)}>
-          <SelectTrigger className="h-8 w-32 text-xs"><SelectValue placeholder="Docs" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="doc_completa">Doc Completa</SelectItem>
-            <SelectItem value="em_andamento">Em Andamento</SelectItem>
-            <SelectItem value="sem_docs">Sem Docs</SelectItem>
-          </SelectContent>
-        </Select>
-        {uniqueEmpreendimentos.length > 0 && (
-          <Select value={filterEmpreendimento} onValueChange={v => setFilterEmpreendimento(v === "all" ? "" : v)}>
-            <SelectTrigger className="h-8 w-36 text-xs"><SelectValue placeholder="Empreend." /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {uniqueEmpreendimentos.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
         {uniqueCorretores.length > 0 && (
           <Select value={filterCorretor} onValueChange={v => setFilterCorretor(v === "all" ? "" : v)}>
             <SelectTrigger className="h-8 w-32 text-xs"><SelectValue placeholder="Corretor" /></SelectTrigger>
@@ -227,11 +196,6 @@ export default function PdnPanel({ filterGerenteId, readOnly }: PdnPanelProps) {
           </Select>
         )}
         <div className="flex-1" />
-        {!isReadOnly && (
-          <Button size="sm" className="gap-1 text-xs h-8" onClick={() => addEntry()}>
-            <Plus className="h-3.5 w-3.5" /> Nova Linha
-          </Button>
-        )}
         <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={handleExportCsv}>
           <Download className="h-3.5 w-3.5" /> CSV
         </Button>
@@ -250,10 +214,8 @@ export default function PdnPanel({ filterGerenteId, readOnly }: PdnPanelProps) {
           onToggleSelect={toggleSelect}
           onUpdate={updateEntry}
           onDelete={deleteEntry}
+          onAdd={(situacao) => addEntry({ situacao })}
           searchTerm={searchTerm}
-          filterTemp={filterTemp}
-          filterDocs={filterDocs}
-          filterEmpreendimento={filterEmpreendimento}
           filterCorretor={filterCorretor}
         />
       )}

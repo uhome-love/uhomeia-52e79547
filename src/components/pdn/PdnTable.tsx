@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { type PdnEntry } from "@/hooks/usePdn";
+import { type PdnEntry, type PdnSituacao } from "@/hooks/usePdn";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
@@ -14,10 +14,8 @@ interface Props {
   onToggleSelect: (id: string) => void;
   onUpdate: (id: string, updates: Record<string, any>) => void;
   onDelete: (id: string) => void;
+  onAdd: (situacao: PdnSituacao) => void;
   searchTerm: string;
-  filterTemp: string;
-  filterDocs: string;
-  filterEmpreendimento: string;
   filterCorretor: string;
 }
 
@@ -26,23 +24,17 @@ const TEMP_COLORS: Record<string, string> = {
   morno: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
   frio: "bg-blue-500/10 text-blue-600 border-blue-500/30",
 };
-
 const DOCS_COLORS: Record<string, string> = {
   doc_completa: "bg-green-500/10 text-green-600 border-green-500/30",
   em_andamento: "bg-orange-500/10 text-orange-600 border-orange-500/30",
   sem_docs: "bg-muted text-muted-foreground border-border",
 };
-
 const TEMP_LABELS: Record<string, string> = { quente: "QUENTE", morno: "MORNO", frio: "FRIO" };
 const DOCS_LABELS: Record<string, string> = { doc_completa: "COMPLETA", em_andamento: "ANDAMENTO", sem_docs: "SEM DOCS" };
-const TIPO_VISITA_LABELS: Record<string, string> = { "1a_visita": "1ª Visita", retorno: "Retorno", visita_tecnica: "V. Técnica", plantao: "Plantão" };
-const PROXIMA_ACAO_LABELS: Record<string, string> = { ligar: "Ligar", whatsapp: "WhatsApp", enviar_docs: "Enviar Docs", agendar_retorno: "Agendar Retorno", proposta: "Proposta" };
 
-type SortKey = "nome" | "empreendimento" | "temperatura" | "docs_status" | "corretor" | "data_visita";
-
-function EditableCell({ value, field, entryId, onUpdate, className, placeholder }: {
-  value: string; field: string; entryId: string;
-  onUpdate: (id: string, updates: Record<string, any>) => void;
+function Cell({ value, field, id, onUpdate, className, placeholder }: {
+  value: string; field: string; id: string;
+  onUpdate: (id: string, u: Record<string, any>) => void;
   className?: string; placeholder?: string;
 }) {
   const [local, setLocal] = useState(value);
@@ -50,17 +42,16 @@ function EditableCell({ value, field, entryId, onUpdate, className, placeholder 
   return (
     <Input
       className={`h-7 text-xs border-0 bg-transparent px-1 focus-visible:ring-1 focus-visible:bg-background ${className || ""}`}
-      value={local}
-      placeholder={placeholder}
+      value={local} placeholder={placeholder}
       onChange={e => setLocal(e.target.value)}
-      onBlur={() => { if (local !== value) onUpdate(entryId, { [field]: local }); }}
+      onBlur={() => { if (local !== value) onUpdate(id, { [field]: local }); }}
     />
   );
 }
 
-function EditableTextareaCell({ value, field, entryId, onUpdate, placeholder }: {
-  value: string; field: string; entryId: string;
-  onUpdate: (id: string, updates: Record<string, any>) => void;
+function TextCell({ value, field, id, onUpdate, placeholder }: {
+  value: string; field: string; id: string;
+  onUpdate: (id: string, u: Record<string, any>) => void;
   placeholder?: string;
 }) {
   const [local, setLocal] = useState(value);
@@ -68,216 +59,312 @@ function EditableTextareaCell({ value, field, entryId, onUpdate, placeholder }: 
   return (
     <Textarea
       className="min-h-[32px] h-8 text-xs border-0 bg-transparent px-1 py-1 resize-none focus-visible:ring-1 focus-visible:bg-background focus-visible:min-h-[80px] transition-all"
-      value={local}
-      placeholder={placeholder}
+      value={local} placeholder={placeholder}
       onChange={e => setLocal(e.target.value)}
-      onBlur={() => { if (local !== value) onUpdate(entryId, { [field]: local }); }}
+      onBlur={() => { if (local !== value) onUpdate(id, { [field]: local }); }}
     />
   );
 }
 
-export default function PdnTable({ entries, readOnly, selectedIds, onToggleSelect, onUpdate, onDelete, searchTerm, filterTemp, filterDocs, filterEmpreendimento, filterCorretor }: Props) {
-  const [sortKey, setSortKey] = useState<SortKey>("data_visita");
-  const [sortAsc, setSortAsc] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+function formatBRL(v: number | null) {
+  if (!v) return "";
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
-  const filtered = entries.filter(e => {
-    if (searchTerm && !e.nome.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-    if (filterTemp && e.temperatura !== filterTemp) return false;
-    if (filterDocs && e.docs_status !== filterDocs) return false;
-    if (filterEmpreendimento && e.empreendimento !== filterEmpreendimento) return false;
-    if (filterCorretor && e.corretor !== filterCorretor) return false;
-    return true;
-  });
+const thClass = "px-2 py-1.5 text-left font-semibold border-r border-border text-xs";
+const tdClass = "px-1 py-0.5 border-r border-border";
 
-  const sorted = [...filtered].sort((a, b) => {
-    const va = (a as any)[sortKey] || "";
-    const vb = (b as any)[sortKey] || "";
-    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-  });
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) setSortAsc(!sortAsc);
-    else { setSortKey(key); setSortAsc(true); }
-  };
-
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return null;
-    return sortAsc ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />;
-  };
-
-  const colSpanTotal = readOnly ? 8 : 9;
-
+// ─── NEGÓCIOS (Visita) ───
+function VisitaSection({ rows, readOnly, selectedIds, onToggleSelect, onUpdate, onDelete, onAdd }: {
+  rows: PdnEntry[]; readOnly?: boolean; selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void; onUpdate: (id: string, u: Record<string, any>) => void;
+  onDelete: (id: string) => void; onAdd: () => void;
+}) {
   return (
     <div className="rounded border border-border bg-card overflow-x-auto">
+      <div className="flex items-center justify-between bg-primary/10 border-b border-border px-3 py-2">
+        <h3 className="text-sm font-bold text-primary">📋 NEGÓCIOS</h3>
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span>{rows.length} registros</span>
+          {!readOnly && (
+            <Button size="sm" variant="outline" className="h-6 text-[11px] gap-1" onClick={onAdd}>
+              <Plus className="h-3 w-3" /> Linha
+            </Button>
+          )}
+        </div>
+      </div>
       <table className="w-full text-xs border-collapse" style={{ tableLayout: "fixed" }}>
         <colgroup>
-          {!readOnly && <col style={{ width: 32 }} />}
-          <col style={{ width: "18%" }} /> {/* Nome */}
-          <col style={{ width: 50 }} />  {/* Und */}
-          <col style={{ width: "14%" }} /> {/* Empreendimento */}
-          <col style={{ width: 100 }} /> {/* Docs */}
-          <col style={{ width: 80 }} />  {/* Temp */}
-          <col style={{ width: "10%" }} /> {/* Corretor */}
-          <col style={{ width: "28%" }} /> {/* Último Contato */}
-          <col style={{ width: 100 }} /> {/* Data */}
-          {!readOnly && <col style={{ width: 56 }} />}
+          {!readOnly && <col style={{ width: 30 }} />}
+          <col style={{ width: "18%" }} />
+          <col style={{ width: 50 }} />
+          <col style={{ width: "14%" }} />
+          <col style={{ width: 95 }} />
+          <col style={{ width: 80 }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "30%" }} />
+          {!readOnly && <col style={{ width: 36 }} />}
         </colgroup>
         <thead>
           <tr className="border-b border-border bg-muted/60">
-            {!readOnly && <th className="px-1 py-1.5 text-center border-r border-border" />}
-            <th className="px-2 py-1.5 text-left font-semibold cursor-pointer select-none border-r border-border" onClick={() => handleSort("nome")}>
-              <span className="flex items-center gap-1">Nome <SortIcon col="nome" /></span>
-            </th>
-            <th className="px-1 py-1.5 text-center font-semibold border-r border-border">Und</th>
-            <th className="px-2 py-1.5 text-left font-semibold cursor-pointer select-none border-r border-border" onClick={() => handleSort("empreendimento")}>
-              <span className="flex items-center gap-1">Empreend. <SortIcon col="empreendimento" /></span>
-            </th>
-            <th className="px-1 py-1.5 text-center font-semibold cursor-pointer select-none border-r border-border" onClick={() => handleSort("docs_status")}>
-              <span className="flex items-center justify-center gap-1">Docs <SortIcon col="docs_status" /></span>
-            </th>
-            <th className="px-1 py-1.5 text-center font-semibold cursor-pointer select-none border-r border-border" onClick={() => handleSort("temperatura")}>
-              <span className="flex items-center justify-center gap-1">Temp. <SortIcon col="temperatura" /></span>
-            </th>
-            <th className="px-2 py-1.5 text-left font-semibold cursor-pointer select-none border-r border-border" onClick={() => handleSort("corretor")}>
-              <span className="flex items-center gap-1">Corretor <SortIcon col="corretor" /></span>
-            </th>
-            <th className="px-2 py-1.5 text-left font-semibold border-r border-border">Último Contato</th>
-            <th className="px-1 py-1.5 text-center font-semibold cursor-pointer select-none border-r border-border" onClick={() => handleSort("data_visita")}>
-              <span className="flex items-center justify-center gap-1">Data <SortIcon col="data_visita" /></span>
-            </th>
+            {!readOnly && <th className="px-1 py-1.5 border-r border-border" />}
+            <th className={thClass}>Nome</th>
+            <th className={`${thClass} text-center`}>Und</th>
+            <th className={thClass}>Empreend.</th>
+            <th className={`${thClass} text-center`}>Docs</th>
+            <th className={`${thClass} text-center`}>Temp.</th>
+            <th className={thClass}>Corretor</th>
+            <th className={thClass}>Último Contato</th>
             {!readOnly && <th className="px-1 py-1.5" />}
           </tr>
         </thead>
         <tbody>
-          {sorted.map((e, idx) => (
-            <>
-              <tr key={e.id} className={`border-b border-border hover:bg-muted/20 group align-top ${idx % 2 === 0 ? "bg-card" : "bg-muted/5"}`}>
-                {!readOnly && (
-                  <td className="px-1 py-1 text-center border-r border-border">
-                    <Checkbox checked={selectedIds.has(e.id)} onCheckedChange={() => onToggleSelect(e.id)} />
-                  </td>
+          {rows.map((e, i) => (
+            <tr key={e.id} className={`border-b border-border hover:bg-muted/20 group align-top ${i % 2 ? "bg-muted/5" : ""}`}>
+              {!readOnly && <td className="px-1 py-1 text-center border-r border-border"><Checkbox checked={selectedIds.has(e.id)} onCheckedChange={() => onToggleSelect(e.id)} /></td>}
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.nome}</span> : <Cell value={e.nome} field="nome" id={e.id} onUpdate={onUpdate} placeholder="Nome" />}</td>
+              <td className={`${tdClass} text-center`}>{readOnly ? e.und : <Cell value={e.und || ""} field="und" id={e.id} onUpdate={onUpdate} className="text-center" placeholder="—" />}</td>
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.empreendimento}</span> : <Cell value={e.empreendimento || ""} field="empreendimento" id={e.id} onUpdate={onUpdate} placeholder="Empreend." />}</td>
+              <td className={`${tdClass} text-center`}>
+                {readOnly ? (
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${DOCS_COLORS[e.docs_status] || ""}`}>{DOCS_LABELS[e.docs_status] || e.docs_status}</span>
+                ) : (
+                  <Select value={e.docs_status} onValueChange={v => onUpdate(e.id, { docs_status: v })}>
+                    <SelectTrigger className={`h-7 text-[10px] border rounded px-1 w-full ${DOCS_COLORS[e.docs_status] || ""}`}><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sem_docs">SEM DOCS</SelectItem>
+                      <SelectItem value="em_andamento">EM ANDAMENTO</SelectItem>
+                      <SelectItem value="doc_completa">COMPLETA</SelectItem>
+                    </SelectContent>
+                  </Select>
                 )}
-                <td className="px-1 py-0.5 border-r border-border">
-                  {readOnly ? <span className="px-1">{e.nome}</span> : (
-                    <EditableCell value={e.nome} field="nome" entryId={e.id} onUpdate={onUpdate} placeholder="Nome do cliente" />
-                  )}
-                </td>
-                <td className="px-1 py-0.5 text-center border-r border-border">
-                  {readOnly ? <span>{e.und}</span> : (
-                    <EditableCell value={e.und || ""} field="und" entryId={e.id} onUpdate={onUpdate} className="w-full text-center" placeholder="—" />
-                  )}
-                </td>
-                <td className="px-1 py-0.5 border-r border-border">
-                  {readOnly ? <span className="px-1">{e.empreendimento}</span> : (
-                    <EditableCell value={e.empreendimento || ""} field="empreendimento" entryId={e.id} onUpdate={onUpdate} placeholder="Empreendimento" />
-                  )}
-                </td>
-                <td className="px-1 py-0.5 text-center border-r border-border">
-                  {readOnly ? (
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${DOCS_COLORS[e.docs_status] || ""}`}>
-                      {DOCS_LABELS[e.docs_status] || e.docs_status}
-                    </span>
-                  ) : (
-                    <Select value={e.docs_status} onValueChange={v => onUpdate(e.id, { docs_status: v })}>
-                      <SelectTrigger className={`h-7 text-[10px] border rounded px-1.5 w-full ${DOCS_COLORS[e.docs_status] || ""}`}><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sem_docs">SEM DOCS</SelectItem>
-                        <SelectItem value="em_andamento">EM ANDAMENTO</SelectItem>
-                        <SelectItem value="doc_completa">COMPLETA</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </td>
-                <td className="px-1 py-0.5 text-center border-r border-border">
-                  {readOnly ? (
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${TEMP_COLORS[e.temperatura] || ""}`}>
-                      {TEMP_LABELS[e.temperatura] || e.temperatura}
-                    </span>
-                  ) : (
-                    <Select value={e.temperatura} onValueChange={v => onUpdate(e.id, { temperatura: v })}>
-                      <SelectTrigger className={`h-7 text-[10px] border rounded px-1.5 w-full ${TEMP_COLORS[e.temperatura] || ""}`}><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="frio">FRIO</SelectItem>
-                        <SelectItem value="morno">MORNO</SelectItem>
-                        <SelectItem value="quente">QUENTE</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </td>
-                <td className="px-1 py-0.5 border-r border-border">
-                  {readOnly ? <span className="px-1">{e.corretor}</span> : (
-                    <EditableCell value={e.corretor || ""} field="corretor" entryId={e.id} onUpdate={onUpdate} placeholder="Corretor" />
-                  )}
-                </td>
-                <td className="px-1 py-0.5 border-r border-border">
-                  {readOnly ? <span className="text-[11px] whitespace-pre-wrap px-1">{e.ultimo_contato}</span> : (
-                    <EditableTextareaCell value={e.ultimo_contato || ""} field="ultimo_contato" entryId={e.id} onUpdate={onUpdate} placeholder="Escreva aqui o status, objeções, próximos passos..." />
-                  )}
-                </td>
-                <td className="px-1 py-0.5 text-center border-r border-border">
-                  {readOnly ? <span className="text-[11px]">{e.data_visita}</span> : (
-                    <Input type="date" className="h-7 text-[10px] border-0 bg-transparent px-0.5 focus-visible:ring-1 w-full" value={e.data_visita || ""} onChange={ev => onUpdate(e.id, { data_visita: ev.target.value })} />
-                  )}
-                </td>
-                {!readOnly && (
-                  <td className="px-1 py-0.5">
-                    <div className="flex gap-0.5">
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100" onClick={() => setExpandedId(expandedId === e.id ? null : e.id)}>
-                        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedId === e.id ? "rotate-180" : ""}`} />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive opacity-0 group-hover:opacity-100" onClick={() => onDelete(e.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
+              </td>
+              <td className={`${tdClass} text-center`}>
+                {readOnly ? (
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${TEMP_COLORS[e.temperatura] || ""}`}>{TEMP_LABELS[e.temperatura] || e.temperatura}</span>
+                ) : (
+                  <Select value={e.temperatura} onValueChange={v => onUpdate(e.id, { temperatura: v })}>
+                    <SelectTrigger className={`h-7 text-[10px] border rounded px-1 w-full ${TEMP_COLORS[e.temperatura] || ""}`}><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="frio">FRIO</SelectItem>
+                      <SelectItem value="morno">MORNO</SelectItem>
+                      <SelectItem value="quente">QUENTE</SelectItem>
+                    </SelectContent>
+                  </Select>
                 )}
-              </tr>
-              {expandedId === e.id && !readOnly && (
-                <tr key={`${e.id}-expand`} className="border-b border-border bg-muted/20">
-                  <td colSpan={colSpanTotal} className="px-4 py-3">
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                      <div>
-                        <label className="text-[10px] text-muted-foreground font-medium">Tipo de Visita</label>
-                        <Select value={e.tipo_visita || ""} onValueChange={v => onUpdate(e.id, { tipo_visita: v })}>
-                          <SelectTrigger className="h-8 text-xs mt-1"><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(TIPO_VISITA_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground font-medium">Próxima Ação</label>
-                        <Select value={e.proxima_acao || ""} onValueChange={v => onUpdate(e.id, { proxima_acao: v })}>
-                          <SelectTrigger className="h-8 text-xs mt-1"><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(PROXIMA_ACAO_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground font-medium">Data Próxima Ação</label>
-                        <Input type="date" className="h-8 text-xs mt-1" value={e.data_proxima_acao || ""} onChange={ev => onUpdate(e.id, { data_proxima_acao: ev.target.value || null })} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground font-medium">Valor Potencial (R$)</label>
-                        <Input type="number" className="h-8 text-xs mt-1" value={e.valor_potencial ?? ""} onChange={ev => onUpdate(e.id, { valor_potencial: ev.target.value ? Number(ev.target.value) : null })} />
-                      </div>
-                      <div className="col-span-2 lg:col-span-4">
-                        <label className="text-[10px] text-muted-foreground font-medium">Observações</label>
-                        <Textarea className="text-xs mt-1 min-h-[60px]" value={e.observacoes || ""} onChange={ev => onUpdate(e.id, { observacoes: ev.target.value })} />
-                      </div>
-                    </div>
-                  </td>
-                </tr>
+              </td>
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.corretor}</span> : <Cell value={e.corretor || ""} field="corretor" id={e.id} onUpdate={onUpdate} placeholder="Corretor" />}</td>
+              <td className={tdClass}>{readOnly ? <span className="whitespace-pre-wrap px-1">{e.ultimo_contato}</span> : <TextCell value={e.ultimo_contato || ""} field="ultimo_contato" id={e.id} onUpdate={onUpdate} placeholder="Status, objeções, próximos passos..." />}</td>
+              {!readOnly && (
+                <td className="px-1 py-0.5">
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive opacity-0 group-hover:opacity-100" onClick={() => onDelete(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                </td>
               )}
-            </>
+            </tr>
           ))}
-          {sorted.length === 0 && (
-            <tr><td colSpan={colSpanTotal} className="text-center py-8 text-muted-foreground">Nenhum registro encontrado.</td></tr>
-          )}
+          {rows.length === 0 && <tr><td colSpan={readOnly ? 7 : 9} className="text-center py-6 text-muted-foreground">Nenhum negócio registrado.</td></tr>}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ─── GERADOS ───
+function GeradoSection({ rows, readOnly, selectedIds, onToggleSelect, onUpdate, onDelete, onAdd }: {
+  rows: PdnEntry[]; readOnly?: boolean; selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void; onUpdate: (id: string, u: Record<string, any>) => void;
+  onDelete: (id: string) => void; onAdd: () => void;
+}) {
+  const totalVgv = rows.reduce((s, e) => s + (e.vgv || 0), 0);
+  return (
+    <div className="rounded border border-border bg-card overflow-x-auto">
+      <div className="flex items-center justify-between bg-warning/10 border-b border-border px-3 py-2">
+        <h3 className="text-sm font-bold text-warning">📄 GERADOS</h3>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span>{rows.length} registros</span>
+          <span className="font-semibold text-foreground">VGV: {formatBRL(totalVgv)}</span>
+          {!readOnly && (
+            <Button size="sm" variant="outline" className="h-6 text-[11px] gap-1" onClick={onAdd}>
+              <Plus className="h-3 w-3" /> Linha
+            </Button>
+          )}
+        </div>
+      </div>
+      <table className="w-full text-xs border-collapse" style={{ tableLayout: "fixed" }}>
+        <colgroup>
+          {!readOnly && <col style={{ width: 30 }} />}
+          <col style={{ width: "20%" }} />
+          <col style={{ width: 55 }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: 110 }} />
+          <col style={{ width: 90 }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "25%" }} />
+          {!readOnly && <col style={{ width: 36 }} />}
+        </colgroup>
+        <thead>
+          <tr className="border-b border-border bg-muted/60">
+            {!readOnly && <th className="px-1 py-1.5 border-r border-border" />}
+            <th className={thClass}>Nome</th>
+            <th className={`${thClass} text-center`}>Und</th>
+            <th className={thClass}>Empreend.</th>
+            <th className={`${thClass} text-right`}>VGV (R$)</th>
+            <th className={`${thClass} text-center`}>Situação</th>
+            <th className={thClass}>Corretor</th>
+            <th className={thClass}>Quando Assina</th>
+            {!readOnly && <th className="px-1 py-1.5" />}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((e, i) => (
+            <tr key={e.id} className={`border-b border-border hover:bg-muted/20 group align-top ${i % 2 ? "bg-muted/5" : ""}`}>
+              {!readOnly && <td className="px-1 py-1 text-center border-r border-border"><Checkbox checked={selectedIds.has(e.id)} onCheckedChange={() => onToggleSelect(e.id)} /></td>}
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.nome}</span> : <Cell value={e.nome} field="nome" id={e.id} onUpdate={onUpdate} placeholder="Nome" />}</td>
+              <td className={`${tdClass} text-center`}>{readOnly ? e.und : <Cell value={e.und || ""} field="und" id={e.id} onUpdate={onUpdate} className="text-center" placeholder="—" />}</td>
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.empreendimento}</span> : <Cell value={e.empreendimento || ""} field="empreendimento" id={e.id} onUpdate={onUpdate} placeholder="Empreend." />}</td>
+              <td className={`${tdClass} text-right`}>
+                {readOnly ? <span className="px-1">{formatBRL(e.vgv)}</span> : (
+                  <Input type="number" className="h-7 text-xs border-0 bg-transparent px-1 text-right focus-visible:ring-1" value={e.vgv ?? ""} onChange={ev => onUpdate(e.id, { vgv: ev.target.value ? Number(ev.target.value) : null })} placeholder="0" />
+                )}
+              </td>
+              <td className={`${tdClass} text-center`}>
+                {readOnly ? (
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${TEMP_COLORS[e.temperatura] || ""}`}>{TEMP_LABELS[e.temperatura] || e.temperatura}</span>
+                ) : (
+                  <Select value={e.temperatura} onValueChange={v => onUpdate(e.id, { temperatura: v })}>
+                    <SelectTrigger className={`h-7 text-[10px] border rounded px-1 w-full ${TEMP_COLORS[e.temperatura] || ""}`}><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="frio">FRIO</SelectItem>
+                      <SelectItem value="morno">MORNO</SelectItem>
+                      <SelectItem value="quente">QUENTE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </td>
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.corretor}</span> : <Cell value={e.corretor || ""} field="corretor" id={e.id} onUpdate={onUpdate} placeholder="Corretor" />}</td>
+              <td className={tdClass}>{readOnly ? <span className="whitespace-pre-wrap px-1">{e.quando_assina}</span> : <TextCell value={e.quando_assina || ""} field="quando_assina" id={e.id} onUpdate={onUpdate} placeholder="Previsão de assinatura..." />}</td>
+              {!readOnly && (
+                <td className="px-1 py-0.5">
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive opacity-0 group-hover:opacity-100" onClick={() => onDelete(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                </td>
+              )}
+            </tr>
+          ))}
+          {rows.length === 0 && <tr><td colSpan={readOnly ? 7 : 9} className="text-center py-6 text-muted-foreground">Nenhum negócio gerado.</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── ASSINADOS ───
+function AssinadoSection({ rows, readOnly, selectedIds, onToggleSelect, onUpdate, onDelete, onAdd }: {
+  rows: PdnEntry[]; readOnly?: boolean; selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void; onUpdate: (id: string, u: Record<string, any>) => void;
+  onDelete: (id: string) => void; onAdd: () => void;
+}) {
+  const totalVgv = rows.reduce((s, e) => s + (e.vgv || 0), 0);
+  const PAGAMENTO_COLORS: Record<string, string> = {
+    pago: "bg-green-500/10 text-green-600 border-green-500/30",
+    falta_pagar: "bg-orange-500/10 text-orange-600 border-orange-500/30",
+  };
+  return (
+    <div className="rounded border border-border bg-card overflow-x-auto">
+      <div className="flex items-center justify-between bg-success/10 border-b border-border px-3 py-2">
+        <h3 className="text-sm font-bold text-success">✅ ASSINADOS</h3>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span>{rows.length} registros</span>
+          <span className="font-semibold text-foreground">VGV: {formatBRL(totalVgv)}</span>
+          {!readOnly && (
+            <Button size="sm" variant="outline" className="h-6 text-[11px] gap-1" onClick={onAdd}>
+              <Plus className="h-3 w-3" /> Linha
+            </Button>
+          )}
+        </div>
+      </div>
+      <table className="w-full text-xs border-collapse" style={{ tableLayout: "fixed" }}>
+        <colgroup>
+          {!readOnly && <col style={{ width: 30 }} />}
+          <col style={{ width: "20%" }} />
+          <col style={{ width: 55 }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: 110 }} />
+          <col style={{ width: 100 }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "22%" }} />
+          {!readOnly && <col style={{ width: 36 }} />}
+        </colgroup>
+        <thead>
+          <tr className="border-b border-border bg-muted/60">
+            {!readOnly && <th className="px-1 py-1.5 border-r border-border" />}
+            <th className={thClass}>Nome</th>
+            <th className={`${thClass} text-center`}>Und</th>
+            <th className={thClass}>Produto</th>
+            <th className={`${thClass} text-right`}>VGV (R$)</th>
+            <th className={`${thClass} text-center`}>Pagamento</th>
+            <th className={thClass}>Corretor</th>
+            <th className={thClass}>Situação</th>
+            {!readOnly && <th className="px-1 py-1.5" />}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((e, i) => (
+            <tr key={e.id} className={`border-b border-border hover:bg-muted/20 group align-top ${i % 2 ? "bg-muted/5" : ""}`}>
+              {!readOnly && <td className="px-1 py-1 text-center border-r border-border"><Checkbox checked={selectedIds.has(e.id)} onCheckedChange={() => onToggleSelect(e.id)} /></td>}
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.nome}</span> : <Cell value={e.nome} field="nome" id={e.id} onUpdate={onUpdate} placeholder="Nome" />}</td>
+              <td className={`${tdClass} text-center`}>{readOnly ? e.und : <Cell value={e.und || ""} field="und" id={e.id} onUpdate={onUpdate} className="text-center" placeholder="—" />}</td>
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.empreendimento}</span> : <Cell value={e.empreendimento || ""} field="empreendimento" id={e.id} onUpdate={onUpdate} placeholder="Produto" />}</td>
+              <td className={`${tdClass} text-right`}>
+                {readOnly ? <span className="px-1">{formatBRL(e.vgv)}</span> : (
+                  <Input type="number" className="h-7 text-xs border-0 bg-transparent px-1 text-right focus-visible:ring-1" value={e.vgv ?? ""} onChange={ev => onUpdate(e.id, { vgv: ev.target.value ? Number(ev.target.value) : null })} placeholder="0" />
+                )}
+              </td>
+              <td className={`${tdClass} text-center`}>
+                {readOnly ? (
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${PAGAMENTO_COLORS[e.status_pagamento || ""] || ""}`}>{e.status_pagamento === "pago" ? "PAGO" : e.status_pagamento === "falta_pagar" ? "FALTA PAGAR" : "—"}</span>
+                ) : (
+                  <Select value={e.status_pagamento || ""} onValueChange={v => onUpdate(e.id, { status_pagamento: v })}>
+                    <SelectTrigger className={`h-7 text-[10px] border rounded px-1 w-full ${PAGAMENTO_COLORS[e.status_pagamento || ""] || ""}`}><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pago">PAGO</SelectItem>
+                      <SelectItem value="falta_pagar">FALTA PAGAR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </td>
+              <td className={tdClass}>{readOnly ? <span className="px-1">{e.corretor}</span> : <Cell value={e.corretor || ""} field="corretor" id={e.id} onUpdate={onUpdate} placeholder="Corretor" />}</td>
+              <td className={tdClass}>{readOnly ? <span className="whitespace-pre-wrap px-1">{e.ultimo_contato}</span> : <TextCell value={e.ultimo_contato || ""} field="ultimo_contato" id={e.id} onUpdate={onUpdate} placeholder="Situação do contrato..." />}</td>
+              {!readOnly && (
+                <td className="px-1 py-0.5">
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive opacity-0 group-hover:opacity-100" onClick={() => onDelete(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                </td>
+              )}
+            </tr>
+          ))}
+          {rows.length === 0 && <tr><td colSpan={readOnly ? 7 : 9} className="text-center py-6 text-muted-foreground">Nenhum negócio assinado.</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Main Component ───
+export default function PdnTable({ entries, readOnly, selectedIds, onToggleSelect, onUpdate, onDelete, onAdd, searchTerm, filterCorretor }: Props) {
+  const filtered = entries.filter(e => {
+    if (searchTerm && !e.nome.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (filterCorretor && e.corretor !== filterCorretor) return false;
+    return true;
+  });
+
+  const visitas = filtered.filter(e => e.situacao === "visita");
+  const gerados = filtered.filter(e => e.situacao === "gerado");
+  const assinados = filtered.filter(e => e.situacao === "assinado");
+
+  return (
+    <div className="space-y-6">
+      <VisitaSection rows={visitas} readOnly={readOnly} selectedIds={selectedIds} onToggleSelect={onToggleSelect} onUpdate={onUpdate} onDelete={onDelete} onAdd={() => onAdd("visita")} />
+      <GeradoSection rows={gerados} readOnly={readOnly} selectedIds={selectedIds} onToggleSelect={onToggleSelect} onUpdate={onUpdate} onDelete={onDelete} onAdd={() => onAdd("gerado")} />
+      <AssinadoSection rows={assinados} readOnly={readOnly} selectedIds={selectedIds} onToggleSelect={onToggleSelect} onUpdate={onUpdate} onDelete={onDelete} onAdd={() => onAdd("assinado")} />
     </div>
   );
 }

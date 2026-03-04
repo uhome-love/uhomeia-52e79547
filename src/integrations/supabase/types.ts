@@ -521,12 +521,16 @@ export type Database = {
           nome: string
           observacoes: string | null
           proxima_acao: string | null
+          quando_assina: string | null
+          situacao: string
+          status_pagamento: string | null
           temperatura: string
           tipo_visita: string | null
           ultimo_contato: string | null
           und: string | null
           updated_at: string
           valor_potencial: number | null
+          vgv: number | null
         }
         Insert: {
           corretor?: string | null
@@ -542,12 +546,16 @@ export type Database = {
           nome: string
           observacoes?: string | null
           proxima_acao?: string | null
+          quando_assina?: string | null
+          situacao?: string
+          status_pagamento?: string | null
           temperatura?: string
           tipo_visita?: string | null
           ultimo_contato?: string | null
           und?: string | null
           updated_at?: string
           valor_potencial?: number | null
+          vgv?: number | null
         }
         Update: {
           corretor?: string | null
@@ -563,12 +571,16 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           proxima_acao?: string | null
+          quando_assina?: string | null
+          situacao?: string
+          status_pagamento?: string | null
           temperatura?: string
           tipo_visita?: string | null
           ultimo_contato?: string | null
           und?: string | null
           updated_at?: string
           valor_potencial?: number | null
+          vgv?: number | null
         }
         Relationships: []
       }

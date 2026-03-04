@@ -5,6 +5,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
+export type PdnSituacao = "visita" | "gerado" | "assinado";
+
 export interface PdnEntry {
   id: string;
   gerente_id: string;
@@ -23,6 +25,10 @@ export interface PdnEntry {
   data_proxima_acao: string | null;
   valor_potencial: number | null;
   observacoes: string;
+  situacao: PdnSituacao;
+  vgv: number | null;
+  quando_assina: string | null;
+  status_pagamento: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -59,6 +65,7 @@ export function usePdn(selectedMes?: string, filterGerenteId?: string) {
 
   const addEntry = useCallback(async (partial?: Partial<PdnEntry>) => {
     if (!user) return;
+    const situacao = partial?.situacao || "visita";
     const { error } = await supabase.from("pdn_entries").insert({
       gerente_id: user.id,
       mes: currentMes,
@@ -74,6 +81,10 @@ export function usePdn(selectedMes?: string, filterGerenteId?: string) {
       tipo_visita: "1a_visita",
       proxima_acao: "",
       observacoes: "",
+      situacao,
+      vgv: null,
+      quando_assina: null,
+      status_pagamento: null,
       ...partial,
     } as any);
     if (error) { toast.error("Erro ao adicionar linha"); console.error(error); }
@@ -114,6 +125,10 @@ export function usePdn(selectedMes?: string, filterGerenteId?: string) {
       proxima_acao: e.proxima_acao,
       observacoes: e.observacoes,
       valor_potencial: e.valor_potencial,
+      situacao: e.situacao,
+      vgv: e.vgv,
+      quando_assina: e.quando_assina,
+      status_pagamento: e.status_pagamento,
     }));
     const { error } = await supabase.from("pdn_entries").insert(inserts as any);
     if (error) toast.error("Erro ao copiar linhas");
@@ -121,14 +136,23 @@ export function usePdn(selectedMes?: string, filterGerenteId?: string) {
   }, [user, entries, load]);
 
   // Stats
+  const visitas = entries.filter(e => e.situacao === "visita");
+  const gerados = entries.filter(e => e.situacao === "gerado");
+  const assinados = entries.filter(e => e.situacao === "assinado");
+
   const stats = {
     total: entries.length,
-    quente: entries.filter(e => e.temperatura === "quente").length,
-    morno: entries.filter(e => e.temperatura === "morno").length,
-    frio: entries.filter(e => e.temperatura === "frio").length,
-    doc_completa: entries.filter(e => e.docs_status === "doc_completa").length,
-    em_andamento: entries.filter(e => e.docs_status === "em_andamento").length,
-    sem_docs: entries.filter(e => e.docs_status === "sem_docs").length,
+    quente: visitas.filter(e => e.temperatura === "quente").length,
+    morno: visitas.filter(e => e.temperatura === "morno").length,
+    frio: visitas.filter(e => e.temperatura === "frio").length,
+    doc_completa: visitas.filter(e => e.docs_status === "doc_completa").length,
+    em_andamento: visitas.filter(e => e.docs_status === "em_andamento").length,
+    sem_docs: visitas.filter(e => e.docs_status === "sem_docs").length,
+    total_visitas: visitas.length,
+    total_gerados: gerados.length,
+    total_assinados: assinados.length,
+    vgv_gerado: gerados.reduce((s, e) => s + (e.vgv || 0), 0),
+    vgv_assinado: assinados.reduce((s, e) => s + (e.vgv || 0), 0),
   };
 
   return { entries, loading, stats, addEntry, updateEntry, deleteEntry, copyToCurrentMonth, reload: load, currentMes };
