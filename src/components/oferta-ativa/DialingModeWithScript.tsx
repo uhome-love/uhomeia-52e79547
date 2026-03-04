@@ -3,51 +3,14 @@ import { useOAFila, useOARegistrarTentativa, useOATemplates, type OALista, type 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Flame, Target } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useCorretorDailyStats, useCorretorDailyGoals } from "@/hooks/useCorretorDailyStats";
+import { useQueryClient } from "@tanstack/react-query";
 import AttemptModal from "./AttemptModal";
 import ScriptPanel from "./ScriptPanel";
 import AttemptHistory from "./AttemptHistory";
-
-function useDailyProgress() {
-  const { user } = useAuth();
-  const [ligacoes, setLigacoes] = useState(0);
-  const [aproveitados, setAproveitados] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  const load = async () => {
-    if (!user) return;
-    const today = new Date().toISOString().split("T")[0];
-    const startOfDay = `${today}T00:00:00.000Z`;
-    const endOfDay = `${today}T23:59:59.999Z`;
-
-    const [tentRes, aprovRes] = await Promise.all([
-      supabase
-        .from("oferta_ativa_tentativas")
-        .select("id", { count: "exact", head: true })
-        .eq("corretor_id", user.id)
-        .gte("created_at", startOfDay)
-        .lte("created_at", endOfDay),
-      supabase
-        .from("oferta_ativa_tentativas")
-        .select("id", { count: "exact", head: true })
-        .eq("corretor_id", user.id)
-        .eq("resultado", "aproveitado")
-        .gte("created_at", startOfDay)
-        .lte("created_at", endOfDay),
-    ]);
-
-    setLigacoes(tentRes.count || 0);
-    setAproveitados(aprovRes.count || 0);
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, [user]);
-
-  return { ligacoes, aproveitados, loading, reload: load };
-}
 
 interface Props {
   lista: OALista;
@@ -58,10 +21,17 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const { fila, isLoading, lockLead, unlockLead, refetch } = useOAFila(lista.id);
   const { registrar } = useOARegistrarTentativa();
   const { templates } = useOATemplates(lista.empreendimento);
-  const dailyProgress = useDailyProgress();
+  const { stats } = useCorretorDailyStats();
+  const { goals } = useCorretorDailyGoals();
+  const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [actionTaken, setActionTaken] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+
+  const metaLigacoes = goals?.meta_ligacoes || 30;
+  const metaAproveitados = goals?.meta_aproveitados || 5;
+  const progLig = Math.min(100, Math.round((stats.tentativas / metaLigacoes) * 100));
+  const progAprov = Math.min(100, Math.round((stats.aproveitados / metaAproveitados) * 100));
 
   const lead = fila[currentIndex];
 
@@ -113,7 +83,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     await registrar(lead, actionTaken, resultado, feedback, lista);
     setShowModal(false);
     setActionTaken(null);
-    dailyProgress.reload();
+    queryClient.invalidateQueries({ queryKey: ["corretor-daily-stats"] });
 
     if (currentIndex < fila.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -142,22 +112,27 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* Daily Progress Mini-Summary */}
-      <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card shadow-card">
-        <div className="flex items-center gap-1.5 text-sm">
-          <Flame className="h-4 w-4 text-primary" />
-          <span className="font-semibold text-foreground">{dailyProgress.ligacoes}</span>
-          <span className="text-muted-foreground text-xs">ligações hoje</span>
+      {/* Daily Progress Mini-Summary with Goals */}
+      <div className="p-3 rounded-xl border border-border bg-card shadow-card space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-sm">
+            <Flame className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-foreground">{stats.tentativas}</span>
+            <span className="text-muted-foreground text-xs">/ {metaLigacoes} ligações</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm">
+            <Target className="h-4 w-4 text-success" />
+            <span className="font-semibold text-foreground">{stats.aproveitados}</span>
+            <span className="text-muted-foreground text-xs">/ {metaAproveitados} aproveitados</span>
+          </div>
+          {stats.tentativas >= metaLigacoes && (
+            <Badge variant="secondary" className="text-[10px] gap-1">🔥 Missão cumprida!</Badge>
+          )}
         </div>
-        <div className="w-px h-5 bg-border" />
-        <div className="flex items-center gap-1.5 text-sm">
-          <Target className="h-4 w-4 text-success" />
-          <span className="font-semibold text-foreground">{dailyProgress.aproveitados}</span>
-          <span className="text-muted-foreground text-xs">aproveitados</span>
+        <div className="grid grid-cols-2 gap-3">
+          <Progress value={progLig} className="h-1.5" />
+          <Progress value={progAprov} className="h-1.5" />
         </div>
-        {dailyProgress.ligacoes >= 30 && (
-          <Badge variant="secondary" className="ml-auto text-[10px] gap-1">🔥 Missão cumprida!</Badge>
-        )}
       </div>
 
       {/* Progress */}
