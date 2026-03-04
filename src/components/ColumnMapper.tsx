@@ -8,7 +8,7 @@ const REQUIRED_FIELDS = [
   { key: "nome", label: "Nome" },
   { key: "email", label: "E-mail" },
   { key: "telefone", label: "Telefone" },
-  { key: "interesse", label: "Imóvel / Interesse" },
+  { key: "interesse", label: "Imóvel de Interesse" },
   { key: "origem", label: "Origem do Lead" },
   { key: "ultimoContato", label: "Último Contato" },
   { key: "status", label: "Status" },
