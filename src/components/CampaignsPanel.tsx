@@ -1,12 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Megaphone, ExternalLink, Users, Clock, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Megaphone, ExternalLink, Users, Clock, ChevronDown, ChevronUp, Check, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import type { Lead } from "@/types/lead";
 import { getDaysSinceContact } from "@/lib/leadUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CampaignsPanelProps {
   leads: Lead[];
@@ -31,7 +32,7 @@ export default function CampaignsPanel({ leads, onGenerateMessages, generatingBu
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
-
+  const [sending360, setSending360] = useState(false);
   const campaignLeads = useMemo(() => {
     const result: Record<string, Lead[]> = {};
     CAMPAIGNS.forEach((c) => {
@@ -83,6 +84,26 @@ export default function CampaignsPanel({ leads, onGenerateMessages, generatingBu
     };
     openNext();
   };
+
+  const handleBulk360 = useCallback(async () => {
+    const toSend = leadsComMensagem.filter((l) => selectedLeadIds.has(l.id));
+    if (toSend.length === 0) { toast.error("Selecione leads com mensagem gerada."); return; }
+    setSending360(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-360dialog", {
+        body: {
+          action: "send_bulk",
+          leads: toSend.map((l) => ({ id: l.id, phone: l.telefone, message: l.mensagemGerada })),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      toSend.forEach((l) => setSentIds((prev) => new Set(prev).add(l.id)));
+      toast.success(`${data.sent} mensagens enviadas via 360dialog! ${data.failed > 0 ? `(${data.failed} falharam)` : ""}`);
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao enviar via 360dialog.");
+    } finally { setSending360(false); }
+  }, [leadsComMensagem, selectedLeadIds]);
 
   const handleGenerateForCampaign = () => {
     const withoutMessage = currentLeads.filter((l) => !l.mensagemGerada).map((l) => l.id);
@@ -144,12 +165,16 @@ export default function CampaignsPanel({ leads, onGenerateMessages, generatingBu
                     <p className="text-sm text-foreground font-medium">
                       {currentLeads.length} leads na campanha • {leadsComMensagem.length} com mensagem pronta
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button size="sm" variant="outline" onClick={handleGenerateForCampaign} disabled={generatingBulk} className="gap-1.5 text-xs">
                         {generatingBulk ? "Gerando..." : "Gerar Mensagens IA"}
                       </Button>
-                      <Button size="sm" onClick={handleBulkWhatsApp} disabled={selectedLeadIds.size === 0} className="gap-1.5 text-xs">
-                        <ExternalLink className="h-3 w-3" /> Enviar WhatsApp ({selectedLeadIds.size})
+                      <Button size="sm" className="gap-1.5 text-xs bg-success hover:bg-success/90 text-success-foreground" onClick={handleBulk360} disabled={selectedLeadIds.size === 0 || sending360}>
+                        {sending360 ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                        {sending360 ? "Enviando..." : `360dialog (${selectedLeadIds.size})`}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={handleBulkWhatsApp} disabled={selectedLeadIds.size === 0} className="gap-1.5 text-xs">
+                        <ExternalLink className="h-3 w-3" /> wa.me ({selectedLeadIds.size})
                       </Button>
                     </div>
                   </div>
