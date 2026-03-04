@@ -81,12 +81,12 @@ export default function CampaignManager() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-foreground truncate">{lista.empreendimento}</h4>
+                    <h4 className="font-semibold text-foreground truncate">{lista.nome}</h4>
                     <Badge variant="outline" className={`text-[10px] h-5 gap-1 ${st.color}`}>
                       {st.icon} {st.label}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">{lista.nome}</p>
+                  <p className="text-xs text-muted-foreground">Empreendimento: {lista.empreendimento}</p>
                   {lista.campanha && <p className="text-xs text-muted-foreground">Campanha: {lista.campanha}</p>}
                   <div className="mt-2">
                     <ListaStats listaId={lista.id} />
