@@ -47,32 +47,40 @@ export default function CeoMetasMensais() {
     const cpIds = (cps || []).map(c => c.id);
     const cpGerenteMap = new Map((cps || []).map(c => [c.id, c.gerente_id]));
 
-    let realByGerente = new Map<string, { vgv: number; vmarc: number; vreal: number }>();
+    // Visitas from checkpoint
+    let visitasByGerente = new Map<string, { vmarc: number; vreal: number }>();
     if (cpIds.length > 0) {
-      const { data: lines } = await supabase.from("checkpoint_lines").select("checkpoint_id, real_vgv_assinado, real_visitas_marcadas, real_visitas_realizadas").in("checkpoint_id", cpIds);
+      const { data: lines } = await supabase.from("checkpoint_lines").select("checkpoint_id, real_visitas_marcadas, real_visitas_realizadas").in("checkpoint_id", cpIds);
       for (const l of (lines || [])) {
         const gId = cpGerenteMap.get(l.checkpoint_id);
         if (!gId) continue;
-        const curr = realByGerente.get(gId) || { vgv: 0, vmarc: 0, vreal: 0 };
-        curr.vgv += Number(l.real_vgv_assinado ?? 0);
+        const curr = visitasByGerente.get(gId) || { vmarc: 0, vreal: 0 };
         curr.vmarc += (l.real_visitas_marcadas ?? 0);
         curr.vreal += (l.real_visitas_realizadas ?? 0);
-        realByGerente.set(gId, curr);
+        visitasByGerente.set(gId, curr);
       }
+    }
+
+    // VGV from PDN (source of truth)
+    const { data: pdns } = await supabase.from("pdn_entries").select("gerente_id, vgv, situacao").eq("mes", mes).eq("situacao", "assinado").in("gerente_id", gerenteIds);
+    const vgvByGerente = new Map<string, number>();
+    for (const p of (pdns || [])) {
+      vgvByGerente.set(p.gerente_id, (vgvByGerente.get(p.gerente_id) || 0) + Number(p.vgv || 0));
     }
 
     const result: GerenteMeta[] = gerenteIds.map(gId => {
       const meta = metaMap.get(gId);
-      const real = realByGerente.get(gId) || { vgv: 0, vmarc: 0, vreal: 0 };
+      const visitas = visitasByGerente.get(gId) || { vmarc: 0, vreal: 0 };
+      const realVgv = vgvByGerente.get(gId) || 0;
       return {
         gerente_id: gId,
         gerente_nome: profileMap.get(gId) || "Gerente",
         meta_vgv_assinado: Number(meta?.meta_vgv_assinado ?? 0),
         meta_visitas_marcadas: Number(meta?.meta_visitas_marcadas ?? 0),
         meta_visitas_realizadas: Number(meta?.meta_visitas_realizadas ?? 0),
-        real_vgv_assinado: real.vgv,
-        real_visitas_marcadas: real.vmarc,
-        real_visitas_realizadas: real.vreal,
+        real_vgv_assinado: realVgv,
+        real_visitas_marcadas: visitas.vmarc,
+        real_visitas_realizadas: visitas.vreal,
       };
     });
 
