@@ -10,6 +10,8 @@ import StatsCards from "@/components/StatsCards";
 import ReactivationPanel from "@/components/ReactivationPanel";
 import { getDaysSinceContact } from "@/components/ReactivationPanel";
 import BulkWhatsAppDialog from "@/components/BulkWhatsAppDialog";
+import TasksPanel from "@/components/TasksPanel";
+import { generateTasksForLeads, type LeadTask } from "@/lib/taskGenerator";
 import type { Lead, LeadCSVRow } from "@/types/lead";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +28,7 @@ export default function Index() {
   const [classifyingAll, setClassifyingAll] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [reactivationFilter, setReactivationFilter] = useState<number | null>(null);
+  const [tasks, setTasks] = useState<LeadTask[]>([]);
 
   const handleDataParsed = useCallback((data: LeadCSVRow[], headers: string[]) => {
     setCsvData(data);
@@ -159,13 +162,13 @@ export default function Index() {
         id: string;
         priority: "alta" | "media" | "baixa" | "frio" | "perdido";
       }>;
-      setLeads((prev) =>
-        prev.map((l) => {
-          const c = classifications.find((cl) => cl.id === l.id);
-          return c ? { ...l, prioridade: c.priority } : l;
-        })
-      );
-      toast.success("Leads classificados com sucesso!");
+      const updatedLeads = leads.map((l) => {
+        const c = classifications.find((cl) => cl.id === l.id);
+        return c ? { ...l, prioridade: c.priority } : l;
+      });
+      setLeads(updatedLeads);
+      setTasks(generateTasksForLeads(updatedLeads));
+      toast.success("Leads classificados e tarefas geradas!");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao classificar leads.");
@@ -187,6 +190,12 @@ export default function Index() {
       return true;
     });
   }, [leads, reactivationFilter]);
+
+  const handleTaskStatusChange = useCallback((taskId: string, status: LeadTask["status"]) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status } : t))
+    );
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -277,6 +286,10 @@ export default function Index() {
               leads={leads}
               onFilterByDays={(days) => setReactivationFilter(days || null)}
               activeFilter={reactivationFilter}
+            />
+            <TasksPanel
+              tasks={tasks}
+              onTaskStatusChange={handleTaskStatusChange}
             />
             <LeadTable
               leads={filteredLeads}
