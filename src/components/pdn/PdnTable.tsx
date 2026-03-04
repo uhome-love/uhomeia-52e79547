@@ -68,7 +68,52 @@ function TextCell({ value, field, id, onUpdate, placeholder }: {
 
 function formatBRL(v: number | null) {
   if (!v) return "";
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
+
+function formatNumber(v: number | null) {
+  if (v == null) return "";
+  return v.toLocaleString("pt-BR");
+}
+
+function parseFormattedNumber(s: string): number | null {
+  if (!s.trim()) return null;
+  // Remove dots (thousand sep) and replace comma with dot (decimal sep)
+  const cleaned = s.replace(/\./g, "").replace(",", ".");
+  const n = Number(cleaned);
+  return isNaN(n) ? null : n;
+}
+
+function CurrencyCell({ value, field, id, onUpdate }: {
+  value: number | null; field: string; id: string;
+  onUpdate: (id: string, u: Record<string, any>) => void;
+}) {
+  const [local, setLocal] = useState(formatNumber(value));
+  useEffect(() => { setLocal(formatNumber(value)); }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow only digits, dots and commas
+    const raw = e.target.value.replace(/[^\d.,]/g, "");
+    setLocal(raw);
+  };
+
+  const handleBlur = () => {
+    const parsed = parseFormattedNumber(local);
+    if (parsed !== value) {
+      onUpdate(id, { [field]: parsed });
+    }
+    setLocal(formatNumber(parsed));
+  };
+
+  return (
+    <Input
+      className="h-7 text-xs border-0 bg-transparent px-1 text-right focus-visible:ring-1 focus-visible:bg-background"
+      value={local}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder="0"
+    />
+  );
 }
 
 const thClass = "px-2 py-1.5 text-left font-semibold border-r border-border text-xs";
@@ -224,7 +269,7 @@ function GeradoSection({ rows, readOnly, selectedIds, onToggleSelect, onUpdate, 
               <td className={tdClass}>{readOnly ? <span className="px-1">{e.empreendimento}</span> : <Cell value={e.empreendimento || ""} field="empreendimento" id={e.id} onUpdate={onUpdate} placeholder="Empreend." />}</td>
               <td className={`${tdClass} text-right`}>
                 {readOnly ? <span className="px-1">{formatBRL(e.vgv)}</span> : (
-                  <Input type="number" className="h-7 text-xs border-0 bg-transparent px-1 text-right focus-visible:ring-1" value={e.vgv ?? ""} onChange={ev => onUpdate(e.id, { vgv: ev.target.value ? Number(ev.target.value) : null })} placeholder="0" />
+                  <CurrencyCell value={e.vgv} field="vgv" id={e.id} onUpdate={onUpdate} />
                 )}
               </td>
               <td className={`${tdClass} text-center`}>
@@ -316,7 +361,7 @@ function AssinadoSection({ rows, readOnly, selectedIds, onToggleSelect, onUpdate
               <td className={tdClass}>{readOnly ? <span className="px-1">{e.empreendimento}</span> : <Cell value={e.empreendimento || ""} field="empreendimento" id={e.id} onUpdate={onUpdate} placeholder="Produto" />}</td>
               <td className={`${tdClass} text-right`}>
                 {readOnly ? <span className="px-1">{formatBRL(e.vgv)}</span> : (
-                  <Input type="number" className="h-7 text-xs border-0 bg-transparent px-1 text-right focus-visible:ring-1" value={e.vgv ?? ""} onChange={ev => onUpdate(e.id, { vgv: ev.target.value ? Number(ev.target.value) : null })} placeholder="0" />
+                  <CurrencyCell value={e.vgv} field="vgv" id={e.id} onUpdate={onUpdate} />
                 )}
               </td>
               <td className={`${tdClass} text-center`}>
