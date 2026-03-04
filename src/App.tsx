@@ -9,8 +9,10 @@ import RoleProtectedRoute from "@/components/RoleProtectedRoute";
 import AppLayout from "@/components/AppLayout";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
+
+// Lazy load all pages including Auth and NotFound
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lazy load all pages
 const HomeDashboard = lazy(() => import("./pages/HomeDashboard"));
@@ -67,8 +69,7 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/auth" element={<Auth />} />
-
+            <Route path="/auth" element={<Suspense fallback={<PageLoader />}><Auth /></Suspense>} />
             {/* Acessível a todos os autenticados */}
             <Route path="/" element={<ProtectedPage><HomeDashboard /></ProtectedPage>} />
 
@@ -92,7 +93,7 @@ const App = () => (
             <Route path="/auditoria" element={<ProtectedPage roles={["admin"]}><AuditDashboard /></ProtectedPage>} />
             <Route path="/admin" element={<ProtectedPage roles={["admin"]}><AdminPanel /></ProtectedPage>} />
 
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
