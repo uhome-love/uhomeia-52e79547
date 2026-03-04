@@ -7,6 +7,7 @@ import CheckpointReports from "@/components/checkpoint/CheckpointReports";
 import CoachPanel from "@/components/checkpoint/CoachPanel";
 import ManagerChecklist from "@/components/checkpoint/ManagerChecklist";
 import JetimobPaste from "@/components/checkpoint/JetimobPaste";
+import MetasMensaisProgress from "@/components/checkpoint/MetasMensaisProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -107,6 +108,8 @@ export default function CheckpointGerente() {
           <p className="text-sm font-medium text-success">✅ Todos os corretores foram preenchidos hoje!</p>
         </div>
       )}
+
+      <MetasMensaisProgress />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-6 h-auto">
