@@ -1,0 +1,51 @@
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart3, Trophy, FileText, Bot, AlertTriangle } from "lucide-react";
+import CeoOverview from "@/components/ceo/CeoOverview";
+import CeoRankings from "@/components/ceo/CeoRankings";
+import CeoReports from "@/components/ceo/CeoReports";
+import CeoAdvisor from "@/components/ceo/CeoAdvisor";
+import CeoAlerts from "@/components/ceo/CeoAlerts";
+
+export default function CeoDashboard() {
+  const [activeTab, setActiveTab] = useState("overview");
+
+  return (
+    <div className="p-6 space-y-4">
+      <div>
+        <h1 className="font-display text-2xl font-bold text-foreground">
+          Dashboard <span className="text-primary">CEO</span>
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Visão macro consolidada de todos os gerentes e corretores
+        </p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-5 h-auto">
+          <TabsTrigger value="overview" className="gap-1.5 text-xs py-2">
+            <BarChart3 className="h-3.5 w-3.5" /> Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="rankings" className="gap-1.5 text-xs py-2">
+            <Trophy className="h-3.5 w-3.5" /> Rankings
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="gap-1.5 text-xs py-2">
+            <FileText className="h-3.5 w-3.5" /> Relatórios
+          </TabsTrigger>
+          <TabsTrigger value="advisor" className="gap-1.5 text-xs py-2">
+            <Bot className="h-3.5 w-3.5" /> CEO Advisor
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="gap-1.5 text-xs py-2">
+            <AlertTriangle className="h-3.5 w-3.5" /> Alertas
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-4"><CeoOverview /></TabsContent>
+        <TabsContent value="rankings" className="mt-4"><CeoRankings /></TabsContent>
+        <TabsContent value="reports" className="mt-4"><CeoReports /></TabsContent>
+        <TabsContent value="advisor" className="mt-4"><CeoAdvisor /></TabsContent>
+        <TabsContent value="alerts" className="mt-4"><CeoAlerts /></TabsContent>
+      </Tabs>
+    </div>
+  );
+}

@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.create-broker-user]
 verify_jwt = false
+
+[functions.ceo-advisor]
+verify_jwt = false
