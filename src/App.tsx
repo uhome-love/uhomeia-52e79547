@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/AppLayout";
+import HomeDashboard from "./pages/HomeDashboard";
 import GestorDashboard from "./pages/GestorDashboard";
 import CorretorDashboard from "./pages/CorretorDashboard";
 import AdminPanel from "./pages/AdminPanel";
@@ -30,7 +31,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <Navigate to="/corretor" replace />
+                    <HomeDashboard />
                   </AppLayout>
                 </ProtectedRoute>
               }
