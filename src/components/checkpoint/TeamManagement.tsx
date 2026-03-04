@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Plus, Trash2, UserPlus, Link2, Unlink, Check, Users, Filter } from "lucide-react";
+import { Trash2, Link2, Unlink, Check, Users, Filter, Info, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,11 +33,11 @@ export default function TeamManagement() {
   const { user } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newName, setNewName] = useState("");
-  const [newEquipe, setNewEquipe] = useState("");
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
   const [linkingMemberId, setLinkingMemberId] = useState<string | null>(null);
   const [filterEquipe, setFilterEquipe] = useState<string>("all");
+  const [editingEquipe, setEditingEquipe] = useState<string | null>(null);
+  const [equipeValue, setEquipeValue] = useState("");
 
   const loadTeam = useCallback(async () => {
     if (!user) return;
@@ -51,7 +51,6 @@ export default function TeamManagement() {
   }, [user]);
 
   const loadSystemUsers = useCallback(async () => {
-    // Load all corretor profiles to allow linking
     const { data: roles } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -71,26 +70,6 @@ export default function TeamManagement() {
     loadSystemUsers();
   }, [loadTeam, loadSystemUsers]);
 
-  const addMember = async () => {
-    if (!user || !newName.trim()) {
-      toast.error("Informe o nome.");
-      return;
-    }
-    const { error } = await supabase.from("team_members").insert({
-      gerente_id: user.id,
-      nome: newName.trim(),
-      equipe: newEquipe.trim() || null,
-    });
-    if (error) {
-      toast.error("Erro ao adicionar.");
-      return;
-    }
-    setNewName("");
-    setNewEquipe("");
-    loadTeam();
-    toast.success("Corretor adicionado!");
-  };
-
   const toggleStatus = async (m: TeamMember) => {
     const next = m.status === "ativo" ? "inativo" : "ativo";
     await supabase.from("team_members").update({ status: next }).eq("id", m.id);
@@ -99,14 +78,20 @@ export default function TeamManagement() {
   };
 
   const removeMember = async (m: TeamMember) => {
-    if (!confirm(`Remover ${m.nome} do time?`)) return;
+    if (!confirm(`Remover ${m.nome} do time? Isso não exclui o usuário do sistema.`)) return;
     await supabase.from("team_members").delete().eq("id", m.id);
     loadTeam();
-    toast.success("Corretor removido.");
+    toast.success("Corretor removido do time.");
   };
 
   const linkUser = async (memberId: string, userId: string) => {
     const profile = systemUsers.find((u) => u.user_id === userId);
+    // Check if this user is already linked to another team_member of this manager
+    const alreadyLinked = members.find((m) => m.user_id === userId && m.id !== memberId);
+    if (alreadyLinked) {
+      toast.error(`Este usuário já está vinculado a "${alreadyLinked.nome}".`);
+      return;
+    }
     const { error } = await supabase
       .from("team_members")
       .update({ user_id: userId })
@@ -129,18 +114,67 @@ export default function TeamManagement() {
     toast.success(`${m.nome} desvinculado do sistema.`);
   };
 
-  // Users already linked to this manager's team
-  const linkedUserIds = members
-    .filter((m) => m.user_id)
-    .map((m) => m.user_id!);
-  const availableUsers = systemUsers.filter(
-    (u) => !linkedUserIds.includes(u.user_id)
-  );
+  const updateEquipe = async (memberId: string, equipe: string) => {
+    await supabase
+      .from("team_members")
+      .update({ equipe: equipe.trim() || null })
+      .eq("id", memberId);
+    setEditingEquipe(null);
+    setEquipeValue("");
+    loadTeam();
+    toast.success("Equipe atualizada!");
+  };
+
+  // Detect unlinked system corretores that could be added to this team
+  const linkedUserIds = members.filter((m) => m.user_id).map((m) => m.user_id!);
+  const availableUsers = systemUsers.filter((u) => !linkedUserIds.includes(u.user_id));
+
+  // Auto-add: find corretores created in Admin for this manager but not yet in team_members
+  const syncFromAdmin = async () => {
+    if (!user) return;
+    // Find corretores that have user accounts but are not in this manager's team
+    const unlinkedCorretores = availableUsers.filter(
+      (u) => !members.some((m) => m.user_id === u.user_id)
+    );
+
+    if (unlinkedCorretores.length === 0) {
+      toast.info("Todos os corretores do sistema já estão no seu time.");
+      return;
+    }
+
+    let added = 0;
+    for (const corretor of unlinkedCorretores) {
+      // Check if there's a matching name already (manual entry without link)
+      const existingByName = members.find(
+        (m) => !m.user_id && m.nome.trim().toLowerCase() === corretor.nome.trim().toLowerCase()
+      );
+
+      if (existingByName) {
+        // Link existing manual entry
+        await supabase
+          .from("team_members")
+          .update({ user_id: corretor.user_id, status: "ativo" })
+          .eq("id", existingByName.id);
+      } else {
+        // Create new team_member entry linked to the corretor
+        await supabase.from("team_members").insert({
+          gerente_id: user.id,
+          nome: corretor.nome || corretor.email || "Corretor",
+          status: "ativo",
+          user_id: corretor.user_id,
+        });
+      }
+      added++;
+    }
+
+    loadTeam();
+    toast.success(`${added} corretor(es) sincronizado(s) ao seu time!`);
+  };
 
   // Equipe filter & stats
   const equipes = Array.from(new Set(members.map((m) => m.equipe).filter(Boolean))) as string[];
-  const filteredMembers = filterEquipe === "all" 
-    ? members 
+  const filteredMembers = filterEquipe === "all"
+    ? members
     : filterEquipe === "sem_equipe"
     ? members.filter((m) => !m.equipe)
     : members.filter((m) => m.equipe === filterEquipe);
@@ -164,42 +198,35 @@ export default function TeamManagement() {
     });
   }
 
+  const unlinkedCount = availableUsers.filter(
+    (u) => !members.some((m) => m.user_id === u.user_id)
+  ).length;
+
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-border bg-card p-6 shadow-card">
-        <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
-          <UserPlus className="h-5 w-5 text-primary" /> Adicionar Corretor
-        </h3>
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="text-xs text-muted-foreground mb-1 block">
-              Nome
-            </label>
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Nome do corretor"
-            />
-          </div>
-          <div className="w-40">
-            <label className="text-xs text-muted-foreground mb-1 block">
-              Equipe (opcional)
-            </label>
-            <Input
-              value={newEquipe}
-              onChange={(e) => setNewEquipe(e.target.value)}
-              placeholder="Ex: Equipe A"
-            />
-          </div>
-          <Button onClick={addMember} className="gap-1.5">
-            <Plus className="h-4 w-4" /> Adicionar
-          </Button>
+      {/* Info banner - no more manual creation */}
+      <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5">
+        <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-foreground">
+            Os corretores são cadastrados pelo administrador no <span className="text-primary">Painel Admin</span>.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Ao criar um corretor no Admin vinculado a você como gerente, ele aparece automaticamente aqui. 
+            Use esta tela para gerenciar equipes, ativar/desativar e vincular usuários.
+          </p>
+          {unlinkedCount > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-3 gap-1.5 text-xs"
+              onClick={syncFromAdmin}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Sincronizar {unlinkedCount} corretor(es) do sistema
+            </Button>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground mt-3">
-          💡 Ao criar um usuário corretor no painel Admin vinculado a você, o
-          sistema vincula automaticamente por nome. Você também pode vincular
-          manualmente abaixo.
-        </p>
       </div>
 
       {/* Equipe Stats */}
@@ -263,8 +290,8 @@ export default function TeamManagement() {
           </div>
         ) : filteredMembers.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
-            {members.length === 0 
-              ? "Nenhum corretor cadastrado. Adicione acima."
+            {members.length === 0
+              ? "Nenhum corretor no time. Peça ao administrador para cadastrar corretores vinculados a você."
               : "Nenhum corretor nesta equipe."}
           </div>
         ) : (
@@ -283,14 +310,14 @@ export default function TeamManagement() {
                     className="flex items-center gap-4 p-4 hover:bg-muted/20 transition-colors"
                   >
                     <div
-                      className={`h-2.5 w-2.5 rounded-full ${
+                      className={`h-2.5 w-2.5 rounded-full shrink-0 ${
                         m.status === "ativo"
                           ? "bg-success"
                           : "bg-muted-foreground/30"
                       }`}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-foreground">{m.nome}</p>
                         {m.user_id ? (
                           <Badge
@@ -304,30 +331,47 @@ export default function TeamManagement() {
                             variant="outline"
                             className="text-[10px] h-5 text-muted-foreground"
                           >
-                            Manual
+                            Não vinculado
                           </Badge>
                         )}
-                        {m.equipe && (
-                          <Badge variant="secondary" className="text-[10px] h-5">
-                            {m.equipe}
+                        {editingEquipe === m.id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              value={equipeValue}
+                              onChange={(e) => setEquipeValue(e.target.value)}
+                              placeholder="Equipe"
+                              className="h-6 w-28 text-xs"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") updateEquipe(m.id, equipeValue);
+                                if (e.key === "Escape") { setEditingEquipe(null); setEquipeValue(""); }
+                              }}
+                              autoFocus
+                            />
+                            <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => updateEquipe(m.id, equipeValue)}>
+                              OK
+                            </Button>
+                          </div>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] h-5 cursor-pointer hover:bg-secondary/80"
+                            onClick={() => { setEditingEquipe(m.id); setEquipeValue(m.equipe || ""); }}
+                          >
+                            {m.equipe || "Definir equipe"}
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {linkedProfile?.email && (
-                          <p className="text-xs text-muted-foreground">
-                            • {linkedProfile.email}
-                          </p>
-                        )}
-                      </div>
+                      {linkedProfile?.email && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          • {linkedProfile.email}
+                        </p>
+                      )}
                     </div>
 
                     {/* Link/Unlink controls */}
                     {linkingMemberId === m.id ? (
                       <div className="flex items-center gap-2">
-                        <Select
-                          onValueChange={(val) => linkUser(m.id, val)}
-                        >
+                        <Select onValueChange={(val) => linkUser(m.id, val)}>
                           <SelectTrigger className="w-48 h-8 text-xs">
                             <SelectValue placeholder="Selecione o usuário" />
                           </SelectTrigger>
@@ -338,10 +382,7 @@ export default function TeamManagement() {
                               </SelectItem>
                             ) : (
                               availableUsers.map((u) => (
-                                <SelectItem
-                                  key={u.user_id}
-                                  value={u.user_id}
-                                >
+                                <SelectItem key={u.user_id} value={u.user_id}>
                                   {u.nome || u.email || "Sem nome"}
                                 </SelectItem>
                               ))
@@ -379,9 +420,7 @@ export default function TeamManagement() {
 
                     <Button
                       size="sm"
-                      variant={
-                        m.status === "ativo" ? "outline" : "default"
-                      }
+                      variant={m.status === "ativo" ? "outline" : "default"}
                       onClick={() => toggleStatus(m)}
                       className="text-xs"
                     >
