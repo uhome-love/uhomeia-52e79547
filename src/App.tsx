@@ -10,6 +10,7 @@ import GestorDashboard from "./pages/GestorDashboard";
 import CorretorDashboard from "./pages/CorretorDashboard";
 import AdminPanel from "./pages/AdminPanel";
 import CheckpointGerente from "./pages/CheckpointGerente";
+import CeoDashboard from "./pages/CeoDashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -60,6 +61,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <CheckpointGerente />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ceo"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CeoDashboard />
                   </AppLayout>
                 </ProtectedRoute>
               }

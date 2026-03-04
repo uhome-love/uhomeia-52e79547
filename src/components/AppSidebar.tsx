@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   LogOut,
   User,
+  Crown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -42,7 +43,10 @@ export function AppSidebar() {
   ];
 
   const adminItems = isAdmin
-    ? [{ title: "Administração", url: "/admin", icon: Shield }]
+    ? [
+        { title: "Dashboard CEO", url: "/ceo", icon: Crown },
+        { title: "Administração", url: "/admin", icon: Shield },
+      ]
     : [];
 
   return (
