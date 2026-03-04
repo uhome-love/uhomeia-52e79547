@@ -39,7 +39,6 @@ export function AppSidebar() {
           { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
         ]
       : []),
-    { title: "Minhas Tarefas", url: "/corretor", icon: ClipboardList },
   ];
 
   const adminItems = isAdmin
