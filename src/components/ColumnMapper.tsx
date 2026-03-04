@@ -20,7 +20,7 @@ const JETIMOB_AUTO_MAP: Record<string, string[]> = {
   nome: ["fn", "first_name", "nome", "name"],
   email: ["email_1", "email", "e-mail"],
   telefone: ["phone_1", "telefone", "phone", "celular"],
-  interesse: ["imovel_referencia_codigo", "imovel", "interesse", "property"],
+  interesse: ["imovel_referencia_codigo", "imovel_referencia", "imovel", "interesse", "property", "cod_imovel", "codigo_imovel", "ref_imovel"],
   origem: ["origem", "source", "origin", "midia"],
   ultimoContato: ["event_time", "ultimo_contato", "last_contact", "data"],
   status: ["event_name", "status", "situacao"],
@@ -28,13 +28,19 @@ const JETIMOB_AUTO_MAP: Record<string, string[]> = {
 
 function autoMap(headers: string[]): Record<string, string> {
   const result: Record<string, string> = {};
-  const lowerHeaders = headers.map((h) => h.toLowerCase());
+  const normalizedHeaders = headers.map((h) => h.trim().toLowerCase().replace(/\s+/g, "_"));
 
   for (const [field, candidates] of Object.entries(JETIMOB_AUTO_MAP)) {
     for (const candidate of candidates) {
-      const idx = lowerHeaders.indexOf(candidate.toLowerCase());
+      const idx = normalizedHeaders.indexOf(candidate.toLowerCase());
       if (idx !== -1) {
         result[field] = headers[idx];
+        break;
+      }
+      // Partial match fallback
+      const partialIdx = normalizedHeaders.findIndex((h) => h.includes(candidate.toLowerCase()));
+      if (partialIdx !== -1 && !result[field]) {
+        result[field] = headers[partialIdx];
         break;
       }
     }
