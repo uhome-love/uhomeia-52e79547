@@ -41,11 +41,13 @@ export default function CheckpointReports() {
     if (!cps || cps.length === 0) { setRows([]); setDailyData([]); setLoading(false); return; }
 
     const cpIds = cps.map((c: any) => c.id);
+    const cpDateMap = new Map(cps.map((c: any) => [c.id, c.data]));
     const { data: lines } = await supabase.from("checkpoint_lines").select("*, team_members!checkpoint_lines_corretor_id_fkey(nome)").in("checkpoint_id", cpIds);
     const { data: team } = await supabase.from("team_members").select("id, nome").eq("gerente_id", user.id);
 
-    // Aggregate per corretor
+    // Aggregate per corretor — VGV uses latest value (cumulative), rest sums daily
     const aggMap = new Map<string, AggRow>();
+    const vgvLatest = new Map<string, { date: string; gerado: number; assinado: number; metaGerado: number; metaAssinado: number }>();
     for (const m of (team || [])) {
       aggMap.set(m.id, {
         corretor_nome: (m as any).nome,
@@ -66,10 +68,30 @@ export default function CheckpointReports() {
       agg.real_visitas_realizadas += l.real_visitas_realizadas ?? 0;
       agg.meta_propostas += l.meta_propostas ?? 0;
       agg.real_propostas += l.real_propostas ?? 0;
-      agg.meta_vgv_gerado += Number(l.meta_vgv_gerado ?? 0);
-      agg.real_vgv_gerado += Number(l.real_vgv_gerado ?? 0);
-      agg.meta_vgv_assinado += Number(l.meta_vgv_assinado ?? 0);
-      agg.real_vgv_assinado += Number(l.real_vgv_assinado ?? 0);
+
+      // VGV: keep latest date value (acumulado do mês)
+      const cpDate = cpDateMap.get(l.checkpoint_id) || "";
+      const prev = vgvLatest.get(l.corretor_id);
+      if (!prev || cpDate > prev.date) {
+        vgvLatest.set(l.corretor_id, {
+          date: cpDate,
+          gerado: Number(l.real_vgv_gerado ?? 0),
+          assinado: Number(l.real_vgv_assinado ?? 0),
+          metaGerado: Number(l.meta_vgv_gerado ?? 0),
+          metaAssinado: Number(l.meta_vgv_assinado ?? 0),
+        });
+      }
+    }
+
+    // Apply latest VGV values
+    for (const [corretorId, vgv] of vgvLatest) {
+      const agg = aggMap.get(corretorId);
+      if (agg) {
+        agg.real_vgv_gerado = vgv.gerado;
+        agg.real_vgv_assinado = vgv.assinado;
+        agg.meta_vgv_gerado = vgv.metaGerado;
+        agg.meta_vgv_assinado = vgv.metaAssinado;
+      }
     }
     setRows(Array.from(aggMap.values()));
 
