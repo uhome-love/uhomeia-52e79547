@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, CheckCircle, Trophy, Target, Flame, MessageCircle, Mail, ArrowRight, Lock, LogOut, Sparkles, Star, Zap, TrendingUp } from "lucide-react";
+import { Phone, CheckCircle, Trophy, Target, Flame, MessageCircle, Mail, ArrowRight, Lock, LogOut, Sparkles, Star, Zap, TrendingUp, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -395,25 +396,30 @@ export default function CorretorDashboard() {
                     </div>
                   </div>
 
-                  {/* Level Legend */}
-                  <div className="w-full mt-3 pt-3 border-t border-border space-y-1.5">
-                    <p className="text-[10px] font-semibold text-muted-foreground text-center uppercase tracking-wider">Níveis</p>
-                    {[
-                      { emoji: "🌱", label: "Iniciante", range: "0–4 pts", color: "text-emerald-500" },
-                      { emoji: "💪", label: "Ativo", range: "5–14 pts", color: "text-blue-500" },
-                      { emoji: "🔥", label: "Veterano", range: "15–29 pts", color: "text-orange-500" },
-                      { emoji: "⭐", label: "Mestre", range: "30–49 pts", color: "text-purple-500" },
-                      { emoji: "👑", label: "Lenda", range: "50+ pts", color: "text-amber-400" },
-                    ].map((lv) => (
-                      <div key={lv.label} className={`flex items-center justify-between text-[10px] ${lv.label === level.label ? "font-bold" : "opacity-60"}`}>
-                        <span className={lv.color}>{lv.emoji} {lv.label}</span>
-                        <span className="text-muted-foreground">{lv.range}</span>
-                      </div>
-                    ))}
-                    <p className="text-[9px] text-muted-foreground text-center mt-1.5 leading-tight">
-                      +3 pts por aproveitado · +1 pt por tentativa
-                    </p>
-                  </div>
+                   {/* Level Legend - Collapsible */}
+                   <Collapsible>
+                     <CollapsibleTrigger className="w-full mt-3 pt-3 border-t border-border flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                       <span className="font-semibold uppercase tracking-wider">Ver níveis</span>
+                       <ChevronDown className="h-3 w-3" />
+                     </CollapsibleTrigger>
+                     <CollapsibleContent className="space-y-1.5 mt-2">
+                       {[
+                         { emoji: "🌱", label: "Iniciante", range: "0–4 pts", color: "text-emerald-500" },
+                         { emoji: "💪", label: "Ativo", range: "5–14 pts", color: "text-blue-500" },
+                         { emoji: "🔥", label: "Veterano", range: "15–29 pts", color: "text-orange-500" },
+                         { emoji: "⭐", label: "Mestre", range: "30–49 pts", color: "text-purple-500" },
+                         { emoji: "👑", label: "Lenda", range: "50+ pts", color: "text-amber-400" },
+                       ].map((lv) => (
+                         <div key={lv.label} className={`flex items-center justify-between text-[10px] ${lv.label === level.label ? "font-bold" : "opacity-60"}`}>
+                           <span className={lv.color}>{lv.emoji} {lv.label}</span>
+                           <span className="text-muted-foreground">{lv.range}</span>
+                         </div>
+                       ))}
+                       <p className="text-[9px] text-muted-foreground text-center mt-1.5 leading-tight">
+                         +3 pts por aproveitado · +1 pt por tentativa
+                       </p>
+                     </CollapsibleContent>
+                   </Collapsible>
                 </CardContent>
               </Card>
             </motion.div>
