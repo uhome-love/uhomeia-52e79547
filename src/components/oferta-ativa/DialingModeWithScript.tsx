@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useOAFila, useOARegistrarTentativa, useOATemplates, type OALista, type OALead } from "@/hooks/useOfertaAtiva";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Flame, Target, Lock, CalendarCheck, Zap, ChevronDown, Pencil, LogOut } from "lucide-react";
+import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Flame, Target, Lock, CalendarCheck, Zap, ChevronDown, Pencil, LogOut, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { useCorretorDailyStats, useCorretorDailyGoals } from "@/hooks/useCorretorDailyStats";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,20 @@ import AttemptModal from "./AttemptModal";
 import ScriptPanel from "./ScriptPanel";
 import AttemptHistory from "./AttemptHistory";
 import ScoringLegend from "./ScoringLegend";
+
+/** Format Brazilian phone: +5551999924554 → (51) 99992-4554 */
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  // Remove country code 55
+  const local = digits.startsWith("55") && digits.length > 11 ? digits.slice(2) : digits;
+  if (local.length === 11) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  }
+  if (local.length === 10) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  }
+  return phone; // fallback
+}
 
 interface Props {
   lista: OALista;
@@ -40,6 +54,39 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const [metaAprov, setMetaAprov] = useState("");
   const [metaVis, setMetaVis] = useState("");
   const [finalizando, setFinalizando] = useState(false);
+  const [callTimer, setCallTimer] = useState(0);
+  const [callActive, setCallActive] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Timer logic
+  const startTimer = useCallback(() => {
+    setCallTimer(0);
+    setCallActive(true);
+    timerRef.current = setInterval(() => {
+      setCallTimer(prev => prev + 1);
+    }, 1000);
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    setCallActive(false);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const formatTimer = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   const metaLigacoes = goals?.meta_ligacoes || 30;
   const metaAproveitados = goals?.meta_aproveitados || 5;
@@ -90,7 +137,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     setActionTaken(canal);
 
     if (canal === "ligacao") {
-      // Não redireciona — corretor liga manualmente pelo celular
+      startTimer();
       setTimeout(() => setShowModal(true), 300);
       return;
     } else if (canal === "whatsapp" && lead.telefone) {
@@ -177,6 +224,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         }
       }
 
+      stopTimer();
       setShowModal(false);
       setActionTaken(null);
       queryClient.invalidateQueries({ queryKey: ["corretor-daily-stats"] });
@@ -342,7 +390,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Left: Lead Card (3 cols) */}
         <div className="lg:col-span-3 space-y-3">
-          <Card className="border-2 border-primary/20">
+          <Card className={`border-2 ${lead.tentativas_count > 0 ? "border-amber-500/40 bg-amber-500/5" : "border-primary/20"}`}>
             <CardContent className="p-4 space-y-3">
               {/* Header */}
               <div className="flex items-start justify-between">
@@ -356,12 +404,23 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                     {lead.origem && <span>· {lead.origem}</span>}
                   </div>
                 </div>
-                {lead.tentativas_count > 0 && (
-                  <Badge variant="outline" className="text-[10px] gap-1">
-                    <History className="h-3 w-3" /> {lead.tentativas_count} tent.
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {lead.tentativas_count > 0 && (
+                    <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/40 bg-amber-500/10 text-amber-700">
+                      <History className="h-3 w-3" /> {lead.tentativas_count} tent. anterior{lead.tentativas_count > 1 ? "es" : ""}
+                    </Badge>
+                  )}
+                </div>
               </div>
+
+              {/* Call Timer */}
+              {callActive && (
+                <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 animate-pulse">
+                  <Timer className="h-4 w-4 text-emerald-600" />
+                  <span className="text-lg font-mono font-bold text-emerald-600">{formatTimer(callTimer)}</span>
+                  <span className="text-xs text-emerald-600">em ligação...</span>
+                </div>
+              )}
 
               {/* Contact info */}
               <div className="grid gap-2">
@@ -369,7 +428,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                   <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/50 border border-border">
                     <div>
                       <p className="text-[10px] text-muted-foreground">Telefone principal</p>
-                      <p className="text-base font-mono font-bold text-foreground">{lead.telefone}</p>
+                      <p className="text-base font-mono font-bold text-foreground">{formatPhone(lead.telefone)}</p>
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => copyToClipboard(lead.telefone!, "Telefone")}>
                       <Copy className="h-3.5 w-3.5" />
@@ -380,7 +439,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                   <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border">
                     <div>
                       <p className="text-[10px] text-muted-foreground">Telefone secundário</p>
-                      <p className="text-sm font-mono text-foreground">{lead.telefone2}</p>
+                      <p className="text-sm font-mono text-foreground">{formatPhone(lead.telefone2)}</p>
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => copyToClipboard(lead.telefone2!, "Telefone 2")}>
                       <Copy className="h-3.5 w-3.5" />
@@ -419,7 +478,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                   onClick={() => handleAction("ligacao")}
                   disabled={lockStatus !== "locked" || (!!actionTaken && !showModal)}
                 >
-                  <Phone className="h-4 w-4" /> Ligar
+                  <Phone className="h-4 w-4" /> {callActive ? formatTimer(callTimer) : "Ligar"}
                 </Button>
                 <Button
                   size="lg"
