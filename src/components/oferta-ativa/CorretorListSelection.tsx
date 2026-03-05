@@ -4,55 +4,124 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Phone, ArrowLeft, Loader2, Users, Search } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Phone, ArrowLeft, Loader2, Users, Search, Zap, Clock } from "lucide-react";
 import DialingModeWithScript from "./DialingModeWithScript";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 function ListaCard({ lista, onSelect }: { lista: OALista; onSelect: () => void }) {
+  const { user } = useAuth();
+
   const { data: stats } = useQuery({
-    queryKey: ["oa-lista-fila-count", lista.id],
+    queryKey: ["oa-lista-stats-enhanced", lista.id, user?.id],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const { count } = await supabase
+      const { count: naFila } = await supabase
         .from("oferta_ativa_leads")
         .select("id", { count: "exact", head: true })
         .eq("lista_id", lista.id)
         .eq("status", "na_fila")
         .or(`proxima_tentativa_apos.is.null,proxima_tentativa_apos.lt.${now}`);
-      return count || 0;
+
+      const { count: aproveitados } = await supabase
+        .from("oferta_ativa_leads")
+        .select("id", { count: "exact", head: true })
+        .eq("lista_id", lista.id)
+        .eq("status", "aproveitado");
+
+      const { count: total } = await supabase
+        .from("oferta_ativa_leads")
+        .select("id", { count: "exact", head: true })
+        .eq("lista_id", lista.id);
+
+      // My attempts today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count: meusTentativas } = await supabase
+        .from("oferta_ativa_tentativas")
+        .select("id", { count: "exact", head: true })
+        .eq("lista_id", lista.id)
+        .eq("corretor_id", user!.id)
+        .gte("created_at", today.toISOString());
+
+      const worked = (total || 0) - (naFila || 0);
+      const pct = (total || 0) > 0 ? Math.round((worked / (total || 1)) * 100) : 0;
+
+      return {
+        naFila: naFila || 0,
+        aproveitados: aproveitados || 0,
+        total: total || 0,
+        pct,
+        meusTentativas: meusTentativas || 0,
+      };
     },
     staleTime: 15000,
+    enabled: !!user,
   });
+
+  const hasLeads = (stats?.naFila ?? 0) > 0;
 
   return (
     <Card
-      className="cursor-pointer hover:border-primary/40 hover:shadow-md transition-all group"
-      onClick={onSelect}
+      className={`cursor-pointer transition-all group ${hasLeads ? "hover:border-primary/40 hover:shadow-md" : "opacity-60"}`}
+      onClick={hasLeads ? onSelect : undefined}
     >
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between mb-3">
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-start justify-between">
           <div>
             <h3 className="font-bold text-foreground text-lg group-hover:text-primary transition-colors">
               {lista.empreendimento}
             </h3>
             {lista.campanha && <p className="text-xs text-muted-foreground">{lista.campanha}</p>}
           </div>
-          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]">
             Liberada
           </Badge>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-primary">{stats ?? "..."}</p>
-              <p className="text-[10px] text-muted-foreground">na fila</p>
+
+        {stats ? (
+          <>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <p className="text-2xl font-bold text-primary">{stats.naFila}</p>
+                <p className="text-[10px] text-muted-foreground">na fila</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-emerald-600">{stats.aproveitados}</p>
+                <p className="text-[10px] text-muted-foreground">aproveitados</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+                <p className="text-[10px] text-muted-foreground">total</p>
+              </div>
             </div>
+
+            <div>
+              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                <span>Progresso da lista</span>
+                <span className="font-semibold">{stats.pct}%</span>
+              </div>
+              <Progress value={stats.pct} className="h-1.5" />
+            </div>
+
+            {stats.meusTentativas > 0 && (
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Zap className="h-3 w-3 text-primary" />
+                <span>Você fez <strong className="text-foreground">{stats.meusTentativas}</strong> tentativas hoje nesta lista</span>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
-          <Button size="sm" className="gap-1.5">
-            <Phone className="h-3.5 w-3.5" /> Começar
-          </Button>
-        </div>
+        )}
+
+        <Button size="sm" className="w-full gap-1.5" disabled={!hasLeads}>
+          <Phone className="h-3.5 w-3.5" /> {hasLeads ? "Começar Discagem" : "Lista Esgotada"}
+        </Button>
       </CardContent>
     </Card>
   );
@@ -103,13 +172,13 @@ export default function CorretorListSelection() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Users className="h-4 w-4" /> Escolha uma lista ({liberadas.length} liberadas)
+          <Users className="h-4 w-4 text-primary" /> Escolha uma lista ({liberadas.length} liberadas)
         </h3>
       </div>
-      {liberadas.length > 6 && (
+      {liberadas.length > 3 && (
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

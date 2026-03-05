@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Flame, Target, Lock, CalendarCheck, Zap, ChevronDown, Pencil, LogOut, Timer } from "lucide-react";
+import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Flame, Target, Lock, CalendarCheck, Zap, ChevronDown, Pencil, LogOut, Timer, SkipForward } from "lucide-react";
 import { toast } from "sonner";
 import { useCorretorDailyStats, useCorretorDailyGoals } from "@/hooks/useCorretorDailyStats";
 import { useAuth } from "@/hooks/useAuth";
@@ -298,20 +298,23 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         ) : (
           <>
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-1.5 text-sm">
-                <Flame className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-foreground">{stats.tentativas}</span>
-                <span className="text-muted-foreground text-xs">/ {metaLigacoes} ligações</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-sm">
-                <Target className="h-4 w-4 text-success" />
-                <span className="font-semibold text-foreground">{stats.aproveitados}</span>
-                <span className="text-muted-foreground text-xs">/ {metaAproveitados} aproveitados</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-sm">
-                <CalendarCheck className="h-4 w-4 text-amber-500" />
-                <span className="font-semibold text-foreground">{stats.visitas_marcadas}</span>
-                <span className="text-muted-foreground text-xs">/ {metaVisitas} visitas</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-sm">
+                  <Flame className="h-4 w-4 text-primary" />
+                  <span className="font-bold text-foreground">{stats.tentativas}</span>
+                  <span className="text-muted-foreground text-[10px]">/ {metaLigacoes}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-sm">
+                  <Target className="h-4 w-4 text-emerald-500" />
+                  <span className="font-bold text-foreground">{stats.aproveitados}</span>
+                  <span className="text-muted-foreground text-[10px]">/ {metaAproveitados}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-sm">
+                  <CalendarCheck className="h-4 w-4 text-amber-500" />
+                  <span className="font-bold text-foreground">{stats.visitas_marcadas}</span>
+                  <span className="text-muted-foreground text-[10px]">/ {metaVisitas}</span>
+                </div>
+                <span className="text-xs font-bold text-primary">{stats.pontos} pts</span>
               </div>
               <div className="flex items-center gap-1">
                 <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
@@ -322,10 +325,10 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                 }}>
                   <Pencil className="h-3 w-3 text-muted-foreground" />
                 </Button>
+                {stats.tentativas >= metaLigacoes && (
+                  <Badge variant="secondary" className="text-[10px] gap-1">🔥 Missão cumprida!</Badge>
+                )}
               </div>
-              {stats.tentativas >= metaLigacoes && (
-                <Badge variant="secondary" className="text-[10px] gap-1">🔥 Missão cumprida!</Badge>
-              )}
             </div>
             <div className="grid grid-cols-3 gap-3">
               <Progress value={progLig} className="h-1.5" />
@@ -336,45 +339,66 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         )}
       </div>
 
-      {/* Finalizar Trabalho */}
-      <div className="flex items-center justify-between gap-2">
-        <ScoringLegend />
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
-          onClick={async () => {
-            if (!user) return;
-            setFinalizando(true);
-            try {
-              const { data, error } = await supabase.rpc("finalizar_trabalho_corretor", { p_user_id: user.id });
-              if (error) throw error;
-              const result = data as any;
-              if (result?.success) {
-                toast.success(`Trabalho finalizado! ${result.tentativas} tentativas e ${result.aproveitados} aproveitados enviados ao gerente.`);
-                onBack();
-              } else {
-                toast.error(result?.message || "Erro ao finalizar trabalho.");
+      {/* Controls Row */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <ScoringLegend />
+          <span className="text-[10px] text-muted-foreground">•</span>
+          <span className="text-[10px] text-primary font-semibold">{lista.empreendimento}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {fila.length > 1 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs gap-1"
+              onClick={() => {
+                if (currentIndex < fila.length - 1) {
+                  setCurrentIndex(prev => prev + 1);
+                  toast("Lead pulado — avançando para o próximo", { duration: 1500 });
+                }
+              }}
+              disabled={currentIndex >= fila.length - 1}
+            >
+              <SkipForward className="h-3.5 w-3.5" /> Pular
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+            onClick={async () => {
+              if (!user) return;
+              setFinalizando(true);
+              try {
+                const { data, error } = await supabase.rpc("finalizar_trabalho_corretor", { p_user_id: user.id });
+                if (error) throw error;
+                const result = data as any;
+                if (result?.success) {
+                  toast.success(`Trabalho finalizado! ${result.tentativas} tentativas e ${result.aproveitados} aproveitados enviados.`);
+                  onBack();
+                } else {
+                  toast.error(result?.message || "Erro ao finalizar trabalho.");
+                }
+              } catch (err: any) {
+                toast.error("Erro ao finalizar: " + err.message);
+              } finally {
+                setFinalizando(false);
               }
-            } catch (err: any) {
-              toast.error("Erro ao finalizar: " + err.message);
-            } finally {
-              setFinalizando(false);
-            }
-          }}
-          disabled={finalizando || stats.tentativas === 0}
-        >
-          <LogOut className="h-3.5 w-3.5" /> {finalizando ? "Enviando..." : "Finalizar Trabalho"}
-        </Button>
+            }}
+            disabled={finalizando || stats.tentativas === 0}
+          >
+            <LogOut className="h-3.5 w-3.5" /> {finalizando ? "Enviando..." : "Finalizar"}
+          </Button>
+        </div>
       </div>
+
+      {/* Progress bar */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span className="font-semibold text-primary">{lista.empreendimento} · Modo Missão</span>
-      </div>
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>Lead {currentIndex + 1} de {fila.length}</span>
+        <span>Lead <strong className="text-foreground">{currentIndex + 1}</strong> de {fila.length}</span>
         {lockStatus === "locked" && (
           <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/30 text-emerald-600">
-            <Lock className="h-3 w-3" /> Reservado para você
+            <Lock className="h-3 w-3" /> Reservado
           </Badge>
         )}
         {lockStatus === "locking" && (
@@ -384,7 +408,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         )}
         {lockStatus === "failed" && (
           <Badge variant="outline" className="gap-1 text-[10px] border-destructive/30 text-destructive">
-            <Lock className="h-3 w-3" /> Bloqueado por outro corretor
+            <Lock className="h-3 w-3" /> Bloqueado
           </Badge>
         )}
       </div>
