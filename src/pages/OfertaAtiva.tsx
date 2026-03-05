@@ -5,9 +5,29 @@ import ImportListPanel from "@/components/oferta-ativa/ImportListPanel";
 import CampaignManager from "@/components/oferta-ativa/CampaignManager";
 import TemplateManager from "@/components/oferta-ativa/TemplateManager";
 import PerformanceLivePanel from "@/components/oferta-ativa/PerformanceLivePanel";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export default function OfertaAtiva() {
+  const { isAdmin } = useUserRole();
   const [activeTab, setActiveTab] = useState("performance");
+
+  // Gestor only sees Live tab
+  if (!isAdmin) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
+            <Activity className="h-6 w-6 text-primary" />
+            Oferta Ativa — Minha Equipe
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Acompanhe a performance dos seus corretores em tempo real
+          </p>
+        </div>
+        <PerformanceLivePanel teamOnly />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
