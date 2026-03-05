@@ -97,6 +97,9 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
       setResultado("");
       setFeedback("");
       setVisitaMarcada(false);
+    } catch (err: any) {
+      console.error("Erro no submit do modal:", err);
+      toast.error("Erro ao registrar. Tente novamente.");
     } finally {
       setSubmitting(false);
     }

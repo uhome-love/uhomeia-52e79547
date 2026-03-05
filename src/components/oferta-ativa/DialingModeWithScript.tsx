@@ -232,7 +232,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     setSubmitting(true);
     try {
       const result = await registrar(lead, actionTaken, resultado, feedback, lista);
-      if (!result.success) { setSubmitting(false); return; }
+      if (!result?.success) { setSubmitting(false); return; }
 
       // Update streak
       if (resultado === "com_interesse") {
@@ -245,7 +245,6 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         setStreak(0);
         toast("👋 Sem interesse — lead removido da fila", { duration: 2000 });
       } else if (resultado === "numero_errado") {
-        // Don't break streak for wrong numbers
         toast("❌ Número errado — removido", { duration: 2000 });
       }
 
@@ -317,6 +316,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         refetch();
         setCurrentIndex(0);
       }
+    } catch (err: any) {
+      console.error("Erro ao registrar tentativa:", err);
+      toast.error("Erro ao registrar tentativa. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
@@ -748,7 +750,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       </div>
 
       {/* Attempt Modal */}
-      {showModal && (
+      {showModal && lead && (
         <AttemptModal
           open={showModal}
           onClose={() => { setShowModal(false); setActionTaken(null); stopTimer(); }}
