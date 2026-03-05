@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Trophy,
   Phone,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AvatarUpload from "@/components/AvatarUpload";
@@ -87,6 +88,7 @@ export function AppSidebar() {
   const gestorItems = isGestor
     ? [
         { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
+        { title: "Meu Time", url: "/meu-time", icon: Users },
         { title: "PDN", url: "/pdn", icon: FileSpreadsheet },
         { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
         { title: "Scripts & Follow Ups", url: "/scripts", icon: FileEdit },

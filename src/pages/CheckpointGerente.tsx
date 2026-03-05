@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardCheck, Users, BarChart3, CheckSquare, FileText, Bell, AlertTriangle, CheckCircle } from "lucide-react";
+import { ClipboardCheck, BarChart3, CheckSquare, Bell, AlertTriangle, CheckCircle } from "lucide-react";
 import homiMascot from "@/assets/homi-mascot.png";
 import CheckpointDaily from "@/components/checkpoint/CheckpointDaily";
-import TeamManagement from "@/components/checkpoint/TeamManagement";
 import CheckpointReports from "@/components/checkpoint/CheckpointReports";
 import CoachPanel from "@/components/checkpoint/CoachPanel";
 import ManagerChecklist from "@/components/checkpoint/ManagerChecklist";
-import JetimobPaste from "@/components/checkpoint/JetimobPaste";
 import MetasMensaisProgress from "@/components/checkpoint/MetasMensaisProgress";
 import CheckpointAproveitados from "@/components/checkpoint/CheckpointAproveitados";
 import { useAuth } from "@/hooks/useAuth";
@@ -114,21 +112,15 @@ export default function CheckpointGerente() {
       <MetasMensaisProgress />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7 h-auto">
+        <TabsList className="grid w-full grid-cols-5 h-auto">
           <TabsTrigger value="checkpoint" className="gap-1.5 text-xs py-2">
             <ClipboardCheck className="h-3.5 w-3.5" /> Checkpoint
           </TabsTrigger>
           <TabsTrigger value="aproveitados" className="gap-1.5 text-xs py-2">
             <CheckCircle className="h-3.5 w-3.5" /> Aproveitados
           </TabsTrigger>
-          <TabsTrigger value="time" className="gap-1.5 text-xs py-2">
-            <Users className="h-3.5 w-3.5" /> Meu Time
-          </TabsTrigger>
           <TabsTrigger value="relatorios" className="gap-1.5 text-xs py-2">
             <BarChart3 className="h-3.5 w-3.5" /> Relatórios
-          </TabsTrigger>
-          <TabsTrigger value="jetimob" className="gap-1.5 text-xs py-2">
-            <FileText className="h-3.5 w-3.5" /> Jetimob
           </TabsTrigger>
           <TabsTrigger value="coach" className="gap-1.5 text-xs py-2">
             <img src={homiMascot} alt="Homi" className="h-4 w-4 object-contain" /> Coach IA
@@ -144,14 +136,8 @@ export default function CheckpointGerente() {
         <TabsContent value="aproveitados" className="mt-4">
           <CheckpointAproveitados />
         </TabsContent>
-        <TabsContent value="time" className="mt-4">
-          <TeamManagement />
-        </TabsContent>
         <TabsContent value="relatorios" className="mt-4">
           <CheckpointReports />
-        </TabsContent>
-        <TabsContent value="jetimob" className="mt-4">
-          <JetimobPaste />
         </TabsContent>
         <TabsContent value="coach" className="mt-4">
           <CoachPanel />
