@@ -4,9 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Bot, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { format, startOfWeek, endOfWeek } from "date-fns";
+import homiMascot from "@/assets/homi-mascot.png";
 
 export default function CoachPanel() {
   const { user } = useAuth();
@@ -66,11 +67,11 @@ export default function CoachPanel() {
       <div className="rounded-xl border border-border bg-card p-6 shadow-card">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-warm">
-              <Bot className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 overflow-hidden">
+              <img src={homiMascot} alt="Homi" className="h-9 w-9 object-contain" />
             </div>
             <div>
-              <h3 className="font-display font-semibold text-foreground">Coach de Performance Uhome</h3>
+              <h3 className="font-display font-semibold text-foreground">Homi — Coach de Performance</h3>
               <p className="text-xs text-muted-foreground">IA que analisa o desempenho semanal e gera feedbacks</p>
             </div>
           </div>
@@ -86,7 +87,8 @@ export default function CoachPanel() {
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
-            <p>Clique em "Analisar Semana" para a IA gerar o diagnóstico.</p>
+            <img src={homiMascot} alt="Homi" className="h-16 w-16 object-contain mx-auto mb-3 opacity-50" />
+            <p>Clique em "Analisar Semana" para o Homi gerar o diagnóstico.</p>
             <p className="text-xs mt-1">A IA irá analisar metas vs resultados, identificar gargalos e sugerir ações.</p>
           </div>
         )}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardCheck, Users, BarChart3, Bot, CheckSquare, FileText, Bell, AlertTriangle, CheckCircle } from "lucide-react";
+import { ClipboardCheck, Users, BarChart3, CheckSquare, FileText, Bell, AlertTriangle, CheckCircle } from "lucide-react";
+import homiMascot from "@/assets/homi-mascot.png";
 import CheckpointDaily from "@/components/checkpoint/CheckpointDaily";
 import TeamManagement from "@/components/checkpoint/TeamManagement";
 import CheckpointReports from "@/components/checkpoint/CheckpointReports";
@@ -130,7 +131,7 @@ export default function CheckpointGerente() {
             <FileText className="h-3.5 w-3.5" /> Jetimob
           </TabsTrigger>
           <TabsTrigger value="coach" className="gap-1.5 text-xs py-2">
-            <Bot className="h-3.5 w-3.5" /> Coach IA
+            <img src={homiMascot} alt="Homi" className="h-4 w-4 object-contain" /> Coach IA
           </TabsTrigger>
           <TabsTrigger value="checklist" className="gap-1.5 text-xs py-2">
             <CheckSquare className="h-3.5 w-3.5" /> Checklist

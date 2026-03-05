@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Sparkles, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUhomeIa } from "@/hooks/useUhomeIa";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import homiMascot from "@/assets/homi-mascot.png";
 
 interface IaCoreActionProps {
   module: string;
@@ -46,10 +47,10 @@ export default function IaCoreAction({
         size={size}
         onClick={handleClick}
         disabled={loading}
-        className={`gap-1.5 ${className}`}
+        className={`gap-2 ${className}`}
       >
-        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-        {loading ? "Analisando..." : label}
+        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <img src={homiMascot} alt="Homi" className="h-5 w-5 object-contain" />}
+        {loading ? "Homi analisando..." : label}
       </Button>
 
       <AnimatePresence>
@@ -69,8 +70,8 @@ export default function IaCoreAction({
               <X className="h-3.5 w-3.5" />
             </Button>
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">UHOME IA</span>
+              <img src={homiMascot} alt="Homi" className="h-6 w-6 object-contain" />
+              <span className="text-sm font-semibold text-foreground">Homi — IA UHome</span>
             </div>
             <div className="prose prose-sm max-w-none dark:prose-invert">
               <ReactMarkdown>{result}</ReactMarkdown>

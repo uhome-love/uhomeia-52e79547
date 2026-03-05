@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Trophy, FileText, Bot, AlertTriangle, TrendingUp, CheckCircle } from "lucide-react";
+import { BarChart3, Trophy, FileText, AlertTriangle, TrendingUp, CheckCircle } from "lucide-react";
+import homiMascot from "@/assets/homi-mascot.png";
 import CeoOverview from "@/components/ceo/CeoOverview";
 import CeoRankings from "@/components/ceo/CeoRankings";
 import CeoReports from "@/components/ceo/CeoReports";
@@ -14,13 +15,16 @@ export default function CeoDashboard() {
 
   return (
     <div className="p-6 space-y-4">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">
-          Dashboard <span className="text-primary">CEO</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Visão macro consolidada de todos os gerentes e corretores
-        </p>
+      <div className="flex items-center gap-3">
+        <img src={homiMascot} alt="Homi" className="h-10 w-10 object-contain" />
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">
+            Dashboard <span className="text-primary">CEO</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Visão macro consolidada de todos os gerentes e corretores
+          </p>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -41,7 +45,7 @@ export default function CeoDashboard() {
             <FileText className="h-3.5 w-3.5" /> Relatórios
           </TabsTrigger>
           <TabsTrigger value="advisor" className="gap-1.5 text-xs py-2">
-            <Bot className="h-3.5 w-3.5" /> CEO Advisor
+            <img src={homiMascot} alt="Homi" className="h-4 w-4 object-contain" /> CEO Advisor
           </TabsTrigger>
           <TabsTrigger value="alerts" className="gap-1.5 text-xs py-2">
             <AlertTriangle className="h-3.5 w-3.5" /> Alertas

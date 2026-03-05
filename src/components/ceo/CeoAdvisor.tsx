@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useCeoData, pct, type CeoPeriod } from "@/hooks/useCeoData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Bot, Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import homiMascot from "@/assets/homi-mascot.png";
 
 export default function CeoAdvisor() {
   const [period, setPeriod] = useState<CeoPeriod>("semana");
@@ -72,15 +73,15 @@ export default function CeoAdvisor() {
           </SelectContent>
         </Select>
         <Button onClick={generateAnalysis} disabled={generating || dataLoading} className="gap-2">
-          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <img src={homiMascot} alt="Homi" className="h-6 w-6 object-contain" />}
           Gerar Análise CEO Advisor
         </Button>
       </div>
 
       {!analysis && !generating && (
         <div className="rounded-xl border border-border bg-card shadow-card p-8 text-center">
-          <Bot className="h-12 w-12 text-primary/30 mx-auto mb-3" />
-          <h3 className="font-display font-semibold text-foreground mb-1">Uhome Gestão e IA – CEO Advisor</h3>
+          <img src={homiMascot} alt="Homi" className="h-20 w-20 object-contain mx-auto mb-3 opacity-60" />
+          <h3 className="font-display font-semibold text-foreground mb-1">Homi — CEO Advisor</h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
             Selecione o período e clique em "Gerar Análise" para receber insights estratégicos, diagnósticos por gerente e corretor, e ações recomendadas.
           </p>
@@ -97,7 +98,7 @@ export default function CeoAdvisor() {
       {analysis && !generating && (
         <div className="rounded-xl border border-border bg-card shadow-card p-6">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
-            <Bot className="h-5 w-5 text-primary" />
+            <img src={homiMascot} alt="Homi" className="h-7 w-7 object-contain" />
             <h3 className="font-display font-semibold">Análise CEO Advisor</h3>
             <span className="text-xs text-muted-foreground ml-auto">{dateRange.start} a {dateRange.end}</span>
           </div>
