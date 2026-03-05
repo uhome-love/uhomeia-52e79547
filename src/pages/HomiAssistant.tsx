@@ -104,7 +104,14 @@ export default function HomiAssistant() {
   };
 
   // Parse sections from resultado for individual copy
-  const sections = resultado.split(/(?=## )/).filter(s => s.trim());
+  const rawSections = resultado.split(/(?=## )/).filter(s => s.trim());
+  // If first section doesn't start with ##, add a default analysis header
+  const sections = rawSections.map((s, i) => {
+    if (i === 0 && !s.startsWith("## ")) {
+      return `## 🧠 Análise da Situação\n${s}`;
+    }
+    return s;
+  });
 
   const acaoInfo = ACOES.find(a => a.id === acao);
 
@@ -293,26 +300,51 @@ export default function HomiAssistant() {
                     const title = titleMatch ? titleMatch[1].trim() : "";
                     const body = section.replace(/^##\s*[^\n]+\n/, "").trim();
 
+                    if (!body) return null;
+
+                    // Color code sections based on emoji/type
+                    const isWhatsApp = title.includes("💬") || title.toLowerCase().includes("whatsapp");
+                    const isAlternative = title.includes("🔄") || title.toLowerCase().includes("alternativ");
+                    const isScript = title.includes("📞") || title.toLowerCase().includes("script");
+                    const isAction = title.includes("🎯") || title.toLowerCase().includes("ação");
+                    const isAnalysis = title.includes("🧠") || title.toLowerCase().includes("anális");
+
+                    const headerColor = isWhatsApp ? "bg-emerald-500/10 border-emerald-500/20"
+                      : isAlternative ? "bg-blue-500/10 border-blue-500/20"
+                      : isScript ? "bg-amber-500/10 border-amber-500/20"
+                      : isAction ? "bg-primary/10 border-primary/20"
+                      : isAnalysis ? "bg-violet-500/10 border-violet-500/20"
+                      : "bg-muted/30 border-border";
+
+                    const borderColor = isWhatsApp ? "border-emerald-500/20"
+                      : isAlternative ? "border-blue-500/20"
+                      : isScript ? "border-amber-500/20"
+                      : isAction ? "border-primary/20"
+                      : isAnalysis ? "border-violet-500/20"
+                      : "border-border";
+
                     return (
                       <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="rounded-xl border border-border bg-card shadow-card overflow-hidden"
+                        className={`rounded-xl border ${borderColor} bg-card shadow-card overflow-hidden`}
                       >
-                        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/30">
-                          <span className="text-xs font-bold text-foreground">{title}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copySection(section)}
-                            className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-                          >
-                            <Copy className="h-3 w-3" /> Copiar
-                          </Button>
-                        </div>
-                        <div className="p-4 prose prose-sm max-w-none text-foreground prose-p:my-1 prose-headings:font-display">
+                        {title && (
+                          <div className={`flex items-center justify-between px-4 py-2.5 border-b ${headerColor}`}>
+                            <span className="text-xs font-bold text-foreground">{title}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copySection(section)}
+                              className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                            >
+                              <Copy className="h-3 w-3" /> Copiar
+                            </Button>
+                          </div>
+                        )}
+                        <div className="p-4 prose prose-sm max-w-none text-foreground prose-p:my-1.5 prose-strong:text-foreground prose-headings:font-display leading-relaxed">
                           <ReactMarkdown>{body}</ReactMarkdown>
                         </div>
                       </motion.div>
