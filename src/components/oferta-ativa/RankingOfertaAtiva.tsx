@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, Phone, ThumbsUp, TrendingUp, Loader2, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { startOfDay, startOfWeek, startOfMonth, format } from "date-fns";
+import { startOfWeek, startOfMonth, format } from "date-fns";
 
 type PeriodOption = "hoje" | "semana" | "mes" | "acumulado";
 
@@ -44,12 +44,20 @@ export default function RankingOfertaAtiva() {
   const { isAdmin, isGestor } = useUserRole();
   const [period, setPeriod] = useState<PeriodOption>("semana");
 
+  // Use explicit BRT (-03:00) boundaries to match server-side timezone
   const periodStart = useMemo(() => {
     if (period === "acumulado") return null;
     const now = new Date();
-    if (period === "hoje") return startOfDay(now).toISOString();
-    if (period === "semana") return startOfWeek(now, { weekStartsOn: 1 }).toISOString();
-    return startOfMonth(now).toISOString();
+    if (period === "hoje") {
+      const todayStr = format(now, "yyyy-MM-dd");
+      return `${todayStr}T00:00:00-03:00`;
+    }
+    if (period === "semana") {
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+      return `${format(weekStart, "yyyy-MM-dd")}T00:00:00-03:00`;
+    }
+    const monthStart = startOfMonth(now);
+    return `${format(monthStart, "yyyy-MM-dd")}T00:00:00-03:00`;
   }, [period]);
 
   // For gestores: fetch team member user_ids to filter
