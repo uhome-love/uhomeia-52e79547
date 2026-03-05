@@ -184,7 +184,7 @@ export default function Auth() {
               src={uhomeSalesLogo}
               alt="UhomeSales"
               className="relative w-auto object-contain drop-shadow-[0_0_60px_hsl(229,100%,64%,0.4)]"
-              style={{ height: "200px", clipPath: "inset(10% 0 8% 0)", margin: "-16px 0" }}
+              style={{ height: "200px", clipPath: "inset(10% 0 8% 0)", margin: "-22px 0" }}
             />
           </motion.div>
         </div>
