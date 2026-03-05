@@ -83,6 +83,7 @@ export function AppSidebar() {
       ]
     : [
         { title: "Central do Corretor", url: "/corretor", icon: Phone },
+        { title: "Resumo Semanal", url: "/corretor/resumo", icon: BarChart3 },
       ];
 
   const gestorItems = isGestor

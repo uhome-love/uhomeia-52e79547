@@ -30,6 +30,7 @@ const RankingComercial = lazy(() => import("./pages/RankingComercial"));
 const AuditDashboard = lazy(() => import("./pages/AuditDashboard"));
 const OfertaAtiva = lazy(() => import("./pages/OfertaAtiva"));
 const MeuTime = lazy(() => import("./pages/MeuTime"));
+const CorretorResumo = lazy(() => import("./pages/CorretorResumo"));
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
 
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><CorretorDashboard /></ProtectedPage>} />
+            <Route path="/corretor/resumo" element={<ProtectedPage><CorretorResumo /></ProtectedPage>} />
 
             {/* CEO / Admin only */}
             <Route path="/ceo" element={<ProtectedPage roles={["admin"]}><CeoDashboard /></ProtectedPage>} />
