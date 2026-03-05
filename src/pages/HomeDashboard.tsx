@@ -23,17 +23,18 @@ const medals = ["🥇", "🥈", "🥉"];
 
 export default function HomeDashboard() {
   const { user } = useAuth();
-  const { isAdmin, isGestor } = useUserRole();
+  const { isAdmin, isGestor, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [period, setPeriod] = useState<Period>("semana");
 
   // Corretor should never see Centro de Comando — redirect to /corretor
   useEffect(() => {
+    if (roleLoading) return; // Wait for roles to load before deciding
     if (!isAdmin && !isGestor) {
       navigate("/corretor", { replace: true });
     }
-  }, [isAdmin, isGestor, navigate]);
+  }, [isAdmin, isGestor, roleLoading, navigate]);
 
   const filterGerenteId = isAdmin ? undefined : user?.id;
   const { gerentes, companyTotals, allCorretores, loading, reload } = useCeoData(period as CeoPeriod, undefined, undefined, filterGerenteId);
