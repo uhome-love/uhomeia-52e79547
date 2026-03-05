@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useOAFila, useOARegistrarTentativa, useOATemplates, type OALista, type OALead } from "@/hooks/useOfertaAtiva";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Flame, Target, Lock } from "lucide-react";
+import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Flame, Target, Lock, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useCorretorDailyStats, useCorretorDailyGoals } from "@/hooks/useCorretorDailyStats";
+import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import AttemptModal from "./AttemptModal";
 import ScriptPanel from "./ScriptPanel";
@@ -24,6 +26,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const { templates } = useOATemplates(lista.empreendimento);
   const { stats } = useCorretorDailyStats();
   const { goals } = useCorretorDailyGoals();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [actionTaken, setActionTaken] = useState<string | null>(null);
@@ -96,19 +99,77 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     setTimeout(() => setShowModal(true), 500);
   };
 
-  const handleResultSubmit = async (resultado: string, feedback: string) => {
+  const handleResultSubmit = async (resultado: string, feedback: string, visitaMarcada?: boolean) => {
     if (!lead || !actionTaken || submitting) return;
     setSubmitting(true);
     try {
       const result = await registrar(lead, actionTaken, resultado, feedback, lista);
       if (!result.success) {
-        // If approval failed, don't advance
         setSubmitting(false);
         return;
       }
+
+      // Se marcou visita, incrementar real_visitas_marcadas no checkpoint
+      if (visitaMarcada && user) {
+        try {
+          const today = new Date().toISOString().split("T")[0];
+          // Find team_member for this user
+          const { data: tm } = await supabase
+            .from("team_members")
+            .select("id, gerente_id")
+            .eq("user_id", user.id)
+            .eq("status", "ativo")
+            .maybeSingle();
+
+          if (tm) {
+            // Find or create today's checkpoint
+            let { data: cp } = await supabase
+              .from("checkpoints")
+              .select("id")
+              .eq("gerente_id", tm.gerente_id)
+              .eq("data", today)
+              .maybeSingle();
+
+            if (!cp) {
+              const { data: newCp } = await supabase
+                .from("checkpoints")
+                .insert({ gerente_id: tm.gerente_id, data: today })
+                .select("id")
+                .single();
+              cp = newCp;
+            }
+
+            if (cp) {
+              // Get current line
+              const { data: line } = await supabase
+                .from("checkpoint_lines")
+                .select("id, real_visitas_marcadas")
+                .eq("checkpoint_id", cp.id)
+                .eq("corretor_id", tm.id)
+                .maybeSingle();
+
+              if (line) {
+                await supabase
+                  .from("checkpoint_lines")
+                  .update({ real_visitas_marcadas: (line.real_visitas_marcadas || 0) + 1 })
+                  .eq("id", line.id);
+              } else {
+                await supabase
+                  .from("checkpoint_lines")
+                  .insert({ checkpoint_id: cp.id, corretor_id: tm.id, real_visitas_marcadas: 1 } as any);
+              }
+            }
+          }
+          toast.success("📅 Visita marcada contabilizada no checkpoint!");
+        } catch (err) {
+          console.error("Erro ao atualizar visita no checkpoint:", err);
+        }
+      }
+
       setShowModal(false);
       setActionTaken(null);
       queryClient.invalidateQueries({ queryKey: ["corretor-daily-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["checkpoint"] });
 
       if (currentIndex < fila.length - 1) {
         setCurrentIndex(prev => prev + 1);

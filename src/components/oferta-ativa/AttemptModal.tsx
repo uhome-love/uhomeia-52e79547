@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PhoneOff, ThumbsDown, ThumbsUp, AlertCircle, PhoneMissed, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { PhoneOff, ThumbsDown, ThumbsUp, AlertCircle, PhoneMissed, Loader2, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (resultado: string, feedback: string) => Promise<void> | void;
+  onSubmit: (resultado: string, feedback: string, visitaMarcada?: boolean) => Promise<void> | void;
   leadName: string;
 }
 
@@ -22,6 +23,7 @@ const RESULTS = [
 export default function AttemptModal({ open, onClose, onSubmit, leadName }: Props) {
   const [resultado, setResultado] = useState<string>("");
   const [feedback, setFeedback] = useState("");
+  const [visitaMarcada, setVisitaMarcada] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -29,9 +31,10 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName }: Prop
     if (feedback.trim().length < 10) { toast.error("Feedback mínimo de 10 caracteres"); return; }
     setSubmitting(true);
     try {
-      await onSubmit(resultado, feedback.trim());
+      await onSubmit(resultado, feedback.trim(), resultado === "com_interesse" ? visitaMarcada : false);
       setResultado("");
       setFeedback("");
+      setVisitaMarcada(false);
     } finally {
       setSubmitting(false);
     }
@@ -54,7 +57,7 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName }: Prop
               return (
                 <button
                   key={r.key}
-                  onClick={() => setResultado(r.key)}
+                  onClick={() => { setResultado(r.key); if (r.key !== "com_interesse") setVisitaMarcada(false); }}
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                     selected ? `${r.color} ring-2 ring-offset-2 ring-current` : "border-border hover:border-muted-foreground/30"
                   }`}
@@ -65,6 +68,31 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName }: Prop
               );
             })}
           </div>
+
+          {/* Marquei Visita checkbox — only when com_interesse */}
+          {resultado === "com_interesse" && (
+            <div
+              className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                visitaMarcada
+                  ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
+                  : "border-border hover:border-primary/30"
+              }`}
+              onClick={() => setVisitaMarcada(!visitaMarcada)}
+            >
+              <Checkbox
+                checked={visitaMarcada}
+                onCheckedChange={(v) => setVisitaMarcada(!!v)}
+                className="h-5 w-5"
+              />
+              <div className="flex items-center gap-2">
+                <CalendarCheck className={`h-4 w-4 ${visitaMarcada ? "text-primary" : "text-muted-foreground"}`} />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Marquei visita</p>
+                  <p className="text-[10px] text-muted-foreground">Será contabilizado nas visitas marcadas do checkpoint</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Feedback */}
           <div>
