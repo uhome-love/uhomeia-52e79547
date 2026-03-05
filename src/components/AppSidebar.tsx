@@ -89,6 +89,7 @@ export function AppSidebar() {
     ? [
         { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
         { title: "Meu Time", url: "/meu-time", icon: Users },
+        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "PDN", url: "/pdn", icon: FileSpreadsheet },
         { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
         { title: "Scripts & Follow Ups", url: "/scripts", icon: FileEdit },
