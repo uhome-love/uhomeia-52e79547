@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import UhomeIaAssistant from "@/components/UhomeIaAssistant";
+import HomiGreeting from "@/components/HomiGreeting";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { User, Settings, LogOut, ChevronDown } from "lucide-react";
@@ -76,6 +77,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <UhomeIaAssistant />
+      <HomiGreeting />
     </SidebarProvider>
   );
 }
