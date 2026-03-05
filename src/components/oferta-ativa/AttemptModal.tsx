@@ -116,23 +116,22 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Resultado da tentativa</DialogTitle>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="text-base">Resultado da tentativa</DialogTitle>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>Lead: <strong>{leadName}</strong></span>
               {callDuration != null && callDuration > 0 && (
-                <Badge variant="outline" className="gap-1 text-xs border-emerald-500/30 text-emerald-600">
+                <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/30 text-emerald-600">
                   <Timer className="h-3 w-3" /> {formatDuration(callDuration)}
                 </Badge>
               )}
             </div>
-            <p className="text-[10px] text-muted-foreground/70">Atalhos: 1-4 para resultado · Ctrl+Enter para enviar</p>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
             {/* Result options */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-1.5">
               {RESULTS.map(r => {
                 const Icon = r.icon;
                 const selected = resultado === r.key;
@@ -140,16 +139,15 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
                   <button
                     key={r.key}
                     onClick={() => { setResultado(r.key); setFeedback(""); }}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all relative ${
-                      selected ? `${r.color} ring-2 ring-offset-2 ring-current` : "border-border hover:border-muted-foreground/30"
+                    className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border-2 transition-all relative ${
+                      selected ? `${r.color} ring-2 ring-offset-1 ring-current` : "border-border hover:border-muted-foreground/30"
                     }`}
                   >
-                    <span className="absolute top-1.5 left-2 text-[9px] font-mono text-muted-foreground/50 bg-muted rounded px-1">{r.shortcut}</span>
-                    <Icon className="h-6 w-6" />
-                    <span className="text-xs font-medium text-center">{r.label}</span>
-                    {r.key === "com_interesse" && <Badge className="text-[9px] bg-emerald-600 h-4">+3 pts</Badge>}
-                    {r.key === "nao_atendeu" && <Badge variant="outline" className="text-[9px] h-4">+1 pt</Badge>}
-                    {r.key === "sem_interesse" && <Badge variant="outline" className="text-[9px] h-4">+1 pt</Badge>}
+                    <Icon className="h-4 w-4" />
+                    <span className="text-[10px] font-medium text-center leading-tight">{r.label}</span>
+                    {r.key === "com_interesse" && <Badge className="text-[8px] bg-emerald-600 h-3.5 px-1">+3</Badge>}
+                    {r.key === "nao_atendeu" && <Badge variant="outline" className="text-[8px] h-3.5 px-1">+1</Badge>}
+                    {r.key === "sem_interesse" && <Badge variant="outline" className="text-[8px] h-3.5 px-1">+1</Badge>}
                   </button>
                 );
               })}
@@ -158,19 +156,14 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
             {/* Marquei Visita */}
             {resultado === "com_interesse" && (
               <div
-                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                  visitaMarcada ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20" : "border-border hover:border-primary/30"
+                className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                  visitaMarcada ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/30"
                 }`}
                 onClick={() => setVisitaMarcada(!visitaMarcada)}
               >
-                <Checkbox checked={visitaMarcada} onCheckedChange={(v) => setVisitaMarcada(!!v)} className="h-5 w-5" />
-                <div className="flex items-center gap-2">
-                  <CalendarCheck className={`h-4 w-4 ${visitaMarcada ? "text-primary" : "text-muted-foreground"}`} />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Marquei visita</p>
-                    <p className="text-[10px] text-muted-foreground">Será contabilizado nas visitas marcadas do checkpoint</p>
-                  </div>
-                </div>
+                <Checkbox checked={visitaMarcada} onCheckedChange={(v) => setVisitaMarcada(!!v)} className="h-4 w-4" />
+                <CalendarCheck className={`h-3.5 w-3.5 ${visitaMarcada ? "text-primary" : "text-muted-foreground"}`} />
+                <span className="text-xs font-medium text-foreground">Marquei visita</span>
               </div>
             )}
 
@@ -198,51 +191,41 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
 
             {/* Feedback */}
             <div>
-              <label className="text-sm font-medium text-foreground">Feedback {feedback.length < 10 ? "(obrigatório)" : ""}</label>
               <Textarea
-                className="mt-1.5"
-                placeholder='Ex: "Já comprou", "Quer 2D, orçamento 450k", "Pediu contato mês que vem"'
+                placeholder='Ex: "Já comprou", "Quer 2D, orçamento 450k"'
                 value={feedback}
                 onChange={e => setFeedback(e.target.value)}
                 rows={2}
+                className="text-sm"
               />
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-[10px] text-muted-foreground">Mínimo 10 caracteres · Ctrl+Enter para enviar</p>
+              <div className="flex items-center justify-between mt-0.5">
+                <p className="text-[10px] text-muted-foreground">Mín. 10 chars · Ctrl+Enter enviar</p>
                 <p className={`text-[10px] ${feedback.trim().length >= 10 ? "text-emerald-500" : "text-muted-foreground"}`}>
                   {feedback.trim().length}/10
                 </p>
               </div>
             </div>
 
-            {/* Contextual info */}
+            {/* Contextual info - compact */}
             {resultado === "nao_atendeu" && (
-              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-700">
-                <PhoneMissed className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>Lead <strong>volta para a fila</strong> após cooldown. +1 pt.</span>
-              </div>
+              <p className="text-[10px] text-blue-600 bg-blue-500/10 rounded px-2 py-1">Lead volta para a fila após cooldown. +1 pt.</p>
             )}
             {resultado === "com_interesse" && (
-              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700">
-                <ThumbsUp className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>Lead vai para <strong>"Aproveitados"</strong> com você. <strong>+3 pts!</strong> 🎉</span>
-              </div>
+              <p className="text-[10px] text-emerald-600 bg-emerald-500/10 rounded px-2 py-1">Lead vai para "Aproveitados". +3 pts! 🎉</p>
             )}
             {resultado === "numero_errado" && (
-              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-700">
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>Lead <strong>removido permanentemente</strong>. 0 pts.</span>
-              </div>
+              <p className="text-[10px] text-red-600 bg-red-500/10 rounded px-2 py-1">Lead removido permanentemente. 0 pts.</p>
             )}
             {resultado === "sem_interesse" && (
-              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700">
-                <ThumbsDown className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>Lead <strong>removido da fila</strong>. +1 pt.</span>
-              </div>
+              <p className="text-[10px] text-amber-600 bg-amber-500/10 rounded px-2 py-1">Lead removido da fila. +1 pt.</p>
             )}
+          </div>
 
+          {/* Submit button fixed at bottom */}
+          <div className="shrink-0 pt-2 border-t">
             <Button
               id="attempt-submit-btn"
-              className="w-full gap-2 h-11"
+              className="w-full gap-2 h-10"
               disabled={!resultado || feedback.trim().length < 10 || submitting}
               onClick={handleSubmit}
             >
