@@ -25,10 +25,23 @@ ARGUMENTOS DE VENDA: Morar em casa com segurança de condomínio, mais espaço p
 ESTRATÉGIA DE CONVERSÃO: 1) Entender perfil do cliente. 2) Explicar conceito de condomínio de casas. 3) Mostrar diferenciais. 4) Convidar para visita. Pergunta final: "Faz sentido eu te mostrar o projeto pessoalmente? Prefere durante a semana ou no fim de semana?"
 OBJETIVO: Converter leads em visitas. A visita aumenta muito a conversão porque o cliente entende o conceito e visualiza o espaço.`,
 
-  "Open Bosque": `EMPREENDIMENTO: Open Bosque
-Apartamentos com integração com a natureza, áreas verdes e lazer completo. Conceito de moradia que valoriza contato com natureza dentro de área urbana.
-DIFERENCIAIS: Áreas verdes, lazer integrado à natureza, projeto paisagístico diferenciado.
-ESTRATÉGIA: Destacar qualidade de vida, contato com natureza sem sair da cidade. Convidar para visita para sentir o ambiente.`,
+  "Open Bosque": `EMPREENDIMENTO: Open Bosque – Parque do Arvoredo
+CONSTRUTORA: Open Construtora (grupo Melnick)
+LOCALIZAÇÃO: Rua Pedro Waine, 75 – Passo d'Areia / Santa Maria Goretti – Zona Norte – Porto Alegre/RS
+CONCEITO: Condomínio-parque pensado para unir moradia, lazer e natureza dentro da cidade. Faz parte do projeto urbano do Parque do Arvoredo, área com mais de 22.000m² que transforma a região em novo polo residencial moderno da Zona Norte. Voltado para primeiro imóvel, custo-benefício e qualidade de vida com infraestrutura completa.
+TIPOLOGIAS: Apartamentos de 1, 2 e 3 dormitórios. Metragens: 31m² a 63m². Plantas modernas e funcionais com ótima iluminação natural.
+CARACTERÍSTICAS: Plantas inteligentes com ambientes integrados, churrasqueira nas unidades, vaga de garagem, opções de unidades garden, boa iluminação natural, acabamento moderno.
+LAZER DO CONDOMÍNIO: Piscina, salão de festas, espaço gourmet, playground, brinquedoteca, quadra esportiva, pet place, bicicletário, quiosques, mini market, horta comunitária, áreas de convivência.
+LOCALIZAÇÃO DETALHADA: Zona Norte de POA, região estratégica. Próximo de Av. Assis Brasil, Bourbon Shopping, Shopping Iguatemi, Parque Germânia, Aeroporto Salgado Filho. Mercados, escolas, farmácias e serviços próximos.
+PERFIL DE CLIENTE IDEAL: Primeiro imóvel, sair do aluguel, bom custo-benefício, financiamento facilitado, infraestrutura de lazer. Jovens casais, famílias pequenas, investidores que buscam imóveis compactos.
+DIFERENCIAIS PRINCIPAIS: Condomínio-parque integrado a grande área verde, infraestrutura completa, plantas funcionais, localização estratégica na Zona Norte, financiamento facilitado, alto potencial de valorização.
+OBJEÇÕES E RESPOSTAS:
+- "Apartamento pequeno" → Plantas pensadas para aproveitar bem o espaço + condomínio oferece grande área de lazer para ampliar conforto.
+- "Prefiro algo maior" → Existem opções de 2 e 3 dormitórios e unidades garden com mais espaço.
+- "Não conheço a região" → Projeto de revitalização da área + proximidade com grandes avenidas e serviços.
+ARGUMENTOS DE VENDA: Primeiro condomínio-parque da região, morar perto de tudo com lazer completo, oportunidade para sair do aluguel, financiamento facilitado, excelente custo-benefício.
+ESTRATÉGIA DE CONVERSÃO: 1) Entender perfil do cliente. 2) Explicar conceito de condomínio-parque. 3) Mostrar diferenciais de lazer e localização. 4) Convidar para conhecer o decorado. Pergunta final: "Faz sentido você conhecer o projeto pessoalmente? Prefere durante a semana ou no fim de semana?"
+OBJETIVO: Converter leads em visitas ao stand ou decorado. A visita aumenta muito a conversão porque o cliente visualiza o conceito e a estrutura de lazer.`,
 
   "Melnick Day": `EMPREENDIMENTO: Melnick Day
 CONSTRUTORA: Melnick (uma das maiores construtoras do RS, referência em qualidade)
