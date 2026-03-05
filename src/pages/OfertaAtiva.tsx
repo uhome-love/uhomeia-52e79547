@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, Upload, Settings, FileText } from "lucide-react";
+import { Phone, Upload, Settings, FileText, Activity } from "lucide-react";
 import ImportListPanel from "@/components/oferta-ativa/ImportListPanel";
 import CampaignManager from "@/components/oferta-ativa/CampaignManager";
 import TemplateManager from "@/components/oferta-ativa/TemplateManager";
+import PerformanceLivePanel from "@/components/oferta-ativa/PerformanceLivePanel";
 
 export default function OfertaAtiva() {
-  const [activeTab, setActiveTab] = useState("campanhas");
+  const [activeTab, setActiveTab] = useState("performance");
 
   return (
     <div className="space-y-4">
@@ -21,7 +22,10 @@ export default function OfertaAtiva() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 h-auto">
+        <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsTrigger value="performance" className="gap-1.5 text-xs">
+            <Activity className="h-3.5 w-3.5" /> Live
+          </TabsTrigger>
           <TabsTrigger value="importar" className="gap-1.5 text-xs">
             <Upload className="h-3.5 w-3.5" /> Importar
           </TabsTrigger>
@@ -33,6 +37,9 @@ export default function OfertaAtiva() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="performance">
+          <PerformanceLivePanel />
+        </TabsContent>
         <TabsContent value="importar">
           <ImportListPanel />
         </TabsContent>
