@@ -181,13 +181,18 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
   const handleAction = (canal: string) => {
     if (!lead) return;
-    setActionTaken(canal);
 
     if (canal === "ligacao") {
+      // 2-step flow: just start the timer, NO modal
+      setActionTaken("ligacao");
       startTimer();
-      setTimeout(() => setShowModal(true), 300);
       return;
-    } else if (canal === "whatsapp" && lead.telefone) {
+    }
+
+    // For WhatsApp / Email: open external app then show modal
+    setActionTaken(canal);
+
+    if (canal === "whatsapp" && lead.telefone) {
       const phone = lead.telefone.replace(/\D/g, "");
       const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
       const template = templates.find(t => t.canal === "whatsapp" && t.tipo === "primeiro_contato");
@@ -202,6 +207,24 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     }
 
     setTimeout(() => setShowModal(true), 500);
+  };
+
+  /** Called when user clicks "Finalizar Ligação" */
+  const handleFinalizarLigacao = () => {
+    stopTimer();
+    setShowModal(true);
+  };
+
+  /** WhatsApp during active call — open without ending call */
+  const handleWhatsAppDuringCall = () => {
+    if (!lead?.telefone) return;
+    const phone = lead.telefone.replace(/\D/g, "");
+    const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
+    const template = templates.find(t => t.canal === "whatsapp" && t.tipo === "primeiro_contato");
+    const msg = template
+      ? template.conteudo.replace("{nome}", lead.nome).replace("{empreendimento}", lead.empreendimento || "")
+      : `Olá ${lead.nome}! Vi que você se interessou pelo ${lead.empreendimento || "nosso empreendimento"}. Podemos conversar?`;
+    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   const handleResultSubmit = async (resultado: string, feedback: string, visitaMarcada?: boolean) => {
@@ -452,7 +475,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                   toast("Lead pulado — avançando para o próximo", { duration: 1500 });
                 }
               }}
-              disabled={currentIndex >= fila.length - 1}
+              disabled={currentIndex >= fila.length - 1 || callActive}
             >
               <SkipForward className="h-3.5 w-3.5" /> Pular
             </Button>
@@ -543,12 +566,36 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                 </div>
               </div>
 
-              {/* Call Timer */}
+              {/* Call Timer — prominent during active call */}
               {callActive && (
-                <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 animate-pulse">
-                  <Timer className="h-4 w-4 text-emerald-600" />
-                  <span className="text-lg font-mono font-bold text-emerald-600">{formatTimer(callTimer)}</span>
-                  <span className="text-xs text-emerald-600">em ligação...</span>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-red-500/10 border-2 border-red-500/30">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                      </span>
+                      <span className="text-xs font-semibold text-red-500 uppercase tracking-wider">Em ligação</span>
+                    </div>
+                    <span className="text-2xl font-mono font-bold text-red-500">{formatTimer(callTimer)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs text-green-600 hover:bg-green-500/10"
+                      onClick={handleWhatsAppDuringCall}
+                    >
+                      <MessageCircle className="h-3.5 w-3.5 mr-1" /> WhatsApp
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs bg-red-600 hover:bg-red-700 text-white gap-1"
+                      onClick={handleFinalizarLigacao}
+                    >
+                      <Phone className="h-3.5 w-3.5 rotate-[135deg]" /> Finalizar Ligação
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -603,43 +650,55 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               {/* Attempt History */}
               {lead.tentativas_count > 0 && <AttemptHistory leadId={lead.id} />}
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-3 gap-2 pt-1">
-                <Button
-                  size="lg"
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 h-12 text-sm"
-                  onClick={() => handleAction("ligacao")}
-                  disabled={lockStatus !== "locked" || (!!actionTaken && !showModal)}
-                >
-                  <Phone className="h-4 w-4" /> {callActive ? formatTimer(callTimer) : "Ligar"}
-                </Button>
-                <Button
-                  size="lg"
-                  className="gap-1.5 bg-green-600 hover:bg-green-700 h-12 text-sm"
-                  onClick={() => handleAction("whatsapp")}
-                  disabled={lockStatus !== "locked" || (!!actionTaken && !showModal)}
-                >
-                  <MessageCircle className="h-4 w-4" /> WhatsApp
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="gap-1.5 h-12 text-sm"
-                  onClick={() => handleAction("email")}
-                  disabled={lockStatus !== "locked" || !lead.email || (!!actionTaken && !showModal)}
-                >
-                  <Mail className="h-4 w-4" /> E-mail
-                </Button>
-              </div>
+              {/* Action Buttons — 2-step flow for calls */}
+              {!callActive ? (
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <Button
+                    size="lg"
+                    className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 h-12 text-sm"
+                    onClick={() => handleAction("ligacao")}
+                    disabled={lockStatus !== "locked" || showModal}
+                  >
+                    <Phone className="h-4 w-4" /> Iniciar Ligação
+                  </Button>
+                  <Button
+                    size="lg"
+                    className="gap-1.5 bg-green-600 hover:bg-green-700 h-12 text-sm"
+                    onClick={() => handleAction("whatsapp")}
+                    disabled={lockStatus !== "locked" || showModal}
+                  >
+                    <MessageCircle className="h-4 w-4" /> WhatsApp
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-1.5 h-12 text-sm"
+                    onClick={() => handleAction("email")}
+                    disabled={lockStatus !== "locked" || !lead.email || showModal}
+                  >
+                    <Mail className="h-4 w-4" /> E-mail
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 pt-1">
+                  <Button
+                    size="lg"
+                    className="gap-2 bg-red-600 hover:bg-red-700 h-14 text-base text-white"
+                    onClick={handleFinalizarLigacao}
+                  >
+                    <Phone className="h-5 w-5 rotate-[135deg]" /> Finalizar Ligação · {formatTimer(callTimer)}
+                  </Button>
+                </div>
+              )}
 
-              {actionTaken && !showModal && (
+              {actionTaken && !showModal && !callActive && (
                 <div className="text-center text-xs text-muted-foreground animate-pulse">
                   Registre o resultado para continuar...
                 </div>
               )}
 
               {/* Next Lead Preview */}
-              {nextLead && (
+              {nextLead && !callActive && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/50 text-[10px] text-muted-foreground">
                   <ChevronRight className="h-3 w-3" />
                   <span>Próximo: <strong className="text-foreground">{nextLead.nome}</strong></span>
@@ -692,9 +751,10 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       {showModal && (
         <AttemptModal
           open={showModal}
-          onClose={() => { setShowModal(false); setActionTaken(null); }}
+          onClose={() => { setShowModal(false); setActionTaken(null); stopTimer(); }}
           onSubmit={handleResultSubmit}
           leadName={lead.nome}
+          callDuration={actionTaken === "ligacao" ? callTimer : undefined}
         />
       )}
     </div>
