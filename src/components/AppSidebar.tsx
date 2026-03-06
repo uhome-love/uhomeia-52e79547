@@ -157,11 +157,16 @@ export function AppSidebar() {
     </SidebarGroup>
   );
 
+  const configItems = [
+    { title: "Configurações", url: "/configuracoes", icon: Settings },
+  ];
+
   const groups = [
     { label: "Principal", items: homeItems },
     ...(gestorItems.length > 0 ? [{ label: "Gestão Comercial", items: gestorItems }] : []),
     ...(ceoItems.length > 0 ? [{ label: "Inteligência CEO", items: ceoItems }] : []),
     ...(adminItems.length > 0 ? [{ label: "Sistema", items: adminItems }] : []),
+    { label: "Conta", items: configItems },
   ];
 
   return (
