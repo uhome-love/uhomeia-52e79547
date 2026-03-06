@@ -58,10 +58,11 @@ export default function CheckpointGerente() {
 
       if (cp.status === "fechado") { setReminder(null); return; }
 
-      const { data: lines } = await supabase.from("checkpoint_lines").select("corretor_id, real_ligacoes, real_visitas_marcadas, real_visitas_realizadas, real_propostas").eq("checkpoint_id", cp.id);
+      const { data: lines } = await supabase.from("checkpoint_lines").select("corretor_id, real_ligacoes, real_leads, real_visitas_marcadas, real_visitas_realizadas, real_propostas, meta_ligacoes, meta_visitas_marcadas").eq("checkpoint_id", cp.id);
       
       const filledCorretors = new Set((lines || []).filter(l => 
-        l.real_ligacoes != null || l.real_visitas_marcadas != null || l.real_visitas_realizadas != null || l.real_propostas != null
+        l.real_ligacoes != null || l.real_leads != null || l.real_visitas_marcadas != null || l.real_visitas_realizadas != null || l.real_propostas != null
+        || (l.meta_ligacoes != null && l.meta_ligacoes > 0) || (l.meta_visitas_marcadas != null && l.meta_visitas_marcadas > 0)
       ).map(l => l.corretor_id));
 
       const pendentes = team.filter(t => !filledCorretors.has(t.id)).map(t => t.nome);
