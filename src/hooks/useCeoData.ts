@@ -168,12 +168,20 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
       if (p.situacao === "assinado") curr.assinado += Number(p.vgv || 0);
       pdnByGerente.set(p.gerente_id, curr);
 
-      // Also try to assign VGV to corretor by name match
+      // Also try to assign VGV + propostas to corretor by name match (flexible)
       if (p.corretor) {
+        const pdnName = p.corretor.toLowerCase().trim();
+        const pdnFirst = pdnName.split(" ")[0];
         for (const [, agg] of corretorAggMap) {
-          if (agg.corretor_nome === p.corretor && agg.gerente_id === p.gerente_id) {
-            if (p.situacao === "gerado") agg.real_vgv_gerado += Number(p.vgv || 0);
-            if (p.situacao === "assinado") agg.real_vgv_assinado += Number(p.vgv || 0);
+          if (agg.gerente_id !== p.gerente_id) continue;
+          const aggName = agg.corretor_nome.toLowerCase().trim();
+          const aggFirst = aggName.split(" ")[0];
+          // Match: exact, first-name, or partial contain
+          const isMatch = aggName === pdnName || aggFirst === pdnFirst || aggName.includes(pdnName) || pdnName.includes(aggFirst);
+          if (isMatch) {
+            if (p.situacao === "gerado") { agg.real_vgv_gerado += Number(p.vgv || 0); agg.real_propostas++; }
+            if (p.situacao === "assinado") { agg.real_vgv_assinado += Number(p.vgv || 0); agg.real_propostas++; }
+            break; // Only match first found to avoid double-counting
           }
         }
       }

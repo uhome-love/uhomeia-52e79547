@@ -3,19 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCeoData, pct, type CeoPeriod } from "@/hooks/useCeoData";
-import { useMarketing, getCanalLabel } from "@/hooks/useMarketing";
 import { useSmartAlerts } from "@/hooks/useSmartAlerts";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, Users, Trophy, Target, BarChart3, AlertTriangle,
-  CalendarDays, RotateCcw, ArrowRight, Building2, FileText, Eye, DollarSign,
-  Megaphone, Flame, ArrowUpRight, Bell, AlertCircle, Info, ClipboardCheck,
+  TrendingUp, Users, Trophy, AlertTriangle,
+  CalendarDays, ArrowRight, Flame, ArrowUpRight, Bell, AlertCircle, Info, ClipboardCheck,
+  MessageSquare, Calendar, CheckCircle, Eye,
 } from "lucide-react";
 const homiMascot = "/images/homi-mascot-opt.png";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import IaCoreAction from "@/components/IaCoreAction";
+import { Button } from "@/components/ui/button";
 
 type Period = "dia" | "semana" | "mes";
 const periodLabels: Record<Period, string> = { dia: "Hoje", semana: "Esta Semana", mes: "Este Mês" };
@@ -64,7 +64,7 @@ export default function HomeDashboard() {
 
   // Corretor should never see Centro de Comando — redirect to /corretor
   useEffect(() => {
-    if (roleLoading) return; // Wait for roles to load before deciding
+    if (roleLoading) return;
     if (!isAdmin && !isGestor) {
       navigate("/corretor", { replace: true });
     }
@@ -72,7 +72,6 @@ export default function HomeDashboard() {
 
   const filterGerenteId = isAdmin ? undefined : user?.id;
   const { gerentes, companyTotals, allCorretores, loading, reload } = useCeoData(period as CeoPeriod, undefined, undefined, filterGerenteId);
-  const { channelStats, totals: mktTotals } = useMarketing();
   const { alerts: smartAlerts } = useSmartAlerts();
 
   // PDN full stats
@@ -82,11 +81,11 @@ export default function HomeDashboard() {
     total_gerados: 0, total_assinados: 0, total_caidos: 0,
     vgv_gerado: 0, vgv_assinado: 0, vgv_caido: 0,
   });
-  // Lead recovery
-  const [recovery, setRecovery] = useState({ reativados: 0, respondidos: 0, visitas: 0 });
   // Checkpoint daily stats + OA realtime
   const [cpStats, setCpStats] = useState({ total_checkpoints: 0, total_corretores: 0, presentes: 0, ausentes: 0, oa_ligacoes: 0, oa_aproveitados: 0, oa_visitas_marcadas: 0 });
   const [oaPeriodStats, setOaPeriodStats] = useState({ ligacoes: 0, visitas_marcadas: 0 });
+  // Agenda de Visitas stats
+  const [visitasStats, setVisitasStats] = useState({ marcadas: 0, confirmadas: 0, realizadas: 0, canceladas: 0, noShow: 0, total: 0 });
 
   useEffect(() => {
     if (!user) return;
@@ -194,16 +193,41 @@ export default function HomeDashboard() {
 
   useEffect(() => { fetchOaPeriodStats(); }, [fetchOaPeriodStats]);
 
+  // Fetch Agenda de Visitas stats
+  const fetchVisitasStats = useCallback(async () => {
+    if (!user) return;
+    const { startDate, endDate } = getPeriodRange(period);
+
+    let q = supabase
+      .from("visitas")
+      .select("status")
+      .gte("data_visita", startDate)
+      .lte("data_visita", endDate);
+
+    if (!isAdmin) q = q.eq("gerente_id", user.id);
+
+    const { data } = await q;
+    if (!data) return;
+
+    setVisitasStats({
+      total: data.length,
+      marcadas: data.filter(v => v.status === "marcada").length,
+      confirmadas: data.filter(v => v.status === "confirmada").length,
+      realizadas: data.filter(v => v.status === "realizada").length,
+      canceladas: data.filter(v => v.status === "cancelada").length,
+      noShow: data.filter(v => v.status === "no_show").length,
+    });
+  }, [user, isAdmin, period]);
+
+  useEffect(() => { fetchVisitasStats(); }, [fetchVisitasStats]);
+
   // Fetch checkpoint daily summary
   const fetchCheckpoint = useCallback(async () => {
     if (!user) return;
     const today = format(new Date(), "yyyy-MM-dd");
-
-    // Explicit BRT (-03:00) day boundaries to match server-side timezone
     const startOfToday = `${today}T00:00:00-03:00`;
     const endOfToday = `${today}T23:59:59.999-03:00`;
 
-    // Checkpoint data
     let cpQ = supabase.from("checkpoints").select("id").eq("data", today);
     if (!isAdmin) cpQ = cpQ.eq("gerente_id", user.id);
     const { data: cps } = await cpQ;
@@ -216,14 +240,12 @@ export default function HomeDashboard() {
       presentes = (lines || []).filter(l => l.meta_presenca !== "falta").length;
     }
 
-    // OA tentativas do dia — filter by team for gestor
     let oaQuery = supabase
       .from("oferta_ativa_tentativas")
       .select("resultado, corretor_id")
       .gte("created_at", startOfToday)
       .lte("created_at", endOfToday);
 
-    // If gestor (not admin), restrict to team members only
     if (!isAdmin) {
       const { data: teamMembers } = await supabase
         .from("team_members")
@@ -234,7 +256,6 @@ export default function HomeDashboard() {
       if (teamUserIds.length > 0) {
         oaQuery = oaQuery.in("corretor_id", teamUserIds);
       } else {
-        // No team members — zero out OA stats
         setCpStats({
           total_checkpoints: cps?.length || 0,
           total_corretores: total,
@@ -249,11 +270,9 @@ export default function HomeDashboard() {
     }
 
     const { data: oaTentativas } = await oaQuery;
-
     const oa_ligacoes = (oaTentativas || []).length;
     const oa_aproveitados = (oaTentativas || []).filter(t => t.resultado === "com_interesse").length;
 
-    // Visitas marcadas from visitas table
     const todayStr = format(new Date(), "yyyy-MM-dd");
     let vmQuery = supabase
       .from("visitas")
@@ -277,12 +296,12 @@ export default function HomeDashboard() {
 
   useEffect(() => { fetchCheckpoint(); }, [fetchCheckpoint]);
 
-  // Realtime: auto-refresh with debounce to prevent event storms
+  // Realtime: auto-refresh with debounce
   useEffect(() => {
     let pdnTimer: ReturnType<typeof setTimeout> | null = null;
     let cpTimer: ReturnType<typeof setTimeout> | null = null;
     const DEBOUNCE_PDN_MS = 1500;
-    const DEBOUNCE_CP_MS = 500; // Faster for checkpoint — gestor expects near-instant feedback
+    const DEBOUNCE_CP_MS = 500;
 
     const debouncedPdn = () => {
       if (pdnTimer) clearTimeout(pdnTimer);
@@ -290,7 +309,7 @@ export default function HomeDashboard() {
     };
     const debouncedCp = () => {
       if (cpTimer) clearTimeout(cpTimer);
-      cpTimer = setTimeout(() => { reload(); fetchCheckpoint(); fetchOaPeriodStats(); }, DEBOUNCE_CP_MS);
+      cpTimer = setTimeout(() => { reload(); fetchCheckpoint(); fetchOaPeriodStats(); fetchVisitasStats(); }, DEBOUNCE_CP_MS);
     };
 
     const pdnChannel = supabase
@@ -303,6 +322,7 @@ export default function HomeDashboard() {
       .on("postgres_changes", { event: "*", schema: "public", table: "checkpoint_lines" }, debouncedCp)
       .on("postgres_changes", { event: "*", schema: "public", table: "checkpoints" }, debouncedCp)
       .on("postgres_changes", { event: "*", schema: "public", table: "oferta_ativa_tentativas" }, debouncedCp)
+      .on("postgres_changes", { event: "*", schema: "public", table: "visitas" }, debouncedCp)
       .subscribe();
 
     return () => {
@@ -311,22 +331,7 @@ export default function HomeDashboard() {
       supabase.removeChannel(pdnChannel);
       supabase.removeChannel(cpChannel);
     };
-  }, [fetchPdn, fetchCheckpoint, fetchOaPeriodStats, reload]);
-
-  // Fetch lead recovery
-  useEffect(() => {
-    if (!user) return;
-    const fetchRecovery = async () => {
-      const { data } = await supabase.from("leads").select("status_recuperacao, status").eq("user_id", user.id);
-      if (!data) return;
-      setRecovery({
-        reativados: data.filter(d => d.status_recuperacao === "contatado" || d.status_recuperacao === "reativado").length,
-        respondidos: data.filter(d => d.status === "respondido" || d.status === "reativado").length,
-        visitas: data.filter(d => d.status === "visita_agendada").length,
-      });
-    };
-    fetchRecovery();
-  }, [user]);
+  }, [fetchPdn, fetchCheckpoint, fetchOaPeriodStats, fetchVisitasStats, reload]);
 
   const sortedTimes = useMemo(() =>
     [...gerentes].sort((a, b) => b.totals.real_vgv_assinado - a.totals.real_vgv_assinado),
@@ -341,26 +346,25 @@ export default function HomeDashboard() {
   // IA Alerts
   const alerts = useMemo(() => {
     const a: string[] = [];
-    const avgCpl = mktTotals.leads > 0 ? mktTotals.investimento / mktTotals.leads : 0;
-    channelStats.forEach(ch => {
-      if (ch.cpl && ch.cpl > avgCpl * 1.5) a.push(`CPL elevado em ${getCanalLabel(ch.canal)}: R$ ${ch.cpl.toFixed(0)} (média R$ ${avgCpl.toFixed(0)})`);
-    });
     gerentes.forEach(g => {
       if (g.totals.real_visitas_realizadas > 10 && g.totals.real_propostas < 2) {
         a.push(`Equipe ${g.gerente_nome}: muitas visitas (${g.totals.real_visitas_realizadas}) e poucas propostas (${g.totals.real_propostas})`);
       }
     });
-    if (recovery.reativados > 0 && recovery.respondidos === 0) a.push("Leads reativados sem resposta — revisar abordagem");
+    if (visitasStats.noShow > 2) a.push(`${visitasStats.noShow} no-shows na agenda — revisar confirmações`);
+    if (visitasStats.canceladas > 3) a.push(`${visitasStats.canceladas} visitas canceladas — investigar motivos`);
     return a.slice(0, 5);
-  }, [channelStats, mktTotals, gerentes, recovery]);
+  }, [gerentes, visitasStats]);
 
   const iaContext = useMemo(() => {
-    const funil = `Funil: Ligações OA ${oaPeriodStats.ligacoes}, Visitas Marcadas OA ${oaPeriodStats.visitas_marcadas}, Visitas Realizadas PDN ${pdnStats.total_visitas + pdnStats.total_gerados + pdnStats.total_assinados}, Propostas PDN ${pdnStats.total_gerados + pdnStats.total_assinados}, VGV Assinado R$ ${pdnStats.vgv_assinado.toLocaleString("pt-BR")}`;
-    const mkt = channelStats.map(c => `${getCanalLabel(c.canal)}: Inv R$ ${c.investimento.toLocaleString("pt-BR")}, Leads ${c.leads}, CPL R$ ${c.cpl?.toFixed(0) || "-"}`).join("; ");
+    const funil = `Funil: Ligações OA ${oaPeriodStats.ligacoes}, Visitas Marcadas ${oaPeriodStats.visitas_marcadas}, Visitas Realizadas PDN ${pdnStats.total_visitas + pdnStats.total_gerados + pdnStats.total_assinados}, Propostas PDN ${pdnStats.total_gerados + pdnStats.total_assinados}, VGV Assinado R$ ${pdnStats.vgv_assinado.toLocaleString("pt-BR")}`;
     const teams = sortedTimes.map((t, i) => `${i + 1}. Equipe ${t.gerente_nome}: VGV R$ ${t.totals.real_vgv_assinado.toLocaleString("pt-BR")}, Propostas ${t.totals.real_propostas}`).join("; ");
     const pdnCtx = `PDN: ${pdnStats.total_visitas} negócios, ${pdnStats.quente} quentes, ${pdnStats.total_gerados} gerados (R$ ${pdnStats.vgv_gerado.toLocaleString("pt-BR")}), ${pdnStats.total_assinados} assinados (R$ ${pdnStats.vgv_assinado.toLocaleString("pt-BR")}), ${pdnStats.total_caidos} caídos (R$ ${pdnStats.vgv_caido.toLocaleString("pt-BR")})`;
-    return `Período: ${periodLabels[period]}\n${funil}\n${pdnCtx}\nMarketing: ${mkt}\nTimes: ${teams}\nRecuperação: ${recovery.reativados} reativados, ${recovery.respondidos} respostas`;
-  }, [oaPeriodStats, channelStats, sortedTimes, period, pdnStats, recovery]);
+    const agendaCtx = `Agenda: ${visitasStats.total} visitas, ${visitasStats.marcadas} marcadas, ${visitasStats.confirmadas} confirmadas, ${visitasStats.realizadas} realizadas, ${visitasStats.canceladas} canceladas, ${visitasStats.noShow} no-shows`;
+    return `Período: ${periodLabels[period]}\n${funil}\n${pdnCtx}\n${agendaCtx}\nTimes: ${teams}`;
+  }, [oaPeriodStats, sortedTimes, period, pdnStats, visitasStats]);
+
+  const visitasRealizadasPct = visitasStats.total > 0 ? Math.round((visitasStats.realizadas / visitasStats.total) * 100) : 0;
 
   const card = "rounded-xl border border-border bg-card shadow-card";
 
@@ -432,9 +436,9 @@ export default function HomeDashboard() {
               </div>
             </motion.div>
 
-            {/* 3. Ranking Corretores */}
+            {/* 3. Top Corretores (VGV) */}
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={card}>
-              <SectionHeader icon={Trophy} title="Top Corretores" action={{ label: "Ver ranking", onClick: () => navigate("/ranking") }} />
+              <SectionHeader icon={Trophy} title="Top Corretores — VGV" action={{ label: "Ver ranking", onClick: () => navigate("/ranking") }} />
               <div className="divide-y divide-border">
                 {topCorretores.map((c, i) => (
                   <div key={c.corretor_id} className="flex items-center gap-3 px-4 py-2.5">
@@ -445,7 +449,7 @@ export default function HomeDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-display font-bold">R$ {c.real_vgv_assinado.toLocaleString("pt-BR")}</p>
-                      <p className="text-[10px] text-muted-foreground">Score {c.score}</p>
+                      <p className="text-[10px] text-muted-foreground">{c.real_propostas || 0} propostas</p>
                     </div>
                   </div>
                 ))}
@@ -454,32 +458,9 @@ export default function HomeDashboard() {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-            {/* 4. Marketing */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 4. PDN — Negócios */}
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className={card}>
-              <SectionHeader icon={Megaphone} title="Marketing" action={isAdmin ? { label: "Ver detalhes", onClick: () => navigate("/marketing") } : undefined} />
-              <div className="p-4 space-y-3">
-                <div className="grid grid-cols-3 gap-2">
-                  <MiniStat label="Investimento" value={`R$ ${(mktTotals.investimento / 1000).toFixed(0)}k`} />
-                  <MiniStat label="Leads" value={`${mktTotals.leads}`} />
-                  <MiniStat label="CPL" value={mktTotals.leads > 0 ? `R$ ${(mktTotals.investimento / mktTotals.leads).toFixed(0)}` : "—"} />
-                </div>
-                <div className="divide-y divide-border/50">
-                  {channelStats.slice(0, 4).map(ch => (
-                    <div key={ch.canal} className="flex items-center justify-between py-1.5 text-xs">
-                      <span className="text-muted-foreground">{getCanalLabel(ch.canal)}</span>
-                      <div className="flex items-center gap-3">
-                        <span>{ch.leads} leads</span>
-                        <span className="font-semibold">CPL R$ {ch.cpl?.toFixed(0) || "—"}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* 5. Negócios Quentes */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={card}>
               <SectionHeader icon={Flame} title="PDN — Negócios" action={{ label: "Ver PDN", onClick: () => navigate("/pdn") }} />
               <div className="p-4 space-y-2">
                 <div className="grid grid-cols-3 gap-2 mb-3">
@@ -529,18 +510,42 @@ export default function HomeDashboard() {
               </div>
             </motion.div>
 
-            {/* 6. Recuperação de Leads */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className={card}>
-              <SectionHeader icon={RotateCcw} title="Recuperação de Leads" action={{ label: "Ver módulo", onClick: () => navigate("/gestao") }} />
+            {/* 5. Agenda de Visitas */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={card}>
+              <SectionHeader icon={Calendar} title="Agenda de Visitas" action={{ label: "Ver agenda", onClick: () => navigate("/visitas") }} />
               <div className="p-4 space-y-3">
-                <HotStat icon={RotateCcw} label="Leads reativados" value={recovery.reativados} color="text-primary" />
-                <HotStat icon={ArrowUpRight} label="Respostas recebidas" value={recovery.respondidos} color="text-success" />
-                <HotStat icon={CalendarDays} label="Visitas geradas" value={recovery.visitas} color="text-warning" />
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="text-center rounded-lg bg-primary/10 p-2">
+                    <p className="text-lg font-display font-bold text-primary">{visitasStats.total}</p>
+                    <p className="text-[10px] text-muted-foreground">Total</p>
+                  </div>
+                  <div className="text-center rounded-lg bg-success/10 p-2">
+                    <p className="text-lg font-display font-bold text-success">{visitasRealizadasPct}%</p>
+                    <p className="text-[10px] text-muted-foreground">Realização</p>
+                  </div>
+                </div>
+                <HotStat icon={CalendarDays} label="Marcadas" value={visitasStats.marcadas} color="text-primary" />
+                <HotStat icon={CheckCircle} label="Confirmadas" value={visitasStats.confirmadas} color="text-success" />
+                <HotStat icon={Eye} label="Realizadas" value={visitasStats.realizadas} color="text-success" />
+                {visitasStats.canceladas > 0 && (
+                  <HotStat icon={AlertTriangle} label="Canceladas" value={visitasStats.canceladas} color="text-destructive" />
+                )}
+                {visitasStats.noShow > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">No-show</p>
+                    </div>
+                    <p className="text-lg font-display font-bold text-destructive">{visitasStats.noShow}</p>
+                  </div>
+                )}
               </div>
             </motion.div>
 
-            {/* Checkpoint do Dia */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className={card}>
+            {/* 6. Checkpoint Hoje */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className={card}>
               <SectionHeader icon={ClipboardCheck} title="Checkpoint Hoje" action={{ label: "Ver checkpoint", onClick: () => navigate("/checkpoint") }} />
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-2 mb-2">
@@ -565,12 +570,8 @@ export default function HomeDashboard() {
                     <span className="font-bold text-success">{cpStats.oa_aproveitados}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Ligações (checkpoint)</span>
-                    <span className="font-bold">{companyTotals.real_ligacoes}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Propostas (checkpoint)</span>
-                    <span className="font-bold">{companyTotals.real_propostas}</span>
+                    <span className="text-muted-foreground">Visitas marcadas (hoje)</span>
+                    <span className="font-bold">{cpStats.oa_visitas_marcadas}</span>
                   </div>
                 </div>
               </div>
@@ -608,17 +609,22 @@ export default function HomeDashboard() {
             </motion.div>
           )}
 
-          {/* 8. Análise IA do Dia */}
+          {/* 8. Homi Gerencial — Análise IA */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className={card}>
             <div className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <img src={homiMascot} alt="Homi" className="h-6 w-6 object-contain" />
-                <h3 className="font-display font-semibold text-sm">Homi — Análise do Dia</h3>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <img src={homiMascot} alt="Homi" className="h-6 w-6 object-contain" />
+                  <h3 className="font-display font-semibold text-sm">Homi Gerencial — Análise do Dia</h3>
+                </div>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => navigate("/homi-gerencial")}>
+                  <MessageSquare className="h-3.5 w-3.5" /> Abrir Chat
+                </Button>
               </div>
               <IaCoreAction
                 label="Gerar Análise do Dia"
                 module="centro_comando"
-                prompt={`Analise os dados do Centro de Comando da Uhome e gere um resumo estratégico do dia:\n\n${iaContext}\n\nInclua: performance da equipe, campanhas de marketing, principais oportunidades, sugestões de ação prioritárias.`}
+                prompt={`Analise os dados do Centro de Comando da Uhome e gere um resumo estratégico do dia:\n\n${iaContext}\n\nInclua: performance da equipe, agenda de visitas, principais oportunidades, sugestões de ação prioritárias.`}
               />
             </div>
           </motion.div>
@@ -666,15 +672,6 @@ function MetricCard({ label, value, meta, highlight, sub }: {
         </p>
       )}
       {sub && <p className="text-[9px] text-muted-foreground mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="text-center">
-      <p className="text-[10px] text-muted-foreground">{label}</p>
-      <p className="text-sm font-display font-bold text-foreground">{value}</p>
     </div>
   );
 }
