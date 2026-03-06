@@ -141,6 +141,7 @@ export default function HomeDashboard() {
           ausentes: total - presentes,
           oa_ligacoes: 0,
           oa_aproveitados: 0,
+          oa_visitas_marcadas: 0,
         });
         return;
       }
