@@ -81,7 +81,7 @@ export function useVisitas(filters?: {
       let q = supabase
         .from("visitas")
         .select("*")
-        .order("data_visita", { ascending: false })
+        .order("data_visita", { ascending: true })
         .order("hora_visita", { ascending: true });
 
       if (filters?.status) q = q.eq("status", filters.status);
