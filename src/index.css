@@ -162,33 +162,10 @@
 
   /* Enhanced card with hover */
   .card-interactive {
-    @apply rounded-xl border border-border/60 bg-card shadow-card transition-all duration-300 ease-out;
+    @apply rounded-xl border border-border bg-card shadow-card transition-all duration-300 ease-out;
   }
   .card-interactive:hover {
     box-shadow: var(--shadow-card-hover);
     @apply border-primary/20 -translate-y-0.5;
-  }
-
-  /* Premium gradient border card */
-  .card-gradient {
-    @apply relative rounded-xl overflow-hidden;
-    background: linear-gradient(135deg, hsl(229 100% 64% / 0.12), hsl(229 100% 64% / 0.03), hsl(260 70% 55% / 0.06));
-    padding: 1px;
-  }
-  .card-gradient > * {
-    @apply rounded-xl bg-card;
-  }
-
-  /* Icon container with subtle glow */
-  .icon-glow {
-    @apply flex items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-200;
-  }
-  .icon-glow:hover {
-    @apply bg-primary/15 shadow-[0_0_12px_hsl(229,100%,64%/0.15)];
-  }
-
-  /* Page header gradient */
-  .page-header-gradient {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--accent)) 100%);
   }
 }

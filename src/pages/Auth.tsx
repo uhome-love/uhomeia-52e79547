@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Mail, Lock, User, Loader2, ArrowRight } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,10 +80,9 @@ function Particles() {
 export default function Auth() {
   const { user, loading, signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState(() => localStorage.getItem("uhome_remember_email") || "");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
-  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("uhome_remember_email"));
   const [submitting, setSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
@@ -114,13 +112,6 @@ export default function Auth() {
             toast.error("Confirme seu email antes de entrar. Verifique sua caixa de entrada.");
           } else {
             toast.error(error.message || "Erro ao entrar.");
-          }
-        } else {
-          // Save or clear remembered email
-          if (rememberMe) {
-            localStorage.setItem("uhome_remember_email", email);
-          } else {
-            localStorage.removeItem("uhome_remember_email");
           }
         }
       } else {
@@ -255,21 +246,6 @@ export default function Auth() {
                     required
                   />
                 </div>
-
-                {/* Remember me */}
-                {isLogin && (
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(v) => setRememberMe(!!v)}
-                      className="border-white/20 data-[state=checked]:bg-[hsl(229,100%,64%)] data-[state=checked]:border-[hsl(229,100%,64%)]"
-                    />
-                    <label htmlFor="remember" className="text-xs text-white/40 cursor-pointer select-none">
-                      Lembrar meu e-mail
-                    </label>
-                  </div>
-                )}
 
                 {/* Submit + Forgot */}
                 <div className="flex items-center gap-3">
