@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import {
   TrendingUp, Users, Trophy, AlertTriangle,
   CalendarDays, ArrowRight, Flame, ArrowUpRight, Bell, AlertCircle, Info, ClipboardCheck,
-  MessageSquare, Calendar, CheckCircle, Eye,
+  MessageSquare, Calendar, CheckCircle, Eye, RefreshCw,
 } from "lucide-react";
 const homiMascot = "/images/homi-mascot-opt.png";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -296,41 +296,12 @@ export default function HomeDashboard() {
 
   useEffect(() => { fetchCheckpoint(); }, [fetchCheckpoint]);
 
-  // Realtime: auto-refresh with debounce
-  useEffect(() => {
-    let pdnTimer: ReturnType<typeof setTimeout> | null = null;
-    let cpTimer: ReturnType<typeof setTimeout> | null = null;
-    const DEBOUNCE_PDN_MS = 1500;
-    const DEBOUNCE_CP_MS = 500;
-
-    const debouncedPdn = () => {
-      if (pdnTimer) clearTimeout(pdnTimer);
-      pdnTimer = setTimeout(() => { fetchPdn(); reload(); }, DEBOUNCE_PDN_MS);
-    };
-    const debouncedCp = () => {
-      if (cpTimer) clearTimeout(cpTimer);
-      cpTimer = setTimeout(() => { reload(); fetchCheckpoint(); fetchOaPeriodStats(); fetchVisitasStats(); }, DEBOUNCE_CP_MS);
-    };
-
-    const pdnChannel = supabase
-      .channel("home-pdn-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "pdn_entries" }, debouncedPdn)
-      .subscribe();
-
-    const cpChannel = supabase
-      .channel("home-checkpoint-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "checkpoint_lines" }, debouncedCp)
-      .on("postgres_changes", { event: "*", schema: "public", table: "checkpoints" }, debouncedCp)
-      .on("postgres_changes", { event: "*", schema: "public", table: "oferta_ativa_tentativas" }, debouncedCp)
-      .on("postgres_changes", { event: "*", schema: "public", table: "visitas" }, debouncedCp)
-      .subscribe();
-
-    return () => {
-      if (pdnTimer) clearTimeout(pdnTimer);
-      if (cpTimer) clearTimeout(cpTimer);
-      supabase.removeChannel(pdnChannel);
-      supabase.removeChannel(cpChannel);
-    };
+  // Manual refresh handler
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchPdn(), fetchCheckpoint(), fetchOaPeriodStats(), fetchVisitasStats(), reload()]);
+    setRefreshing(false);
   }, [fetchPdn, fetchCheckpoint, fetchOaPeriodStats, fetchVisitasStats, reload]);
 
   const sortedTimes = useMemo(() =>
@@ -386,14 +357,19 @@ export default function HomeDashboard() {
             {isAdmin ? "Visão consolidada da empresa" : "Visão da sua equipe"} • {periodLabels[period]}
           </p>
         </motion.div>
-        <Select value={period} onValueChange={v => setPeriod(v as Period)}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(periodLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleRefresh} disabled={refreshing} title="Atualizar dados">
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          </Button>
+          <Select value={period} onValueChange={v => setPeriod(v as Period)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(periodLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {loading ? (
