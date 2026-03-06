@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, CheckCircle, Trophy, Target, Flame, MessageCircle, Mail, ArrowRight, Lock, LogOut, Sparkles, Star, Zap, TrendingUp, ChevronDown } from "lucide-react";
+import { Phone, CheckCircle, Trophy, Target, Flame, MessageCircle, Mail, ArrowRight, Lock, LogOut, Sparkles, Star, Zap, TrendingUp, ChevronDown, CalendarCheck } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -334,11 +334,12 @@ export default function CorretorDashboard() {
 
           {/* Stats Grid */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {[
                 { label: "Ligações", value: progress.ligacoes, icon: Phone, color: "text-emerald-600", bgColor: "bg-emerald-500/10" },
                 { label: "WhatsApps", value: progress.whatsapps, icon: MessageCircle, color: "text-green-600", bgColor: "bg-green-500/10" },
                 { label: "E-mails", value: progress.emails, icon: Mail, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+                { label: "Visitas Marcadas", value: `${progress.visitasMarcadas}/${progress.metaVisitas}`, icon: CalendarCheck, color: "text-amber-600", bgColor: "bg-amber-500/10" },
                 { label: "Taxa Aprov.", value: `${progress.taxaAproveitamento}%`, icon: TrendingUp, color: "text-primary", bgColor: "bg-primary/10" },
               ].map((item) => (
                 <Card key={item.label} className="overflow-hidden">

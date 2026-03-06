@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Phone, MessageCircle, Mail, Trophy, CheckCircle, Zap, Bot } from "lucide-react";
+import { Phone, MessageCircle, Mail, Trophy, CheckCircle, Zap, Bot, CalendarCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -66,11 +66,12 @@ export default function CorretorHome() {
 
       {/* Performance Cards */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
             { label: "Ligações", value: progress.ligacoes, icon: Phone, color: "text-emerald-500", bg: "bg-emerald-500/10" },
             { label: "WhatsApps", value: progress.whatsapps, icon: MessageCircle, color: "text-green-500", bg: "bg-green-500/10" },
             { label: "E-mails", value: progress.emails, icon: Mail, color: "text-primary", bg: "bg-primary/10" },
+            { label: "Visitas Marcadas", value: `${progress.visitasMarcadas}/${progress.metaVisitas}`, icon: CalendarCheck, color: "text-amber-500", bg: "bg-amber-500/10" },
             { label: "Taxa Aprov.", value: `${progress.taxaAproveitamento}%`, icon: CheckCircle, color: "text-primary", bg: "bg-primary/10" },
           ].map((item) => (
             <Card key={item.label} className="border-border/60">
