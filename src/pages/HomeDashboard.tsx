@@ -412,7 +412,7 @@ export default function HomeDashboard() {
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 p-4">
               <MetricCard label="Ligações OA" value={oaPeriodStats.ligacoes} />
               <MetricCard label="Visitas Marcadas" value={oaPeriodStats.visitas_marcadas} />
-              <MetricCard label="Visitas Realizadas" value={pdnStats.total_gerados + pdnStats.total_assinados} sub="PDN: gerado + assinado" />
+              <MetricCard label="Visitas Realizadas" value={pdnStats.total_visitas + pdnStats.total_gerados + pdnStats.total_assinados} sub="PDN: visita + gerado + assinado" />
               <MetricCard label="Propostas (PDN)" value={pdnStats.total_gerados + pdnStats.total_assinados} sub="PDN: gerado + assinado" />
               <MetricCard label="VGV Gerado" value={`R$ ${(pdnStats.vgv_gerado / 1000).toFixed(0)}k`} />
               <MetricCard label="VGV Assinado" value={`R$ ${(pdnStats.vgv_assinado / 1000).toFixed(0)}k`} highlight />
