@@ -80,9 +80,10 @@ function Particles() {
 export default function Auth() {
   const { user, loading, signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("uhome_remember_email") || "");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("uhome_remember_email"));
   const [submitting, setSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
