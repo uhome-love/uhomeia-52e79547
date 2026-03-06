@@ -277,6 +277,11 @@ export default function CorretorDashboard() {
             </Card>
           </motion.div>
 
+          {/* Quick Links */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
+            <QuickLinksGrid />
+          </motion.div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Daily Goals — SHARED COMPONENT (same as in Discagem) */}
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="lg:col-span-2">
