@@ -64,7 +64,8 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <div className="overflow-x-auto -mx-4 px-4 pb-4">
+      <div className="flex gap-3 min-w-max">
       {KANBAN_COLUMNS.map(col => {
         const items = visitas.filter(v => v.status === col);
         const isOver = dragOverCol === col;
