@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useCeoData, pct, type CeoPeriod } from "@/hooks/useCeoData";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,12 +34,29 @@ const medalBg = [
 ];
 
 export default function RankingComercialPanel() {
-  const { isAdmin, isGestor } = useUserRole();
+  const { isAdmin, isGestor, isCorretor } = useUserRole();
   const { user } = useAuth();
   const [period, setPeriod] = useState<PeriodOption>("semana");
   const [metric, setMetric] = useState<RankMetric>("vgv_assinado");
+  const [corretorGerenteId, setCorretorGerenteId] = useState<string | undefined>();
 
-  const filterGerenteId = isAdmin ? undefined : user?.id;
+  // For corretores, resolve their gerente_id
+  useEffect(() => {
+    if (isCorretor && user?.id) {
+      supabase
+        .from("team_members")
+        .select("gerente_id")
+        .eq("user_id", user.id)
+        .eq("status", "ativo")
+        .limit(1)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setCorretorGerenteId(data.gerente_id);
+        });
+    }
+  }, [isCorretor, user?.id]);
+
+  const filterGerenteId = isAdmin ? undefined : isCorretor ? corretorGerenteId : user?.id;
   const { gerentes, allCorretores, loading } = useCeoData(period as CeoPeriod, undefined, undefined, filterGerenteId);
 
   // Sort corretores by selected metric
@@ -145,7 +163,7 @@ export default function RankingComercialPanel() {
         <div className="text-center py-16 text-muted-foreground">Carregando rankings...</div>
       ) : (
         <>
-          {isAdmin ? (
+           {isAdmin ? (
             <Tabs defaultValue="times" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="times" className="gap-1.5">
@@ -161,25 +179,27 @@ export default function RankingComercialPanel() {
               </TabsContent>
 
               <TabsContent value="corretores">
-                <RankingCorretoresView corretores={sortedCorretores} getValue={getCorretorValue} metric={metric} getScoreColor={getScoreColor} showEquipe />
+                <RankingCorretoresView corretores={sortedCorretores} getValue={getCorretorValue} metric={metric} getScoreColor={getScoreColor} showEquipe highlightUserId={user?.id} />
               </TabsContent>
             </Tabs>
           ) : (
-            <RankingCorretoresView corretores={sortedCorretores} getValue={getCorretorValue} metric={metric} getScoreColor={getScoreColor} showEquipe={false} />
+            <RankingCorretoresView corretores={sortedCorretores} getValue={getCorretorValue} metric={metric} getScoreColor={getScoreColor} showEquipe={false} highlightUserId={user?.id} />
           )}
 
-          {/* IA Analysis */}
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <h3 className="font-display font-semibold text-sm">Análise da IA</h3>
+          {/* IA Analysis - only for gestor/admin */}
+          {(isAdmin || isGestor) && (
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h3 className="font-display font-semibold text-sm">Análise da IA</h3>
+              </div>
+              <IaCoreAction
+                label="Gerar Diagnóstico de Performance"
+                module="ranking_comercial"
+                prompt={`Analise o ranking comercial e gere um diagnóstico completo:\n\n${iaContext}\n\nInclua: corretores em destaque, corretores que precisam melhorar, sugestões de ação para os gerentes.`}
+              />
             </div>
-            <IaCoreAction
-              label="Gerar Diagnóstico de Performance"
-              module="ranking_comercial"
-              prompt={`Analise o ranking comercial e gere um diagnóstico completo:\n\n${iaContext}\n\nInclua: corretores em destaque, corretores que precisam melhorar, sugestões de ação para os gerentes.`}
-            />
-          </div>
+          )}
         </>
       )}
     </div>
@@ -232,12 +252,13 @@ function RankingTimesView({ times, getValue, metric }: {
   );
 }
 
-function RankingCorretoresView({ corretores, getValue, metric, getScoreColor, showEquipe }: {
+function RankingCorretoresView({ corretores, getValue, metric, getScoreColor, showEquipe, highlightUserId }: {
   corretores: ReturnType<typeof useCeoData>["allCorretores"];
   getValue: (c: any) => string;
   metric: RankMetric;
   getScoreColor: (score: number) => string;
   showEquipe: boolean;
+  highlightUserId?: string;
 }) {
   if (corretores.length === 0) return <EmptyState label="Sem dados de corretores para o período" />;
 
@@ -250,13 +271,15 @@ function RankingCorretoresView({ corretores, getValue, metric, getScoreColor, sh
       </div>
       <div className="divide-y divide-border">
         <AnimatePresence>
-          {corretores.map((c, i) => (
+          {corretores.map((c, i) => {
+            const isMe = highlightUserId && c.corretor_id === highlightUserId;
+            return (
             <motion.div
               key={c.corretor_id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.03 }}
-              className={`flex items-center gap-3 px-4 py-3 transition-colors ${i < 3 ? "bg-muted/30" : ""}`}
+              className={`flex items-center gap-3 px-4 py-3 transition-colors ${i < 3 ? "bg-muted/30" : ""} ${isMe ? "ring-2 ring-primary/40 ring-inset bg-primary/5" : ""}`}
             >
               <span className="text-lg w-8 text-center shrink-0">
                 {i < 3 ? medals[i] : <span className="text-sm text-muted-foreground font-display font-bold">{i + 1}º</span>}
@@ -280,7 +303,8 @@ function RankingCorretoresView({ corretores, getValue, metric, getScoreColor, sh
                 </p>
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </AnimatePresence>
       </div>
     </div>
