@@ -18,6 +18,7 @@ import {
   Phone,
   Users,
   SearchCheck,
+  Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AvatarUpload from "@/components/AvatarUpload";
