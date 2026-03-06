@@ -114,6 +114,20 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
                           Reagendar
                         </Button>
                       )}
+                      {onDelete && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-5 text-[9px] px-1.5 text-destructive border-destructive/30"
+                          onClick={() => {
+                            if (window.confirm("Tem certeza que deseja excluir esta visita?")) {
+                              onDelete(v.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 );
