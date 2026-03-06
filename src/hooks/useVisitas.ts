@@ -27,6 +27,7 @@ export interface Visita {
   linked_pdn_id: string | null;
   converted_to_pdn_at: string | null;
   converted_to_pdn_by: string | null;
+  corretor_nome?: string;
 }
 
 export type VisitaStatus = "marcada" | "confirmada" | "realizada" | "reagendada" | "cancelada" | "no_show";
@@ -79,7 +80,7 @@ export function useVisitas(filters?: {
     queryFn: async () => {
       let q = supabase
         .from("visitas")
-        .select("*")
+        .select("*, profiles!visitas_corretor_id_profiles(nome)")
         .order("data_visita", { ascending: false })
         .order("hora_visita", { ascending: true });
 
@@ -90,8 +91,22 @@ export function useVisitas(filters?: {
       if (filters?.endDate) q = q.lte("data_visita", filters.endDate);
 
       const { data, error } = await q;
-      if (error) throw error;
-      return (data || []) as Visita[];
+      if (error) {
+        // Fallback without join if foreign key not set up
+        const { data: fallback, error: err2 } = await supabase
+          .from("visitas")
+          .select("*")
+          .order("data_visita", { ascending: false })
+          .order("hora_visita", { ascending: true });
+        if (err2) throw err2;
+        return (fallback || []) as Visita[];
+      }
+      // Map profile name into flat field
+      return (data || []).map((row: any) => ({
+        ...row,
+        corretor_nome: row.profiles?.nome || null,
+        profiles: undefined,
+      })) as Visita[];
     },
     enabled: !!user,
   });
