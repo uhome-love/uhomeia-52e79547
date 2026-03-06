@@ -241,7 +241,7 @@ export default function HomeDashboard() {
   }, [channelStats, mktTotals, gerentes, recovery]);
 
   const iaContext = useMemo(() => {
-    const funnel = `Funil: Ligações ${companyTotals.real_ligacoes}/${companyTotals.meta_ligacoes}, Visitas Marcadas ${companyTotals.real_visitas_marcadas}/${companyTotals.meta_visitas_marcadas}, Visitas Realizadas ${companyTotals.real_visitas_realizadas}/${companyTotals.meta_visitas_realizadas}, Propostas ${companyTotals.real_propostas}/${companyTotals.meta_propostas}, VGV Gerado R$ ${companyTotals.real_vgv_gerado.toLocaleString("pt-BR")}, VGV Assinado R$ ${companyTotals.real_vgv_assinado.toLocaleString("pt-BR")}`;
+    const funnel = `Funil: Ligações OA Hoje ${cpStats.oa_ligacoes}, Ligações Checkpoint ${companyTotals.real_ligacoes}/${companyTotals.meta_ligacoes}, Visitas Marcadas ${companyTotals.real_visitas_marcadas}/${companyTotals.meta_visitas_marcadas}, Visitas Realizadas ${companyTotals.real_visitas_realizadas}/${companyTotals.meta_visitas_realizadas}, Propostas PDN ${pdnStats.total_gerados}, VGV Gerado R$ ${pdnStats.vgv_gerado.toLocaleString("pt-BR")}, VGV Assinado R$ ${pdnStats.vgv_assinado.toLocaleString("pt-BR")}`;
     const mkt = channelStats.map(c => `${getCanalLabel(c.canal)}: Inv R$ ${c.investimento.toLocaleString("pt-BR")}, Leads ${c.leads}, CPL R$ ${c.cpl?.toFixed(0) || "-"}`).join("; ");
     const teams = sortedTimes.map((t, i) => `${i + 1}. Equipe ${t.gerente_nome}: VGV R$ ${t.totals.real_vgv_assinado.toLocaleString("pt-BR")}, Propostas ${t.totals.real_propostas}`).join("; ");
     const pdnCtx = `PDN: ${pdnStats.total_visitas} negócios, ${pdnStats.quente} quentes, ${pdnStats.total_gerados} gerados (R$ ${pdnStats.vgv_gerado.toLocaleString("pt-BR")}), ${pdnStats.total_assinados} assinados (R$ ${pdnStats.vgv_assinado.toLocaleString("pt-BR")}), ${pdnStats.total_caidos} caídos (R$ ${pdnStats.vgv_caido.toLocaleString("pt-BR")})`;
@@ -286,10 +286,10 @@ export default function HomeDashboard() {
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={card}>
             <SectionHeader icon={TrendingUp} title="Funil Comercial" action={{ label: "Ver checkpoint", onClick: () => navigate("/checkpoint") }} />
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 p-4">
-              <MetricCard label="Ligações" value={Math.max(companyTotals.real_ligacoes, cpStats.oa_ligacoes)} meta={companyTotals.meta_ligacoes} />
+              <MetricCard label="Ligações OA" value={cpStats.oa_ligacoes} sub={period !== "dia" ? `Checkpoint: ${companyTotals.real_ligacoes}` : undefined} />
               <MetricCard label="Vis. Marcadas" value={companyTotals.real_visitas_marcadas} meta={companyTotals.meta_visitas_marcadas} />
               <MetricCard label="Vis. Realizadas" value={companyTotals.real_visitas_realizadas} meta={companyTotals.meta_visitas_realizadas} />
-              <MetricCard label="Propostas" value={companyTotals.real_propostas + pdnStats.total_gerados} />
+              <MetricCard label="Propostas (PDN)" value={pdnStats.total_gerados} />
               <MetricCard label="VGV Gerado" value={`R$ ${(pdnStats.vgv_gerado / 1000).toFixed(0)}k`} />
               <MetricCard label="VGV Assinado" value={`R$ ${(pdnStats.vgv_assinado / 1000).toFixed(0)}k`} highlight />
               <MetricCard label="Atingimento" value={`${pct(pdnStats.vgv_assinado, companyTotals.meta_vgv_assinado)}%`} highlight />
@@ -536,8 +536,8 @@ const SectionHeader = forwardRef<HTMLDivElement, {
 });
 SectionHeader.displayName = "SectionHeader";
 
-function MetricCard({ label, value, meta, highlight }: {
-  label: string; value: string | number; meta?: number; highlight?: boolean;
+function MetricCard({ label, value, meta, highlight, sub }: {
+  label: string; value: string | number; meta?: number; highlight?: boolean; sub?: string;
 }) {
   const pctVal = meta && typeof value === "number" ? pct(value, meta) : null;
   return (
@@ -551,6 +551,7 @@ function MetricCard({ label, value, meta, highlight }: {
           {pctVal}% da meta
         </p>
       )}
+      {sub && <p className="text-[9px] text-muted-foreground mt-0.5">{sub}</p>}
     </div>
   );
 }
