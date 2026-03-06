@@ -165,7 +165,23 @@ export function useVisitas(filters?: {
     return updateVisita(id, { status: newStatus } as any);
   }, [updateVisita]);
 
-  return { visitas, isLoading, createVisita, updateVisita, updateStatus };
+  const deleteVisita = useCallback(async (id: string) => {
+    const { error } = await supabase
+      .from("visitas")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao excluir visita");
+      return false;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["visitas"] });
+    toast.success("Visita excluída!");
+    return true;
+  }, [queryClient]);
+
+  return { visitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita };
 }
 
 // Helper to create visita from OA attempt

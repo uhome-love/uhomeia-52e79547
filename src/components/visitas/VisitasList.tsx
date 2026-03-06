@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MoreVertical, ArrowRight, FileSpreadsheet, CheckCircle2 } from "lucide-react";
+import { MoreVertical, ArrowRight, FileSpreadsheet, CheckCircle2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { STATUS_LABELS, STATUS_COLORS, ORIGEM_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
@@ -13,10 +13,11 @@ interface Props {
   visitas: Visita[];
   onUpdateStatus: (id: string, status: VisitaStatus) => void;
   onEdit?: (visita: Visita) => void;
+  onDelete?: (id: string) => void;
   showCorretor?: boolean;
 }
 
-export default function VisitasList({ visitas, onUpdateStatus, onEdit, showCorretor }: Props) {
+export default function VisitasList({ visitas, onUpdateStatus, onEdit, onDelete, showCorretor }: Props) {
   const { convertToPdn } = useVisitaToPdn();
 
   if (visitas.length === 0) {
@@ -120,6 +121,21 @@ export default function VisitasList({ visitas, onUpdateStatus, onEdit, showCorre
                           <DropdownMenuItem onClick={() => onEdit(v)}>
                             Editar
                           </DropdownMenuItem>
+                        )}
+                        {onDelete && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (window.confirm("Tem certeza que deseja excluir esta visita?")) {
+                                  onDelete(v.id);
+                                }
+                              }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3 mr-2" /> Excluir
+                            </DropdownMenuItem>
+                          </>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
