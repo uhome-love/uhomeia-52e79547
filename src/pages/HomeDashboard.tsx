@@ -10,7 +10,7 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-f
 import { motion } from "framer-motion";
 import {
   TrendingUp, Users, Trophy, Target, BarChart3, AlertTriangle,
-  CalendarDays, RotateCcw, ArrowRight, Building2, FileText, Eye, DollarSign,
+  CalendarDays, ArrowRight, Building2, FileText, Eye, DollarSign,
   Megaphone, Flame, ArrowUpRight, Bell, AlertCircle, Info, ClipboardCheck,
 } from "lucide-react";
 const homiMascot = "/images/homi-mascot-opt.png";
@@ -82,11 +82,11 @@ export default function HomeDashboard() {
     total_gerados: 0, total_assinados: 0, total_caidos: 0,
     vgv_gerado: 0, vgv_assinado: 0, vgv_caido: 0,
   });
-  // Lead recovery
-  const [recovery, setRecovery] = useState({ reativados: 0, respondidos: 0, visitas: 0 });
   // Checkpoint daily stats + OA realtime
   const [cpStats, setCpStats] = useState({ total_checkpoints: 0, total_corretores: 0, presentes: 0, ausentes: 0, oa_ligacoes: 0, oa_aproveitados: 0, oa_visitas_marcadas: 0 });
   const [oaPeriodStats, setOaPeriodStats] = useState({ ligacoes: 0, visitas_marcadas: 0 });
+  // OA Top Corretores
+  const [topCorretoresOA, setTopCorretoresOA] = useState<Array<{ nome: string; pontos: number; tentativas: number; aproveitados: number }>>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -313,20 +313,23 @@ export default function HomeDashboard() {
     };
   }, [fetchPdn, fetchCheckpoint, fetchOaPeriodStats, reload]);
 
-  // Fetch lead recovery
-  useEffect(() => {
+  // Fetch OA Top Corretores
+  const fetchOATopCorretores = useCallback(async () => {
     if (!user) return;
-    const fetchRecovery = async () => {
-      const { data } = await supabase.from("leads").select("status_recuperacao, status").eq("user_id", user.id);
-      if (!data) return;
-      setRecovery({
-        reativados: data.filter(d => d.status_recuperacao === "contatado" || d.status_recuperacao === "reativado").length,
-        respondidos: data.filter(d => d.status === "respondido" || d.status === "reativado").length,
-        visitas: data.filter(d => d.status === "visita_agendada").length,
-      });
-    };
-    fetchRecovery();
-  }, [user]);
+    const oaPeriodMap: Record<Period, string> = { dia: "hoje", semana: "semana", mes: "mes" };
+    const { data, error } = await supabase.rpc("get_individual_oa_ranking", { p_period: oaPeriodMap[period] });
+    if (error || !data) return;
+    const parsed = data as any;
+    const ranking = (parsed?.ranking || []).slice(0, 5).map((r: any) => ({
+      nome: r.nome,
+      pontos: r.pontos,
+      tentativas: r.tentativas,
+      aproveitados: r.aproveitados,
+    }));
+    setTopCorretoresOA(ranking);
+  }, [user, period]);
+
+  useEffect(() => { fetchOATopCorretores(); }, [fetchOATopCorretores]);
 
   const sortedTimes = useMemo(() =>
     [...gerentes].sort((a, b) => b.totals.real_vgv_assinado - a.totals.real_vgv_assinado),
@@ -350,17 +353,17 @@ export default function HomeDashboard() {
         a.push(`Equipe ${g.gerente_nome}: muitas visitas (${g.totals.real_visitas_realizadas}) e poucas propostas (${g.totals.real_propostas})`);
       }
     });
-    if (recovery.reativados > 0 && recovery.respondidos === 0) a.push("Leads reativados sem resposta — revisar abordagem");
     return a.slice(0, 5);
-  }, [channelStats, mktTotals, gerentes, recovery]);
+  }, [channelStats, mktTotals, gerentes]);
 
   const iaContext = useMemo(() => {
     const funil = `Funil: Ligações OA ${oaPeriodStats.ligacoes}, Visitas Marcadas OA ${oaPeriodStats.visitas_marcadas}, Visitas Realizadas PDN ${pdnStats.total_visitas + pdnStats.total_gerados + pdnStats.total_assinados}, Propostas PDN ${pdnStats.total_gerados + pdnStats.total_assinados}, VGV Assinado R$ ${pdnStats.vgv_assinado.toLocaleString("pt-BR")}`;
     const mkt = channelStats.map(c => `${getCanalLabel(c.canal)}: Inv R$ ${c.investimento.toLocaleString("pt-BR")}, Leads ${c.leads}, CPL R$ ${c.cpl?.toFixed(0) || "-"}`).join("; ");
     const teams = sortedTimes.map((t, i) => `${i + 1}. Equipe ${t.gerente_nome}: VGV R$ ${t.totals.real_vgv_assinado.toLocaleString("pt-BR")}, Propostas ${t.totals.real_propostas}`).join("; ");
     const pdnCtx = `PDN: ${pdnStats.total_visitas} negócios, ${pdnStats.quente} quentes, ${pdnStats.total_gerados} gerados (R$ ${pdnStats.vgv_gerado.toLocaleString("pt-BR")}), ${pdnStats.total_assinados} assinados (R$ ${pdnStats.vgv_assinado.toLocaleString("pt-BR")}), ${pdnStats.total_caidos} caídos (R$ ${pdnStats.vgv_caido.toLocaleString("pt-BR")})`;
-    return `Período: ${periodLabels[period]}\n${funil}\n${pdnCtx}\nMarketing: ${mkt}\nTimes: ${teams}\nRecuperação: ${recovery.reativados} reativados, ${recovery.respondidos} respostas`;
-  }, [oaPeriodStats, channelStats, sortedTimes, period, pdnStats, recovery]);
+    const oaTop = topCorretoresOA.map((c, i) => `${i+1}. ${c.nome}: ${c.pontos}pts, ${c.tentativas} tent., ${c.aproveitados} aprov.`).join("; ");
+    return `Período: ${periodLabels[period]}\n${funil}\n${pdnCtx}\nMarketing: ${mkt}\nTimes: ${teams}\nTop OA: ${oaTop}`;
+  }, [oaPeriodStats, channelStats, sortedTimes, period, pdnStats, topCorretoresOA]);
 
   const card = "rounded-xl border border-border bg-card shadow-card";
 
@@ -432,9 +435,9 @@ export default function HomeDashboard() {
               </div>
             </motion.div>
 
-            {/* 3. Ranking Corretores */}
+            {/* 3. Top Corretores VGV */}
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={card}>
-              <SectionHeader icon={Trophy} title="Top Corretores" action={{ label: "Ver ranking", onClick: () => navigate("/ranking") }} />
+              <SectionHeader icon={Trophy} title="Top Corretores — VGV" action={{ label: "Ver ranking", onClick: () => navigate("/ranking") }} />
               <div className="divide-y divide-border">
                 {topCorretores.map((c, i) => (
                   <div key={c.corretor_id} className="flex items-center gap-3 px-4 py-2.5">
@@ -454,32 +457,29 @@ export default function HomeDashboard() {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-            {/* 4. Marketing */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className={card}>
-              <SectionHeader icon={Megaphone} title="Marketing" action={isAdmin ? { label: "Ver detalhes", onClick: () => navigate("/marketing") } : undefined} />
-              <div className="p-4 space-y-3">
-                <div className="grid grid-cols-3 gap-2">
-                  <MiniStat label="Investimento" value={`R$ ${(mktTotals.investimento / 1000).toFixed(0)}k`} />
-                  <MiniStat label="Leads" value={`${mktTotals.leads}`} />
-                  <MiniStat label="CPL" value={mktTotals.leads > 0 ? `R$ ${(mktTotals.investimento / mktTotals.leads).toFixed(0)}` : "—"} />
-                </div>
-                <div className="divide-y divide-border/50">
-                  {channelStats.slice(0, 4).map(ch => (
-                    <div key={ch.canal} className="flex items-center justify-between py-1.5 text-xs">
-                      <span className="text-muted-foreground">{getCanalLabel(ch.canal)}</span>
-                      <div className="flex items-center gap-3">
-                        <span>{ch.leads} leads</span>
-                        <span className="font-semibold">CPL R$ {ch.cpl?.toFixed(0) || "—"}</span>
-                      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 4. Top Corretores Oferta Ativa */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className={card}>
+              <SectionHeader icon={Flame} title="Top Corretores — Oferta Ativa" action={{ label: "Ver ranking OA", onClick: () => navigate("/ranking") }} />
+              <div className="divide-y divide-border">
+                {topCorretoresOA.map((c, i) => (
+                  <div key={`oa-${i}`} className="flex items-center gap-3 px-4 py-2.5">
+                    <span className="w-6 text-center text-sm">{i < 3 ? medals[i] : `${i + 1}º`}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{c.nome}</p>
+                      <p className="text-[10px] text-muted-foreground">{c.tentativas} tentativas · {c.aproveitados} aproveitados</p>
                     </div>
-                  ))}
-                </div>
+                    <div className="text-right">
+                      <p className="text-sm font-display font-bold">{c.pontos} pts</p>
+                    </div>
+                  </div>
+                ))}
+                {topCorretoresOA.length === 0 && <p className="p-4 text-center text-sm text-muted-foreground">Sem dados</p>}
               </div>
             </motion.div>
 
-            {/* 5. Negócios Quentes */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={card}>
+            {/* 5. PDN — Negócios */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className={card}>
               <SectionHeader icon={Flame} title="PDN — Negócios" action={{ label: "Ver PDN", onClick: () => navigate("/pdn") }} />
               <div className="p-4 space-y-2">
                 <div className="grid grid-cols-3 gap-2 mb-3">
@@ -528,14 +528,29 @@ export default function HomeDashboard() {
                 </div>
               </div>
             </motion.div>
+          </div>
 
-            {/* 6. Recuperação de Leads */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className={card}>
-              <SectionHeader icon={RotateCcw} title="Recuperação de Leads" action={{ label: "Ver módulo", onClick: () => navigate("/gestao") }} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* 6. Marketing */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={card}>
+              <SectionHeader icon={Megaphone} title="Marketing" action={isAdmin ? { label: "Ver detalhes", onClick: () => navigate("/marketing") } : undefined} />
               <div className="p-4 space-y-3">
-                <HotStat icon={RotateCcw} label="Leads reativados" value={recovery.reativados} color="text-primary" />
-                <HotStat icon={ArrowUpRight} label="Respostas recebidas" value={recovery.respondidos} color="text-success" />
-                <HotStat icon={CalendarDays} label="Visitas geradas" value={recovery.visitas} color="text-warning" />
+                <div className="grid grid-cols-3 gap-2">
+                  <MiniStat label="Investimento" value={`R$ ${(mktTotals.investimento / 1000).toFixed(0)}k`} />
+                  <MiniStat label="Leads" value={`${mktTotals.leads}`} />
+                  <MiniStat label="CPL" value={mktTotals.leads > 0 ? `R$ ${(mktTotals.investimento / mktTotals.leads).toFixed(0)}` : "—"} />
+                </div>
+                <div className="divide-y divide-border/50">
+                  {channelStats.slice(0, 4).map(ch => (
+                    <div key={ch.canal} className="flex items-center justify-between py-1.5 text-xs">
+                      <span className="text-muted-foreground">{getCanalLabel(ch.canal)}</span>
+                      <div className="flex items-center gap-3">
+                        <span>{ch.leads} leads</span>
+                        <span className="font-semibold">CPL R$ {ch.cpl?.toFixed(0) || "—"}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
 
