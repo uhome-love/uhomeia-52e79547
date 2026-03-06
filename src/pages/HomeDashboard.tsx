@@ -478,32 +478,8 @@ export default function HomeDashboard() {
               </div>
             </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-            {/* 4. Marketing */}
+            {/* 5. PDN — Negócios */}
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className={card}>
-              <SectionHeader icon={Megaphone} title="Marketing" action={isAdmin ? { label: "Ver detalhes", onClick: () => navigate("/marketing") } : undefined} />
-              <div className="p-4 space-y-3">
-                <div className="grid grid-cols-3 gap-2">
-                  <MiniStat label="Investimento" value={`R$ ${(mktTotals.investimento / 1000).toFixed(0)}k`} />
-                  <MiniStat label="Leads" value={`${mktTotals.leads}`} />
-                  <MiniStat label="CPL" value={mktTotals.leads > 0 ? `R$ ${(mktTotals.investimento / mktTotals.leads).toFixed(0)}` : "—"} />
-                </div>
-                <div className="divide-y divide-border/50">
-                  {channelStats.slice(0, 4).map(ch => (
-                    <div key={ch.canal} className="flex items-center justify-between py-1.5 text-xs">
-                      <span className="text-muted-foreground">{getCanalLabel(ch.canal)}</span>
-                      <div className="flex items-center gap-3">
-                        <span>{ch.leads} leads</span>
-                        <span className="font-semibold">CPL R$ {ch.cpl?.toFixed(0) || "—"}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* 5. Negócios Quentes */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={card}>
               <SectionHeader icon={Flame} title="PDN — Negócios" action={{ label: "Ver PDN", onClick: () => navigate("/pdn") }} />
               <div className="p-4 space-y-2">
                 <div className="grid grid-cols-3 gap-2 mb-3">
@@ -552,14 +528,29 @@ export default function HomeDashboard() {
                 </div>
               </div>
             </motion.div>
+          </div>
 
-            {/* 6. Recuperação de Leads */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className={card}>
-              <SectionHeader icon={RotateCcw} title="Recuperação de Leads" action={{ label: "Ver módulo", onClick: () => navigate("/gestao") }} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* 6. Marketing */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={card}>
+              <SectionHeader icon={Megaphone} title="Marketing" action={isAdmin ? { label: "Ver detalhes", onClick: () => navigate("/marketing") } : undefined} />
               <div className="p-4 space-y-3">
-                <HotStat icon={RotateCcw} label="Leads reativados" value={recovery.reativados} color="text-primary" />
-                <HotStat icon={ArrowUpRight} label="Respostas recebidas" value={recovery.respondidos} color="text-success" />
-                <HotStat icon={CalendarDays} label="Visitas geradas" value={recovery.visitas} color="text-warning" />
+                <div className="grid grid-cols-3 gap-2">
+                  <MiniStat label="Investimento" value={`R$ ${(mktTotals.investimento / 1000).toFixed(0)}k`} />
+                  <MiniStat label="Leads" value={`${mktTotals.leads}`} />
+                  <MiniStat label="CPL" value={mktTotals.leads > 0 ? `R$ ${(mktTotals.investimento / mktTotals.leads).toFixed(0)}` : "—"} />
+                </div>
+                <div className="divide-y divide-border/50">
+                  {channelStats.slice(0, 4).map(ch => (
+                    <div key={ch.canal} className="flex items-center justify-between py-1.5 text-xs">
+                      <span className="text-muted-foreground">{getCanalLabel(ch.canal)}</span>
+                      <div className="flex items-center gap-3">
+                        <span>{ch.leads} leads</span>
+                        <span className="font-semibold">CPL R$ {ch.cpl?.toFixed(0) || "—"}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
 
