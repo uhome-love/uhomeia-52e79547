@@ -8,7 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { STATUS_LABELS, STATUS_COLORS, ORIGEM_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
 import { useVisitaToPdn } from "@/hooks/useVisitaToPdn";
 
-const KANBAN_COLUMNS: VisitaStatus[] = ["marcada", "confirmada", "realizada", "reagendada", "cancelada"];
+const KANBAN_COLUMNS: VisitaStatus[] = ["marcada", "confirmada", "realizada", "reagendada", "cancelada", "no_show"];
 
 const COLUMN_ICONS: Record<string, string> = {
   marcada: "📅",

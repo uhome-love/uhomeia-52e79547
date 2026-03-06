@@ -22,7 +22,7 @@ export default function AgendaVisitas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const { visitas, isLoading, createVisita, updateStatus, deleteVisita } = useVisitas();
 
