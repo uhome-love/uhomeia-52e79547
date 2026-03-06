@@ -269,13 +269,15 @@ function RankingCorretoresView({ corretores, getValue, metric, getScoreColor, sh
       </div>
       <div className="divide-y divide-border">
         <AnimatePresence>
-          {corretores.map((c, i) => (
+          {corretores.map((c, i) => {
+            const isMe = highlightUserId && c.corretor_id === highlightUserId;
+            return (
             <motion.div
               key={c.corretor_id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.03 }}
-              className={`flex items-center gap-3 px-4 py-3 transition-colors ${i < 3 ? "bg-muted/30" : ""}`}
+              className={`flex items-center gap-3 px-4 py-3 transition-colors ${i < 3 ? "bg-muted/30" : ""} ${isMe ? "ring-2 ring-primary/40 ring-inset bg-primary/5" : ""}`}
             >
               <span className="text-lg w-8 text-center shrink-0">
                 {i < 3 ? medals[i] : <span className="text-sm text-muted-foreground font-display font-bold">{i + 1}º</span>}
