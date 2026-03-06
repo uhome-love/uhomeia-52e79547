@@ -79,9 +79,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingMetas, setEditingMetas] = useState(false);
-  const [metaLig, setMetaLig] = useState("");
-  const [metaAprov, setMetaAprov] = useState("");
-  const [metaVis, setMetaVis] = useState("");
+  const [metaLig, setMetaLig] = useState(() => (goals?.meta_ligacoes || 30).toString());
+  const [metaAprov, setMetaAprov] = useState(() => (goals?.meta_aproveitados || 5).toString());
+  const [metaVis, setMetaVis] = useState(() => (goals?.meta_visitas_marcadas || 3).toString());
   const [finalizando, setFinalizando] = useState(false);
   
   // === TIMESTAMP-BASED TIMER ===
@@ -103,6 +103,15 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       fetchNext();
     }
   }, [fetchNext]);
+
+  // Sync metas when goals load asynchronously
+  useEffect(() => {
+    if (goals && !editingMetas) {
+      setMetaLig(goals.meta_ligacoes.toString());
+      setMetaAprov(goals.meta_aproveitados.toString());
+      setMetaVis(goals.meta_visitas_marcadas.toString());
+    }
+  }, [goals?.meta_ligacoes, goals?.meta_aproveitados, goals?.meta_visitas_marcadas]);
 
   // Session timer
   useEffect(() => {
@@ -233,13 +242,16 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     if (!lead || !actionTaken || submitting) return;
     setSubmitting(true);
     try {
-      const result = await registrar(lead, actionTaken, resultado, feedback, lista, currentIdempotencyKey || undefined);
+      const result = await registrar(lead, actionTaken, resultado, feedback, lista, currentIdempotencyKey || undefined, visitaMarcada);
       if (!result?.success) { setSubmitting(false); return; }
 
       if (!result.idempotent) {
         if (resultado === "com_interesse") {
           setStreak(prev => prev + 1);
           toast.success("🎉 APROVEITADO! +3 pontos! Mandou bem!", { duration: 4000 });
+          if (visitaMarcada) {
+            toast.success("📅 Visita marcada contabilizada no checkpoint!");
+          }
         } else if (resultado === "nao_atendeu") {
           setStreak(0);
           toast("📞 Não atendeu — lead volta à fila com cooldown progressivo", { duration: 2000 });
@@ -250,59 +262,6 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           toast("❌ Número errado — removido", { duration: 2000 });
         }
         checkMilestone(stats.tentativas + 1);
-      }
-
-      if (visitaMarcada && user) {
-        try {
-          const today = new Date().toISOString().split("T")[0];
-          const { data: tm } = await supabase
-            .from("team_members")
-            .select("id, gerente_id")
-            .eq("user_id", user.id)
-            .eq("status", "ativo")
-            .maybeSingle();
-
-          if (tm) {
-            let { data: cp } = await supabase
-              .from("checkpoints")
-              .select("id")
-              .eq("gerente_id", tm.gerente_id)
-              .eq("data", today)
-              .maybeSingle();
-
-            if (!cp) {
-              const { data: newCp } = await supabase
-                .from("checkpoints")
-                .insert({ gerente_id: tm.gerente_id, data: today })
-                .select("id")
-                .single();
-              cp = newCp;
-            }
-
-            if (cp) {
-              const { data: line } = await supabase
-                .from("checkpoint_lines")
-                .select("id, real_visitas_marcadas")
-                .eq("checkpoint_id", cp.id)
-                .eq("corretor_id", tm.id)
-                .maybeSingle();
-
-              if (line) {
-                await supabase
-                  .from("checkpoint_lines")
-                  .update({ real_visitas_marcadas: (line.real_visitas_marcadas || 0) + 1 })
-                  .eq("id", line.id);
-              } else {
-                await supabase
-                  .from("checkpoint_lines")
-                  .insert({ checkpoint_id: cp.id, corretor_id: tm.id, real_visitas_marcadas: 1 } as any);
-              }
-            }
-          }
-          toast.success("📅 Visita marcada contabilizada no checkpoint!");
-        } catch (err) {
-          console.error("Erro ao atualizar visita no checkpoint:", err);
-        }
       }
 
       stopTimer();

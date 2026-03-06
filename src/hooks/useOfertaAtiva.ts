@@ -300,7 +300,8 @@ export function useOARegistrarTentativa() {
     resultado: string,
     feedback: string,
     lista?: OALista,
-    idempotencyKey?: string
+    idempotencyKey?: string,
+    visitaMarcada?: boolean
   ): Promise<{ success: boolean; reason?: string; idempotent?: boolean }> => {
     if (!user) return { success: false, reason: "no_user" };
 
@@ -316,7 +317,7 @@ export function useOARegistrarTentativa() {
       p_lista_id: lead.lista_id,
       p_empreendimento: lead.empreendimento,
       p_idempotency_key: idemKey,
-      p_visita_marcada: resultado === "com_interesse",
+      p_visita_marcada: visitaMarcada ?? false,
     });
 
     if (error) {
