@@ -203,6 +203,7 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
