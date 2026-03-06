@@ -36,11 +36,15 @@ export default function Configuracoes() {
   async function loadProfile() {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("nome, email, telefone, cargo, avatar_url")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erro ao carregar perfil:", error);
+    }
 
     if (data) {
       setNome(data.nome || "");
