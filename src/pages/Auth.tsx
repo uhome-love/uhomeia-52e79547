@@ -167,7 +167,7 @@ export default function Auth() {
         {/* LOGO */}
         <div className="flex flex-col items-center anim-fade-in-scale">
           <div className="relative">
-            <div className="absolute inset-0 -m-8 rounded-full bg-[hsl(229,100%,64%/0.18)] blur-[60px]" />
+            
             <img
               src={uhomeSalesLogo}
               alt="UhomeSales"
