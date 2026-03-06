@@ -225,18 +225,18 @@ export default function CorretorDashboard() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-4 h-auto">
-          <TabsTrigger value="central" className="gap-1.5 text-xs py-2">
-            <Target className="h-3.5 w-3.5" /> Central
+        <TabsList className="grid w-full grid-cols-4 h-auto sticky top-0 z-10">
+          <TabsTrigger value="central" className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs py-2">
+            <Target className="h-3.5 w-3.5" /> <span className="hidden xs:inline">Central</span><span className="xs:hidden">Home</span>
           </TabsTrigger>
-          <TabsTrigger value="discagem" className="gap-1.5 text-xs py-2" disabled={!metaSalva}>
+          <TabsTrigger value="discagem" className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs py-2" disabled={!metaSalva}>
             {!metaSalva && <Lock className="h-3 w-3" />}
-            <Phone className="h-3.5 w-3.5" /> Discagem
+            <Phone className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Discagem</span><span className="sm:hidden">Call</span>
           </TabsTrigger>
-          <TabsTrigger value="aproveitados" className="gap-1.5 text-xs py-2">
-            <CheckCircle className="h-3.5 w-3.5" /> Aproveitados
+          <TabsTrigger value="aproveitados" className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs py-2">
+            <CheckCircle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Aproveitados</span><span className="sm:hidden">Aprov.</span>
           </TabsTrigger>
-          <TabsTrigger value="ranking" className="gap-1.5 text-xs py-2">
+          <TabsTrigger value="ranking" className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs py-2">
             <Trophy className="h-3.5 w-3.5" /> Ranking
           </TabsTrigger>
         </TabsList>
