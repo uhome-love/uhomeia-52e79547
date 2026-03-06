@@ -33,12 +33,29 @@ const medalBg = [
 ];
 
 export default function RankingComercialPanel() {
-  const { isAdmin, isGestor } = useUserRole();
+  const { isAdmin, isGestor, isCorretor } = useUserRole();
   const { user } = useAuth();
   const [period, setPeriod] = useState<PeriodOption>("semana");
   const [metric, setMetric] = useState<RankMetric>("vgv_assinado");
+  const [corretorGerenteId, setCorretorGerenteId] = useState<string | undefined>();
 
-  const filterGerenteId = isAdmin ? undefined : user?.id;
+  // For corretores, resolve their gerente_id
+  useEffect(() => {
+    if (isCorretor && user?.id) {
+      supabase
+        .from("team_members")
+        .select("gerente_id")
+        .eq("user_id", user.id)
+        .eq("status", "ativo")
+        .limit(1)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setCorretorGerenteId(data.gerente_id);
+        });
+    }
+  }, [isCorretor, user?.id]);
+
+  const filterGerenteId = isAdmin ? undefined : isCorretor ? corretorGerenteId : user?.id;
   const { gerentes, allCorretores, loading } = useCeoData(period as CeoPeriod, undefined, undefined, filterGerenteId);
 
   // Sort corretores by selected metric
