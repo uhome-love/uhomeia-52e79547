@@ -81,8 +81,8 @@ export default function VisitasCalendar({ visitas, onDayClick }: Props) {
               </p>
               <div className="space-y-0.5">
                 {dayVisitas.slice(0, 3).map(v => (
-                  <div key={v.id} className={`text-[8px] leading-tight px-1 py-0.5 rounded truncate border ${STATUS_COLORS[v.status]}`}>
-                    {v.hora_visita ? v.hora_visita.slice(0, 5) + " " : ""}{v.nome_cliente}
+                  <div key={v.id} className={`text-[8px] leading-tight px-1 py-0.5 rounded truncate border ${STATUS_COLORS[v.status]}`} title={v.corretor_nome ? `Corretor: ${v.corretor_nome}` : undefined}>
+                    {v.hora_visita ? v.hora_visita.slice(0, 5) + " " : ""}{v.corretor_nome ? `[${v.corretor_nome.split(" ")[0]}] ` : ""}{v.nome_cliente}
                   </div>
                 ))}
                 {dayVisitas.length > 3 && (
