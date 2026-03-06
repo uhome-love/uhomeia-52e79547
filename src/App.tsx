@@ -31,6 +31,7 @@ const AuditDashboard = lazy(() => import("./pages/AuditDashboard"));
 const OfertaAtiva = lazy(() => import("./pages/OfertaAtiva"));
 const MeuTime = lazy(() => import("./pages/MeuTime"));
 const CorretorResumo = lazy(() => import("./pages/CorretorResumo"));
+const RankingEquipe = lazy(() => import("./pages/RankingEquipe"));
 const HomiAssistant = lazy(() => import("./pages/HomiAssistant"));
 const BuscaLeads = lazy(() => import("./pages/BuscaLeads"));
 
@@ -90,6 +91,7 @@ const App = () => (
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><CorretorDashboard /></ProtectedPage>} />
             <Route path="/corretor/resumo" element={<ProtectedPage><CorretorResumo /></ProtectedPage>} />
+            <Route path="/corretor/ranking-equipes" element={<ProtectedPage><RankingEquipe /></ProtectedPage>} />
             <Route path="/homi" element={<ProtectedPage><HomiAssistant /></ProtectedPage>} />
 
             {/* Busca de Leads / Higienização — gestor + admin */}
