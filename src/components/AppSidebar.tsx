@@ -21,6 +21,7 @@ import {
   Settings,
   Kanban,
   Bell,
+  Heart,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AvatarUpload from "@/components/AvatarUpload";

@@ -66,23 +66,27 @@ export function usePipeline(pipelineTipo: string = "leads") {
   const [loading, setLoading] = useState(true);
 
   const loadStages = useCallback(async () => {
-    const { data, error } = await supabase
+    const query = supabase
       .from("pipeline_stages")
       .select("*")
       .eq("ativo", true)
-      .eq("pipeline_tipo" as any, pipelineTipo)
       .order("ordem");
-    if (error) {
+    
+    const { data, error } = await query;
+    if (!data) { if (error) console.error("Error loading stages:", error); return; }
+    
+    // Filter by pipeline_tipo client-side to avoid deep type instantiation
+    const filtered = (data as any[]).filter((s: any) => s.pipeline_tipo === pipelineTipo);
       console.error("Error loading stages:", error);
       return;
     }
-    setStages((data || []).map(s => ({
+    setStages(filtered.map((s: any) => ({
       id: s.id,
       nome: s.nome,
       tipo: s.tipo,
       cor: s.cor,
       ordem: s.ordem,
-      pipeline_tipo: (s as any).pipeline_tipo || pipelineTipo,
+      pipeline_tipo: s.pipeline_tipo || pipelineTipo,
     })));
   }, [pipelineTipo]);
 
