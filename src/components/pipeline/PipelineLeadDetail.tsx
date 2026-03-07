@@ -322,6 +322,17 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, open, onOp
                 />
               )}
 
+              {/* ===== HOMI AI ASSISTANT ===== */}
+              <HomiLeadAssistant
+                leadNome={lead.nome}
+                leadTelefone={lead.telefone}
+                leadEmail={lead.email}
+                empreendimento={lead.empreendimento}
+                etapa={currentStage?.nome || ""}
+                temperatura={(lead as any).temperatura}
+                observacoes={lead.observacoes}
+              />
+
               {/* Contact */}
               <Section title="Contato" icon={User}>
                 <div className="space-y-1.5">
