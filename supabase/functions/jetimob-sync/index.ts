@@ -107,8 +107,14 @@ serve(async (req) => {
     }
     const novoLeadStageId = stageData.id;
 
-    // Get existing jetimob_lead_ids to avoid duplicates
-    const jetimobIds = apiLeads.map((l: any) => String(l.id)).filter(Boolean);
+    // Build unique jetimob IDs from phone+campaign (API doesn't return an "id" field)
+    const buildJetimobId = (lead: any): string => {
+      const phone = lead.phones?.[0] || lead.phone || "";
+      const campaign = lead.campaign_id || "";
+      return `${phone}_${campaign}`;
+    };
+
+    const jetimobIds = apiLeads.map(buildJetimobId).filter((id: string) => id !== "_");
     const { data: existingLeads } = await adminClient
       .from("pipeline_leads")
       .select("jetimob_lead_id")
@@ -120,8 +126,8 @@ serve(async (req) => {
     let skipped = 0;
 
     for (const lead of apiLeads) {
-      const jetimobId = String(lead.id);
-      if (existingIds.has(jetimobId)) {
+      const jetimobId = buildJetimobId(lead);
+      if (!jetimobId || jetimobId === "_" || existingIds.has(jetimobId)) {
         skipped++;
         continue;
       }
