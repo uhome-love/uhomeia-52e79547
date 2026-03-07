@@ -28,6 +28,8 @@ import PartnershipDialog from "./PartnershipDialog";
 import GerenteManagementSection from "./GerenteManagementSection";
 import LeadSequenceSuggestion from "./LeadSequenceSuggestion";
 import HomiLeadAssistant from "./HomiLeadAssistant";
+import OpportunityVisitasTab from "./OpportunityVisitasTab";
+import OpportunityPropostasTab from "./OpportunityPropostasTab";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
