@@ -1,12 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { type PdnEntry, type PdnSituacao } from "@/hooks/usePdn";
-import { Card } from "@/components/ui/card";
+import PdnCard from "./PdnCard";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { GripVertical, Flame, Thermometer, Snowflake, Building2, User, AlertTriangle, Calendar, Target } from "lucide-react";
-import { calcProbabilidade, calcRisco, type RiscoNivel } from "@/lib/pdnScoring";
+import { ChevronLeft, ChevronRight, TrendingUp, Clock, AlertTriangle } from "lucide-react";
 import { differenceInDays } from "date-fns";
+import { calcAlerts, calcVgvProvavel } from "@/lib/pdnScoring";
 
 interface Props {
   entries: PdnEntry[];
@@ -16,54 +14,112 @@ interface Props {
   filterCorretor: string;
 }
 
-const COLUMNS: { key: PdnSituacao; label: string; color: string; border: string }[] = [
-  { key: "visita", label: "📋 Negócios (Visita)", color: "bg-primary/10 text-primary", border: "border-primary/30" },
-  { key: "gerado", label: "📄 Gerados", color: "bg-amber-500/10 text-amber-600", border: "border-amber-500/30" },
-  { key: "assinado", label: "✅ Assinados", color: "bg-emerald-500/10 text-emerald-600", border: "border-emerald-500/30" },
-  { key: "caiu", label: "❌ Caiu", color: "bg-destructive/10 text-destructive", border: "border-destructive/30" },
+const COLUMNS: { key: PdnSituacao; label: string; emoji: string; color: string; headerBg: string; dotColor: string }[] = [
+  { key: "visita", label: "Negócios", emoji: "📋", color: "hsl(var(--primary))", headerBg: "bg-primary/5", dotColor: "bg-primary" },
+  { key: "gerado", label: "Gerados", emoji: "📄", color: "#f59e0b", headerBg: "bg-amber-500/5", dotColor: "bg-amber-500" },
+  { key: "assinado", label: "Assinados", emoji: "✅", color: "#10b981", headerBg: "bg-emerald-500/5", dotColor: "bg-emerald-500" },
+  { key: "caiu", label: "Caiu", emoji: "❌", color: "#ef4444", headerBg: "bg-red-500/5", dotColor: "bg-red-500" },
 ];
 
-const TEMP_CONFIG: Record<string, { icon: React.ReactNode; class: string; label: string }> = {
-  quente: { icon: <Flame className="h-3 w-3" />, class: "bg-red-500/15 text-red-600 border-red-500/30", label: "Quente" },
-  morno: { icon: <Thermometer className="h-3 w-3" />, class: "bg-amber-500/15 text-amber-600 border-amber-500/30", label: "Morno" },
-  frio: { icon: <Snowflake className="h-3 w-3" />, class: "bg-blue-500/15 text-blue-600 border-blue-500/30", label: "Frio" },
-};
+const COLUMN_WIDTH_DESKTOP = 320;
+const COLUMN_WIDTH_MOBILE = 290;
+const COLUMN_GAP = 12;
 
-const RISCO_CONFIG: Record<RiscoNivel, { emoji: string; class: string; label: string }> = {
-  seguro: { emoji: "🟢", class: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30", label: "Seguro" },
-  atencao: { emoji: "🟡", class: "bg-amber-500/15 text-amber-600 border-amber-500/30", label: "Atenção" },
-  risco: { emoji: "🔴", class: "bg-red-500/15 text-red-600 border-red-500/30", label: "Risco" },
-};
+function getColumnWidth() {
+  return typeof window !== "undefined" && window.innerWidth < 640 ? COLUMN_WIDTH_MOBILE : COLUMN_WIDTH_DESKTOP;
+}
 
-function formatBRL(v: number | null) {
-  if (!v) return "—";
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+function formatVGV(value: number) {
+  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1).replace(".", ",")}M`;
+  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)}mil`;
+  return `R$ ${value.toLocaleString("pt-BR")}`;
+}
+
+function getColumnAlerts(items: PdnEntry[]) {
+  const parados = items.filter(e => differenceInDays(new Date(), new Date(e.updated_at)) >= 5).length;
+  const semAcao = items.filter(e =>
+    e.situacao !== "caiu" && e.situacao !== "assinado" &&
+    (!e.proxima_acao || !e.proxima_acao.trim())
+  ).length;
+  return { parados, semAcao, total: parados + semAcao };
 }
 
 export default function PdnKanban({ entries, readOnly, onUpdate, searchTerm, filterCorretor }: Props) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<PdnSituacao | null>(null);
-  const [editingMotivo, setEditingMotivo] = useState<string | null>(null);
   const dragRef = useRef<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isDraggingScroll, setIsDraggingScroll] = useState(false);
+  const dragScrollStart = useRef({ x: 0, scrollLeft: 0 });
 
-  const filtered = entries.filter(e => {
+  const filtered = useMemo(() => entries.filter(e => {
     if (searchTerm && !e.nome.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     if (filterCorretor && e.corretor !== filterCorretor) return false;
     return true;
-  });
+  }), [entries, searchTerm, filterCorretor]);
 
-  const grouped = COLUMNS.map(col => ({
+  const grouped = useMemo(() => COLUMNS.map(col => ({
     ...col,
     items: filtered.filter(e => e.situacao === col.key),
     totalVgv: filtered.filter(e => e.situacao === col.key).reduce((s, e) => s + (e.vgv || 0), 0),
-  }));
+  })), [filtered]);
 
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    if (readOnly) return;
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+    const colW = getColumnWidth();
+    const idx = Math.round(el.scrollLeft / (colW + COLUMN_GAP));
+    setActiveIndex(Math.min(idx, COLUMNS.length - 1));
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      ro.disconnect();
+    };
+  }, [updateScrollState]);
+
+  const scrollTo = (direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const colW = getColumnWidth();
+    el.scrollBy({ left: direction === "left" ? -(colW + COLUMN_GAP) : (colW + COLUMN_GAP), behavior: "smooth" });
+  };
+
+  const scrollToIndex = (idx: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ left: idx * (getColumnWidth() + COLUMN_GAP), behavior: "smooth" });
+  };
+
+  // Drag-to-scroll
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("[draggable]")) return;
+    setIsDraggingScroll(true);
+    dragScrollStart.current = { x: e.clientX, scrollLeft: scrollRef.current?.scrollLeft || 0 };
+  };
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDraggingScroll || !scrollRef.current) return;
+    e.preventDefault();
+    scrollRef.current.scrollLeft = dragScrollStart.current.scrollLeft - (e.clientX - dragScrollStart.current.x);
+  }, [isDraggingScroll]);
+  const handleMouseUp = () => setIsDraggingScroll(false);
+
+  // DnD handlers
+  const handleDragStart = (id: string) => {
     dragRef.current = id;
     setDraggedId(id);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", id);
   };
 
   const handleDragOver = (e: React.DragEvent, col: PdnSituacao) => {
@@ -73,8 +129,6 @@ export default function PdnKanban({ entries, readOnly, onUpdate, searchTerm, fil
     setDragOverCol(col);
   };
 
-  const handleDragLeave = () => setDragOverCol(null);
-
   const handleDrop = (e: React.DragEvent, targetSituacao: PdnSituacao) => {
     e.preventDefault();
     setDragOverCol(null);
@@ -83,13 +137,7 @@ export default function PdnKanban({ entries, readOnly, onUpdate, searchTerm, fil
     if (!id || readOnly) return;
     const entry = entries.find(en => en.id === id);
     if (!entry || entry.situacao === targetSituacao) return;
-
-    if (targetSituacao === "caiu") {
-      onUpdate(id, { situacao: targetSituacao });
-      setEditingMotivo(id);
-    } else {
-      onUpdate(id, { situacao: targetSituacao, motivo_queda: null });
-    }
+    onUpdate(id, { situacao: targetSituacao, ...(targetSituacao !== "caiu" ? { motivo_queda: null } : {}) });
     dragRef.current = null;
   };
 
@@ -100,200 +148,136 @@ export default function PdnKanban({ entries, readOnly, onUpdate, searchTerm, fil
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 min-h-[400px]">
-      {grouped.map(col => (
+    <div className="relative flex flex-col h-full w-full max-w-full min-w-0 overflow-hidden">
+      {/* Nav pills */}
+      <div className="shrink-0 flex items-center gap-1 mb-2 px-1 overflow-x-auto scrollbar-none">
+        {grouped.map((col, idx) => {
+          const isActive = idx === activeIndex;
+          return (
+            <button
+              key={col.key}
+              onClick={() => scrollToIndex(idx)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap transition-all duration-200 border ${
+                isActive
+                  ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                  : "bg-card text-muted-foreground border-border/50 hover:border-primary/30 hover:text-foreground"
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full shrink-0 ${col.dotColor}`} />
+              <span>{col.emoji} {col.label}</span>
+              <Badge variant="secondary" className={`text-[9px] px-1 py-0 h-3.5 font-bold ${isActive ? "bg-white/20 text-primary-foreground" : ""}`}>
+                {col.items.length}
+              </Badge>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Kanban board */}
+      <div className="relative flex-1 min-h-0">
+        {/* Scroll arrows */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scrollTo("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-card/95 border border-border shadow-lg hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 backdrop-blur-sm"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
+        {canScrollRight && (
+          <button
+            onClick={() => scrollTo("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-card/95 border border-border shadow-lg hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 backdrop-blur-sm"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
+
+        {/* Scrollable container */}
         <div
-          key={col.key}
-          className={`flex flex-col rounded-lg border-2 transition-colors ${
-            dragOverCol === col.key ? `${col.border} bg-accent/50` : "border-border bg-card"
-          }`}
-          onDragOver={e => handleDragOver(e, col.key)}
-          onDragLeave={handleDragLeave}
-          onDrop={e => handleDrop(e, col.key)}
+          ref={scrollRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          className={`flex gap-3 h-full overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-none ${isDraggingScroll ? "cursor-grabbing select-none" : ""}`}
+          style={{ scrollSnapType: "x proximity", minHeight: "500px" }}
         >
-          {/* Column header */}
-          <div className={`flex items-center justify-between px-3 py-2.5 rounded-t-lg ${col.color}`}>
-            <span className="text-sm font-bold">{col.label}</span>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-[10px] h-5">{col.items.length}</Badge>
-              {col.totalVgv > 0 && (
-                <span className="text-[10px] font-semibold opacity-80">{formatBRL(col.totalVgv)}</span>
-              )}
-            </div>
-          </div>
+          {grouped.map((col) => {
+            const isDragOver = dragOverCol === col.key;
+            const alerts = getColumnAlerts(col.items);
 
-          {/* Cards */}
-          <ScrollArea className="flex-1 p-2">
-            <div className="space-y-2 min-h-[100px]">
-              {col.items.map(entry => {
-                const temp = TEMP_CONFIG[entry.temperatura] || TEMP_CONFIG.morno;
-                const isDragged = draggedId === entry.id;
-                const isCaiu = entry.situacao === "caiu";
-                const isAssinado = entry.situacao === "assinado";
-                const prob = calcProbabilidade(entry);
-                const risco = calcRisco(entry);
-                const riscoConf = RISCO_CONFIG[risco.nivel];
-                const semProximaAcao = !isCaiu && !isAssinado && (!entry.proxima_acao || !entry.proxima_acao.trim());
-                const diasParado = differenceInDays(new Date(), new Date(entry.updated_at));
-
-                return (
-                  <Card
-                    key={entry.id}
-                    draggable={!readOnly}
-                    onDragStart={e => handleDragStart(e, entry.id)}
-                    onDragEnd={handleDragEnd}
-                    className={`p-3 cursor-grab active:cursor-grabbing transition-all hover:shadow-md ${
-                      isDragged ? "opacity-40 scale-95" : "opacity-100"
-                    } ${!readOnly ? "hover:border-primary/40" : ""} ${isCaiu ? "border-destructive/20 bg-destructive/5" : ""} ${
-                      risco.nivel === "risco" && !isCaiu && !isAssinado ? "border-red-500/30" : ""
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {!readOnly && (
-                        <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1 min-w-0 space-y-1.5">
-                        {/* Name + risk badge */}
-                        <div className="flex items-center justify-between gap-1">
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {entry.nome || <span className="text-muted-foreground italic">Sem nome</span>}
-                          </p>
-                          {!isCaiu && !isAssinado && (
-                            <span className="text-[9px] shrink-0" title={riscoConf.label}>{riscoConf.emoji}</span>
-                          )}
-                        </div>
-
-                        {/* Und */}
-                        {entry.und && (
-                          <p className="text-[11px] text-muted-foreground">Und: {entry.und}</p>
-                        )}
-
-                        {/* Empreendimento */}
-                        {entry.empreendimento && (
-                          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                            <Building2 className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{entry.empreendimento}</span>
-                          </div>
-                        )}
-
-                        {/* Corretor */}
-                        {entry.corretor && (
-                          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                            <User className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{entry.corretor}</span>
-                          </div>
-                        )}
-
-                        {/* VGV */}
-                        {entry.vgv ? (
-                          <p className="text-[11px] font-bold text-foreground">{formatBRL(entry.vgv)}</p>
-                        ) : null}
-
-                        {/* Probabilidade */}
-                        {!isCaiu && !isAssinado && (
-                          <div className="flex items-center gap-1.5">
-                            <Target className="h-3 w-3 text-muted-foreground" />
-                            <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all ${
-                                  prob >= 70 ? "bg-emerald-500" : prob >= 40 ? "bg-amber-500" : "bg-red-500"
-                                }`}
-                                style={{ width: `${prob}%` }}
-                              />
-                            </div>
-                            <span className="text-[10px] font-semibold text-muted-foreground">{prob}%</span>
-                          </div>
-                        )}
-
-                        {/* Próxima ação */}
-                        {entry.proxima_acao && entry.proxima_acao.trim() && (
-                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                            <Calendar className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{entry.proxima_acao}</span>
-                            {entry.data_proxima_acao && <span className="shrink-0 font-medium">· {entry.data_proxima_acao}</span>}
-                          </div>
-                        )}
-
-                        {/* Alert: sem próxima ação */}
-                        {semProximaAcao && (
-                          <div className="flex items-center gap-1 text-[10px] text-amber-600 bg-amber-500/10 rounded px-1.5 py-0.5">
-                            <AlertTriangle className="h-3 w-3 shrink-0" />
-                            <span>Sem próxima ação</span>
-                          </div>
-                        )}
-
-                        {/* Alert: negócio parado */}
-                        {!isCaiu && !isAssinado && diasParado >= 3 && (
-                          <div className={`flex items-center gap-1 text-[10px] rounded px-1.5 py-0.5 ${
-                            diasParado >= 7 ? "text-red-700 bg-red-500/20" :
-                            diasParado >= 5 ? "text-red-600 bg-red-500/10" :
-                            "text-amber-600 bg-amber-500/10"
-                          }`}>
-                            <AlertTriangle className="h-3 w-3 shrink-0" />
-                            <span>{diasParado >= 5 ? "Parado" : "Sem atualização"} há {diasParado} dias</span>
-                          </div>
-                        )}
-
-                        {/* Objeção */}
-                        {entry.objecao_cliente && (
-                          <Badge variant="outline" className="text-[9px] h-4 gap-0.5 border-muted-foreground/30">
-                            💬 {entry.objecao_cliente}
-                          </Badge>
-                        )}
-
-                        {/* Motivo da queda */}
-                        {isCaiu && (
-                          <div className="mt-1">
-                            {editingMotivo === entry.id ? (
-                              <Input
-                                autoFocus
-                                className="h-7 text-xs"
-                                placeholder="Motivo da queda..."
-                                defaultValue={entry.motivo_queda || ""}
-                                onBlur={(e) => {
-                                  onUpdate(entry.id, { motivo_queda: e.target.value });
-                                  setEditingMotivo(null);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    onUpdate(entry.id, { motivo_queda: (e.target as HTMLInputElement).value });
-                                    setEditingMotivo(null);
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <p
-                                className="text-[11px] text-destructive/80 italic cursor-pointer hover:underline"
-                                onClick={() => !readOnly && setEditingMotivo(entry.id)}
-                              >
-                                {entry.motivo_queda ? `❌ ${entry.motivo_queda}` : "Clique para informar motivo da queda"}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Bottom row: temperature */}
-                        {!isCaiu && (
-                          <div className="flex items-center justify-between gap-2 pt-1">
-                            <Badge variant="outline" className={`text-[10px] h-5 gap-1 ${temp.class}`}>
-                              {temp.icon} {temp.label}
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-              {col.items.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground text-xs">
-                  {readOnly ? "Nenhum registro" : "Arraste cards aqui"}
+            return (
+              <div
+                key={col.key}
+                className={`flex flex-col shrink-0 h-full rounded-xl transition-all duration-200 ${
+                  isDragOver
+                    ? "ring-2 ring-primary/50 bg-primary/5 shadow-xl shadow-primary/10 scale-[1.01]"
+                    : "bg-muted/20"
+                }`}
+                style={{ width: `${getColumnWidth()}px`, scrollSnapAlign: "start" }}
+                onDragOver={(e) => handleDragOver(e, col.key)}
+                onDragLeave={() => setDragOverCol(null)}
+                onDrop={(e) => handleDrop(e, col.key)}
+              >
+                {/* Column header */}
+                <div className={`shrink-0 px-3.5 py-3 bg-card border border-border/40 rounded-t-xl ${col.headerBg}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-3 w-1 rounded-full" style={{ backgroundColor: col.color }} />
+                    <span className="text-xs font-bold text-foreground tracking-tight">
+                      {col.emoji} {col.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 font-bold gap-1">
+                      {col.items.length} <span className="font-normal text-muted-foreground">negócios</span>
+                    </Badge>
+                    {col.totalVgv > 0 && (
+                      <span className="text-[10px] font-semibold text-foreground flex items-center gap-0.5">
+                        <TrendingUp className="h-2.5 w-2.5 text-primary" />
+                        {formatVGV(col.totalVgv)}
+                      </span>
+                    )}
+                    {alerts.total > 0 && (
+                      <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${
+                        alerts.parados > 0 ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
+                      }`}>
+                        <AlertTriangle className="h-2.5 w-2.5" />
+                        {alerts.total}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          </ScrollArea>
+
+                {/* Cards */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 scrollbar-thin">
+                  {col.items.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mb-2">
+                        <span className="text-muted-foreground/40 text-sm">+</span>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground/50">
+                        {readOnly ? "Nenhum registro" : "Arraste cards aqui"}
+                      </span>
+                    </div>
+                  )}
+                  {col.items.map((entry) => (
+                    <PdnCard
+                      key={entry.id}
+                      entry={entry}
+                      readOnly={readOnly}
+                      onUpdate={onUpdate}
+                      onDragStart={() => handleDragStart(entry.id)}
+                      onDragEnd={handleDragEnd}
+                      isDragged={draggedId === entry.id}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      ))}
+      </div>
     </div>
   );
 }
