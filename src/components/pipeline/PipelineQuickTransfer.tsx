@@ -26,19 +26,40 @@ export default function PipelineQuickTransfer({ leadId, leadNome, currentCorreto
   const [transferring, setTransferring] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Load team members on first open
+  // Load team members with gerente name fallback on first open
   useEffect(() => {
     if (!showDropdown || members.length > 0) return;
     setLoading(true);
-    supabase
-      .from("team_members")
-      .select("id, user_id, nome, equipe")
-      .eq("status", "ativo")
-      .order("nome")
-      .then(({ data }) => {
-        setMembers(data || []);
-        setLoading(false);
-      });
+    (async () => {
+      const { data: teamData } = await supabase
+        .from("team_members")
+        .select("id, user_id, nome, equipe, gerente_id")
+        .eq("status", "ativo")
+        .order("nome");
+
+      if (!teamData) { setLoading(false); return; }
+
+      // Get unique gerente IDs to fetch their names
+      const gerenteIds = [...new Set(teamData.map(t => t.gerente_id).filter(Boolean))];
+      let gerenteMap: Record<string, string> = {};
+      if (gerenteIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, nome")
+          .in("user_id", gerenteIds);
+        if (profiles) {
+          profiles.forEach(p => { gerenteMap[p.user_id] = p.nome; });
+        }
+      }
+
+      setMembers(teamData.map(t => ({
+        id: t.id,
+        user_id: t.user_id,
+        nome: t.nome,
+        equipe: t.equipe || gerenteMap[t.gerente_id] || null,
+      })));
+      setLoading(false);
+    })();
   }, [showDropdown]);
 
   // Close dropdown on outside click
