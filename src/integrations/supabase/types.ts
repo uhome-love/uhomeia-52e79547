@@ -1500,6 +1500,47 @@ export type Database = {
           },
         ]
       }
+      pipeline_comissoes: {
+        Row: {
+          corretor_id: string
+          created_at: string
+          id: string
+          papel: string
+          percentual: number
+          pipeline_lead_id: string
+          registrado_por: string
+          valor_comissao: number | null
+        }
+        Insert: {
+          corretor_id: string
+          created_at?: string
+          id?: string
+          papel?: string
+          percentual?: number
+          pipeline_lead_id: string
+          registrado_por: string
+          valor_comissao?: number | null
+        }
+        Update: {
+          corretor_id?: string
+          created_at?: string
+          id?: string
+          papel?: string
+          percentual?: number
+          pipeline_lead_id?: string
+          registrado_por?: string
+          valor_comissao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_comissoes_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_historico: {
         Row: {
           created_at: string
@@ -1548,6 +1589,60 @@ export type Database = {
             columns: ["stage_novo_id"]
             isOneToOne: false
             referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_lead_sequencias: {
+        Row: {
+          concluida_em: string | null
+          created_at: string
+          id: string
+          iniciada_em: string
+          passo_atual: number
+          pausada_em: string | null
+          pipeline_lead_id: string
+          proximo_envio_em: string | null
+          sequencia_id: string
+          status: string
+        }
+        Insert: {
+          concluida_em?: string | null
+          created_at?: string
+          id?: string
+          iniciada_em?: string
+          passo_atual?: number
+          pausada_em?: string | null
+          pipeline_lead_id: string
+          proximo_envio_em?: string | null
+          sequencia_id: string
+          status?: string
+        }
+        Update: {
+          concluida_em?: string | null
+          created_at?: string
+          id?: string
+          iniciada_em?: string
+          passo_atual?: number
+          pausada_em?: string | null
+          pipeline_lead_id?: string
+          proximo_envio_em?: string | null
+          sequencia_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_lead_sequencias_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_lead_sequencias_sequencia_id_fkey"
+            columns: ["sequencia_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_sequencias"
             referencedColumns: ["id"]
           },
         ]
@@ -1697,6 +1792,104 @@ export type Database = {
           },
         ]
       }
+      pipeline_materiais: {
+        Row: {
+          arquivo_nome: string | null
+          ativo: boolean
+          categoria: string
+          created_at: string
+          criado_por: string
+          descricao: string | null
+          empreendimento: string | null
+          id: string
+          tamanho_bytes: number | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          criado_por: string
+          descricao?: string | null
+          empreendimento?: string | null
+          id?: string
+          tamanho_bytes?: number | null
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          criado_por?: string
+          descricao?: string | null
+          empreendimento?: string | null
+          id?: string
+          tamanho_bytes?: number | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      pipeline_parcerias: {
+        Row: {
+          corretor_parceiro_id: string
+          corretor_principal_id: string
+          created_at: string
+          criado_por: string
+          divisao_parceiro: number
+          divisao_principal: number
+          id: string
+          motivo: string | null
+          pipeline_lead_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          corretor_parceiro_id: string
+          corretor_principal_id: string
+          created_at?: string
+          criado_por: string
+          divisao_parceiro?: number
+          divisao_principal?: number
+          id?: string
+          motivo?: string | null
+          pipeline_lead_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          corretor_parceiro_id?: string
+          corretor_principal_id?: string
+          created_at?: string
+          criado_por?: string
+          divisao_parceiro?: number
+          divisao_principal?: number
+          id?: string
+          motivo?: string | null
+          pipeline_lead_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_parcerias_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_produtos: {
         Row: {
           ativo: boolean
@@ -1776,6 +1969,110 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pipeline_sequencia_passos: {
+        Row: {
+          ativo: boolean
+          canal: string
+          conteudo: string | null
+          created_at: string
+          dias_apos_inicio: number
+          id: string
+          material_id: string | null
+          ordem: number
+          sequencia_id: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          ativo?: boolean
+          canal?: string
+          conteudo?: string | null
+          created_at?: string
+          dias_apos_inicio?: number
+          id?: string
+          material_id?: string | null
+          ordem?: number
+          sequencia_id: string
+          tipo?: string
+          titulo: string
+        }
+        Update: {
+          ativo?: boolean
+          canal?: string
+          conteudo?: string | null
+          created_at?: string
+          dias_apos_inicio?: number
+          id?: string
+          material_id?: string | null
+          ordem?: number
+          sequencia_id?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_sequencia_passos_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_materiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_sequencia_passos_sequencia_id_fkey"
+            columns: ["sequencia_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_sequencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_sequencias: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          criado_por: string
+          descricao: string | null
+          empreendimento: string | null
+          id: string
+          nome: string
+          segmento_id: string | null
+          stage_gatilho: string
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          criado_por: string
+          descricao?: string | null
+          empreendimento?: string | null
+          id?: string
+          nome: string
+          segmento_id?: string | null
+          stage_gatilho?: string
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          criado_por?: string
+          descricao?: string | null
+          empreendimento?: string | null
+          id?: string
+          nome?: string
+          segmento_id?: string | null
+          stage_gatilho?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_sequencias_segmento_id_fkey"
+            columns: ["segmento_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_segmentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipeline_stages: {
         Row: {
