@@ -20,7 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import CorretorListSelection from "@/components/oferta-ativa/CorretorListSelection";
 import AproveitadosPanel from "@/components/oferta-ativa/AproveitadosPanel";
-import RankingPanel from "@/components/oferta-ativa/RankingPanel";
+import RankingGestaoLeads from "@/components/corretor/RankingGestaoLeads";
+import { useMissoesLeads } from "@/hooks/useMissoesLeads";
 import ScoringLegend from "@/components/oferta-ativa/ScoringLegend";
 import CorretorDisponibilidadePanel from "@/components/disponibilidade/CorretorDisponibilidadePanel";
 
