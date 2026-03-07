@@ -80,39 +80,53 @@ export function AppSidebar() {
     }
   }, [alerts]);
 
-  const homeItems = isGestor || isAdmin
+  // === GESTOR / ADMIN nav ===
+  const principalItems = isGestor || isAdmin
     ? [
         { title: "Início", url: "/", icon: Home },
-        { title: "Pipeline", url: "/pipeline", icon: Kanban },
-        { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
+        { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
         { title: "HOMI Gerencial", url: "/homi-gerente", icon: Bot },
       ]
     : [
         { title: "Central do Corretor", url: "/corretor", icon: Phone },
-        { title: "Pipeline", url: "/pipeline", icon: Kanban },
-        { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
-        { title: "Meus Negócios", url: "/meus-negocios", icon: FileSpreadsheet },
-        { title: "Scripts do Time", url: "/scripts", icon: FileEdit },
         { title: "HOMI Assistente", url: "/homi", icon: Bot },
+      ];
+
+  const gestaoLeadsItems = isGestor || isAdmin
+    ? [
+        { title: "Pipeline", url: "/pipeline", icon: Kanban },
+        { title: "Escala Diária", url: "/escala-diaria", icon: CalendarDays },
+        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
+      ]
+    : [
+        { title: "Pipeline", url: "/pipeline", icon: Kanban },
+        { title: "Meus Negócios", url: "/meus-negocios", icon: FileSpreadsheet },
+      ];
+
+  const gestaoComercialItems = isGestor
+    ? [
+        { title: "PDN", url: "/pdn", icon: FileSpreadsheet },
+        { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
+        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
+        { title: "Scripts", url: "/scripts", icon: FileEdit },
+        { title: "Meu Time", url: "/meu-time", icon: Users },
+      ]
+    : [
+        { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
+        { title: "Scripts do Time", url: "/scripts", icon: FileEdit },
+      ];
+
+  const rankingItems = isGestor || isAdmin
+    ? [
+        { title: "Ranking Comercial", url: "/ranking", icon: Trophy },
+        { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
+        { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
+      ]
+    : [
         { title: "Resumo Semanal", url: "/corretor/resumo", icon: BarChart3 },
         { title: "Ranking OA", url: "/corretor/ranking-equipes", icon: Trophy },
         { title: "Ranking Comercial", url: "/ranking", icon: BarChart3 },
       ];
-
-  const gestorItems = isGestor
-    ? [
-        { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
-        { title: "PDN", url: "/pdn", icon: FileSpreadsheet },
-        { title: "Escala Diária", url: "/escala-diaria", icon: CalendarDays },
-        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
-        { title: "Scripts", url: "/scripts", icon: FileEdit },
-        { title: "Ranking Comercial", url: "/ranking", icon: Trophy },
-        { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
-        { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
-        { title: "Meu Time", url: "/meu-time", icon: Users },
-        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
-      ]
-    : [];
 
   const ceoItems = isAdmin
     ? [
@@ -120,7 +134,6 @@ export function AppSidebar() {
         { title: "Recuperação de Leads", url: "/gestao", icon: LayoutDashboard },
         { title: "Inteligência Marketing", url: "/marketing", icon: BarChart3 },
         { title: "Auditoria & Saúde", url: "/auditoria", icon: Shield },
-        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
       ]
     : [];
 
@@ -130,7 +143,7 @@ export function AppSidebar() {
       ]
     : [];
 
-  const renderGroup = (label: string, items: typeof homeItems, index: number) => (
+  const renderGroup = (label: string, items: typeof principalItems, index: number) => (
     <SidebarGroup key={label} className="animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
       <SidebarGroupLabel className="text-sidebar-foreground/30 uppercase text-[10px] tracking-[0.15em] font-bold mb-1 px-3">
         {label}
@@ -172,8 +185,10 @@ export function AppSidebar() {
   ];
 
   const groups = [
-    { label: "Principal", items: homeItems },
-    ...(gestorItems.length > 0 ? [{ label: "Gestão Comercial", items: gestorItems }] : []),
+    { label: "Principal", items: principalItems },
+    { label: "Gestão de Leads", items: gestaoLeadsItems },
+    { label: "Gestão Comercial", items: gestaoComercialItems },
+    { label: "Performance", items: rankingItems },
     ...(ceoItems.length > 0 ? [{ label: "Inteligência CEO", items: ceoItems }] : []),
     ...(adminItems.length > 0 ? [{ label: "Sistema", items: adminItems }] : []),
     { label: "Conta", items: configItems },
