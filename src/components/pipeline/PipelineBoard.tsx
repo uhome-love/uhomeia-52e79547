@@ -135,9 +135,9 @@ export default function PipelineBoard({ stages, leads, segmentos, onMoveLead, on
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full max-w-full min-w-0 overflow-hidden">
       {/* Mini-map / Stage nav pills */}
-      <div className="flex items-center gap-1 mb-3 px-1 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1 mb-3 px-1 overflow-x-auto scrollbar-none max-w-full">
         {stages.map((stage, idx) => {
           const stageLeads = leadsByStage.get(stage.id) || [];
           const isActive = idx === activeIndex;

@@ -82,7 +82,7 @@ export default function PipelineKanban() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 w-full max-w-full min-w-0 overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center gap-3 flex-wrap">
         {/* Search */}
