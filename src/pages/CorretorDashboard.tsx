@@ -79,6 +79,7 @@ export default function CorretorDashboard() {
   const { progress, goals, saveGoals } = useCorretorProgress();
   const { isGestor, isAdmin, loading: roleLoading } = useUserRole();
   const motivation = useDailyMotivation();
+  const { user } = useAuth();
   const { ranking, rankingLoading, userId } = useMissoesLeads();
 
   const [activeTab, setActiveTab] = useState("central");
