@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, ChevronLeft, ChevronRight, Users, TrendingUp, Eye } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Users, TrendingUp, Eye, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -65,20 +65,16 @@ export default function CeoCheckpointViewer() {
   const load = useCallback(async () => {
     setLoading(true);
 
-    // Get all gestores
     const { data: gestorRoles } = await supabase.from("user_roles").select("user_id").eq("role", "gestor");
     const gestorIds = (gestorRoles || []).map(r => r.user_id);
     if (gestorIds.length === 0) { setGerentesData([]); setLoading(false); return; }
 
-    // Get profiles
     const { data: profiles } = await supabase.from("profiles").select("user_id, nome").in("user_id", gestorIds);
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p.nome]));
 
-    // Get checkpoints for this date for all gestores
     const { data: cps } = await supabase.from("checkpoints").select("*").eq("data", date).in("gerente_id", gestorIds);
     const cpMap = new Map((cps || []).map(c => [c.gerente_id, c]));
 
-    // Get all team members for all gestores
     const { data: allTeam } = await supabase.from("team_members").select("id, nome, gerente_id, status").in("gerente_id", gestorIds).eq("status", "ativo").order("nome");
     const teamByGerente = new Map<string, typeof allTeam>();
     for (const t of (allTeam || [])) {
@@ -87,7 +83,6 @@ export default function CeoCheckpointViewer() {
       teamByGerente.set(t.gerente_id, arr);
     }
 
-    // Get checkpoint lines
     const cpIds = (cps || []).map(c => c.id);
     const { data: allLines } = cpIds.length > 0
       ? await supabase.from("checkpoint_lines").select("*").in("checkpoint_id", cpIds)
@@ -99,7 +94,6 @@ export default function CeoCheckpointViewer() {
       linesByCp.set(l.checkpoint_id, arr);
     }
 
-    // Build data per gerente
     const result: GerenteCheckpoint[] = [];
     for (const gId of gestorIds) {
       const cp = cpMap.get(gId);
@@ -191,6 +185,20 @@ export default function CeoCheckpointViewer() {
     return { label: "⚪ Não criado", cls: "bg-muted/10 text-muted-foreground border-border" };
   };
 
+  // Alerts
+  const alerts = gerentesData.filter(g => g.checkpoint_status === "não_criado").map(g => ({
+    type: "warning" as const,
+    text: `${g.gerente_nome} não criou checkpoint hoje`,
+  }));
+
+  // Low conversion alerts
+  for (const g of gerentesData) {
+    const txVisita = g.totals.real_visitas_marcadas > 0 ? Math.round((g.totals.real_visitas_realizadas / g.totals.real_visitas_marcadas) * 100) : -1;
+    if (txVisita >= 0 && txVisita < 40) {
+      alerts.push({ type: "warning", text: `${g.gerente_nome}: baixa taxa de visita (${txVisita}%)` });
+    }
+  }
+
   if (loading) return <div className="text-center py-12 text-muted-foreground">Carregando checkpoints...</div>;
 
   return (
@@ -213,6 +221,18 @@ export default function CeoCheckpointViewer() {
       </div>
 
       <p className="text-xs text-muted-foreground capitalize">{dateLabel}</p>
+
+      {/* Checkpoint Alerts */}
+      {alerts.length > 0 && (
+        <div className="space-y-2">
+          {alerts.map((a, i) => (
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-warning/20 bg-warning/5 text-xs text-warning">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              {a.text}
+            </div>
+          ))}
+        </div>
+      )}
 
       {gerentesData.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Nenhum gerente encontrado.</div>
@@ -241,7 +261,7 @@ export default function CeoCheckpointViewer() {
             ))}
           </div>
 
-          {/* Comparativo lado a lado */}
+          {/* Comparativo lado a lado - Enhanced with conversion rates */}
           <div className="rounded-xl border border-border bg-card shadow-card overflow-x-auto">
             <div className="px-4 py-3 border-b border-border">
               <h3 className="font-display font-semibold text-sm">Comparativo entre Gerentes</h3>
@@ -258,12 +278,18 @@ export default function CeoCheckpointViewer() {
                   <th className="px-2 py-2 text-center">V.Real</th>
                   <th className="px-2 py-2 text-center">Propostas</th>
                   <th className="px-2 py-2 text-center">% Lig.</th>
+                  <th className="px-2 py-2 text-center text-primary">Tx Visita</th>
+                  <th className="px-2 py-2 text-center text-primary">Tx Proposta</th>
+                  <th className="px-2 py-2 text-center text-primary">Eficiência</th>
                 </tr>
               </thead>
               <tbody>
                 {gerentesData.map(g => {
                   const st = cpStatusLabel(g.checkpoint_status);
                   const ligPct = pctVal(g.totals.real_ligacoes, g.totals.meta_ligacoes);
+                  const txVisita = g.totals.real_visitas_marcadas > 0 ? Math.round((g.totals.real_visitas_realizadas / g.totals.real_visitas_marcadas) * 100) : 0;
+                  const txProposta = g.totals.real_visitas_realizadas > 0 ? Math.round((g.totals.real_propostas / g.totals.real_visitas_realizadas) * 100) : 0;
+                  const eficiencia = g.totals.real_ligacoes > 0 ? ((g.totals.real_propostas / g.totals.real_ligacoes) * 100).toFixed(1) : "0";
                   return (
                     <tr key={g.gerente_id} className="border-b border-border hover:bg-muted/10">
                       <td className="px-3 py-2 font-medium">{g.gerente_nome}</td>
@@ -278,6 +304,15 @@ export default function CeoCheckpointViewer() {
                       <td className="px-2 py-2 text-center">{g.totals.real_propostas}</td>
                       <td className="px-2 py-2 text-center">
                         <span className={`font-semibold ${pctColor(ligPct)}`}>{ligPct}%</span>
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <span className={`font-semibold ${txVisita >= 70 ? "text-success" : txVisita >= 40 ? "text-warning" : "text-destructive"}`}>{txVisita}%</span>
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <span className={`font-semibold ${txProposta >= 30 ? "text-success" : txProposta >= 15 ? "text-warning" : "text-destructive"}`}>{txProposta}%</span>
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <span className="font-semibold text-muted-foreground">{eficiencia}%</span>
                       </td>
                     </tr>
                   );
@@ -299,7 +334,6 @@ export default function CeoCheckpointViewer() {
               ))}
             </TabsList>
 
-            {/* Consolidated tab — all teams summary */}
             <TabsContent value="consolidado" className="mt-4">
               <div className="space-y-4">
                 {gerentesData.map(g => {
@@ -406,7 +440,6 @@ export default function CeoCheckpointViewer() {
                               </tr>
                             );
                           })}
-                          {/* Totals row */}
                           <tr className="bg-muted/30 font-semibold">
                             <td className="px-3 py-2">Total</td>
                             <td className="px-2 py-2 text-center border-l border-border">{g.totals.meta_ligacoes}</td>
