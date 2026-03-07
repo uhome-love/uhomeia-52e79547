@@ -200,17 +200,22 @@ export default function CorretorDashboard() {
             <QuickLinksGrid />
           </motion.div>
 
-          {/* 5️⃣ META DO DIA — com barras de progresso */}
+          {/* 5️⃣ META DO DIA */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
-            <DailyProgressCard
-              progress={progress}
-              goals={goals}
-              saveGoals={saveGoals}
-              variant="full"
-            />
-            {metaSalva && (
-              <Card className="mt-3">
-                <CardContent className="p-4 space-y-2.5">
+            {!metaSalva ? (
+              <DailyProgressCard
+                progress={progress}
+                goals={goals}
+                saveGoals={saveGoals}
+                variant="full"
+              />
+            ) : (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-foreground">⊙ Meta do Dia</p>
+                    <DailyProgressCard progress={progress} goals={goals} saveGoals={saveGoals} variant="edit-only" />
+                  </div>
                   {[
                     { label: "Tentativas", value: progress.tentativas, max: goals?.meta_ligacoes || 30, pct: ligPct },
                     { label: "Aproveitados", value: progress.aproveitados, max: goals?.meta_aproveitados || 5, pct: aprvPct },
