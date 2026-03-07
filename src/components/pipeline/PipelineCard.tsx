@@ -120,11 +120,8 @@ const PipelineCard = memo(function PipelineCard({ lead, stage, segmentos, corret
   const createdTime = getTimeSinceCreated(lead.created_at);
   const style = activityStyles[activity.variant];
   const temp = TEMP_CONFIG[lead.temperatura || "morno"];
+  const calcTemp = getCalcTemperature(lead);
   const showAlert = activity.variant === "warning" || activity.variant === "danger";
-  const leadScore = calculateLeadScore(lead as any);
-  
-  // SLA status
-  const sla = stage ? getSlaStatus(stage.tipo, lead.stage_changed_at) : null;
 
   const handleWhatsApp = (e: React.MouseEvent, phone: string) => {
     e.stopPropagation();
