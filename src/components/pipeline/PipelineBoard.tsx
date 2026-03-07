@@ -233,10 +233,10 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                         {avgTime} média
                       </span>
                     )}
-                    {alerts > 0 && (
-                      <span className="text-[10px] font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-0.5">
+                    {alerts.total > 0 && (
+                      <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${alerts.dangers > 0 ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>
                         <AlertTriangle className="h-2.5 w-2.5" />
-                        {alerts}
+                        {alerts.total}
                       </span>
                     )}
                   </div>
