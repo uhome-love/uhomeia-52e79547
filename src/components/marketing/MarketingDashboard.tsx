@@ -1,13 +1,14 @@
 import { useState, useRef } from "react";
 import { useMarketing, getCanalLabel } from "@/hooks/useMarketing";
+import { useMetaAdsSync } from "@/hooks/useMetaAdsSync";
 import IaCoreAction from "@/components/IaCoreAction";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, TrendingUp, DollarSign, Users, MousePointerClick, BarChart3, Trophy, Trash2, Plus, FileDown, Loader2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Upload, TrendingUp, DollarSign, Users, MousePointerClick, BarChart3, Trophy, Trash2, Plus, FileDown, Loader2, RefreshCw, Target } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, FunnelChart, Funnel, LabelList } from "recharts";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
@@ -35,6 +36,7 @@ export default function MarketingDashboard() {
     entries, reports, loading, importing, channelStats, totals,
     importReport, addManualEntry, updateEntry, deleteEntry, deleteReport, reload,
   } = useMarketing();
+  const { syncing, syncNow } = useMetaAdsSync();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState("overview");
@@ -67,6 +69,9 @@ export default function MarketingDashboard() {
 
   const cplTotal = totals.leads > 0 ? totals.investimento / totals.leads : 0;
   const cpcTotal = totals.cliques > 0 ? totals.investimento / totals.cliques : 0;
+  const vgvPerReal = totals.investimento > 0
+    ? channelStats.reduce((s, c) => s + (c.vendas || 0), 0) // placeholder — will be VGV when available
+    : 0;
 
   const chartData = channelStats.map(s => ({
     name: getCanalLabel(s.canal),
@@ -169,7 +174,16 @@ export default function MarketingDashboard() {
           </h2>
           <p className="text-xs text-muted-foreground mt-1">Análise de campanhas, portais e canais de marketing</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={async () => { await syncNow(); reload(); }}
+            disabled={syncing}
+            className="gap-2"
+          >
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {syncing ? "Sincronizando..." : "Sincronizar Meta Ads"}
+          </Button>
           <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleFileUpload} />
           <Button onClick={() => fileRef.current?.click()} disabled={importing} className="gap-2">
             {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
@@ -192,28 +206,28 @@ export default function MarketingDashboard() {
         </Card>
         <Card className="border-border">
           <CardContent className="p-3 text-center">
-            <Users className="h-4 w-4 mx-auto text-success mb-1" />
+            <Users className="h-4 w-4 mx-auto text-green-500 mb-1" />
             <p className="text-lg font-bold">{formatNum(totals.leads)}</p>
             <p className="text-[10px] text-muted-foreground">Leads Gerados</p>
           </CardContent>
         </Card>
         <Card className="border-border">
           <CardContent className="p-3 text-center">
-            <TrendingUp className="h-4 w-4 mx-auto text-warning mb-1" />
+            <TrendingUp className="h-4 w-4 mx-auto text-yellow-500 mb-1" />
             <p className="text-lg font-bold">{cplTotal > 0 ? formatBRL(cplTotal) : "—"}</p>
             <p className="text-[10px] text-muted-foreground">CPL Médio</p>
           </CardContent>
         </Card>
         <Card className="border-border">
           <CardContent className="p-3 text-center">
-            <MousePointerClick className="h-4 w-4 mx-auto text-info mb-1" />
+            <MousePointerClick className="h-4 w-4 mx-auto text-blue-500 mb-1" />
             <p className="text-lg font-bold">{formatNum(totals.cliques)}</p>
             <p className="text-[10px] text-muted-foreground">Cliques</p>
           </CardContent>
         </Card>
         <Card className="border-border">
           <CardContent className="p-3 text-center">
-            <Trophy className="h-4 w-4 mx-auto text-destructive mb-1" />
+            <Trophy className="h-4 w-4 mx-auto text-red-500 mb-1" />
             <p className="text-lg font-bold">{formatNum(totals.vendas)}</p>
             <p className="text-[10px] text-muted-foreground">Vendas</p>
           </CardContent>
@@ -297,6 +311,42 @@ export default function MarketingDashboard() {
               </CardContent>
             </Card>
           )}
+
+          {/* Funnel Conversion Chart */}
+          {channelStats.length > 0 && (() => {
+            const totalVisitas = channelStats.reduce((s, c) => s + c.visitas, 0);
+            const totalPropostas = channelStats.reduce((s, c) => s + c.propostas, 0);
+            const totalVendas = channelStats.reduce((s, c) => s + c.vendas, 0);
+            const funnelData = [
+              { name: "Leads", value: totals.leads, fill: "hsl(var(--primary))" },
+              { name: "Visitas", value: totalVisitas, fill: "hsl(210, 70%, 55%)" },
+              { name: "Propostas", value: totalPropostas, fill: "hsl(45, 90%, 50%)" },
+              { name: "Vendas", value: totalVendas, fill: "hsl(142, 70%, 45%)" },
+            ].filter(d => d.value > 0);
+
+            return funnelData.length > 1 ? (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" /> Funil de Conversão
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={funnelData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" tick={{ fontSize: 10 }} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={70} />
+                      <Tooltip formatter={(v: number) => formatNum(v)} />
+                      <Bar dataKey="value" name="Quantidade" radius={[0, 4, 4, 0]}>
+                        {funnelData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            ) : null;
+          })()}
 
           {/* IA Analysis */}
           <div className="flex flex-wrap gap-2">

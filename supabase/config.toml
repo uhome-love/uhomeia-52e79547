@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.generate-sequence]
 verify_jwt = false
+
+[functions.meta-ads-sync]
+verify_jwt = false
