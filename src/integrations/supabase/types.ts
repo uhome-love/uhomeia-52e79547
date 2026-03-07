@@ -349,6 +349,86 @@ export type Database = {
           },
         ]
       }
+      distribuicao_escala: {
+        Row: {
+          ativo: boolean
+          corretor_id: string
+          created_at: string
+          criado_por: string
+          data: string
+          id: string
+          segmento_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          corretor_id: string
+          created_at?: string
+          criado_por: string
+          data?: string
+          id?: string
+          segmento_id: string
+        }
+        Update: {
+          ativo?: boolean
+          corretor_id?: string
+          created_at?: string
+          criado_por?: string
+          data?: string
+          id?: string
+          segmento_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distribuicao_escala_segmento_id_fkey"
+            columns: ["segmento_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_segmentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      distribuicao_historico: {
+        Row: {
+          acao: string
+          corretor_id: string
+          created_at: string
+          id: string
+          pipeline_lead_id: string
+          segmento_id: string | null
+        }
+        Insert: {
+          acao?: string
+          corretor_id: string
+          created_at?: string
+          id?: string
+          pipeline_lead_id: string
+          segmento_id?: string | null
+        }
+        Update: {
+          acao?: string
+          corretor_id?: string
+          created_at?: string
+          id?: string
+          pipeline_lead_id?: string
+          segmento_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distribuicao_historico_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "distribuicao_historico_segmento_id_fkey"
+            columns: ["segmento_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_segmentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_entries: {
         Row: {
           analise_ia: string | null
@@ -1175,6 +1255,58 @@ export type Database = {
             columns: ["linked_visit_id"]
             isOneToOne: false
             referencedRelation: "visitas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_historico: {
+        Row: {
+          created_at: string
+          id: string
+          movido_por: string
+          observacao: string | null
+          pipeline_lead_id: string
+          stage_anterior_id: string | null
+          stage_novo_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          movido_por: string
+          observacao?: string | null
+          pipeline_lead_id: string
+          stage_anterior_id?: string | null
+          stage_novo_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          movido_por?: string
+          observacao?: string | null
+          pipeline_lead_id?: string
+          stage_anterior_id?: string | null
+          stage_novo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_historico_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_historico_stage_anterior_id_fkey"
+            columns: ["stage_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_historico_stage_novo_id_fkey"
+            columns: ["stage_novo_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
             referencedColumns: ["id"]
           },
         ]
