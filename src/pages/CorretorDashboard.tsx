@@ -297,7 +297,36 @@ export default function CorretorDashboard() {
             <QuickLinksGrid />
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* 📅 Visitas de Hoje */}
+          {visitasHoje.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+              <VisitasHojeCard visitas={visitasHoje} loading={visitasLoading} />
+            </motion.div>
+          )}
+
+          {/* ⚡ Follow-ups Pendentes */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+            <FollowUpsDoDia leads={followUps} loading={followUpsLoading} />
+          </motion.div>
+
+          {/* 🎮 Missões de Hoje */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
+            <MissoesDeHoje
+              missoes={missoes}
+              missaoGeral={missaoGeral}
+              pontos={progress.pontos}
+              todasCompletas={progress.todasMissoesCumpridas}
+            />
+          </motion.div>
+
+          {/* 📊 Mini Funil + Evolução */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <MiniFunilPessoal funil={funil} totalLeads={totalLeads} loading={funilLoading} />
+              <EvolucaoSemanal evolucao={evolucao} loading={evolucaoLoading} />
+            </div>
+          </motion.div>
+
             {/* Daily Goals — SHARED COMPONENT (same as in Discagem) */}
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="lg:col-span-2">
               <DailyProgressCard
