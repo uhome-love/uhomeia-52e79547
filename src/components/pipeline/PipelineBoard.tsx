@@ -253,6 +253,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                       corretorNome={lead.corretor_id ? corretorNomes[lead.corretor_id] : undefined}
                       onDragStart={() => handleDragStart(lead.id)}
                       onClick={() => onSelectLead(lead)}
+                      onTransferred={onTransferred}
                     />
                   ))}
                 </div>
