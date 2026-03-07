@@ -1,11 +1,22 @@
 import { motion } from "framer-motion";
-import { Trophy, Medal, TrendingUp } from "lucide-react";
+import { Trophy, Medal, TrendingUp, Phone, Eye, CheckCircle, MessageSquare, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { RankingEntry } from "@/hooks/useMissoesLeads";
+
+export interface PipelineRankingEntry {
+  corretor_id: string;
+  corretor_nome: string;
+  pontos_total: number;
+  novos: number;
+  contatos: number;
+  qualificados: number;
+  possiveis_visitas: number;
+  visitas_marcadas: number;
+  visitas_realizadas: number;
+}
 
 interface Props {
-  ranking: RankingEntry[];
+  ranking: PipelineRankingEntry[];
   loading: boolean;
   userId?: string;
 }
@@ -29,7 +40,7 @@ export default function RankingGestaoLeads({ ranking, loading, userId }: Props) 
         <CardContent className="p-6 text-center space-y-2">
           <Trophy className="h-8 w-8 text-muted-foreground mx-auto" />
           <p className="text-sm font-medium text-muted-foreground">
-            Ranking será atualizado conforme o time trabalhar leads hoje.
+            Ranking será atualizado conforme leads avançarem no pipeline.
           </p>
         </CardContent>
       </Card>
@@ -49,7 +60,7 @@ export default function RankingGestaoLeads({ ranking, loading, userId }: Props) 
             </div>
             <div>
               <h3 className="text-sm font-bold text-foreground">Ranking Gestão de Leads</h3>
-              <p className="text-[10px] text-muted-foreground">Competição do dia</p>
+              <p className="text-[10px] text-muted-foreground">Pipeline Leads — Competição do dia</p>
             </div>
           </div>
           {myPosition > 0 && (
@@ -114,9 +125,11 @@ export default function RankingGestaoLeads({ ranking, loading, userId }: Props) 
                     {isMe && <span className="text-[9px] text-primary/70 ml-1">(você)</span>}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 text-[10px] text-muted-foreground">
-                  <span title="Tentativas">📞 {r.tentativas}</span>
-                  <span title="Visitas">📅 {r.visitas_marcadas}</span>
+                <div className="flex items-center gap-1.5 shrink-0 text-[10px] text-muted-foreground">
+                  <span title="Contatos">📞 {r.contatos}</span>
+                  <span title="Qualificados">🔍 {r.qualificados}</span>
+                  <span title="Visitas Marcadas">📅 {r.visitas_marcadas}</span>
+                  <span title="Visitas Realizadas">✅ {r.visitas_realizadas}</span>
                 </div>
                 <span className={`text-xs font-mono font-extrabold shrink-0 ${isMe ? "text-primary" : "text-foreground"}`}>
                   {r.pontos_total} pts
@@ -140,6 +153,14 @@ export default function RankingGestaoLeads({ ranking, loading, userId }: Props) 
             </span>
           </div>
         )}
+
+        {/* Scoring legend */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-muted-foreground/60 pt-1 border-t border-border/30">
+          <span>📞 Contato = 5pts</span>
+          <span>🔍 Qualif. = 10pts</span>
+          <span>📅 Visita Marc. = 30pts</span>
+          <span>✅ Visita Real. = 50pts</span>
+        </div>
       </CardContent>
     </Card>
   );
