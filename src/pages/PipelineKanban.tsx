@@ -139,41 +139,59 @@ export default function PipelineKanban() {
       <div className="shrink-0 space-y-3 pb-3">
         {/* Top bar */}
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar lead..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 bg-card"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
-                <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-              </button>
-            )}
-          </div>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-shrink-0">
+            <TabsList className="h-9">
+              <TabsTrigger value="kanban" className="text-xs gap-1.5 px-3">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Kanban
+              </TabsTrigger>
+              <TabsTrigger value="flow" className="text-xs gap-1.5 px-3">
+                <BarChart3 className="h-3.5 w-3.5" />
+                Fluxo & Score
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-          <Button
-            variant={showFilters ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="gap-1.5 h-9"
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            Filtros
-            {activeFiltersCount > 0 && (
-              <Badge className="h-4 w-4 p-0 flex items-center justify-center text-[9px] rounded-full">
-                {activeFiltersCount}
-              </Badge>
-            )}
-          </Button>
+          {activeTab === "kanban" && (
+            <>
+              <div className="relative flex-1 min-w-[200px] max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar lead..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 bg-card"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                  </button>
+                )}
+              </div>
+
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="gap-1.5 h-9"
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Filtros
+                {activeFiltersCount > 0 && (
+                  <Badge className="h-4 w-4 p-0 flex items-center justify-center text-[9px] rounded-full">
+                    {activeFiltersCount}
+                  </Badge>
+                )}
+              </Button>
+            </>
+          )}
 
           <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleRefresh} disabled={refreshing}>
             <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
           </Button>
 
-          {canAdd && (
+          {canAdd && activeTab === "kanban" && (
             <>
               <Button
                 variant="outline"
@@ -194,7 +212,7 @@ export default function PipelineKanban() {
         </div>
 
         {/* Expandable filters */}
-        {showFilters && (
+        {showFilters && activeTab === "kanban" && (
           <div className="flex items-center gap-2 flex-wrap p-3 rounded-lg border border-border bg-card animate-fade-in">
             <Select value={filterSegmento} onValueChange={setFilterSegmento}>
               <SelectTrigger className="w-[160px] h-8 text-xs">
@@ -258,58 +276,68 @@ export default function PipelineKanban() {
         )}
 
         {/* Summary */}
-        <div className="flex items-center gap-3 px-1">
-          <div className="flex items-center gap-2">
-            <LayoutGrid className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold text-foreground">
-              {filteredLeads.length} oportunidades
-            </span>
-          </div>
-          {totalVGV > 0 && (
-            <span className="text-sm text-muted-foreground font-medium">
-              • {formatVGV(totalVGV)} em VGV
-            </span>
-          )}
-          {activeFiltersCount > 0 && (
-            <div className="flex items-center gap-1.5 ml-auto flex-wrap">
-              {filterSegmento !== "all" && (
-                <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterSegmento("all")}>
-                  {pipeline.segmentos.find(s => s.id === filterSegmento)?.nome} ×
-                </Badge>
-              )}
-              {filterOrigem !== "all" && (
-                <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterOrigem("all")}>
-                  {filterOrigem.replace(/_/g, " ")} ×
-                </Badge>
-              )}
-              {filterCorretor !== "all" && (
-                <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterCorretor("all")}>
-                  {pipeline.corretorNomes[filterCorretor] || "Corretor"} ×
-                </Badge>
-              )}
-              {filterCampanha !== "all" && (
-                <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterCampanha("all")}>
-                  {filterCampanha} ×
-                </Badge>
-              )}
+        {activeTab === "kanban" && (
+          <div className="flex items-center gap-3 px-1">
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">
+                {filteredLeads.length} oportunidades
+              </span>
             </div>
-          )}
-        </div>
+            {totalVGV > 0 && (
+              <span className="text-sm text-muted-foreground font-medium">
+                • {formatVGV(totalVGV)} em VGV
+              </span>
+            )}
+            {activeFiltersCount > 0 && (
+              <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+                {filterSegmento !== "all" && (
+                  <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterSegmento("all")}>
+                    {pipeline.segmentos.find(s => s.id === filterSegmento)?.nome} ×
+                  </Badge>
+                )}
+                {filterOrigem !== "all" && (
+                  <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterOrigem("all")}>
+                    {filterOrigem.replace(/_/g, " ")} ×
+                  </Badge>
+                )}
+                {filterCorretor !== "all" && (
+                  <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterCorretor("all")}>
+                    {pipeline.corretorNomes[filterCorretor] || "Corretor"} ×
+                  </Badge>
+                )}
+                {filterCampanha !== "all" && (
+                  <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterCampanha("all")}>
+                    {filterCampanha} ×
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Kanban Board — fills remaining height */}
+      {/* Content area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <PipelineBoard
-          stages={pipeline.stages}
-          leads={filteredLeads}
-          segmentos={pipeline.segmentos}
-          corretorNomes={pipeline.corretorNomes}
-          onMoveLead={pipeline.moveLead}
-          onSelectLead={setSelectedLead}
-          onTransferred={(_leadId, corretorId, _corretorNome) => {
-            pipeline.reload();
-          }}
-        />
+        {activeTab === "kanban" ? (
+          <PipelineBoard
+            stages={pipeline.stages}
+            leads={filteredLeads}
+            segmentos={pipeline.segmentos}
+            corretorNomes={pipeline.corretorNomes}
+            onMoveLead={pipeline.moveLead}
+            onSelectLead={setSelectedLead}
+            onTransferred={(_leadId, corretorId, _corretorNome) => {
+              pipeline.reload();
+            }}
+          />
+        ) : (
+          <PipelineFlowDashboard
+            stages={pipeline.stages}
+            leads={pipeline.leads}
+            corretorNomes={pipeline.corretorNomes}
+          />
+        )}
       </div>
 
       {/* Dialogs */}
