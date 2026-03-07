@@ -63,9 +63,9 @@ export function usePushSubscription() {
       // Subscribe to push
       const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       const subscription = await registration.pushManager.subscribe({
-        userVisuallyShown: true,
+        userVisibleOnly: true,
         applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
-      });
+      } as PushSubscriptionOptionsInit);
 
       const subJson = subscription.toJSON();
 
