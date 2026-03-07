@@ -10,6 +10,7 @@ export interface Visita {
   corretor_id: string;
   gerente_id: string;
   lead_id: string | null;
+  pipeline_lead_id: string | null;
   nome_cliente: string;
   telefone: string | null;
   empreendimento: string | null;
