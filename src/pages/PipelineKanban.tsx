@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { usePipeline } from "@/hooks/usePipeline";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import PipelineAddLeadDialog from "@/components/pipeline/PipelineAddLeadDialog";
@@ -21,18 +21,42 @@ import { toast } from "sonner";
 export default function PipelineKanban() {
   const pipeline = usePipeline();
   const { isGestor, isAdmin } = useUserRole();
+  const { user: authUser } = useAuth();
   const [addOpen, setAddOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<PipelineLead | null>(null);
   const [filterSegmento, setFilterSegmento] = useState<string>("all");
   const [filterOrigem, setFilterOrigem] = useState<string>("all");
   const [filterCorretor, setFilterCorretor] = useState<string>("all");
   const [filterCampanha, setFilterCampanha] = useState<string>("all");
+  const [filterGerente, setFilterGerente] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [parcerias, setParcerias] = useState<Record<string, string>>({});
+
+  // Load partnerships
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("pipeline_parcerias")
+        .select("pipeline_lead_id, corretor_parceiro_id")
+        .eq("status", "ativa");
+      if (!data || data.length === 0) return;
+      const parceiroIds = [...new Set(data.map(p => p.corretor_parceiro_id))];
+      const { data: members } = await supabase
+        .from("team_members")
+        .select("user_id, nome")
+        .in("user_id", parceiroIds);
+      const nameMap: Record<string, string> = {};
+      members?.forEach(m => { if (m.user_id) nameMap[m.user_id] = m.nome; });
+      const result: Record<string, string> = {};
+      data.forEach(p => { result[p.pipeline_lead_id] = nameMap[p.corretor_parceiro_id] || "Parceiro"; });
+      setParcerias(result);
+    })();
+  }, [pipeline.leads]);
   const [refreshing, setRefreshing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState("kanban");
-  const { user } = useAuth();
+  // user already destructured above as authUser
 
   const canAdd = isGestor || isAdmin;
 
@@ -59,6 +83,9 @@ export default function PipelineKanban() {
     if (filterOrigem !== "all") result = result.filter(l => l.origem === filterOrigem);
     if (filterCorretor !== "all") result = result.filter(l => l.corretor_id === filterCorretor);
     if (filterCampanha !== "all") result = result.filter(l => l.empreendimento === filterCampanha);
+    if (filterGerente === "sem_gerente") result = result.filter(l => !l.gerente_id);
+    else if (filterGerente === "com_gerente") result = result.filter(l => !!l.gerente_id);
+    else if (filterGerente === "criticos") result = result.filter(l => l.complexidade_score >= 40 && !l.gerente_id);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(l =>
@@ -69,14 +96,14 @@ export default function PipelineKanban() {
       );
     }
     return result;
-  }, [pipeline.leads, filterSegmento, filterOrigem, filterCorretor, filterCampanha, searchQuery]);
+  }, [pipeline.leads, filterSegmento, filterOrigem, filterCorretor, filterCampanha, filterGerente, searchQuery]);
 
   const totalVGV = useMemo(() =>
     filteredLeads.reduce((sum, l) => sum + (l.valor_estimado || 0), 0),
     [filteredLeads]
   );
 
-  const activeFiltersCount = (filterSegmento !== "all" ? 1 : 0) + (filterOrigem !== "all" ? 1 : 0) + (filterCorretor !== "all" ? 1 : 0) + (filterCampanha !== "all" ? 1 : 0) + (searchQuery ? 1 : 0);
+  const activeFiltersCount = (filterSegmento !== "all" ? 1 : 0) + (filterOrigem !== "all" ? 1 : 0) + (filterCorretor !== "all" ? 1 : 0) + (filterCampanha !== "all" ? 1 : 0) + (filterGerente !== "all" ? 1 : 0) + (searchQuery ? 1 : 0);
 
   const formatVGV = (value: number) => {
     if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(2).replace(".", ",")}M`;
@@ -91,7 +118,7 @@ export default function PipelineKanban() {
   };
 
   const handleJetimobSync = useCallback(async () => {
-    if (!user) return;
+    if (!authUser) return;
     setSyncing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -116,13 +143,14 @@ export default function PipelineKanban() {
     } finally {
       setSyncing(false);
     }
-  }, [user, pipeline]);
+  }, [authUser, pipeline]);
 
   const clearFilters = () => {
     setFilterSegmento("all");
     setFilterOrigem("all");
     setFilterCorretor("all");
     setFilterCampanha("all");
+    setFilterGerente("all");
     setSearchQuery("");
   };
 
@@ -293,6 +321,21 @@ export default function PipelineKanban() {
               </SelectContent>
             </Select>
 
+            {/* Gerente filter */}
+            {(isGestor || isAdmin) && (
+              <Select value={filterGerente} onValueChange={setFilterGerente}>
+                <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs">
+                  <SelectValue placeholder="Gerente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="sem_gerente">Sem gerente</SelectItem>
+                  <SelectItem value="com_gerente">Com gerente</SelectItem>
+                  <SelectItem value="criticos">⚠️ Críticos (sem gerente)</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
             {activeFiltersCount > 0 && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-8 text-primary">
                 Limpar filtros
@@ -351,6 +394,7 @@ export default function PipelineKanban() {
             leads={filteredLeads}
             segmentos={pipeline.segmentos}
             corretorNomes={pipeline.corretorNomes}
+            parcerias={parcerias}
             onMoveLead={pipeline.moveLead}
             onSelectLead={setSelectedLead}
             onTransferred={(_leadId, corretorId, _corretorNome) => {
