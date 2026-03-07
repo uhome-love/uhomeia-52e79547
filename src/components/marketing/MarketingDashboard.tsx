@@ -312,6 +312,42 @@ export default function MarketingDashboard() {
             </Card>
           )}
 
+          {/* Funnel Conversion Chart */}
+          {channelStats.length > 0 && (() => {
+            const totalVisitas = channelStats.reduce((s, c) => s + c.visitas, 0);
+            const totalPropostas = channelStats.reduce((s, c) => s + c.propostas, 0);
+            const totalVendas = channelStats.reduce((s, c) => s + c.vendas, 0);
+            const funnelData = [
+              { name: "Leads", value: totals.leads, fill: "hsl(var(--primary))" },
+              { name: "Visitas", value: totalVisitas, fill: "hsl(210, 70%, 55%)" },
+              { name: "Propostas", value: totalPropostas, fill: "hsl(45, 90%, 50%)" },
+              { name: "Vendas", value: totalVendas, fill: "hsl(142, 70%, 45%)" },
+            ].filter(d => d.value > 0);
+
+            return funnelData.length > 1 ? (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" /> Funil de Conversão
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={funnelData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" tick={{ fontSize: 10 }} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={70} />
+                      <Tooltip formatter={(v: number) => formatNum(v)} />
+                      <Bar dataKey="value" name="Quantidade" radius={[0, 4, 4, 0]}>
+                        {funnelData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            ) : null;
+          })()}
+
           {/* IA Analysis */}
           <div className="flex flex-wrap gap-2">
             <IaCoreAction
