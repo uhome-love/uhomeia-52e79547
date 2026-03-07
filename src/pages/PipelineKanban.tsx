@@ -289,10 +289,10 @@ export default function PipelineKanban() {
 
         {/* Summary */}
         {activeTab === "kanban" && (
-          <div className="flex items-center gap-3 px-1">
-            <div className="flex items-center gap-2">
-              <LayoutGrid className="h-4 w-4 text-primary" />
-              <span className="text-sm font-bold text-foreground">
+          <div className="flex items-center gap-2 flex-wrap px-1">
+            <div className="flex items-center gap-1.5">
+              <LayoutGrid className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs sm:text-sm font-bold text-foreground">
                 {filteredLeads.length} oportunidades
               </span>
             </div>
