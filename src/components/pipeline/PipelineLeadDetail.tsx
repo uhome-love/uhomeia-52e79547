@@ -22,7 +22,7 @@ import {
   FileText, Send, PhoneCall, Video, ChevronRight,
   Flame, Snowflake, Sun, Zap, ClipboardList, StickyNote,
   History, Brain, TrendingUp, AlertCircle, Timer,
-  Trash2, Ban, PhoneOff, Handshake
+  Trash2, Ban, PhoneOff, Handshake, Shield, UserPlus, UserMinus, HelpCircle
 } from "lucide-react";
 import PartnershipDialog from "./PartnershipDialog";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays, parseISO } from "date-fns";
@@ -305,6 +305,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, open, onOp
                   </p>
                 )}
               </div>
+
+              {/* ===== RESPONSABILIDADE FLEXÍVEL ===== */}
+              <GerenteManagementSection lead={lead} onUpdate={onUpdate} />
 
               {/* Contact */}
               <Section title="Contato" icon={User}>
