@@ -2675,6 +2675,20 @@ export type Database = {
           visitas_marcadas: number
         }[]
       }
+      get_ranking_pipeline_leads: {
+        Args: { p_periodo?: string }
+        Returns: {
+          contatos: number
+          corretor_id: string
+          corretor_nome: string
+          novos: number
+          pontos_total: number
+          possiveis_visitas: number
+          qualificados: number
+          visitas_marcadas: number
+          visitas_realizadas: number
+        }[]
+      }
       get_team_oa_ranking: { Args: { p_period?: string }; Returns: Json }
       has_role: {
         Args: {
