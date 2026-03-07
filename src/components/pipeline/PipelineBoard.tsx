@@ -3,7 +3,7 @@ import type { PipelineStage, PipelineLead, PipelineSegmento } from "@/hooks/useP
 import PipelineCard from "./PipelineCard";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, AlertTriangle, Clock, TrendingUp } from "lucide-react";
-import { differenceInHours } from "date-fns";
+import { differenceInHours, differenceInMinutes } from "date-fns";
 
 interface PipelineBoardProps {
   stages: PipelineStage[];
@@ -19,11 +19,14 @@ const COLUMN_WIDTH = 300;
 const COLUMN_GAP = 12;
 
 function getStageAlerts(leads: PipelineLead[]) {
-  let alerts = 0;
+  let warnings = 0;
+  let dangers = 0;
   for (const l of leads) {
-    if (differenceInHours(new Date(), new Date(l.stage_changed_at)) >= 2) alerts++;
+    const mins = differenceInMinutes(new Date(), new Date(l.stage_changed_at));
+    if (mins >= 120) dangers++;
+    else if (mins >= 30) warnings++;
   }
-  return alerts;
+  return { warnings, dangers, total: warnings + dangers };
 }
 
 function getAvgTimeLabel(leads: PipelineLead[]) {
@@ -230,10 +233,10 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                         {avgTime} média
                       </span>
                     )}
-                    {alerts > 0 && (
-                      <span className="text-[10px] font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-0.5">
+                    {alerts.total > 0 && (
+                      <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${alerts.dangers > 0 ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>
                         <AlertTriangle className="h-2.5 w-2.5" />
-                        {alerts}
+                        {alerts.total}
                       </span>
                     )}
                   </div>

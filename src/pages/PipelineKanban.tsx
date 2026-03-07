@@ -21,6 +21,8 @@ export default function PipelineKanban() {
   const [selectedLead, setSelectedLead] = useState<PipelineLead | null>(null);
   const [filterSegmento, setFilterSegmento] = useState<string>("all");
   const [filterOrigem, setFilterOrigem] = useState<string>("all");
+  const [filterCorretor, setFilterCorretor] = useState<string>("all");
+  const [filterCampanha, setFilterCampanha] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -35,10 +37,23 @@ export default function PipelineKanban() {
     return Array.from(set).sort();
   }, [pipeline.leads]);
 
+  const campanhas = useMemo(() => {
+    const set = new Set<string>();
+    pipeline.leads.forEach(l => { if (l.empreendimento) set.add(l.empreendimento); });
+    return Array.from(set).sort();
+  }, [pipeline.leads]);
+
+  const corretorList = useMemo(() => {
+    const entries = Object.entries(pipeline.corretorNomes).sort((a, b) => a[1].localeCompare(b[1]));
+    return entries;
+  }, [pipeline.corretorNomes]);
+
   const filteredLeads = useMemo(() => {
     let result = pipeline.leads;
     if (filterSegmento !== "all") result = result.filter(l => l.segmento_id === filterSegmento);
     if (filterOrigem !== "all") result = result.filter(l => l.origem === filterOrigem);
+    if (filterCorretor !== "all") result = result.filter(l => l.corretor_id === filterCorretor);
+    if (filterCampanha !== "all") result = result.filter(l => l.empreendimento === filterCampanha);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(l =>
@@ -49,14 +64,14 @@ export default function PipelineKanban() {
       );
     }
     return result;
-  }, [pipeline.leads, filterSegmento, filterOrigem, searchQuery]);
+  }, [pipeline.leads, filterSegmento, filterOrigem, filterCorretor, filterCampanha, searchQuery]);
 
   const totalVGV = useMemo(() =>
     filteredLeads.reduce((sum, l) => sum + (l.valor_estimado || 0), 0),
     [filteredLeads]
   );
 
-  const activeFiltersCount = (filterSegmento !== "all" ? 1 : 0) + (filterOrigem !== "all" ? 1 : 0) + (searchQuery ? 1 : 0);
+  const activeFiltersCount = (filterSegmento !== "all" ? 1 : 0) + (filterOrigem !== "all" ? 1 : 0) + (filterCorretor !== "all" ? 1 : 0) + (filterCampanha !== "all" ? 1 : 0) + (searchQuery ? 1 : 0);
 
   const formatVGV = (value: number) => {
     if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(2).replace(".", ",")}M`;
@@ -101,6 +116,8 @@ export default function PipelineKanban() {
   const clearFilters = () => {
     setFilterSegmento("all");
     setFilterOrigem("all");
+    setFilterCorretor("all");
+    setFilterCampanha("all");
     setSearchQuery("");
   };
 
@@ -205,6 +222,30 @@ export default function PipelineKanban() {
               </SelectContent>
             </Select>
 
+            <Select value={filterCorretor} onValueChange={setFilterCorretor}>
+              <SelectTrigger className="w-[160px] h-8 text-xs">
+                <SelectValue placeholder="Corretor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos corretores</SelectItem>
+                {corretorList.map(([id, nome]) => (
+                  <SelectItem key={id} value={id}>{nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterCampanha} onValueChange={setFilterCampanha}>
+              <SelectTrigger className="w-[160px] h-8 text-xs">
+                <SelectValue placeholder="Campanha" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas campanhas</SelectItem>
+                {campanhas.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             {activeFiltersCount > 0 && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-8 text-primary">
                 Limpar filtros
@@ -227,7 +268,7 @@ export default function PipelineKanban() {
             </span>
           )}
           {activeFiltersCount > 0 && (
-            <div className="flex items-center gap-1.5 ml-auto">
+            <div className="flex items-center gap-1.5 ml-auto flex-wrap">
               {filterSegmento !== "all" && (
                 <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterSegmento("all")}>
                   {pipeline.segmentos.find(s => s.id === filterSegmento)?.nome} ×
@@ -236,6 +277,16 @@ export default function PipelineKanban() {
               {filterOrigem !== "all" && (
                 <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterOrigem("all")}>
                   {filterOrigem.replace(/_/g, " ")} ×
+                </Badge>
+              )}
+              {filterCorretor !== "all" && (
+                <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterCorretor("all")}>
+                  {pipeline.corretorNomes[filterCorretor] || "Corretor"} ×
+                </Badge>
+              )}
+              {filterCampanha !== "all" && (
+                <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer" onClick={() => setFilterCampanha("all")}>
+                  {filterCampanha} ×
                 </Badge>
               )}
             </div>
