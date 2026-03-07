@@ -78,12 +78,34 @@ const activityStyles: Record<ActivityVariant, { dot: string; border: string; bg:
   danger: { dot: "bg-red-500", border: "border-red-500/50", bg: "bg-red-500/10", text: "text-red-600 dark:text-red-400" },
 };
 
-// Temperature config
+// Temperature config (stored field)
 const TEMP_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string; bg: string }> = {
   quente: { icon: Flame, label: "Quente", color: "text-red-600", bg: "bg-red-500/10" },
   morno: { icon: Thermometer, label: "Morno", color: "text-amber-600", bg: "bg-amber-500/10" },
   frio: { icon: Snowflake, label: "Frio", color: "text-blue-500", bg: "bg-blue-500/10" },
 };
+
+// Calculated temperature based on time since last action
+interface CalcTemp { emoji: string; label: string; bg: string; border: string; text: string; tooltip: string }
+function getCalcTemperature(lead: PipelineLead): CalcTemp {
+  const refDate = lead.updated_at || lead.created_at;
+  const hours = differenceInHours(new Date(), new Date(refDate));
+  const isIndicacao = (lead.origem || "").toLowerCase().includes("indicação") || (lead.origem || "").toLowerCase().includes("indicacao");
+
+  if (hours < 2 || isIndicacao) {
+    const tip = isIndicacao ? "Origem: indicação" : `Lead há ${hours < 1 ? "<1" : hours}h sem ação`;
+    return { emoji: "🔥", label: "Quente", bg: "bg-[#EF4444]/15", border: "border-[#EF4444]/30", text: "text-[#EF4444]", tooltip: tip };
+  }
+  if (hours < 24) {
+    return { emoji: "🟡", label: "Morno", bg: "bg-[#F59E0B]/15", border: "border-[#F59E0B]/30", text: "text-[#F59E0B]", tooltip: `Lead há ${hours}h sem ação` };
+  }
+  if (hours < 72) {
+    const days = Math.floor(hours / 24);
+    return { emoji: "🔵", label: "Frio", bg: "bg-[#3B82F6]/15", border: "border-[#3B82F6]/30", text: "text-[#3B82F6]", tooltip: `Lead há ${days}d ${hours % 24}h sem ação` };
+  }
+  const days = Math.floor(hours / 24);
+  return { emoji: "❄️", label: "Gelado", bg: "bg-[#6B7280]/15", border: "border-[#6B7280]/30", text: "text-[#6B7280]", tooltip: `Lead há ${days} dias sem ação` };
+}
 
 const MODO_LABELS: Record<string, { label: string; color: string }> = {
   corretor_conduz: { label: "Corretor", color: "text-blue-600 bg-blue-500/10" },
@@ -98,10 +120,9 @@ const PipelineCard = memo(function PipelineCard({ lead, stage, segmentos, corret
   const createdTime = getTimeSinceCreated(lead.created_at);
   const style = activityStyles[activity.variant];
   const temp = TEMP_CONFIG[lead.temperatura || "morno"];
+  const calcTemp = getCalcTemperature(lead);
   const showAlert = activity.variant === "warning" || activity.variant === "danger";
   const leadScore = calculateLeadScore(lead as any);
-  
-  // SLA status
   const sla = stage ? getSlaStatus(stage.tipo, lead.stage_changed_at) : null;
 
   const handleWhatsApp = (e: React.MouseEvent, phone: string) => {
@@ -158,16 +179,15 @@ const PipelineCard = memo(function PipelineCard({ lead, stage, segmentos, corret
                   <p className="text-muted-foreground">{leadScore.factors.join(" · ")}</p>
                 </TooltipContent>
               </Tooltip>
-              {temp && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={`p-0.5 rounded ${temp.bg}`}>
-                      <temp.icon className={`h-3 w-3 ${temp.color}`} />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">{temp.label}</TooltipContent>
-                </Tooltip>
-              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${calcTemp.bg} ${calcTemp.border} ${calcTemp.text}`}>
+                    <span>{calcTemp.emoji}</span>
+                    {calcTemp.label}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">{calcTemp.tooltip}</TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
