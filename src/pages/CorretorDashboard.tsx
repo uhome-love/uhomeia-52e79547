@@ -13,6 +13,13 @@ import DailyProgressCard from "@/components/corretor/DailyProgressCard";
 import QuickLinksGrid from "@/components/corretor/QuickLinksGrid";
 import AchievementsBadges from "@/components/corretor/AchievementsBadges";
 import YesterdayComparison from "@/components/corretor/YesterdayComparison";
+import FollowUpsDoDia from "@/components/corretor/FollowUpsDoDia";
+import VisitasHojeCard from "@/components/corretor/VisitasHojeCard";
+import MiniFunilPessoal from "@/components/corretor/MiniFunilPessoal";
+import EvolucaoSemanal from "@/components/corretor/EvolucaoSemanal";
+import MissoesDeHoje from "@/components/corretor/MissoesDeHoje";
+import { useMissoesLeads } from "@/hooks/useMissoesLeads";
+import { useCorretorHomeData } from "@/hooks/useCorretorHomeData";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Navigate } from "react-router-dom";
@@ -79,6 +86,9 @@ export default function CorretorDashboard() {
   const { isGestor, isAdmin, loading: roleLoading } = useUserRole();
   const motivation = useDailyMotivation();
   const { user } = useAuth();
+
+  const { missoes, missaoGeral, radarLeads, radarLoading, ranking, rankingLoading, userId } = useMissoesLeads();
+  const { followUps, followUpsLoading, visitasHoje, visitasLoading, funil, funilLoading, totalLeads, evolucao, evolucaoLoading } = useCorretorHomeData();
 
   const [activeTab, setActiveTab] = useState("central");
   const [nome, setNome] = useState("");
@@ -285,6 +295,36 @@ export default function CorretorDashboard() {
           {/* Quick Links */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
             <QuickLinksGrid />
+          </motion.div>
+
+          {/* 📅 Visitas de Hoje */}
+          {visitasHoje.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+              <VisitasHojeCard visitas={visitasHoje} loading={visitasLoading} />
+            </motion.div>
+          )}
+
+          {/* ⚡ Follow-ups Pendentes */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+            <FollowUpsDoDia leads={followUps} loading={followUpsLoading} />
+          </motion.div>
+
+          {/* 🎮 Missões de Hoje */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
+            <MissoesDeHoje
+              missoes={missoes}
+              missaoGeral={missaoGeral}
+              pontos={progress.pontos}
+              todasCompletas={progress.todasMissoesCumpridas}
+            />
+          </motion.div>
+
+          {/* 📊 Mini Funil + Evolução */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <MiniFunilPessoal funil={funil} totalLeads={totalLeads} loading={funilLoading} />
+              <EvolucaoSemanal evolucao={evolucao} loading={evolucaoLoading} />
+            </div>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
