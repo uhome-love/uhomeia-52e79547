@@ -1,7 +1,8 @@
+import { useMemo } from "react";
 import { useForecast } from "@/hooks/useForecast";
 import ForecastCards from "./ForecastCards";
 import IaCoreAction from "@/components/IaCoreAction";
-import { AlertTriangle, TrendingUp, Crown } from "lucide-react";
+import { AlertTriangle, TrendingUp, Crown, BarChart3, Info } from "lucide-react";
 
 const fmtCurrency = (v: number) => {
   if (Math.abs(v) >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
@@ -11,6 +12,25 @@ const fmtCurrency = (v: number) => {
 
 export default function CeoForecastPanel() {
   const { gerentes, consolidado, loading } = useForecast();
+
+  // Scenarios
+  const scenarios = useMemo(() => {
+    if (gerentes.length === 0) return null;
+    const c = consolidado;
+    const conservador = {
+      vendas: Math.max(0, Math.round(c.vendas_previstas * 0.7)),
+      vgv: c.vgv_previsto * 0.7,
+    };
+    const provavel = {
+      vendas: c.vendas_previstas,
+      vgv: c.vgv_previsto,
+    };
+    const otimista = {
+      vendas: Math.round(c.vendas_previstas * 1.3),
+      vgv: c.vgv_previsto * 1.3,
+    };
+    return { conservador, provavel, otimista };
+  }, [gerentes, consolidado]);
 
   if (loading) return <div className="text-center py-12 text-muted-foreground">Carregando previsão consolidada...</div>;
   if (gerentes.length === 0) return <div className="text-center py-12 text-muted-foreground">Sem dados para gerar previsão.</div>;
@@ -46,6 +66,41 @@ export default function CeoForecastPanel() {
         vgv={consolidado.vgv_previsto}
       />
 
+      {/* ═══ CENÁRIOS ═══ */}
+      {scenarios && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] px-2 py-0.5 rounded bg-destructive/10 text-destructive font-semibold">CONSERVADOR</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Vendas previstas</p>
+            <p className="text-xl font-display font-bold text-foreground">{scenarios.conservador.vendas}</p>
+            <p className="text-xs text-muted-foreground mt-1">VGV previsto</p>
+            <p className="text-sm font-bold text-foreground">{fmtCurrency(scenarios.conservador.vgv)}</p>
+          </div>
+          <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 shadow-card">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold">PROVÁVEL</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Vendas previstas</p>
+            <p className="text-xl font-display font-bold text-foreground">{scenarios.provavel.vendas}</p>
+            <p className="text-[10px] text-muted-foreground">Faixa: {scenarios.conservador.vendas} a {scenarios.otimista.vendas}</p>
+            <p className="text-xs text-muted-foreground mt-1">VGV previsto</p>
+            <p className="text-sm font-bold text-foreground">{fmtCurrency(scenarios.provavel.vgv)}</p>
+            <p className="text-[10px] text-muted-foreground">Faixa: {fmtCurrency(scenarios.conservador.vgv)} a {fmtCurrency(scenarios.otimista.vgv)}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] px-2 py-0.5 rounded bg-success/10 text-success font-semibold">OTIMISTA</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Vendas previstas</p>
+            <p className="text-xl font-display font-bold text-foreground">{scenarios.otimista.vendas}</p>
+            <p className="text-xs text-muted-foreground mt-1">VGV previsto</p>
+            <p className="text-sm font-bold text-foreground">{fmtCurrency(scenarios.otimista.vgv)}</p>
+          </div>
+        </div>
+      )}
+
       {/* Alert */}
       {gap > 0 && consolidado.meta_vendas > 0 && (
         <div className="flex items-start gap-3 p-4 rounded-xl border bg-destructive/5 border-destructive/20">
@@ -61,6 +116,32 @@ export default function CeoForecastPanel() {
           </div>
         </div>
       )}
+
+      {/* Metodologia */}
+      <div className="rounded-xl border border-border bg-muted/20 p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Info className="h-4 w-4 text-muted-foreground" />
+          <h4 className="text-xs font-semibold text-muted-foreground">Metodologia do Cálculo</h4>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[10px] text-muted-foreground">
+          <div>
+            <p className="font-medium">Visitas Realizadas</p>
+            <p>Dados dos checkpoints do mês</p>
+          </div>
+          <div>
+            <p className="font-medium">Propostas Estimadas</p>
+            <p>Visitas × Taxa histórica V→P ({gerentes.length > 0 ? `${(gerentes[0].conv_visita_proposta * 100).toFixed(0)}%` : "22%"})</p>
+          </div>
+          <div>
+            <p className="font-medium">Vendas Previstas</p>
+            <p>Propostas × Taxa histórica P→V ({gerentes.length > 0 ? `${(gerentes[0].conv_proposta_venda * 100).toFixed(0)}%` : "33%"})</p>
+          </div>
+          <div>
+            <p className="font-medium">Cenários</p>
+            <p>Conservador: -30% · Otimista: +30%</p>
+          </div>
+        </div>
+      </div>
 
       {/* Ranking por Gerente */}
       <div className="rounded-xl border border-border bg-card shadow-card overflow-x-auto">

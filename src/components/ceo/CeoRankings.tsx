@@ -3,14 +3,17 @@ import { useCeoData, pct, type CeoPeriod } from "@/hooks/useCeoData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy, Medal } from "lucide-react";
 
-type RankMetric = "score" | "vgv_assinado" | "vgv_gerado" | "visitas_realizadas" | "propostas" | "atingimento";
+type RankMetric = "score" | "ligacoes" | "visitas_marcadas" | "visitas_realizadas" | "propostas" | "vgv_assinado" | "vgv_gerado" | "conversao" | "atingimento";
 
 const metricLabels: Record<RankMetric, string> = {
   score: "Score Geral",
-  vgv_assinado: "VGV Assinado",
-  vgv_gerado: "VGV Gerado",
+  ligacoes: "Ligações",
+  visitas_marcadas: "Visitas Marcadas",
   visitas_realizadas: "Visitas Realizadas",
   propostas: "Propostas",
+  vgv_assinado: "VGV Assinado",
+  vgv_gerado: "VGV Gerado",
+  conversao: "Conversão",
   atingimento: "% Atingimento",
 };
 
@@ -23,10 +26,17 @@ export default function CeoRankings() {
     const arr = [...allCorretores];
     arr.sort((a, b) => {
       if (metric === "score") return b.score - a.score;
+      if (metric === "ligacoes") return b.real_ligacoes - a.real_ligacoes;
+      if (metric === "visitas_marcadas") return b.real_visitas_marcadas - a.real_visitas_marcadas;
       if (metric === "vgv_assinado") return b.real_vgv_assinado - a.real_vgv_assinado;
       if (metric === "vgv_gerado") return b.real_vgv_gerado - a.real_vgv_gerado;
       if (metric === "visitas_realizadas") return b.real_visitas_realizadas - a.real_visitas_realizadas;
       if (metric === "propostas") return b.real_propostas - a.real_propostas;
+      if (metric === "conversao") {
+        const aConv = a.real_visitas_realizadas > 0 ? a.real_propostas / a.real_visitas_realizadas : 0;
+        const bConv = b.real_visitas_realizadas > 0 ? b.real_propostas / b.real_visitas_realizadas : 0;
+        return bConv - aConv;
+      }
       const aPct = pct(a.real_ligacoes + a.real_visitas_realizadas + a.real_propostas, a.meta_ligacoes + a.meta_visitas_realizadas + a.meta_propostas);
       const bPct = pct(b.real_ligacoes + b.real_visitas_realizadas + b.real_propostas, b.meta_ligacoes + b.meta_visitas_realizadas + b.meta_propostas);
       return bPct - aPct;
@@ -38,7 +48,10 @@ export default function CeoRankings() {
     const arr = [...gerentes];
     arr.sort((a, b) => {
       if (metric === "vgv_assinado") return b.totals.real_vgv_assinado - a.totals.real_vgv_assinado;
+      if (metric === "ligacoes") return b.totals.real_ligacoes - a.totals.real_ligacoes;
+      if (metric === "visitas_marcadas") return b.totals.real_visitas_marcadas - a.totals.real_visitas_marcadas;
       if (metric === "visitas_realizadas") return b.totals.real_visitas_realizadas - a.totals.real_visitas_realizadas;
+      if (metric === "propostas") return b.totals.real_propostas - a.totals.real_propostas;
       return b.totals.score - a.totals.score;
     });
     return arr;
@@ -46,10 +59,16 @@ export default function CeoRankings() {
 
   const getValue = (c: typeof allCorretores[0]) => {
     if (metric === "score") return `${c.score} pts`;
+    if (metric === "ligacoes") return `${c.real_ligacoes}`;
+    if (metric === "visitas_marcadas") return `${c.real_visitas_marcadas}`;
     if (metric === "vgv_assinado") return `R$ ${c.real_vgv_assinado.toLocaleString("pt-BR")}`;
     if (metric === "vgv_gerado") return `R$ ${c.real_vgv_gerado.toLocaleString("pt-BR")}`;
     if (metric === "visitas_realizadas") return `${c.real_visitas_realizadas}`;
     if (metric === "propostas") return `${c.real_propostas}`;
+    if (metric === "conversao") {
+      const conv = c.real_visitas_realizadas > 0 ? Math.round((c.real_propostas / c.real_visitas_realizadas) * 100) : 0;
+      return `${conv}%`;
+    }
     return `${pct(c.real_ligacoes + c.real_visitas_realizadas + c.real_propostas, c.meta_ligacoes + c.meta_visitas_realizadas + c.meta_propostas)}%`;
   };
 
