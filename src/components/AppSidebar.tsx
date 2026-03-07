@@ -107,12 +107,14 @@ export function AppSidebar() {
       ]
     : isGestor
     ? [
+        { title: "Pipeline", url: "/pipeline", icon: Kanban },
         { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Scripts", url: "/scripts", icon: FileEdit },
       ]
     : [
+        { title: "Pipeline", url: "/pipeline", icon: Kanban },
         { title: "Meus Negócios", url: "/meus-negocios", icon: FileSpreadsheet },
         { title: "Minha Agenda", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
