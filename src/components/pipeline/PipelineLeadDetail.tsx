@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import PartnershipDialog from "./PartnershipDialog";
 import GerenteManagementSection from "./GerenteManagementSection";
+import LeadSequenceSuggestion from "./LeadSequenceSuggestion";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -309,6 +310,16 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, open, onOp
 
               {/* ===== RESPONSABILIDADE FLEXÍVEL ===== */}
               <GerenteManagementSection lead={lead} onUpdate={onUpdate} />
+
+              {/* ===== SUGESTÃO DE SEQUÊNCIA ===== */}
+              {currentStage && (
+                <LeadSequenceSuggestion
+                  leadId={lead.id}
+                  leadNome={lead.nome}
+                  stageType={currentStage.tipo}
+                  empreendimento={lead.empreendimento}
+                />
+              )}
 
               {/* Contact */}
               <Section title="Contato" icon={User}>
