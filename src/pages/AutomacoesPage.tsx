@@ -11,6 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AutomationWizard from "@/components/automations/AutomationWizard";
 import AutomationLogsDialog from "@/components/automations/AutomationLogsDialog";
+import SequenceTemplates from "@/components/automations/SequenceTemplates";
 
 interface Automation {
   id: string;
@@ -125,17 +126,20 @@ export default function AutomacoesPage() {
         </Button>
       </div>
 
+      {/* Sequence Templates */}
+      <SequenceTemplates onCreated={loadAutomations} />
+
       {automations.length === 0 ? (
         <Card className="p-12 text-center">
           <Zap className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Nenhuma automação criada</h3>
           <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
             Automações executam ações automaticamente quando algo acontece. 
-            Por exemplo: enviar WhatsApp quando um lead chegar.
+            Use um template acima ou crie do zero.
           </p>
           <Button onClick={() => setWizardOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Criar primeira automação
+            Criar automação personalizada
           </Button>
         </Card>
       ) : (
