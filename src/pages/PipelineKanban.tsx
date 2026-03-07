@@ -203,6 +203,7 @@ export default function PipelineKanban() {
                 <FileText className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Relatórios</span>
               </TabsTrigger>
+            </TabsList>
           </Tabs>
 
           {(activeTab === "kanban") && (
