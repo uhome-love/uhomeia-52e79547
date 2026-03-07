@@ -28,10 +28,12 @@ export interface RankingEntry {
   corretor_id: string;
   corretor_nome: string;
   pontos_total: number;
-  tentativas: number;
-  leads_responderam: number;
+  novos: number;
+  contatos: number;
+  qualificados: number;
+  possiveis_visitas: number;
   visitas_marcadas: number;
-  propostas: number;
+  visitas_realizadas: number;
 }
 
 export function useMissoesLeads() {
