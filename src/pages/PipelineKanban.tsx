@@ -4,10 +4,12 @@ import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import PipelineAddLeadDialog from "@/components/pipeline/PipelineAddLeadDialog";
 import PipelineLeadDetail from "@/components/pipeline/PipelineLeadDetail";
 import PipelineFlowDashboard from "@/components/pipeline/PipelineFlowDashboard";
+import MaterialsLibrary from "@/components/pipeline/MaterialsLibrary";
+import SequenceBuilder from "@/components/pipeline/SequenceBuilder";
 import type { PipelineLead } from "@/hooks/usePipeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, RefreshCw, Loader2, Search, LayoutGrid, X, SlidersHorizontal, CloudDownload, BarChart3 } from "lucide-react";
+import { Plus, RefreshCw, Loader2, Search, LayoutGrid, X, SlidersHorizontal, CloudDownload, BarChart3, FolderOpen, Zap } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
@@ -148,8 +150,20 @@ export default function PipelineKanban() {
               </TabsTrigger>
               <TabsTrigger value="flow" className="text-xs gap-1.5 px-2 sm:px-3">
                 <BarChart3 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Fluxo & Score</span>
+                <span className="hidden sm:inline">Fluxo</span>
               </TabsTrigger>
+              {canAdd && (
+                <>
+                  <TabsTrigger value="materiais" className="text-xs gap-1.5 px-2 sm:px-3">
+                    <FolderOpen className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Materiais</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="sequencias" className="text-xs gap-1.5 px-2 sm:px-3">
+                    <Zap className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Sequências</span>
+                  </TabsTrigger>
+                </>
+              )}
             </TabsList>
           </Tabs>
 
@@ -343,13 +357,21 @@ export default function PipelineKanban() {
               pipeline.reload();
             }}
           />
-        ) : (
+        ) : activeTab === "flow" ? (
           <PipelineFlowDashboard
             stages={pipeline.stages}
             leads={pipeline.leads}
             corretorNomes={pipeline.corretorNomes}
           />
-        )}
+        ) : activeTab === "materiais" ? (
+          <div className="h-full overflow-auto p-1">
+            <MaterialsLibrary />
+          </div>
+        ) : activeTab === "sequencias" ? (
+          <div className="h-full overflow-auto p-1">
+            <SequenceBuilder />
+          </div>
+        ) : null}
       </div>
 
       {/* Dialogs */}
