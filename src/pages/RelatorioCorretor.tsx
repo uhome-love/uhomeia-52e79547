@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Sparkles, Download, Save, RefreshCw, FileText, History, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Sparkles, Download, Save, RefreshCw, FileText, History, Trash2, CheckCircle2, Clock, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -36,6 +37,21 @@ interface SavedReport {
   score_performance: number | null;
   created_at: string;
   conteudo_relatorio: string;
+}
+
+interface AutoReport {
+  id: string;
+  corretor_id: string;
+  corretor_nome: string;
+  periodo_inicio: string;
+  periodo_fim: string;
+  dados_semana: any;
+  contexto_auto: string | null;
+  conteudo_relatorio: string | null;
+  status: string;
+  score_performance: number | null;
+  created_at: string;
+  aprovado_em: string | null;
 }
 
 function calcScore(m: Metricas): number {
@@ -73,7 +89,7 @@ const emptyMetricas: Metricas = {
 
 export default function RelatorioCorretor() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("gerar");
+  const [activeTab, setActiveTab] = useState("rascunhos");
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [corretorId, setCorretorId] = useState("");
   const [periodoTipo, setPeriodoTipo] = useState("semanal");
@@ -89,6 +105,12 @@ export default function RelatorioCorretor() {
   const [historico, setHistorico] = useState<SavedReport[]>([]);
   const [viewingReport, setViewingReport] = useState<SavedReport | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  // Auto reports state
+  const [autoReports, setAutoReports] = useState<AutoReport[]>([]);
+  const [loadingAuto, setLoadingAuto] = useState(false);
+  const [viewingAuto, setViewingAuto] = useState<AutoReport | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
 
   // Load team + gerente name
   useEffect(() => {
@@ -135,7 +157,6 @@ export default function RelatorioCorretor() {
       .in("checkpoint_id", cpIds);
 
     const m: Metricas = { ...emptyMetricas };
-    // Deep clone
     Object.keys(m).forEach(k => { (m as any)[k] = { meta: 0, real: 0 }; });
 
     let presencaDias = 0;
@@ -180,6 +201,23 @@ export default function RelatorioCorretor() {
   }, [user]);
 
   useEffect(() => { loadHistorico(); }, [loadHistorico]);
+
+  // Load auto reports
+  const loadAutoReports = useCallback(async () => {
+    if (!user) return;
+    setLoadingAuto(true);
+    const { data } = await supabase
+      .from("one_on_one_reports")
+      .select("*")
+      .eq("gerente_id", user.id)
+      .eq("status", "rascunho")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    setAutoReports((data as AutoReport[]) || []);
+    setLoadingAuto(false);
+  }, [user]);
+
+  useEffect(() => { loadAutoReports(); }, [loadAutoReports]);
 
   // Load previous period metrics for trend
   const loadTendencia = useCallback(async () => {
@@ -313,6 +351,54 @@ export default function RelatorioCorretor() {
     if (viewingReport?.id === id) setViewingReport(null);
   };
 
+  // Approve auto report
+  const approveReport = async (report: AutoReport) => {
+    if (!user) return;
+    setApprovingId(report.id);
+    
+    const { error } = await supabase
+      .from("one_on_one_reports")
+      .update({
+        status: "aprovado",
+        aprovado_em: new Date().toISOString(),
+        aprovado_por: user.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", report.id);
+
+    if (error) {
+      toast.error("Erro ao aprovar relatório");
+      console.error(error);
+    } else {
+      toast.success(`Relatório de ${report.corretor_nome} aprovado!`);
+      // Also save to corretor_reports for unified history
+      await supabase.from("corretor_reports").insert({
+        gerente_id: report.gerente_id,
+        corretor_id: report.corretor_id,
+        corretor_nome: report.corretor_nome,
+        periodo_tipo: "semanal",
+        periodo_inicio: report.periodo_inicio,
+        periodo_fim: report.periodo_fim,
+        contexto_gerente: report.contexto_auto || "Relatório automático",
+        dados_metricas: report.dados_semana,
+        conteudo_relatorio: report.contexto_auto || "",
+        score_performance: report.score_performance,
+      });
+      loadAutoReports();
+      loadHistorico();
+    }
+    setApprovingId(null);
+    setViewingAuto(null);
+  };
+
+  const deleteAutoReport = async (id: string) => {
+    if (!confirm("Excluir este rascunho?")) return;
+    await supabase.from("one_on_one_reports").delete().eq("id", id);
+    toast.success("Rascunho excluído");
+    loadAutoReports();
+    if (viewingAuto?.id === id) setViewingAuto(null);
+  };
+
   const pct = (real: number, meta: number) => meta > 0 ? Math.round((real / meta) * 100) : 0;
   const fmtVgv = (v: number) => v >= 1_000_000 ? `R$ ${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `R$ ${(v / 1_000).toFixed(0)}k` : `R$ ${v}`;
 
@@ -326,6 +412,8 @@ export default function RelatorioCorretor() {
     { label: "VGV Assinado", ...metricas.vgv_assinado, fmt: fmtVgv },
   ];
 
+  const rascunhosCount = autoReports.length;
+
   return (
     <div className="space-y-4">
       <div>
@@ -338,15 +426,161 @@ export default function RelatorioCorretor() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto">
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="rascunhos" className="gap-1.5 text-xs py-2 relative">
+            <Bot className="h-3.5 w-3.5" /> Rascunhos
+            {rascunhosCount > 0 && (
+              <Badge variant="destructive" className="h-4 min-w-4 p-0 flex items-center justify-center text-[9px] rounded-full ml-1">
+                {rascunhosCount}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="gerar" className="gap-1.5 text-xs py-2">
-            <FileText className="h-3.5 w-3.5" /> Gerar Relatório
+            <FileText className="h-3.5 w-3.5" /> Gerar Manual
           </TabsTrigger>
           <TabsTrigger value="historico" className="gap-1.5 text-xs py-2">
             <History className="h-3.5 w-3.5" /> Histórico
           </TabsTrigger>
         </TabsList>
 
+        {/* ═══ RASCUNHOS AUTOMÁTICOS ═══ */}
+        <TabsContent value="rascunhos" className="mt-4">
+          {viewingAuto ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button variant="ghost" size="sm" onClick={() => setViewingAuto(null)}>← Voltar</Button>
+                <h3 className="font-display font-semibold text-sm flex-1">
+                  {viewingAuto.corretor_nome} — {format(new Date(viewingAuto.periodo_inicio + "T12:00:00"), "dd/MM")} a {format(new Date(viewingAuto.periodo_fim + "T12:00:00"), "dd/MM/yyyy")}
+                </h3>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="gap-1.5 text-xs h-8"
+                  onClick={() => approveReport(viewingAuto)}
+                  disabled={approvingId === viewingAuto.id}
+                >
+                  {approvingId === viewingAuto.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                  Revisar e Aprovar
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Metrics summary */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-display flex items-center gap-2">
+                      📊 Métricas da Semana
+                      {viewingAuto.score_performance != null && (
+                        <Badge variant={viewingAuto.score_performance >= 60 ? "default" : "secondary"} className="ml-auto text-xs">
+                          Score: {viewingAuto.score_performance}/100
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {viewingAuto.dados_semana && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { label: "Ligações", value: viewingAuto.dados_semana.total_ligacoes },
+                          { label: "Aproveitados", value: viewingAuto.dados_semana.aproveitados },
+                          { label: "Visitas Marcadas", value: viewingAuto.dados_semana.visitas_marcadas },
+                          { label: "Visitas Realizadas", value: viewingAuto.dados_semana.visitas_realizadas },
+                          { label: "Propostas", value: viewingAuto.dados_semana.propostas },
+                          { label: "Taxa Aprov.", value: `${viewingAuto.dados_semana.taxa_aproveitamento}%` },
+                          { label: "VGV Gerado", value: fmtVgv(viewingAuto.dados_semana.vgv_gerado || 0) },
+                        ].map(item => (
+                          <div key={item.label} className="rounded-lg bg-muted p-2.5">
+                            <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                            <p className="text-sm font-bold text-foreground">{item.value ?? 0}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Context */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-display">📝 Análise Comparativa</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed">
+                      {viewingAuto.contexto_auto || "Sem contexto gerado."}
+                    </pre>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {loadingAuto ? (
+                <Card className="p-8 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Carregando rascunhos...</p>
+                </Card>
+              ) : autoReports.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <div className="text-4xl mb-3">🤖</div>
+                  <h3 className="font-display font-semibold text-foreground mb-1">Nenhum rascunho pendente</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Os relatórios automáticos são gerados todo domingo às 20h. Quando disponíveis, aparecerão aqui para revisão.
+                  </p>
+                </Card>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 px-1">
+                    <Bot className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">{rascunhosCount} rascunhos aguardando revisão</span>
+                    <Button variant="ghost" size="sm" onClick={loadAutoReports} className="ml-auto h-7 text-xs gap-1">
+                      <RefreshCw className="h-3 w-3" /> Atualizar
+                    </Button>
+                  </div>
+                  {autoReports.map(r => (
+                    <Card key={r.id} className="hover:shadow-elevated transition-shadow cursor-pointer" onClick={() => setViewingAuto(r)}>
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 shrink-0">
+                          <Clock className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-display font-semibold text-sm text-foreground truncate">{r.corretor_nome}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(r.periodo_inicio + "T12:00:00"), "dd/MM")} a {format(new Date(r.periodo_fim + "T12:00:00"), "dd/MM/yyyy")}
+                          </p>
+                        </div>
+                        {r.score_performance != null && (
+                          <div className={`text-sm font-bold ${r.score_performance >= 60 ? "text-emerald-600" : r.score_performance >= 40 ? "text-amber-600" : "text-red-600"}`}>
+                            {r.score_performance}/100
+                          </div>
+                        )}
+                        <Badge variant="secondary" className="text-[10px] shrink-0">
+                          Rascunho
+                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={(e) => { e.stopPropagation(); approveReport(r); }}
+                            disabled={approvingId === r.id}
+                          >
+                            {approvingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                            Aprovar
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); deleteAutoReport(r.id); }}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ═══ GERAR MANUAL ═══ */}
         <TabsContent value="gerar" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Form */}
@@ -356,7 +590,6 @@ export default function RelatorioCorretor() {
                   <CardTitle className="text-sm font-display">Configuração</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Corretor */}
                   <div className="space-y-2">
                     <Label className="text-xs">Corretor *</Label>
                     <Select value={corretorId} onValueChange={setCorretorId}>
@@ -367,7 +600,6 @@ export default function RelatorioCorretor() {
                     </Select>
                   </div>
 
-                  {/* Period */}
                   <div className="space-y-2">
                     <Label className="text-xs">Tipo de período</Label>
                     <Select value={periodoTipo} onValueChange={setPeriodoTipo}>
@@ -391,7 +623,6 @@ export default function RelatorioCorretor() {
                     </div>
                   </div>
 
-                  {/* Contexto */}
                   <div className="space-y-2">
                     <Label className="text-xs">Contexto do gerente sobre o corretor *</Label>
                     <Textarea
@@ -414,7 +645,6 @@ export default function RelatorioCorretor() {
                 </CardContent>
               </Card>
 
-              {/* Metrics Preview */}
               {corretorId && (
                 <Card>
                   <CardHeader className="pb-3">
@@ -439,7 +669,6 @@ export default function RelatorioCorretor() {
                       );
                     })}
 
-                    {/* Score */}
                     <div className="pt-2 border-t border-border">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-foreground">Score de Performance</span>
@@ -450,7 +679,6 @@ export default function RelatorioCorretor() {
                       <Progress value={score} className="h-2 mt-1" />
                     </div>
 
-                    {/* Funnel rates */}
                     <div className="pt-2 border-t border-border space-y-1">
                       <p className="text-xs font-medium text-foreground mb-1">Taxas do Funil</p>
                       <div className="grid grid-cols-2 gap-2 text-[10px]">
@@ -525,6 +753,7 @@ export default function RelatorioCorretor() {
           </div>
         </TabsContent>
 
+        {/* ═══ HISTÓRICO ═══ */}
         <TabsContent value="historico" className="mt-4">
           {viewingReport ? (
             <div className="space-y-3">
@@ -552,7 +781,6 @@ export default function RelatorioCorretor() {
                   </body></html>`);
                   const contentDiv = printWindow.document.getElementById("content");
                   if (contentDiv) contentDiv.innerHTML = printWindow.document.body.querySelector("#content")?.innerHTML || "";
-                  // Re-render markdown as HTML
                   const tempDiv = document.createElement("div");
                   document.body.appendChild(tempDiv);
                   import("react-dom/client").then(({ createRoot }) => {
