@@ -49,8 +49,8 @@ export default function PdnPanel({ filterGerenteId, readOnly }: PdnPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCorretor, setFilterCorretor] = useState("");
   const [alertFilter, setAlertFilter] = useState<string | null>(null);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-  const [viewMode, setViewMode] = useState<"table" | "kanban">(isMobile ? "kanban" : "table");
+  
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("kanban");
 
   const uniqueCorretores = [...new Set(entries.map(e => e.corretor).filter(Boolean))];
 
