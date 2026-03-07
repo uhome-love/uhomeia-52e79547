@@ -3,13 +3,15 @@ import { usePipeline } from "@/hooks/usePipeline";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import PipelineAddLeadDialog from "@/components/pipeline/PipelineAddLeadDialog";
 import PipelineLeadDetail from "@/components/pipeline/PipelineLeadDetail";
+import PipelineFlowDashboard from "@/components/pipeline/PipelineFlowDashboard";
 import type { PipelineLead } from "@/hooks/usePipeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, RefreshCw, Loader2, Search, LayoutGrid, X, SlidersHorizontal, CloudDownload } from "lucide-react";
+import { Plus, RefreshCw, Loader2, Search, LayoutGrid, X, SlidersHorizontal, CloudDownload, BarChart3 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -27,6 +29,7 @@ export default function PipelineKanban() {
   const [refreshing, setRefreshing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState("kanban");
   const { user } = useAuth();
 
   const canAdd = isGestor || isAdmin;
