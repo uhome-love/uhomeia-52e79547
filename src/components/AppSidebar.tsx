@@ -143,7 +143,7 @@ export function AppSidebar() {
       ]
     : [];
 
-  const renderGroup = (label: string, items: typeof homeItems, index: number) => (
+  const renderGroup = (label: string, items: typeof principalItems, index: number) => (
     <SidebarGroup key={label} className="animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
       <SidebarGroupLabel className="text-sidebar-foreground/30 uppercase text-[10px] tracking-[0.15em] font-bold mb-1 px-3">
         {label}
