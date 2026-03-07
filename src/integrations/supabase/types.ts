@@ -349,6 +349,86 @@ export type Database = {
           },
         ]
       }
+      distribuicao_escala: {
+        Row: {
+          ativo: boolean
+          corretor_id: string
+          created_at: string
+          criado_por: string
+          data: string
+          id: string
+          segmento_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          corretor_id: string
+          created_at?: string
+          criado_por: string
+          data?: string
+          id?: string
+          segmento_id: string
+        }
+        Update: {
+          ativo?: boolean
+          corretor_id?: string
+          created_at?: string
+          criado_por?: string
+          data?: string
+          id?: string
+          segmento_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distribuicao_escala_segmento_id_fkey"
+            columns: ["segmento_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_segmentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      distribuicao_historico: {
+        Row: {
+          acao: string
+          corretor_id: string
+          created_at: string
+          id: string
+          pipeline_lead_id: string
+          segmento_id: string | null
+        }
+        Insert: {
+          acao?: string
+          corretor_id: string
+          created_at?: string
+          id?: string
+          pipeline_lead_id: string
+          segmento_id?: string | null
+        }
+        Update: {
+          acao?: string
+          corretor_id?: string
+          created_at?: string
+          id?: string
+          pipeline_lead_id?: string
+          segmento_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distribuicao_historico_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "distribuicao_historico_segmento_id_fkey"
+            columns: ["segmento_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_segmentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_entries: {
         Row: {
           analise_ia: string | null
@@ -1179,6 +1259,262 @@ export type Database = {
           },
         ]
       }
+      pipeline_historico: {
+        Row: {
+          created_at: string
+          id: string
+          movido_por: string
+          observacao: string | null
+          pipeline_lead_id: string
+          stage_anterior_id: string | null
+          stage_novo_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          movido_por: string
+          observacao?: string | null
+          pipeline_lead_id: string
+          stage_anterior_id?: string | null
+          stage_novo_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          movido_por?: string
+          observacao?: string | null
+          pipeline_lead_id?: string
+          stage_anterior_id?: string | null
+          stage_novo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_historico_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_historico_stage_anterior_id_fkey"
+            columns: ["stage_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_historico_stage_novo_id_fkey"
+            columns: ["stage_novo_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_leads: {
+        Row: {
+          aceite_expira_em: string | null
+          aceito_em: string | null
+          corretor_id: string | null
+          created_at: string
+          created_by: string | null
+          data_proxima_acao: string | null
+          distribuido_em: string | null
+          email: string | null
+          empreendimento: string | null
+          id: string
+          jetimob_lead_id: string | null
+          motivo_descarte: string | null
+          nome: string
+          observacoes: string | null
+          ordem_no_stage: number
+          origem: string | null
+          origem_detalhe: string | null
+          produto_id: string | null
+          proxima_acao: string | null
+          segmento_id: string | null
+          stage_changed_at: string
+          stage_id: string
+          telefone: string | null
+          telefone2: string | null
+          updated_at: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          aceite_expira_em?: string | null
+          aceito_em?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_proxima_acao?: string | null
+          distribuido_em?: string | null
+          email?: string | null
+          empreendimento?: string | null
+          id?: string
+          jetimob_lead_id?: string | null
+          motivo_descarte?: string | null
+          nome: string
+          observacoes?: string | null
+          ordem_no_stage?: number
+          origem?: string | null
+          origem_detalhe?: string | null
+          produto_id?: string | null
+          proxima_acao?: string | null
+          segmento_id?: string | null
+          stage_changed_at?: string
+          stage_id: string
+          telefone?: string | null
+          telefone2?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          aceite_expira_em?: string | null
+          aceito_em?: string | null
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_proxima_acao?: string | null
+          distribuido_em?: string | null
+          email?: string | null
+          empreendimento?: string | null
+          id?: string
+          jetimob_lead_id?: string | null
+          motivo_descarte?: string | null
+          nome?: string
+          observacoes?: string | null
+          ordem_no_stage?: number
+          origem?: string | null
+          origem_detalhe?: string | null
+          produto_id?: string | null
+          proxima_acao?: string | null
+          segmento_id?: string | null
+          stage_changed_at?: string
+          stage_id?: string
+          telefone?: string | null
+          telefone2?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_leads_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_leads_segmento_id_fkey"
+            columns: ["segmento_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_segmentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_leads_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_produtos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          segmento_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          segmento_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          segmento_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_produtos_segmento_id_fkey"
+            columns: ["segmento_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_segmentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_segmentos: {
+        Row: {
+          ativo: boolean
+          cor: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pipeline_stages: {
+        Row: {
+          ativo: boolean
+          cor: string | null
+          id: string
+          nome: string
+          ordem: number
+          tipo: Database["public"]["Enums"]["pipeline_stage_type"]
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          tipo: Database["public"]["Enums"]["pipeline_stage_type"]
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          tipo?: Database["public"]["Enums"]["pipeline_stage_type"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1583,6 +1919,15 @@ export type Database = {
       lead_priority: "alta" | "media" | "baixa" | "frio" | "perdido"
       message_channel: "whatsapp" | "sms" | "email"
       message_status: "pendente" | "enviado" | "entregue" | "falhou"
+      pipeline_stage_type:
+        | "novo_lead"
+        | "sem_contato"
+        | "atendimento_inicial"
+        | "qualificacao_busca"
+        | "visita"
+        | "proposta"
+        | "venda"
+        | "descarte"
       task_status: "pendente" | "em_andamento" | "concluida" | "cancelada"
     }
     CompositeTypes: {
@@ -1715,6 +2060,16 @@ export const Constants = {
       lead_priority: ["alta", "media", "baixa", "frio", "perdido"],
       message_channel: ["whatsapp", "sms", "email"],
       message_status: ["pendente", "enviado", "entregue", "falhou"],
+      pipeline_stage_type: [
+        "novo_lead",
+        "sem_contato",
+        "atendimento_inicial",
+        "qualificacao_busca",
+        "visita",
+        "proposta",
+        "venda",
+        "descarte",
+      ],
       task_status: ["pendente", "em_andamento", "concluida", "cancelada"],
     },
   },

@@ -19,6 +19,7 @@ import {
   Users,
   SearchCheck,
   Settings,
+  Kanban,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AvatarUpload from "@/components/AvatarUpload";
@@ -82,11 +83,13 @@ export function AppSidebar() {
   const homeItems = isGestor || isAdmin
     ? [
         { title: "Início", url: "/", icon: Home },
+        { title: "Pipeline", url: "/pipeline", icon: Kanban },
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "HOMI Gerencial", url: "/homi-gerente", icon: Bot },
       ]
     : [
         { title: "Central do Corretor", url: "/corretor", icon: Phone },
+        { title: "Pipeline", url: "/pipeline", icon: Kanban },
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Meus Negócios", url: "/meus-negocios", icon: FileSpreadsheet },
         { title: "Scripts do Time", url: "/scripts", icon: FileEdit },
@@ -100,6 +103,7 @@ export function AppSidebar() {
     ? [
         { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
         { title: "PDN", url: "/pdn", icon: FileSpreadsheet },
+        { title: "Escala Diária", url: "/escala-diaria", icon: CalendarDays },
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Scripts", url: "/scripts", icon: FileEdit },
         { title: "Ranking Comercial", url: "/ranking", icon: Trophy },
