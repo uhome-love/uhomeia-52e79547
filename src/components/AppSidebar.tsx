@@ -192,6 +192,43 @@ export function AppSidebar() {
     { title: "Configurações", url: "/configuracoes", icon: Settings },
   ];
 
+  const renderGroup = (label: string, items: typeof principalItems, index: number) => (
+    <SidebarGroup key={label} className="animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
+      <SidebarGroupLabel className="text-sidebar-foreground/30 uppercase text-[10px] tracking-[0.15em] font-bold mb-1 px-3">
+        {label}
+      </SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu className="space-y-0.5">
+          {items.map((item) => {
+            const badgeCount = badges[item.url] || 0;
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to={item.url}
+                    end
+                    className="group/nav hover:bg-sidebar-accent/70 transition-all duration-200 rounded-lg relative py-2.5 px-3"
+                    activeClassName="bg-sidebar-primary/15 text-sidebar-primary font-semibold border-l-[3px] border-sidebar-primary shadow-[inset_0_0_20px_hsl(229_100%_64%/0.06)]"
+                  >
+                    <item.icon className="mr-2.5 h-4 w-4 shrink-0 transition-transform duration-200 group-hover/nav:scale-110" />
+                    {!collapsed && (
+                      <span className="text-[13px] transition-colors duration-200">{item.title}</span>
+                    )}
+                    {badgeCount > 0 && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1 animate-pulse-soft">
+                        {badgeCount}
+                      </span>
+                    )}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+
   const groups = [
     { label: "⚙️ Principal", items: principalItems },
     { label: "🎯 Gestão de Leads", items: gestaoLeadsItems },
