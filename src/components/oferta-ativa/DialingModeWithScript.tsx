@@ -217,11 +217,11 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  const handleResultSubmit = async (resultado: string, feedback: string, visitaMarcada?: boolean) => {
+  const handleResultSubmit = async (resultado: string, feedback: string, visitaMarcada?: boolean, interesseTipo?: string) => {
     if (!lead || !actionTaken || submitting) return;
     setSubmitting(true);
     try {
-      const result = await registrar(lead, actionTaken, resultado, feedback, lista, currentIdempotencyKey || undefined, visitaMarcada);
+      const result = await registrar(lead, actionTaken, resultado, feedback, lista, currentIdempotencyKey || undefined, visitaMarcada, interesseTipo);
       if (!result?.success) { setSubmitting(false); return; }
 
       if (!result.idempotent) {

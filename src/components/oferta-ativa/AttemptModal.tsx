@@ -236,8 +236,10 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
             {resultado === "nao_atendeu" && (
               <p className="text-[10px] text-blue-600 bg-blue-500/10 rounded px-2 py-1">Lead volta para a fila após cooldown. +1 pt.</p>
             )}
-            {resultado === "com_interesse" && (
-              <p className="text-[10px] text-emerald-600 bg-emerald-500/10 rounded px-2 py-1">Lead vai para "Aproveitados". +3 pts! 🎉</p>
+            {resultado === "com_interesse" && interesseTipo && (
+              <p className="text-[10px] text-emerald-600 bg-emerald-500/10 rounded px-2 py-1">
+                ✅ Lead vai direto para o Pipeline ({INTERESSE_SUB_OPTIONS.find(o => o.key === interesseTipo)?.desc}). +3 pts! 🎉
+              </p>
             )}
             {resultado === "numero_errado" && (
               <p className="text-[10px] text-red-600 bg-red-500/10 rounded px-2 py-1">Lead removido permanentemente. 0 pts.</p>
