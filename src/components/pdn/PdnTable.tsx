@@ -222,10 +222,19 @@ function ProximaAcaoAlert({ entry }: { entry: PdnEntry }) {
 function ParadoAlert({ entry }: { entry: PdnEntry }) {
   if (entry.situacao === "caiu" || entry.situacao === "assinado") return null;
   const dias = differenceInDays(new Date(), new Date(entry.updated_at));
-  if (dias < 5) return null;
+  if (dias < 3) return null;
+  const isCritical = dias >= 7;
+  const isWarning = dias >= 5;
   return (
-    <span className="inline-flex items-center gap-0.5 text-[9px] text-red-600 bg-red-500/10 rounded px-1 py-0.5 font-semibold">
-      PARADO {dias}d
+    <span
+      className={`inline-flex items-center gap-0.5 text-[9px] rounded px-1 py-0.5 font-semibold ${
+        isCritical ? "text-red-700 bg-red-500/20" :
+        isWarning ? "text-red-600 bg-red-500/10" :
+        "text-amber-600 bg-amber-500/10"
+      }`}
+      title={`Último update: ${dias} dias atrás`}
+    >
+      {isCritical ? "⛔" : isWarning ? "🔴" : "🟡"} {dias}d {isCritical ? "PARADO" : isWarning ? "PARADO" : "sem atualização"}
     </span>
   );
 }
