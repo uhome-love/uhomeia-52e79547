@@ -25,6 +25,7 @@ import {
   Trash2, Ban, PhoneOff, Handshake, Shield, UserPlus, UserMinus, HelpCircle
 } from "lucide-react";
 import PartnershipDialog from "./PartnershipDialog";
+import GerenteManagementSection from "./GerenteManagementSection";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
