@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { ArrowRight, Plus, X, Sparkles } from "lucide-react";
+import { ArrowRight, Plus, X, Sparkles, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
