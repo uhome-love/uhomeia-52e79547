@@ -44,6 +44,7 @@ const EscalaDiaria = lazy(() => import("./pages/EscalaDiaria"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const PosVendas = lazy(() => import("./pages/PosVendas"));
 const DisponibilidadePage = lazy(() => import("./pages/DisponibilidadePage"));
+const AutomacoesPage = lazy(() => import("./pages/AutomacoesPage"));
 const Notificacoes = lazy(() => import("./pages/Notificacoes"));
 
 const queryClient = new QueryClient();
@@ -102,6 +103,7 @@ const App = () => (
             <Route path="/pipeline" element={<ProtectedPage><PipelineKanban /></ProtectedPage>} />
             <Route path="/escala-diaria" element={<ProtectedPage roles={["admin"]}><EscalaDiaria /></ProtectedPage>} />
             <Route path="/disponibilidade" element={<ProtectedPage roles={["gestor", "admin"]}><DisponibilidadePage /></ProtectedPage>} />
+            <Route path="/automacoes" element={<ProtectedPage roles={["gestor", "admin"]}><AutomacoesPage /></ProtectedPage>} />
 
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><CorretorDashboard /></ProtectedPage>} />

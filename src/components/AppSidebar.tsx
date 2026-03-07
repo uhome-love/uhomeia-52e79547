@@ -22,6 +22,7 @@ import {
   Kanban,
   Bell,
   Heart,
+  Workflow,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AvatarUpload from "@/components/AvatarUpload";
@@ -104,6 +105,7 @@ export function AppSidebar() {
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Scripts", url: "/scripts", icon: FileEdit },
         { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
+        { title: "Automações", url: "/automacoes", icon: Workflow },
       ]
     : isGestor
     ? [
@@ -112,6 +114,7 @@ export function AppSidebar() {
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Scripts", url: "/scripts", icon: FileEdit },
         { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
+        { title: "Automações", url: "/automacoes", icon: Workflow },
       ]
     : [
         { title: "Pipeline Leads", url: "/pipeline", icon: Kanban },
