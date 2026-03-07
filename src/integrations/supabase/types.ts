@@ -56,6 +56,89 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_logs: {
+        Row: {
+          actions_executed: Json
+          automation_id: string
+          error_message: string | null
+          id: string
+          lead_id: string | null
+          status: string
+          triggered_at: string
+        }
+        Insert: {
+          actions_executed?: Json
+          automation_id: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          status?: string
+          triggered_at?: string
+        }
+        Update: {
+          actions_executed?: Json
+          automation_id?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          status?: string
+          triggered_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automations: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          name: string
+          run_count: number
+          trigger_config: Json
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name: string
+          run_count?: number
+          trigger_config?: Json
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name?: string
+          run_count?: number
+          trigger_config?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ceo_metas_mensais: {
         Row: {
           created_at: string
