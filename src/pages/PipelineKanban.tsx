@@ -21,6 +21,8 @@ export default function PipelineKanban() {
   const [selectedLead, setSelectedLead] = useState<PipelineLead | null>(null);
   const [filterSegmento, setFilterSegmento] = useState<string>("all");
   const [filterOrigem, setFilterOrigem] = useState<string>("all");
+  const [filterCorretor, setFilterCorretor] = useState<string>("all");
+  const [filterCampanha, setFilterCampanha] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [syncing, setSyncing] = useState(false);
