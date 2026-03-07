@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePendingLeadAlert } from "@/hooks/usePendingLeadAlert";
 import LeadAcceptanceDialog from "@/components/pipeline/LeadAcceptanceDialog";
+import NewLeadBanner from "@/components/notifications/NewLeadBanner";
 const homiMascot = "/images/homi-mascot-opt.png";
 
 const UhomeIaAssistant = lazy(() => import("@/components/UhomeIaAssistant"));
