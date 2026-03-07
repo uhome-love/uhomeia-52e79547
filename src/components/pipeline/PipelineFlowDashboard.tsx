@@ -238,12 +238,12 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
         </Card>
       </div>
 
-      {/* Funnel Flow */}
+      {/* Funnel Flow with Conversion Rates */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" />
-            Funil do Pipeline — Tempo Médio por Etapa
+            Funil do Pipeline — Taxa de Conversão por Etapa
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -255,8 +255,19 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
                 const pct = (metric.count / maxCount) * 100;
                 const hasSlaIssue = metric.slaBreaches > 0;
 
+                // Conversion rate from this stage to next
+                const nextMetric = arr[i + 1];
+                const conversionRate = nextMetric && metric.count > 0
+                  ? Math.round((nextMetric.count / metric.count) * 100)
+                  : null;
+
+                // Check transition history for actual conversion count
+                const transitionCount = transitions.find(
+                  t => t.from === metric.stage.id && nextMetric && t.to === nextMetric.stage.id
+                )?.count;
+
                 return (
-                  <div key={metric.stage.id} className="flex items-center gap-1">
+                  <div key={metric.stage.id} className="flex items-center gap-0">
                     <div
                       className={`flex flex-col items-center p-2 sm:p-3 rounded-lg border min-w-[100px] sm:min-w-[120px] snap-start transition-all ${
                         hasSlaIssue ? "border-red-500/40 bg-red-500/5" : "border-border/50 bg-card"
@@ -310,8 +321,24 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
                       </Badge>
                     </div>
 
+                    {/* Conversion arrow between stages */}
                     {i < arr.length - 1 && (
-                      <ArrowRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      <div className="flex flex-col items-center px-1 min-w-[50px]">
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                        {conversionRate !== null && (
+                          <div className={`text-center mt-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                            conversionRate >= 50 ? "bg-emerald-500/15 text-emerald-600" :
+                            conversionRate >= 30 ? "bg-blue-500/15 text-blue-600" :
+                            conversionRate >= 15 ? "bg-amber-500/15 text-amber-600" :
+                            "bg-red-500/15 text-red-600"
+                          }`}>
+                            {conversionRate}%
+                          </div>
+                        )}
+                        {transitionCount && transitionCount > 0 && (
+                          <span className="text-[9px] text-muted-foreground mt-0.5">{transitionCount}x</span>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
