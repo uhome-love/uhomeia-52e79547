@@ -9,7 +9,7 @@ import RankingOfertaAtiva from "@/components/oferta-ativa/RankingOfertaAtiva";
 import OAObservabilityPanel from "@/components/oferta-ativa/OAObservabilityPanel";
 import { useUserRole } from "@/hooks/useUserRole";
 
-export default function OfertaAtiva() {
+export default function OfertaAtiva() { // refresh
   const { isAdmin } = useUserRole();
   const [activeTab, setActiveTab] = useState("performance");
 
