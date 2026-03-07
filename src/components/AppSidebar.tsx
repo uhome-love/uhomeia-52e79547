@@ -85,7 +85,7 @@ export function AppSidebar() {
     ? [
         { title: "Início", url: "/", icon: Home },
         { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
-        { title: "HOMI CEO", url: "/homi-gerente", icon: Bot },
+        { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
       ]
     : isGestor
     ? [
