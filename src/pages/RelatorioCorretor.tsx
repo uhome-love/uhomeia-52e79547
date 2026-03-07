@@ -42,6 +42,7 @@ interface SavedReport {
 interface AutoReport {
   id: string;
   corretor_id: string;
+  gerente_id: string;
   corretor_nome: string;
   periodo_inicio: string;
   periodo_fim: string;
