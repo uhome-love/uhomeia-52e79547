@@ -7,83 +7,135 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/** Extract campaign/empreendimento name from Jetimob message field */
+function extractCampanha(message: string | null | undefined): string | null {
+  if (!message) return null;
+  const match = message.match(/[Ff]ormul[aá]rio\s+(?:de|do|da|dos|das)\s+(.+)/i);
+  return match?.[1]?.trim() || null;
+}
+
+/** Build a unique ID for deduplication (API has no id field) */
+function buildJetimobId(lead: any): string {
+  const phone = lead.phones?.[0] || lead.phone || "";
+  const campaign = lead.campaign_id || "";
+  const created = lead.created_at || "";
+  return `${phone}_${campaign}_${created}`.replace(/[^a-zA-Z0-9_\-:.]/g, "");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Support both cron (no JWT) and manual (JWT) calls
+  try {
+    // Support both cron (anon key) and manual (user JWT) calls
     let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
 
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.replace("Bearer ", "");
-      // Check if this is the anon key (cron call) or a real JWT
       if (token !== supabaseAnonKey) {
-        const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-          global: { headers: { Authorization: authHeader } },
-        });
-        const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-        if (!claimsError && claimsData?.claims) {
-          userId = claimsData.claims.sub as string;
-          // Verify role
-          const adminClient = createClient(supabaseUrl, serviceRoleKey);
-          const { data: roles } = await adminClient
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", userId);
-          const userRoles = (roles || []).map(r => r.role);
-          if (!userRoles.includes("admin") && !userRoles.includes("gestor")) {
-            return new Response(
-              JSON.stringify({ error: "Sem permissão" }),
-              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
+        // Real user JWT — verify role
+        try {
+          const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: authHeader } },
+          });
+          const { data: userData } = await userClient.auth.getUser();
+          if (userData?.user) {
+            userId = userData.user.id;
+            const adminCheck = createClient(supabaseUrl, serviceRoleKey);
+            const { data: roles } = await adminCheck
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", userId);
+            const userRoles = (roles || []).map((r: any) => r.role);
+            if (!userRoles.includes("admin") && !userRoles.includes("gestor")) {
+              return new Response(
+                JSON.stringify({ error: "Sem permissão" }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
           }
+        } catch (authErr) {
+          console.warn("Auth check failed, proceeding as cron:", authErr);
         }
       }
+      // If token === anonKey, it's a cron call — no auth needed
     }
 
-    // Use service role for all DB operations
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-
     const body = await req.json().catch(() => ({}));
-    const { broker_id } = body;
+    const { broker_id, fix_existing } = body;
 
-    // Get Jetimob API keys
+    // --- Fix existing leads with bad campaign names ---
+    if (fix_existing) {
+      const { data: badLeads } = await adminClient
+        .from("pipeline_leads")
+        .select("id, observacoes, origem")
+        .like("origem", "Campanha %");
+
+      let fixed = 0;
+      for (const lead of badLeads || []) {
+        const campanha = extractCampanha(lead.observacoes);
+        if (campanha) {
+          await adminClient.from("pipeline_leads").update({
+            origem: campanha,
+            empreendimento: campanha,
+          }).eq("id", lead.id);
+          fixed++;
+        }
+      }
+      return new Response(
+        JSON.stringify({ fixed, total: (badLeads || []).length }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // --- Main sync flow ---
     const JETIMOB_LEADS_URL_KEY = Deno.env.get("JETIMOB_LEADS_URL_KEY");
     const JETIMOB_LEADS_PRIVATE_KEY = Deno.env.get("JETIMOB_LEADS_PRIVATE_KEY");
     if (!JETIMOB_LEADS_URL_KEY || !JETIMOB_LEADS_PRIVATE_KEY) {
-      throw new Error("JETIMOB_LEADS keys not configured");
-    }
-
-    // Fetch leads from Jetimob API
-    const url = `https://api.jetimob.com/leads/${JETIMOB_LEADS_URL_KEY}`;
-    const response = await fetch(url, {
-      method: "GET",
-      headers: { "Authorization-Key": JETIMOB_LEADS_PRIVATE_KEY },
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Jetimob API error:", response.status, text);
+      console.error("JETIMOB_LEADS keys not configured — skipping sync");
       return new Response(
-        JSON.stringify({ error: `Erro Jetimob: ${response.status}` }),
+        JSON.stringify({ error: "JETIMOB_LEADS keys not configured", synced: 0 }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const data = await response.json();
+    let apiResponse: Response;
+    try {
+      apiResponse = await fetch(`https://api.jetimob.com/leads/${JETIMOB_LEADS_URL_KEY}`, {
+        method: "GET",
+        headers: { "Authorization-Key": JETIMOB_LEADS_PRIVATE_KEY },
+      });
+    } catch (fetchErr) {
+      console.error("Jetimob API fetch failed:", fetchErr);
+      return new Response(
+        JSON.stringify({ error: "Falha na conexão com Jetimob", synced: 0 }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!apiResponse.ok) {
+      const text = await apiResponse.text().catch(() => "");
+      console.error("Jetimob API error:", apiResponse.status, text);
+      return new Response(
+        JSON.stringify({ error: `Erro Jetimob: ${apiResponse.status}`, synced: 0 }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const data = await apiResponse.json();
     let apiLeads = Array.isArray(data?.result) ? data.result : Array.isArray(data) ? data : [];
 
     if (broker_id) {
       apiLeads = apiLeads.filter((lead: any) => {
-        const responsavelId = lead.broker_id || lead.responsavel_id || lead.user_id;
-        return String(responsavelId) === String(broker_id);
+        const rid = lead.broker_id || lead.responsavel_id || lead.user_id;
+        return String(rid) === String(broker_id);
       });
     }
 
@@ -100,116 +152,116 @@ serve(async (req) => {
       .select("id")
       .eq("tipo", "novo_lead")
       .eq("ativo", true)
+      .limit(1)
       .single();
 
     if (!stageData) {
-      throw new Error("Estágio 'Novos Leads' não encontrado");
+      console.error("Stage 'novo_lead' not found");
+      return new Response(
+        JSON.stringify({ error: "Estágio inicial não configurado", synced: 0 }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
     const novoLeadStageId = stageData.id;
 
-    // Build unique jetimob IDs from phone+campaign (API doesn't return an "id" field)
-    const buildJetimobId = (lead: any): string => {
-      const phone = lead.phones?.[0] || lead.phone || "";
-      const campaign = lead.campaign_id || "";
-      return `${phone}_${campaign}`;
-    };
+    // Deduplication: check existing jetimob_lead_ids
+    const jetimobIds = apiLeads.map(buildJetimobId).filter((id: string) => id && id.length > 2);
+    
+    // Also deduplicate by phone number to catch leads with old "undefined" IDs
+    const phones = apiLeads
+      .map((l: any) => l.phones?.[0] || l.phone || null)
+      .filter(Boolean);
 
-    const jetimobIds = apiLeads.map(buildJetimobId).filter((id: string) => id !== "_");
-    const { data: existingLeads } = await adminClient
-      .from("pipeline_leads")
-      .select("jetimob_lead_id")
-      .in("jetimob_lead_id", jetimobIds);
+    const [existingByJetimob, existingByPhone] = await Promise.all([
+      jetimobIds.length > 0
+        ? adminClient.from("pipeline_leads").select("jetimob_lead_id").in("jetimob_lead_id", jetimobIds)
+        : Promise.resolve({ data: [] }),
+      phones.length > 0
+        ? adminClient.from("pipeline_leads").select("telefone").in("telefone", phones)
+        : Promise.resolve({ data: [] }),
+    ]);
 
-    const existingIds = new Set((existingLeads || []).map(l => l.jetimob_lead_id));
+    const existingIds = new Set((existingByJetimob.data || []).map((l: any) => l.jetimob_lead_id));
+    const existingPhones = new Set((existingByPhone.data || []).map((l: any) => l.telefone));
 
     let synced = 0;
     let skipped = 0;
+    const errors: string[] = [];
 
     for (const lead of apiLeads) {
-      const jetimobId = buildJetimobId(lead);
-      if (!jetimobId || jetimobId === "_" || existingIds.has(jetimobId)) {
+      try {
+        const jetimobId = buildJetimobId(lead);
+        const phone = lead.phones?.[0] || lead.phone || null;
+
+        // Skip if already exists by ID or phone
+        if (existingIds.has(jetimobId) || (phone && existingPhones.has(phone))) {
+          skipped++;
+          continue;
+        }
+
+        const nome = lead.full_name || lead.name || lead.nome || "Lead sem nome";
+        const telefone = phone;
+        const telefone2 = lead.phones?.[1] || null;
+        const email = lead.emails?.[0] || lead.email || null;
+        const msg = lead.message || "";
+        const campanhaNome = extractCampanha(msg);
+
+        const { error: insertError } = await adminClient
+          .from("pipeline_leads")
+          .insert({
+            nome,
+            telefone,
+            telefone2,
+            email,
+            empreendimento: campanhaNome,
+            stage_id: novoLeadStageId,
+            origem: campanhaNome || msg || "API Jetimob",
+            origem_detalhe: lead.source || lead.origin || null,
+            jetimob_lead_id: jetimobId,
+            observacoes: msg || null,
+            corretor_id: null,
+            created_by: userId,
+          });
+
+        if (insertError) {
+          console.error(`Insert error for ${jetimobId}:`, insertError.message);
+          errors.push(`${nome}: ${insertError.message}`);
+          skipped++;
+        } else {
+          synced++;
+          // Add phone to set to prevent duplicates within same batch
+          if (phone) existingPhones.add(phone);
+        }
+      } catch (leadErr) {
+        console.error("Error processing lead:", leadErr);
         skipped++;
-        continue;
-      }
-
-      const nome = lead.full_name || lead.name || lead.nome || "Lead sem nome";
-      const telefone = lead.phones?.[0] || lead.phone || lead.telefone || null;
-      const telefone2 = lead.phones?.[1] || null;
-      const email = lead.emails?.[0] || lead.email || null;
-      const observacoes = lead.message || lead.subject || null;
-      
-      // Extract campaign name from message field
-      // Pattern: "Lead Gerado do Formulário de/do/da/dos <CAMPAIGN NAME>"
-      let campanhaNome: string | null = null;
-      const msg = lead.message || "";
-      const formularioMatch = msg.match(/[Ff]ormul[aá]rio\s+(?:de|do|da|dos|das)\s+(.+)/i);
-      if (formularioMatch?.[1]) {
-        campanhaNome = formularioMatch[1].trim();
-      }
-      
-      const origem = campanhaNome || msg || "API Jetimob";
-      const origemDetalhe = lead.source || lead.origin || lead.utm_source || null;
-      const empreendimento = campanhaNome || lead.property_name || lead.property?.name || lead.empreendimento || null;
-      const brokerName = lead.broker_name || lead.broker?.name || null;
-
-      // Try to find corretor_id from broker_name in team_members
-      let corretorId: string | null = null;
-      if (brokerName) {
-        const { data: member } = await adminClient
-          .from("team_members")
-          .select("user_id")
-          .ilike("nome", `%${brokerName.split(" ")[0]}%`)
-          .eq("status", "ativo")
-          .limit(1)
-          .maybeSingle();
-        if (member?.user_id) corretorId = member.user_id;
-      }
-
-      const { error: insertError } = await adminClient
-        .from("pipeline_leads")
-        .insert({
-          nome,
-          telefone,
-          telefone2,
-          email,
-          empreendimento,
-          stage_id: novoLeadStageId,
-          origem,
-          origem_detalhe: origemDetalhe,
-          jetimob_lead_id: jetimobId,
-          observacoes,
-          corretor_id: corretorId,
-          created_by: userId,
-        });
-
-      if (insertError) {
-        console.error(`Error inserting lead ${jetimobId}:`, insertError);
-        skipped++;
-      } else {
-        synced++;
       }
     }
 
-    // Audit log
-    await adminClient.from("audit_log").insert({
-      user_id: userId || "00000000-0000-0000-0000-000000000000",
-      modulo: "pipeline",
-      acao: "jetimob_sync",
-      descricao: `Sincronizados ${synced} leads do Jetimob para o Pipeline. ${skipped} ignorados.`,
-      origem: userId ? "manual" : "cron",
-    });
+    // Audit log (don't let this fail the whole sync)
+    try {
+      await adminClient.from("audit_log").insert({
+        user_id: userId || "00000000-0000-0000-0000-000000000000",
+        modulo: "pipeline",
+        acao: "jetimob_sync",
+        descricao: `Sync: ${synced} novos, ${skipped} ignorados de ${apiLeads.length} total.${errors.length > 0 ? ` Erros: ${errors.length}` : ""}`,
+        origem: userId ? "manual" : "cron",
+      });
+    } catch (auditErr) {
+      console.warn("Audit log insert failed:", auditErr);
+    }
 
-    console.log(`Jetimob sync complete: ${synced} synced, ${skipped} skipped`);
+    console.log(`Jetimob sync: ${synced} synced, ${skipped} skipped, ${errors.length} errors`);
 
     return new Response(
-      JSON.stringify({ synced, skipped, total: apiLeads.length }),
+      JSON.stringify({ synced, skipped, total: apiLeads.length, errors: errors.slice(0, 5) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
-    console.error("jetimob-sync error:", e);
+    console.error("jetimob-sync critical error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error", synced: 0 }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
