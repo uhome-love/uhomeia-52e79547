@@ -100,7 +100,6 @@ export function AppSidebar() {
   const gestaoLeadsItems = isAdmin
     ? [
         { title: "Pipeline Leads", url: "/pipeline", icon: Kanban },
-        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Scripts", url: "/scripts", icon: FileEdit },
@@ -109,7 +108,6 @@ export function AppSidebar() {
     : isGestor
     ? [
         { title: "Pipeline Leads", url: "/pipeline", icon: Kanban },
-        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Scripts", url: "/scripts", icon: FileEdit },
@@ -156,6 +154,7 @@ export function AppSidebar() {
   const inteligenciaItems = isAdmin
     ? [
         { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
+        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
         { title: "Notificações", url: "/notificacoes", icon: Bell },
         { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
         { title: "Inteligência Marketing", url: "/marketing", icon: TrendingUp },
@@ -164,6 +163,7 @@ export function AppSidebar() {
     : isGestor
     ? [
         { title: "HOMI Gerencial", url: "/homi-gerente", icon: Bot },
+        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
         { title: "Notificações", url: "/notificacoes", icon: Bell },
       ]
     : [
