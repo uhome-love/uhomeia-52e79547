@@ -141,10 +141,10 @@ const PipelineCard = memo(function PipelineCard({
       hora_visita: scheduleTime,
       empreendimento: lead.empreendimento || "",
       corretor_id: lead.corretor_id || user.id,
-      corretor_nome: corretorNome || "",
       origem: "pipeline",
       status: "marcada",
       gerente_id: user.id,
+      created_by: user.id,
       pipeline_lead_id: lead.id,
     });
     // Move lead to "Visita Marcada"
