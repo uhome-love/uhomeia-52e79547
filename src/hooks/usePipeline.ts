@@ -10,6 +10,7 @@ export interface PipelineStage {
   tipo: string;
   cor: string;
   ordem: number;
+  pipeline_tipo: string;
 }
 
 export interface PipelineLead {
@@ -55,7 +56,7 @@ export interface PipelineSegmento {
   ordem: number;
 }
 
-export function usePipeline() {
+export function usePipeline(pipelineTipo: string = "leads") {
   const { user } = useAuth();
   const { isGestor, isAdmin } = useUserRole();
   const [stages, setStages] = useState<PipelineStage[]>([]);
@@ -69,6 +70,7 @@ export function usePipeline() {
       .from("pipeline_stages")
       .select("*")
       .eq("ativo", true)
+      .eq("pipeline_tipo" as any, pipelineTipo)
       .order("ordem");
     if (error) {
       console.error("Error loading stages:", error);
@@ -80,8 +82,9 @@ export function usePipeline() {
       tipo: s.tipo,
       cor: s.cor,
       ordem: s.ordem,
+      pipeline_tipo: (s as any).pipeline_tipo || pipelineTipo,
     })));
-  }, []);
+  }, [pipelineTipo]);
 
   const loadSegmentos = useCallback(async () => {
     const { data, error } = await supabase
