@@ -1,11 +1,12 @@
 import { memo, useState } from "react";
 import type { PipelineLead, PipelineSegmento } from "@/hooks/usePipeline";
-import { Phone, Mail, Clock, MapPin, MessageCircle, Eye, Hourglass, Calendar, Flame, Thermometer, Snowflake } from "lucide-react";
+import { Phone, Mail, Clock, MapPin, MessageCircle, Eye, Hourglass, Calendar, Flame, Thermometer, Snowflake, Zap } from "lucide-react";
 import { differenceInHours, differenceInDays, differenceInMinutes } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PipelineQuickTransfer from "./PipelineQuickTransfer";
+import { calculateLeadScore } from "@/lib/leadScoring";
 
 interface PipelineCardProps {
   lead: PipelineLead;
@@ -82,6 +83,7 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
   const style = activityStyles[activity.variant];
   const temp = TEMP_CONFIG[(lead as any).temperatura || "morno"];
   const showAlert = activity.variant === "warning" || activity.variant === "danger";
+  const leadScore = calculateLeadScore(lead as any);
 
   const handleWhatsApp = (e: React.MouseEvent, phone: string) => {
     e.stopPropagation();
@@ -119,21 +121,35 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
         <div className={`h-[2px] w-full ${style.dot}`} />
 
         <div className="p-3 space-y-2">
-          {/* Name + Temperature */}
+          {/* Name + Score + Temperature */}
           <div className="flex items-start justify-between gap-1">
             <h4 className="text-[13px] font-bold text-foreground leading-tight line-clamp-1 flex-1">
               {lead.nome}
             </h4>
-            {temp && (
+            <div className="flex items-center gap-1 shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className={`shrink-0 p-0.5 rounded ${temp.bg}`}>
-                    <temp.icon className={`h-3 w-3 ${temp.color}`} />
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${leadScore.bgColor} ${leadScore.color}`}>
+                    <Zap className="h-2.5 w-2.5 inline mr-0.5" />
+                    {leadScore.label}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">{temp.label}</TooltipContent>
+                <TooltipContent side="top" className="text-xs max-w-[200px]">
+                  <p className="font-semibold mb-1">Score: {leadScore.score}/100</p>
+                  <p className="text-muted-foreground">{leadScore.factors.join(" · ")}</p>
+                </TooltipContent>
               </Tooltip>
-            )}
+              {temp && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={`p-0.5 rounded ${temp.bg}`}>
+                      <temp.icon className={`h-3 w-3 ${temp.color}`} />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">{temp.label}</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
           </div>
 
           {/* Phone + WhatsApp */}
