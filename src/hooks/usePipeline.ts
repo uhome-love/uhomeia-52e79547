@@ -25,6 +25,9 @@ export interface PipelineLead {
   stage_changed_at: string;
   ordem_no_stage: number;
   corretor_id: string | null;
+  gerente_id: string | null;
+  modo_conducao: string;
+  complexidade_score: number;
   distribuido_em: string | null;
   aceito_em: string | null;
   aceite_expira_em: string | null;
@@ -107,18 +110,25 @@ export function usePipeline() {
     const leadsData = (data || []) as PipelineLead[];
     setLeads(leadsData);
 
-    // Load corretor names for leads that have corretor_id
-    const corretorIds = [...new Set(leadsData.map(l => l.corretor_id).filter(Boolean))] as string[];
-    if (corretorIds.length > 0) {
+    // Load corretor + gerente names
+    const allUserIds = [...new Set([
+      ...leadsData.map(l => l.corretor_id).filter(Boolean),
+      ...leadsData.map(l => l.gerente_id).filter(Boolean),
+    ])] as string[];
+    if (allUserIds.length > 0) {
       const { data: members } = await supabase
         .from("team_members")
         .select("user_id, nome")
-        .in("user_id", corretorIds);
-      if (members) {
-        const map: Record<string, string> = {};
-        members.forEach(m => { if (m.user_id) map[m.user_id] = m.nome; });
-        setCorretorNomes(map);
-      }
+        .in("user_id", allUserIds);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, nome")
+        .in("user_id", allUserIds);
+      const map: Record<string, string> = {};
+      members?.forEach(m => { if (m.user_id) map[m.user_id] = m.nome; });
+      // Profiles as fallback for gerentes who may not be in team_members
+      profiles?.forEach(p => { if (p.user_id && !map[p.user_id]) map[p.user_id] = p.nome; });
+      setCorretorNomes(map);
     }
   }, [user]);
 
