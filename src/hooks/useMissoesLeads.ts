@@ -28,10 +28,12 @@ export interface RankingEntry {
   corretor_id: string;
   corretor_nome: string;
   pontos_total: number;
-  tentativas: number;
-  leads_responderam: number;
+  novos: number;
+  contatos: number;
+  qualificados: number;
+  possiveis_visitas: number;
   visitas_marcadas: number;
-  propostas: number;
+  visitas_realizadas: number;
 }
 
 export function useMissoesLeads() {
@@ -118,9 +120,9 @@ export function useMissoesLeads() {
 
   // Ranking
   const { data: ranking = [], isLoading: rankingLoading } = useQuery({
-    queryKey: ["ranking-gestao-leads", "dia"],
+    queryKey: ["ranking-pipeline-leads", "dia"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_ranking_gestao_leads", {
+      const { data, error } = await supabase.rpc("get_ranking_pipeline_leads", {
         p_periodo: "dia",
       });
       if (error) throw error;
