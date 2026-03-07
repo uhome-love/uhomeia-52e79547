@@ -97,7 +97,7 @@ const PipelineCard = memo(function PipelineCard({ lead, stage, segmentos, corret
   const activity = getActivityInfo(lead.stage_changed_at);
   const createdTime = getTimeSinceCreated(lead.created_at);
   const style = activityStyles[activity.variant];
-  const temp = TEMP_CONFIG[(lead as any).temperatura || "morno"];
+  const temp = TEMP_CONFIG[lead.temperatura || "morno"];
   const showAlert = activity.variant === "warning" || activity.variant === "danger";
   const leadScore = calculateLeadScore(lead as any);
   
