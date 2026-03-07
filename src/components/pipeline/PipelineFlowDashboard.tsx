@@ -238,12 +238,12 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
         </Card>
       </div>
 
-      {/* Funnel Flow */}
+      {/* Funnel Flow with Conversion Rates */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" />
-            Funil do Pipeline — Tempo Médio por Etapa
+            Funil do Pipeline — Taxa de Conversão por Etapa
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -255,8 +255,19 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
                 const pct = (metric.count / maxCount) * 100;
                 const hasSlaIssue = metric.slaBreaches > 0;
 
+                // Conversion rate from this stage to next
+                const nextMetric = arr[i + 1];
+                const conversionRate = nextMetric && metric.count > 0
+                  ? Math.round((nextMetric.count / metric.count) * 100)
+                  : null;
+
+                // Check transition history for actual conversion count
+                const transitionCount = transitions.find(
+                  t => t.from === metric.stage.id && nextMetric && t.to === nextMetric.stage.id
+                )?.count;
+
                 return (
-                  <div key={metric.stage.id} className="flex items-center gap-1">
+                  <div key={metric.stage.id} className="flex items-center gap-0">
                     <div
                       className={`flex flex-col items-center p-2 sm:p-3 rounded-lg border min-w-[100px] sm:min-w-[120px] snap-start transition-all ${
                         hasSlaIssue ? "border-red-500/40 bg-red-500/5" : "border-border/50 bg-card"
@@ -310,8 +321,24 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
                       </Badge>
                     </div>
 
+                    {/* Conversion arrow between stages */}
                     {i < arr.length - 1 && (
-                      <ArrowRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      <div className="flex flex-col items-center px-1 min-w-[50px]">
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                        {conversionRate !== null && (
+                          <div className={`text-center mt-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                            conversionRate >= 50 ? "bg-emerald-500/15 text-emerald-600" :
+                            conversionRate >= 30 ? "bg-blue-500/15 text-blue-600" :
+                            conversionRate >= 15 ? "bg-amber-500/15 text-amber-600" :
+                            "bg-red-500/15 text-red-600"
+                          }`}>
+                            {conversionRate}%
+                          </div>
+                        )}
+                        {transitionCount && transitionCount > 0 && (
+                          <span className="text-[9px] text-muted-foreground mt-0.5">{transitionCount}x</span>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
@@ -355,43 +382,73 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {corretorMetrics.map((c, i) => (
-                <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg border border-border/30 bg-card">
-                  <span className="text-xs font-bold text-muted-foreground w-5">#{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{c.nome}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-muted-foreground">{c.totalLeads} leads</span>
-                      {c.quentes > 0 && (
-                        <span className="text-[10px] text-red-600">🔥 {c.quentes} quentes</span>
+              {corretorMetrics.map((c, i) => {
+                const taxaConversao = c.totalLeads > 0 ? Math.round((c.quentes / Math.max(c.totalLeads, 1)) * 100) : 0;
+                return (
+                  <div key={c.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 bg-card">
+                    <span className={`text-xs font-bold w-6 text-center ${i === 0 ? "text-amber-500" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-orange-400" : "text-muted-foreground/50"}`}>
+                      #{i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{c.nome}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[10px] text-muted-foreground">{c.totalLeads} leads</span>
+                        {c.quentes > 0 && (
+                          <span className="text-[10px] text-red-600">🔥 {c.quentes} quentes</span>
+                        )}
+                        {c.vgv > 0 && (
+                          <span className="text-[10px] text-primary font-medium">{formatVGV(c.vgv)}</span>
+                        )}
+                        <span className="text-[10px] text-muted-foreground">
+                          Conv: {taxaConversao}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {c.slaBreaches > 0 && (
+                        <Badge className="bg-red-500/15 text-red-600 text-[9px]">
+                          🚨 {c.slaBreaches} atrasados
+                        </Badge>
                       )}
-                      {c.vgv > 0 && (
-                        <span className="text-[10px] text-primary font-medium">{formatVGV(c.vgv)}</span>
-                      )}
+                      <Badge
+                        className={`text-[10px] ${
+                          c.avgScore >= 70 ? "bg-emerald-500/15 text-emerald-600" :
+                          c.avgScore >= 50 ? "bg-blue-500/15 text-blue-600" :
+                          "bg-amber-500/15 text-amber-600"
+                        }`}
+                      >
+                        {c.avgScore} pts
+                      </Badge>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {c.slaBreaches > 0 && (
-                      <Badge className="bg-red-500/15 text-red-600 text-[9px]">
-                        {c.slaBreaches} atrasados
-                      </Badge>
-                    )}
-                    <Badge
-                      className={`text-[10px] ${
-                        c.avgScore >= 70 ? "bg-emerald-500/15 text-emerald-600" :
-                        c.avgScore >= 50 ? "bg-blue-500/15 text-blue-600" :
-                        "bg-amber-500/15 text-amber-600"
-                      }`}
-                    >
-                      {c.avgScore}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Leads perdidos por atraso */}
+      {(() => {
+        const leadsAtrasados = stageMetrics.reduce((s, m) => s + m.slaBreaches, 0);
+        if (leadsAtrasados === 0) return null;
+        return (
+          <Card className="border-red-200 bg-red-50/30 dark:bg-red-950/10">
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-red-500/15 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-red-600">{leadsAtrasados}</p>
+                  <p className="text-xs text-red-600/80 font-medium">leads com prazo estourado</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Estes leads podem ser perdidos por demora no atendimento</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
     </div>
   );
 }
