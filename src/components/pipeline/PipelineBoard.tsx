@@ -12,6 +12,7 @@ interface PipelineBoardProps {
   corretorNomes: Record<string, string>;
   onMoveLead: (leadId: string, newStageId: string) => void;
   onSelectLead: (lead: PipelineLead) => void;
+  onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
 }
 
 const COLUMN_WIDTH = 300;
@@ -36,7 +37,7 @@ function getAvgTimeLabel(leads: PipelineLead[]) {
   return `${Math.round(avg / 24)}d`;
 }
 
-export default function PipelineBoard({ stages, leads, segmentos, corretorNomes, onMoveLead, onSelectLead }: PipelineBoardProps) {
+export default function PipelineBoard({ stages, leads, segmentos, corretorNomes, onMoveLead, onSelectLead, onTransferred }: PipelineBoardProps) {
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const dragLeadId = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -252,6 +253,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                       corretorNome={lead.corretor_id ? corretorNomes[lead.corretor_id] : undefined}
                       onDragStart={() => handleDragStart(lead.id)}
                       onClick={() => onSelectLead(lead)}
+                      onTransferred={onTransferred}
                     />
                   ))}
                 </div>

@@ -4,6 +4,7 @@ import { Phone, Mail, Clock, MapPin, MessageCircle, Eye, Hourglass, Calendar } f
 import { differenceInHours, differenceInDays, differenceInMinutes } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import PipelineQuickTransfer from "./PipelineQuickTransfer";
 
 interface PipelineCardProps {
   lead: PipelineLead;
@@ -11,6 +12,7 @@ interface PipelineCardProps {
   corretorNome?: string;
   onDragStart: () => void;
   onClick: () => void;
+  onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
 }
 
 function getActivityInfo(stageChangedAt: string) {
@@ -64,7 +66,7 @@ const activityStyles = {
   danger: { dot: "bg-destructive", bg: "bg-destructive/10", text: "text-destructive", border: "border-destructive/30" },
 };
 
-const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome, onDragStart, onClick }: PipelineCardProps) {
+const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome, onDragStart, onClick, onTransferred }: PipelineCardProps) {
   const [hovered, setHovered] = useState(false);
   const segmento = segmentos.find(s => s.id === lead.segmento_id);
   const activity = getActivityInfo(lead.stage_changed_at);
@@ -263,7 +265,7 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
                   <TooltipTrigger asChild>
                     <button
                       onClick={(e) => handleWhatsApp(e, lead.telefone!)}
-                      className="p-1.5 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                      className="p-1.5 rounded-md hover:bg-accent transition-colors"
                     >
                       <MessageCircle className="h-3.5 w-3.5 text-green-600" />
                     </button>
@@ -272,6 +274,13 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
                 </Tooltip>
               </>
             )}
+            <div className="w-px h-4 bg-border mx-0.5" />
+            <PipelineQuickTransfer
+              leadId={lead.id}
+              leadNome={lead.nome}
+              currentCorretorId={lead.corretor_id}
+              onTransferred={(corretorId, nome) => onTransferred?.(lead.id, corretorId, nome)}
+            />
           </div>
         )}
       </div>
