@@ -1,6 +1,6 @@
 import { memo, useState } from "react";
 import type { PipelineLead, PipelineSegmento } from "@/hooks/usePipeline";
-import { Phone, Mail, Clock, MapPin, MessageCircle, Eye, Hourglass, Calendar, Flame, Thermometer, Snowflake, Zap } from "lucide-react";
+import { Phone, Mail, Clock, MapPin, MessageCircle, Eye, Hourglass, Calendar, Flame, Thermometer, Snowflake, Zap, Shield, Users, Handshake } from "lucide-react";
 import { differenceInHours, differenceInDays, differenceInMinutes } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ interface PipelineCardProps {
   lead: PipelineLead;
   segmentos: PipelineSegmento[];
   corretorNome?: string;
+  gerenteNome?: string;
+  parceiroNome?: string;
   onDragStart: () => void;
   onClick: () => void;
   onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
@@ -75,7 +77,13 @@ const TEMP_CONFIG: Record<string, { icon: React.ElementType; label: string; colo
   frio: { icon: Snowflake, label: "Frio", color: "text-blue-500", bg: "bg-blue-500/10" },
 };
 
-const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome, onDragStart, onClick, onTransferred }: PipelineCardProps) {
+const MODO_LABELS: Record<string, { label: string; color: string }> = {
+  corretor_conduz: { label: "Corretor", color: "text-blue-600 bg-blue-500/10" },
+  corretor_gerente: { label: "Cor + Ger", color: "text-purple-600 bg-purple-500/10" },
+  gerente_conduz: { label: "Gerente", color: "text-amber-600 bg-amber-500/10" },
+};
+
+const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome, gerenteNome, parceiroNome, onDragStart, onClick, onTransferred }: PipelineCardProps) {
   const [hovered, setHovered] = useState(false);
   const segmento = segmentos.find(s => s.id === lead.segmento_id);
   const activity = getActivityInfo(lead.stage_changed_at);
@@ -241,26 +249,59 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
             </div>
           )}
 
-          {/* Footer: corretor + alert */}
+          {/* Footer: team info + alert */}
           <div className="flex items-center justify-between pt-1.5 border-t border-border/30">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Avatar className="h-5 w-5 text-[8px] border border-border/40 shrink-0">
-                <AvatarFallback className="bg-primary/10 text-primary text-[8px]">
-                  {corretorNome ? corretorNome.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-[10px] text-muted-foreground truncate max-w-[100px] font-medium">
-                {corretorNome || "Sem corretor"}
-              </span>
+            <div className="flex items-center gap-1 min-w-0 flex-wrap">
+              {/* Corretor */}
+              <div className="flex items-center gap-1 min-w-0">
+                <Avatar className="h-4 w-4 text-[7px] border border-border/40 shrink-0">
+                  <AvatarFallback className="bg-primary/10 text-primary text-[7px]">
+                    {corretorNome ? corretorNome.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() : "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-[9px] text-muted-foreground truncate max-w-[60px] font-medium">
+                  {corretorNome || "Sem corretor"}
+                </span>
+              </div>
+              {/* Parceiro */}
+              {parceiroNome && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-[9px] text-purple-600 dark:text-purple-400 flex items-center gap-0.5">
+                      <Handshake className="h-2.5 w-2.5" />
+                      {parceiroNome.split(" ")[0]}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Parceiro: {parceiroNome}</TooltipContent>
+                </Tooltip>
+              )}
+              {/* Gerente */}
+              {gerenteNome && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-[9px] text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                      <Shield className="h-2.5 w-2.5" />
+                      {gerenteNome.split(" ")[0]}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Gerente: {gerenteNome}</TooltipContent>
+                </Tooltip>
+              )}
+              {/* Modo */}
+              {lead.modo_conducao && lead.modo_conducao !== "corretor_conduz" && (
+                <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${MODO_LABELS[lead.modo_conducao]?.color || ""}`}>
+                  {MODO_LABELS[lead.modo_conducao]?.label}
+                </span>
+              )}
             </div>
 
             {showAlert ? (
-              <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full ${style.bg} ${style.text} border ${style.border}`}>
+              <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full ${style.bg} ${style.text} border ${style.border} shrink-0`}>
                 <Calendar className="h-2.5 w-2.5" />
-                {activity.variant === "warning" ? "30min+" : "2h+ parado"}
+                {activity.variant === "warning" ? "30m+" : "2h+"}
               </span>
             ) : (
-              <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full ${style.bg} ${style.text}`}>
+              <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full ${style.bg} ${style.text} shrink-0`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
                 {activity.label}
               </span>
