@@ -83,8 +83,7 @@ export function AppSidebar() {
   // === PRINCIPAL ===
   const principalItems = isAdmin
     ? [
-        { title: "Início", url: "/", icon: Home },
-        { title: "Dashboard CEO", url: "/ceo", icon: Crown },
+        { title: "Início", url: "/ceo", icon: Home },
       ]
     : isGestor
     ? [
