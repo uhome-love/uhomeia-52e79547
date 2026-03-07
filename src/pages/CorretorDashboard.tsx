@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCorretorProgress } from "@/hooks/useCorretorProgress";
 import { useDailyMotivation } from "@/hooks/useCorretorDailyStats";
 import DailyProgressCard from "@/components/corretor/DailyProgressCard";
-import AcoesAgora from "@/components/corretor/AcoesAgora";
+
 import AchievementsBadges from "@/components/corretor/AchievementsBadges";
 import FollowUpsDoDia from "@/components/corretor/FollowUpsDoDia";
 import VisitasHojeCard from "@/components/corretor/VisitasHojeCard";
@@ -332,23 +332,8 @@ export default function CorretorDashboard() {
             </div>
           </motion.div>
 
-          {/* 2️⃣ AÇÕES AGORA */}
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
-            <AcoesAgora
-              followUps={followUps}
-              visitasHoje={visitasHoje}
-              newLeadsCount={newLeadsCount}
-              onStartCall={() => {
-                if (!goals) {
-                  toast.warning("Defina sua meta do dia antes de iniciar a discagem!");
-                  return;
-                }
-                setActiveTab("discagem");
-              }}
-            />
-          </motion.div>
 
-          {/* 3️⃣ MISSÕES DO DIA */}
+          {/* 2️⃣ MISSÕES DO DIA (was 3) */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <MissoesDeHoje
               missoes={missoes}
