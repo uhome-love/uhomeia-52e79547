@@ -2677,6 +2677,13 @@ export type Database = {
         | "proposta"
         | "venda"
         | "descarte"
+        | "contato_inicial"
+        | "atendimento"
+        | "possibilidade_visita"
+        | "visita_marcada"
+        | "visita_realizada"
+        | "negociacao"
+        | "assinatura"
       task_status: "pendente" | "em_andamento" | "concluida" | "cancelada"
     }
     CompositeTypes: {
@@ -2818,6 +2825,13 @@ export const Constants = {
         "proposta",
         "venda",
         "descarte",
+        "contato_inicial",
+        "atendimento",
+        "possibilidade_visita",
+        "visita_marcada",
+        "visita_realizada",
+        "negociacao",
+        "assinatura",
       ],
       task_status: ["pendente", "em_andamento", "concluida", "cancelada"],
     },
