@@ -192,7 +192,7 @@ export default function PipelineBoard({ stages, leads, segmentos, onMoveLead, on
             return (
               <div
                 key={stage.id}
-                className={`flex flex-col shrink-0 rounded-xl transition-all duration-200 ${
+                className={`flex flex-col shrink-0 h-full rounded-xl transition-all duration-200 ${
                   isDragOver
                     ? "ring-2 ring-primary/50 bg-primary/5 shadow-xl shadow-primary/10 scale-[1.01]"
                     : "bg-muted/20"
@@ -202,7 +202,7 @@ export default function PipelineBoard({ stages, leads, segmentos, onMoveLead, on
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
-                {/* Column header */}
+                {/* Column header — fixed */}
                 <div className="shrink-0 px-3.5 py-3 bg-card border border-border/40 rounded-t-xl">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-3 w-1 rounded-full" style={{ backgroundColor: stage.cor }} />
@@ -233,10 +233,10 @@ export default function PipelineBoard({ stages, leads, segmentos, onMoveLead, on
                   </div>
                 </div>
 
-                {/* Cards — scrollable vertically within column */}
-                <div className="flex-1 min-h-0 flex flex-col gap-2 p-2 overflow-y-auto scrollbar-thin">
+                {/* Cards list — fills remaining height, scrolls vertically */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 scrollbar-thin">
                   {stageLeads.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-10 text-center flex-1">
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mb-2">
                         <span className="text-muted-foreground/40 text-sm">+</span>
                       </div>
