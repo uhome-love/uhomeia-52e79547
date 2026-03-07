@@ -116,6 +116,8 @@ export default function PipelineKanban() {
   const clearFilters = () => {
     setFilterSegmento("all");
     setFilterOrigem("all");
+    setFilterCorretor("all");
+    setFilterCampanha("all");
     setSearchQuery("");
   };
 
