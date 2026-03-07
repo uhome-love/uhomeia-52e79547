@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Phone, MapPin, Target, FileText, DollarSign, TrendingUp, Percent, ArrowUpRight, ArrowDownRight, Minus, AlertTriangle, CheckCircle, Users, Zap, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import CeoMetasMensais from "./CeoMetasMensais";
+import SaudeOperacao from "./SaudeOperacao";
 
 const fmtCurrency = (v: number) => {
   if (Math.abs(v) >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(2).replace(".", ",")}M`;
