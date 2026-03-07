@@ -241,6 +241,15 @@ export default function CeoOverview() {
             )}
           </div>
 
+          {/* ═══ SAÚDE DA OPERAÇÃO ═══ */}
+          <div className="rounded-xl border border-border bg-card shadow-card p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="h-4 w-4 text-primary" />
+              <h3 className="font-display font-semibold text-sm">Saúde da Operação</h3>
+            </div>
+            <SaudeOperacao />
+          </div>
+
           {/* Metas Mensais CEO */}
           <CeoMetasMensais />
 
