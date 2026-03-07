@@ -83,11 +83,13 @@ export function AppSidebar() {
   const homeItems = isGestor || isAdmin
     ? [
         { title: "Início", url: "/", icon: Home },
+        { title: "Pipeline", url: "/pipeline", icon: Kanban },
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "HOMI Gerencial", url: "/homi-gerente", icon: Bot },
       ]
     : [
         { title: "Central do Corretor", url: "/corretor", icon: Phone },
+        { title: "Pipeline", url: "/pipeline", icon: Kanban },
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Meus Negócios", url: "/meus-negocios", icon: FileSpreadsheet },
         { title: "Scripts do Time", url: "/scripts", icon: FileEdit },
