@@ -50,7 +50,7 @@ export default function PdnPanel({ filterGerenteId, readOnly }: PdnPanelProps) {
   const [filterCorretor, setFilterCorretor] = useState("");
   const [alertFilter, setAlertFilter] = useState<string | null>(null);
   
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("kanban");
+  // Only kanban view
 
   const uniqueCorretores = [...new Set(entries.map(e => e.corretor).filter(Boolean))];
 
@@ -203,26 +203,6 @@ export default function PdnPanel({ filterGerenteId, readOnly }: PdnPanelProps) {
             </SelectContent>
           </Select>
         )}
-        <div className="flex items-center gap-1 border rounded-md p-0.5">
-          <Button
-            size="sm"
-            variant={viewMode === "table" ? "default" : "ghost"}
-            className="h-7 w-7 p-0"
-            onClick={() => setViewMode("table")}
-            title="Tabela"
-          >
-            <Table2 className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            variant={viewMode === "kanban" ? "default" : "ghost"}
-            className="h-7 w-7 p-0"
-            onClick={() => setViewMode("kanban")}
-            title="Kanban"
-          >
-            <LayoutGrid className="h-3.5 w-3.5" />
-          </Button>
-        </div>
         <div className="flex-1 hidden sm:block" />
         <div className="flex items-center gap-1">
           <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={handleExportCsv}>
@@ -236,23 +216,11 @@ export default function PdnPanel({ filterGerenteId, readOnly }: PdnPanelProps) {
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Carregando PDN...</div>
-      ) : viewMode === "kanban" ? (
+      ) : (
         <PdnKanban
           entries={entries}
           readOnly={isReadOnly}
           onUpdate={updateEntry}
-          searchTerm={searchTerm}
-          filterCorretor={filterCorretor}
-        />
-      ) : (
-        <PdnTable
-          entries={entries}
-          readOnly={isReadOnly}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onUpdate={updateEntry}
-          onDelete={deleteEntry}
-          onAdd={(situacao) => addEntry({ situacao })}
           searchTerm={searchTerm}
           filterCorretor={filterCorretor}
         />
