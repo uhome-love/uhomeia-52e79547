@@ -9,6 +9,7 @@ interface TeamMember {
   user_id: string | null;
   nome: string;
   equipe: string | null;
+  gerente_nome?: string | null;
 }
 
 interface Props {
