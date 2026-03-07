@@ -84,7 +84,6 @@ export function AppSidebar() {
   const principalItems = isAdmin
     ? [
         { title: "Início", url: "/ceo", icon: Home },
-        { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
       ]
     : isGestor
     ? [
@@ -126,8 +125,16 @@ export function AppSidebar() {
       ];
 
   // === GESTÃO DAS EQUIPES ===
-  const gestaoEquipesItems = isGestor || isAdmin
+  const gestaoEquipesItems = isAdmin
     ? [
+        { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
+        { title: "PDN - Gerentes", url: "/pdn", icon: FileSpreadsheet },
+        { title: "Meu Time", url: "/meu-time", icon: Users },
+      ]
+    : isGestor
+    ? [
+        { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
+        { title: "PDN", url: "/pdn", icon: FileSpreadsheet },
         { title: "Meu Time", url: "/meu-time", icon: Users },
       ]
     : [];
