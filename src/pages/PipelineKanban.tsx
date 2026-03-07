@@ -252,8 +252,8 @@ export default function PipelineKanban() {
           corretorNomes={pipeline.corretorNomes}
           onMoveLead={pipeline.moveLead}
           onSelectLead={setSelectedLead}
-          onTransferred={(leadId, corretorId, corretorNome) => {
-            pipeline.updateLead(leadId, { corretor_id: corretorId } as any);
+          onTransferred={(_leadId, corretorId, _corretorNome) => {
+            pipeline.reload();
           }}
         />
       </div>
