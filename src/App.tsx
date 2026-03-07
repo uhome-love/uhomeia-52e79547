@@ -38,6 +38,7 @@ const BuscaLeads = lazy(() => import("./pages/BuscaLeads"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const AgendaVisitas = lazy(() => import("./pages/AgendaVisitas"));
 const MeusNegocios = lazy(() => import("./pages/MeusNegocios"));
+const PipelineKanban = lazy(() => import("./pages/PipelineKanban"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 
 const queryClient = new QueryClient();
@@ -93,6 +94,7 @@ const App = () => (
             <Route path="/ranking" element={<ProtectedPage roles={["gestor", "admin", "corretor"]}><RankingComercial /></ProtectedPage>} />
             <Route path="/meu-time" element={<ProtectedPage roles={["gestor", "admin"]}><MeuTime /></ProtectedPage>} />
             <Route path="/oferta-ativa" element={<ProtectedPage roles={["gestor", "admin"]}><OfertaAtiva /></ProtectedPage>} />
+            <Route path="/pipeline" element={<ProtectedPage><PipelineKanban /></ProtectedPage>} />
 
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><CorretorDashboard /></ProtectedPage>} />
