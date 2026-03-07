@@ -286,6 +286,9 @@ export default function MeusNegocios() {
             </div>
           )}
         </div>
+
+        {/* Forecast Ponderado */}
+        <ForecastPonderadoPanel leads={filteredLeads} stages={pipeline.stages} />
       </div>
 
       {/* Kanban Board */}
