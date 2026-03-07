@@ -85,14 +85,30 @@ export default function CorretorDashboard() {
   const motivation = useDailyMotivation();
   const { user } = useAuth();
 
-  const { missoes, missaoGeral, radarLeads, radarLoading, ranking, rankingLoading, userId } = useMissoesLeads();
+  const { missoes, missaoGeral } = useMissoesLeads();
   const { followUps, followUpsLoading, visitasHoje, visitasLoading, funil, funilLoading, totalLeads, evolucao, evolucaoLoading } = useCorretorHomeData();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("central");
   const [nome, setNome] = useState("");
   const [finalizando, setFinalizando] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [prevAproveitados, setPrevAproveitados] = useState(0);
+
+  // Count new leads (no contact yet)
+  const { data: newLeadsCount = 0 } = useQuery({
+    queryKey: ["corretor-new-leads-count", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("pipeline_leads")
+        .select("id", { count: "exact", head: true })
+        .eq("corretor_id", user!.id)
+        .in("stage_id", (await supabase.from("pipeline_stages").select("id").in("nome", ["Novo Lead", "Sem Contato"])).data?.map(s => s.id) || []);
+      return count || 0;
+    },
+    enabled: !!user,
+    staleTime: 30_000,
+  });
 
   // Streak calculation
   const { data: streak } = useQuery({
