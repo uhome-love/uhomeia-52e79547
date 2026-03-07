@@ -434,6 +434,12 @@ export default function PipelineKanban() {
             corretorNomes={pipeline.corretorNomes}
             onSelectLead={setSelectedLead}
           />
+        ) : activeTab === "relatorios" ? (
+          <PipelineReportsDashboard
+            stages={pipeline.stages}
+            leads={pipeline.leads}
+            corretorNomes={pipeline.corretorNomes}
+          />
         ) : null}
       </div>
 
