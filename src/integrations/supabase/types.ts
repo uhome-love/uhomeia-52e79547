@@ -441,24 +441,30 @@ export type Database = {
           corretor_id: string
           created_at: string
           id: string
+          motivo_rejeicao: string | null
           pipeline_lead_id: string
           segmento_id: string | null
+          tempo_resposta_seg: number | null
         }
         Insert: {
           acao?: string
           corretor_id: string
           created_at?: string
           id?: string
+          motivo_rejeicao?: string | null
           pipeline_lead_id: string
           segmento_id?: string | null
+          tempo_resposta_seg?: number | null
         }
         Update: {
           acao?: string
           corretor_id?: string
           created_at?: string
           id?: string
+          motivo_rejeicao?: string | null
           pipeline_lead_id?: string
           segmento_id?: string | null
+          tempo_resposta_seg?: number | null
         }
         Relationships: [
           {
@@ -1549,6 +1555,7 @@ export type Database = {
       pipeline_leads: {
         Row: {
           aceite_expira_em: string | null
+          aceite_status: string
           aceito_em: string | null
           bairro_regiao: string | null
           corretor_id: string | null
@@ -1564,6 +1571,7 @@ export type Database = {
           imovel_troca: boolean | null
           jetimob_lead_id: string | null
           motivo_descarte: string | null
+          motivo_rejeicao: string | null
           nivel_interesse: string | null
           nome: string
           objetivo_cliente: string | null
@@ -1571,7 +1579,9 @@ export type Database = {
           ordem_no_stage: number
           origem: string | null
           origem_detalhe: string | null
+          primeiro_contato_em: string | null
           prioridade_acao: string | null
+          prioridade_lead: string
           produto_id: string | null
           proxima_acao: string | null
           segmento_id: string | null
@@ -1585,6 +1595,7 @@ export type Database = {
         }
         Insert: {
           aceite_expira_em?: string | null
+          aceite_status?: string
           aceito_em?: string | null
           bairro_regiao?: string | null
           corretor_id?: string | null
@@ -1600,6 +1611,7 @@ export type Database = {
           imovel_troca?: boolean | null
           jetimob_lead_id?: string | null
           motivo_descarte?: string | null
+          motivo_rejeicao?: string | null
           nivel_interesse?: string | null
           nome: string
           objetivo_cliente?: string | null
@@ -1607,7 +1619,9 @@ export type Database = {
           ordem_no_stage?: number
           origem?: string | null
           origem_detalhe?: string | null
+          primeiro_contato_em?: string | null
           prioridade_acao?: string | null
+          prioridade_lead?: string
           produto_id?: string | null
           proxima_acao?: string | null
           segmento_id?: string | null
@@ -1621,6 +1635,7 @@ export type Database = {
         }
         Update: {
           aceite_expira_em?: string | null
+          aceite_status?: string
           aceito_em?: string | null
           bairro_regiao?: string | null
           corretor_id?: string | null
@@ -1636,6 +1651,7 @@ export type Database = {
           imovel_troca?: boolean | null
           jetimob_lead_id?: string | null
           motivo_descarte?: string | null
+          motivo_rejeicao?: string | null
           nivel_interesse?: string | null
           nome?: string
           objetivo_cliente?: string | null
@@ -1643,7 +1659,9 @@ export type Database = {
           ordem_no_stage?: number
           origem?: string | null
           origem_detalhe?: string | null
+          primeiro_contato_em?: string | null
           prioridade_acao?: string | null
+          prioridade_lead?: string
           produto_id?: string | null
           proxima_acao?: string | null
           segmento_id?: string | null
@@ -1721,8 +1739,12 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          max_leads_ativos: number
           nome: string
           ordem: number
+          roleta_fim: string | null
+          roleta_inicio: string | null
+          sla_minutos: number
           updated_at: string
         }
         Insert: {
@@ -1731,8 +1753,12 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          max_leads_ativos?: number
           nome: string
           ordem?: number
+          roleta_fim?: string | null
+          roleta_inicio?: string | null
+          sla_minutos?: number
           updated_at?: string
         }
         Update: {
@@ -1741,8 +1767,12 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          max_leads_ativos?: number
           nome?: string
           ordem?: number
+          roleta_fim?: string | null
+          roleta_inicio?: string | null
+          sla_minutos?: number
           updated_at?: string
         }
         Relationships: []
@@ -2162,6 +2192,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aceitar_lead: {
+        Args: {
+          p_corretor_id: string
+          p_lead_id: string
+          p_status_inicial?: string
+        }
+        Returns: Json
+      }
       aprovar_lead_exclusivo: {
         Args: {
           p_canal: string
@@ -2268,6 +2306,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_distribuicao_performance: {
+        Args: { p_periodo?: string }
+        Returns: Json
+      }
       get_individual_oa_ranking: { Args: { p_period?: string }; Returns: Json }
       get_team_oa_ranking: { Args: { p_period?: string }; Returns: Json }
       has_role: {
@@ -2298,6 +2340,14 @@ export type Database = {
       marcar_todas_notificacoes_lidas: { Args: never; Returns: number }
       recalculate_all_scores: { Args: never; Returns: undefined }
       reciclar_leads_expirados: { Args: never; Returns: number }
+      redistribuir_leads_pendentes: {
+        Args: { p_segmento_id?: string }
+        Returns: Json
+      }
+      rejeitar_lead: {
+        Args: { p_corretor_id: string; p_lead_id: string; p_motivo: string }
+        Returns: Json
+      }
       renew_lead_lock: {
         Args: {
           p_corretor_id: string
