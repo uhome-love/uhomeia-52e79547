@@ -1,8 +1,9 @@
 import { memo, useState } from "react";
 import type { PipelineLead, PipelineSegmento } from "@/hooks/usePipeline";
-import { Phone, Mail, Clock, MapPin, MessageCircle, Eye, Hourglass, Calendar } from "lucide-react";
+import { Phone, Mail, Clock, MapPin, MessageCircle, Eye, Hourglass, Calendar, Flame, Thermometer, Snowflake } from "lucide-react";
 import { differenceInHours, differenceInDays, differenceInMinutes } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PipelineQuickTransfer from "./PipelineQuickTransfer";
 
@@ -15,19 +16,19 @@ interface PipelineCardProps {
   onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
 }
 
-function getActivityInfo(stageChangedAt: string) {
+type ActivityVariant = "active" | "ok" | "warning" | "danger";
+
+function getActivityInfo(stageChangedAt: string): { label: string; variant: ActivityVariant; timeText: string } {
   const now = new Date();
   const changed = new Date(stageChangedAt);
   const mins = differenceInMinutes(now, changed);
   const hours = differenceInHours(now, changed);
   const days = differenceInDays(now, changed);
 
-  if (mins < 5) return { label: "Agora", variant: "new" as const, timeText: "Agora" };
-  if (mins < 60) return { label: `${mins}m`, variant: "new" as const, timeText: `${mins}m` };
-  if (hours < 6) return { label: `${hours}h`, variant: "ok" as const, timeText: `${hours}h` };
-  if (hours < 24) return { label: `${hours}h`, variant: "info" as const, timeText: `${hours}h` };
-  if (days < 3) return { label: `${days}d`, variant: "warning" as const, timeText: `${days}d` };
-  return { label: `${days}d`, variant: "danger" as const, timeText: `${days}d` };
+  if (mins < 30) return { label: mins < 5 ? "Agora" : `${mins}m`, variant: "active", timeText: mins < 5 ? "Agora" : `${mins}m` };
+  if (mins < 120) return { label: `${mins}m`, variant: "warning", timeText: `${mins}m` };
+  if (hours < 24) return { label: `${hours}h`, variant: "danger", timeText: `${hours}h` };
+  return { label: `${days}d`, variant: "danger", timeText: `${days}d` };
 }
 
 function getTimeSinceCreated(createdAt: string) {
@@ -58,12 +59,19 @@ function getWhatsAppUrl(phone: string) {
   return `https://wa.me/${number}`;
 }
 
-const activityStyles = {
-  new: { dot: "bg-emerald-500", bg: "bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-500/30" },
-  ok: { dot: "bg-blue-400", bg: "bg-blue-400/10", text: "text-blue-600 dark:text-blue-400", border: "border-blue-400/30" },
-  info: { dot: "bg-amber-400", bg: "bg-amber-400/10", text: "text-amber-600 dark:text-amber-400", border: "border-amber-400/30" },
-  warning: { dot: "bg-orange-500", bg: "bg-orange-500/10", text: "text-orange-600 dark:text-orange-400", border: "border-orange-500/30" },
-  danger: { dot: "bg-destructive", bg: "bg-destructive/10", text: "text-destructive", border: "border-destructive/30" },
+// Card border + bar color based on activity
+const activityStyles: Record<ActivityVariant, { dot: string; border: string; bg: string; text: string }> = {
+  active: { dot: "bg-emerald-500", border: "border-emerald-500/40", bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400" },
+  ok: { dot: "bg-blue-400", border: "border-blue-400/40", bg: "bg-blue-400/10", text: "text-blue-600 dark:text-blue-400" },
+  warning: { dot: "bg-amber-500", border: "border-amber-500/50", bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400" },
+  danger: { dot: "bg-red-500", border: "border-red-500/50", bg: "bg-red-500/10", text: "text-red-600 dark:text-red-400" },
+};
+
+// Temperature config
+const TEMP_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string; bg: string }> = {
+  quente: { icon: Flame, label: "Quente", color: "text-red-600", bg: "bg-red-500/10" },
+  morno: { icon: Thermometer, label: "Morno", color: "text-amber-600", bg: "bg-amber-500/10" },
+  frio: { icon: Snowflake, label: "Frio", color: "text-blue-500", bg: "bg-blue-500/10" },
 };
 
 const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome, onDragStart, onClick, onTransferred }: PipelineCardProps) {
@@ -72,6 +80,8 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
   const activity = getActivityInfo(lead.stage_changed_at);
   const createdTime = getTimeSinceCreated(lead.created_at);
   const style = activityStyles[activity.variant];
+  const temp = TEMP_CONFIG[(lead as any).temperatura || "morno"];
+  const showAlert = activity.variant === "warning" || activity.variant === "danger";
 
   const handleWhatsApp = (e: React.MouseEvent, phone: string) => {
     e.stopPropagation();
@@ -82,15 +92,6 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
     e.stopPropagation();
     window.open(`tel:${phone}`, "_self");
   };
-
-  const initials = lead.nome
-    .split(" ")
-    .slice(0, 2)
-    .map(n => n[0])
-    .join("")
-    .toUpperCase();
-
-  const showInactivityAlert = activity.variant === "warning" || activity.variant === "danger";
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -112,16 +113,28 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="group relative rounded-xl border border-border/60 bg-card p-0 cursor-grab active:cursor-grabbing hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 select-none overflow-hidden"
+        className={`group relative rounded-xl border-l-[3px] border bg-card p-0 cursor-grab active:cursor-grabbing hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 select-none overflow-hidden ${style.border}`}
       >
         {/* Activity indicator bar */}
-        <div className={`h-[3px] w-full ${style.dot}`} />
+        <div className={`h-[2px] w-full ${style.dot}`} />
 
         <div className="p-3 space-y-2">
-          {/* Name */}
-          <h4 className="text-[13px] font-bold text-foreground leading-tight line-clamp-1">
-            {lead.nome}
-          </h4>
+          {/* Name + Temperature */}
+          <div className="flex items-start justify-between gap-1">
+            <h4 className="text-[13px] font-bold text-foreground leading-tight line-clamp-1 flex-1">
+              {lead.nome}
+            </h4>
+            {temp && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className={`shrink-0 p-0.5 rounded ${temp.bg}`}>
+                    <temp.icon className={`h-3 w-3 ${temp.color}`} />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">{temp.label}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
 
           {/* Phone + WhatsApp */}
           {lead.telefone && (
@@ -136,7 +149,7 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
                 <TooltipTrigger asChild>
                   <button
                     onClick={(e) => handleWhatsApp(e, lead.telefone!)}
-                    className="p-0.5 rounded hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                    className="p-0.5 rounded hover:bg-accent transition-colors"
                   >
                     <MessageCircle className="h-3.5 w-3.5 text-green-600" />
                   </button>
@@ -154,7 +167,7 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
             </div>
           )}
 
-          {/* Empreendimento / Product */}
+          {/* Empreendimento */}
           {lead.empreendimento && (
             <div className="flex items-center gap-1.5">
               <MapPin className="h-3 w-3 text-muted-foreground/60 shrink-0" />
@@ -162,33 +175,40 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
             </div>
           )}
 
-          {/* Value */}
-          {lead.valor_estimado && lead.valor_estimado > 0 && (
+          {/* VGV */}
+          {lead.valor_estimado && lead.valor_estimado > 0 ? (
             <div className="text-[11px] text-muted-foreground italic">
               R$ {lead.valor_estimado.toLocaleString("pt-BR")}
             </div>
-          )}
-          {(!lead.valor_estimado || lead.valor_estimado <= 0) && (
-            <div className="text-[11px] text-muted-foreground/50 italic">
-              Valor não informado
-            </div>
+          ) : (
+            <div className="text-[11px] text-muted-foreground/50 italic">Valor não informado</div>
           )}
 
           {/* Time indicators */}
           <div className="flex items-center gap-3 text-[10px] text-muted-foreground/70">
-            <span className="flex items-center gap-1">
-              <Clock className="h-2.5 w-2.5" />
-              {createdTime}
-            </span>
-            <span className="flex items-center gap-1">
-              <Hourglass className="h-2.5 w-2.5" />
-              {activity.timeText}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-2.5 w-2.5" />
+                  {createdTime}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs">Tempo desde criação</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`flex items-center gap-1 font-medium ${showAlert ? style.text : ""}`}>
+                  <Hourglass className="h-2.5 w-2.5" />
+                  {activity.timeText}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs">Tempo nesta etapa</TooltipContent>
+            </Tooltip>
           </div>
 
-          {/* Segmento tag + Origem (only if different from empreendimento) */}
+          {/* Segmento tag + Origem */}
           {(segmento || (lead.origem && lead.origem !== lead.empreendimento)) && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               {segmento && (
                 <span
                   className="text-[9px] font-bold px-1.5 py-0.5 rounded-md text-white leading-none"
@@ -205,9 +225,8 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
             </div>
           )}
 
-          {/* Footer: corretor info + inactivity alert */}
+          {/* Footer: corretor + alert */}
           <div className="flex items-center justify-between pt-1.5 border-t border-border/30">
-            {/* Corretor info */}
             <div className="flex items-center gap-1.5 min-w-0">
               <Avatar className="h-5 w-5 text-[8px] border border-border/40 shrink-0">
                 <AvatarFallback className="bg-primary/10 text-primary text-[8px]">
@@ -219,11 +238,10 @@ const PipelineCard = memo(function PipelineCard({ lead, segmentos, corretorNome,
               </span>
             </div>
 
-            {/* Activity badge */}
-            {showInactivityAlert ? (
-              <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full ${style.bg} ${style.text} ${style.border} border`}>
+            {showAlert ? (
+              <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full ${style.bg} ${style.text} border ${style.border}`}>
                 <Calendar className="h-2.5 w-2.5" />
-                Sem atividade!
+                {activity.variant === "warning" ? "30min+" : "2h+ parado"}
               </span>
             ) : (
               <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full ${style.bg} ${style.text}`}>
