@@ -167,17 +167,29 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
               })}
             </div>
 
-            {/* Marquei Visita */}
+            {/* Interest sub-type selection */}
             {resultado === "com_interesse" && (
-              <div
-                className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
-                  visitaMarcada ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/30"
-                }`}
-                onClick={() => setVisitaMarcada(!visitaMarcada)}
-              >
-                <Checkbox checked={visitaMarcada} onCheckedChange={(v) => setVisitaMarcada(!!v)} className="h-4 w-4" />
-                <CalendarCheck className={`h-3.5 w-3.5 ${visitaMarcada ? "text-primary" : "text-muted-foreground"}`} />
-                <span className="text-xs font-medium text-foreground">Marquei visita</span>
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Tipo de interesse (obrigatório)</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {INTERESSE_SUB_OPTIONS.map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => {
+                        setInteresseTipo(opt.key);
+                        if (opt.key === "visita_marcada") setVisitaMarcada(true);
+                      }}
+                      className={`flex flex-col items-start gap-0.5 p-2 rounded-lg border-2 transition-all text-left ${
+                        interesseTipo === opt.key
+                          ? "border-emerald-500/50 bg-emerald-500/10 ring-1 ring-emerald-500/30"
+                          : "border-border hover:border-emerald-500/20"
+                      }`}
+                    >
+                      <span className="text-xs font-medium">{opt.emoji} {opt.label}</span>
+                      <span className="text-[9px] text-muted-foreground">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
