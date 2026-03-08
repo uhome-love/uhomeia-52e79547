@@ -6,6 +6,8 @@ import { getLevel } from "@/lib/gamification";
 
 const Avatar3DViewer = lazy(() => import("@/components/avaturn/Avatar3DViewer"));
 
+export type AvatarAnimationState = "idle" | "celebrating" | "calling" | "no-answer" | "levelup" | "overtaken";
+
 export interface CorretorAvatarProps {
   nome: string;
   avatarUrl?: string | null;
@@ -17,6 +19,7 @@ export interface CorretorAvatarProps {
   size?: "sm" | "md" | "lg" | "xl";
   animated?: boolean;
   showBadges?: boolean;
+  animationState?: AvatarAnimationState;
   className?: string;
 }
 
@@ -127,6 +130,7 @@ export default function CorretorAvatar({
   size = "md",
   animated = true,
   showBadges = true,
+  animationState = "idle",
   className,
 }: CorretorAvatarProps) {
   const level = levelOverride || getLevel(points);
@@ -141,7 +145,11 @@ export default function CorretorAvatar({
   const isTop1 = ranking === 1;
 
   return (
-    <div className={cn("relative inline-flex items-center justify-center", className)}>
+    <div className={cn(
+      "relative inline-flex items-center justify-center",
+      animated && `avatar-${animationState}`,
+      className,
+    )}>
       {/* Animated aura for higher levels */}
       {animated && level.id !== "iniciante" && (
         <div
