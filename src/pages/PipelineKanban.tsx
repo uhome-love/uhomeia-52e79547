@@ -195,8 +195,6 @@ export default function PipelineKanban() {
 
   const isKanbanOrIntel = activeTab === "kanban" || activeTab === "inteligencia";
 
-  const [forecastExpanded, setForecastExpanded] = useState(false);
-
   return (
     <div className="flex flex-col w-full max-w-full min-w-0 overflow-hidden" style={{ height: "calc(100vh - 56px - 2rem)" }}>
       {/* Controls — fixed top area */}
