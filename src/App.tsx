@@ -60,6 +60,7 @@ const ComissoesPage = lazy(() => import("./pages/ComissoesPage"));
 const MarketingCentral = lazy(() => import("./pages/MarketingCentral"));
 const HomiAna = lazy(() => import("./pages/HomiAna"));
 const BaseConhecimento = lazy(() => import("./pages/BaseConhecimento"));
+const TemplatesComunicacao = lazy(() => import("./pages/TemplatesComunicacao"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,6 +131,7 @@ const App = () => (
             <Route path="/escala-diaria" element={<ProtectedPage roles={["admin"]}><EscalaDiaria /></ProtectedPage>} />
             <Route path="/disponibilidade" element={<ProtectedPage roles={["gestor", "admin"]}><DisponibilidadePage /></ProtectedPage>} />
             <Route path="/automacoes" element={<ProtectedPage roles={["gestor", "admin"]}><AutomacoesPage /></ProtectedPage>} />
+            <Route path="/templates-comunicacao" element={<ProtectedPage roles={["gestor", "admin"]}><TemplatesComunicacao /></ProtectedPage>} />
 
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><CorretorDashboard /></ProtectedPage>} />
