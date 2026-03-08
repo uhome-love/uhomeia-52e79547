@@ -2684,6 +2684,9 @@ export type Database = {
           cliente_endereco: string | null
           cliente_nome: string
           cliente_telefone: string | null
+          comissao_pct: number | null
+          comissao_total: number | null
+          contrato_gerado_em: string | null
           created_at: string
           criada_por: string
           data_venda: string
@@ -2704,6 +2707,9 @@ export type Database = {
           cliente_endereco?: string | null
           cliente_nome: string
           cliente_telefone?: string | null
+          comissao_pct?: number | null
+          comissao_total?: number | null
+          contrato_gerado_em?: string | null
           created_at?: string
           criada_por: string
           data_venda?: string
@@ -2724,6 +2730,9 @@ export type Database = {
           cliente_endereco?: string | null
           cliente_nome?: string
           cliente_telefone?: string | null
+          comissao_pct?: number | null
+          comissao_total?: number | null
+          contrato_gerado_em?: string | null
           created_at?: string
           criada_por?: string
           data_venda?: string
@@ -3700,7 +3709,9 @@ export type Database = {
           avatar_updated_at: string | null
           avatar_url: string | null
           cargo: string | null
+          cpf: string | null
           created_at: string
+          creci: string | null
           email: string | null
           id: string
           jetimob_user_id: string | null
@@ -3715,7 +3726,9 @@ export type Database = {
           avatar_updated_at?: string | null
           avatar_url?: string | null
           cargo?: string | null
+          cpf?: string | null
           created_at?: string
+          creci?: string | null
           email?: string | null
           id?: string
           jetimob_user_id?: string | null
@@ -3730,7 +3743,9 @@ export type Database = {
           avatar_updated_at?: string | null
           avatar_url?: string | null
           cargo?: string | null
+          cpf?: string | null
           created_at?: string
+          creci?: string | null
           email?: string | null
           id?: string
           jetimob_user_id?: string | null
