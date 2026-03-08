@@ -11,6 +11,7 @@ import CheckpointTableTab from "@/components/checkpoint/CheckpointTableTab";
 import AproveitadosTab from "@/components/checkpoint/AproveitadosTab";
 import RelatoriosTab from "@/components/checkpoint/RelatoriosTab";
 import CoachIATab from "@/components/checkpoint/CoachIATab";
+import CeoCheckpointViewer from "@/components/ceo/CeoCheckpointViewer";
 
 // ─── TYPES ───
 export interface CheckpointRow {
@@ -90,8 +91,7 @@ export default function CheckpointGerente() {
   // ─── AUTH GUARD ───
   useEffect(() => {
     if (roleLoading) return;
-    if (isAdmin) { navigate("/ceo?tab=checkpoints", { replace: true }); return; }
-    if (!isGestor) navigate("/corretor", { replace: true });
+    if (!isGestor && !isAdmin) navigate("/corretor", { replace: true });
   }, [isGestor, isAdmin, roleLoading, navigate]);
 
   // ─── LOAD TEAM ───
@@ -249,6 +249,21 @@ export default function CheckpointGerente() {
   const presentes = rows.filter(r => r.presenca !== "ausente").length;
 
   if (roleLoading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+
+  // ─── CEO / ADMIN VIEW ───
+  if (isAdmin) {
+    return (
+      <div className="min-h-screen bg-muted/30 pb-12">
+        <div className="bg-card border-b border-border px-6 py-5">
+          <h1 className="text-2xl font-bold text-foreground">Checkpoint <span className="text-primary">CEO</span></h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Visão consolidada de todos os times</p>
+        </div>
+        <div className="max-w-screen-xl mx-auto px-4 mt-5">
+          <CeoCheckpointViewer />
+        </div>
+      </div>
+    );
+  }
 
   const tabs = [
     { key: "checkpoint" as const, icon: <ClipboardList size={15} />, label: "Checkpoint" },
