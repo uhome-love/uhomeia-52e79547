@@ -1,15 +1,14 @@
 import { memo, useState, useMemo } from "react";
 import type { PipelineLead, PipelineSegmento, PipelineStage } from "@/hooks/usePipeline";
-import { Phone, Mail, Clock, MessageCircle, Calendar, AlertCircle, Timer, ChevronDown, MoreHorizontal, Eye, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft } from "lucide-react";
+import { Phone, Mail, Clock, MessageCircle, Calendar, AlertCircle, Timer, MoreHorizontal, Eye, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { differenceInHours, differenceInMinutes, differenceInDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,6 +55,27 @@ function deduplicateEmpreendimento(raw: string): string {
     }
   }
   return [...seen.values()].join(" · ");
+}
+
+// Mission badges by stage type/name
+function cleanName(name: string) {
+  if (!name) return "";
+  const half = Math.floor(name.length / 2);
+  const firstHalf = name.substring(0, half).trim();
+  const secondHalf = name.substring(half).trim();
+  if (firstHalf === secondHalf) return firstHalf;
+  return name;
+}
+
+function cleanOrigem(origem: string | null): string {
+  if (!origem) return "";
+  const lower = origem.toLowerCase();
+  if (lower.includes("tik tok") || lower.includes("tiktok")) return "TikTok Ads";
+  if (lower.includes("facebook") || lower.includes("fb")) return "Facebook Ads";
+  if (lower.includes("instagram") || lower.includes("ig")) return "Instagram Ads";
+  if (lower.includes("google")) return "Google Ads";
+  if (lower.includes("não informado") || lower.includes("nao informado")) return "Não informada";
+  return origem.replace(/_/g, " ");
 }
 
 // Mission badges by stage type/name
@@ -308,7 +328,7 @@ const PipelineCard = memo(function PipelineCard({
 
           {/* Line 1: name + score */}
           <div className="flex items-center justify-between gap-1">
-            <span className="text-[13px] font-bold text-foreground truncate leading-tight">{lead.nome}</span>
+            <span className="text-[13px] font-bold text-foreground truncate leading-tight">{cleanName(lead.nome)}</span>
             <span className={cn("text-[9px] px-1 py-0 rounded shrink-0", scoreStyle)}>
               {leadScore.score}
             </span>
@@ -318,7 +338,7 @@ const PipelineCard = memo(function PipelineCard({
           <div className="text-[10px] text-muted-foreground truncate leading-tight">
             {displayEmpreendimento && <span className="font-medium">{displayEmpreendimento}</span>}
             {displayEmpreendimento && lead.origem && " · "}
-            {lead.origem && <span>{lead.origem.replace(/_/g, " ")}</span>}
+            {lead.origem && <span>{cleanOrigem(lead.origem)}</span>}
             {lead.telefone && <span> · {formatPhone(lead.telefone)}</span>}
           </div>
 
@@ -383,114 +403,66 @@ const PipelineCard = memo(function PipelineCard({
           )}
         </div>
 
-        <Separator />
+        <div className="h-px bg-border/50" />
 
         {/* ─── Actions section — semantic colors ─── */}
-        <div data-actions-area className="px-2 py-1 flex items-center gap-0.5 flex-wrap">
-          {/* Atribuir (purple) or Ligar (green) */}
-          {!corretorNome ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 text-[10px] px-2 gap-1 font-semibold bg-[#3b82f6]/10 text-[#1e40af] hover:bg-[#3b82f6]/20"
-              onClick={(e) => { e.stopPropagation(); setTransferOpen(true); }}
-            >
-              <UserPlus className="h-3 w-3" /> 👤 Atribuir Corretor
-            </Button>
-          ) : lead.telefone ? (
+        <div data-actions-area className="px-2 py-1.5 flex items-center justify-between bg-muted/20">
+          <div className="flex items-center gap-1">
+            {lead.telefone && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 text-[10px] px-2 gap-1 font-semibold bg-[#dcfce7] text-[#166534] hover:bg-[#bbf7d0]"
+                onClick={handleCall}
+              >
+                <Phone className="h-3 w-3 text-[#22c55e]" /> Ligar
+              </Button>
+            )}
+
             <Button
               size="sm"
               variant="ghost"
               className="h-6 text-[10px] px-2 gap-1 font-semibold bg-[#dcfce7] text-[#166534] hover:bg-[#bbf7d0]"
-              onClick={handleCall}
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); setComunicacaoOpen(true); }}
             >
-              <Phone className="h-3 w-3 text-[#22c55e]" /> 📞 Ligar
+              <MessageCircle className="h-3 w-3 text-[#22c55e]" /> WhatsApp
             </Button>
-          ) : null}
+          </div>
 
-          {/* Mensagem (green) */}
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 text-[10px] px-2 gap-1 font-semibold bg-[#dcfce7] text-[#166534] hover:bg-[#bbf7d0]"
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); setComunicacaoOpen(true); }}
-          >
-            <MessageCircle className="h-3 w-3 text-[#22c55e]" /> 💬 Mensagem
-          </Button>
-
-          {/* Agendar Visita (blue) */}
-          <Popover open={scheduleOpen} onOpenChange={setScheduleOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 text-[10px] px-2 gap-1 font-semibold bg-[#dbeafe] text-[#1e40af] hover:bg-[#bfdbfe]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Calendar className="h-3 w-3 text-[#3b82f6]" /> 📅 Agendar
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-3 space-y-2" align="start" onClick={(e) => e.stopPropagation()}>
-              <p className="text-xs font-semibold">Agendar visita</p>
-              <CalendarPicker
-                mode="single"
-                selected={scheduleDate}
-                onSelect={setScheduleDate}
-                className={cn("p-2 pointer-events-auto")}
-                locale={ptBR}
-              />
-              <Input
-                type="time"
-                value={scheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                className="h-8 text-xs"
-              />
-              <div className="text-[10px] text-muted-foreground">
-                {lead.empreendimento || "Sem empreendimento"}
-              </div>
-              <Button size="sm" className="w-full h-7 text-xs" disabled={!scheduleDate} onClick={handleScheduleVisit}>
-                Confirmar visita
-              </Button>
-            </PopoverContent>
-          </Popover>
-
-          {/* Mover (blue outline) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-6 text-[10px] px-2 gap-1 ml-auto font-semibold border-[#3b82f6]/40 text-[#1e40af] hover:bg-[#dbeafe]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Mover <ChevronDown className="h-2.5 w-2.5" />
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:bg-muted" onClick={(e) => e.stopPropagation()}>
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent align="end" className="min-w-[180px]" onClick={(e) => e.stopPropagation()}>
+              {!corretorNome && (
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTransferOpen(true); }} className="text-xs gap-2 font-medium text-[#1e40af]">
+                  <UserPlus className="h-3.5 w-3.5" /> Atribuir Corretor
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setScheduleOpen(true); }} className="text-xs gap-2">
+                <Calendar className="h-3.5 w-3.5" /> Agendar Visita
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground">Mover para:</div>
               {stages.filter(s => s.id !== lead.stage_id).map(s => (
                 <DropdownMenuItem key={s.id} onClick={(e) => handleMoveStage(e as any, s.id)} className="text-xs gap-2">
                   <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: s.cor }} />
                   {s.nome}
                 </DropdownMenuItem>
               ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
 
-          {/* Mais (neutral gray) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground" onClick={(e) => e.stopPropagation()}>
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[180px]" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setPartnerOpen(true); }} className="text-xs gap-2">
                 <Handshake className="h-3.5 w-3.5" /> Fazer parceria
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTransferOpen(true); }} className="text-xs gap-2">
-                <ArrowRightLeft className="h-3.5 w-3.5" /> Repassar lead
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {corretorNome && (
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTransferOpen(true); }} className="text-xs gap-2">
+                  <ArrowRightLeft className="h-3.5 w-3.5" /> Repassar lead
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={onClick} className="text-xs gap-2">
                 <Eye className="h-3.5 w-3.5" /> Ver lead completo
               </DropdownMenuItem>
@@ -507,29 +479,63 @@ const PipelineCard = memo(function PipelineCard({
 
         {/* Dialogs */}
         <div data-no-card-click onClick={(e) => e.stopPropagation()}>
-          <PartnershipDialog
-            open={partnerOpen}
-            onOpenChange={setPartnerOpen}
-            leadId={lead.id}
-            leadNome={lead.nome}
-            corretorPrincipalId={lead.corretor_id}
-          />
-          <PipelineTransferDialog
-            open={transferOpen}
-            onOpenChange={setTransferOpen}
-            leadId={lead.id}
-            leadNome={lead.nome}
-            currentCorretorId={lead.corretor_id}
-            stages={stages}
-            onTransferred={(corretorId, nome) => onTransferred?.(lead.id, corretorId, nome)}
-          />
-          <CentralComunicacao
-            open={comunicacaoOpen}
-            onOpenChange={setComunicacaoOpen}
-            leadId={lead.id}
-            leadNome={lead.nome}
-            leadEmpreendimento={lead.empreendimento}
-          />
+          <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+            <DialogContent className="max-w-[320px] p-4 gap-3">
+              <DialogHeader className="p-0 mb-1">
+                <DialogTitle className="text-sm font-semibold">Agendar visita</DialogTitle>
+              </DialogHeader>
+              <CalendarPicker
+                mode="single"
+                selected={scheduleDate}
+                onSelect={setScheduleDate}
+                className={cn("p-0 mx-auto pointer-events-auto border rounded-md")}
+                locale={ptBR}
+              />
+              <div className="space-y-1.5 mt-2">
+                <Input
+                  type="time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="h-8 text-xs w-full"
+                />
+                <div className="text-[10px] text-muted-foreground truncate">
+                  {lead.empreendimento || "Sem empreendimento"}
+                </div>
+                <Button size="sm" className="w-full h-8 text-xs mt-1" disabled={!scheduleDate} onClick={handleScheduleVisit}>
+                  Confirmar visita
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          {partnerOpen && (
+            <PartnershipDialog
+              open={partnerOpen}
+              onOpenChange={setPartnerOpen}
+              leadId={lead.id}
+              leadNome={lead.nome}
+              corretorPrincipalId={lead.corretor_id}
+            />
+          )}
+          {transferOpen && (
+            <PipelineTransferDialog
+              open={transferOpen}
+              onOpenChange={setTransferOpen}
+              leadId={lead.id}
+              leadNome={lead.nome}
+              currentCorretorId={lead.corretor_id}
+              stages={stages}
+              onTransferred={(corretorId, nome) => onTransferred?.(lead.id, corretorId, nome)}
+            />
+          )}
+          {comunicacaoOpen && (
+            <CentralComunicacao
+              open={comunicacaoOpen}
+              onOpenChange={setComunicacaoOpen}
+              leadId={lead.id}
+              leadNome={lead.nome}
+              leadEmpreendimento={lead.empreendimento}
+            />
+          )}
         </div>
       </div>
     </TooltipProvider>
