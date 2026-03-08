@@ -331,8 +331,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 />
               )}
 
-              {/* ===== HOMI AI ASSISTANT ===== */}
+              {/* ===== HOMI AI ASSISTANT v2 ===== */}
               <HomiLeadAssistant
+                leadId={lead.id}
                 leadNome={lead.nome}
                 leadTelefone={lead.telefone}
                 leadEmail={lead.email}
@@ -340,6 +341,13 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 etapa={currentStage?.nome || ""}
                 temperatura={(lead as any).temperatura}
                 observacoes={lead.observacoes}
+                origem={lead.origem}
+                origemDetalhe={lead.origem_detalhe}
+                createdAt={lead.created_at}
+                updatedAt={lead.updated_at}
+                proximaAcao={lead.proxima_acao}
+                valorEstimado={lead.valor_estimado}
+                oportunidadeScore={lead.oportunidade_score}
               />
 
               {/* Contact */}
