@@ -61,6 +61,10 @@ const MarketingCentral = lazy(() => import("./pages/MarketingCentral"));
 const HomiAna = lazy(() => import("./pages/HomiAna"));
 const BaseConhecimento = lazy(() => import("./pages/BaseConhecimento"));
 const TemplatesComunicacao = lazy(() => import("./pages/TemplatesComunicacao"));
+const AcademiaPage = lazy(() => import("./pages/AcademiaPage"));
+const AcademiaTrilhaPage = lazy(() => import("./pages/AcademiaTrilhaPage"));
+const AcademiaAulaPage = lazy(() => import("./pages/AcademiaAulaPage"));
+const AcademiaGerenciarPage = lazy(() => import("./pages/AcademiaGerenciarPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,6 +144,10 @@ const App = () => (
             <Route path="/corretor/resumo" element={<ProtectedPage><CorretorResumo /></ProtectedPage>} />
             <Route path="/corretor/ranking-equipes" element={<ProtectedPage><RankingEquipe /></ProtectedPage>} />
             <Route path="/conquistas" element={<ProtectedPage><Conquistas /></ProtectedPage>} />
+            <Route path="/academia" element={<ProtectedPage><AcademiaPage /></ProtectedPage>} />
+            <Route path="/academia/trilha/:trilhaId" element={<ProtectedPage><AcademiaTrilhaPage /></ProtectedPage>} />
+            <Route path="/academia/aula/:aulaId" element={<ProtectedPage><AcademiaAulaPage /></ProtectedPage>} />
+            <Route path="/academia/gerenciar" element={<ProtectedPage roles={["gestor", "admin"]}><AcademiaGerenciarPage /></ProtectedPage>} />
             <Route path="/onboarding" element={<ProtectedPage><Onboarding /></ProtectedPage>} />
             <Route path="/homi" element={<ProtectedPage><HomiAssistant /></ProtectedPage>} />
             <Route path="/homi-gerente" element={<ProtectedPage roles={["gestor", "admin"]}><HomiGerencial /></ProtectedPage>} />
