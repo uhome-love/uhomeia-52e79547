@@ -34,6 +34,53 @@ import { toast } from "sonner";
 
 
 
+// ─── Forecast Probability Map ───
+const STAGE_PROBABILITY: Record<string, number> = {
+  novo: 10, atendimento: 15, qualificacao: 25, visita_marcada: 40,
+  visita_realizada: 60, negociacao: 75, proposta: 85, assinatura: 95,
+};
+const EXCLUDED_TYPES = ["venda", "descarte", "caiu"];
+
+function ForecastInline({ leads, stages, expanded, onToggle }: {
+  leads: PipelineLead[]; stages: PipelineStage[]; expanded: boolean; onToggle: () => void;
+}) {
+  const forecast = useMemoReact(() => {
+    const stageMap = new Map(stages.map(s => [s.id, s]));
+    const activeLeads = leads.filter(l => { const s = stageMap.get(l.stage_id); return s && !EXCLUDED_TYPES.includes(s.tipo); });
+    let conserv = 0, prov = 0, otim = 0;
+    for (const lead of activeLeads) {
+      const s = stageMap.get(lead.stage_id)!;
+      const vgv = lead.valor_estimado || 0;
+      const prob = STAGE_PROBABILITY[s.tipo] ?? 20;
+      otim += vgv;
+      prov += vgv * (prob / 100);
+      if (prob >= 75) conserv += vgv;
+    }
+    return { conserv, prov: Math.round(prov), otim };
+  }, [leads, stages]);
+
+  const fmt = (v: number) => {
+    if (v >= 1_000_000) return `R$${(v / 1_000_000).toFixed(1)}M`;
+    if (v >= 1_000) return `R$${(v / 1_000).toFixed(0)}k`;
+    return `R$${v}`;
+  };
+
+  return (
+    <button
+      onClick={onToggle}
+      className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors ml-auto"
+    >
+      <span>💰</span>
+      <span className="text-blue-600 font-medium">{fmt(forecast.conserv)}</span>
+      <span>·</span>
+      <span className="text-amber-600 font-medium">{fmt(forecast.prov)}</span>
+      <span>·</span>
+      <span className="text-emerald-600 font-medium">{fmt(forecast.otim)}</span>
+      {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+    </button>
+  );
+}
+
 export default function PipelineKanban() {
   const pipeline = usePipeline();
   const { isGestor, isAdmin, isCorretor } = useUserRole();
