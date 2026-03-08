@@ -31,9 +31,9 @@ serve(async (req) => {
     const { photo_url } = await req.json();
     if (!photo_url) throw new Error("photo_url is required");
 
-    console.log("Generating gamified avatar for user:", user.id);
+    console.log("Generating chibi avatar for user:", user.id);
 
-    // Call Gemini image model to transform the photo
+    // Call Gemini image model to create chibi avatar from photo
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -48,7 +48,22 @@ serve(async (req) => {
             content: [
               {
                 type: "text",
-                text: "Transform this person's photo into a flat illustration avatar suitable for a gamified business app. Style: clean, modern flat design similar to Notion or Slack avatars. Keep the person's likeness, hair style, and facial features recognizable. Use vibrant but professional colors. The avatar should be a bust/portrait with a clean solid background. Make it look like a polished app avatar icon. Output a square image on a clean white background.",
+                text: `Transform this person's photo into a 3D chibi vinyl toy character figure.
+
+Style requirements:
+- Chibi proportions: oversized head (about 1/2 of total height), small rounded body
+- Matte plastic toy appearance, like a collectible designer vinyl figure
+- Soft studio lighting on a pure white background
+- No shadows, no floor reflection
+
+Character details:
+- Keep the person's exact likeness: hair color/style, skin tone, eye color, facial features
+- Outfit: elegant navy blue business suit with subtle details
+- Face: cute chibi style with expressive large eyes and a warm friendly smile
+- Full body visible, centered composition
+
+Quality: High detail, clean render, professional product photography style.
+Output a square image on a solid white background.`,
               },
               {
                 type: "image_url",
@@ -114,10 +129,15 @@ serve(async (req) => {
 
     const avatarUrl = `${publicUrl}?t=${Date.now()}`;
 
-    // Update profile
+    // Update profile with both avatar_url and preview
     const { error: updateError } = await supabaseAdmin
       .from("profiles")
-      .update({ avatar_gamificado_url: avatarUrl })
+      .update({
+        avatar_url: avatarUrl,
+        avatar_preview_url: avatarUrl,
+        avatar_gamificado_url: avatarUrl,
+        avatar_updated_at: new Date().toISOString(),
+      })
       .eq("user_id", user.id);
 
     if (updateError) {
@@ -125,7 +145,7 @@ serve(async (req) => {
       throw new Error("Failed to update profile");
     }
 
-    console.log("Gamified avatar generated successfully for user:", user.id);
+    console.log("Chibi avatar generated successfully for user:", user.id);
 
     return new Response(JSON.stringify({ url: avatarUrl }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
