@@ -4449,6 +4449,75 @@ export type Database = {
           },
         ]
       }
+      tarefas: {
+        Row: {
+          anexo_url: string | null
+          categoria: string | null
+          concluida_em: string | null
+          created_at: string | null
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          observacoes: string | null
+          prazo: string | null
+          prazo_hora: string | null
+          prioridade: string | null
+          responsavel_id: string | null
+          status: string | null
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          anexo_url?: string | null
+          categoria?: string | null
+          concluida_em?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          prazo?: string | null
+          prazo_hora?: string | null
+          prioridade?: string | null
+          responsavel_id?: string | null
+          status?: string | null
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          anexo_url?: string | null
+          categoria?: string | null
+          concluida_em?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          prazo?: string | null
+          prazo_hora?: string | null
+          prioridade?: string | null
+          responsavel_id?: string | null
+          status?: string | null
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string

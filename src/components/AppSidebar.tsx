@@ -30,6 +30,7 @@ import {
   Cog,
   GraduationCap,
   Handshake,
+  ListChecks,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -303,6 +304,7 @@ export function AppSidebar() {
             label: "Ferramentas",
             items: [
               { title: "HOMI Ana", url: "/backoffice/homi-ana", icon: Bot },
+              { title: "📋 Minhas Tarefas", url: "/backoffice/tarefas", icon: ListChecks },
               { title: "Marketplace", url: "/marketplace", icon: BookOpen },
             ],
           },
