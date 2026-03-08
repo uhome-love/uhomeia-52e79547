@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,25 +22,23 @@ export default function BackofficeDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [nome, setNome] = useState("Ana");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [subtitleIdx, setSubtitleIdx] = useState(0);
 
-  // Marketing summary
   const [mktStats, setMktStats] = useState({ campanhas: 0, leadsHoje: 0, leadsSemana: 0, ultimoPost: "" });
-  // Financeiro summary
   const [finStats, setFinStats] = useState({ pendentes: 0, ultimoContrato: "" });
-  // Marketplace summary
   const [mkpStats, setMkpStats] = useState({ ativos: 0, pendentes: 0 });
-  // Operational summary
   const [opStats, setOpStats] = useState({ corretoresAtivos: 0, visitasHoje: 0, leadsFila: 0 });
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("nome").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+    supabase.from("profiles").select("nome, avatar_url, avatar_gamificado_url").eq("user_id", user.id).maybeSingle().then(({ data }) => {
       if (data?.nome) setNome(data.nome.split(" ")[0]);
+      const url = data?.avatar_url || (data as any)?.avatar_gamificado_url || null;
+      setAvatarUrl(url);
     });
   }, [user]);
 
-  // Rotate subtitle
   useEffect(() => {
     const interval = setInterval(() => {
       setSubtitleIdx((prev) => (prev + 1) % subtitles.length);
@@ -48,7 +46,6 @@ export default function BackofficeDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch marketing stats
   useEffect(() => {
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
     const fetchMkt = async () => {
@@ -64,7 +61,6 @@ export default function BackofficeDashboard() {
     fetchMkt();
   }, []);
 
-  // Fetch financeiro stats
   useEffect(() => {
     const fetchFin = async () => {
       const { data }: any = await supabase.from("pagadorias").select("status, created_at").order("created_at", { ascending: false });
@@ -74,7 +70,6 @@ export default function BackofficeDashboard() {
     fetchFin();
   }, []);
 
-  // Fetch marketplace stats
   useEffect(() => {
     const fetchMkp = async () => {
       const { data }: any = await supabase.from("marketplace_items").select("status");
@@ -85,11 +80,9 @@ export default function BackofficeDashboard() {
     fetchMkp();
   }, []);
 
-  // Fetch operational stats
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const fetchOp = async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const r1: any = await (supabase.from("team_members" as any).select("id", { count: "exact", head: true }) as any);
       const r2: any = await (supabase.from("visitas").select("id", { count: "exact", head: true }).eq("data_visita", today) as any);
       const r3: any = await (supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).is("corretor_id", null) as any);
@@ -110,49 +103,66 @@ export default function BackofficeDashboard() {
       title: "Central de Marketing",
       subtitle: "Campanhas, posts e conteúdos",
       route: "/backoffice/marketing",
-      color: "from-purple-600 to-purple-400",
-      borderColor: "border-purple-500/30",
+      borderLeft: "#8B5CF6",
+      iconBg: "#8B5CF6",
+      linkColor: "#7C3AED",
     },
     {
       icon: DollarSign,
       title: "Financeiro / Pagadorias",
       subtitle: "Comissões e contratos",
       route: "/backoffice/pagadorias",
-      color: "from-amber-600 to-amber-400",
-      borderColor: "border-amber-500/30",
+      borderLeft: "#F59E0B",
+      iconBg: "#F59E0B",
+      linkColor: "#D97706",
     },
     {
       icon: ShoppingCart,
       title: "Marketplace Admin",
       subtitle: "Scripts e materiais da equipe",
       route: "/marketplace",
-      color: "from-emerald-600 to-emerald-400",
-      borderColor: "border-emerald-500/30",
+      borderLeft: "#10B981",
+      iconBg: "#10B981",
+      linkColor: "#059669",
     },
     {
       icon: Settings,
       title: "Administração",
       subtitle: "Configurações do sistema",
       route: "/configuracoes",
-      color: "from-slate-600 to-slate-400",
-      borderColor: "border-slate-500/30",
+      borderLeft: "#6B7280",
+      iconBg: "#6B7280",
+      linkColor: "#6B7280",
     },
   ];
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header personalizado */}
+      {/* ── Header "Fala, Ana" ── */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="rounded-2xl px-6 py-5 flex items-center justify-between"
+        style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)" }}
       >
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-full bg-purple-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-purple-600/30">
-            AP
-          </div>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={nome}
+              className="rounded-full object-cover shrink-0"
+              style={{ width: 56, height: 56, border: "2px solid #7C3AED" }}
+            />
+          ) : (
+            <div
+              className="flex items-center justify-center rounded-full font-bold text-white text-lg shrink-0"
+              style={{ width: 56, height: 56, background: "#7C3AED", border: "2px solid #7C3AED" }}
+            >
+              {nome ? nome[0].toUpperCase() : "A"}
+            </div>
+          )}
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 style={{ color: "#FFFFFF", fontSize: 28, fontWeight: 700, lineHeight: 1.2 }}>
               Fala, {nome}! 👋
             </h1>
             <motion.p
@@ -160,19 +170,19 @@ export default function BackofficeDashboard() {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-sm text-muted-foreground mt-0.5"
+              style={{ color: "#94A3B8", fontSize: 14, marginTop: 4 }}
             >
               {subtitles[subtitleIdx]}
             </motion.p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground capitalize">{todayFormatted}</p>
+        <div className="text-right hidden sm:block">
+          <p className="capitalize" style={{ color: "#64748B", fontSize: 13 }}>{todayFormatted}</p>
         </div>
       </motion.div>
 
-      {/* Quick Access Grid 2x2 */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* ── Quick Access Grid 2×2 ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {quickCards.map((card, idx) => (
           <motion.div
             key={card.title}
@@ -181,17 +191,48 @@ export default function BackofficeDashboard() {
             transition={{ delay: idx * 0.08 }}
           >
             <Card
-              className={`cursor-pointer hover:shadow-lg transition-all duration-200 border ${card.borderColor} hover:scale-[1.01]`}
+              className="cursor-pointer transition-all duration-200 bg-card hover:shadow-xl group"
+              style={{
+                borderLeft: `4px solid ${card.borderLeft}`,
+                borderTop: "1px solid hsl(var(--border))",
+                borderRight: "1px solid hsl(var(--border))",
+                borderBottom: "1px solid hsl(var(--border))",
+              }}
               onClick={() => navigate(card.route)}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.transform = "translateY(-2px)";
+                el.style.boxShadow = `0 8px 24px rgba(124,58,237,0.12)`;
+                el.style.borderColor = card.borderLeft;
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.transform = "translateY(0)";
+                el.style.boxShadow = "none";
+                el.style.borderColor = "";
+              }}
             >
-              <CardContent className="p-5">
-                <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center mb-3`}>
-                  <card.icon className="h-5 w-5 text-white" />
+              <CardContent style={{ padding: 28 }}>
+                <div
+                  className="flex items-center justify-center mb-3"
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 14,
+                    background: card.iconBg,
+                  }}
+                >
+                  <card.icon className="text-white" style={{ width: 26, height: 26 }} />
                 </div>
-                <h3 className="font-semibold text-foreground text-base">{card.title}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{card.subtitle}</p>
-                <div className="flex items-center gap-1 text-xs font-medium text-purple-400 mt-3">
-                  Acessar <ArrowRight className="h-3 w-3" />
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: "hsl(var(--foreground))" }}>
+                  {card.title}
+                </h3>
+                <p style={{ fontSize: 13, color: "#6B7280", marginTop: 2 }}>{card.subtitle}</p>
+                <div
+                  className="flex items-center gap-1 mt-3"
+                  style={{ fontSize: 13, fontWeight: 600, color: card.linkColor }}
+                >
+                  Acessar <ArrowRight style={{ width: 14, height: 14 }} />
                 </div>
               </CardContent>
             </Card>
@@ -199,29 +240,30 @@ export default function BackofficeDashboard() {
         ))}
       </div>
 
-      {/* Summary sections - 2 columns */}
+      {/* ── Summary Cards ── */}
       <div className="grid md:grid-cols-2 gap-4">
-        {/* Marketing Section */}
-        <Card className="border-purple-500/20">
+        {/* Marketing */}
+        <Card style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Megaphone className="h-4 w-4 text-purple-500" />
+            <CardTitle className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
+              <Megaphone className="h-4 w-4" style={{ color: "#8B5CF6" }} />
               📣 Atividade de Marketing
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Campanhas recentes</span>
-              <span className="font-semibold">{mktStats.campanhas}</span>
+              <span style={{ fontSize: 13, color: "#6B7280" }}>Campanhas recentes</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{mktStats.campanhas}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Último post</span>
-              <span className="font-medium text-foreground truncate max-w-[180px]">{mktStats.ultimoPost}</span>
+              <span style={{ fontSize: 13, color: "#6B7280" }}>Último post</span>
+              <span className="truncate max-w-[180px]" style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{mktStats.ultimoPost}</span>
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="w-full mt-2 border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+              className="w-full mt-2"
+              style={{ borderColor: "#7C3AED", color: "#7C3AED", borderRadius: 6, fontSize: 13 }}
               onClick={() => navigate("/backoffice/marketing")}
             >
               Ir para Central de Marketing →
@@ -229,27 +271,28 @@ export default function BackofficeDashboard() {
           </CardContent>
         </Card>
 
-        {/* Financeiro Section */}
-        <Card className="border-amber-500/20">
+        {/* Financeiro */}
+        <Card style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-amber-500" />
+            <CardTitle className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
+              <DollarSign className="h-4 w-4" style={{ color: "#F59E0B" }} />
               💰 Financeiro
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Pagadorias pendentes</span>
-              <span className="font-semibold">{finStats.pendentes}</span>
+              <span style={{ fontSize: 13, color: "#6B7280" }}>Pagadorias pendentes</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{finStats.pendentes}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Último contrato</span>
-              <span className="font-medium">{finStats.ultimoContrato}</span>
+              <span style={{ fontSize: 13, color: "#6B7280" }}>Último contrato</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{finStats.ultimoContrato}</span>
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="w-full mt-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+              className="w-full mt-2"
+              style={{ borderColor: "#D97706", color: "#D97706", borderRadius: 6, fontSize: 13 }}
               onClick={() => navigate("/backoffice/pagadorias")}
             >
               Ir para Pagadorias →
@@ -257,27 +300,28 @@ export default function BackofficeDashboard() {
           </CardContent>
         </Card>
 
-        {/* Marketplace Section */}
-        <Card className="border-emerald-500/20">
+        {/* Marketplace */}
+        <Card style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4 text-emerald-500" />
+            <CardTitle className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
+              <ShoppingCart className="h-4 w-4" style={{ color: "#10B981" }} />
               🛒 Marketplace
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Itens ativos</span>
-              <span className="font-semibold">{mkpStats.ativos}</span>
+              <span style={{ fontSize: 13, color: "#6B7280" }}>Itens ativos</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{mkpStats.ativos}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Pendentes de aprovação</span>
-              <span className="font-semibold">{mkpStats.pendentes}</span>
+              <span style={{ fontSize: 13, color: "#6B7280" }}>Pendentes de aprovação</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{mkpStats.pendentes}</span>
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="w-full mt-2 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+              className="w-full mt-2"
+              style={{ borderColor: "#10B981", color: "#059669", borderRadius: 6, fontSize: 13 }}
               onClick={() => navigate("/marketplace")}
             >
               Gerenciar Marketplace →
@@ -285,41 +329,41 @@ export default function BackofficeDashboard() {
           </CardContent>
         </Card>
 
-        {/* Operational Overview */}
-        <Card className="border-slate-500/20">
+        {/* Operacional */}
+        <Card style={{ background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Eye className="h-4 w-4 text-slate-400" />
+            <CardTitle className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
+              <Eye className="h-4 w-4" style={{ color: "#6B7280" }} />
               📋 Visão Geral da Empresa
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-muted-foreground flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5" style={{ fontSize: 13, color: "#6B7280" }}>
                 <Users className="h-3.5 w-3.5" /> Corretores ativos
               </span>
-              <span className="font-semibold">{opStats.corretoresAtivos}</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{opStats.corretoresAtivos}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5" style={{ fontSize: 13, color: "#6B7280" }}>
                 <CalendarDays className="h-3.5 w-3.5" /> Visitas hoje
               </span>
-              <span className="font-semibold">{opStats.visitasHoje}</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{opStats.visitasHoje}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5" style={{ fontSize: 13, color: "#6B7280" }}>
                 <Kanban className="h-3.5 w-3.5" /> Leads na fila
               </span>
-              <span className="font-semibold">{opStats.leadsFila}</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#374151" }}>{opStats.leadsFila}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1 italic">Somente leitura — dados consolidados</p>
+            <p style={{ fontSize: 10, color: "#9CA3AF", marginTop: 4, fontStyle: "italic" }}>Somente leitura — dados consolidados</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* HOMI Alert */}
+      {/* ── HOMI Alert ── */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-        <Card className="border-blue-500/20">
+        <Card style={{ border: "1px solid rgba(99,102,241,0.2)" }}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-full bg-white shadow flex items-center justify-center shrink-0">
@@ -327,7 +371,7 @@ export default function BackofficeDashboard() {
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-500" /> HOMI Ana
+                  <Sparkles className="h-3.5 w-3.5" style={{ color: "#6366F1" }} /> HOMI Ana
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {finStats.pendentes > 0
@@ -338,7 +382,8 @@ export default function BackofficeDashboard() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-blue-400 hover:text-blue-300 px-0"
+                  className="px-0"
+                  style={{ color: "#7C3AED" }}
                   onClick={() => navigate("/backoffice/homi-ana")}
                 >
                   Conversar com HOMI Ana →
