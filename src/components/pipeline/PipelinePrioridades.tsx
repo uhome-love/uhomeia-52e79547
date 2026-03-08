@@ -48,7 +48,8 @@ function computePriority(lead: PipelineLead, stage: PipelineStage): { score: num
 
   // 2. Score alto + sem contato recente
   if (leadScore > 80) {
-    const lastContact = lead.ultimo_contato ? differenceInHours(now, new Date(lead.ultimo_contato)) : 999;
+    const lastContactField = (lead as any).ultimo_contato;
+    const lastContact = lastContactField ? differenceInHours(now, new Date(lastContactField)) : 999;
     if (lastContact > 2) {
       return {
         score: 800 + leadScore,
