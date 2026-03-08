@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export type AppRole = "admin" | "gestor" | "corretor";
+export type AppRole = "admin" | "gestor" | "corretor" | "backoffice";
 
 export function useUserRole() {
   const { user } = useAuth();
@@ -19,7 +19,7 @@ export function useUserRole() {
       return (data || []).map((r) => r.role as AppRole);
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 min cache
+    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
@@ -31,6 +31,7 @@ export function useUserRole() {
   const isGestor = hasRole("gestor") || hasRole("admin");
   const isCorretor = hasRole("corretor");
   const isAdmin = hasRole("admin");
+  const isBackoffice = hasRole("backoffice");
 
-  return { roles, loading, hasRole, isGestor, isCorretor, isAdmin };
+  return { roles, loading, hasRole, isGestor, isCorretor, isAdmin, isBackoffice };
 }
