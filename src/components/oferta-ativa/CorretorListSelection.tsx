@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useOAListas, type OALista } from "@/hooks/useOfertaAtiva";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ArrowLeft, Loader2, Users, Search, Zap, Sparkles, Trash2, RotateCcw } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import DialingModeWithScript from "./DialingModeWithScript";
 import CustomListWizard from "./CustomListWizard";
 import { useQuery } from "@tanstack/react-query";
@@ -29,51 +30,30 @@ function useBatchListaStats(listaIds: string[]) {
     queryFn: async () => {
       if (!listaIds.length || !user) return {} as Record<string, ListaStats>;
 
-      const allLeads: Array<{ id: string; lista_id: string; status: string; proxima_tentativa_apos: string | null }> = [];
-      const PAGE_SIZE = 1000;
-      let page = 0;
-      while (true) {
-        const { data: batch } = await supabase
-          .from("oferta_ativa_leads")
-          .select("id, lista_id, status, proxima_tentativa_apos")
-          .in("lista_id", listaIds)
-          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-        if (!batch || batch.length === 0) break;
-        allLeads.push(...batch);
-        if (batch.length < PAGE_SIZE) break;
-        page++;
+      const { data, error } = await supabase.rpc("get_batch_lista_stats", {
+        p_lista_ids: listaIds,
+        p_corretor_id: user.id,
+      });
+
+      if (error) {
+        console.error("get_batch_lista_stats error:", error);
+        return {} as Record<string, ListaStats>;
       }
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const { data: attempts } = await supabase
-        .from("oferta_ativa_tentativas")
-        .select("id, lista_id")
-        .eq("corretor_id", user.id)
-        .in("lista_id", listaIds)
-        .gte("created_at", today.toISOString());
-
-      const now = new Date().toISOString();
+      const raw = (data || {}) as Record<string, any>;
       const statsMap: Record<string, ListaStats> = {};
-
-      for (const lid of listaIds) {
-        const listaLeads = allLeads.filter(l => l.lista_id === lid);
-        const total = listaLeads.length;
-        const naFila = listaLeads.filter(l =>
-          (l.status === "na_fila" || l.status === "em_cooldown") &&
-          (l.proxima_tentativa_apos == null || l.proxima_tentativa_apos < now)
-        ).length;
-        const aproveitados = listaLeads.filter(l => l.status === "aproveitado").length;
-        const worked = total - naFila;
-        const pct = total > 0 ? Math.round((worked / total) * 100) : 0;
-        const meusTentativas = (attempts || []).filter(a => a.lista_id === lid).length;
-
-        statsMap[lid] = { naFila, aproveitados, total, pct, meusTentativas };
+      for (const [lid, val] of Object.entries(raw)) {
+        statsMap[lid] = {
+          naFila: val.naFila ?? 0,
+          aproveitados: val.aproveitados ?? 0,
+          total: val.total ?? 0,
+          pct: val.pct ?? 0,
+          meusTentativas: val.meusTentativas ?? 0,
+        };
       }
-
       return statsMap;
     },
-    staleTime: 15000,
+    staleTime: 60_000, // Cache 60s
     enabled: listaIds.length > 0 && !!user,
   });
 }
@@ -155,8 +135,16 @@ function ListaCard({ lista, stats, isCustom }: { lista: OALista; stats?: ListaSt
           )}
         </>
       ) : (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />
+        <div className="space-y-3 py-2">
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="text-center space-y-1.5">
+                <Skeleton className="h-8 w-16 mx-auto rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+                <Skeleton className="h-3 w-12 mx-auto rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+              </div>
+            ))}
+          </div>
+          <Skeleton className="h-1.5 w-full rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
         </div>
       )}
 
@@ -273,8 +261,51 @@ export default function CorretorListSelection() {
     );
   }
 
+  // Pagination: show 20 initially, load more on scroll
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const paginatedFiltered = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const hasMore = visibleCount < filtered.length;
+
+  // Reset pagination when search changes
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!hasMore || !sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisibleCount(v => v + PAGE_SIZE); },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, paginatedFiltered.length]);
+
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-blue-400" /></div>;
+    return (
+      <div className="space-y-3" style={{ background: "#0A0F1E" }}>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="arena-card rounded-xl p-5 space-y-3">
+              <Skeleton className="h-5 w-2/3 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+              <Skeleton className="h-3 w-1/3 rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3].map(j => (
+                  <div key={j} className="text-center space-y-1.5">
+                    <Skeleton className="h-8 w-16 mx-auto rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+                    <Skeleton className="h-3 w-12 mx-auto rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+                  </div>
+                ))}
+              </div>
+              <Skeleton className="h-1.5 w-full rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+              <Skeleton className="h-10 w-full rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -362,7 +393,7 @@ export default function CorretorListSelection() {
             <p className="text-sm text-neutral-500 text-center py-4">Nenhuma lista encontrada para "{search}"</p>
           )}
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map(lista => {
+            {paginatedFiltered.map(lista => {
               const stats = statsMap?.[lista.id];
               const hasLeads = (stats?.naFila ?? 0) > 0;
               return (
@@ -372,6 +403,11 @@ export default function CorretorListSelection() {
               );
             })}
           </div>
+          {hasMore && (
+            <div ref={sentinelRef} className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-neutral-500" />
+            </div>
+          )}
         </>
       )}
 
