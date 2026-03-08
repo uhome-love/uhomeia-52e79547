@@ -133,8 +133,8 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
       const { count: leadsAtivos } = await supabase
         .from("pipeline_leads")
         .select("id", { count: "exact", head: true })
-        .eq("corretor_id", corretorUserId)
-        .neq("status", "arquivado");
+        .eq("corretor_id", corretorUserId!)
+        .neq("status" as any, "arquivado");
 
       return {
         ligacoes,
