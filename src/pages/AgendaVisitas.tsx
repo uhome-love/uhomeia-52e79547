@@ -7,18 +7,28 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, List, Users, Plus, CalendarIcon, X, ArrowUpDown, Search, AlertTriangle, CheckCircle2, XCircle, Clock, RefreshCw, TrendingUp } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { CalendarDays, List, Users, Plus, CalendarIcon, X, ArrowUpDown, Search, AlertTriangle, CheckCircle2, XCircle, Clock, RefreshCw, TrendingUp, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVisitas, STATUS_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
 import { getTeamBadgeStyle } from "@/components/visitas/VisitaRow";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import VisitasList from "@/components/visitas/VisitasList";
 import VisitasByCorretor from "@/components/visitas/VisitasByCorretor";
 import VisitasCalendar from "@/components/visitas/VisitasCalendar";
 import VisitaForm from "@/components/visitas/VisitaForm";
 import VisitaResultadoDialog, { type ResultadoVisita } from "@/components/visitas/VisitaResultadoDialog";
+
+const FIXED_TEAMS = [
+  { key: "gabrielle", label: "Gabrielle", emoji: "🟢", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { key: "bruno", label: "Bruno", emoji: "🔵", className: "bg-blue-50 text-blue-700 border-blue-200" },
+  { key: "gabriel", label: "Gabriel", emoji: "🟣", className: "bg-purple-50 text-purple-700 border-purple-200" },
+];
 
 
 // ─── Day Summary Card ───
@@ -32,20 +42,29 @@ function DaySummary({ visitas, showTeamBreakdown }: { visitas: Visita[]; showTea
   const total = todayVisitas.length;
   const taxa = total > 0 ? Math.round((realizadas / total) * 100) : 0;
 
-  // Team breakdown
+  // Team breakdown — always show all 3 fixed teams
   const teamStats = useMemo(() => {
     if (!showTeamBreakdown) return [];
     const map = new Map<string, { total: number; realizadas: number }>();
+    // Initialize all fixed teams with 0
+    FIXED_TEAMS.forEach(t => map.set(t.key, { total: 0, realizadas: 0 }));
     for (const v of todayVisitas) {
-      const team = v.equipe || "Sem equipe";
-      if (!map.has(team)) map.set(team, { total: 0, realizadas: 0 });
-      const s = map.get(team)!;
-      s.total++;
-      if (v.status === "realizada") s.realizadas++;
+      const equipe = (v.equipe || "").toLowerCase().replace(/^equipe\s+/i, "").trim();
+      // Match to fixed team
+      const teamKey = FIXED_TEAMS.find(t => equipe.includes(t.key))?.key;
+      if (teamKey) {
+        const s = map.get(teamKey)!;
+        s.total++;
+        if (v.status === "realizada") s.realizadas++;
+      }
     }
-    return Array.from(map.entries())
-      .map(([name, stats]) => ({ name, ...stats }))
-      .sort((a, b) => b.total - a.total);
+    return FIXED_TEAMS.map(t => ({
+      name: t.key,
+      label: t.label,
+      emoji: t.emoji,
+      className: t.className,
+      ...map.get(t.key)!,
+    }));
   }, [todayVisitas, showTeamBreakdown]);
 
   if (total === 0) return null;
@@ -89,26 +108,19 @@ function DaySummary({ visitas, showTeamBreakdown }: { visitas: Visita[]; showTea
       {showTeamBreakdown && teamStats.length > 0 && (
         <div className="mt-3 pt-3 border-t border-border/50 space-y-1.5">
           <span className="text-[11px] font-semibold text-muted-foreground">Por equipe</span>
-          {teamStats.map(t => {
-            const style = getTeamBadgeStyle(t.name);
-            return (
-              <div key={t.name} className="flex items-center gap-2">
-                {style ? (
-                  <span className={cn("text-[11px] px-1.5 py-0 rounded-full border whitespace-nowrap", style.className)}>
-                    {style.emoji} {style.label}
-                  </span>
-                ) : (
-                  <span className="text-[11px] text-muted-foreground">{t.name}</span>
-                )}
-                <span className="text-[11px] text-foreground font-semibold ml-auto">
-                  {t.total} visita{t.total !== 1 ? "s" : ""} hoje
-                </span>
-                <span className="text-[11px] text-green-600 font-semibold">
-                  {t.realizadas} realizada{t.realizadas !== 1 ? "s" : ""}
-                </span>
-              </div>
-            );
-          })}
+          {teamStats.map(t => (
+            <div key={t.name} className="flex items-center gap-2">
+              <span className={cn("text-[11px] px-1.5 py-0 rounded-full border whitespace-nowrap", t.className)}>
+                {t.emoji} {t.label}
+              </span>
+              <span className="text-[11px] text-foreground font-semibold ml-auto">
+                {t.total} visita{t.total !== 1 ? "s" : ""} hoje
+              </span>
+              <span className="text-[11px] text-green-600 font-semibold">
+                {t.realizadas} realizada{t.realizadas !== 1 ? "s" : ""}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
