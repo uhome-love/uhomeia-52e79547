@@ -460,7 +460,6 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   ];
 
   // ─── LEAD CARD (protagonist, left column 55%) ───
-  const [objAccordionOpen, setObjAccordionOpen] = useState(false);
 
   const LeadColumn = (
     <div className="space-y-2 min-w-0">
