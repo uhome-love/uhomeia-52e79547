@@ -75,7 +75,8 @@ serve(async (req) => {
         throw new Error("Dados incompletos: email, nome e senha são obrigatórios");
       }
 
-      const assignedRole = role === "gestor" ? "gestor" : "corretor";
+      const validRoles = ["corretor", "gestor", "backoffice"];
+      const assignedRole = validRoles.includes(role) ? role : "corretor";
 
       // Create auth user
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -144,7 +145,7 @@ serve(async (req) => {
         }
       }
 
-      const roleLabel = assignedRole === "gestor" ? "Gerente" : "Corretor";
+      const roleLabel = assignedRole === "gestor" ? "Gerente" : assignedRole === "backoffice" ? "Backoffice" : "Corretor";
       return new Response(JSON.stringify({ 
         success: true, 
         user_id: newUser.user.id,
