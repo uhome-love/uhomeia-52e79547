@@ -347,7 +347,7 @@ export default function PipelineKanban() {
       <div className="flex-1 min-h-0 overflow-hidden flex">
         <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
           {activeTab === "kanban" ? (
-            <PipelineBoard
+            <JourneyMapBoard
               stages={pipeline.stages}
               leads={filteredLeads}
               segmentos={pipeline.segmentos}
