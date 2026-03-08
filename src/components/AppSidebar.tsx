@@ -149,7 +149,7 @@ export function AppSidebar() {
       ]
     : [
         { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
-        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
+        { title: "Oferta Ativa", url: "/corretor/call", icon: Phone },
       ];
 
   const negociosItems: NavItem[] = [
