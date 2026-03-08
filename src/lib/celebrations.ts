@@ -72,22 +72,46 @@ interface GreetingContext {
   slaExpired: number;
   metaBatidaOntem?: boolean;
   streak?: number;
+  /** Must be > 0 for leadership greeting to trigger */
+  myPts?: number;
+  /** Total participants with points > 0 */
+  totalWithPoints?: number;
 }
 
 export function getDynamicGreeting(ctx: GreetingContext): { greeting: string; subtitle: string } {
   const hour = new Date().getHours();
-  const { nome, rankingPos, slaExpired, metaBatidaOntem, streak } = ctx;
+  const { nome, rankingPos, slaExpired, metaBatidaOntem, streak, myPts = 0, totalWithPoints = 0 } = ctx;
   const n = nome || "Corretor";
 
   // Priority contexts first
   if (slaExpired > 0) {
     return { greeting: `Atenção, ${n}! 🚨`, subtitle: `Tem ${slaExpired} lead${slaExpired > 1 ? "s" : ""} te esperando. Bora resolver!` };
   }
-  if (rankingPos === 1) {
+
+  // Only show leader greeting if genuinely #1 WITH points AND more than just themselves
+  if (rankingPos === 1 && myPts > 0 && totalWithPoints > 1) {
     return { greeting: `Líder do ranking, ${n}! 👑`, subtitle: "Defende o trono. Ninguém tira isso de quem executa." };
   }
+
+  // Has points but not #1
+  if (rankingPos > 1 && myPts > 0) {
+    return { greeting: `Continue subindo, ${n}! 💪`, subtitle: `Você está em #${rankingPos}. O topo está perto.` };
+  }
+
   if (metaBatidaOntem) {
     return { greeting: `Que dia ontem, ${n}! 🏆`, subtitle: "Repete hoje? Eu sei que dá." };
+  }
+
+  // Everyone at 0 or no ranking data — neutral/motivational greeting
+  if (myPts === 0 && totalWithPoints === 0) {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      return { greeting: `Bom dia, ${n}! 👋`, subtitle: "A arena está esperando. Quem ligar primeiro, lidera." };
+    } else if (hour < 18) {
+      return { greeting: `Fala, ${n}! 👋`, subtitle: "A arena está esperando. Quem ligar primeiro, lidera." };
+    } else {
+      return { greeting: `E aí, ${n}! 👋`, subtitle: "A arena está esperando. Quem ligar primeiro, lidera." };
+    }
   }
 
   // Time-based
@@ -107,8 +131,6 @@ export function getDynamicGreeting(ctx: GreetingContext): { greeting: string; su
   ];
 
   const pool = hour < 12 ? morningGreets : hour < 18 ? afternoonGreets : eveningGreets;
-
-  // Use day seed + streak for variety
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const idx = (dayOfYear + (streak || 0)) % pool.length;
   return pool[idx];
@@ -117,7 +139,7 @@ export function getDynamicGreeting(ctx: GreetingContext): { greeting: string; su
 // ─── Streak formatting ───
 
 export function formatStreak(streak: number): { emoji: string; label: string; color: string } {
-  if (streak <= 0) return { emoji: "", label: "", color: "" };
+  if (streak <= 0) return { emoji: "🔥", label: "Comece hoje seu streak!", color: "text-gray-400 italic" };
   if (streak === 1) return { emoji: "🔥", label: "Começou bem!", color: "text-orange-500" };
   if (streak <= 3) return { emoji: "🔥🔥", label: `Sequência de ${streak}!`, color: "text-orange-500" };
   if (streak <= 5) return { emoji: "🔥🔥🔥", label: `${streak} dias! Consistente!`, color: "text-orange-600" };
