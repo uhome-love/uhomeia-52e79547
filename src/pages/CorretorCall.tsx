@@ -60,6 +60,7 @@ export default function CorretorCall() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("call");
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   // Track user interaction for sound
   useEffect(() => {
