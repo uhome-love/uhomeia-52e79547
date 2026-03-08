@@ -169,6 +169,7 @@ export default function CorretorCall() {
 
   const ligPct = Math.min(100, Math.round((progress.tentativas / progress.metaLigacoes) * 100));
   const aprvPct = Math.min(100, Math.round((progress.aproveitados / progress.metaAproveitados) * 100));
+  const visitPct = Math.min(100, Math.round(((progress.visitasMarcadas || 0) / Math.max(1, progress.metaVisitas)) * 100));
 
   const currentLevel = getLevel(progress.pontos);
   const nextLevel = getNextLevel(progress.pontos);
@@ -181,6 +182,18 @@ export default function CorretorCall() {
 
   // Streak data placeholder (could come from DB)
   const streakDays = progress.tentativas > 0 ? 3 : 0;
+
+  // Arena particles - must be before any early returns
+  const arenaParticles = useMemo(() =>
+    Array.from({ length: 10 }, (_, i) => ({
+      left: `${5 + Math.random() * 90}%`,
+      top: `${10 + Math.random() * 70}%`,
+      duration: `${3 + Math.random() * 4}s`,
+      delay: `${Math.random() * 3}s`,
+      size: `${2 + Math.random() * 2}px`,
+      opacity: 0.2 + Math.random() * 0.4,
+    })), []
+  );
 
   const handleStartSession = () => {
     setPhase("launching");
