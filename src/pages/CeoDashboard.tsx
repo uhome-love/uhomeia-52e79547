@@ -122,22 +122,32 @@ export default function CeoDashboard() {
 
   useEffect(() => { loadFilaCeo(); }, [loadFilaCeo]);
 
-  // Approve credenciamento
+  // Approve credenciamento — optimistic
+  const [localPendentes, setLocalPendentes] = useState<any[]>([]);
+  useEffect(() => { setLocalPendentes(roletaPendentes); }, [roletaPendentes]);
+
   const aprovar = useCallback(async (id: string) => {
     if (!user) return;
-    await supabase.from("roleta_credenciamentos").update({ status: "aprovado", aprovado_por: user.id, aprovado_em: new Date().toISOString() }).eq("id", id);
-    toast.success("Aprovado!");
-    reload();
-  }, [user, reload]);
+    const item = localPendentes.find((c: any) => c.id === id);
+    setLocalPendentes(prev => prev.filter((c: any) => c.id !== id));
+    const { error } = await supabase.from("roleta_credenciamentos").update({ status: "aprovado", aprovado_por: user.id, aprovado_em: new Date().toISOString() }).eq("id", id);
+    if (error) {
+      toast.error("Erro ao aprovar");
+      setLocalPendentes(prev => [...prev, item].filter(Boolean));
+      return;
+    }
+    toast.success(`✅ ${item?.corretor_nome || "Corretor"} aprovado(a) na Roleta!`);
+  }, [user, localPendentes]);
 
   const aprovarTodos = useCallback(async () => {
     if (!user) return;
-    for (const c of roletaPendentes) {
+    const pending = [...localPendentes];
+    setLocalPendentes([]);
+    for (const c of pending) {
       await supabase.from("roleta_credenciamentos").update({ status: "aprovado", aprovado_por: user.id, aprovado_em: new Date().toISOString() }).eq("id", c.id);
     }
-    toast.success("Todos aprovados!");
-    reload();
-  }, [user, roletaPendentes, reload]);
+    toast.success(`✅ ${pending.length} corretor(es) aprovado(s) na Roleta!`);
+  }, [user, localPendentes]);
 
 
 
