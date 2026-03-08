@@ -235,7 +235,7 @@ export default function CeoDashboard() {
           ) : (
             <div className="space-y-2">
               {roletaPendentes.map((c: any) => (
-                <div key={c.id} className="flex items-center justify-between p-2.5 rounded-lg border bg-card">
+                <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg border bg-card">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       {c.avatar && <AvatarImage src={c.avatar} />}
@@ -252,7 +252,7 @@ export default function CeoDashboard() {
                       </div>
                     </div>
                   </div>
-                  <Button size="sm" onClick={() => aprovar(c.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
+                  <Button size="sm" onClick={() => aprovar(c.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs w-full sm:w-auto">
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Aprovar
                   </Button>
                 </div>
