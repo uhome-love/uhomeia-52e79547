@@ -18,6 +18,7 @@ import { getLevel, getNextLevel, getLevelProgress } from "@/lib/gamification";
 import MetaCelebration from "@/components/corretor/MetaCelebration";
 import ConfettiBurst from "@/components/corretor/ConfettiToast";
 import PulseFeed from "@/components/pulse/PulseFeed";
+import RoletaStatusBar from "@/components/corretor/RoletaStatusBar";
 
 import {
   AlertDialog,
@@ -203,6 +204,11 @@ export default function CorretorDashboard() {
           <p className="text-sm text-muted-foreground truncate">{greetingData.subtitle}</p>
         </div>
       </motion.div>
+
+      {/* STATUS BAR — Roleta */}
+      <div className="mb-4">
+        <RoletaStatusBar />
+      </div>
 
       {/* GRID PRINCIPAL — 2 colunas desktop, 1 coluna mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-4 flex-1 min-h-0">
