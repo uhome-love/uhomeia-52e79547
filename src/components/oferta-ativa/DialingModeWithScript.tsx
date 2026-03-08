@@ -607,11 +607,8 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             className="space-y-3 lead-card-enter"
           >
             <div
-              className="rounded-xl p-4 space-y-3"
-              style={{
-                background: "#161B22",
-                border: isHotLead ? "1px solid rgba(234,179,8,0.4)" : "1px solid rgba(255,255,255,0.08)",
-              }}
+              className="arena-card p-4 space-y-3"
+              style={isHotLead ? { borderColor: "rgba(234,179,8,0.4)" } : undefined}
             >
               {/* Context line */}
               <div className="flex items-center gap-2 text-[10px] text-neutral-500">
@@ -625,8 +622,8 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               {/* Name */}
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-2xl lg:text-3xl font-bold text-white flex items-center gap-2">
-                    <User className="h-5 w-5 text-blue-400 shrink-0" /> {lead.nome}
+                  <h2 className="text-3xl lg:text-4xl font-black text-white flex items-center gap-2">
+                    <User className="h-5 w-5 shrink-0" style={{ color: "#60A5FA" }} /> {lead.nome}
                   </h2>
                   <div className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
                     <Building2 className="h-3 w-3" /> {lead.empreendimento}
@@ -727,15 +724,13 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               {/* ACTION BUTTONS — Line 1: Contact */}
               {!callActive ? (
                 <div className="space-y-2 pt-1">
-                  <Button
-                    size="lg"
-                    className="w-full gap-2 h-12 text-base font-bold rounded-xl shadow-lg text-white"
-                    style={{ background: "linear-gradient(135deg, #16A34A, #15803D)", boxShadow: "0 4px 14px rgba(22,163,74,0.4)" }}
+                  <button
+                    className="arena-btn-call w-full gap-2 h-12 text-lg font-bold rounded-xl flex items-center justify-center"
                     onClick={() => handleAction("ligacao")}
                     disabled={showModal}
                   >
                     <Phone className="h-5 w-5" /> LIGAR AGORA
-                  </Button>
+                  </button>
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       size="sm"
@@ -775,43 +770,43 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                 <div className="grid grid-cols-3 gap-1.5">
                   <button
                     onClick={() => handleInlineResult("com_interesse")}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-colors"
-                    style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#86EFAC" }}
+                    className="arena-result-btn arena-result-green flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
+                    style={{ color: "#86EFAC" }}
                   >
                     <span>✅</span>Aproveitou
                   </button>
                   <button
                     onClick={() => handleInlineResult("agendar")}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-colors"
-                    style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", color: "#86EFAC" }}
+                    className="arena-result-btn arena-result-blue flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
+                    style={{ color: "#93C5FD" }}
                   >
                     <span>📅</span>Agendar
                   </button>
                   <button
                     onClick={() => handleInlineResult("depois")}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-colors"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}
+                    className="arena-result-btn arena-result-gray flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
+                    style={{ color: "#9CA3AF" }}
                   >
                     <span>🔄</span>Depois
                   </button>
                   <button
                     onClick={() => handleInlineResult("nao_atendeu")}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-colors"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}
+                    className="arena-result-btn arena-result-orange flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
+                    style={{ color: "#FDBA74" }}
                   >
                     <span>📵</span>N. Atendeu
                   </button>
                   <button
                     onClick={() => handleInlineResult("sem_interesse")}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-colors"
-                    style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", color: "#FCA5A5" }}
+                    className="arena-result-btn arena-result-yellow flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
+                    style={{ color: "#FDE68A" }}
                   >
                     <span>😐</span>S. Interes.
                   </button>
                   <button
                     onClick={() => handleInlineResult("numero_errado")}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-colors"
-                    style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", color: "#FCA5A5" }}
+                    className="arena-result-btn arena-result-red flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
+                    style={{ color: "#FCA5A5" }}
                   >
                     <span>🚫</span>Errado
                   </button>
@@ -829,7 +824,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode />
 
             {/* Objeções Rápidas — always visible */}
-            <div className="rounded-xl p-3 space-y-2" style={{ background: "#161B22", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="arena-card p-3 space-y-2">
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-amber-400" />
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider">Objeções Rápidas</h4>
