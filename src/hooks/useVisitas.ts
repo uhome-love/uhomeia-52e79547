@@ -173,8 +173,28 @@ export function useVisitas(filters?: {
       return null;
     }
 
+    // GATILHO 1: Auto-advance pipeline lead to "agenda" module
+    if (data?.pipeline_lead_id) {
+      try {
+        await supabase.from("pipeline_leads").update({
+          modulo_atual: "agenda",
+        } as any).eq("id", data.pipeline_lead_id);
+
+        await supabase.from("lead_progressao").insert({
+          lead_id: data.pipeline_lead_id,
+          modulo_origem: "pipeline",
+          modulo_destino: "agenda",
+          fase_destino: "visita_marcada",
+          triggered_by: "agendar_visita",
+          corretor_id: data.corretor_id,
+          visita_id: data.id,
+        });
+      } catch (err) {
+        console.error("Lead progression error:", err);
+      }
+    }
+
     queryClient.invalidateQueries({ queryKey: ["visitas"] });
-    toast.success("📅 Visita registrada com sucesso!");
 
     // Send WhatsApp confirmation (fire-and-forget)
     if (data?.telefone) {
