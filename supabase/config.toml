@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.whatsapp-notificacao]
 verify_jwt = false
+
+[functions.homi-briefing]
+verify_jwt = false
