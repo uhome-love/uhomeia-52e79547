@@ -29,51 +29,30 @@ function useBatchListaStats(listaIds: string[]) {
     queryFn: async () => {
       if (!listaIds.length || !user) return {} as Record<string, ListaStats>;
 
-      const allLeads: Array<{ id: string; lista_id: string; status: string; proxima_tentativa_apos: string | null }> = [];
-      const PAGE_SIZE = 1000;
-      let page = 0;
-      while (true) {
-        const { data: batch } = await supabase
-          .from("oferta_ativa_leads")
-          .select("id, lista_id, status, proxima_tentativa_apos")
-          .in("lista_id", listaIds)
-          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-        if (!batch || batch.length === 0) break;
-        allLeads.push(...batch);
-        if (batch.length < PAGE_SIZE) break;
-        page++;
+      const { data, error } = await supabase.rpc("get_batch_lista_stats", {
+        p_lista_ids: listaIds,
+        p_corretor_id: user.id,
+      });
+
+      if (error) {
+        console.error("get_batch_lista_stats error:", error);
+        return {} as Record<string, ListaStats>;
       }
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const { data: attempts } = await supabase
-        .from("oferta_ativa_tentativas")
-        .select("id, lista_id")
-        .eq("corretor_id", user.id)
-        .in("lista_id", listaIds)
-        .gte("created_at", today.toISOString());
-
-      const now = new Date().toISOString();
+      const raw = (data || {}) as Record<string, any>;
       const statsMap: Record<string, ListaStats> = {};
-
-      for (const lid of listaIds) {
-        const listaLeads = allLeads.filter(l => l.lista_id === lid);
-        const total = listaLeads.length;
-        const naFila = listaLeads.filter(l =>
-          (l.status === "na_fila" || l.status === "em_cooldown") &&
-          (l.proxima_tentativa_apos == null || l.proxima_tentativa_apos < now)
-        ).length;
-        const aproveitados = listaLeads.filter(l => l.status === "aproveitado").length;
-        const worked = total - naFila;
-        const pct = total > 0 ? Math.round((worked / total) * 100) : 0;
-        const meusTentativas = (attempts || []).filter(a => a.lista_id === lid).length;
-
-        statsMap[lid] = { naFila, aproveitados, total, pct, meusTentativas };
+      for (const [lid, val] of Object.entries(raw)) {
+        statsMap[lid] = {
+          naFila: val.naFila ?? 0,
+          aproveitados: val.aproveitados ?? 0,
+          total: val.total ?? 0,
+          pct: val.pct ?? 0,
+          meusTentativas: val.meusTentativas ?? 0,
+        };
       }
-
       return statsMap;
     },
-    staleTime: 15000,
+    staleTime: 60_000, // Cache 60s
     enabled: listaIds.length > 0 && !!user,
   });
 }
