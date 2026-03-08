@@ -498,14 +498,14 @@ export default function CorretorCall() {
                 <Button
                   variant="ghost" size="sm"
                   className="h-7 text-xs gap-1 text-neutral-400 hover:text-white hover:bg-white/5"
-                  onClick={() => navigate("/corretor")}
+                  onClick={handleExitArena}
                 >
                   <Pause className="h-3 w-3" /> Pausar
                 </Button>
                 <Button
                   variant="ghost" size="sm"
                   className="h-7 text-xs gap-1 text-red-400 hover:bg-red-500/10"
-                  onClick={() => navigate("/corretor")}
+                  onClick={handleExitArena}
                 >
                   <X className="h-3 w-3" /> Sair
                 </Button>
