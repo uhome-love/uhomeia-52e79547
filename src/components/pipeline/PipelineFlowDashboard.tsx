@@ -6,7 +6,6 @@ import { differenceInHours, differenceInMinutes } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight,
-  ArrowLeft,
   Clock,
   TrendingUp,
   AlertTriangle,
