@@ -334,6 +334,27 @@ export default function GerenteDashboard() {
         </div>
       </motion.div>
 
+      {/* Empty state when team has no activity */}
+      {teamUserIds.length > 0 && k.ligacoes === 0 && k.aproveitados === 0 && k.visitasHoje === 0 && k.negociosAtivos === 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border border-border/60 bg-muted/30 p-4 flex items-center gap-3">
+          <span className="text-2xl">📋</span>
+          <div>
+            <p className="text-sm font-medium text-foreground">Nenhuma atividade registrada ainda ({periodLabels[period].toLowerCase()})</p>
+            <p className="text-xs text-muted-foreground">Quando seus corretores começarem a ligar e registrar visitas, os KPIs aparecerão aqui.</p>
+          </div>
+        </motion.div>
+      )}
+
+      {teamUserIds.length === 0 && !kpisLoading && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border border-border/60 bg-muted/30 p-4 flex items-center gap-3">
+          <span className="text-2xl">📋</span>
+          <div>
+            <p className="text-sm font-medium text-foreground">Nenhum corretor ativo no time ainda</p>
+            <p className="text-xs text-muted-foreground">Quando seus corretores forem adicionados e receberem leads, os KPIs aparecerão aqui.</p>
+          </div>
+        </motion.div>
+      )}
+
       {/* ─── 2. KPI CARDS — 6 em linha ─── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
