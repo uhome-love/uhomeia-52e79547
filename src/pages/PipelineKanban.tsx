@@ -128,6 +128,9 @@ export default function PipelineKanban() {
     }
   }, [authUser, pipeline]);
 
+  const [intelView, setIntelView] = useState<"funil" | "radar">("funil");
+  const [autoView, setAutoView] = useState<"materiais" | "sequencias">("materiais");
+
   const clearFilters = () => setFilters({ ...EMPTY_FILTERS });
 
   if (pipeline.loading) {
@@ -140,8 +143,6 @@ export default function PipelineKanban() {
   }
 
   const isKanbanOrIntel = activeTab === "kanban" || activeTab === "inteligencia";
-  const [intelView, setIntelView] = useState<"funil" | "radar">("funil");
-  const [autoView, setAutoView] = useState<"materiais" | "sequencias">("materiais");
 
   return (
     <div className="flex flex-col w-full max-w-full min-w-0 overflow-hidden" style={{ height: "calc(100vh - 56px - 2rem)" }}>
