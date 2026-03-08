@@ -581,21 +581,30 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
       {/* Lead counter */}
       <div className="flex items-center justify-between text-xs text-neutral-500">
-        <span>Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> desta sessão</span>
+        <span>Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> · ROUND {sessionLeadsServed + 1}</span>
         <span className="text-[10px] text-emerald-400/70">🔒 Reservado p/ você</span>
       </div>
 
+      {/* Arena Timer — prominent when calling */}
+      {callActive && (
+        <div className="flex items-center justify-center py-2">
+          <div className={`arena-timer ${timerColorClass}`}>
+            {formatTimer(callTimer)}
+          </div>
+        </div>
+      )}
+
       {/* 2-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-4">
+      <div className={`grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-4 ${arenaShake ? "arena-shake" : ""}`}>
         {/* Left: Lead Card */}
         <AnimatePresence mode="wait">
           <motion.div
             key={lead.id}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-3"
+            transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+            className="space-y-3 lead-card-enter"
           >
             <div
               className="rounded-xl p-4 space-y-3"
