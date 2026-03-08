@@ -434,8 +434,34 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     handleResultSubmit(resultado === "depois" ? "nao_atendeu" : resultado, feedbackMap[resultado] || resultado);
   };
 
+  // Timer color based on duration
+  const timerColorClass = callTimer <= 30 ? "arena-timer-green" : callTimer <= 60 ? "arena-timer-amber" : "arena-timer-red";
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 relative">
+      {/* ═══ ARENA OVERLAYS ═══ */}
+      {showFlash && <div className="round-flash" />}
+      {showRound && (
+        <div className="fixed inset-0 flex flex-col items-center justify-center z-[59] pointer-events-none">
+          <div className="round-number">ROUND {sessionLeadsServed + 1}</div>
+          <div className="round-sub">{lead?.empreendimento || "Arena"}</div>
+        </div>
+      )}
+      {/* Confetti */}
+      {arenaConfetti.length > 0 && arenaConfetti.map((emoji, i) => (
+        <span
+          key={`confetti-${i}`}
+          className="arena-confetti"
+          style={{
+            left: `${5 + Math.random() * 90}%`,
+            animationDuration: `${1.5 + Math.random() * 1.5}s`,
+            animationDelay: `${Math.random() * 0.3}s`,
+          }}
+        >
+          {emoji}
+        </span>
+      ))}
+
       {/* Pending attempts bar */}
       <PendingAttemptsBar />
 
