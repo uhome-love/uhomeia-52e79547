@@ -238,12 +238,18 @@ export default function CheckpointGerente() {
     if (teamUserIds.length === 0) return;
     const { data } = await supabase
       .from("oferta_ativa_tentativas")
-      .select("id, lead_nome, lead_telefone, corretor_id, created_at")
+      .select("id, corretor_id, created_at, lead_id, oferta_ativa_leads(nome, telefone)")
       .in("corretor_id", teamUserIds)
       .eq("resultado", "com_interesse")
       .order("created_at", { ascending: false })
       .limit(100);
-    setAproveitados((data || []).map(d => ({ ...d, corretor_nome: teamNameMap[d.corretor_id] || "Corretor" })));
+    setAproveitados((data || []).map((d: any) => ({
+      id: d.id,
+      lead_nome: d.oferta_ativa_leads?.nome || "Sem nome",
+      lead_telefone: d.oferta_ativa_leads?.telefone || "",
+      corretor_id: d.corretor_id,
+      corretor_nome: teamNameMap[d.corretor_id] || "Corretor",
+    })));
   }, [teamUserIds, teamNameMap]);
 
   // ─── LOAD RELATORIO ───
