@@ -593,15 +593,15 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     </div>
   );
 
-  // ─── COLUMN: CENTER (Script Ligação) ───
+  // ─── COLUMN: CENTER (Script Ligação ONLY) ───
   const CenterColumn = (
-    <div className="min-w-0">
+    <div className="min-w-0 h-full flex flex-col">
       <div
-        className="rounded-xl overflow-hidden"
+        className="rounded-xl overflow-hidden flex-1 flex flex-col"
         style={{ background: "#1a2332", borderLeft: "3px solid rgba(34,197,94,0.3)" }}
       >
-        <div className="sticky top-0" style={{ maxHeight: "calc(100vh - 220px)", overflowY: "auto" }}>
-          <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode />
+        <div className="flex-1 overflow-y-auto">
+          <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode scriptFilter="ligacao" />
         </div>
       </div>
 
@@ -612,7 +612,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="mt-2 p-3 rounded-lg text-sm leading-relaxed"
+            className="mt-2 p-3 rounded-lg text-sm leading-relaxed shrink-0"
             style={{ background: "rgba(245,158,11,0.08)", border: "2px solid rgba(245,158,11,0.25)", color: "#E5E7EB" }}
           >
             <div className="flex items-center gap-1.5 mb-1">
@@ -628,27 +628,27 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
   // ─── COLUMN: RIGHT (WhatsApp Script + Result) ───
   const RightColumn = (
-    <div className="space-y-3 min-w-0">
-      {/* WhatsApp Script — compact */}
+    <div className="min-w-0 h-full flex flex-col gap-3">
+      {/* WhatsApp Script — compact, ONLY whatsapp */}
       <div
-        className="rounded-xl overflow-hidden"
-        style={{ background: "#0d1f0d", borderLeft: "3px solid rgba(34,197,94,0.5)" }}
+        className="rounded-xl overflow-hidden shrink-0"
+        style={{ background: "#0d1f0d", borderLeft: "3px solid rgba(34,197,94,0.5)", maxHeight: "40%" }}
       >
-        <div style={{ maxHeight: "200px", overflowY: "auto" }}>
-          <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode />
+        <div className="overflow-y-auto" style={{ maxHeight: "100%" }}>
+          <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode scriptFilter="whatsapp" />
         </div>
       </div>
 
       {/* Separator */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} className="shrink-0" />
 
       {/* 📊 RESULTADO DA LIGAÇÃO */}
-      <div className="space-y-2">
+      <div className="space-y-2 flex-1 min-h-0">
         <span style={{ fontSize: 11, color: "#94A3B8", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const }}>📊 Resultado da Ligação</span>
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => handleInlineResult("com_interesse")}
-            className="flex items-center justify-center gap-1.5 rounded-lg py-3 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", color: "#86EFAC" }}
           >
             ✅ Aproveitado
@@ -661,7 +661,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               }
               setShowModal(true);
             }}
-            className="flex items-center justify-center gap-1.5 rounded-lg py-3 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.35)", color: "#FCD34D" }}
           >
             📅 Agendar Visita
@@ -685,7 +685,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               await fetchNext();
               toast("Lead pulado — próximo da fila", { duration: 1500 });
             }}
-            className="flex items-center justify-center gap-1.5 rounded-lg py-3 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{ background: "rgba(107,114,128,0.15)", border: "1px solid rgba(107,114,128,0.35)", color: "#9CA3AF" }}
             disabled={callActive}
           >
@@ -693,7 +693,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           </button>
           <button
             onClick={() => handleInlineResult("nao_atendeu")}
-            className="flex items-center justify-center gap-1.5 rounded-lg py-3 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "#FCA5A5" }}
           >
             🔴 Não Atendeu
@@ -714,7 +714,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   );
 
   return (
-    <div className="space-y-2 relative" style={{ background: "#0A0F1E" }}>
+    <div className="relative overflow-hidden" style={{ background: "#0A0F1E" }}>
       {/* ═══ ARENA OVERLAYS ═══ */}
       {showFlash && <div className="round-flash" />}
       {showRound && (
@@ -859,8 +859,11 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           </AnimatePresence>
         </div>
       ) : (
-        /* ═══ DESKTOP: 3-column layout (30|40|30) ═══ */
-        <div className={`grid grid-cols-[3fr_4fr_3fr] gap-4 ${arenaShake ? "arena-shake" : ""}`}>
+        /* ═══ DESKTOP: 3-column layout (25|42|33) — viewport height ═══ */
+        <div
+          className={`grid grid-cols-[25fr_42fr_33fr] gap-3 ${arenaShake ? "arena-shake" : ""}`}
+          style={{ height: "calc(100vh - 180px)", overflow: "hidden" }}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={lead.id + "-left"}
@@ -868,12 +871,18 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -40 }}
               transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+              className="overflow-y-auto h-full"
+              style={{ scrollbarWidth: "thin" }}
             >
               {LeftColumn}
             </motion.div>
           </AnimatePresence>
-          {CenterColumn}
-          {RightColumn}
+          <div className="overflow-y-auto h-full" style={{ scrollbarWidth: "thin" }}>
+            {CenterColumn}
+          </div>
+          <div className="overflow-y-auto h-full" style={{ scrollbarWidth: "thin" }}>
+            {RightColumn}
+          </div>
         </div>
       )}
 
