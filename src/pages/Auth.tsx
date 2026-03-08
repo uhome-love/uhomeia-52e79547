@@ -149,20 +149,32 @@ function HomiSpeechBubble() {
 
   return (
     <div
-      className="absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap transition-opacity duration-300"
-      style={{
-        opacity: fade ? 1 : 0,
-        background: "rgba(30,41,59,0.95)",
-        border: "1px solid rgba(99,179,237,0.3)",
-        borderRadius: "12px 12px 12px 4px",
-        padding: "8px 14px",
-        fontSize: "13px",
-        color: "#E2E8F0",
-        boxShadow: "0 0 20px rgba(59,130,246,0.2)",
-        animation: "fade-in 0.4s ease-out both",
-      }}
+      className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap transition-opacity duration-400 z-20"
+      style={{ opacity: fade ? 1 : 0 }}
     >
-      {HOMI_PHRASES[idx]}
+      <div
+        style={{
+          background: "rgba(30,41,59,0.95)",
+          border: "1px solid rgba(99,179,237,0.3)",
+          borderRadius: "12px",
+          padding: "8px 14px",
+          fontSize: "13px",
+          color: "#E2E8F0",
+          boxShadow: "0 0 20px rgba(59,130,246,0.2)",
+        }}
+      >
+        {HOMI_PHRASES[idx]}
+      </div>
+      {/* Arrow pointing down */}
+      <div
+        className="mx-auto"
+        style={{
+          width: 0, height: 0,
+          borderLeft: "6px solid transparent",
+          borderRight: "6px solid transparent",
+          borderTop: "6px solid rgba(30,41,59,0.95)",
+        }}
+      />
     </div>
   );
 }
