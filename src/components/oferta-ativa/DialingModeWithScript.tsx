@@ -106,13 +106,10 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
   // Auto-scroll to objection response
   useEffect(() => {
-    if (objectionInsert && expandedObj !== null && objScrollRef.current) {
-      setTimeout(() => {
-        const el = objScrollRef.current?.querySelector('[data-objection-block]');
-        el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 100);
+    if (openObjections.length > 0 && objScrollRef.current) {
+      // no-op: responses are now in left column
     }
-  }, [objectionInsert, expandedObj]);
+  }, [openObjections]);
 
   useEffect(() => {
     if (lead && lead.id !== prevLeadIdRef.current) {
@@ -124,7 +121,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         setTimeout(() => setShowRound(false), 900);
       }
       setExpandedObj(null);
-      setObjectionInsert(null);
+      setOpenObjections([]);
       setInlineObs("");
       setSelectedResult(null);
       setShowResultPopup(false);
