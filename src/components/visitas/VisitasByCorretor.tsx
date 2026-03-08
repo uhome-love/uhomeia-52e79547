@@ -18,6 +18,7 @@ interface Props {
 interface CorretorGroup {
   corretorId: string;
   nome: string;
+  equipe?: string;
   initials: string;
   color: string;
   totalVisitas: number;
@@ -88,9 +89,13 @@ export default function VisitasByCorretor({ visitas, onUpdateStatus, onDelete, s
 
       const totalRealizadas = data.visitas.filter(v => v.status === "realizada").length;
 
+      // Get equipe from first visita
+      const firstEquipe = data.visitas[0]?.equipe;
+
       result.push({
         corretorId,
         nome: data.nome,
+        equipe: firstEquipe,
         initials: getInitials(data.nome),
         color: AVATAR_COLORS[colorIdx % AVATAR_COLORS.length],
         totalVisitas: data.visitas.length,
@@ -151,6 +156,17 @@ export default function VisitasByCorretor({ visitas, onUpdateStatus, onDelete, s
                 <span className="text-xs text-muted-foreground ml-2">
                   {c.totalVisitas} visita{c.totalVisitas !== 1 ? "s" : ""} · {c.totalDias} dia{c.totalDias !== 1 ? "s" : ""}
                 </span>
+                {showTeam && (() => {
+                  const style = getTeamBadgeStyle(c.equipe);
+                  if (!style) return null;
+                  return (
+                    <div className="mt-0.5">
+                      <span className={cn("text-[11px] px-1.5 py-0 rounded-full border", style.className)}>
+                        {style.emoji} {style.label}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Progress bar */}
