@@ -85,7 +85,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             <p className="text-[11px] text-muted-foreground truncate">{negocio.empreendimento}</p>
           )}
 
-          {/* VGV + Corretor */}
+          {/* VGV */}
           <div className="flex items-center justify-between text-[10px]">
             {negocio.vgv_estimado ? (
               <span className="font-semibold text-foreground flex items-center gap-0.5">
@@ -95,10 +95,26 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             ) : (
               <span className="text-muted-foreground italic">Sem VGV</span>
             )}
-            {corretorNome && (
-              <span className="text-muted-foreground truncate max-w-[100px]">👤 {corretorNome}</span>
-            )}
           </div>
+
+          {/* Corretor info for CEO/Gerente */}
+          {showCorretor && corretorInfo && (
+            <div className="flex items-center gap-1.5 pt-0.5">
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={corretorInfo.avatar_gamificado_url || corretorInfo.avatar_url || undefined} className="object-cover" />
+                <AvatarFallback className="text-[8px] bg-muted">{(corretorInfo.nome || "?")[0]}</AvatarFallback>
+              </Avatar>
+              <span className="text-[10px] text-muted-foreground truncate max-w-[100px]">{corretorInfo.nome?.split(" ")[0]}</span>
+              {corretorInfo.equipe && (
+                <Badge variant="outline" className={`text-[8px] px-1 py-0 h-3.5 border ${getTeamColorClass(corretorInfo.equipe)}`}>
+                  {corretorInfo.equipe}
+                </Badge>
+              )}
+            </div>
+          )}
+          {!showCorretor && corretorNome && (
+            <div className="text-[10px] text-muted-foreground truncate">👤 {corretorNome}</div>
+          )}
 
           {/* Comunicar button */}
           <div className="pt-1">
