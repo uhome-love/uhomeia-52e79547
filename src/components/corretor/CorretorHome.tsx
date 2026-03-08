@@ -32,6 +32,7 @@ export default function CorretorHome() {
 
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-5xl mx-auto">
+      <CelebrationOverlay achievement={newlyUnlocked} onDismiss={dismissCelebration} />
       {/* Header */}
       <div>
         <h1 className="font-display text-2xl font-extrabold text-foreground flex items-center gap-2">
