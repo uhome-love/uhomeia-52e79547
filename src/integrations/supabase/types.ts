@@ -1186,6 +1186,127 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_items: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          autor_id: string
+          autor_nome: string
+          categoria: string
+          conteudo: string
+          created_at: string
+          id: string
+          media_avaliacao: number | null
+          origem: string | null
+          status: string
+          tags: string[] | null
+          titulo: string
+          total_avaliacoes: number | null
+          total_usos: number | null
+          updated_at: string
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          autor_id: string
+          autor_nome?: string
+          categoria?: string
+          conteudo: string
+          created_at?: string
+          id?: string
+          media_avaliacao?: number | null
+          origem?: string | null
+          status?: string
+          tags?: string[] | null
+          titulo: string
+          total_avaliacoes?: number | null
+          total_usos?: number | null
+          updated_at?: string
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          autor_id?: string
+          autor_nome?: string
+          categoria?: string
+          conteudo?: string
+          created_at?: string
+          id?: string
+          media_avaliacao?: number | null
+          origem?: string | null
+          status?: string
+          tags?: string[] | null
+          titulo?: string
+          total_avaliacoes?: number | null
+          total_usos?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketplace_ratings: {
+        Row: {
+          comentario: string | null
+          created_at: string
+          id: string
+          item_id: string
+          nota: number
+          user_id: string
+        }
+        Insert: {
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          nota: number
+          user_id: string
+        }
+        Update: {
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          nota?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_ratings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_usage: {
+        Row: {
+          id: string
+          item_id: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_usage_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           agrupar_similares: boolean
@@ -3208,6 +3329,10 @@ export type Database = {
         }
         Returns: Json
       }
+      increment_marketplace_usage: {
+        Args: { p_item_id: string }
+        Returns: undefined
+      }
       increment_referral_count: {
         Args: { p_referral_id: string }
         Returns: undefined
@@ -3221,6 +3346,10 @@ export type Database = {
         Returns: Json
       }
       marcar_todas_notificacoes_lidas: { Args: never; Returns: number }
+      rate_marketplace_item: {
+        Args: { p_comentario?: string; p_item_id: string; p_nota: number }
+        Returns: undefined
+      }
       recalculate_all_scores: { Args: never; Returns: undefined }
       reciclar_leads_expirados: { Args: never; Returns: number }
       redistribuir_leads_pendentes: {
