@@ -53,6 +53,13 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const MarketplaceScripts = lazy(() => import("./pages/MarketplaceScripts"));
 const CorretorCall = lazy(() => import("./pages/CorretorCall"));
 
+// Backoffice pages
+const BackofficeDashboard = lazy(() => import("./pages/BackofficeDashboard"));
+const PagadoriasPage = lazy(() => import("./pages/PagadoriasPage"));
+const ComissoesPage = lazy(() => import("./pages/ComissoesPage"));
+const MarketingCentral = lazy(() => import("./pages/MarketingCentral"));
+const HomiAna = lazy(() => import("./pages/HomiAna"));
+
 const queryClient = new QueryClient();
 
 function PageLoader() {
@@ -64,7 +71,7 @@ function PageLoader() {
 }
 
 // Helper to wrap a page with layout + auth + role protection
-function ProtectedPage({ children, roles }: { children: React.ReactNode; roles?: ("admin" | "gestor" | "corretor")[] }) {
+function ProtectedPage({ children, roles }: { children: React.ReactNode; roles?: ("admin" | "gestor" | "corretor" | "backoffice")[] }) {
   if (roles) {
     return (
       <RoleProtectedRoute allowedRoles={roles}>
@@ -138,6 +145,13 @@ const App = () => (
             <Route path="/marketing" element={<ProtectedPage roles={["admin"]}><MarketingDashboard /></ProtectedPage>} />
             <Route path="/auditoria" element={<ProtectedPage roles={["admin"]}><AuditDashboard /></ProtectedPage>} />
             <Route path="/admin" element={<ProtectedPage roles={["admin"]}><AdminPanel /></ProtectedPage>} />
+
+            {/* Backoffice — Ana Paula */}
+            <Route path="/backoffice" element={<ProtectedPage roles={["backoffice", "admin"]}><BackofficeDashboard /></ProtectedPage>} />
+            <Route path="/backoffice/pagadorias" element={<ProtectedPage roles={["backoffice", "admin"]}><PagadoriasPage /></ProtectedPage>} />
+            <Route path="/backoffice/comissoes" element={<ProtectedPage roles={["backoffice", "admin"]}><ComissoesPage /></ProtectedPage>} />
+            <Route path="/backoffice/marketing" element={<ProtectedPage roles={["backoffice", "admin"]}><MarketingCentral /></ProtectedPage>} />
+            <Route path="/backoffice/homi-ana" element={<ProtectedPage roles={["backoffice", "admin"]}><HomiAna /></ProtectedPage>} />
 
             <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
           </Routes>

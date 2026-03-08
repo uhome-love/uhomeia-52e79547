@@ -145,7 +145,120 @@ export function AppSidebar() {
   }, [alerts]);
 
   const level = getLevel(points);
-  const isCorretor = !isAdmin && !isGestor;
+  const isCorretor = !isAdmin && !isGestor && !isBackoffice;
+
+  // ── Backoffice sidebar (completely different navigation) ──
+  if (isBackoffice) {
+    const backofficeTopItem: NavItem = { title: "Minha Central", url: "/backoffice", icon: Home };
+    const backofficeGroups = [
+      {
+        label: "Financeiro",
+        items: [
+          { title: "Pagadorias", url: "/backoffice/pagadorias", icon: FileBarChart },
+          { title: "Controle de Comissões", url: "/backoffice/comissoes", icon: TrendingUp },
+        ] as NavItem[],
+      },
+      {
+        label: "Marketing",
+        items: [
+          { title: "Central de Marketing", url: "/backoffice/marketing", icon: BarChart3 },
+        ] as NavItem[],
+      },
+      {
+        label: "Ferramentas",
+        items: [
+          { title: "HOMI Ana", url: "/backoffice/homi-ana", icon: Bot },
+          { title: "Notificações", url: "/notificacoes", icon: Bell },
+        ] as NavItem[],
+      },
+    ];
+
+    return (
+      <Sidebar collapsible="icon">
+        <SidebarContent className="scrollbar-thin flex flex-col">
+          <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} px-3 h-14 border-b border-white/10 shrink-0`}>
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button onClick={toggleSidebar} className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors">
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-neutral-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">Expandir sidebar</TooltipContent>
+              </Tooltip>
+            ) : (
+              <>
+                <div className="flex items-center gap-2.5 animate-slide-in-left">
+                  <img src={homiMascot} alt="Homi AI" className="h-9 w-9 object-contain shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-white tracking-tight leading-tight">Uhome<span className="text-blue-400">Sales</span></span>
+                    <span className="text-[9px] font-medium text-neutral-500 tracking-wider">Powered by Homi AI</span>
+                  </div>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={toggleSidebar} className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors">
+                      <PanelLeftClose className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-neutral-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">Recolher sidebar</TooltipContent>
+                </Tooltip>
+              </>
+            )}
+          </div>
+
+          {/* Minha Central — top item */}
+          <div className={`border-b border-white/10 pb-3 mb-1 ${collapsed ? "px-1" : ""}`}>
+            <SidebarMenu className="px-1 pt-3">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={backofficeTopItem.title}>
+                  <NavLink to={backofficeTopItem.url} end className={`group/nav text-white hover:text-white hover:bg-white/[0.08] transition-all duration-150 rounded-lg relative py-1.5 font-medium ${collapsed ? "px-0 justify-center" : "px-3"}`} activeClassName="!text-white !font-semibold !bg-white/10 border-l-2 !border-l-blue-400 !rounded-l-none rounded-r-lg">
+                    <backofficeTopItem.icon className={`${collapsed ? "" : "mr-2.5"} h-4 w-4 shrink-0 text-white/70`} />
+                    {!collapsed && <span className="text-sm">{backofficeTopItem.title}</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </div>
+
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            {backofficeGroups.map((g, i) => (
+              <SidebarNavGroup key={g.label} label={g.label} items={g.items} badges={badges} collapsed={collapsed} index={i} />
+            ))}
+          </div>
+        </SidebarContent>
+
+        <SidebarFooter className="!p-0">
+          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"} py-3 px-3 border-t border-white/10 group/footer sticky bottom-0 bg-sidebar`} onMouseEnter={() => setHoverFooter(true)} onMouseLeave={() => setHoverFooter(false)}>
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button onClick={() => navigate("/configuracoes")} className="shrink-0">
+                    <CorretorAvatar nome={profile.nome || user?.email || "U"} avatarUrl={profile.avatar_url} points={points} size="sm" showBadges={false} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-neutral-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">
+                  <p className="font-medium">{profile.nome || user?.email}</p>
+                  <p className="text-xs text-neutral-400">Backoffice</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <>
+                <CorretorAvatar nome={profile.nome || user?.email || "U"} avatarUrl={profile.avatar_url} points={points} size="sm" showBadges={false} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{profile.nome || user?.email}</p>
+                  <p className="text-xs text-neutral-400 font-medium">Backoffice</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={signOut} className={`h-7 w-7 shrink-0 text-neutral-400 hover:text-danger-500 hover:bg-danger-500/10 transition-all duration-150 rounded-lg ${hoverFooter ? "opacity-100" : "opacity-0"}`}>
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            )}
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
 
   // "Minha Rotina" special item (corretor only, above groups)
   const topItem: NavItem | null = isCorretor
