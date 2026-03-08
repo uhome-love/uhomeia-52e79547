@@ -739,12 +739,12 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       size="sm"
-                      className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                      className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
                       style={{ height: "48px", fontSize: "15px" }}
-                      onClick={() => handleAction("whatsapp")}
+                      onClick={() => setComunicacaoOpen(true)}
                       disabled={showModal}
                     >
-                      <MessageCircle className="h-4 w-4" /> WhatsApp
+                      <MessageCircle className="h-4 w-4" /> 💬 Comunicar
                     </Button>
                     <Button
                       size="sm"
