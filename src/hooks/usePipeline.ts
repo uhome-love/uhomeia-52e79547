@@ -108,7 +108,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
     if (!user) return;
     let query = supabase
       .from("pipeline_leads")
-      .select("id, nome, telefone, telefone2, email, segmento_id, produto_id, empreendimento, stage_id, stage_changed_at, ordem_no_stage, corretor_id, gerente_id, temperatura, modo_conducao, complexidade_score, oportunidade_score, escalation_level, last_escalation_at, distribuido_em, aceito_em, aceite_expira_em, origem, origem_detalhe, observacoes, proxima_acao, data_proxima_acao, motivo_descarte, valor_estimado, created_at, updated_at, created_by")
+      .select("id, nome, telefone, telefone2, email, segmento_id, produto_id, empreendimento, stage_id, stage_changed_at, ordem_no_stage, corretor_id, gerente_id, temperatura, modo_conducao, complexidade_score, oportunidade_score, escalation_level, last_escalation_at, distribuido_em, aceito_em, aceite_expira_em, origem, origem_detalhe, observacoes, proxima_acao, data_proxima_acao, motivo_descarte, valor_estimado, created_at, updated_at, created_by", { count: "exact" })
       .order("updated_at", { ascending: false });
 
     // Role-based visibility
@@ -137,7 +137,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
       query = query.eq("corretor_id", user.id);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.throwOnError();
     if (error) {
       console.error("Error loading pipeline leads:", error);
       return;
