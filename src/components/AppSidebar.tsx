@@ -19,7 +19,7 @@ import {
   Kanban,
   Bell,
   Heart,
-  
+  Brain,
   BookOpen,
   Award,
   PanelLeftOpen,

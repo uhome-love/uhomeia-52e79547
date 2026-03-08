@@ -59,6 +59,7 @@ const PagadoriasPage = lazy(() => import("./pages/PagadoriasPage"));
 const ComissoesPage = lazy(() => import("./pages/ComissoesPage"));
 const MarketingCentral = lazy(() => import("./pages/MarketingCentral"));
 const HomiAna = lazy(() => import("./pages/HomiAna"));
+const BaseConhecimento = lazy(() => import("./pages/BaseConhecimento"));
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,7 @@ const App = () => (
             <Route path="/homi" element={<ProtectedPage><HomiAssistant /></ProtectedPage>} />
             <Route path="/homi-gerente" element={<ProtectedPage roles={["gestor", "admin"]}><HomiGerencial /></ProtectedPage>} />
             <Route path="/homi-ceo" element={<ProtectedPage roles={["admin"]}><HomiCeo /></ProtectedPage>} />
+            <Route path="/homi/base-conhecimento" element={<ProtectedPage roles={["admin", "gestor"]}><BaseConhecimento /></ProtectedPage>} />
             <Route path="/meus-negocios" element={<ProtectedPage><MeusNegocios /></ProtectedPage>} />
             <Route path="/pos-vendas" element={<ProtectedPage roles={["gestor", "admin"]}><PosVendas /></ProtectedPage>} />
 
