@@ -407,7 +407,7 @@ export default function HomeDashboard() {
       ) : (
         <div className="space-y-6">
           {/* 1. Funil Comercial — Enhanced */}
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={card}>
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-card" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
             <SectionHeader icon={TrendingUp} title="Funil Comercial" action={{ label: "Ver checkpoint", onClick: () => navigate("/checkpoint") }} />
             <div className="p-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
