@@ -170,27 +170,24 @@ export default function RoletaStatusBar() {
   };
 
   const saveCredenciamento = async () => {
-    if (!user || selectedIds.length === 0) return;
+    if (!user || !profileId || selectedIds.length === 0) return;
     setSaving(true);
 
     const today = new Date().toISOString().slice(0, 10);
+    const janela = getJanela();
 
-    // Delete existing for today
+    // Upsert: delete existing for this corretor+data+janela, then insert
     await supabase
       .from("roleta_credenciamentos")
       .delete()
-      .eq("corretor_id", user.id)
-      .eq("data", today);
+      .eq("corretor_id", profileId)
+      .eq("data", today)
+      .eq("janela", janela);
 
-    // Determine current window
-    const hour = new Date().getHours();
-    const janela = hour < 6 ? "madrugada" : hour < 12 ? "manha" : hour < 18 ? "tarde" : "noturna";
-
-    // Insert new
     const { error } = await supabase
       .from("roleta_credenciamentos")
       .insert({
-        corretor_id: user.id,
+        corretor_id: profileId,
         data: today,
         janela,
         segmento_1_id: selectedIds[0] || null,
@@ -199,6 +196,7 @@ export default function RoletaStatusBar() {
       });
 
     if (error) {
+      console.error("Credenciamento error:", error);
       toast.error("Erro ao salvar credenciamento");
       setSaving(false);
       return;
@@ -208,7 +206,7 @@ export default function RoletaStatusBar() {
     setCredStatus("pendente");
     setCredModalOpen(false);
     setSaving(false);
-    toast.success("Credenciamento salvo! Aguardando aprovação.");
+    toast.success(`Credenciamento salvo para ${getJanelaLabel(janela)}! Aguardando aprovação.`);
   };
 
   const currentOpt = STATUS_OPTIONS.find((o) => o.value === status) || STATUS_OPTIONS[3];
