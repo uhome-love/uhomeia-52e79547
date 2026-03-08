@@ -26,6 +26,7 @@ import { playSoundSuccess, playSoundDing } from "@/lib/celebrations";
 import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 import { useIsMobile } from "@/hooks/use-mobile";
 import HomiObjectionHelper from "./HomiObjectionHelper";
+import FichaRapida from "./FichaRapida";
 
 /** Format Brazilian phone */
 function formatPhone(phone: string): string {
@@ -96,6 +97,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
   // Script tab (desktop right column)
   const [scriptTab, setScriptTab] = useState<"ligacao" | "whatsapp">("ligacao");
+
+  // Shared empreendimento selection (HOMI helper + FichaRapida)
+  const [selectedEmp, setSelectedEmp] = useState(lead?.empreendimento || "Alfa");
 
   // Arena overlays
   const [showRound, setShowRound] = useState(false);
@@ -647,8 +651,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           </div>
         )}
 
-        {/* HOMI dynamic objection helper */}
-        <HomiObjectionHelper leadNome={lead.nome} leadEmpreendimento={lead.empreendimento || undefined} />
+        <HomiObjectionHelper leadNome={lead.nome} leadEmpreendimento={lead.empreendimento || undefined} selectedEmp={selectedEmp} onEmpChange={setSelectedEmp} />
       </div>
 
       {/* Recent calls — collapsed, outside card */}
@@ -705,6 +708,11 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         }}
       >
         <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode scriptFilter={scriptTab} hideCta />
+      </div>
+
+      {/* Ficha Rápida — between script and CTA */}
+      <div className="shrink-0 px-2 py-1.5" style={{ background: "#161B22" }}>
+        <FichaRapida empreendimento={selectedEmp} />
       </div>
 
       {/* CTA Final — pinned at bottom */}
