@@ -1,4 +1,4 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePendingLeadAlert } from "@/hooks/usePendingLeadAlert";
@@ -51,6 +51,26 @@ function useArenaMode() {
   return { isFullscreen, isSession };
 }
 
+/** Auto-collapse sidebar when arena session is active */
+function ArenaAutoCollapse({ isSession }: { isSession: boolean }) {
+  const { setOpen, open } = useSidebar();
+  const prevOpenRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (isSession) {
+      // Store previous state and collapse
+      prevOpenRef.current = open;
+      setOpen(false);
+    } else if (prevOpenRef.current !== null) {
+      // Restore previous state
+      setOpen(prevOpenRef.current);
+      prevOpenRef.current = null;
+    }
+  }, [isSession]); // intentionally not including open/setOpen to avoid loops
+
+  return null;
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const { isAdmin, isGestor } = useUserRole();
@@ -68,8 +88,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={!isSession}>
       <HomiProvider>
+        <ArenaAutoCollapse isSession={isSession} />
         <div className="min-h-screen flex w-full">
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
