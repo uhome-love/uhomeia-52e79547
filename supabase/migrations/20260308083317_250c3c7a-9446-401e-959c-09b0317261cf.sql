@@ -1,0 +1,6 @@
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS cpf TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS creci TEXT;
+ALTER TABLE public.pagadorias ADD COLUMN IF NOT EXISTS contrato_gerado_em TIMESTAMPTZ;
+ALTER TABLE public.pagadorias ADD COLUMN IF NOT EXISTS comissao_pct NUMERIC DEFAULT 5;
+ALTER TABLE public.pagadorias ADD COLUMN IF NOT EXISTS comissao_total NUMERIC DEFAULT 0;
