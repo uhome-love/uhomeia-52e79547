@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { usePipeline } from "@/hooks/usePipeline";
-import PipelineBoard from "@/components/pipeline/PipelineBoard";
+import JourneyMapBoard from "@/components/pipeline/JourneyMapBoard";
 import PipelineAddLeadDialog from "@/components/pipeline/PipelineAddLeadDialog";
 import PipelineLeadDetail from "@/components/pipeline/PipelineLeadDetail";
 import PipelineFlowDashboard from "@/components/pipeline/PipelineFlowDashboard";
