@@ -360,10 +360,10 @@ ${histCtx}
 
       {/* ═══ SMART RECOMMENDATION ═══ */}
       {recommendation && !result && (
-        <div className="rounded-lg border border-blue-400/30 bg-blue-500/10 p-2.5 mb-3">
+        <div className="rounded-lg border border-accent/30 bg-accent/10 p-2.5 mb-3">
           <div className="flex items-start gap-1.5">
-            <Lightbulb className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-blue-700 dark:text-blue-300 leading-relaxed">
+            <Lightbulb className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+            <p className="text-[10px] text-accent-foreground leading-relaxed">
               <span className="font-bold">Recomendação:</span> {recommendation.text}
             </p>
           </div>
