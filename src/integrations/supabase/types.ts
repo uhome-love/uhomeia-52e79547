@@ -1186,6 +1186,77 @@ export type Database = {
           },
         ]
       }
+      lead_progressao: {
+        Row: {
+          corretor_id: string | null
+          created_at: string | null
+          fase_destino: string | null
+          fase_origem: string | null
+          id: string
+          lead_id: string | null
+          modulo_destino: string
+          modulo_origem: string
+          negocio_id: string | null
+          triggered_by: string | null
+          visita_id: string | null
+        }
+        Insert: {
+          corretor_id?: string | null
+          created_at?: string | null
+          fase_destino?: string | null
+          fase_origem?: string | null
+          id?: string
+          lead_id?: string | null
+          modulo_destino: string
+          modulo_origem: string
+          negocio_id?: string | null
+          triggered_by?: string | null
+          visita_id?: string | null
+        }
+        Update: {
+          corretor_id?: string | null
+          created_at?: string | null
+          fase_destino?: string | null
+          fase_origem?: string | null
+          id?: string
+          lead_id?: string | null
+          modulo_destino?: string
+          modulo_origem?: string
+          negocio_id?: string | null
+          triggered_by?: string | null
+          visita_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_progressao_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_progressao_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_progressao_negocio_id_fkey"
+            columns: ["negocio_id"]
+            isOneToOne: false
+            referencedRelation: "negocios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_progressao_visita_id_fkey"
+            columns: ["visita_id"]
+            isOneToOne: false
+            referencedRelation: "visitas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_tasks: {
         Row: {
           concluida_em: string | null
@@ -1240,6 +1311,7 @@ export type Database = {
         Row: {
           atualizado_em: string
           corretor_responsavel: string | null
+          dias_parado: number | null
           email: string | null
           id: string
           imovel_codigo: string | null
@@ -1247,21 +1319,26 @@ export type Database = {
           importado_em: string
           interesse: string | null
           mensagem_gerada: string | null
+          modulo_atual: string | null
+          negocio_id: string | null
           nome: string
           observacoes: string | null
           origem: string | null
+          pipeline_fase: string | null
           prioridade: Database["public"]["Enums"]["lead_priority"] | null
           recovery_score: number | null
           status: string | null
           status_recuperacao: string | null
           telefone: string | null
           tipo_situacao: string | null
+          ultima_acao_at: string | null
           ultimo_contato: string | null
           user_id: string
         }
         Insert: {
           atualizado_em?: string
           corretor_responsavel?: string | null
+          dias_parado?: number | null
           email?: string | null
           id?: string
           imovel_codigo?: string | null
@@ -1269,21 +1346,26 @@ export type Database = {
           importado_em?: string
           interesse?: string | null
           mensagem_gerada?: string | null
+          modulo_atual?: string | null
+          negocio_id?: string | null
           nome: string
           observacoes?: string | null
           origem?: string | null
+          pipeline_fase?: string | null
           prioridade?: Database["public"]["Enums"]["lead_priority"] | null
           recovery_score?: number | null
           status?: string | null
           status_recuperacao?: string | null
           telefone?: string | null
           tipo_situacao?: string | null
+          ultima_acao_at?: string | null
           ultimo_contato?: string | null
           user_id: string
         }
         Update: {
           atualizado_em?: string
           corretor_responsavel?: string | null
+          dias_parado?: number | null
           email?: string | null
           id?: string
           imovel_codigo?: string | null
@@ -1291,15 +1373,19 @@ export type Database = {
           importado_em?: string
           interesse?: string | null
           mensagem_gerada?: string | null
+          modulo_atual?: string | null
+          negocio_id?: string | null
           nome?: string
           observacoes?: string | null
           origem?: string | null
+          pipeline_fase?: string | null
           prioridade?: Database["public"]["Enums"]["lead_priority"] | null
           recovery_score?: number | null
           status?: string | null
           status_recuperacao?: string | null
           telefone?: string | null
           tipo_situacao?: string | null
+          ultima_acao_at?: string | null
           ultimo_contato?: string | null
           user_id?: string
         }
@@ -1568,6 +1654,92 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      negocios: {
+        Row: {
+          corretor_id: string | null
+          created_at: string | null
+          empreendimento: string | null
+          fase: string | null
+          gerente_id: string | null
+          id: string
+          lead_id: string | null
+          nome_cliente: string
+          observacoes: string | null
+          origem: string | null
+          status: string | null
+          telefone: string | null
+          updated_at: string | null
+          vgv_estimado: number | null
+          vgv_final: number | null
+          visita_id: string | null
+        }
+        Insert: {
+          corretor_id?: string | null
+          created_at?: string | null
+          empreendimento?: string | null
+          fase?: string | null
+          gerente_id?: string | null
+          id?: string
+          lead_id?: string | null
+          nome_cliente: string
+          observacoes?: string | null
+          origem?: string | null
+          status?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          vgv_estimado?: number | null
+          vgv_final?: number | null
+          visita_id?: string | null
+        }
+        Update: {
+          corretor_id?: string | null
+          created_at?: string | null
+          empreendimento?: string | null
+          fase?: string | null
+          gerente_id?: string | null
+          id?: string
+          lead_id?: string | null
+          nome_cliente?: string
+          observacoes?: string | null
+          origem?: string | null
+          status?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          vgv_estimado?: number | null
+          vgv_final?: number | null
+          visita_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "negocios_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negocios_gerente_id_fkey"
+            columns: ["gerente_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negocios_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negocios_visita_id_fkey"
+            columns: ["visita_id"]
+            isOneToOne: false
+            referencedRelation: "visitas"
             referencedColumns: ["id"]
           },
         ]
@@ -2977,6 +3149,73 @@ export type Database = {
             columns: ["pipeline_lead_id"]
             isOneToOne: false
             referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_vendas: {
+        Row: {
+          corretor_id: string | null
+          created_at: string | null
+          data_assinatura: string | null
+          empreendimento: string | null
+          id: string
+          indicacoes: number | null
+          lead_id: string | null
+          negocio_id: string | null
+          nome_cliente: string
+          nps_score: number | null
+          observacoes: string | null
+          vgv_final: number | null
+        }
+        Insert: {
+          corretor_id?: string | null
+          created_at?: string | null
+          data_assinatura?: string | null
+          empreendimento?: string | null
+          id?: string
+          indicacoes?: number | null
+          lead_id?: string | null
+          negocio_id?: string | null
+          nome_cliente: string
+          nps_score?: number | null
+          observacoes?: string | null
+          vgv_final?: number | null
+        }
+        Update: {
+          corretor_id?: string | null
+          created_at?: string | null
+          data_assinatura?: string | null
+          empreendimento?: string | null
+          id?: string
+          indicacoes?: number | null
+          lead_id?: string | null
+          negocio_id?: string | null
+          nome_cliente?: string
+          nps_score?: number | null
+          observacoes?: string | null
+          vgv_final?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_vendas_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_vendas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_vendas_negocio_id_fkey"
+            columns: ["negocio_id"]
+            isOneToOne: false
+            referencedRelation: "negocios"
             referencedColumns: ["id"]
           },
         ]
