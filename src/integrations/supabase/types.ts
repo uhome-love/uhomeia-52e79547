@@ -4327,6 +4327,10 @@ export type Database = {
         }
         Returns: Json
       }
+      increment_comunicacao_usage: {
+        Args: { p_template_id: string }
+        Returns: undefined
+      }
       increment_marketplace_usage: {
         Args: { p_item_id: string }
         Returns: undefined
