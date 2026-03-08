@@ -3154,6 +3154,10 @@ export type Database = {
         }
         Returns: Json
       }
+      increment_referral_count: {
+        Args: { p_referral_id: string }
+        Returns: undefined
+      }
       lock_lead_atomic: {
         Args: {
           p_corretor_id: string
