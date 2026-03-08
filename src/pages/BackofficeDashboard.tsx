@@ -87,13 +87,13 @@ export default function BackofficeDashboard() {
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const fetchOp = async () => {
-      const corretores = await supabase.from("team_members").select("id", { count: "exact", head: true }).eq("ativo", true);
-      const visitas = await supabase.from("visitas").select("id", { count: "exact", head: true }).eq("data_visita", today);
-      const fila = await supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).is("corretor_id", null);
+      const { count: c1 } = await supabase.from("team_members").select("id", { count: "exact", head: true }).eq("ativo", true) as any;
+      const { count: c2 } = await supabase.from("visitas").select("id", { count: "exact", head: true }).eq("data_visita", today) as any;
+      const { count: c3 } = await supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).is("corretor_id", null) as any;
       setOpStats({
-        corretoresAtivos: corretores.count ?? 0,
-        visitasHoje: visitas.count ?? 0,
-        leadsFila: fila.count ?? 0,
+        corretoresAtivos: c1 ?? 0,
+        visitasHoje: c2 ?? 0,
+        leadsFila: c3 ?? 0,
       });
     };
     fetchOp();
