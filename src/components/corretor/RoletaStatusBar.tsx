@@ -48,10 +48,12 @@ export default function RoletaStatusBar() {
   const [credModalOpen, setCredModalOpen] = useState(false);
   const [segmentos, setSegmentos] = useState<Segmento[]>([]);
   const [mySegmentoIds, setMySegmentoIds] = useState<string[]>([]);
-  const [credStatus, setCredStatus] = useState<string>(""); // aprovado, pendente
+  const [credStatus, setCredStatus] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [currentJanela, setCurrentJanela] = useState("");
 
   const fetchData = useCallback(async () => {
     if (!user) return;
