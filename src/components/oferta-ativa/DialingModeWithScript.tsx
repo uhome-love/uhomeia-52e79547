@@ -710,6 +710,11 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode scriptFilter={scriptTab} hideCta />
       </div>
 
+      {/* Ficha Rápida — between script and CTA */}
+      <div className="shrink-0 px-2 py-1.5" style={{ background: "#161B22" }}>
+        <FichaRapida empreendimento={selectedEmp} />
+      </div>
+
       {/* CTA Final — pinned at bottom */}
       <div
         className="shrink-0 rounded-b-xl p-3"
