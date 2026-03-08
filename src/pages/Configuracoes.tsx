@@ -60,7 +60,7 @@ export default function Configuracoes() {
       setTelefone(data.telefone || "");
       setCargo(data.cargo || "");
       setAvatarUrl(data.avatar_url);
-      setGamifiedAvatarUrl((data as any).avatar_gamificado_url);
+      setGamifiedAvatarUrl(data.avatar_gamificado_url);
     }
     setLoading(false);
   }
