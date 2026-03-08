@@ -165,9 +165,9 @@ export default function CeoDashboard() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold truncate">{getGreeting()}, {profile?.nome?.split(" ")[0] || "CEO"} 👋</h1>
-            <p className="text-xs sm:text-sm text-white/60 italic mt-0.5 truncate">"{frase}"</p>
-            <p className="text-[11px] text-white/40 mt-0.5">
+            <h1 className="text-lg sm:text-xl font-bold truncate" style={{ color: "#FFFFFF" }}>{getGreeting()}, {profile?.nome?.split(" ")[0] || "CEO"} 👋</h1>
+            <p className="text-xs sm:text-sm italic mt-0.5 truncate" style={{ color: "#94A3B8" }}>"{frase}"</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "#64748B" }}>
               {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })} — Semana {weekNum}
             </p>
           </div>
@@ -182,12 +182,16 @@ export default function CeoDashboard() {
         </div>
         {/* Period pills — always visible */}
         <div className="flex items-center justify-between mt-3 gap-2">
-          <div className="flex bg-white/10 rounded-lg p-0.5">
+          <div className="flex rounded-lg p-0.5 gap-1">
             {(["hoje", "semana", "mes"] as DashPeriod[]).map(p => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${period === p ? "bg-white text-slate-900" : "text-white/70 hover:text-white"}`}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  period === p
+                    ? "bg-[#1e293b] text-white border border-[#3B82F6]"
+                    : "text-[#94A3B8] hover:text-white border border-transparent"
+                }`}
               >
                 {p === "hoje" ? "Hoje" : p === "semana" ? "Semana" : "Mês"}
               </button>
