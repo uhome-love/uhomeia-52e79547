@@ -993,6 +993,41 @@ export type Database = {
         }
         Relationships: []
       }
+      homi_chunks: {
+        Row: {
+          content: string
+          created_at: string | null
+          document_id: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          document_id?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          document_id?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homi_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "homi_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homi_conversations: {
         Row: {
           acao: string | null
@@ -1035,6 +1070,51 @@ export type Database = {
           titulo?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      homi_documents: {
+        Row: {
+          category: string
+          chunk_count: number | null
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          empreendimento: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          status: string | null
+          subcategory: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          chunk_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          empreendimento?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          status?: string | null
+          subcategory?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          chunk_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          empreendimento?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          status?: string | null
+          subcategory?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -3470,6 +3550,21 @@ export type Database = {
           p_lista_id?: string
         }
         Returns: Json
+      }
+      buscar_conhecimento: {
+        Args: {
+          filter_empreendimento?: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          document_id: string
+          id: string
+          metadata: Json
+          similarity: number
+        }[]
       }
       calculate_recovery_score: {
         Args: {
