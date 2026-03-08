@@ -116,8 +116,20 @@ export function usePipeline(pipelineTipo: string = "leads") {
     if (!isGestor && !isAdmin) {
       query = query.eq("corretor_id", user.id);
     } else if (isGestor && !isAdmin) {
-      // Gerentes: only see leads that have a corretor assigned (no Fila CEO)
-      query = query.not("corretor_id", "is", null);
+      // Gerentes: only see leads assigned to their team members
+      const { data: teamMembers } = await supabase
+        .from("team_members")
+        .select("user_id")
+        .eq("gerente_id", user.id);
+      const teamUserIds = (teamMembers || []).map(m => m.user_id).filter(Boolean) as string[];
+      if (teamUserIds.length > 0) {
+        query = query.in("corretor_id", teamUserIds);
+      } else {
+        // No team members → no leads to show
+        setLeads([]);
+        setCorretorNomes({});
+        return;
+      }
     }
 
     const { data, error } = await query;
