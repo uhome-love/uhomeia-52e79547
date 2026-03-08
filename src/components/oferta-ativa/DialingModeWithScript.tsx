@@ -768,6 +768,50 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                 </div>
               )}
 
+              {/* ⚡ OBJEÇÕES RÁPIDAS — moved here */}
+              <div style={{ background: "#1C2128", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: 14 }} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: 12, color: "#FBBF24", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>⚡ OBJEÇÕES RÁPIDAS</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {objections.map((obj, i) => (
+                    <div key={i}>
+                      <button
+                        onClick={() => setExpandedObj(expandedObj === i ? null : i)}
+                        className="w-full text-left transition-colors"
+                        style={{
+                          background: expandedObj === i ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.04)",
+                          border: expandedObj === i ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 8,
+                          padding: "8px 12px",
+                          color: expandedObj === i ? "#FCD34D" : "#D1D5DB",
+                          fontSize: 14,
+                        }}
+                      >
+                        {obj.emoji} {obj.label}
+                      </button>
+                      {expandedObj === i && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-1 p-2.5 rounded-lg text-xs leading-relaxed"
+                          style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", color: "#E5E7EB" }}
+                        >
+                          {obj.answer}
+                          <div className="flex items-center gap-2 mt-2">
+                            <button onClick={() => { navigator.clipboard.writeText(obj.answer); toast.success("Resposta copiada!"); }} className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "#9CA3AF" }}>
+                              📋 Copiar
+                            </button>
+                            <button className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(34,197,94,0.1)", color: "#86EFAC" }}>👍 Funcionou</button>
+                            <button className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(239,68,68,0.1)", color: "#FCA5A5" }}>👎 Não</button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <RecentCallsHistory />
             </div>
