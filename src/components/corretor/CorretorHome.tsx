@@ -29,7 +29,7 @@ import { useNavigate } from "react-router-dom";
 const ACHIEVEMENTS_MAP: Record<string, { emoji: string; label: string }> = Object.fromEntries(
   ACHIEVEMENTS.map(a => [a.id, { emoji: a.emoji, label: a.label }])
 );
-const homiMascot = "/images/homi-mascot-opt.png";
+
 
 export default function CorretorHome() {
   const { progress, goals, saveGoals } = useCorretorProgress();
