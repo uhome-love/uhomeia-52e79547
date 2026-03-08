@@ -7,6 +7,7 @@ import { differenceInHours, differenceInMinutes } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight,
+  ArrowLeft,
   Clock,
   TrendingUp,
   AlertTriangle,
@@ -15,6 +16,7 @@ import {
   Flame,
   BarChart3,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { calculateLeadScore, getSlaStatus } from "@/lib/leadScoring";
 
 interface PipelineFlowDashboardProps {
