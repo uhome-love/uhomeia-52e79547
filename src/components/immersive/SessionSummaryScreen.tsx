@@ -82,7 +82,7 @@ export default function SessionSummaryScreen({ stats, homiMessage, onNewSession,
           >
             <div className="flex items-start gap-3">
               <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                <img src="/images/homi-mascot-opt.png" alt="HOMI" className="h-6 w-6 object-contain" />
+                <img src="/images/homi-mascot-official.png" alt="HOMI" className="h-6 w-6 object-contain" />
               </div>
               <p className="text-sm text-neutral-300 leading-relaxed">{homiMessage}</p>
             </div>
