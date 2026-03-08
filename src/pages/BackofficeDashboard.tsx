@@ -76,25 +76,27 @@ export default function BackofficeDashboard() {
 
   // Fetch marketplace stats
   useEffect(() => {
-    supabase.from("marketplace_items").select("status").then(({ data }) => {
+    const fetchMkp = async () => {
+      const { data }: any = await supabase.from("marketplace_items").select("status");
       const ativos = (data || []).filter((i: any) => i.status === "aprovado").length;
       const pendentes = (data || []).filter((i: any) => i.status === "pendente").length;
       setMkpStats({ ativos, pendentes });
-    });
+    };
+    fetchMkp();
   }, []);
 
   // Fetch operational stats
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const fetchOp = async () => {
-      const q1: any = supabase.from("team_members").select("id", { count: "exact", head: true }).eq("ativo", true);
-      const q2: any = supabase.from("visitas").select("id", { count: "exact", head: true }).eq("data_visita", today);
-      const q3: any = supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).is("corretor_id", null);
-      const [r1, r2, r3] = await Promise.all([q1, q2, q3]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const r1: any = await (supabase.from("team_members" as any).select("id", { count: "exact", head: true }) as any);
+      const r2: any = await (supabase.from("visitas").select("id", { count: "exact", head: true }).eq("data_visita", today) as any);
+      const r3: any = await (supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).is("corretor_id", null) as any);
       setOpStats({
-        corretoresAtivos: r1.count ?? 0,
-        visitasHoje: r2.count ?? 0,
-        leadsFila: r3.count ?? 0,
+        corretoresAtivos: r1?.count ?? 0,
+        visitasHoje: r2?.count ?? 0,
+        leadsFila: r3?.count ?? 0,
       });
     };
     fetchOp();
