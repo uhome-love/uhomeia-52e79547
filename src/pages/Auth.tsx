@@ -232,22 +232,7 @@ export default function Auth() {
 
         {/* Logo — text-based, no image tint issues */}
         <div className="flex flex-col items-center anim-fis" style={{ marginBottom: 4 }}>
-          {/* Icon circle */}
-          <div className="flex items-center justify-center rounded-full mb-3" style={{ width: 56, height: 56, background: "linear-gradient(135deg, #3B82F6, #2563EB)", boxShadow: "0 0 30px rgba(59,130,246,0.4)" }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <path d="M3 9.5L12 4L21 9.5V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V9.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M9 21V12H15V21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          {/* Text logo */}
-          <h1 className="text-3xl font-bold tracking-tight" style={{ lineHeight: 1.1 }}>
-            <span style={{ color: "#FFFFFF" }}>Uhome</span>
-            <span style={{ color: "#60A5FA" }}>Sales</span>
-          </h1>
-          {/* Tagline */}
-          <p className="mt-1.5" style={{ fontSize: 11, color: "#9CA3AF", letterSpacing: "0.04em" }}>
-            Powered by Homi AI
-          </p>
+          <img src="/images/uhomesales-logo.png" alt="UhomeSales — Powered by Homi AI" style={{ height: 120, width: "auto" }} className="object-contain" />
         </div>
 
         {/* Subtitle */}
