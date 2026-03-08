@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Users, Phone, CalendarDays, RefreshCw, TrendingUp, Eye } from "lucide-react";
+import { Users, Phone, CalendarDays, RefreshCw, Eye, Briefcase } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AdminStaff {
@@ -18,16 +18,6 @@ interface AdminStaff {
 }
 
 interface CorretorInfo {
-  user_id: string;
-  nome: string;
-  avatar_url: string | null;
-  avatar_gamificado_url: string | null;
-  cargo: string | null;
-  ligacoes_hoje: number;
-  aproveitados_hoje: number;
-  visitas_semana: number;
-  ativo_hoje: boolean;
-}
   user_id: string;
   nome: string;
   avatar_url: string | null;
@@ -55,6 +45,12 @@ const TEAM_COLORS = [
   { bg: "bg-amber-50", border: "border-amber-200", ring: "ring-amber-400", accent: "text-amber-700" },
 ];
 
+const ADMIN_BADGES = [
+  { label: "🎨 Marketing", className: "bg-pink-100 text-pink-700 border-pink-200" },
+  { label: "💼 Administrativo", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  { label: "💰 Financeiro", className: "bg-amber-100 text-amber-700 border-amber-200" },
+];
+
 function getInitials(name: string) {
   return name.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join("");
 }
@@ -64,6 +60,7 @@ export default function CeoTeamPanel() {
   const { isAdmin } = useUserRole();
   const isMobile = useIsMobile();
   const [teams, setTeams] = useState<GerenteTeam[]>([]);
+  const [adminStaff, setAdminStaff] = useState<AdminStaff[]>([]);
   const [loading, setLoading] = useState(true);
   const [detailCorretor, setDetailCorretor] = useState<CorretorInfo | null>(null);
 
@@ -77,7 +74,6 @@ export default function CeoTeamPanel() {
     const monday = new Date(today);
     monday.setDate(today.getDate() - ((dayOfWeek === 0 ? 7 : dayOfWeek) - 1));
     const weekStart = monday.toISOString().slice(0, 10);
-    const monthStart = todayStr.slice(0, 8) + "01";
     const todayStart = todayStr + "T00:00:00-03:00";
 
     // 1. Get all active team members with their gerente
@@ -100,7 +96,24 @@ export default function CeoTeamPanel() {
       .in("user_id", allUserIds as string[]);
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-    // 4. Get today's tentativas for all corretores
+    // 4. Load admin/marketing staff
+    const { data: adminProfiles } = await supabase
+      .from("profiles")
+      .select("user_id, nome, avatar_url, avatar_gamificado_url, cargo")
+      .or("cargo.in.(marketing,admin,financeiro,administrativo),nome.ilike.%Ana Paula%")
+      .not("cargo", "in", "(ceo,corretor,gestor)");
+
+    setAdminStaff(
+      (adminProfiles || []).map(p => ({
+        user_id: p.user_id,
+        nome: p.nome || "Colaborador",
+        avatar_url: p.avatar_url,
+        avatar_gamificado_url: p.avatar_gamificado_url,
+        cargo: p.cargo,
+      }))
+    );
+
+    // 5. Get today's tentativas for all corretores
     const corretorUserIds = members.map(m => m.user_id).filter(Boolean) as string[];
     const { data: tentativas } = await supabase
       .from("oferta_ativa_tentativas")
@@ -108,14 +121,14 @@ export default function CeoTeamPanel() {
       .in("corretor_id", corretorUserIds)
       .gte("created_at", todayStart);
 
-    // 5. Get this week's visitas
+    // 6. Get this week's visitas
     const { data: visitas } = await supabase
       .from("visitas")
       .select("corretor_id")
       .in("corretor_id", corretorUserIds)
       .gte("data_visita", weekStart);
 
-    // 6. Get this month's VGV (from negocios or pdn_entries)
+    // 7. Get this month's VGV
     const { data: negocios } = await supabase
       .from("pdn_entries")
       .select("corretor, vgv, situacao")
@@ -172,7 +185,6 @@ export default function CeoTeamPanel() {
     // Try to add VGV from PDN
     if (negocios) {
       for (const n of negocios) {
-        // Try to match corretor name to a team
         for (const [, team] of teamMap) {
           const found = team.corretores.find(c =>
             c.nome.toLowerCase().includes((n.corretor || "").toLowerCase()) ||
@@ -195,12 +207,13 @@ export default function CeoTeamPanel() {
   const totalCorretores = teams.reduce((a, t) => a + t.corretores.length, 0);
   const totalGerentes = teams.length;
   const totalAtivos = teams.reduce((a, t) => a + t.corretores.filter(c => c.ativo_hoje).length, 0);
-  const totalColab = totalGerentes + totalCorretores;
+  const totalAdmin = adminStaff.length;
+  const totalColab = 1 + totalGerentes + totalCorretores + totalAdmin; // 1 = CEO
 
-  const renderAvatar = (url: string | null, gamUrl: string | null, name: string, size: "sm" | "md" = "sm", ringColor?: string) => {
+  const renderAvatar = (url: string | null, gamUrl: string | null, name: string, size: "sm" | "md" | "lg" = "sm", ringColor?: string) => {
     const src = gamUrl || url;
-    const sizeClass = size === "md" ? "h-12 w-12" : "h-8 w-8";
-    const textSize = size === "md" ? "text-base" : "text-xs";
+    const sizeClass = size === "lg" ? "h-14 w-14" : size === "md" ? "h-12 w-12" : "h-8 w-8";
+    const textSize = size === "lg" ? "text-lg" : size === "md" ? "text-base" : "text-xs";
     return src ? (
       <img src={src} alt={name} className={`${sizeClass} rounded-full object-cover border-2 ${ringColor || "border-border"}`} />
     ) : (
@@ -214,7 +227,6 @@ export default function CeoTeamPanel() {
     const colors = TEAM_COLORS[colorIdx % TEAM_COLORS.length];
     return (
       <div className={`rounded-xl border ${colors.border} ${colors.bg} overflow-hidden`}>
-        {/* Gerente header */}
         <div className="p-4 border-b border-border/50">
           <div className="flex items-center gap-3">
             {renderAvatar(team.gerente_avatar, team.gerente_avatar_gamificado, team.gerente_nome, "md", colors.ring)}
@@ -236,7 +248,6 @@ export default function CeoTeamPanel() {
           </div>
         </div>
 
-        {/* Corretores list */}
         <div className="divide-y divide-border/30">
           {team.corretores.map(c => (
             <button
@@ -269,7 +280,6 @@ export default function CeoTeamPanel() {
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-3 border-t border-border/50 bg-white/40 flex items-center justify-between text-[10px] text-muted-foreground">
           <span><strong className="text-foreground">{team.totals.ligacoes}</strong> ligações hoje</span>
           <span><strong className="text-foreground">{team.totals.visitas}</strong> visitas semana</span>
@@ -288,7 +298,7 @@ export default function CeoTeamPanel() {
   return (
     <div className="space-y-5">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Total Colaboradores</p>
           <p className="text-2xl font-black text-foreground mt-1">{totalColab}</p>
@@ -300,6 +310,10 @@ export default function CeoTeamPanel() {
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Corretores Ativos</p>
           <p className="text-2xl font-black text-foreground mt-1">{totalCorretores}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Administrativo</p>
+          <p className="text-2xl font-black text-foreground mt-1">{totalAdmin}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Online Hoje</p>
@@ -314,29 +328,66 @@ export default function CeoTeamPanel() {
         </Button>
       </div>
 
-      {/* Team cards — 3 columns on desktop, accordion on mobile */}
-      {isMobile ? (
-        <Accordion type="single" collapsible className="space-y-3">
-          {teams.map((team, i) => (
-            <AccordionItem key={team.gerente_id} value={team.gerente_id} className="border-none">
-              <AccordionTrigger className={`rounded-xl px-4 py-3 ${TEAM_COLORS[i % TEAM_COLORS.length].bg} ${TEAM_COLORS[i % TEAM_COLORS.length].border} border hover:no-underline`}>
-                <div className="flex items-center gap-2">
-                  {renderAvatar(team.gerente_avatar, team.gerente_avatar_gamificado, team.gerente_nome)}
-                  <span className="font-semibold text-sm">{team.gerente_nome}</span>
-                  <Badge variant="secondary" className="text-[10px] h-5">{team.corretores.length}</Badge>
+      {/* Section: Times Comerciais */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Users className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Times Comerciais</h3>
+        </div>
+
+        {isMobile ? (
+          <Accordion type="single" collapsible className="space-y-3">
+            {teams.map((team, i) => (
+              <AccordionItem key={team.gerente_id} value={team.gerente_id} className="border-none">
+                <AccordionTrigger className={`rounded-xl px-4 py-3 ${TEAM_COLORS[i % TEAM_COLORS.length].bg} ${TEAM_COLORS[i % TEAM_COLORS.length].border} border hover:no-underline`}>
+                  <div className="flex items-center gap-2">
+                    {renderAvatar(team.gerente_avatar, team.gerente_avatar_gamificado, team.gerente_nome)}
+                    <span className="font-semibold text-sm">{team.gerente_nome}</span>
+                    <Badge variant="secondary" className="text-[10px] h-5">{team.corretores.length}</Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2">
+                  <TeamCard team={team} colorIdx={i} />
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <div className={`grid gap-4 ${teams.length === 1 ? "grid-cols-1" : teams.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+            {teams.map((team, i) => (
+              <TeamCard key={team.gerente_id} team={team} colorIdx={i} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section: Administrativo */}
+      {adminStaff.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3 mt-6">
+            <Briefcase className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Administrativo</h3>
+          </div>
+
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {adminStaff.map(staff => (
+              <div key={staff.user_id} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-3">
+                  {renderAvatar(staff.avatar_url, staff.avatar_gamificado_url, staff.nome, "md")}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{staff.nome}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {ADMIN_BADGES.map(b => (
+                        <span key={b.label} className={`inline-flex items-center text-[10px] font-medium rounded-full px-2 py-0.5 border ${b.className}`}>
+                          {b.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <TeamCard team={team} colorIdx={i} />
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      ) : (
-        <div className={`grid gap-4 ${teams.length === 1 ? "grid-cols-1" : teams.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-          {teams.map((team, i) => (
-            <TeamCard key={team.gerente_id} team={team} colorIdx={i} />
-          ))}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
