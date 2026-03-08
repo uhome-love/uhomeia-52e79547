@@ -58,20 +58,22 @@ const getPeriodRange = (period: Period) => {
 
 export default function HomeDashboard() {
   const { user } = useAuth();
-  const { isAdmin, isGestor, loading: roleLoading } = useUserRole();
+  const { isAdmin, isGestor, isBackoffice, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [period, setPeriod] = useState<Period>("semana");
 
-  // Admin/CEO should go to /ceo, Corretor to /corretor
+  // Route by role: admin→/ceo, backoffice→/backoffice, corretor→/corretor
   useEffect(() => {
     if (roleLoading) return;
     if (isAdmin) {
       navigate("/ceo", { replace: true });
+    } else if (isBackoffice) {
+      navigate("/backoffice", { replace: true });
     } else if (!isGestor) {
       navigate("/corretor", { replace: true });
     }
-  }, [isAdmin, isGestor, roleLoading, navigate]);
+  }, [isAdmin, isGestor, isBackoffice, roleLoading, navigate]);
 
   const filterGerenteId = isAdmin ? undefined : user?.id;
   const { gerentes, companyTotals, allCorretores, loading, reload } = useCeoData(period as CeoPeriod, undefined, undefined, filterGerenteId);
