@@ -2503,6 +2503,188 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_config: {
+        Row: {
+          ativo: boolean
+          descricao_premiacao: string | null
+          id: string
+          regra_conversao: string
+          tipo_premiacao: string
+          updated_at: string
+          updated_by: string | null
+          valor_premiacao: number
+        }
+        Insert: {
+          ativo?: boolean
+          descricao_premiacao?: string | null
+          id?: string
+          regra_conversao?: string
+          tipo_premiacao?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor_premiacao?: number
+        }
+        Update: {
+          ativo?: boolean
+          descricao_premiacao?: string | null
+          id?: string
+          regra_conversao?: string
+          tipo_premiacao?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor_premiacao?: number
+        }
+        Relationships: []
+      }
+      referral_leads: {
+        Row: {
+          convertido: boolean
+          convertido_em: string | null
+          created_at: string
+          email: string | null
+          id: string
+          interesse: string | null
+          nome: string
+          pipeline_lead_id: string | null
+          referral_id: string
+          status: string
+          telefone: string | null
+        }
+        Insert: {
+          convertido?: boolean
+          convertido_em?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          interesse?: string | null
+          nome: string
+          pipeline_lead_id?: string | null
+          referral_id: string
+          status?: string
+          telefone?: string | null
+        }
+        Update: {
+          convertido?: boolean
+          convertido_em?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          interesse?: string | null
+          nome?: string
+          pipeline_lead_id?: string | null
+          referral_id?: string
+          status?: string
+          telefone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_leads_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_rewards: {
+        Row: {
+          created_at: string
+          id: string
+          processado_em: string | null
+          referral_id: string
+          referral_lead_id: string
+          status: string
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          processado_em?: string | null
+          referral_id: string
+          referral_lead_id: string
+          status?: string
+          tipo?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          processado_em?: string | null
+          referral_id?: string
+          referral_lead_id?: string
+          status?: string
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_referral_lead_id_fkey"
+            columns: ["referral_lead_id"]
+            isOneToOne: false
+            referencedRelation: "referral_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          ativo: boolean
+          cliente_email: string | null
+          cliente_nome: string
+          cliente_telefone: string | null
+          codigo_unico: string
+          corretor_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          indicacoes_convertidas: number
+          pipeline_lead_id: string | null
+          premiacao_acumulada: number
+          total_indicacoes: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cliente_email?: string | null
+          cliente_nome: string
+          cliente_telefone?: string | null
+          codigo_unico: string
+          corretor_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          indicacoes_convertidas?: number
+          pipeline_lead_id?: string | null
+          premiacao_acumulada?: number
+          total_indicacoes?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cliente_email?: string | null
+          cliente_nome?: string
+          cliente_telefone?: string | null
+          codigo_unico?: string
+          corretor_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          indicacoes_convertidas?: number
+          pipeline_lead_id?: string | null
+          premiacao_acumulada?: number
+          total_indicacoes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       saved_scripts: {
         Row: {
           conteudo: string
