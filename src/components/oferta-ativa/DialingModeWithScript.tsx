@@ -619,7 +619,6 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             ))}
           </div>
         </div>
-        </Collapsible>
       </div>
 
       {/* Recent calls — collapsed, outside card */}
