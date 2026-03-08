@@ -269,12 +269,16 @@ export default function Configuracoes() {
               {/* 3D Avatar preview */}
               {has3DAvatar && avatarUrl && (
                 <div className="rounded-xl overflow-hidden ring-2 ring-indigo-500/40 shadow-lg bg-muted/30"
-                     style={{ width: 200, height: 280 }}>
+                     style={{ width: 200, height: 320 }}>
                   {/* @ts-ignore */}
                   <model-viewer
                     src={avatarUrl}
-                    camera-orbit="0deg 80deg 2.2m"
-                    camera-target="0m 0.9m 0m"
+                    camera-orbit="0deg 90deg 2.8m"
+                    camera-target="0m 0.85m 0m"
+                    field-of-view="25deg"
+                    min-camera-orbit="0deg 90deg auto"
+                    max-camera-orbit="0deg 90deg auto"
+                    bounds="tight"
                     auto-rotate
                     rotation-per-second="18deg"
                     interaction-prompt="none"
