@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { playSoundSuccess, playSoundDing } from "@/lib/celebrations";
 import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 import { useIsMobile } from "@/hooks/use-mobile";
+import HomiObjectionHelper from "./HomiObjectionHelper";
 
 /** Format Brazilian phone */
 function formatPhone(phone: string): string {
@@ -645,6 +646,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             ))}
           </div>
         )}
+
+        {/* HOMI dynamic objection helper */}
+        <HomiObjectionHelper leadNome={lead.nome} leadEmpreendimento={lead.empreendimento || undefined} />
       </div>
 
       {/* Recent calls — collapsed, outside card */}
