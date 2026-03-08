@@ -51,6 +51,7 @@ const ReferralPage = lazy(() => import("./pages/ReferralPage"));
 const Conquistas = lazy(() => import("./pages/Conquistas"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const MarketplaceScripts = lazy(() => import("./pages/MarketplaceScripts"));
+const CorretorCall = lazy(() => import("./pages/CorretorCall"));
 
 const queryClient = new QueryClient();
 
