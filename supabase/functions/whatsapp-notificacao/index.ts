@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,109 +6,53 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(
-      authHeader.replace("Bearer ", "")
-    );
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const { telefone, tipo, dados } = await req.json();
 
-    // Use existing secrets (WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID)
-    const token = Deno.env.get("WHATSAPP_ACCESS_TOKEN") || Deno.env.get("WHATSAPP_TOKEN");
-    const phoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || Deno.env.get("WHATSAPP_PHONE_ID");
+    const token = Deno.env.get("WHATSAPP_TOKEN");
+    const phoneId = Deno.env.get("WHATSAPP_PHONE_ID");
 
     if (!token || !phoneId) {
-      console.error("WhatsApp credentials not configured");
+      console.error("WHATSAPP_TOKEN or WHATSAPP_PHONE_ID not configured");
       return new Response(
         JSON.stringify({ error: "WhatsApp credentials not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Format phone: remove non-digits and ensure DDI 55
     const numeroLimpo = telefone.replace(/\D/g, "");
     const numeroFinal = numeroLimpo.startsWith("55") ? numeroLimpo : `55${numeroLimpo}`;
-
-    if (numeroFinal.length < 12) {
-      return new Response(
-        JSON.stringify({ error: "Telefone inválido", telefone: numeroFinal }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     let mensagem = "";
 
     if (tipo === "novo_lead") {
-      mensagem =
-        `🔔 *NOVO LEAD — VOCÊ TEM 5 MINUTOS!*\n\n` +
-        `👤 *${dados.nome}*\n` +
-        `🏢 ${dados.empreendimento}\n` +
-        `📱 ${dados.telefone}\n\n` +
-        `⏱️ Acesse o UhomeSales agora e aceite o lead antes que expire!\n` +
-        `👉 https://uhomeia.lovable.app/roleta-leads`;
+      mensagem = `🔔 *NOVO LEAD — VOCÊ TEM 5 MINUTOS!*\n\n👤 *${dados.nome}*\n🏢 ${dados.empreendimento}\n📱 ${dados.telefone}\n\n⏱️ Acesse o UhomeSales agora e aceite antes que expire!\n👉 https://6e97ca96-8d59-451c-8ca6-c1b3d18c3c30.lovableproject.com/roleta-leads`;
     }
 
-    if (tipo === "aviso_interacao_1h") {
-      mensagem =
-        `⚠️ *ATENÇÃO — Lead sem contato há 1 hora!*\n\n` +
-        `👤 *${dados.nome}*\n` +
-        `🏢 ${dados.empreendimento}\n\n` +
-        `Faça a primeira interação agora no UhomeSales para não perder o lead!`;
+    if (tipo === "aviso_1h") {
+      mensagem = `⚠️ *Lead sem contato há 1 hora!*\n\n👤 *${dados.nome}*\n🏢 ${dados.empreendimento}\n\nFaça a primeira interação agora no UhomeSales!`;
     }
 
-    if (tipo === "aviso_interacao_1h30") {
-      mensagem =
-        `⚠️ *ATENÇÃO — Lead sem contato há 1h30!*\n\n` +
-        `👤 *${dados.nome}*\n` +
-        `🏢 ${dados.empreendimento}\n\n` +
-        `Segundo aviso! Você ainda tem tempo. Acesse o sistema agora.`;
+    if (tipo === "aviso_1h30") {
+      mensagem = `⚠️ *Segundo aviso — 1h30 sem contato!*\n\n👤 *${dados.nome}*\n🏢 ${dados.empreendimento}\n\nUrgente! Acesse o sistema agora.`;
     }
 
     if (tipo === "aviso_repasse") {
-      mensagem =
-        `🔴 *ÚLTIMO AVISO — Lead será repassado em 30 minutos!*\n\n` +
-        `👤 *${dados.nome}*\n` +
-        `🏢 ${dados.empreendimento}\n\n` +
-        `Após 3 avisos sem interação, o lead será repassado para outro corretor.`;
+      mensagem = `🔴 *ÚLTIMO AVISO — Lead repassado em 30 min!*\n\n👤 *${dados.nome}*\n🏢 ${dados.empreendimento}\n\nApós 3 avisos o lead será repassado para outro corretor.`;
     }
 
-    if (tipo === "lead_expirado_ceo") {
-      mensagem =
-        `📋 *Lead repassado por falta de interação*\n\n` +
-        `Corretor: ${dados.corretor}\n` +
-        `Lead: ${dados.nome} — ${dados.empreendimento}\n` +
-        `Motivo: ${dados.motivo}\n\n` +
-        `Lead devolvido para a fila.`;
+    if (tipo === "lead_expirado_gestor") {
+      mensagem = `📋 *Lead repassado por inatividade*\n\nCorretor: ${dados.corretor}\nLead: ${dados.nome} — ${dados.empreendimento}\n\nLead devolvido para a fila automaticamente.`;
     }
 
     if (!mensagem) {
       return new Response(
-        JSON.stringify({ error: "Tipo de notificação desconhecido", tipo }),
+        JSON.stringify({ error: `Tipo de mensagem desconhecido: ${tipo}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -133,24 +77,16 @@ Deno.serve(async (req) => {
     );
 
     const result = await response.json();
+    console.log("WhatsApp response:", JSON.stringify(result));
 
-    if (!response.ok) {
-      console.error("WhatsApp API error:", JSON.stringify(result));
-      return new Response(
-        JSON.stringify({ error: "WhatsApp API error", details: result }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log("WhatsApp sent successfully:", JSON.stringify(result));
-
-    return new Response(JSON.stringify({ success: true, ...result }), {
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: response.ok ? 200 : 400,
     });
   } catch (err) {
-    console.error("Unexpected error:", err);
+    console.error("whatsapp-notificacao error:", err);
     return new Response(
-      JSON.stringify({ error: "Internal error", message: String(err) }),
+      JSON.stringify({ error: err.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
