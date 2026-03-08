@@ -267,6 +267,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         if (resultado === "com_interesse") {
           setStreak(prev => prev + 1);
           playSoundSuccess();
+          triggerConfetti();
           const tipoLabel = interesseTipo === "visita_marcada" ? "Visita Marcada" 
             : interesseTipo === "quer_visitar" ? "Possibilidade de Visita"
             : interesseTipo === "demonstrou_interesse" ? "Atendimento"
@@ -286,7 +287,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           }
         } else if (resultado === "nao_atendeu") {
           setStreak(0);
-          toast("📞 Não atendeu — lead volta à fila com cooldown progressivo", { duration: 2000 });
+          setArenaShake(true);
+          setTimeout(() => setArenaShake(false), 500);
+          toast("Próximo! 💪", { duration: 1500 });
         } else if (resultado === "sem_interesse") {
           setStreak(0);
           toast("👋 Sem interesse — lead removido da fila", { duration: 2000 });
