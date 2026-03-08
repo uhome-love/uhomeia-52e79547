@@ -75,16 +75,14 @@ export default function CorretorCall() {
     if (hasInteracted) playWhoosh();
   }, [hasInteracted]);
 
-  // Fullscreen arena: hide sidebar + remove padding via body class
+  // Arena-mode class: managed by CorretorListSelection when dialing starts
+  // Keep badge visible via a lighter class
   useEffect(() => {
-    prevOpenRef.current = open;
-    setOpen(false);
-    document.body.classList.add("arena-mode");
+    document.body.classList.add("arena-session");
     return () => {
+      document.body.classList.remove("arena-session");
       document.body.classList.remove("arena-mode");
-      setOpen(prevOpenRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Check meta exists
