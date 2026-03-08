@@ -6,17 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { type Visita, type VisitaStatus } from "@/hooks/useVisitas";
-import VisitaRow from "./VisitaRow";
+import VisitaRow, { getTeamBadgeStyle } from "./VisitaRow";
 
 interface Props {
   visitas: Visita[];
   onUpdateStatus: (id: string, status: VisitaStatus) => void;
   onDelete?: (id: string) => void;
+  showTeam?: boolean;
 }
 
 interface CorretorGroup {
   corretorId: string;
   nome: string;
+  equipe?: string;
   initials: string;
   color: string;
   totalVisitas: number;
@@ -44,7 +46,7 @@ function getInitials(name: string) {
   return name.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
 }
 
-export default function VisitasByCorretor({ visitas, onUpdateStatus, onDelete }: Props) {
+export default function VisitasByCorretor({ visitas, onUpdateStatus, onDelete, showTeam }: Props) {
   const [collapsedCorretores, setCollapsedCorretores] = useState<Set<string>>(new Set());
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
 
@@ -87,9 +89,13 @@ export default function VisitasByCorretor({ visitas, onUpdateStatus, onDelete }:
 
       const totalRealizadas = data.visitas.filter(v => v.status === "realizada").length;
 
+      // Get equipe from first visita
+      const firstEquipe = data.visitas[0]?.equipe;
+
       result.push({
         corretorId,
         nome: data.nome,
+        equipe: firstEquipe,
         initials: getInitials(data.nome),
         color: AVATAR_COLORS[colorIdx % AVATAR_COLORS.length],
         totalVisitas: data.visitas.length,
@@ -150,6 +156,17 @@ export default function VisitasByCorretor({ visitas, onUpdateStatus, onDelete }:
                 <span className="text-xs text-muted-foreground ml-2">
                   {c.totalVisitas} visita{c.totalVisitas !== 1 ? "s" : ""} · {c.totalDias} dia{c.totalDias !== 1 ? "s" : ""}
                 </span>
+                {showTeam && (() => {
+                  const style = getTeamBadgeStyle(c.equipe);
+                  if (!style) return null;
+                  return (
+                    <div className="mt-0.5">
+                      <span className={cn("text-[11px] px-1.5 py-0 rounded-full border", style.className)}>
+                        {style.emoji} {style.label}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Progress bar */}
