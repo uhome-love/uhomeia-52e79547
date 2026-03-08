@@ -126,18 +126,18 @@ export default function GlobalSearch() {
       // Search visitas
       const { data: visitas } = await supabase
         .from("visitas")
-        .select("id, cliente_nome, empreendimento, data_visita, status, corretor_nome")
-        .or(`cliente_nome.ilike.%${term}%,empreendimento.ilike.%${term}%,corretor_nome.ilike.%${term}%`)
+        .select("id, nome_cliente, empreendimento, data_visita, hora_visita, status")
+        .or(`nome_cliente.ilike.%${term}%,empreendimento.ilike.%${term}%`)
         .order("data_visita", { ascending: false })
         .limit(6);
 
       (visitas || []).forEach(v => {
-        const dateStr = v.data_visita ? new Date(v.data_visita).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+        const dateStr = v.data_visita ? new Date(v.data_visita).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "";
         all.push({
           id: v.id,
           type: "visita",
-          title: v.cliente_nome || "Visita",
-          subtitle: [v.empreendimento, dateStr, v.status].filter(Boolean).join(" · "),
+          title: v.nome_cliente || "Visita",
+          subtitle: [v.empreendimento, dateStr, v.hora_visita, v.status].filter(Boolean).join(" · "),
           badge: v.status || "Visita",
           url: `/agenda-visitas?visita=${v.id}`,
         });
