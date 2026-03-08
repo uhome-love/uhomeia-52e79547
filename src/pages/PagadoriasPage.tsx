@@ -12,9 +12,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Plus, Search, FileText, Link, Loader2, Trash2, Settings } from "lucide-react";
+import { DollarSign, Plus, Search, FileText, Link, Loader2, Trash2, Settings, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import PagadoriaConfigModal from "@/components/pagadorias/PagadoriaConfigModal";
+import ContratoIntermediacao from "@/components/pagadorias/ContratoIntermediacao";
 
 const STATUS_MAP: Record<string, { label: string }> = {
   rascunho: { label: "Rascunho" },
