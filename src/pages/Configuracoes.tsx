@@ -270,21 +270,24 @@ export default function Configuracoes() {
               {has3DAvatar && avatarUrl && (
                 <div className="rounded-xl overflow-hidden ring-2 ring-indigo-500/40 shadow-lg bg-muted/30"
                      style={{ width: 200, height: 320 }}>
-                  {/* @ts-ignore */}
-                  <model-viewer
-                    src={avatarUrl}
-                    camera-orbit="0deg 90deg 2.8m"
-                    camera-target="0m 0.85m 0m"
-                    field-of-view="25deg"
-                    min-camera-orbit="0deg 90deg auto"
-                    max-camera-orbit="0deg 90deg auto"
-                    bounds="tight"
-                    auto-rotate
-                    rotation-per-second="18deg"
-                    interaction-prompt="none"
-                    shadow-intensity="0"
-                    style={{ width: "100%", height: "100%", background: "transparent" } as React.CSSProperties}
-                  />
+                  {/* @ts-ignore - model-viewer custom element */}
+                  {(() => {
+                    const props: any = {
+                      src: avatarUrl,
+                      "camera-orbit": "0deg 90deg 2.8m",
+                      "camera-target": "0m 0.85m 0m",
+                      "field-of-view": "25deg",
+                      "min-camera-orbit": "0deg 90deg auto",
+                      "max-camera-orbit": "0deg 90deg auto",
+                      bounds: "tight",
+                      "auto-rotate": true,
+                      "rotation-per-second": "18deg",
+                      "interaction-prompt": "none",
+                      "shadow-intensity": "0",
+                      style: { width: "100%", height: "100%", background: "transparent" },
+                    };
+                    return <model-viewer {...props} />;
+                  })()}
                 </div>
               )}
 
