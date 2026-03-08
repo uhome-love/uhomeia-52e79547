@@ -35,7 +35,34 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { pipeline_lead_id, segmento_id, action } = body;
+    const { pipeline_lead_id, segmento_id: providedSegmentoId, action } = body;
+
+    // If no segmento_id provided, try to map from empreendimento
+    let segmento_id = providedSegmentoId || null;
+    if (!segmento_id && pipeline_lead_id && action !== "aceitar" && action !== "rejeitar" && action !== "redistribuir_pendentes") {
+      const { data: lead } = await supabase
+        .from("pipeline_leads")
+        .select("empreendimento")
+        .eq("id", pipeline_lead_id)
+        .maybeSingle();
+
+      if (lead?.empreendimento) {
+        const { data: segmentos } = await supabase
+          .from("pipeline_segmentos")
+          .select("id, empreendimentos")
+          .eq("ativo", true);
+
+        if (segmentos) {
+          const matched = segmentos.find((s: any) =>
+            (s.empreendimentos || []).some((e: string) =>
+              lead.empreendimento!.toLowerCase().includes(e.toLowerCase()) ||
+              e.toLowerCase().includes(lead.empreendimento!.toLowerCase())
+            )
+          );
+          if (matched) segmento_id = matched.id;
+        }
+      }
+    }
 
     // Handle special actions
     if (action === "aceitar" || action === "rejeitar") {
@@ -106,10 +133,23 @@ Deno.serve(async (req) => {
         .from("user_roles")
         .select("user_id")
         .in("role", ["gestor", "admin"]);
+
+      // Get segment name for better notification
+      let segmentoNome = "";
+      if (segmento_id) {
+        const { data: seg } = await supabase
+          .from("pipeline_segmentos")
+          .select("nome")
+          .eq("id", segmento_id)
+          .maybeSingle();
+        segmentoNome = seg?.nome || "";
+      }
       
       if (gestores) {
         const msg = data.reason === "fora_horario" 
           ? "Lead recebido fora do horário da roleta. Aguardando redistribuição."
+          : segmentoNome
+          ? `⚠️ Sem corretor para ${segmentoNome}. Lead aguardando distribuição.`
           : "Nenhum corretor disponível para o segmento. Lead aguardando distribuição.";
         for (const g of gestores) {
           await supabase.rpc("criar_notificacao", {
