@@ -175,6 +175,7 @@ export function useNegocios() {
   return {
     negocios,
     corretorNomes,
+    corretorInfoMap,
     loading,
     moveFase,
     updateNegocio,
