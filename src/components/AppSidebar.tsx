@@ -111,7 +111,7 @@ export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, signOut } = useAuth();
-  const { isGestor, isAdmin } = useUserRole();
+  const { isGestor, isAdmin, isBackoffice } = useUserRole();
   const { alerts, badges } = useSmartAlerts();
   const toastShown = useRef(false);
   const navigate = useNavigate();
