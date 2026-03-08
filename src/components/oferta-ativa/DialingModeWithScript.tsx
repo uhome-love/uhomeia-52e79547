@@ -607,11 +607,8 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             className="space-y-3 lead-card-enter"
           >
             <div
-              className="rounded-xl p-4 space-y-3"
-              style={{
-                background: "#161B22",
-                border: isHotLead ? "1px solid rgba(234,179,8,0.4)" : "1px solid rgba(255,255,255,0.08)",
-              }}
+              className="arena-card p-4 space-y-3"
+              style={isHotLead ? { borderColor: "rgba(234,179,8,0.4)" } : undefined}
             >
               {/* Context line */}
               <div className="flex items-center gap-2 text-[10px] text-neutral-500">
