@@ -446,6 +446,13 @@ export default function PipelineKanban() {
           onDelete={pipeline.deleteLead}
         />
       )}
+
+      {/* Fila CEO Dispatch Modal */}
+      <FilaCeoDispatchModal
+        open={dispatchOpen}
+        onOpenChange={setDispatchOpen}
+        onDispatched={() => pipeline.reload()}
+      />
     </div>
   );
 }
