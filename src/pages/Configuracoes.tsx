@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -134,7 +135,6 @@ export default function Configuracoes() {
       .update({
         nome: nome.trim(),
         telefone: telefone.trim(),
-        cargo: cargo.trim(),
       })
       .eq("user_id", user.id);
 
