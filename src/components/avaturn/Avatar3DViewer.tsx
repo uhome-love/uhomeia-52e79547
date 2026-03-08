@@ -1,31 +1,7 @@
 import { useEffect, useRef, memo } from "react";
 import "@google/model-viewer";
 
-// Type declaration for model-viewer custom element
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "model-viewer": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          src?: string;
-          alt?: string;
-          "camera-orbit"?: string;
-          "camera-target"?: string;
-          "field-of-view"?: string;
-          "min-camera-orbit"?: string;
-          "max-camera-orbit"?: string;
-          bounds?: string;
-          "auto-rotate"?: boolean;
-          "rotation-per-second"?: string;
-          "interaction-prompt"?: string;
-          "shadow-intensity"?: string;
-          loading?: string;
-        },
-        HTMLElement
-      >;
-    }
-  }
-}
+// Type declaration for model-viewer is in src/types/model-viewer.d.ts
 
 interface Avatar3DViewerProps {
   src: string;
