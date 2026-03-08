@@ -702,33 +702,6 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         }}
       >
         <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode scriptFilter={scriptTab} />
-
-        {/* Objection response block — inside scroll area */}
-        <AnimatePresence>
-          {objectionInsert && expandedObj !== null && (
-            <motion.div
-              data-objection-block
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="mx-3 mb-3 p-3 rounded-lg text-sm leading-relaxed relative"
-              style={{ background: "rgba(245,158,11,0.1)", borderLeft: "3px solid #F59E0B", color: "#E5E7EB" }}
-            >
-              <button
-                onClick={() => { setExpandedObj(null); setObjectionInsert(null); }}
-                className="absolute top-2 right-2 text-neutral-500 hover:text-white transition-colors"
-                style={{ fontSize: 14, lineHeight: 1 }}
-              >
-                ✕
-              </button>
-              <div className="flex items-center gap-1.5 mb-1.5 pr-5">
-                <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: "#FBBF24" }} />
-                <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "#FBBF24" }}>Resposta p/ objeção: {objections[expandedObj].label}</span>
-              </div>
-              <p style={{ fontSize: "14px", lineHeight: 1.6 }}>{objectionInsert}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
