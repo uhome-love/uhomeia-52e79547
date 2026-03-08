@@ -110,7 +110,7 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
           </label>
           <select
             value={selectedEmp}
-            onChange={e => setSelectedEmp(e.target.value)}
+            onChange={e => onEmpChange(e.target.value)}
             className="w-full mt-0.5 text-sm rounded-md px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
             style={{
               background: "#1C2128",
