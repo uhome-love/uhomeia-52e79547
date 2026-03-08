@@ -340,6 +340,12 @@ export default function TeamManagement() {
                             Não vinculado
                           </Badge>
                         )}
+                        {m.user_id && onboardingMap[m.user_id] !== undefined && (onboardingMap[m.user_id] || 0) < totalOnboardingSteps && (
+                          <Badge variant="outline" className="text-[10px] h-5 gap-1 border-amber-400/40 text-amber-600">
+                            <GraduationCap className="h-3 w-3" />
+                            Onboarding {Math.round(((onboardingMap[m.user_id] || 0) / totalOnboardingSteps) * 100)}%
+                          </Badge>
+                        )}
                         {editingEquipe === m.id ? (
                           <div className="flex items-center gap-1">
                             <Input
