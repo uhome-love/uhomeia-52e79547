@@ -412,7 +412,7 @@ export default function CorretorCall() {
             100% { box-shadow: 0 0 40px rgba(22,163,74,0.4), 0 0 80px rgba(22,163,74,0.1); }
           }
         `}</style>
-      </div>
+      </ImmersiveScreen>
     );
   }
 
