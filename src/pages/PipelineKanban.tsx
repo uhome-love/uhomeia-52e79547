@@ -284,8 +284,26 @@ export default function PipelineKanban() {
                 {activeFiltersCount > 0
                   ? `${filteredLeads.length} de ${pipeline.leads.length} leads`
                   : `${filteredLeads.length} oportunidades`}
+                {(isGestor || isAdmin) && filaCeoCount > 0 && !filaCeoFilter && (
+                  <span className="text-muted-foreground font-normal"> ({filaCeoCount} na fila CEO)</span>
+                )}
               </span>
             </div>
+            {(isGestor || isAdmin) && filaCeoCount > 0 && (
+              <button
+                onClick={() => setFilaCeoFilter(f => !f)}
+                className={`flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                  filaCeoFilter
+                    ? "bg-purple-100 text-purple-700 border-purple-300"
+                    : "bg-card text-muted-foreground border-border hover:border-purple-300 hover:text-purple-600"
+                }`}
+              >
+                📥 Fila CEO
+                <Badge className="text-[9px] px-1 py-0 h-3.5 bg-purple-600 text-white border-none">
+                  {filaCeoCount}
+                </Badge>
+              </button>
+            )}
             {totalVGV > 0 && (
               <span className="text-sm text-muted-foreground font-medium">
                 • {formatVGV(totalVGV)} em VGV
