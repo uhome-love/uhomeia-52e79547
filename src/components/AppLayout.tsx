@@ -74,7 +74,7 @@ function ArenaAutoCollapse({ isSession }: { isSession: boolean }) {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
-  const { isAdmin, isGestor } = useUserRole();
+  const { isAdmin, isGestor, isBackoffice } = useUserRole();
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -88,16 +88,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       if (data?.nome) setNome(data.nome);
       const url = data?.avatar_url || (data as any)?.avatar_gamificado_url || null;
       setAvatarUrl(url);
-      const c = (data as any)?.cargo || "";
-      const labelMap: Record<string, string> = {
-        backoffice: "Backoffice · 💜 Admin",
-        admin: "Admin · 👑 CEO",
-        gerente: "Gerente",
-        corretor: "Corretor",
-      };
-      setCargoLabel(labelMap[c] || (isAdmin ? "Admin · 👑 CEO" : isGestor ? "Gerente" : "Corretor"));
+      // Use role from useUserRole as primary signal, profile.cargo as secondary
+      if (isBackoffice) {
+        setCargoLabel("Backoffice · 💜 Admin");
+      } else if (isAdmin) {
+        setCargoLabel("Admin · 👑 CEO");
+      } else if (isGestor) {
+        setCargoLabel("Gerente");
+      } else {
+        const c = (data as any)?.cargo || "";
+        const labelMap: Record<string, string> = {
+          backoffice: "Backoffice · 💜 Admin",
+          admin: "Admin · 👑 CEO",
+          gerente: "Gerente",
+          corretor: "Corretor",
+        };
+        setCargoLabel(labelMap[c] || "Corretor");
+      }
     });
-  }, [user, isAdmin, isGestor]);
+  }, [user, isAdmin, isGestor, isBackoffice]);
 
   return (
     <SidebarProvider defaultOpen={!isSession}>
@@ -164,10 +173,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       </div>
                     )}
                     <div className="text-left hidden sm:block">
-                      <p className="text-xs font-medium leading-tight" style={{ color: "#fff" }}>
+                      <p className="leading-tight" style={{ color: "#FFFFFF", fontSize: 14, fontWeight: 600 }}>
                         {nome || user?.email?.split("@")[0]}
                       </p>
-                      <p className="text-[10px] leading-tight" style={{ color: "#9CA3AF" }}>{cargoLabel}</p>
+                      <p className="leading-tight" style={{ color: "#9CA3AF", fontSize: 12 }}>{cargoLabel}</p>
                     </div>
                     <ChevronDown className="h-3.5 w-3.5 hidden sm:block" style={{ color: "#6B7280" }} />
                   </Button>
