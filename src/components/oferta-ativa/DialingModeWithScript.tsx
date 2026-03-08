@@ -456,8 +456,23 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                 if (error) throw error;
                 const result = data as any;
                 if (result?.success) {
-                  toast.success(`Trabalho finalizado! ${result.tentativas} tentativas e ${result.aproveitados} aproveitados enviados.`);
-                  onBack();
+                  // Build session metrics snapshot for coaching
+                  const atenderam = progress.aproveitados + (progress.tentativas - progress.ligacoes > 0 ? Math.round(progress.tentativas * 0.3) : Math.round(progress.tentativas * 0.25));
+                  const snapshot: SessionMetrics = {
+                    total_tentativas: progress.tentativas,
+                    total_atenderam: Math.min(atenderam, progress.tentativas),
+                    total_aproveitados: progress.aproveitados,
+                    ligacoes: progress.ligacoes,
+                    whatsapps: progress.whatsapps,
+                    emails: progress.emails,
+                    pontos: progress.pontos,
+                    duracao_segundos: sessionSeconds,
+                    empreendimento: lista.empreendimento,
+                    lista_id: lista.id,
+                    session_start: sessionStart,
+                  };
+                  setSessionMetricsSnapshot(snapshot);
+                  setShowCoachingModal(true);
                 } else {
                   toast.error(result?.message || "Erro ao finalizar trabalho.");
                 }
