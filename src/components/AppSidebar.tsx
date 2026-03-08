@@ -23,6 +23,7 @@ import {
   Bell,
   Heart,
   Workflow,
+  BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AvatarUpload from "@/components/AvatarUpload";
@@ -104,6 +105,7 @@ export function AppSidebar() {
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Scripts", url: "/scripts", icon: FileEdit },
+        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
         { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
         { title: "Automações", url: "/automacoes", icon: Workflow },
       ]
@@ -113,6 +115,7 @@ export function AppSidebar() {
         { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Scripts", url: "/scripts", icon: FileEdit },
+        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
         { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
         { title: "Automações", url: "/automacoes", icon: Workflow },
       ]
@@ -121,6 +124,7 @@ export function AppSidebar() {
         { title: "Minha Agenda", url: "/agenda-visitas", icon: CalendarDays },
         { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
         { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
+        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
       ];
 
   // === GESTÃO DE NEGÓCIOS (Gestor) ===
