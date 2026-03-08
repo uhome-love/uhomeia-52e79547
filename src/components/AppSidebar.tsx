@@ -172,7 +172,7 @@ export function AppSidebar() {
       ]
     : [
         { title: "Meu Desempenho", url: "/corretor/resumo", icon: BarChart3 },
-        { title: "Rankings", url: "/ranking", icon: Trophy },
+        { title: "Rankings", url: "/corretor/ranking-equipes", icon: Trophy },
         { title: "Conquistas", url: "/conquistas", icon: Award },
       ];
 
