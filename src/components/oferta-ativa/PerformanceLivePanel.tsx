@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Activity, Users, Phone, ThumbsUp, AlertTriangle, TrendingUp, Zap } from "lucide-react";
 import { format, differenceInMinutes } from "date-fns";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 
 interface CorretorLive {
   corretor_id: string;
