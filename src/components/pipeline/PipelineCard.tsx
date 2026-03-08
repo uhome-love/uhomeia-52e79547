@@ -256,6 +256,26 @@ const PipelineCard = memo(function PipelineCard({
       >
         {/* Info section */}
         <div className="px-3 pt-2.5 pb-2 space-y-1">
+          {/* Game: Mission badge + days counter */}
+          <div className="flex items-center justify-between mb-1">
+            <span
+              className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: `${missionBadge.color}20`, color: missionBadge.color }}
+            >
+              {missionBadge.badge}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`text-[10px] font-bold ${daysLabel.cls}`}>
+                  {daysLabel.text}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Lead parado há {daysInStage} dias nesta fase
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
           {/* Line 1: emoji + name + score */}
           <div className="flex items-center justify-between gap-1">
             <div className="flex items-center gap-1 min-w-0">
