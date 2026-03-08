@@ -34,6 +34,72 @@ Deno.serve(async (req) => {
     );
     if (recycleError) console.error("Recycle error:", recycleError);
 
+    // 4b. If leads were recycled, notify CEO/gerentes via WhatsApp
+    if (recycledCount && recycledCount > 0) {
+      try {
+        // Get recently expired leads (recycled in last 2 minutes)
+        const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+        const { data: expiredLeads } = await supabase
+          .from("distribuicao_historico")
+          .select("pipeline_lead_id, corretor_id")
+          .eq("acao", "timeout")
+          .gte("created_at", twoMinAgo);
+
+        if (expiredLeads && expiredLeads.length > 0) {
+          // Get CEO/gerente profiles with phone numbers
+          const { data: ceoGerentes } = await supabase
+            .from("profiles")
+            .select("telefone, nome, cargo")
+            .in("cargo", ["ceo", "gerente"]);
+
+          for (const expired of expiredLeads) {
+            // Get corretor name
+            const { data: corretorProfile } = await supabase
+              .from("profiles")
+              .select("nome")
+              .eq("user_id", expired.corretor_id)
+              .maybeSingle();
+
+            // Get lead data
+            const { data: leadData } = await supabase
+              .from("pipeline_leads")
+              .select("nome, empreendimento")
+              .eq("id", expired.pipeline_lead_id)
+              .maybeSingle();
+
+            if (leadData && ceoGerentes) {
+              for (const gestor of ceoGerentes) {
+                if (!gestor.telefone) continue;
+                try {
+                  await fetch(`${supabaseUrl}/functions/v1/whatsapp-notificacao`, {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${serviceKey}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      telefone: gestor.telefone,
+                      tipo: "lead_expirado_ceo",
+                      dados: {
+                        corretor: corretorProfile?.nome || "Desconhecido",
+                        nome: leadData.nome || "Lead",
+                        empreendimento: leadData.empreendimento || "Não identificado",
+                        motivo: "Tempo de aceite expirado (5 min)",
+                      },
+                    }),
+                  });
+                } catch (whErr) {
+                  console.error("WhatsApp CEO notify error:", whErr);
+                }
+              }
+            }
+          }
+        }
+      } catch (notifyErr) {
+        console.error("CEO notification error (non-blocking):", notifyErr);
+      }
+    }
+
     // 4. Clean expired OA locks
     const { data: cleanedCount, error: cleanError } = await supabase.rpc(
       "cleanup_expired_locks"
