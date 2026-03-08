@@ -1,7 +1,7 @@
-import { memo, useState } from "react";
+import { memo, useState, useMemo } from "react";
 import type { PipelineLead, PipelineSegmento, PipelineStage } from "@/hooks/usePipeline";
 import { Phone, Mail, Clock, MessageCircle, Calendar, Flame, Thermometer, Snowflake, Zap, AlertCircle, Timer, ChevronDown, MoreHorizontal, Eye, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft } from "lucide-react";
-import { differenceInHours, differenceInMinutes } from "date-fns";
+import { differenceInHours, differenceInMinutes, differenceInDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -61,7 +61,20 @@ function deduplicateEmpreendimento(raw: string): string {
   return [...seen.values()].join(" · ");
 }
 
-// Temperature border colors
+// Mission badges by stage type/name
+const MISSION_BADGES: Record<string, { badge: string; color: string }> = {
+  "Novo Lead":          { badge: "🗺️ EXPLORAR",    color: "#6B7280" },
+  "Contato Iniciado":   { badge: "⚡ ENGAJAR",      color: "#3B82F6" },
+  "Qualificação":       { badge: "🎯 QUALIFICAR",   color: "#8B5CF6" },
+  "Possível Visita":    { badge: "🏃 AVANÇAR",      color: "#F59E0B" },
+  "Visita Marcada":     { badge: "🔑 CONFIRMAR",    color: "#10B981" },
+  "Visita Realizada":   { badge: "👑 FECHAR",       color: "#F97316" },
+  "Descarte":           { badge: "💀 DESCARTE",     color: "#EF4444" },
+};
+
+function getMissionBadge(stageName: string) {
+  return MISSION_BADGES[stageName] || { badge: "📍 MISSÃO", color: "#6B7280" };
+}
 const TEMP_BORDER: Record<string, string> = {
   quente: "border-l-red-500",
   morno: "border-l-amber-400",
@@ -100,11 +113,12 @@ interface PipelineCardProps {
   onClick: () => void;
   onMoveLead?: (leadId: string, stageId: string) => void;
   onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
+  stageIndexMap?: Map<string, number>;
 }
 
 const PipelineCard = memo(function PipelineCard({
   lead, stage, stages, segmentos, corretorNome, gerenteNome, parceiroNome,
-  onDragStart, onClick, onMoveLead, onTransferred,
+  onDragStart, onClick, onMoveLead, onTransferred, stageIndexMap,
 }: PipelineCardProps) {
   const { user } = useAuth();
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -118,6 +132,15 @@ const PipelineCard = memo(function PipelineCard({
   const leadScore = calculateLeadScore(lead as any);
   const sla = stage ? getSlaStatus(stage.tipo, lead.stage_changed_at) : null;
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || "");
+  const missionBadge = stage ? getMissionBadge(stage.nome) : getMissionBadge("");
+  const daysInStage = differenceInDays(new Date(), new Date(lead.stage_changed_at));
+  const currentIdx = stageIndexMap?.get(lead.stage_id) ?? 0;
+
+  const daysLabel = useMemo(() => {
+    if (daysInStage <= 2) return { text: `✅ ${daysInStage}d`, cls: "text-emerald-600 dark:text-emerald-400" };
+    if (daysInStage <= 5) return { text: `⚠️ ${daysInStage}d`, cls: "text-amber-600 dark:text-amber-400" };
+    return { text: `🔥 ${daysInStage}d`, cls: "text-red-600 dark:text-red-400" };
+  }, [daysInStage]);
 
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
