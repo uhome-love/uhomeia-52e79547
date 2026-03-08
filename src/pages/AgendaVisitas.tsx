@@ -525,6 +525,49 @@ export default function AgendaVisitas() {
           nomeCliente={resultadoVisita.nome_cliente}
         />
       )}
+
+      {/* ─── COBRANÇA DIALOG ─── */}
+      <Dialog open={showCobranca} onOpenChange={setShowCobranca}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-red-600" /> Cobrar atualização de visitas
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Enviar cobrança para <strong>{pendingByCorretor.length}</strong> corretor{pendingByCorretor.length !== 1 ? "es" : ""}:
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {pendingByCorretor.map((c, i) => (
+                  <Badge key={i} variant="outline" className="text-xs">
+                    {c.nome} ({c.count})
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Mensagem (editável)</label>
+              <Textarea
+                value={cobrancaMsg}
+                onChange={e => setCobrancaMsg(e.target.value)}
+                rows={5}
+                className="mt-1 text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Use [nome] para nome do corretor e [X] para qtd de visitas
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCobranca(false)}>Cancelar</Button>
+            <Button onClick={sendCobranca} disabled={sendingCobranca} className="gap-1.5 bg-red-600 hover:bg-red-700 text-white">
+              {sendingCobranca ? "Enviando..." : `📲 Enviar para ${pendingByCorretor.length}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
