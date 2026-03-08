@@ -13,6 +13,7 @@ import ImmersiveScreen from "@/components/immersive/ImmersiveScreen";
 import CorretorListSelection from "@/components/oferta-ativa/CorretorListSelection";
 import AproveitadosPanel from "@/components/oferta-ativa/AproveitadosPanel";
 import RankingPanel from "@/components/oferta-ativa/RankingPanel";
+import ArenaSessionSummary, { type ArenaSessionData } from "@/components/oferta-ativa/ArenaSessionSummary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLevel, getNextLevel, getLevelProgress } from "@/lib/gamification";
 import { toast } from "sonner";
@@ -59,6 +60,7 @@ export default function CorretorCall() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("call");
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   // Track user interaction for sound
   useEffect(() => {
@@ -199,6 +201,15 @@ export default function CorretorCall() {
     setTimeout(() => {
       setPhase("session");
     }, 600);
+  };
+
+  const handleExitArena = () => {
+    // If no attempts were made, go directly to dashboard
+    if (progress.tentativas === 0) {
+      navigate("/corretor");
+      return;
+    }
+    setShowSummary(true);
   };
 
   if (!metaSalva) return null;
@@ -487,14 +498,14 @@ export default function CorretorCall() {
                 <Button
                   variant="ghost" size="sm"
                   className="h-7 text-xs gap-1 text-neutral-400 hover:text-white hover:bg-white/5"
-                  onClick={() => navigate("/corretor")}
+                  onClick={handleExitArena}
                 >
                   <Pause className="h-3 w-3" /> Pausar
                 </Button>
                 <Button
                   variant="ghost" size="sm"
                   className="h-7 text-xs gap-1 text-red-400 hover:bg-red-500/10"
-                  onClick={() => navigate("/corretor")}
+                  onClick={handleExitArena}
                 >
                   <X className="h-3 w-3" /> Sair
                 </Button>
@@ -590,6 +601,28 @@ export default function CorretorCall() {
           </Tabs>
         </div>
       </div>
+
+      {/* SESSION SUMMARY OVERLAY */}
+      {showSummary && (
+        <ArenaSessionSummary
+          data={{
+            tentativas: progress.tentativas,
+            aproveitados: progress.aproveitados,
+            visitasMarcadas: progress.visitasMarcadas || 0,
+            pontos: progress.pontos,
+            metaLigacoes: progress.metaLigacoes,
+            metaAproveitados: progress.metaAproveitados,
+            metaVisitas: progress.metaVisitas,
+            empreendimento: w.queueLeads > 0 ? "Arena de Ligação" : "Arena de Ligação",
+            streak: streakDays,
+          }}
+          onNewSession={() => {
+            setShowSummary(false);
+            setPhase("warmup");
+          }}
+          onDashboard={() => navigate("/corretor")}
+        />
+      )}
     </div>
   );
 }
