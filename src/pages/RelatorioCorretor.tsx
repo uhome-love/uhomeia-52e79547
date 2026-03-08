@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
+import GerarManualTab from "@/components/relatorio/GerarManualTab";
 
 interface TeamMember { id: string; nome: string; }
 
