@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import AvatarUpload from "@/components/AvatarUpload";
-import { Loader2, Save, Lock, User, Mail, Phone, Volume2, PartyPopper } from "lucide-react";
+import { Loader2, Save, Lock, User, Mail, Phone, Volume2, PartyPopper, Sparkles, RefreshCw } from "lucide-react";
 import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 import MetaAdsSettings from "@/components/marketing/MetaAdsSettings";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -28,6 +28,8 @@ export default function Configuracoes() {
   const [telefone, setTelefone] = useState("");
   const [cargo, setCargo] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [gamifiedAvatarUrl, setGamifiedAvatarUrl] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState("");
@@ -44,7 +46,7 @@ export default function Configuracoes() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("nome, email, telefone, cargo, avatar_url")
+      .select("nome, email, telefone, cargo, avatar_url, avatar_gamificado_url")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -58,6 +60,7 @@ export default function Configuracoes() {
       setTelefone(data.telefone || "");
       setCargo(data.cargo || "");
       setAvatarUrl(data.avatar_url);
+      setGamifiedAvatarUrl(data.avatar_gamificado_url);
     }
     setLoading(false);
   }
@@ -149,10 +152,50 @@ export default function Configuracoes() {
                 nome={nome}
                 size="lg"
                 onUploaded={(url) => setAvatarUrl(url)}
+                onGamifiedGenerated={(url) => setGamifiedAvatarUrl(url)}
               />
-              <div>
+              {gamifiedAvatarUrl && (
+                <div className="relative group">
+                  <div className="h-20 w-20 rounded-full overflow-hidden ring-2 ring-primary/40 shadow-lg">
+                    <img src={gamifiedAvatarUrl} alt="Avatar gamificado" className="h-full w-full object-cover" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1">
+                    <Sparkles className="h-3 w-3" />
+                  </div>
+                </div>
+              )}
+              <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground">{nome || "Seu nome"}</p>
                 <p className="text-xs text-muted-foreground">Clique na foto para alterar</p>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    disabled={regenerating}
+                    onClick={async () => {
+                      setRegenerating(true);
+                      const toastId = toast.loading("✨ Regenerando avatar gamificado...");
+                      try {
+                        const { data, error } = await supabase.functions.invoke("generate-avatar", {
+                          body: { photo_url: avatarUrl },
+                        });
+                        if (error) throw error;
+                        if (data?.error) throw new Error(data.error);
+                        if (data?.url) {
+                          setGamifiedAvatarUrl(data.url);
+                          toast.success("🎮 Avatar regenerado!", { id: toastId });
+                        }
+                      } catch (err: any) {
+                        toast.error("Erro ao regenerar: " + (err.message || "tente novamente"), { id: toastId });
+                      } finally {
+                        setRegenerating(false);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    {regenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                    {gamifiedAvatarUrl ? "Regenerar avatar gamificado" : "Gerar avatar gamificado"}
+                  </button>
+                )}
               </div>
             </div>
 

@@ -7,6 +7,7 @@ import { getLevel } from "@/lib/gamification";
 export interface CorretorAvatarProps {
   nome: string;
   avatarUrl?: string | null;
+  gamifiedAvatarUrl?: string | null;
   points?: number;
   level?: GamificationLevel;
   ranking?: number;
@@ -103,6 +104,7 @@ function getInitials(nome: string) {
 export default function CorretorAvatar({
   nome,
   avatarUrl,
+  gamifiedAvatarUrl,
   points = 0,
   level: levelOverride,
   ranking,
@@ -115,6 +117,8 @@ export default function CorretorAvatar({
   const level = levelOverride || getLevel(points);
   const style = levelStyles[level.id] || levelStyles.iniciante;
   const initials = useMemo(() => getInitials(nome), [nome]);
+  // Prefer gamified avatar, fallback to regular
+  const displayUrl = gamifiedAvatarUrl || avatarUrl;
 
   const isTop1 = ranking === 1;
   const isTop3 = ranking !== undefined && ranking >= 1 && ranking <= 3;
@@ -157,7 +161,7 @@ export default function CorretorAvatar({
           animated && style.aura,
         )}
       >
-        <AvatarImage src={avatarUrl || undefined} alt={nome} />
+        <AvatarImage src={displayUrl || undefined} alt={nome} />
         <AvatarFallback
           className={cn(
             style.bg,

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -10,6 +10,8 @@ interface AvatarUploadProps {
   nome: string;
   size?: "sm" | "md" | "lg";
   onUploaded?: (url: string) => void;
+  onGamifiedGenerated?: (url: string) => void;
+  autoGenerateGamified?: boolean;
 }
 
 const sizeMap = {
@@ -24,7 +26,7 @@ const iconSizeMap = {
   lg: "h-5 w-5",
 };
 
-export default function AvatarUpload({ avatarUrl, nome, size = "md", onUploaded }: AvatarUploadProps) {
+export default function AvatarUpload({ avatarUrl, nome, size = "md", onUploaded, onGamifiedGenerated, autoGenerateGamified = true }: AvatarUploadProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [currentUrl, setCurrentUrl] = useState(avatarUrl);
@@ -78,12 +80,37 @@ export default function AvatarUpload({ avatarUrl, nome, size = "md", onUploaded 
       setCurrentUrl(urlWithCacheBust);
       onUploaded?.(urlWithCacheBust);
       toast.success("Foto atualizada!");
+
+      // Auto-generate gamified avatar
+      if (autoGenerateGamified) {
+        generateGamifiedAvatar(urlWithCacheBust);
+      }
     } catch (err: any) {
       console.error("Avatar upload error:", err);
       toast.error("Erro ao enviar foto: " + (err.message || "tente novamente"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const generateGamifiedAvatar = async (photoUrl: string) => {
+    const genToast = toast.loading("✨ Gerando avatar gamificado...");
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-avatar", {
+        body: { photo_url: photoUrl },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.url) {
+        onGamifiedGenerated?.(data.url);
+        toast.success("🎮 Avatar gamificado criado!", { id: genToast });
+      }
+    } catch (err: any) {
+      console.error("Gamified avatar error:", err);
+      toast.error("Não foi possível gerar o avatar gamificado", { id: genToast });
     }
   };
 
