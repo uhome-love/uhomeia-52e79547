@@ -22,11 +22,12 @@ interface HomiResponse {
 interface Props {
   leadNome: string;
   leadEmpreendimento?: string;
+  selectedEmp: string;
+  onEmpChange: (emp: string) => void;
 }
 
-export default function HomiObjectionHelper({ leadNome, leadEmpreendimento }: Props) {
+export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, selectedEmp, onEmpChange }: Props) {
   const { user } = useAuth();
-  const [selectedEmp, setSelectedEmp] = useState(leadEmpreendimento || EMPREENDIMENTOS[0]);
   const [situacao, setSituacao] = useState("");
   const [loading, setLoading] = useState(false);
   const [responses, setResponses] = useState<HomiResponse[]>([]);
