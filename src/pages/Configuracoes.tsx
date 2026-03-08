@@ -71,76 +71,27 @@ export default function Configuracoes() {
     setLoading(false);
   }
 
-  async function generatePreviewPng(glbPublicUrl: string) {
-    if (!user) return;
-    // Use a hidden model-viewer to capture a screenshot
-    const mv = modelViewerRef.current as any;
-    if (!mv) return;
-    mv.src = glbPublicUrl;
-
-    // Wait for model to fully load and render
-    await new Promise<void>((resolve) => {
-      const onLoad = () => { mv.removeEventListener("load", onLoad); setTimeout(resolve, 1500); };
-      if (mv.loaded) {
-        setTimeout(resolve, 1500);
-      } else {
-        mv.addEventListener("load", onLoad);
-        setTimeout(resolve, 10000);
-      }
-    });
-
-    try {
-      const blob = await mv.toBlob({ idealAspect: true });
-      const previewPath = `${user.id}/avatar-preview.png`;
-      const { error: uploadErr } = await supabase.storage
-        .from("avatars")
-        .upload(previewPath, blob, { upsert: true, contentType: "image/png" });
-
-      if (uploadErr) {
-        console.error("Preview upload error:", uploadErr);
-        return;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(previewPath);
-
-      const previewUrlWithBust = `${publicUrl}?t=${Date.now()}`;
-
-      await supabase
-        .from("profiles")
-        .update({ avatar_preview_url: previewUrlWithBust })
-        .eq("user_id", user.id);
-
-      setAvatarPreviewUrl(previewUrlWithBust);
-    } catch (err) {
-      console.error("Error generating preview:", err);
-    }
-  }
-
-  async function handleGlbUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePngUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate extension
-    if (!file.name.toLowerCase().endsWith(".glb")) {
-      toast.error("Selecione um arquivo .glb válido");
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem válida");
       return;
     }
-
-    // Validate size (50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error("O arquivo deve ter no máximo 50MB");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
       return;
     }
 
     setUploadingGlb(true);
     try {
-      const filePath = `${user.id}/avatar.glb`;
+      const ext = file.name.split(".").pop() || "png";
+      const filePath = `${user.id}/avatar.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true, contentType: "model/gltf-binary" });
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -154,6 +105,7 @@ export default function Configuracoes() {
         .from("profiles")
         .update({
           avatar_url: urlWithBust,
+          avatar_preview_url: urlWithBust,
           avatar_updated_at: new Date().toISOString(),
         })
         .eq("user_id", user.id);
@@ -161,16 +113,14 @@ export default function Configuracoes() {
       if (updateError) throw updateError;
 
       setAvatarUrl(urlWithBust);
-      toast.success("Avatar 3D enviado! 🎮");
-
-      // Generate preview PNG in background
-      generatePreviewPng(urlWithBust);
+      setAvatarPreviewUrl(urlWithBust);
+      toast.success("Avatar atualizado! 🎨");
     } catch (err: any) {
-      console.error("GLB upload error:", err);
+      console.error("PNG upload error:", err);
       toast.error("Erro ao enviar avatar: " + (err.message || "tente novamente"));
     } finally {
       setUploadingGlb(false);
-      if (glbInputRef.current) glbInputRef.current.value = "";
+      if (pngInputRef.current) pngInputRef.current.value = "";
     }
   }
 
