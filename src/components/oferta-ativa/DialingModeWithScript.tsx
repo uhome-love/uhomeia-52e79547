@@ -95,6 +95,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const [sessionSeconds, setSessionSeconds] = useState(0);
   const [showMilestone, setShowMilestone] = useState<string | null>(null);
   const [expandedObj, setExpandedObj] = useState<number | null>(null);
+  const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
 
   // === ARENA: Round announcement ===
   const [showRound, setShowRound] = useState(false);
