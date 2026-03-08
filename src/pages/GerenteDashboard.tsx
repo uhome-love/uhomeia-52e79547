@@ -43,28 +43,22 @@ function formatCurrency(v: number) {
   return `R$ ${v.toFixed(0)}`;
 }
 
-const AVATAR_GRADIENTS: Record<string, string> = {
-  AG: "from-blue-400 to-blue-600",
-  FD: "from-orange-400 to-orange-600",
-  JF: "from-purple-400 to-purple-600",
-  LB: "from-pink-400 to-pink-600",
-  LD: "from-teal-400 to-teal-600",
-  LC: "from-cyan-400 to-cyan-600",
-  MP: "from-indigo-400 to-indigo-600",
-};
-
 function getInitials(name: string) {
-  return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  return name.split(" ").map(w => w[0]).filter(Boolean).join("").slice(0, 2).toUpperCase();
 }
 
-function getAvatarGradient(initials: string) {
-  return AVATAR_GRADIENTS[initials] || "from-gray-400 to-gray-600";
+function hashColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const h = ((hash % 360) + 360) % 360;
+  return `hsl(${h}, 55%, 50%)`;
 }
 
 interface CorretorRow {
   user_id: string;
   nome: string;
   avatar_url: string | null;
+  avatar_gamificado_url: string | null;
   ligacoes: number;
   aproveitados: number;
   taxa: number;
@@ -122,7 +116,7 @@ export default function GerenteDashboard() {
   const { data: kpis, isLoading: kpisLoading } = useQuery({
     queryKey: ["gerente-kpis", user?.id, period, teamUserIds.join(",")],
     queryFn: async () => {
-      if (teamUserIds.length === 0) return { ligacoes: 0, metaLigacoes: 150, aproveitados: 0, taxa: 0, visitasHoje: 0, visitasSemana: 0, negociosAtivos: 0, vgvTotal: 0, melhorStreak: { nome: "-", dias: 0 } };
+      if (teamUserIds.length === 0) return { ligacoes: 0, metaLigacoesPorCorretor: 30, metaLigacoesTime: 0, aproveitados: 0, taxa: 0, visitasHoje: 0, visitasSemana: 0, negociosAtivos: 0, vgvTotal: 0, melhorStreak: { nome: "-", dias: 0 } };
 
       const { count: ligacoes } = await supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs);
       const { count: aproveitados } = await supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).eq("resultado", "com_interesse").gte("created_at", startTs).lte("created_at", endTs);
@@ -138,16 +132,34 @@ export default function GerenteDashboard() {
       const apr = aproveitados || 0;
       const taxa = lig > 0 ? Math.round((apr / lig) * 100) : 0;
 
+      const metaPorCorretor = period === "dia" ? 30 : period === "semana" ? 150 : 600;
+      const metaTime = teamUserIds.length * metaPorCorretor;
+
+      // Best streak historical
+      const { data: streakData } = await supabase
+        .from("oferta_ativa_tentativas")
+        .select("corretor_id")
+        .in("corretor_id", teamUserIds)
+        .gte("created_at", startTs)
+        .lte("created_at", endTs);
+      // Count per corretor to find top performer
+      const streakCounts: Record<string, number> = {};
+      (streakData || []).forEach(s => { streakCounts[s.corretor_id] = (streakCounts[s.corretor_id] || 0) + 1; });
+      const topStreakId = Object.entries(streakCounts).sort((a, b) => b[1] - a[1])[0];
+      const { data: profilesAll } = await supabase.from("profiles").select("user_id, nome").in("user_id", teamUserIds);
+      const nameMap = Object.fromEntries((profilesAll || []).map(p => [p.user_id, p.nome]));
+
       return {
         ligacoes: lig,
-        metaLigacoes: teamUserIds.length * (period === "dia" ? 30 : period === "semana" ? 150 : 600),
+        metaLigacoesPorCorretor: metaPorCorretor,
+        metaLigacoesTime: metaTime,
         aproveitados: apr,
         taxa,
         visitasHoje: visitasHoje || 0,
         visitasSemana: visitasSemana || 0,
         negociosAtivos,
         vgvTotal,
-        melhorStreak: { nome: "-", dias: 0 },
+        melhorStreak: topStreakId ? { nome: nameMap[topStreakId[0]]?.split(" ")[0] || "Corretor", dias: topStreakId[1] } : { nome: "-", dias: 0 },
       };
     },
     enabled: !!user && teamUserIds.length > 0,
@@ -159,7 +171,7 @@ export default function GerenteDashboard() {
     queryKey: ["gerente-ranking", user?.id, period, teamUserIds.join(",")],
     queryFn: async () => {
       if (teamUserIds.length === 0) return [];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, nome, avatar_url").in("user_id", teamUserIds);
+      const { data: profiles } = await supabase.from("profiles").select("user_id, nome, avatar_url, avatar_gamificado_url").in("user_id", teamUserIds);
       const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p]));
       const { data: tentativas } = await supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, pontos").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs);
       const { data: visitas } = await supabase.from("visitas").select("corretor_id").eq("gerente_id", user!.id).gte("data_visita", start).lte("data_visita", end);
@@ -186,6 +198,7 @@ export default function GerenteDashboard() {
           user_id: uid,
           nome: p?.nome || teamMembers?.find(t => t.user_id === uid)?.nome || "Corretor",
           avatar_url: p?.avatar_url || null,
+          avatar_gamificado_url: (p as any)?.avatar_gamificado_url || null,
           ligacoes: s.lig,
           aproveitados: s.apr,
           taxa: s.lig > 0 ? Math.round((s.apr / s.lig) * 100) : 0,
@@ -240,7 +253,7 @@ export default function GerenteDashboard() {
     enabled: teamUserIds.length > 0,
   });
 
-  const k = kpis || { ligacoes: 0, metaLigacoes: 150, aproveitados: 0, taxa: 0, visitasHoje: 0, visitasSemana: 0, negociosAtivos: 0, vgvTotal: 0, melhorStreak: { nome: "-", dias: 0 } };
+  const k = kpis || { ligacoes: 0, metaLigacoesPorCorretor: 30, metaLigacoesTime: 0, aproveitados: 0, taxa: 0, visitasHoje: 0, visitasSemana: 0, negociosAtivos: 0, vgvTotal: 0, melhorStreak: { nome: "-", dias: 0 } };
   const pipe = pipelineSummary || { fases: { proposta: { count: 0, vgv: 0 }, negociacao: { count: 0, vgv: 0 }, documentacao: { count: 0, vgv: 0 }, assinado: { count: 0, vgv: 0 } }, totalVgv: 0 };
 
   const statusIcons: Record<string, string> = {
@@ -252,7 +265,7 @@ export default function GerenteDashboard() {
   }
 
   const greeting = new Date().getHours() < 12 ? "Bom dia" : new Date().getHours() < 18 ? "Boa tarde" : "Boa noite";
-  const ligPct = k.metaLigacoes > 0 ? Math.min(100, Math.round((k.ligacoes / k.metaLigacoes) * 100)) : 0;
+  const ligPct = k.metaLigacoesTime > 0 ? Math.min(100, Math.round((k.ligacoes / k.metaLigacoesTime) * 100)) : 0;
   const totalPipeCount = Object.values(pipe.fases).reduce((s, f) => s + f.count, 0);
   const visitas3 = (todayVisitas || []).slice(0, 3);
   const visitasExtra = (todayVisitas || []).length - 3;
@@ -306,9 +319,12 @@ export default function GerenteDashboard() {
               key={p}
               className="text-sm px-4 py-1.5 rounded-full font-medium transition-all duration-200"
               style={{
-                background: period === p ? "#ffffff" : "rgba(255,255,255,0.1)",
-                color: period === p ? "#0f172a" : "#ffffff",
+                background: period === p ? "#1e293b" : "transparent",
+                color: period === p ? "#FFFFFF" : "#94A3B8",
+                border: period === p ? "1px solid #3B82F6" : "1px solid transparent",
               }}
+              onMouseEnter={e => { if (period !== p) e.currentTarget.style.color = "#FFFFFF"; }}
+              onMouseLeave={e => { if (period !== p) e.currentTarget.style.color = "#94A3B8"; }}
               onClick={() => setPeriod(p)}
             >
               {periodLabels[p]}
@@ -328,7 +344,8 @@ export default function GerenteDashboard() {
             </div>
             <p className="text-4xl font-black text-blue-600">{k.ligacoes}</p>
             <p className={`text-sm font-semibold ${ligPct > 0 ? "text-blue-600" : "text-red-500"}`}>{ligPct}%</p>
-            <p className="text-xs text-gray-400 mt-0.5">{periodLabels[period]} · meta {k.metaLigacoes}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{periodLabels[period]} · meta {k.metaLigacoesPorCorretor}/corretor</p>
+            <p className="text-[10px] text-gray-300 mt-0.5">Time: {k.ligacoes}/{k.metaLigacoesTime}</p>
             <Progress value={ligPct} className="h-1 mt-2" />
           </div>
 
@@ -375,8 +392,9 @@ export default function GerenteDashboard() {
               </>
             ) : (
               <>
-                <p className="text-4xl font-black text-orange-500">-</p>
-                <p className="text-sm text-gray-300">Ninguém ainda hoje</p>
+                <p className="text-4xl font-black text-orange-500">🏆</p>
+                <p className="text-sm text-gray-400">Aguardando atividade</p>
+                <p className="text-[10px] text-gray-300 mt-0.5">Primeiro a ligar ganha destaque!</p>
               </>
             )}
           </div>
@@ -414,7 +432,6 @@ export default function GerenteDashboard() {
                 <tbody>
                   {(ranking || []).map((r, i) => {
                     const initials = getInitials(r.nome);
-                    const grad = getAvatarGradient(initials);
                     return (
                       <tr
                         key={r.user_id}
@@ -427,12 +444,12 @@ export default function GerenteDashboard() {
                            i === 2 ? <span>🥉</span> :
                            <span className="text-gray-400">{i + 1}</span>}
                         </td>
-                        <td className="py-3 px-2">
+                    <td className="py-3 px-2">
                           <div className="flex items-center gap-2.5">
-                            {r.avatar_url ? (
-                              <img src={r.avatar_url} alt={r.nome} className="h-9 w-9 rounded-full object-cover" />
+                            {(r.avatar_gamificado_url || r.avatar_url) ? (
+                              <img src={r.avatar_gamificado_url || r.avatar_url!} alt={r.nome} className="h-9 w-9 rounded-full object-cover" />
                             ) : (
-                              <div className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br ${grad} text-white font-bold text-xs`}>
+                              <div className="flex h-9 w-9 items-center justify-center rounded-full text-white font-bold text-xs" style={{ background: hashColor(r.nome) }}>
                                 {initials}
                               </div>
                             )}
@@ -445,14 +462,19 @@ export default function GerenteDashboard() {
                         <td className="py-3 px-2 text-center text-amber-600 font-semibold">{r.visitas}</td>
                         <td className="py-3 px-2 text-center font-black text-blue-700">{r.pontos}</td>
                         <td className="py-3 px-2 text-center">
-                          <span
-                            className={`inline-flex h-2.5 w-2.5 rounded-full ${
+                          <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                            r.status === "online"
+                              ? "bg-green-50 text-green-700"
+                              : r.status === "paused"
+                              ? "bg-yellow-50 text-yellow-700"
+                              : "bg-red-50 text-red-600"
+                          }`}>
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${
                               r.status === "online" ? "bg-green-500" :
-                              r.status === "paused" ? "bg-yellow-400" :
-                              "bg-gray-800"
-                            }`}
-                            title={r.status === "online" ? "Online/discando" : r.status === "paused" ? "Ativo mas parado" : "Offline hoje"}
-                          />
+                              r.status === "paused" ? "bg-yellow-400" : "bg-red-400"
+                            }`} />
+                            {r.status === "online" ? "Ativo" : r.status === "paused" ? "Parado" : "Ausente"}
+                          </span>
                         </td>
                       </tr>
                     );

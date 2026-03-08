@@ -247,7 +247,7 @@ export function AppSidebar() {
           {
             label: "Visão Geral",
             items: [
-              { title: "Meu Time", url: "/meu-time", icon: Users },
+              { title: "Painel do Time", url: "/meu-time", icon: Users },
               { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
             ],
           },
@@ -279,7 +279,7 @@ export function AppSidebar() {
             ],
           },
         ],
-        roleLabel: `Gestor · ${level.emoji} ${level.label}`,
+        roleLabel: `Gerente · Time ${profile.nome?.split(" ")[0] || ""}`,
       };
     }
 
