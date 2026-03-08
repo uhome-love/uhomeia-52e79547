@@ -86,8 +86,6 @@ export default function CeoDashboard() {
   const { user } = useAuth();
   const [period, setPeriod] = useState<DashPeriod>("hoje");
   const [frase] = useState(() => FRASES[Math.floor(Math.random() * FRASES.length)]);
-  const [advisorLoading, setAdvisorLoading] = useState(false);
-  const [advisorContent, setAdvisorContent] = useState("");
   const [dispatchOpen, setDispatchOpen] = useState(false);
   const [filaCeoCount, setFilaCeoCount] = useState(0);
   const [lastDispatch, setLastDispatch] = useState<{ at: string; count: number } | null>(null);
@@ -98,6 +96,13 @@ export default function CeoDashboard() {
     teams, origens, leadsPorEmpreendimento, visitasPorEmp,
     reload,
   } = useCeoDashboard(period);
+
+  // Build dashboard data for HOMI
+  const dashboardData = useMemo(() => ({
+    kpis, prevKpis, alertas, teams, campanhas, pipelineStages,
+    filaCeoCount, origens, leadsPorEmpreendimento, visitasPorEmp,
+    negocioFases, vgvEmRisco, topCorretoresVgv, period,
+  }), [kpis, prevKpis, alertas, teams, campanhas, pipelineStages, filaCeoCount, origens, leadsPorEmpreendimento, visitasPorEmp, negocioFases, vgvEmRisco, topCorretoresVgv, period]);
 
   const now = new Date();
   const weekNum = Math.ceil(now.getDate() / 7);
