@@ -234,6 +234,53 @@ export type Database = {
           },
         ]
       }
+      academia_quiz_perguntas: {
+        Row: {
+          aula_id: string | null
+          explicacao: string | null
+          id: string
+          opcao_a: string
+          opcao_b: string
+          opcao_c: string
+          opcao_d: string
+          ordem: number | null
+          pergunta: string
+          resposta_correta: string
+        }
+        Insert: {
+          aula_id?: string | null
+          explicacao?: string | null
+          id?: string
+          opcao_a: string
+          opcao_b: string
+          opcao_c: string
+          opcao_d: string
+          ordem?: number | null
+          pergunta: string
+          resposta_correta: string
+        }
+        Update: {
+          aula_id?: string | null
+          explicacao?: string | null
+          id?: string
+          opcao_a?: string
+          opcao_b?: string
+          opcao_c?: string
+          opcao_d?: string
+          ordem?: number | null
+          pergunta?: string
+          resposta_correta?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_quiz_perguntas_aula_id_fkey"
+            columns: ["aula_id"]
+            isOneToOne: false
+            referencedRelation: "academia_aulas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academia_trilhas: {
         Row: {
           categoria: string | null

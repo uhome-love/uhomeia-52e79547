@@ -68,9 +68,15 @@ export default function AvatarUpload({ avatarUrl, nome, size = "md", onUploaded 
 
       const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
 
+      // Update ALL avatar fields so the new photo takes priority everywhere
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: urlWithCacheBust })
+        .update({
+          avatar_url: urlWithCacheBust,
+          avatar_gamificado_url: urlWithCacheBust,
+          avatar_preview_url: urlWithCacheBust,
+          avatar_updated_at: new Date().toISOString(),
+        } as any)
         .eq("user_id", user.id);
 
       if (updateError) throw updateError;
