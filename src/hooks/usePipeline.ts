@@ -137,7 +137,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
       query = query.eq("corretor_id", user.id);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.throwOnError();
     if (error) {
       console.error("Error loading pipeline leads:", error);
       return;
