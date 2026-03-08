@@ -2380,6 +2380,7 @@ export type Database = {
           cor: string | null
           created_at: string
           descricao: string | null
+          empreendimentos: string[]
           id: string
           max_leads_ativos: number
           nome: string
@@ -2394,6 +2395,7 @@ export type Database = {
           cor?: string | null
           created_at?: string
           descricao?: string | null
+          empreendimentos?: string[]
           id?: string
           max_leads_ativos?: number
           nome: string
@@ -2408,6 +2410,7 @@ export type Database = {
           cor?: string | null
           created_at?: string
           descricao?: string | null
+          empreendimentos?: string[]
           id?: string
           max_leads_ativos?: number
           nome?: string
