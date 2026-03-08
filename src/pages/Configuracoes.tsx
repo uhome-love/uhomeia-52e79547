@@ -40,7 +40,7 @@ export default function Configuracoes() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const has3DAvatar = avatarUrl?.includes(".glb") || avatarUrl?.includes(".gltf");
+  
 
   useEffect(() => {
     if (!user) return;
@@ -257,86 +257,71 @@ export default function Configuracoes() {
             {/* Avatar Section */}
             <div className="flex items-start gap-4">
               <AvatarUpload
-                avatarUrl={has3DAvatar ? avatarPreviewUrl : avatarUrl}
+                avatarUrl={avatarPreviewUrl || avatarUrl}
                 nome={nome}
                 size="lg"
                 onUploaded={(url) => {
                   setAvatarUrl(url);
-                  setAvatarPreviewUrl(null);
+                  setAvatarPreviewUrl(url);
                 }}
               />
 
-              {/* 3D Avatar preview */}
-              {has3DAvatar && avatarUrl && (
-                <div className="rounded-xl overflow-hidden ring-2 ring-indigo-500/40 shadow-lg bg-muted/30"
-                     style={{ width: 200, height: 320 }}>
-                  {/* @ts-ignore - model-viewer custom element */}
-                  {(() => {
-                    const props: any = {
-                      src: avatarUrl,
-                      "camera-orbit": "0deg 90deg 2.8m",
-                      "camera-target": "0m 0.85m 0m",
-                      "field-of-view": "25deg",
-                      "min-camera-orbit": "0deg 90deg auto",
-                      "max-camera-orbit": "0deg 90deg auto",
-                      bounds: "tight",
-                      "auto-rotate": true,
-                      "rotation-per-second": "18deg",
-                      "interaction-prompt": "none",
-                      "shadow-intensity": "0",
-                      style: { width: "100%", height: "100%", background: "transparent" },
-                    };
-                    return <model-viewer {...props} />;
-                  })()}
-                </div>
-              )}
-
-              <div className="space-y-2 flex-1">
+              <div className="space-y-3 flex-1">
                 <p className="text-sm font-medium text-foreground">{nome || "Seu nome"}</p>
-                <p className="text-xs text-muted-foreground">Clique na foto para alterar</p>
+                <p className="text-xs text-muted-foreground">Clique na foto para alterar ou use as opções abaixo</p>
 
-                {/* Link to Avaturn */}
-                <a
-                  href="https://avaturn.me"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 underline transition-colors"
-                >
-                  Não tem avatar? Crie gratuitamente em avaturn.me
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+                <div className="flex flex-wrap gap-2">
+                  {/* AI generate button */}
+                  <Button
+                    type="button"
+                    onClick={() => setAvatarModalOpen(true)}
+                    className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white"
+                    size="sm"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    🎨 Gerar avatar com IA
+                  </Button>
 
-                {/* GLB upload button */}
-                <button
-                  type="button"
-                  onClick={() => glbInputRef.current?.click()}
-                  disabled={uploadingGlb}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors shadow-sm"
-                >
-                  {uploadingGlb ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Upload className="h-3.5 w-3.5" />
-                  )}
-                  {uploadingGlb
-                    ? "Enviando avatar..."
-                    : has3DAvatar
-                    ? "Recriar avatar 3D"
-                    : "🎮 Enviar meu avatar 3D (.glb)"}
-                </button>
+                  {/* Manual upload button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => pngInputRef.current?.click()}
+                    disabled={uploadingGlb}
+                    className="gap-2"
+                  >
+                    {uploadingGlb ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="h-3.5 w-3.5" />
+                    )}
+                    📁 Enviar manualmente (.png)
+                  </Button>
+                </div>
 
                 <input
-                  ref={glbInputRef}
+                  ref={pngInputRef}
                   type="file"
-                  accept=".glb"
+                  accept="image/png,image/jpeg,image/webp"
                   className="hidden"
-                  onChange={handleGlbUpload}
+                  onChange={handlePngUpload}
                   disabled={uploadingGlb}
                 />
               </div>
             </div>
 
             <Separator />
+
+            {/* Avatar Generator Modal */}
+            <AvatarGeneratorModal
+              open={avatarModalOpen}
+              onOpenChange={setAvatarModalOpen}
+              onGenerated={(url) => {
+                setAvatarUrl(url);
+                setAvatarPreviewUrl(url);
+              }}
+            />
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -487,21 +472,6 @@ export default function Configuracoes() {
         </CardContent>
       </Card>
 
-      {/* Hidden model-viewer for generating preview PNGs */}
-      <div style={{ position: "absolute", left: -9999, top: -9999, width: 512, height: 512 }}>
-        {(() => {
-          const props: any = {
-            ref: modelViewerRef,
-            "camera-orbit": "0deg 90deg 2.8m",
-            "camera-target": "0m 0.85m 0m",
-            "field-of-view": "25deg",
-            "interaction-prompt": "none",
-            "shadow-intensity": "0",
-            style: { width: 512, height: 512, background: "transparent" },
-          };
-          return <model-viewer {...props} />;
-        })()}
-      </div>
     </div>
   );
 }
