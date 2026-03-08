@@ -100,6 +100,21 @@ export default function CeoDashboard() {
   const now = new Date();
   const weekNum = Math.ceil(now.getDate() / 7);
 
+  // Load Fila CEO count + last dispatch
+  const loadFilaCeo = useCallback(async () => {
+    const [countRes, logRes] = await Promise.all([
+      supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).is("corretor_id", null),
+      supabase.from("audit_log").select("created_at, depois").eq("acao", "dispatch_fila_ceo").order("created_at", { ascending: false }).limit(1),
+    ]);
+    setFilaCeoCount(countRes.count || 0);
+    if (logRes.data?.[0]) {
+      const d = logRes.data[0].depois as any;
+      setLastDispatch({ at: logRes.data[0].created_at, count: d?.dispatched || 0 });
+    }
+  }, []);
+
+  useEffect(() => { loadFilaCeo(); }, [loadFilaCeo]);
+
   // Approve credenciamento
   const aprovar = useCallback(async (id: string) => {
     if (!user) return;
