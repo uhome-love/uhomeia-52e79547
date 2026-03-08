@@ -499,17 +499,17 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         </Badge>
       </div>
 
-      {/* 2-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Left: Lead Card (3 cols) */}
-        <div className="lg:col-span-3 space-y-3">
+      {/* 2-column layout — immersive */}
+      <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-4">
+        {/* Left: Lead Card */}
+        <div className="space-y-3">
           <Card className={`border-2 ${lead.tentativas_count > 0 ? "border-amber-500/40 bg-amber-500/5" : "border-primary/20"}`}>
             <CardContent className="p-4 space-y-3">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                    <User className="h-4 w-4 text-primary" /> {lead.nome}
+                  <h2 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary shrink-0" /> {lead.nome}
                   </h2>
                   <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
                     <Building2 className="h-3 w-3" /> {lead.empreendimento}
@@ -618,11 +618,12 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                 <div className="grid grid-cols-3 gap-2 pt-1">
                   <Button
                     size="lg"
-                    className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 h-12 text-sm"
+                    className="gap-2 h-14 text-base font-bold rounded-xl shadow-lg"
+                    style={{ background: "linear-gradient(135deg, #16A34A, #15803D)", boxShadow: "0 4px 14px rgba(22, 163, 74, 0.4)" }}
                     onClick={() => handleAction("ligacao")}
                     disabled={showModal}
                   >
-                    <Phone className="h-4 w-4" /> Iniciar Ligação
+                    <Phone className="h-5 w-5" /> 📞 LIGAR AGORA
                   </Button>
                   <Button
                     size="lg"
@@ -691,8 +692,8 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           </Card>
         </div>
 
-        {/* Right: Script Panel (2 cols) */}
-        <div className="lg:col-span-2">
+        {/* Right: Script Panel */}
+        <div>
           <div className="sticky top-4">
             <ScriptPanel empreendimento={lista.empreendimento} lead={lead} />
           </div>
