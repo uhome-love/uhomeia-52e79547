@@ -133,10 +133,23 @@ Deno.serve(async (req) => {
         .from("user_roles")
         .select("user_id")
         .in("role", ["gestor", "admin"]);
+
+      // Get segment name for better notification
+      let segmentoNome = "";
+      if (segmento_id) {
+        const { data: seg } = await supabase
+          .from("pipeline_segmentos")
+          .select("nome")
+          .eq("id", segmento_id)
+          .maybeSingle();
+        segmentoNome = seg?.nome || "";
+      }
       
       if (gestores) {
         const msg = data.reason === "fora_horario" 
           ? "Lead recebido fora do horário da roleta. Aguardando redistribuição."
+          : segmentoNome
+          ? `⚠️ Sem corretor para ${segmentoNome}. Lead aguardando distribuição.`
           : "Nenhum corretor disponível para o segmento. Lead aguardando distribuição.";
         for (const g of gestores) {
           await supabase.rpc("criar_notificacao", {
