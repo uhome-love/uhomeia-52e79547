@@ -10,7 +10,7 @@ interface RoleProtectedRouteProps {
 
 export default function RoleProtectedRoute({ children, allowedRoles }: RoleProtectedRouteProps) {
   const { user, loading: authLoading } = useAuth();
-  const { roles, loading: roleLoading, isAdmin, isGestor, isCorretor } = useUserRole();
+  const { roles, loading: roleLoading, isAdmin, isGestor, isCorretor, isBackoffice } = useUserRole();
 
   if (authLoading || roleLoading) {
     return (
@@ -27,8 +27,8 @@ export default function RoleProtectedRoute({ children, allowedRoles }: RoleProte
   const hasAccess = allowedRoles.some((role) => roles.includes(role));
 
   if (!hasAccess) {
-    // Redirect to appropriate home based on role
     if (isAdmin) return <Navigate to="/" replace />;
+    if (isBackoffice) return <Navigate to="/backoffice" replace />;
     if (isGestor) return <Navigate to="/checkpoint" replace />;
     if (isCorretor) return <Navigate to="/corretor" replace />;
     return <Navigate to="/" replace />;
