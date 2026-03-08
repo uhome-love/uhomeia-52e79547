@@ -194,9 +194,9 @@ export default function GlobalSearch() {
     switch (type) {
       case "lead": return <Kanban className="h-3.5 w-3.5 text-destructive shrink-0" />;
       case "negocio": return <Flame className="h-3.5 w-3.5 text-primary shrink-0" />;
-      case "visita": return <CalendarDays className="h-3.5 w-3.5 text-emerald-500 shrink-0" />;
-      case "corretor": return <Users className="h-3.5 w-3.5 text-amber-500 shrink-0" />;
-      default: return <Search className="h-3.5 w-3.5 shrink-0" />;
+      case "visita": return <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />;
+      case "corretor": return <Users className="h-3.5 w-3.5 text-primary shrink-0" />;
+      default: return <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
     }
   };
 

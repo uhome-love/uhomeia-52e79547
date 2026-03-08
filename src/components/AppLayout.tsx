@@ -122,6 +122,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         onResult={refreshPending}
       />
       <NewLeadBanner />
+      <GlobalSearch />
     </SidebarProvider>
   );
 }
