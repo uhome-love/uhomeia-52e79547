@@ -134,6 +134,7 @@ export default function CorretorCall() {
       }
 
       // Count leads available — corretor-specific: only from lists they have access to
+      const now = new Date().toISOString();
       const { count: myQueueCount } = await supabase
         .from("oferta_ativa_leads")
         .select("id", { count: "exact", head: true })
