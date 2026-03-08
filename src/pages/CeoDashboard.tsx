@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Trophy, FileText, AlertTriangle, TrendingUp, CheckCircle, Phone, ClipboardCheck } from "lucide-react";
+import { BarChart3, Trophy, FileText, AlertTriangle, TrendingUp, CheckCircle, Phone, ClipboardCheck, BookOpen } from "lucide-react";
 const homiMascot = "/images/homi-mascot-opt.png";
 import CeoOverview from "@/components/ceo/CeoOverview";
 import CeoRankings from "@/components/ceo/CeoRankings";
@@ -41,7 +41,7 @@ export default function CeoDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-10 h-auto">
+        <TabsList className="grid w-full grid-cols-11 h-auto">
           <TabsTrigger value="overview" className="gap-1.5 text-xs py-2">
             <BarChart3 className="h-3.5 w-3.5" /> Visão Geral
           </TabsTrigger>
@@ -66,6 +66,9 @@ export default function CeoDashboard() {
           <TabsTrigger value="reports" className="gap-1.5 text-xs py-2">
             <FileText className="h-3.5 w-3.5" /> Relatórios
           </TabsTrigger>
+          <TabsTrigger value="monthly" className="gap-1.5 text-xs py-2">
+            <BookOpen className="h-3.5 w-3.5" /> Executivo
+          </TabsTrigger>
           <TabsTrigger value="advisor" className="gap-1.5 text-xs py-2">
             <img src={homiMascot} alt="Homi" className="h-4 w-4 object-contain" /> CEO Advisor
           </TabsTrigger>
@@ -85,6 +88,7 @@ export default function CeoDashboard() {
           <RankingOfertaAtiva />
         </TabsContent>
         <TabsContent value="reports" className="mt-4"><CeoReports /></TabsContent>
+        <TabsContent value="monthly" className="mt-4"><CeoMonthlyReports /></TabsContent>
         <TabsContent value="advisor" className="mt-4"><CeoAdvisor /></TabsContent>
         <TabsContent value="alerts" className="mt-4"><CeoAlerts /></TabsContent>
       </Tabs>
