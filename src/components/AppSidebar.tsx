@@ -19,7 +19,7 @@ import {
   Kanban,
   Bell,
   Heart,
-  Workflow,
+  
   BookOpen,
   Award,
   PanelLeftOpen,
@@ -145,219 +145,178 @@ export function AppSidebar() {
   }, [alerts]);
 
   const level = getLevel(points);
-  const isCorretor = !isAdmin && !isGestor && !isBackoffice;
 
-  // ── Backoffice sidebar (completely different navigation) ──
-  if (isBackoffice) {
-    const backofficeTopItem: NavItem = { title: "Minha Central", url: "/backoffice", icon: Home };
-    const backofficeGroups = [
-      {
-        label: "Financeiro",
-        items: [
-          { title: "Pagadorias", url: "/backoffice/pagadorias", icon: FileBarChart },
-          { title: "Controle de Comissões", url: "/backoffice/comissoes", icon: TrendingUp },
-        ] as NavItem[],
-      },
-      {
-        label: "Marketing",
-        items: [
-          { title: "Central de Marketing", url: "/backoffice/marketing", icon: BarChart3 },
-        ] as NavItem[],
-      },
-      {
-        label: "Ferramentas",
-        items: [
-          { title: "HOMI Ana", url: "/backoffice/homi-ana", icon: Bot },
-          { title: "Notificações", url: "/notificacoes", icon: Bell },
-        ] as NavItem[],
-      },
-    ];
+  // ── Build navigation groups by role ──
+  function getGroupsByRole(): { topItem: NavItem | null; groups: { label: string; items: NavItem[] }[]; roleLabel: string } {
+    // ── CEO / Admin ──
+    if (isAdmin) {
+      return {
+        topItem: null,
+        groups: [
+          {
+            label: "Visão Geral",
+            items: [
+              { title: "Dashboard CEO", url: "/ceo", icon: Home },
+              { title: "Painel da Equipe", url: "/meu-time", icon: Users },
+            ],
+          },
+          {
+            label: "Leads & Vendas",
+            items: [
+              { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+              { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+              { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
+              { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
+            ],
+          },
+          {
+            label: "Performance",
+            items: [
+              { title: "Rankings", url: "/ranking", icon: Trophy },
+            ],
+          },
+          {
+            label: "Financeiro",
+            items: [
+              { title: "Pagadorias", url: "/backoffice/pagadorias", icon: FileBarChart },
+            ],
+          },
+          {
+            label: "Marketing",
+            items: [
+              { title: "Central de Marketing", url: "/marketing", icon: TrendingUp },
+            ],
+          },
+          {
+            label: "Ferramentas",
+            items: [
+              { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
+              { title: "Marketplace", url: "/marketplace", icon: BookOpen },
+              { title: "Configurações", url: "/configuracoes", icon: Settings },
+              { title: "Gerenciar Usuários", url: "/admin", icon: Shield },
+            ],
+          },
+        ],
+        roleLabel: "Admin · 👑 CEO",
+      };
+    }
 
-    return (
-      <Sidebar collapsible="icon">
-        <SidebarContent className="scrollbar-thin flex flex-col">
-          <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} px-3 h-14 border-b border-white/10 shrink-0`}>
-            {collapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={toggleSidebar} className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors">
-                    <PanelLeftOpen className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-neutral-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">Expandir sidebar</TooltipContent>
-              </Tooltip>
-            ) : (
-              <>
-                <div className="flex items-center gap-2.5 animate-slide-in-left">
-                  <img src={homiMascot} alt="Homi AI" className="h-9 w-9 object-contain shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-white tracking-tight leading-tight">Uhome<span className="text-blue-400">Sales</span></span>
-                    <span className="text-[9px] font-medium text-neutral-500 tracking-wider">Powered by Homi AI</span>
-                  </div>
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={toggleSidebar} className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors">
-                      <PanelLeftClose className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-neutral-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">Recolher sidebar</TooltipContent>
-                </Tooltip>
-              </>
-            )}
-          </div>
+    // ── Gestor ──
+    if (isGestor) {
+      return {
+        topItem: null,
+        groups: [
+          {
+            label: "Leads",
+            items: [
+              { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+              { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
+              { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
+            ],
+          },
+          {
+            label: "Negócios",
+            items: [
+              { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+              { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
+            ],
+          },
+          {
+            label: "Equipe",
+            items: [
+              { title: "Meu Time", url: "/meu-time", icon: Users },
+              { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
+            ],
+          },
+          {
+            label: "Performance",
+            items: [
+              { title: "Rankings", url: "/ranking", icon: Trophy },
+              { title: "Checkpoint e Metas", url: "/checkpoint", icon: ClipboardCheck },
+            ],
+          },
+          {
+            label: "Ferramentas",
+            items: [
+              { title: "HOMI Assistente", url: "/homi-gerente", icon: Bot },
+              { title: "Marketplace", url: "/marketplace", icon: BookOpen },
+            ],
+          },
+        ],
+        roleLabel: `Gestor · ${level.emoji} ${level.label}`,
+      };
+    }
 
-          {/* Minha Central — top item */}
-          <div className={`border-b border-white/10 pb-3 mb-1 ${collapsed ? "px-1" : ""}`}>
-            <SidebarMenu className="px-1 pt-3">
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={backofficeTopItem.title}>
-                  <NavLink to={backofficeTopItem.url} end className={`group/nav text-white hover:text-white hover:bg-white/[0.08] transition-all duration-150 rounded-lg relative py-1.5 font-medium ${collapsed ? "px-0 justify-center" : "px-3"}`} activeClassName="!text-white !font-semibold !bg-white/10 border-l-2 !border-l-blue-400 !rounded-l-none rounded-r-lg">
-                    <backofficeTopItem.icon className={`${collapsed ? "" : "mr-2.5"} h-4 w-4 shrink-0 text-white/70`} />
-                    {!collapsed && <span className="text-sm">{backofficeTopItem.title}</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </div>
+    // ── Backoffice ──
+    if (isBackoffice) {
+      return {
+        topItem: null,
+        groups: [
+          {
+            label: "Financeiro",
+            items: [
+              { title: "Pagadorias", url: "/backoffice/pagadorias", icon: FileBarChart },
+            ],
+          },
+          {
+            label: "Marketing",
+            items: [
+              { title: "Central de Marketing", url: "/backoffice/marketing", icon: BarChart3 },
+            ],
+          },
+          {
+            label: "Ferramentas",
+            items: [
+              { title: "HOMI Ana", url: "/backoffice/homi-ana", icon: Bot },
+              { title: "Marketplace", url: "/marketplace", icon: BookOpen },
+            ],
+          },
+        ],
+        roleLabel: "Backoffice",
+      };
+    }
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            {backofficeGroups.map((g, i) => (
-              <SidebarNavGroup key={g.label} label={g.label} items={g.items} badges={badges} collapsed={collapsed} index={i} />
-            ))}
-          </div>
-        </SidebarContent>
-
-        <SidebarFooter className="!p-0">
-          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"} py-3 px-3 border-t border-white/10 group/footer sticky bottom-0 bg-sidebar`} onMouseEnter={() => setHoverFooter(true)} onMouseLeave={() => setHoverFooter(false)}>
-            {collapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => navigate("/configuracoes")} className="shrink-0">
-                    <CorretorAvatar nome={profile.nome || user?.email || "U"} avatarUrl={profile.avatar_url} avatarPreviewUrl={profile.avatar_preview_url} points={points} size="sm" showBadges={false} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-neutral-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">
-                  <p className="font-medium">{profile.nome || user?.email}</p>
-                  <p className="text-xs text-neutral-400">Backoffice</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <>
-                <CorretorAvatar nome={profile.nome || user?.email || "U"} avatarUrl={profile.avatar_url} avatarPreviewUrl={profile.avatar_preview_url} points={points} size="sm" showBadges={false} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{profile.nome || user?.email}</p>
-                  <p className="text-xs text-neutral-400 font-medium">Backoffice</p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={signOut} className={`h-7 w-7 shrink-0 text-neutral-400 hover:text-danger-500 hover:bg-danger-500/10 transition-all duration-150 rounded-lg ${hoverFooter ? "opacity-100" : "opacity-0"}`}>
-                  <LogOut className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            )}
-          </div>
-        </SidebarFooter>
-      </Sidebar>
-    );
+    // ── Corretor (default) ──
+    return {
+      topItem: { title: "Minha Rotina", url: "/corretor", icon: Home },
+      groups: [
+        {
+          label: "Leads",
+          items: [
+            { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+            { title: "Oferta Ativa", url: "/corretor/call", icon: Phone },
+          ],
+        },
+        {
+          label: "Negócios",
+          items: [
+            { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+            { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
+          ],
+        },
+        {
+          label: "Performance",
+          items: [
+            { title: "Meu Desempenho", url: "/corretor/resumo", icon: BarChart3 },
+            { title: "Rankings", url: "/corretor/ranking-equipes", icon: Trophy },
+            { title: "Conquistas", url: "/conquistas", icon: Award },
+          ],
+        },
+        {
+          label: "Ferramentas",
+          items: [
+            { title: "HOMI Assistente", url: "/homi", icon: Bot },
+            { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
+            { title: "Marketplace", url: "/marketplace", icon: BookOpen },
+            { title: "Notificações", url: "/notificacoes", icon: Bell },
+          ],
+        },
+      ],
+      roleLabel: `Corretor · ${level.emoji} ${level.label}`,
+    };
   }
 
-  // "Minha Rotina" special item (corretor only, above groups)
-  const topItem: NavItem | null = isCorretor
-    ? { title: "Minha Rotina", url: "/corretor", icon: Home }
-    : null;
-
-  // ── Navigation structure by role ──
-
-  const leadsItems: NavItem[] = isAdmin || isGestor
-    ? [
-        { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
-        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
-        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
-        { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
-      ]
-    : [
-        { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
-        { title: "Oferta Ativa", url: "/corretor/call", icon: Phone },
-      ];
-
-  const negociosItems: NavItem[] = [
-    { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
-    { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
-    ...(isAdmin || isGestor ? [{ title: "Pós-Vendas", url: "/pos-vendas", icon: Heart }] : []),
-  ];
-
-  const performanceItems: NavItem[] = isAdmin
-    ? [
-        { title: "Início", url: "/ceo", icon: Home },
-        { title: "Checkpoint e Metas", url: "/checkpoint", icon: ClipboardCheck },
-        { title: "Rankings", url: "/ranking", icon: Trophy },
-      ]
-    : isGestor
-    ? [
-        { title: "Início", url: "/", icon: Home },
-        { title: "Checkpoint e Metas", url: "/checkpoint", icon: ClipboardCheck },
-        { title: "Rankings", url: "/ranking", icon: Trophy },
-      ]
-    : [
-        { title: "Meu Desempenho", url: "/corretor/resumo", icon: BarChart3 },
-        { title: "Rankings", url: "/corretor/ranking-equipes", icon: Trophy },
-        { title: "Conquistas", url: "/conquistas", icon: Award },
-      ];
-
-  const ferramentasItems: NavItem[] = isAdmin
-    ? [
-        { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
-        { title: "Scripts", url: "/scripts", icon: FileEdit },
-        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-        { title: "Automações", url: "/automacoes", icon: Workflow },
-        { title: "Notificações", url: "/notificacoes", icon: Bell },
-      ]
-    : isGestor
-    ? [
-        { title: "HOMI Gerencial", url: "/homi-gerente", icon: Bot },
-        { title: "Scripts", url: "/scripts", icon: FileEdit },
-        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-        { title: "Automações", url: "/automacoes", icon: Workflow },
-        { title: "Notificações", url: "/notificacoes", icon: Bell },
-      ]
-    : [
-        { title: "HOMI Assistente", url: "/homi", icon: Bot },
-        { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
-        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-        { title: "Notificações", url: "/notificacoes", icon: Bell },
-      ];
-
-  const equipeItems: NavItem[] = isAdmin || isGestor
-    ? [
-        { title: "Meu Time", url: "/meu-time", icon: Users },
-        { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
-      ]
-    : [];
-
-  const inteligenciaItems: NavItem[] = isAdmin
-    ? [
-        { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
-        { title: "Inteligência Marketing", url: "/marketing", icon: TrendingUp },
-        { title: "Auditoria & Saúde", url: "/auditoria", icon: Shield },
-      ]
-    : [];
-
-  const sistemaItems: NavItem[] = isAdmin
-    ? [
-        { title: "Recuperação de Leads", url: "/gestao", icon: LayoutDashboard },
-        { title: "Administração", url: "/admin", icon: Shield },
-      ]
-    : [];
-
-  // No "Conta" group — config is only in the avatar dropdown menu
-  const groups = [
-    { label: "Leads", items: leadsItems },
-    { label: "Negócios", items: negociosItems },
-    { label: "Performance", items: performanceItems },
-    ...(equipeItems.length > 0 ? [{ label: "Equipe", items: equipeItems }] : []),
-    { label: "Ferramentas", items: ferramentasItems },
-    ...(inteligenciaItems.length > 0 ? [{ label: "Inteligência", items: inteligenciaItems }] : []),
-    ...(sistemaItems.length > 0 ? [{ label: "Sistema", items: sistemaItems }] : []),
-  ];
+  const { topItem, groups, roleLabel } = getGroupsByRole();
 
   // Footer initials
   const initials = (profile.nome || user?.email || "U")
@@ -367,7 +326,7 @@ export function AppSidebar() {
     .map(w => w[0]?.toUpperCase())
     .join("");
 
-  const roleLabel = isAdmin ? "Admin" : isGestor ? "Gestor" : "Corretor";
+  
 
   return (
     <Sidebar collapsible="icon">
@@ -476,7 +435,7 @@ export function AppSidebar() {
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-neutral-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">
                 <p className="font-medium">{profile.nome || user?.email}</p>
-                <p className="text-xs text-neutral-400">{roleLabel} · {level.emoji} {level.label}</p>
+                <p className="text-xs text-neutral-400">{roleLabel}</p>
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -494,7 +453,7 @@ export function AppSidebar() {
                   {profile.nome || user?.email}
                 </p>
                 <p className="text-xs text-neutral-400 font-medium flex items-center gap-1">
-                  {roleLabel} · <span>{level.emoji} {level.label}</span>
+                  {roleLabel}
                 </p>
               </div>
               <Button
