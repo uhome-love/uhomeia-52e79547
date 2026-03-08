@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalendarDays, List, Users, Plus, CalendarIcon, X, ArrowUpDown, Search, AlertTriangle, CheckCircle2, XCircle, Clock, RefreshCw, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVisitas, STATUS_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
+import { getTeamBadgeStyle } from "@/components/visitas/VisitaRow";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -21,7 +22,7 @@ import VisitaResultadoDialog, { type ResultadoVisita } from "@/components/visita
 
 
 // ─── Day Summary Card ───
-function DaySummary({ visitas }: { visitas: Visita[] }) {
+function DaySummary({ visitas, showTeamBreakdown }: { visitas: Visita[]; showTeamBreakdown?: boolean }) {
   const today = startOfDay(new Date());
   const todayVisitas = visitas.filter(v => isToday(new Date(v.data_visita + "T12:00:00")));
   const realizadas = todayVisitas.filter(v => v.status === "realizada").length;
@@ -30,6 +31,22 @@ function DaySummary({ visitas }: { visitas: Visita[] }) {
   const pendentes = todayVisitas.filter(v => v.status === "marcada" || v.status === "confirmada").length;
   const total = todayVisitas.length;
   const taxa = total > 0 ? Math.round((realizadas / total) * 100) : 0;
+
+  // Team breakdown
+  const teamStats = useMemo(() => {
+    if (!showTeamBreakdown) return [];
+    const map = new Map<string, { total: number; realizadas: number }>();
+    for (const v of todayVisitas) {
+      const team = v.equipe || "Sem equipe";
+      if (!map.has(team)) map.set(team, { total: 0, realizadas: 0 });
+      const s = map.get(team)!;
+      s.total++;
+      if (v.status === "realizada") s.realizadas++;
+    }
+    return Array.from(map.entries())
+      .map(([name, stats]) => ({ name, ...stats }))
+      .sort((a, b) => b.total - a.total);
+  }, [todayVisitas, showTeamBreakdown]);
 
   if (total === 0) return null;
 
@@ -67,6 +84,33 @@ function DaySummary({ visitas }: { visitas: Visita[] }) {
           {taxa}% realização
         </span>
       </div>
+
+      {/* Team breakdown for CEO/admin */}
+      {showTeamBreakdown && teamStats.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border/50 space-y-1.5">
+          <span className="text-[11px] font-semibold text-muted-foreground">Por equipe</span>
+          {teamStats.map(t => {
+            const style = getTeamBadgeStyle(t.name);
+            return (
+              <div key={t.name} className="flex items-center gap-2">
+                {style ? (
+                  <span className={cn("text-[11px] px-1.5 py-0 rounded-full border whitespace-nowrap", style.className)}>
+                    {style.emoji} {style.label}
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground">{t.name}</span>
+                )}
+                <span className="text-[11px] text-foreground font-semibold ml-auto">
+                  {t.total} visita{t.total !== 1 ? "s" : ""} hoje
+                </span>
+                <span className="text-[11px] text-green-600 font-semibold">
+                  {t.realizadas} realizada{t.realizadas !== 1 ? "s" : ""}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

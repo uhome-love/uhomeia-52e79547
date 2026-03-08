@@ -13,6 +13,7 @@ interface Props {
   onEdit?: (visita: Visita) => void;
   onDelete?: (id: string) => void;
   showCorretor?: boolean;
+  showTeam?: boolean;
 }
 
 interface DateGroup {
@@ -26,7 +27,7 @@ interface DateGroup {
   total: number;
 }
 
-export default function VisitasList({ visitas, onUpdateStatus, onEdit, onDelete, showCorretor }: Props) {
+export default function VisitasList({ visitas, onUpdateStatus, onEdit, onDelete, showCorretor, showTeam }: Props) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const groups = useMemo(() => {
@@ -139,6 +140,7 @@ export default function VisitasList({ visitas, onUpdateStatus, onEdit, onDelete,
                       onUpdateStatus={onUpdateStatus}
                       onDelete={onDelete}
                       showCorretor={showCorretor}
+                      showTeam={showTeam}
                       isPastPending={isPastPending}
                     />
                   );
