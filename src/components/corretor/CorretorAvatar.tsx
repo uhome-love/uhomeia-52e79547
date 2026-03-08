@@ -130,6 +130,7 @@ export default function CorretorAvatar({
   size = "md",
   animated = true,
   showBadges = true,
+  animationState = "idle",
   className,
 }: CorretorAvatarProps) {
   const level = levelOverride || getLevel(points);
