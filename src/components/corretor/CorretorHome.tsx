@@ -19,7 +19,12 @@ import MiniFunilPessoal from "./MiniFunilPessoal";
 import EvolucaoSemanal from "./EvolucaoSemanal";
 import LevelProgressBar from "./LevelProgressBar";
 import CelebrationOverlay from "./CelebrationOverlay";
+import { ACHIEVEMENTS } from "@/lib/gamification";
 import { useNavigate } from "react-router-dom";
+
+const ACHIEVEMENTS_MAP: Record<string, { emoji: string; label: string }> = Object.fromEntries(
+  ACHIEVEMENTS.map(a => [a.id, { emoji: a.emoji, label: a.label }])
+);
 const homiMascot = "/images/homi-mascot-opt.png";
 
 export default function CorretorHome() {
