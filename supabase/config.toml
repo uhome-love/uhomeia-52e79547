@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.generate-avatar]
 verify_jwt = false
+
+[functions.whatsapp-notificacao]
+verify_jwt = false
