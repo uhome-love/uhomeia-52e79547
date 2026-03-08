@@ -169,7 +169,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { acao, empreendimento, situacao, mensagem_cliente, objetivo, role } = await req.json();
+    const { acao, empreendimento, situacao, mensagem_cliente, objetivo, role, lead_context } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -362,8 +362,10 @@ MÁXIMO 5-6 trocas. Cada fala do corretor em NO MÁXIMO 2 linhas.)
 ## 🎯 Próxima Ação
 (3-4 bullet points curtos com ações concretas. Use • para cada item.)`;
 
-    let userPrompt = "";
+    // Inject lead_context (v2 full history) into all prompts
+    const leadCtx = lead_context ? `\n\n═══ CONTEXTO COMPLETO DO LEAD ═══\n${lead_context}\n═══════════════════════════════` : "";
 
+    let userPrompt = "";
     const contextoCliente = mensagem_cliente ? `\n\nO CLIENTE DISSE/ESCREVEU: "${mensagem_cliente}"\n\nIMPORTANTE: Analise a frase do cliente, identifique o sentimento/objeção real por trás dela, e responda de forma estratégica.` : "";
 
     switch (acao) {
@@ -451,6 +453,9 @@ Objetivo: ${objetivo}${contextoCliente}
 
 Ajude o corretor com a melhor estratégia para esta situação.`;
     }
+
+    // Append full lead context to prompt for v2 contextual responses
+    userPrompt += leadCtx;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
