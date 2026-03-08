@@ -692,36 +692,6 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         </AnimatePresence>
       </div>
 
-      {/* ⚡ OBJEÇÕES RÁPIDAS — always visible */}
-      <div className="shrink-0 space-y-2">
-        <span style={{ fontSize: 11, color: "#FBBF24", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const }}>⚡ Objeções Rápidas</span>
-        <div className="grid grid-cols-2 gap-1.5">
-          {objections.map((obj, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setExpandedObj(expandedObj === i ? null : i);
-                setObjectionInsert(obj.answer);
-              }}
-              className="transition-all text-left"
-              style={{
-                background: expandedObj === i ? "rgba(245,158,11,0.12)" : "#1C2128",
-                border: expandedObj === i ? "1px solid rgba(245,158,11,0.4)" : "1px dashed rgba(255,255,255,0.1)",
-                borderRadius: 10,
-                padding: "10px 12px",
-                fontSize: 12,
-                fontWeight: 600,
-                color: expandedObj === i ? "#FCD34D" : "#D1D5DB",
-                height: 36,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              {obj.emoji} {obj.label}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 
