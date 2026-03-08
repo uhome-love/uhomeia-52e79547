@@ -9,12 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import AvatarUpload from "@/components/AvatarUpload";
-import { Loader2, Save, Lock, User, Mail, Phone, Volume2, PartyPopper, Gamepad2, ExternalLink, Upload } from "lucide-react";
+import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
+import { Loader2, Save, Lock, User, Mail, Phone, Volume2, PartyPopper, Sparkles, Upload } from "lucide-react";
 import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 import MetaAdsSettings from "@/components/marketing/MetaAdsSettings";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getSoundEnabled, setSoundEnabled, getCelebrationEnabled, setCelebrationEnabled } from "@/lib/celebrations";
-import "@google/model-viewer";
 
 export default function Configuracoes() {
   const { user } = useAuth();
