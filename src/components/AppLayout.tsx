@@ -78,18 +78,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [cargoLabel, setCargoLabel] = useState("");
   const { pendingLead, showDialog, closeDialog, refresh: refreshPending } = usePendingLeadAlert();
-  const cargo = isAdmin ? "CEO" : isGestor ? "Gerente" : "Corretor";
   const { isFullscreen, isSession } = useArenaMode();
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("nome, avatar_url, avatar_gamificado_url").eq("user_id", user.id).single().then(({ data }) => {
+    supabase.from("profiles").select("nome, avatar_url, avatar_gamificado_url, cargo").eq("user_id", user.id).single().then(({ data }) => {
       if (data?.nome) setNome(data.nome);
       const url = data?.avatar_url || (data as any)?.avatar_gamificado_url || null;
       setAvatarUrl(url);
+      const c = (data as any)?.cargo || "";
+      const labelMap: Record<string, string> = {
+        backoffice: "Backoffice · 💜 Admin",
+        admin: "Admin · 👑 CEO",
+        gerente: "Gerente",
+        corretor: "Corretor",
+      };
+      setCargoLabel(labelMap[c] || (isAdmin ? "Admin · 👑 CEO" : isGestor ? "Gerente" : "Corretor"));
     });
-  }, [user]);
+  }, [user, isAdmin, isGestor]);
 
   return (
     <SidebarProvider defaultOpen={!isSession}>
@@ -144,22 +152,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <img
                         src={avatarUrl}
                         alt={nome || "Avatar"}
-                        className="rounded-full object-cover"
-                        style={{ width: 56, height: 56, border: "2px solid #7C3AED" }}
+                        className="rounded-full object-cover shrink-0"
+                        style={{ width: 36, height: 36, border: "2px solid #7C3AED" }}
                       />
                     ) : (
                       <div
-                        className="flex items-center justify-center rounded-full font-bold text-white text-sm"
-                        style={{ width: 56, height: 56, background: "#7C3AED", border: "2px solid #7C3AED" }}
+                        className="flex items-center justify-center rounded-full font-bold text-white text-[11px] shrink-0"
+                        style={{ width: 36, height: 36, background: "#7C3AED", border: "2px solid #7C3AED" }}
                       >
-                        {nome ? nome.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : <User className="h-5 w-5" />}
+                        {nome ? nome.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : <User className="h-4 w-4" />}
                       </div>
                     )}
                     <div className="text-left hidden sm:block">
                       <p className="text-xs font-medium leading-tight" style={{ color: "#fff" }}>
                         {nome || user?.email?.split("@")[0]}
                       </p>
-                      <p className="text-[10px] leading-tight" style={{ color: "#9CA3AF" }}>{cargo}</p>
+                      <p className="text-[10px] leading-tight" style={{ color: "#9CA3AF" }}>{cargoLabel}</p>
                     </div>
                     <ChevronDown className="h-3.5 w-3.5 hidden sm:block" style={{ color: "#6B7280" }} />
                   </Button>
@@ -167,7 +175,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-3 py-2">
                     <p className="text-sm font-semibold">{nome || "Usuário"}</p>
-                    <p className="text-xs text-muted-foreground">{cargo}</p>
+                    <p className="text-xs text-muted-foreground">{cargoLabel}</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="text-xs gap-2 cursor-pointer">
