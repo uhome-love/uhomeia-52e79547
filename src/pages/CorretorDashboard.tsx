@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
 import { differenceInHours } from "date-fns";
 import { getDynamicGreeting, formatStreak } from "@/lib/celebrations";
+import { getLevel, getNextLevel, getLevelProgress } from "@/lib/gamification";
 import MetaCelebration from "@/components/corretor/MetaCelebration";
 import ConfettiBurst from "@/components/corretor/ConfettiToast";
 
@@ -161,7 +162,10 @@ export default function CorretorDashboard() {
     slaExpired: radar.slaExpired,
     streak: 0,
   });
-  const streak = formatStreak(0); // TODO: compute from DB
+  const streakData = formatStreak(0); // TODO: compute from DB
+  const currentLevel = getLevel(progress.pontos);
+  const nextLevel = getNextLevel(progress.pontos);
+  const levelProgress = getLevelProgress(progress.pontos);
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px-2rem)] px-4 md:px-6 lg:px-8 py-4 overflow-auto">
@@ -178,9 +182,9 @@ export default function CorretorDashboard() {
             {greetingData.greeting}
           </h1>
           <p className="text-sm text-muted-foreground truncate">{greetingData.subtitle}</p>
-          {streak.emoji && (
-            <p className={`text-xs font-semibold mt-0.5 ${streak.color}`}>
-              {streak.emoji} {streak.label}
+          {streakData.emoji && (
+            <p className={`text-xs font-semibold mt-0.5 ${streakData.color}`}>
+              {streakData.emoji} {streakData.label}
             </p>
           )}
         </div>
@@ -241,25 +245,29 @@ export default function CorretorDashboard() {
             <div className="grid grid-cols-2 gap-3">
               <Button
                 disabled={!metaSalva}
-                className={`h-20 flex-col gap-1.5 rounded-xl text-base font-bold ${
+                className={`h-14 flex-col gap-1 rounded-xl text-sm font-bold ${
                   metaSalva
                     ? "bg-[#16A34A] hover:bg-[#15803D] text-white shadow-[0_4px_20px_hsl(142_60%_40%/0.3)]"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
                 onClick={() => metaSalva && navigate("/corretor/call")}
               >
-                {!metaSalva ? <Lock className="h-6 w-6" /> : <Phone className="h-6 w-6" />}
-                {metaSalva ? "Iniciar Call" : "🔒 Iniciar Call"}
-                <span className="text-xs font-normal opacity-70">Oferta Ativa</span>
+                <div className="flex items-center gap-1.5">
+                  {!metaSalva ? <Lock className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                  {metaSalva ? "Iniciar Call" : "🔒 Iniciar Call"}
+                </div>
+                <span className="text-[10px] font-normal opacity-70">Oferta Ativa</span>
               </Button>
               <Button
                 variant="outline"
-                className="h-20 flex-col gap-1.5 rounded-xl text-base font-bold border-2 hover:bg-primary/5 hover:border-primary/30 group"
+                className="h-14 flex-col gap-1 rounded-xl text-sm font-bold border-2 hover:bg-primary/5 hover:border-primary/30 group"
                 onClick={() => navigate("/pipeline")}
               >
-                <Kanban className="h-6 w-6 text-primary" />
-                Gestão de Leads
-                <span className="text-xs font-normal text-muted-foreground">Pipeline</span>
+                <div className="flex items-center gap-1.5">
+                  <Kanban className="h-4 w-4 text-primary" />
+                  Gestão de Leads
+                </div>
+                <span className="text-[10px] font-normal text-muted-foreground">Pipeline</span>
               </Button>
             </div>
             {!metaSalva && (
@@ -267,6 +275,77 @@ export default function CorretorDashboard() {
                 Defina sua meta para liberar a discagem.
               </p>
             )}
+          </motion.div>
+
+          {/* Streak + Nível */}
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <Card className="border-border/60">
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base">{streakData.emoji || "🔥"}</span>
+                    <span className="text-xs font-semibold text-foreground">Streak</span>
+                    <span className={`text-xs font-bold ${streakData.color || "text-muted-foreground"}`}>0 dias</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base">{currentLevel.emoji}</span>
+                    <span className={`text-xs font-bold ${currentLevel.color}`}>{currentLevel.label}</span>
+                  </div>
+                </div>
+                <div className="relative h-1.5 rounded-full bg-muted overflow-hidden">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 rounded-full bg-primary"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${levelProgress}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-muted-foreground">{progress.pontos}/{nextLevel ? nextLevel.minPoints : "MAX"} pts</p>
+                  <p className="text-[10px] text-muted-foreground italic">
+                    {streakData.label || "Bata a meta hoje para começar! 🚀"}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Ranking Compacto */}
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+            <Card className="border-border/60">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base">🏆</span>
+                    <span className="text-xs font-semibold text-foreground">Ranking Hoje</span>
+                  </div>
+                  <Button variant="link" size="sm" className="h-auto p-0 text-[10px] text-primary" onClick={() => navigate("/ranking")}>
+                    Ver completo →
+                  </Button>
+                </div>
+                <div className="space-y-1">
+                  {[
+                    { pos: 1, name: nome || "Você", pts: progress.pontos, isMe: true, streak: 0 },
+                    { pos: 2, name: "—", pts: 0, isMe: false, streak: 0 },
+                    { pos: 3, name: "—", pts: 0, isMe: false, streak: 0 },
+                  ].map((r) => (
+                    <div
+                      key={r.pos}
+                      className={`flex items-center gap-2 px-2 py-1 rounded-md text-xs ${
+                        r.isMe ? "bg-primary/5 font-semibold" : ""
+                      }`}
+                    >
+                      <span className="w-5 text-center shrink-0">
+                        {r.pos === 1 ? "👑" : r.pos === 2 ? "🥈" : "🥉"}
+                      </span>
+                      <span className="flex-1 truncate text-foreground">{r.name}</span>
+                      <span className="font-bold text-foreground">{r.pts}pts</span>
+                      {r.streak > 0 && <span className="text-orange-500">🔥{r.streak}</span>}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* Finalizar Trabalho — desktop only in left column */}
