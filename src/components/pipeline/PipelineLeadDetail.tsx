@@ -29,7 +29,7 @@ import PartnershipDialog from "./PartnershipDialog";
 import GerenteManagementSection from "./GerenteManagementSection";
 import LeadSequenceSuggestion from "./LeadSequenceSuggestion";
 import HomiLeadAssistant from "./HomiLeadAssistant";
-import { CentralComunicacao } from "@/components/comunicacao/CentralComunicacao";
+import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 import OpportunityVisitasTab from "./OpportunityVisitasTab";
 import OpportunityPropostasTab from "./OpportunityPropostasTab";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays } from "date-fns";

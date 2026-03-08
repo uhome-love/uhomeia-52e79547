@@ -17,7 +17,7 @@ import { calculateLeadScore, getSlaStatus } from "@/lib/leadScoring";
 import PipelineQuickTransfer from "./PipelineQuickTransfer";
 import PartnershipDialog from "./PartnershipDialog";
 import PipelineTransferDialog from "./PipelineTransferDialog";
-import { CentralComunicacao } from "@/components/comunicacao/CentralComunicacao";
+import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
