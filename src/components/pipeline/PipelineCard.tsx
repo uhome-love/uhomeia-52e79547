@@ -339,6 +339,39 @@ const PipelineCard = memo(function PipelineCard({
               </span>
             </div>
           </div>
+
+          {/* Game: Journey progress dots */}
+          {stageIndexMap && (
+            <div className="flex items-center gap-0.5 pt-1">
+              {stages.map((s, i) => {
+                const isCurrent = i === currentIdx;
+                const isPast = i < currentIdx;
+                return (
+                  <div key={s.id} className="flex items-center">
+                    <div
+                      className="rounded-full"
+                      style={{
+                        width: isCurrent ? 8 : 6,
+                        height: isCurrent ? 8 : 6,
+                        backgroundColor: isPast || isCurrent ? (missionBadge.color) : "hsl(var(--muted))",
+                        opacity: isPast ? 0.5 : 1,
+                        animation: isCurrent ? "pulseDot 2s ease-in-out infinite" : undefined,
+                      }}
+                    />
+                    {i < stages.length - 1 && (
+                      <div
+                        className="h-[2px]"
+                        style={{
+                          width: "8px",
+                          backgroundColor: isPast ? `${missionBadge.color}60` : "hsl(var(--muted))",
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <Separator />
