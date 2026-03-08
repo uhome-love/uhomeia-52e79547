@@ -10,7 +10,6 @@ export interface CorretorAvatarProps {
   nome: string;
   avatarUrl?: string | null;
   avatarPreviewUrl?: string | null;
-  gamifiedAvatarUrl?: string | null;
   points?: number;
   level?: GamificationLevel;
   ranking?: number;
@@ -121,7 +120,6 @@ export default function CorretorAvatar({
   nome,
   avatarUrl,
   avatarPreviewUrl,
-  gamifiedAvatarUrl,
   points = 0,
   level: levelOverride,
   ranking,
@@ -137,8 +135,8 @@ export default function CorretorAvatar({
 
   const has3D = is3DModel(avatarUrl);
   const use3D = has3D && (size === "lg" || size === "xl");
-  // For sm/md: use preview PNG if available, else gamified, else regular photo
-  const flatImageUrl = avatarPreviewUrl || gamifiedAvatarUrl || (has3D ? null : avatarUrl);
+  // For sm/md: use preview PNG if available, else regular photo
+  const flatImageUrl = avatarPreviewUrl || (has3D ? null : avatarUrl);
 
   const isTop1 = ranking === 1;
 
