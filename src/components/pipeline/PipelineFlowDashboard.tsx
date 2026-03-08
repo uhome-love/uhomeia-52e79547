@@ -192,53 +192,80 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
   return (
     <div className="space-y-6 overflow-y-auto max-h-full pb-8 pr-1">
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-border/50">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Target className="h-4 w-4 text-primary" />
-              <span className="text-xs text-muted-foreground">Total Pipeline</span>
-            </div>
-            <p className="text-2xl font-bold">{totalLeads}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Flame className="h-4 w-4 text-emerald-600" />
-              <span className="text-xs text-muted-foreground">Vendas</span>
-            </div>
-            <p className="text-2xl font-bold text-emerald-600">{vendasCount}</p>
-            {totalLeads > 0 && (
-              <span className="text-[10px] text-muted-foreground">
-                {((vendasCount / totalLeads) * 100).toFixed(1)}% conversão
-              </span>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-2 mb-1">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <span className="text-xs text-muted-foreground">Prazos Estourados</span>
-            </div>
-            <p className="text-2xl font-bold text-red-600">
-              {stageMetrics.reduce((s, m) => s + m.slaBreaches, 0)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <span className="text-xs text-muted-foreground">VGV Total</span>
-            </div>
-            <p className="text-lg font-bold">
-              {formatVGV(stageMetrics.reduce((s, m) => s + m.vgv, 0))}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <TooltipProvider>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card className="border-border/50">
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Target className="h-4 w-4 text-primary" />
+                    <span className="text-xs text-muted-foreground">Total Pipeline</span>
+                  </div>
+                  <p className="text-2xl font-bold">{totalLeads}</p>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>Leads ativos em todas as etapas do funil</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card className="border-border/50">
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Flame className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs text-muted-foreground">Vendas</span>
+                  </div>
+                  <p className="text-2xl font-bold text-emerald-600">{vendasCount}</p>
+                  {totalLeads > 0 && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {((vendasCount / totalLeads) * 100).toFixed(1)}% conversão
+                    </span>
+                  )}
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>Leads que fecharam venda no período</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card className="border-border/50">
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <span className="text-xs text-muted-foreground">Prazos Estourados</span>
+                  </div>
+                  <p className="text-2xl font-bold text-destructive">
+                    {stageMetrics.reduce((s, m) => s + m.slaBreaches, 0)}
+                  </p>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>Leads que ultrapassaram o SLA da etapa atual</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card className="border-border/50">
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <span className="text-xs text-muted-foreground">VGV Total</span>
+                  </div>
+                  {(() => {
+                    const totalVgv = stageMetrics.reduce((s, m) => s + m.vgv, 0);
+                    return (
+                      <p className={`text-lg font-bold ${totalVgv === 0 ? "text-muted-foreground" : ""}`}>
+                        {totalVgv === 0 ? "R$ 0" : formatVGV(totalVgv)}
+                      </p>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>Soma do valor estimado de todas as oportunidades ativas</TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
 
       {/* Funnel Flow with Conversion Rates */}
       <Card>
@@ -284,9 +311,7 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
 
                       <span className="text-xl font-bold">{metric.count}</span>
 
-                      <div className="w-full mt-2">
-                        <Progress value={pct} className="h-1.5" />
-                      </div>
+                      {/* Progress bar removed — number is enough */}
 
                       <div className="flex flex-col items-center gap-0.5 mt-2">
                         <span className="text-[10px] text-muted-foreground flex items-center gap-1">
@@ -326,13 +351,20 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
                     {/* Conversion arrow between stages */}
                     {i < arr.length - 1 && (
                       <div className="flex flex-col items-center px-1 min-w-[50px]">
-                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                        <ArrowRight className={`h-5 w-5 shrink-0 ${
+                          conversionRate !== null
+                            ? conversionRate >= 50 ? "text-emerald-600"
+                            : conversionRate >= 30 ? "text-blue-600"
+                            : conversionRate >= 15 ? "text-amber-600"
+                            : "text-destructive"
+                            : "text-muted-foreground/40"
+                        }`} />
                         {conversionRate !== null && (
-                          <div className={`text-center mt-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                            conversionRate >= 50 ? "bg-emerald-500/15 text-emerald-600" :
-                            conversionRate >= 30 ? "bg-blue-500/15 text-blue-600" :
-                            conversionRate >= 15 ? "bg-amber-500/15 text-amber-600" :
-                            "bg-red-500/15 text-red-600"
+                          <div className={`text-center mt-0.5 px-1.5 py-0.5 rounded-md text-lg font-bold ${
+                            conversionRate >= 50 ? "text-emerald-600" :
+                            conversionRate >= 30 ? "text-blue-600" :
+                            conversionRate >= 15 ? "text-amber-600" :
+                            "text-destructive"
                           }`}>
                             {conversionRate}%
                           </div>
@@ -360,14 +392,26 @@ export default function PipelineFlowDashboard({ stages, leads, corretorNomes }: 
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {transitions.slice(0, 8).map((t, i) => (
-                <div key={i} className="flex items-center gap-3 text-sm">
-                  <span className="text-xs font-medium text-foreground min-w-[100px] truncate">{t.fromName}</span>
-                  <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                  <span className="text-xs font-medium text-foreground min-w-[100px] truncate">{t.toName}</span>
-                  <Badge variant="secondary" className="text-[10px] ml-auto">{t.count}x</Badge>
-                </div>
-              ))}
+              {transitions.slice(0, 8).map((t, i) => {
+                const fromIdx = stages.findIndex(s => s.id === t.from);
+                const toIdx = stages.findIndex(s => s.id === t.to);
+                const isRegressive = fromIdx !== -1 && toIdx !== -1 && toIdx < fromIdx;
+                return (
+                  <div key={i} className={`flex items-center gap-3 text-sm ${isRegressive ? "bg-destructive/5 rounded-md px-2 py-1" : ""}`}>
+                    <span className="text-xs font-medium text-foreground min-w-[100px] truncate">{t.fromName}</span>
+                    {isRegressive ? (
+                      <span className="flex items-center gap-0.5 shrink-0">
+                        <AlertTriangle className="h-3 w-3 text-destructive" />
+                        <ArrowLeft className="h-3 w-3 text-destructive" />
+                      </span>
+                    ) : (
+                      <ArrowRight className="h-3 w-3 text-emerald-600 shrink-0" />
+                    )}
+                    <span className={`text-xs font-medium min-w-[100px] truncate ${isRegressive ? "text-destructive" : "text-foreground"}`}>{t.toName}</span>
+                    <Badge variant="secondary" className="text-[10px] ml-auto">{t.count}x</Badge>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
