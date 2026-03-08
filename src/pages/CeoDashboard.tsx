@@ -86,6 +86,9 @@ export default function CeoDashboard() {
   const [frase] = useState(() => FRASES[Math.floor(Math.random() * FRASES.length)]);
   const [advisorLoading, setAdvisorLoading] = useState(false);
   const [advisorContent, setAdvisorContent] = useState("");
+  const [dispatchOpen, setDispatchOpen] = useState(false);
+  const [filaCeoCount, setFilaCeoCount] = useState(0);
+  const [lastDispatch, setLastDispatch] = useState<{ at: string; count: number } | null>(null);
 
   const {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
