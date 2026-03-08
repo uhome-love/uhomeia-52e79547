@@ -379,7 +379,6 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     { emoji: "🤔", label: "Preciso pensar", answer: `Faz sentido! Que tal uma visita sem compromisso? Muitos clientes decidem ao ver pessoalmente. Posso agendar algo rápido de 20 minutos?` },
     { emoji: "👫", label: "Falar com cônjuge", answer: `Claro! Que tal agendar uma visita juntos? Assim vocês dois conhecem e decidem juntos. Qual o melhor dia para vocês dois?` },
   ];
-  const [expandedObj, setExpandedObj] = useState<number | null>(null);
 
   // Inline result handler
   const handleInlineResult = (resultado: string) => {
