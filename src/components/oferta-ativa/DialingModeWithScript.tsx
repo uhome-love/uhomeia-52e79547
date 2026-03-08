@@ -94,6 +94,36 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const [sessionSeconds, setSessionSeconds] = useState(0);
   const [showMilestone, setShowMilestone] = useState<string | null>(null);
   const [expandedObj, setExpandedObj] = useState<number | null>(null);
+
+  // === ARENA: Round announcement ===
+  const [showRound, setShowRound] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
+  const [arenaShake, setArenaShake] = useState(false);
+  const [arenaConfetti, setArenaConfetti] = useState<string[]>([]);
+  const prevLeadIdRef = useRef<string | null>(null);
+
+  // Trigger round animation on new lead
+  useEffect(() => {
+    if (lead && lead.id !== prevLeadIdRef.current) {
+      prevLeadIdRef.current = lead.id;
+      if (sessionLeadsServed > 0) {
+        setShowFlash(true);
+        setShowRound(true);
+        setTimeout(() => setShowFlash(false), 350);
+        setTimeout(() => setShowRound(false), 900);
+      }
+    }
+  }, [lead?.id, sessionLeadsServed]);
+
+  // Arena confetti burst
+  const triggerConfetti = useCallback(() => {
+    const emojis = ['🎉', '✨', '🌟', '⭐', '🔥', '💫', '🎊', '✅', '💎', '🏆',
+                    '🎉', '✨', '🌟', '⭐', '🔥', '💫', '🎊', '✅', '💎', '🏆',
+                    '🎉', '✨', '🌟', '⭐', '🔥', '💫', '🎊', '✅', '💎', '🏆'];
+    setArenaConfetti(emojis);
+    setTimeout(() => setArenaConfetti([]), 3000);
+  }, []);
+
   // === FETCH FIRST LEAD on mount ===
   const hasFetchedRef = useRef(false);
   useEffect(() => {
@@ -237,6 +267,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         if (resultado === "com_interesse") {
           setStreak(prev => prev + 1);
           playSoundSuccess();
+          triggerConfetti();
           const tipoLabel = interesseTipo === "visita_marcada" ? "Visita Marcada" 
             : interesseTipo === "quer_visitar" ? "Possibilidade de Visita"
             : interesseTipo === "demonstrou_interesse" ? "Atendimento"
@@ -256,7 +287,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           }
         } else if (resultado === "nao_atendeu") {
           setStreak(0);
-          toast("📞 Não atendeu — lead volta à fila com cooldown progressivo", { duration: 2000 });
+          setArenaShake(true);
+          setTimeout(() => setArenaShake(false), 500);
+          toast("Próximo! 💪", { duration: 1500 });
         } else if (resultado === "sem_interesse") {
           setStreak(0);
           toast("👋 Sem interesse — lead removido da fila", { duration: 2000 });
@@ -401,8 +434,34 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     handleResultSubmit(resultado === "depois" ? "nao_atendeu" : resultado, feedbackMap[resultado] || resultado);
   };
 
+  // Timer color based on duration
+  const timerColorClass = callTimer <= 30 ? "arena-timer-green" : callTimer <= 60 ? "arena-timer-amber" : "arena-timer-red";
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 relative">
+      {/* ═══ ARENA OVERLAYS ═══ */}
+      {showFlash && <div className="round-flash" />}
+      {showRound && (
+        <div className="fixed inset-0 flex flex-col items-center justify-center z-[59] pointer-events-none">
+          <div className="round-number">ROUND {sessionLeadsServed + 1}</div>
+          <div className="round-sub">{lead?.empreendimento || "Arena"}</div>
+        </div>
+      )}
+      {/* Confetti */}
+      {arenaConfetti.length > 0 && arenaConfetti.map((emoji, i) => (
+        <span
+          key={`confetti-${i}`}
+          className="arena-confetti"
+          style={{
+            left: `${5 + Math.random() * 90}%`,
+            animationDuration: `${1.5 + Math.random() * 1.5}s`,
+            animationDelay: `${Math.random() * 0.3}s`,
+          }}
+        >
+          {emoji}
+        </span>
+      ))}
+
       {/* Pending attempts bar */}
       <PendingAttemptsBar />
 
@@ -522,21 +581,30 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
       {/* Lead counter */}
       <div className="flex items-center justify-between text-xs text-neutral-500">
-        <span>Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> desta sessão</span>
+        <span>Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> · ROUND {sessionLeadsServed + 1}</span>
         <span className="text-[10px] text-emerald-400/70">🔒 Reservado p/ você</span>
       </div>
 
+      {/* Arena Timer — prominent when calling */}
+      {callActive && (
+        <div className="flex items-center justify-center py-2">
+          <div className={`arena-timer ${timerColorClass}`}>
+            {formatTimer(callTimer)}
+          </div>
+        </div>
+      )}
+
       {/* 2-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-4">
+      <div className={`grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-4 ${arenaShake ? "arena-shake" : ""}`}>
         {/* Left: Lead Card */}
         <AnimatePresence mode="wait">
           <motion.div
             key={lead.id}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-3"
+            transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+            className="space-y-3 lead-card-enter"
           >
             <div
               className="rounded-xl p-4 space-y-3"
