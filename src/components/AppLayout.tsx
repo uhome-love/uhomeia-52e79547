@@ -30,9 +30,9 @@ const HomiAvatar = lazy(() => import("@/components/homi/HomiAvatar"));
 const HomiProactiveAlert = lazy(() => import("@/components/homi/HomiProactiveAlert"));
 const HomiGreeting = lazy(() => import("@/components/HomiGreeting"));
 
-// Detect arena-mode class on body reactively
+// Detect arena-mode or arena-session class on body reactively
 function useArenaMode() {
-  return useSyncExternalStore(
+  const isFullscreen = useSyncExternalStore(
     (cb) => {
       const observer = new MutationObserver(cb);
       observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
@@ -40,6 +40,15 @@ function useArenaMode() {
     },
     () => document.body.classList.contains("arena-mode")
   );
+  const isSession = useSyncExternalStore(
+    (cb) => {
+      const observer = new MutationObserver(cb);
+      observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+      return () => observer.disconnect();
+    },
+    () => document.body.classList.contains("arena-session")
+  );
+  return { isFullscreen, isSession };
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

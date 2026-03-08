@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useOAListas, type OALista } from "@/hooks/useOfertaAtiva";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ArrowLeft, Loader2, Users, Search, Zap, Sparkles, Trash2, RotateCcw } from "lucide-react";
