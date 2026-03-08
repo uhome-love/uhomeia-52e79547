@@ -284,18 +284,18 @@ export function AppSidebar() {
     // ── Backoffice ──
     if (isBackoffice) {
       return {
-        topItem: null,
+        topItem: { title: "Dashboard", url: "/backoffice", icon: Home },
         groups: [
-          {
-            label: "Financeiro",
-            items: [
-              { title: "Pagadorias", url: "/backoffice/pagadorias", icon: FileBarChart },
-            ],
-          },
           {
             label: "Marketing",
             items: [
               { title: "Central de Marketing", url: "/backoffice/marketing", icon: BarChart3 },
+            ],
+          },
+          {
+            label: "Financeiro",
+            items: [
+              { title: "Pagadorias", url: "/backoffice/pagadorias", icon: FileBarChart },
             ],
           },
           {
@@ -306,7 +306,7 @@ export function AppSidebar() {
             ],
           },
         ],
-        roleLabel: "Backoffice",
+        roleLabel: "Backoffice · 💜 Admin",
       };
     }
 
