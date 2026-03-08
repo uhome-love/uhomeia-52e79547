@@ -108,6 +108,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     });
   }, [user, isAdmin, isGestor, isBackoffice]);
 
+  useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+  useEffect(() => {
+    const handler = () => fetchProfile();
+    window.addEventListener("profile-updated", handler);
+    return () => window.removeEventListener("profile-updated", handler);
+  }, [fetchProfile]);
+
   return (
     <SidebarProvider defaultOpen={!isSession}>
       <HomiProvider>
