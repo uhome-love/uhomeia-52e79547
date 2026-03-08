@@ -14,6 +14,22 @@ function extractCampanha(message: string | null | undefined): string | null {
   return match?.[1]?.trim() || null;
 }
 
+/** Normalize empreendimento from any text (origem, campanha, message) */
+function normalizeEmpreendimento(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  if (lower.includes("casa tua")) return "Casa Tua";
+  if (lower.includes("orygem")) return "Orygem";
+  if (lower.includes("lake eyre")) return "Lake Eyre";
+  if (lower.includes("open bosque") || lower.includes("open")) return "Open Bosque";
+  if (lower.includes("casa bastian")) return "Casa Bastian";
+  if (lower.includes("shift")) return "Shift";
+  if (lower.includes("las casas") || lower.includes("vértice") || lower.includes("vertice")) return "Las Casas";
+  if (lower.includes("alto lindóia") || lower.includes("alto lindoia")) return "Alto Lindóia";
+  if (lower.includes("melnick")) return "Melnick Day";
+  return null;
+}
+
 /** Build a unique ID for deduplication (API has no id field) */
 function buildJetimobId(lead: any): string {
   const phone = lead.phones?.[0] || lead.phone || "";
