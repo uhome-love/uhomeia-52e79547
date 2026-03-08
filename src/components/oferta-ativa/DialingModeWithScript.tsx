@@ -631,19 +631,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     </div>
   );
 
-  // ─── TOOLS COLUMN (right 45%): Scripts in tabs + Objections ───
-  const objScrollRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll when objection is inserted
-  useEffect(() => {
-    if (objectionInsert && expandedObj !== null && objScrollRef.current) {
-      setTimeout(() => {
-        const el = objScrollRef.current?.querySelector('[data-objection-block]');
-        el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 100);
-    }
-  }, [objectionInsert, expandedObj]);
-
+  // ─── TOOLS COLUMN (right 45%): Scripts in tabs ───
   const ToolsColumn = (
     <div className="min-w-0 h-full flex flex-col gap-3">
       {/* Script Tabs — fixed header */}
