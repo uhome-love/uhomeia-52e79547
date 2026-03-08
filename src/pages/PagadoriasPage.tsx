@@ -46,6 +46,8 @@ export default function PagadoriasPage() {
   const [configOpen, setConfigOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [contratoOpen, setContratoOpen] = useState(false);
+  const [contratoData, setContratoData] = useState<any>(null);
 
   // Step 1 form
   const [form, setForm] = useState({
@@ -496,9 +498,24 @@ export default function PagadoriasPage() {
                   </div>
                 </CardContent>
               </Card>
-              <div className="flex justify-between">
+              <div className="flex flex-wrap gap-2 justify-between items-center">
                 <Button variant="outline" onClick={() => setStep(2)}>← Voltar</Button>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setContratoData({
+                      ...form,
+                      comissao_pct: comissaoPct,
+                      comissao_total: totalComissao,
+                      credores,
+                      parcelas: [],
+                      corretor_cpf: "", corretor_creci: "", corretor_email: "",
+                      gerente_cpf: "", gerente_creci: "", gerente_email: "",
+                      data_assinatura: new Date().toISOString().slice(0, 10),
+                    });
+                    setContratoOpen(true);
+                  }}>
+                    <FileDown className="h-4 w-4 mr-1" /> 📄 Gerar Contrato
+                  </Button>
                   <Button variant="outline" onClick={handleSave} disabled={saving}>
                     {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                     Salvar como Pendente
