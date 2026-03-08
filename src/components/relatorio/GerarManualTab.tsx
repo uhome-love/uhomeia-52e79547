@@ -130,12 +130,11 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
       const vgvAndamento = negocios.reduce((sum, n) => sum + (Number(n.vgv_estimado) || 0), 0);
 
       // Leads ativos
-      let leadsAtivosQuery = supabase
+      const { count: leadsAtivos } = await (supabase
         .from("pipeline_leads")
-        .select("id", { count: "exact", head: true })
-        .eq("corretor_id", corretorUserId!);
-      leadsAtivosQuery = leadsAtivosQuery.neq("status" as any, "arquivado");
-      const { count: leadsAtivos } = await leadsAtivosQuery;
+        .select("id", { count: "exact", head: true }) as any)
+        .eq("corretor_id", corretorUserId)
+        .neq("status", "arquivado");
 
       return {
         ligacoes,
