@@ -79,6 +79,8 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [showCoachingModal, setShowCoachingModal] = useState(false);
+  const [sessionMetricsSnapshot, setSessionMetricsSnapshot] = useState<SessionMetrics | null>(null);
   
   // === TIMESTAMP-BASED TIMER ===
   const [callStartTimestamp, setCallStartTimestamp] = useState<number | null>(null);
