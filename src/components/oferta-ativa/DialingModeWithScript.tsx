@@ -857,6 +857,16 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           }}
         />
       )}
+
+      {lead && (
+        <CentralComunicacao
+          open={comunicacaoOpen}
+          onOpenChange={setComunicacaoOpen}
+          leadId={lead.id}
+          leadNome={lead.nome}
+          leadEmpreendimento={lead.empreendimento}
+        />
+      )}
     </div>
   );
 }

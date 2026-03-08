@@ -8,10 +8,11 @@ import JornadaLead from "@/components/pipeline/JornadaLead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, RefreshCw, Briefcase, X, SlidersHorizontal, LayoutGrid, ChevronLeft, ChevronRight, TrendingUp, Clock } from "lucide-react";
+import { Loader2, Search, RefreshCw, Briefcase, X, SlidersHorizontal, LayoutGrid, ChevronLeft, ChevronRight, TrendingUp, Clock, MessageCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { differenceInDays } from "date-fns";
 import { toast } from "sonner";
+import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 
 function formatVGV(value: number) {
   if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(2).replace(".", ",")}M`;
