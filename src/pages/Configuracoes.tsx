@@ -489,15 +489,18 @@ export default function Configuracoes() {
 
       {/* Hidden model-viewer for generating preview PNGs */}
       <div style={{ position: "absolute", left: -9999, top: -9999, width: 512, height: 512 }}>
-        {/* @ts-ignore */}
-        <model-viewer
-          ref={modelViewerRef}
-          camera-orbit="0deg 80deg 2.2m"
-          camera-target="0m 0.9m 0m"
-          interaction-prompt="none"
-          shadow-intensity="0"
-          style={{ width: 512, height: 512, background: "transparent" } as React.CSSProperties}
-        />
+        {(() => {
+          const props: any = {
+            ref: modelViewerRef,
+            "camera-orbit": "0deg 90deg 2.8m",
+            "camera-target": "0m 0.85m 0m",
+            "field-of-view": "25deg",
+            "interaction-prompt": "none",
+            "shadow-intensity": "0",
+            style: { width: 512, height: 512, background: "transparent" },
+          };
+          return <model-viewer {...props} />;
+        })()}
       </div>
     </div>
   );
