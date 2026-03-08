@@ -141,11 +141,11 @@ export default function UhomeLogo({ size = "md", showTagline = false, className 
       {/* Text block */}
       <div className={cn(isVertical ? "text-center" : "flex flex-col")}>
         <span className={cn(c.textClass, "font-extrabold tracking-tight leading-tight")}>
-          <span style={{ color: "#2563EB" }} className="dark:text-white">Uhome</span>
-          <span style={{ color: "#93A3B8" }}>Sales</span>
+          <span style={{ color: "#FFFFFF", fontWeight: 800 }}>Uhome</span>
+          <span style={{ color: "#3B82F6", fontWeight: 800 }}>Sales</span>
         </span>
         {showTagline && (
-          <span className={cn(c.taglineClass, "leading-tight flex items-center", isVertical ? "justify-center" : "")} style={{ color: "#6B7280", gap: 4 }}>
+          <span className={cn(c.taglineClass, "leading-tight flex items-center", isVertical ? "justify-center" : "")} style={{ color: "#9CA3AF", fontSize: 11, gap: 4 }}>
             Powered by <HomiTaglineIcon size={c.taglineIcon} /> Homi AI
           </span>
         )}
