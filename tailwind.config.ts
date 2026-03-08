@@ -14,8 +14,16 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "Montserrat", "sans-serif"],
-        display: ["Montserrat", "Inter", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        display: ["Inter", "system-ui", "sans-serif"],
+      },
+      fontSize: {
+        xs: ["0.6875rem", { lineHeight: "1rem" }],
+        sm: ["0.8125rem", { lineHeight: "1.25rem" }],
+        base: ["0.9375rem", { lineHeight: "1.5rem" }],
+        lg: ["1.0625rem", { lineHeight: "1.75rem" }],
+        xl: ["1.25rem", { lineHeight: "2rem" }],
+        "2xl": ["1.5rem", { lineHeight: "2.25rem" }],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -26,6 +34,11 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          50: "hsl(var(--primary-50))",
+          100: "hsl(var(--primary-100))",
+          500: "hsl(var(--primary-500))",
+          600: "hsl(var(--primary-600))",
+          900: "hsl(var(--primary-900))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -54,14 +67,34 @@ export default {
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
+          50: "hsl(var(--success-50))",
+          500: "hsl(var(--success-500))",
+          700: "hsl(var(--success-700))",
         },
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+          50: "hsl(var(--warning-50))",
+          500: "hsl(var(--warning-500))",
+          700: "hsl(var(--warning-700))",
+        },
+        danger: {
+          DEFAULT: "hsl(var(--danger-500))",
+          50: "hsl(var(--danger-50))",
+          500: "hsl(var(--danger-500))",
+          700: "hsl(var(--danger-700))",
         },
         info: {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
+        },
+        neutral: {
+          50: "hsl(var(--neutral-50))",
+          100: "hsl(var(--neutral-100))",
+          200: "hsl(var(--neutral-200))",
+          400: "hsl(var(--neutral-400))",
+          600: "hsl(var(--neutral-600))",
+          900: "hsl(var(--neutral-900))",
         },
         priority: {
           high: "hsl(var(--priority-high))",
@@ -97,29 +130,21 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
-        "pulse-row": {
-          "0%, 100%": { backgroundColor: "transparent" },
-          "50%": { backgroundColor: "hsl(var(--primary) / 0.15)" },
-        },
         "shimmer": {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
         "fade-in": {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "scale-in": {
-          "0%": { transform: "scale(0.96)", opacity: "0" },
+          "0%": { transform: "scale(0.97)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
         "slide-in-left": {
           "0%": { transform: "translateX(-8px)", opacity: "0" },
           "100%": { transform: "translateX(0)", opacity: "1" },
-        },
-        "count-up": {
-          "0%": { transform: "translateY(100%)", opacity: "0" },
-          "100%": { transform: "translateY(0)", opacity: "1" },
         },
         "slide-in-from-top": {
           "0%": { transform: "translateY(-100%)", opacity: "0" },
@@ -131,11 +156,10 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
         "shimmer": "shimmer 3s ease-in-out infinite",
-        "fade-in": "fade-in 0.4s ease-out",
-        "scale-in": "scale-in 0.3s ease-out",
-        "slide-in-left": "slide-in-left 0.3s ease-out",
-        "count-up": "count-up 0.5s ease-out",
-        "slide-in-from-top": "slide-in-from-top 0.4s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
+        "slide-in-left": "slide-in-left 0.25s ease-out",
+        "slide-in-from-top": "slide-in-from-top 0.3s ease-out",
       },
     },
   },
