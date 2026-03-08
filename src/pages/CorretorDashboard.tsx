@@ -18,6 +18,7 @@ import { getLevel, getNextLevel, getLevelProgress } from "@/lib/gamification";
 import MetaCelebration from "@/components/corretor/MetaCelebration";
 import ConfettiBurst from "@/components/corretor/ConfettiToast";
 import PulseFeed from "@/components/pulse/PulseFeed";
+import RoletaStatusBar from "@/components/corretor/RoletaStatusBar";
 
 import {
   AlertDialog,
