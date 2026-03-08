@@ -24,6 +24,7 @@ import {
   Award,
   PanelLeftOpen,
   PanelLeftClose,
+  MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -192,6 +193,7 @@ export function AppSidebar() {
             items: [
               { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
+              { title: "Templates", url: "/templates-comunicacao", icon: MessageSquare },
               { title: "Marketplace", url: "/marketplace", icon: BookOpen },
               { title: "Configurações", url: "/configuracoes", icon: Settings },
               { title: "Gerenciar Usuários", url: "/admin", icon: Shield },
@@ -241,6 +243,7 @@ export function AppSidebar() {
             items: [
               { title: "HOMI Assistente", url: "/homi-gerente", icon: Bot },
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
+              { title: "Templates", url: "/templates-comunicacao", icon: MessageSquare },
               { title: "Marketplace", url: "/marketplace", icon: BookOpen },
             ],
           },
