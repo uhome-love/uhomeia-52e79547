@@ -84,7 +84,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const [showMilestone, setShowMilestone] = useState<string | null>(null);
   const [expandedObj, setExpandedObj] = useState<number | null>(null);
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
-  const [objectionInsert, setObjectionInsert] = useState<string | null>(null);
+  const [openObjections, setOpenObjections] = useState<number[]>([]);
   const [inlineObs, setInlineObs] = useState("");
   const [showResultPopup, setShowResultPopup] = useState(false);
   const [selectedResult, setSelectedResult] = useState<string | null>(null);
@@ -106,13 +106,10 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
   // Auto-scroll to objection response
   useEffect(() => {
-    if (objectionInsert && expandedObj !== null && objScrollRef.current) {
-      setTimeout(() => {
-        const el = objScrollRef.current?.querySelector('[data-objection-block]');
-        el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 100);
+    if (openObjections.length > 0 && objScrollRef.current) {
+      // no-op: responses are now in left column
     }
-  }, [objectionInsert, expandedObj]);
+  }, [openObjections]);
 
   useEffect(() => {
     if (lead && lead.id !== prevLeadIdRef.current) {
@@ -124,7 +121,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         setTimeout(() => setShowRound(false), 900);
       }
       setExpandedObj(null);
-      setObjectionInsert(null);
+      setOpenObjections([]);
       setInlineObs("");
       setSelectedResult(null);
       setShowResultPopup(false);
@@ -595,30 +592,59 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         <div>
           <span style={{ fontSize: 11, color: "#FBBF24", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const }}>⚡ Objeções Rápidas</span>
           <div className="grid grid-cols-2 gap-1.5 pt-1.5">
-            {objections.map((obj, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  setExpandedObj(expandedObj === i ? null : i);
-                  setObjectionInsert(obj.answer);
-                }}
-                className="transition-all text-left flex items-center"
-                style={{
-                  background: expandedObj === i ? "rgba(245,158,11,0.12)" : "#1C2128",
-                  border: expandedObj === i ? "1px solid rgba(245,158,11,0.4)" : "1px dashed rgba(255,255,255,0.1)",
-                  borderRadius: 8,
-                  padding: "6px 10px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: expandedObj === i ? "#FCD34D" : "#D1D5DB",
-                  height: 32,
-                }}
-              >
-                {obj.emoji} {obj.label}
-              </button>
-            ))}
+            {objections.map((obj, i) => {
+              const isOpen = openObjections.includes(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setOpenObjections(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]);
+                    setExpandedObj(isOpen ? null : i);
+                  }}
+                  className="transition-all text-left flex items-center"
+                  style={{
+                    background: isOpen ? "rgba(245,158,11,0.12)" : "#1C2128",
+                    border: isOpen ? "1px solid rgba(245,158,11,0.4)" : "1px dashed rgba(255,255,255,0.1)",
+                    borderRadius: 8,
+                    padding: "6px 10px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: isOpen ? "#FCD34D" : "#D1D5DB",
+                    height: 32,
+                  }}
+                >
+                  {obj.emoji} {obj.label}
+                </button>
+              );
+            })}
           </div>
         </div>
+
+        {/* Objection responses — stacked below buttons */}
+        {openObjections.length > 0 && (
+          <div className="space-y-2">
+            {openObjections.map(i => (
+              <div
+                key={i}
+                className="p-3 rounded-lg relative"
+                style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}
+              >
+                <button
+                  onClick={() => setOpenObjections(prev => prev.filter(x => x !== i))}
+                  className="absolute top-2 right-2 text-neutral-500 hover:text-white transition-colors"
+                  style={{ fontSize: 12, lineHeight: 1 }}
+                >
+                  ✕
+                </button>
+                <div className="flex items-center gap-1.5 mb-1 pr-5">
+                  <Sparkles className="h-3 w-3 shrink-0" style={{ color: "#FBBF24" }} />
+                  <span className="text-xs font-bold" style={{ color: "#FBBF24" }}>✨ {objections[i].label}</span>
+                </div>
+                <p className="text-sm leading-snug line-clamp-3" style={{ color: "#D1D5DB" }}>{objections[i].answer}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recent calls — collapsed, outside card */}
@@ -676,33 +702,6 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         }}
       >
         <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode scriptFilter={scriptTab} />
-
-        {/* Objection response block — inside scroll area */}
-        <AnimatePresence>
-          {objectionInsert && expandedObj !== null && (
-            <motion.div
-              data-objection-block
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="mx-3 mb-3 p-3 rounded-lg text-sm leading-relaxed relative"
-              style={{ background: "rgba(245,158,11,0.1)", borderLeft: "3px solid #F59E0B", color: "#E5E7EB" }}
-            >
-              <button
-                onClick={() => { setExpandedObj(null); setObjectionInsert(null); }}
-                className="absolute top-2 right-2 text-neutral-500 hover:text-white transition-colors"
-                style={{ fontSize: 14, lineHeight: 1 }}
-              >
-                ✕
-              </button>
-              <div className="flex items-center gap-1.5 mb-1.5 pr-5">
-                <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: "#FBBF24" }} />
-                <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "#FBBF24" }}>Resposta p/ objeção: {objections[expandedObj].label}</span>
-              </div>
-              <p style={{ fontSize: "14px", lineHeight: 1.6 }}>{objectionInsert}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
