@@ -17,7 +17,7 @@ import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import GerarManualTab from "@/components/relatorio/GerarManualTab";
 
-interface TeamMember { id: string; nome: string; }
+interface TeamMember { id: string; nome: string; user_id: string | null; }
 
 interface Metricas {
   ligacoes: { meta: number; real: number };
@@ -117,7 +117,7 @@ export default function RelatorioCorretor() {
   // Load team + gerente name
   useEffect(() => {
     if (!user) return;
-    supabase.from("team_members").select("id, nome").eq("gerente_id", user.id).eq("status", "ativo").order("nome").then(({ data }) => setTeam(data || []));
+    supabase.from("team_members").select("id, nome, user_id").eq("gerente_id", user.id).eq("status", "ativo").order("nome").then(({ data }) => setTeam(data || []));
     supabase.from("profiles").select("nome").eq("user_id", user.id).single().then(({ data }) => { if (data?.nome) setGerenteNome(data.nome); });
   }, [user]);
 
