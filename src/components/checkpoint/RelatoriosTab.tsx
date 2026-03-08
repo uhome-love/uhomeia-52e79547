@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Phone, Award, MapPin, Target } from "lucide-react";
+import { Phone, Award, MapPin, Target, AlertTriangle } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const pct = (a: number, b: number) => b === 0 ? 0 : Math.round((a / b) * 100);
 const fmt = (n: number) => n.toLocaleString("pt-BR");
@@ -11,6 +12,15 @@ const fmtR = (n: number) => `R$ ${n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 
 interface Props {
   teamUserIds: string[];
   teamNameMap: Record<string, string>;
+}
+
+interface CorretorData {
+  nome: string;
+  ligacoes: number;
+  aproveitados: number;
+  visitas: number;
+  propostas: number;
+  vgv: number;
 }
 
 interface RelatorioData {
@@ -22,7 +32,7 @@ interface RelatorioData {
   total_visitas_marcadas: number;
   vgv_gerado: number;
   vgv_assinado: number;
-  por_corretor: { nome: string; ligacoes: number; aproveitados: number; visitas: number; propostas: number }[];
+  por_corretor: CorretorData[];
 }
 
 export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
@@ -56,8 +66,16 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
     vis?.forEach(v => { if (v.corretor_id) { vmMap[v.corretor_id] = (vmMap[v.corretor_id] || 0) + 1; if (v.status === "realizada") vrMap[v.corretor_id] = (vrMap[v.corretor_id] || 0) + 1; } });
 
     const propMap: Record<string, number> = {};
+    const vgvMap: Record<string, number> = {};
     let vgvGerado = 0, vgvAssinado = 0;
-    neg?.forEach(n => { if (n.corretor_id) propMap[n.corretor_id] = (propMap[n.corretor_id] || 0) + 1; vgvGerado += Number(n.vgv_estimado ?? 0); if (n.fase === "assinado") vgvAssinado += Number(n.vgv_final ?? 0); });
+    neg?.forEach(n => {
+      if (n.corretor_id) {
+        propMap[n.corretor_id] = (propMap[n.corretor_id] || 0) + 1;
+        if (n.fase === "assinado") vgvMap[n.corretor_id] = (vgvMap[n.corretor_id] || 0) + Number(n.vgv_final ?? 0);
+      }
+      vgvGerado += Number(n.vgv_estimado ?? 0);
+      if (n.fase === "assinado") vgvAssinado += Number(n.vgv_final ?? 0);
+    });
 
     const totalLig = Object.values(ligMap).reduce((a, b) => a + b, 0);
     const totalAprov = Object.values(aprovMap).reduce((a, b) => a + b, 0);
@@ -77,6 +95,7 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
         aproveitados: aprovMap[id] ?? 0,
         visitas: vrMap[id] ?? 0,
         propostas: propMap[id] ?? 0,
+        vgv: vgvMap[id] ?? 0,
       })).sort((a, b) => b.ligacoes - a.ligacoes),
     });
   }, [user, periodo, teamUserIds, teamNameMap]);
@@ -115,34 +134,98 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
 
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Desempenho por Corretor</h3>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-xs text-gray-400">
-                  <th className="text-left py-2 font-medium">Corretor</th>
-                  <th className="text-center py-2 font-medium">Ligações</th>
-                  <th className="text-center py-2 font-medium">Aproveitados</th>
-                  <th className="text-center py-2 font-medium">Taxa %</th>
-                  <th className="text-center py-2 font-medium">Visitas</th>
-                  <th className="text-center py-2 font-medium">Propostas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {relatorio.por_corretor.map((c, i) => (
-                  <tr key={c.nome} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="py-2.5 font-medium text-gray-700"><span className="text-gray-400 text-xs mr-2">#{i + 1}</span>{c.nome}</td>
-                    <td className="text-center py-2.5 font-semibold text-blue-600">{c.ligacoes}</td>
-                    <td className="text-center py-2.5 font-semibold text-green-600">{c.aproveitados}</td>
-                    <td className="text-center py-2.5">
-                      <span className={`text-xs font-bold ${pct(c.aproveitados, c.ligacoes) >= 10 ? "text-green-500" : "text-amber-500"}`}>
-                        {pct(c.aproveitados, c.ligacoes)}%
-                      </span>
-                    </td>
-                    <td className="text-center py-2.5 text-amber-600">{c.visitas}</td>
-                    <td className="text-center py-2.5 text-purple-600">{c.propostas}</td>
+            <TooltipProvider>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 text-xs text-gray-400">
+                    <th className="text-left py-2 font-medium">Corretor</th>
+                    <th className="text-center py-2 font-medium">Ligações</th>
+                    <th className="text-center py-2 font-medium">Aproveitados</th>
+                    <th className="text-center py-2 font-medium">Taxa %</th>
+                    <th className="text-center py-2 font-medium">Visitas</th>
+                    <th className="text-center py-2 font-medium">Propostas</th>
+                    <th className="text-center py-2 font-medium">VGV</th>
+                    <th className="text-center py-2 font-medium w-16">Alertas</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {relatorio.por_corretor.map((c, i) => {
+                    const taxa = pct(c.aproveitados, c.ligacoes);
+                    const isMvp = i === 0 && c.ligacoes > 0;
+                    const noActivity = c.ligacoes === 0 && c.aproveitados === 0 && c.visitas === 0;
+                    const visitsSansLig = c.visitas > 0 && c.ligacoes < c.visitas;
+
+                    return (
+                      <tr key={c.nome} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="py-2.5 font-medium text-gray-700">
+                          <span className="text-gray-400 text-xs mr-2">#{i + 1}</span>
+                          {c.nome}
+                          {isMvp && (
+                            <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+                              🏆 MVP
+                            </span>
+                          )}
+                          {noActivity && (
+                            <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-medium bg-red-50 text-red-500 px-1.5 py-0.5 rounded-full">
+                              ⚠️ Sem atividade
+                            </span>
+                          )}
+                        </td>
+                        <td className="text-center py-2.5 font-semibold text-blue-600">{c.ligacoes}</td>
+                        <td className="text-center py-2.5 font-semibold text-green-600">{c.aproveitados}</td>
+                        <td className="text-center py-2.5">
+                          <span className={`text-xs font-bold ${taxa >= 10 ? "text-green-500" : taxa > 0 ? "text-amber-500" : "text-gray-300"}`}>
+                            {taxa}%
+                          </span>
+                        </td>
+                        <td className="text-center py-2.5 text-amber-600">{c.visitas}</td>
+                        <td className="text-center py-2.5 text-purple-600">{c.propostas}</td>
+                        <td className="text-center py-2.5 text-xs font-medium text-gray-600">{c.vgv > 0 ? fmtR(c.vgv) : "—"}</td>
+                        <td className="text-center py-2.5">
+                          {visitsSansLig && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertTriangle size={14} className="text-amber-500 mx-auto" />
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="text-xs max-w-[200px]">
+                                Atenção: visitas sem ligações correspondentes
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                {/* Team average row */}
+                {relatorio.por_corretor.length > 0 && (
+                  <tfoot>
+                    <tr className="border-t-2 border-gray-200 bg-gray-50/80 text-sm">
+                      <td className="py-2.5 px-2 font-semibold text-gray-600">Média do Time</td>
+                      <td className="text-center py-2.5 font-medium text-gray-600">
+                        {Math.round(relatorio.total_ligacoes / relatorio.por_corretor.length)}
+                      </td>
+                      <td className="text-center py-2.5 font-medium text-gray-600">
+                        {Math.round(relatorio.total_aproveitados / relatorio.por_corretor.length)}
+                      </td>
+                      <td className="text-center py-2.5 text-xs font-bold text-gray-500">
+                        {relatorio.taxa_aproveitamento}%
+                      </td>
+                      <td className="text-center py-2.5 font-medium text-gray-600">
+                        {Math.round(relatorio.total_visitas_realizadas / relatorio.por_corretor.length)}
+                      </td>
+                      <td className="text-center py-2.5 font-medium text-gray-600">
+                        {Math.round(relatorio.por_corretor.reduce((a, c) => a + c.propostas, 0) / relatorio.por_corretor.length)}
+                      </td>
+                      <td className="text-center py-2.5 text-xs font-medium text-gray-600">
+                        {fmtR(Math.round(relatorio.por_corretor.reduce((a, c) => a + c.vgv, 0) / relatorio.por_corretor.length))}
+                      </td>
+                      <td />
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </TooltipProvider>
           </div>
         </>
       )}
