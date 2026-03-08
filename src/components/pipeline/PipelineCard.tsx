@@ -1,6 +1,6 @@
 import { memo, useState } from "react";
 import type { PipelineLead, PipelineSegmento, PipelineStage } from "@/hooks/usePipeline";
-import { Phone, Mail, Clock, MessageCircle, Calendar, Flame, Thermometer, Snowflake, Zap, AlertCircle, Timer, ChevronDown, MoreHorizontal, Eye, UserPlus, StickyNote, XCircle } from "lucide-react";
+import { Phone, Mail, Clock, MessageCircle, Calendar, Flame, Thermometer, Snowflake, Zap, AlertCircle, Timer, ChevronDown, MoreHorizontal, Eye, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft } from "lucide-react";
 import { differenceInHours, differenceInMinutes } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -9,11 +9,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { calculateLeadScore, getSlaStatus } from "@/lib/leadScoring";
 import PipelineQuickTransfer from "./PipelineQuickTransfer";
+import PartnershipDialog from "./PartnershipDialog";
+import PipelineTransferDialog from "./PipelineTransferDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -38,6 +41,24 @@ function getWhatsAppUrl(phone: string) {
   const digits = phone.replace(/\D/g, "");
   const number = digits.startsWith("55") ? digits : `55${digits}`;
   return `https://wa.me/${number}`;
+}
+
+/** Deduplicate empreendimento text (e.g. "Open Bosque (Video) · Open Bosque (X)" → "Open Bosque") */
+function deduplicateEmpreendimento(raw: string): string {
+  if (!raw) return "";
+  // Split by common separators
+  const parts = raw.split(/[·,;|]/).map(s => s.trim()).filter(Boolean);
+  // Normalize: strip parenthetical suffixes for comparison
+  const normalize = (s: string) => s.replace(/\s*\(.*?\)\s*/g, "").trim().toLowerCase();
+  const seen = new Map<string, string>();
+  for (const part of parts) {
+    const key = normalize(part);
+    if (!seen.has(key)) {
+      // Use the shortest clean version
+      seen.set(key, part.replace(/\s*\(.*?\)\s*/g, "").trim());
+    }
+  }
+  return [...seen.values()].join(" · ");
 }
 
 // Temperature border colors
@@ -89,17 +110,19 @@ const PipelineCard = memo(function PipelineCard({
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date>();
   const [scheduleTime, setScheduleTime] = useState("10:00");
+  const [partnerOpen, setPartnerOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
 
   const tempBorder = lead.temperatura ? TEMP_BORDER[lead.temperatura] || getCalcTempBorder(lead) : getCalcTempBorder(lead);
   const tempEmoji = getCalcTempEmoji(lead);
   const leadScore = calculateLeadScore(lead as any);
   const sla = stage ? getSlaStatus(stage.tipo, lead.stage_changed_at) : null;
+  const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || "");
 
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!lead.telefone) return;
     window.open(`tel:${lead.telefone}`, "_self");
-    // Register activity
     if (user) {
       supabase.from("pipeline_atividades").insert({
         pipeline_lead_id: lead.id,
@@ -107,7 +130,6 @@ const PipelineCard = memo(function PipelineCard({
         titulo: "Ligação realizada",
         created_by: user.id,
       }).then(() => {});
-      // Move to "Contato Iniciado" if "Novo Lead"
       if (stage?.tipo === "novo_lead" && onMoveLead) {
         const contatoStage = stages.find(s => s.tipo === "atendimento" || s.nome.toLowerCase().includes("contato"));
         if (contatoStage) onMoveLead(lead.id, contatoStage.id);
@@ -134,7 +156,6 @@ const PipelineCard = memo(function PipelineCard({
   const handleScheduleVisit = async () => {
     if (!scheduleDate || !user) return;
     const dateStr = format(scheduleDate, "yyyy-MM-dd");
-    // Create visita
     await supabase.from("visitas").insert({
       nome_cliente: lead.nome,
       data_visita: dateStr,
@@ -147,7 +168,6 @@ const PipelineCard = memo(function PipelineCard({
       created_by: user.id,
       pipeline_lead_id: lead.id,
     });
-    // Move lead to "Visita Marcada"
     if (onMoveLead) {
       const visitaStage = stages.find(s => s.nome.toLowerCase().includes("visita marcada") || s.tipo === "visita");
       if (visitaStage) onMoveLead(lead.id, visitaStage.id);
@@ -161,7 +181,6 @@ const PipelineCard = memo(function PipelineCard({
     e.stopPropagation();
     if (!onMoveLead) return;
     const targetStage = stages.find(s => s.id === stageId);
-    // If moving to visita stage, open schedule instead
     if (targetStage?.nome.toLowerCase().includes("visita marcada")) {
       setScheduleOpen(true);
       return;
@@ -194,6 +213,13 @@ const PipelineCard = memo(function PipelineCard({
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't open detail if clicking on action buttons area
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-actions-area]")) return;
+    onClick();
+  };
+
   return (
     <TooltipProvider delayDuration={200}>
       <div
@@ -202,16 +228,17 @@ const PipelineCard = memo(function PipelineCard({
           e.dataTransfer.effectAllowed = "move";
           onDragStart();
         }}
-        className={`group relative rounded-lg border-l-[3px] border bg-card cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-150 select-none overflow-hidden ${tempBorder}`}
+        onClick={handleCardClick}
+        className={`group relative rounded-lg border-l-[3px] border bg-card cursor-pointer active:cursor-grabbing hover:bg-accent/40 transition-all duration-150 select-none overflow-hidden ${tempBorder}`}
       >
         {/* Info section */}
         <div className="px-3 pt-2.5 pb-2 space-y-1">
           {/* Line 1: emoji + name + score */}
           <div className="flex items-center justify-between gap-1">
-            <button onClick={onClick} className="flex items-center gap-1 min-w-0 hover:underline">
+            <div className="flex items-center gap-1 min-w-0">
               <span className="text-xs">{tempEmoji}</span>
               <span className="text-[13px] font-bold text-foreground truncate">{lead.nome}</span>
-            </button>
+            </div>
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${leadScore.bgColor} ${leadScore.color}`}>
               {leadScore.score}
             </span>
@@ -219,8 +246,8 @@ const PipelineCard = memo(function PipelineCard({
 
           {/* Line 2: empreendimento · origem */}
           <div className="text-[11px] text-muted-foreground truncate">
-            {lead.empreendimento && <span className="font-medium">{lead.empreendimento}</span>}
-            {lead.empreendimento && lead.origem && " · "}
+            {displayEmpreendimento && <span className="font-medium">{displayEmpreendimento}</span>}
+            {displayEmpreendimento && lead.origem && " · "}
             {lead.origem && <span>{lead.origem.replace(/_/g, " ")}</span>}
           </div>
 
@@ -237,7 +264,7 @@ const PipelineCard = memo(function PipelineCard({
             </div>
           )}
 
-          {/* Line 4: SLA + corretor */}
+          {/* Line 4: SLA + corretor + parceria badge */}
           <div className="flex items-center justify-between gap-2">
             {sla && sla.status !== "ok" ? (
               <span className={`flex items-center gap-1 text-[10px] font-bold ${
@@ -258,16 +285,23 @@ const PipelineCard = memo(function PipelineCard({
                 })()}
               </span>
             )}
-            <span className="text-[10px] text-muted-foreground truncate max-w-[90px]">
-              👤 {corretorNome || "Sem corretor"}
-            </span>
+            <div className="flex items-center gap-1">
+              {parceiroNome && (
+                <Badge variant="secondary" className="text-[9px] px-1 py-0 gap-0.5 h-4">
+                  <Handshake className="h-2.5 w-2.5" /> Parceria
+                </Badge>
+              )}
+              <span className="text-[10px] text-muted-foreground truncate max-w-[90px]">
+                👤 {corretorNome || "Sem corretor"}
+              </span>
+            </div>
           </div>
         </div>
 
         <Separator />
 
         {/* Actions section */}
-        <div className="px-2 py-1.5 flex items-center gap-1 flex-wrap">
+        <div data-actions-area className="px-2 py-1.5 flex items-center gap-1 flex-wrap">
           {/* Ligar */}
           {lead.telefone && (
             <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 gap-1" onClick={handleCall}>
@@ -338,19 +372,15 @@ const PipelineCard = memo(function PipelineCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[180px]" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={onClick} className="text-xs gap-2">
-                <Eye className="h-3.5 w-3.5" /> Ver lead completo
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setPartnerOpen(true); }} className="text-xs gap-2">
+                <Handshake className="h-3.5 w-3.5" /> Fazer parceria
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTransferOpen(true); }} className="text-xs gap-2">
+                <ArrowRightLeft className="h-3.5 w-3.5" /> Repassar lead
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild className="text-xs gap-2 p-0">
-                <div className="w-full">
-                  <PipelineQuickTransfer
-                    leadId={lead.id}
-                    leadNome={lead.nome}
-                    currentCorretorId={lead.corretor_id}
-                    onTransferred={(corretorId, nome) => onTransferred?.(lead.id, corretorId, nome)}
-                  />
-                </div>
+              <DropdownMenuItem onClick={onClick} className="text-xs gap-2">
+                <Eye className="h-3.5 w-3.5" /> Ver lead completo
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAddNote(); }} className="text-xs gap-2">
                 <StickyNote className="h-3.5 w-3.5" /> Registrar observação
@@ -362,6 +392,24 @@ const PipelineCard = memo(function PipelineCard({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        {/* Dialogs */}
+        <PartnershipDialog
+          open={partnerOpen}
+          onOpenChange={setPartnerOpen}
+          leadId={lead.id}
+          leadNome={lead.nome}
+          corretorPrincipalId={lead.corretor_id}
+        />
+        <PipelineTransferDialog
+          open={transferOpen}
+          onOpenChange={setTransferOpen}
+          leadId={lead.id}
+          leadNome={lead.nome}
+          currentCorretorId={lead.corretor_id}
+          stages={stages}
+          onTransferred={(corretorId, nome) => onTransferred?.(lead.id, corretorId, nome)}
+        />
       </div>
     </TooltipProvider>
   );
