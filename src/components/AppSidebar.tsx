@@ -174,29 +174,40 @@ export function AppSidebar() {
   function getGroupsByRole(): { topItem: NavItem | null; groups: { label: string; items: NavItem[] }[]; roleLabel: string } {
     // ── CEO / Admin ──
     if (isAdmin) {
+      const roletaBadges: Record<string, number> = roletaPendentes > 0 ? { "/roleta": roletaPendentes } : {};
       return {
-        topItem: null,
+        topItem: { title: "Dashboard CEO", url: "/ceo", icon: Home },
         groups: [
           {
             label: "Visão Geral",
             items: [
-              { title: "Dashboard CEO", url: "/ceo", icon: Home },
               { title: "Painel da Equipe", url: "/meu-time", icon: Users },
+              { title: "Checkpoint", url: "/checkpoint", icon: ClipboardCheck },
             ],
           },
           {
             label: "Leads & Vendas",
             items: [
+              { title: "Roleta de Leads", url: "/roleta", icon: Cog },
               { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+              { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
               { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+              { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
               { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
-              { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
             ],
           },
           {
             label: "Performance",
             items: [
               { title: "Rankings", url: "/ranking", icon: Trophy },
+              { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
+            ],
+          },
+          {
+            label: "Marketing",
+            items: [
+              { title: "Central de Marketing", url: "/marketing", icon: TrendingUp },
+              { title: "Empreendimentos", url: "/empreendimentos", icon: Building2 },
             ],
           },
           {
@@ -206,25 +217,16 @@ export function AppSidebar() {
             ],
           },
           {
-            label: "Marketing",
-            items: [
-              { title: "Central de Marketing", url: "/marketing", icon: TrendingUp },
-            ],
-          },
-          {
             label: "Ferramentas",
             items: [
               { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
-              { title: "Academia", url: "/academia/gerenciar", icon: Award },
-              { title: "Templates", url: "/templates-comunicacao", icon: MessageSquare },
-              { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-              { title: "Configurações", url: "/configuracoes", icon: Settings },
-              { title: "Gerenciar Usuários", url: "/admin", icon: Shield },
+              { title: "Academia", url: "/academia/gerenciar", icon: GraduationCap },
             ],
           },
         ],
         roleLabel: "Admin · 👑 CEO",
+        extraBadges: roletaBadges,
       };
     }
 
