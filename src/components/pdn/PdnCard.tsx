@@ -1,14 +1,15 @@
 import { memo, useState, useMemo, useCallback } from "react";
 import { type PdnEntry, type PdnSituacao } from "@/hooks/usePdn";
-import { calcProbabilidade, calcRisco, OBJECAO_OPTIONS, PROXIMA_ACAO_OPTIONS, type RiscoNivel } from "@/lib/pdnScoring";
+import { calcSmartProbabilidade, calcRisco, OBJECAO_OPTIONS, PROXIMA_ACAO_OPTIONS, type RiscoNivel, type SmartProbResult } from "@/lib/pdnScoring";
 import { differenceInDays } from "date-fns";
 import {
   Flame, Thermometer, Snowflake, Building2, User, AlertTriangle,
   Calendar, Target, FileText, Clock, CheckCircle, Edit3, GripVertical,
-  Phone, MessageCircle, ArrowRightLeft,
+  Phone, MessageCircle, ArrowRightLeft, TrendingUp, TrendingDown, Minus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
