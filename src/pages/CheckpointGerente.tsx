@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { Target, ClipboardList, CheckCircle2, BarChart2, Sparkles, AlertCircle, Loader2 } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { format, subDays, getDaysInMonth, getDate } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CheckpointTableTab from "@/components/checkpoint/CheckpointTableTab";
 import AproveitadosTab from "@/components/checkpoint/AproveitadosTab";
@@ -17,7 +17,7 @@ import CeoCheckpointViewer from "@/components/ceo/CeoCheckpointViewer";
 export interface CheckpointRow {
   corretor_id: string;
   nome: string;
-  presenca: "presente" | "ausente" | "home_office";
+  presenca: "presente" | "ausente" | "meio_periodo" | "atestado" | "folga" | "nao_informado";
   meta_ligacoes: number;
   meta_aproveitados: number;
   meta_visitas_marcar: number;
@@ -29,7 +29,7 @@ export interface CheckpointRow {
   res_propostas: number;
   res_vgv: number;
   obs_dia: string;
-  status: "ok" | "atencao" | "critico" | "pendente";
+  status: "ok" | "parcial" | "pendente" | "zero" | "ausente_status";
 }
 
 export interface MetasMes {
@@ -44,19 +44,20 @@ export interface MetasMes {
 }
 
 // ─── HELPERS ───
-export const calcStatus = (row: CheckpointRow): CheckpointRow["status"] => {
-  if (row.presenca === "ausente") return "critico";
+export const calcStatus = (row: CheckpointRow, published: boolean): CheckpointRow["status"] => {
+  if (["ausente", "atestado", "folga"].includes(row.presenca)) return "ausente_status";
   const hasAnyResult = row.res_ligacoes > 0 || row.res_aproveitados > 0 || row.res_visitas_marcadas > 0 || row.res_visitas_realizadas > 0 || row.res_propostas > 0;
-  if (!hasAnyResult && row.meta_ligacoes > 0) return "pendente";
+  if (!hasAnyResult) {
+    return published ? "zero" : "pendente";
+  }
   const metrics: number[] = [];
   if (row.meta_ligacoes > 0) metrics.push(row.res_ligacoes / row.meta_ligacoes);
   if (row.meta_aproveitados > 0) metrics.push(row.res_aproveitados / row.meta_aproveitados);
   if (row.meta_visitas_marcar > 0) metrics.push(row.res_visitas_marcadas / row.meta_visitas_marcar);
-  if (metrics.length === 0) return hasAnyResult ? "ok" : "pendente";
+  if (metrics.length === 0) return "ok";
   const avg = metrics.reduce((a, b) => a + b, 0) / metrics.length;
   if (avg >= 0.8) return "ok";
-  if (avg >= 0.5) return "atencao";
-  return "critico";
+  return "parcial";
 };
 
 export const pct = (a: number, b: number) => b === 0 ? 0 : Math.round((a / b) * 100);
@@ -133,16 +134,23 @@ export default function CheckpointGerente() {
     const vrCount: Record<string, number> = {};
     visitasRealizadas?.forEach((v: any) => { vrCount[v.corretor_id] = (vrCount[v.corretor_id] || 0) + 1; });
 
-    // Check published status
     const anyPublished = saved?.some((s: any) => s.publicado);
-    setCheckpointStatus(anyPublished ? "publicado" : "aberto");
+    const isPublished = !!anyPublished;
+    setCheckpointStatus(isPublished ? "publicado" : "aberto");
 
     const newRows: CheckpointRow[] = teamUserIds.map(uid => {
       const s = savedMap[uid];
+      const hadActivity = (oaLig[uid] || 0) > 0;
+      // Auto-detect presence: if has activity → presente, otherwise keep saved or nao_informado
+      let presenca: CheckpointRow["presenca"] = s?.presenca ?? "nao_informado";
+      if (presenca === "nao_informado" && hadActivity) presenca = "presente";
+      // Map legacy values
+      if ((presenca as string) === "home_office") presenca = "presente";
+
       const row: CheckpointRow = {
         corretor_id: uid,
         nome: teamNameMap[uid] || "Corretor",
-        presenca: s?.presenca ?? "presente",
+        presenca,
         meta_ligacoes: s?.meta_ligacoes ?? 0,
         meta_aproveitados: s?.meta_aproveitados ?? 0,
         meta_visitas_marcar: s?.meta_visitas_marcar ?? 0,
@@ -156,7 +164,7 @@ export default function CheckpointGerente() {
         obs_dia: s?.obs_dia ?? "",
         status: "pendente",
       };
-      row.status = calcStatus(row);
+      row.status = calcStatus(row, isPublished);
       return row;
     });
 
@@ -194,7 +202,7 @@ export default function CheckpointGerente() {
   const saveCheckpoint = async () => {
     setSaving(true);
     const upserts = rows.map(r => ({
-      corretor_id: r.corretor_id, data: dateStr, presenca: r.presenca,
+      corretor_id: r.corretor_id, data: dateStr, presenca: r.presenca === "nao_informado" ? "presente" : r.presenca,
       meta_ligacoes: r.meta_ligacoes, meta_aproveitados: r.meta_aproveitados, meta_visitas_marcar: r.meta_visitas_marcar, obs_gerente: r.obs_gerente,
       res_ligacoes: r.res_ligacoes, res_aproveitados: r.res_aproveitados, res_visitas_marcadas: r.res_visitas_marcadas,
       res_visitas_realizadas: r.res_visitas_realizadas, res_propostas: r.res_propostas, res_vgv: r.res_vgv, obs_dia: r.obs_dia,
@@ -211,7 +219,7 @@ export default function CheckpointGerente() {
     if (!data || data.length === 0) { toast({ title: "Nenhum dado ontem para copiar.", variant: "destructive" }); return; }
     const map: Record<string, any> = {};
     data.forEach((d: any) => { map[d.corretor_id] = d; });
-    setRows(prev => prev.map(r => { const y = map[r.corretor_id]; if (!y) return r; return { ...r, meta_ligacoes: y.meta_ligacoes, meta_aproveitados: y.meta_aproveitados, meta_visitas_marcar: y.meta_visitas_marcar, presenca: y.presenca }; }));
+    setRows(prev => prev.map(r => { const y = map[r.corretor_id]; if (!y) return r; return { ...r, meta_ligacoes: y.meta_ligacoes, meta_aproveitados: y.meta_aproveitados, meta_visitas_marcar: y.meta_visitas_marcar }; }));
     toast({ title: "📋 Metas copiadas de ontem!" });
   };
 
@@ -221,6 +229,8 @@ export default function CheckpointGerente() {
     await saveCheckpoint();
     await supabase.from("checkpoint_diario").update({ publicado: true }).eq("data", dateStr).in("corretor_id", teamUserIds);
     setCheckpointStatus("publicado");
+    // Recalc status after publish
+    setRows(prev => prev.map(r => ({ ...r, status: calcStatus(r, true) })));
     toast({ title: "🔒 Checkpoint publicado!", description: "Time notificado." });
   };
 
@@ -228,7 +238,7 @@ export default function CheckpointGerente() {
     setRows(prev => prev.map(r => {
       if (r.corretor_id !== id) return r;
       const updated = { ...r, [field]: value };
-      updated.status = calcStatus(updated);
+      updated.status = calcStatus(updated, checkpointStatus === "publicado");
       return updated;
     }));
   };
@@ -240,17 +250,22 @@ export default function CheckpointGerente() {
   // ─── COMPUTED ───
   const pendentes = rows.filter(r => {
     const hasResult = r.res_ligacoes > 0 || r.res_aproveitados > 0 || r.res_visitas_marcadas > 0 || r.res_visitas_realizadas > 0 || r.res_propostas > 0;
-    return !hasResult && r.presenca !== "ausente";
+    return !hasResult && !["ausente", "atestado", "folga"].includes(r.presenca);
   }).map(r => r.nome);
 
   const totalLig = rows.reduce((a, r) => a + r.res_ligacoes, 0);
   const totalAprov = rows.reduce((a, r) => a + r.res_aproveitados, 0);
   const totalVm = rows.reduce((a, r) => a + r.res_visitas_marcadas, 0);
-  const presentes = rows.filter(r => r.presenca !== "ausente").length;
+  const presentes = rows.filter(r => !["ausente", "atestado", "folga", "nao_informado"].includes(r.presenca)).length;
+
+  // ─── PROJECTION ───
+  const hoje = new Date();
+  const diasPassados = getDate(hoje);
+  const diasNoMes = getDaysInMonth(hoje);
+  const projecao = (valor: number) => diasPassados > 0 ? Math.round((valor / diasPassados) * diasNoMes) : 0;
 
   if (roleLoading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
-  // ─── CEO / ADMIN VIEW ───
   if (isAdmin) {
     return (
       <div className="min-h-screen bg-muted/30 pb-12">
@@ -274,14 +289,12 @@ export default function CheckpointGerente() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      {/* HEADER */}
       <div className="bg-white border-b border-gray-200 px-6 py-5">
         <h1 className="text-2xl font-bold text-gray-900">Checkpoint do <span className="text-blue-600">Gerente</span></h1>
         <p className="text-sm text-gray-500 mt-0.5">Gestão diária do time comercial com metas, resultados e IA</p>
       </div>
 
       <div className="max-w-screen-xl mx-auto px-4 mt-5 space-y-4">
-        {/* ALERTA PENDENTES */}
         {pendentes.length > 0 && (
           <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
             <AlertCircle className="text-amber-500 mt-0.5 shrink-0" size={18} />
@@ -313,12 +326,14 @@ export default function CheckpointGerente() {
               { label: "Visitas Realizadas", atual: metasMes.visitas_realizadas_realizado, meta: metasMes.visitas_realizadas_meta, cor: "bg-purple-500", money: false },
             ]).map(({ label, atual, meta, cor, money }) => {
               const p = pct(atual, meta);
+              const icon = p >= 100 ? "🏆" : p < 20 ? "❌" : p < 50 ? "⚠️" : "";
+              const textColor = p >= 100 ? "text-green-600" : p < 20 ? "text-red-500" : p < 50 ? "text-amber-500" : "text-green-500";
               return (
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-gray-500">{label}</span>
-                    <span className={`text-xs font-bold ${p < 50 ? "text-red-500" : p < 80 ? "text-amber-500" : "text-green-500"}`}>
-                      ↗ {p}%
+                    <span className={`text-xs font-bold ${textColor} flex items-center gap-1`}>
+                      {icon && <span>{icon}</span>} ↗ {p}%
                     </span>
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -330,6 +345,27 @@ export default function CheckpointGerente() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Projeção do Mês */}
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-500 flex items-center gap-1.5">
+              📅 <span className="font-medium text-gray-700">Projeção do mês</span> (mantendo este ritmo):
+              {(() => {
+                const projLig = projecao(metasMes.ligacoes_realizado);
+                const projVgv = projecao(metasMes.vgv_realizado);
+                const projVm = projecao(metasMes.visitas_marcadas_realizado);
+                const projVr = projecao(metasMes.visitas_realizadas_realizado);
+                return (
+                  <span className="ml-1 flex items-center gap-3 flex-wrap">
+                    <span>Ligações: <span className={projLig >= metasMes.ligacoes_meta ? "text-green-600 font-semibold" : "text-red-500 font-semibold"}>{projLig >= metasMes.ligacoes_meta ? "✅ meta batida" : `❌ ${fmt(projLig)}`}</span></span>
+                    <span>VGV: <span className={projVgv >= metasMes.vgv_meta ? "text-green-600 font-semibold" : "text-red-500 font-semibold"}>{projVgv >= metasMes.vgv_meta ? "✅ meta batida" : `❌ ${fmtR(projVgv)} (meta em risco)`}</span></span>
+                    <span>V.Marc: <span className={projVm >= metasMes.visitas_marcadas_meta ? "text-green-600 font-semibold" : "text-amber-500 font-semibold"}>{projVm >= metasMes.visitas_marcadas_meta ? "✅" : `⚠️ ${fmt(projVm)}`}</span></span>
+                    <span>V.Real: <span className={projVr >= metasMes.visitas_realizadas_meta ? "text-green-600 font-semibold" : "text-amber-500 font-semibold"}>{projVr >= metasMes.visitas_realizadas_meta ? "✅" : `⚠️ ${fmt(projVr)}`}</span></span>
+                  </span>
+                );
+              })()}
+            </p>
           </div>
         </div>
 
@@ -350,7 +386,6 @@ export default function CheckpointGerente() {
           ))}
         </div>
 
-        {/* TAB CONTENT */}
         {activeTab === "checkpoint" && (
           <CheckpointTableTab
             rows={rows}
@@ -382,7 +417,7 @@ export default function CheckpointGerente() {
         )}
 
         {activeTab === "coach" && (
-          <CoachIATab rows={rows} metasMes={metasMes} dateFmt={dateFmt} />
+          <CoachIATab rows={rows} metasMes={metasMes} dateFmt={dateFmt} teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
         )}
       </div>
     </div>
