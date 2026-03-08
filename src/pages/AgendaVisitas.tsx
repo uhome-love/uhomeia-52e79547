@@ -425,7 +425,7 @@ export default function AgendaVisitas() {
         </TabsContent>
 
         <TabsContent value="calendario" className="mt-3">
-          <VisitasCalendar visitas={filtered} />
+          <VisitasCalendar visitas={filtered} showTeam={isAdmin} />
         </TabsContent>
 
         {(isAdmin || isGestor) && (

@@ -8,6 +8,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { STATUS_LABELS, type Visita } from "@/hooks/useVisitas";
+import { getTeamBadgeStyle } from "./VisitaRow";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -29,9 +30,10 @@ const CORRETOR_COLORS = [
 interface Props {
   visitas: Visita[];
   onDayClick?: (date: Date) => void;
+  showTeam?: boolean;
 }
 
-export default function VisitasCalendar({ visitas, onDayClick }: Props) {
+export default function VisitasCalendar({ visitas, onDayClick, showTeam }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Build a map of corretor_id -> color
@@ -164,6 +166,11 @@ export default function VisitasCalendar({ visitas, onDayClick }: Props) {
                         <div className="space-y-1">
                           <p className="text-xs font-semibold">{v.nome_cliente}</p>
                           {v.corretor_nome && <p className="text-[10px] text-muted-foreground">👤 {v.corretor_nome}</p>}
+                          {showTeam && (() => {
+                            const style = getTeamBadgeStyle(v.equipe);
+                            if (!style) return null;
+                            return <p className="text-[10px] text-muted-foreground">{style.emoji} {style.label}</p>;
+                          })()}
                           {v.empreendimento && <p className="text-[10px] text-muted-foreground">🏠 {v.empreendimento}</p>}
                           {v.hora_visita && <p className="text-[10px]">🕐 {v.hora_visita.slice(0, 5)}</p>}
                           <Badge variant="secondary" className="text-[9px]">
