@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePendingLeadAlert } from "@/hooks/usePendingLeadAlert";
@@ -30,6 +30,18 @@ const HomiAvatar = lazy(() => import("@/components/homi/HomiAvatar"));
 const HomiProactiveAlert = lazy(() => import("@/components/homi/HomiProactiveAlert"));
 const HomiGreeting = lazy(() => import("@/components/HomiGreeting"));
 
+// Detect arena-mode class on body reactively
+function useArenaMode() {
+  return useSyncExternalStore(
+    (cb) => {
+      const observer = new MutationObserver(cb);
+      observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+      return () => observer.disconnect();
+    },
+    () => document.body.classList.contains("arena-mode")
+  );
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const { isAdmin, isGestor } = useUserRole();
@@ -37,6 +49,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [nome, setNome] = useState("");
   const { pendingLead, showDialog, closeDialog, refresh: refreshPending } = usePendingLeadAlert();
   const cargo = isAdmin ? "CEO" : isGestor ? "Gerente" : "Corretor";
+  const isArenaMode = useArenaMode();
 
   useEffect(() => {
     if (!user) return;
@@ -58,6 +71,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <img src={homiMascot} alt="Homi" className="h-7 w-7 object-contain" />
                   <span className="font-display font-extrabold text-foreground/80 text-sm">Uhome<span className="text-primary">Sales</span></span>
                 </div>
+                {isArenaMode && (
+                  <span className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)" }}>
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+                    ⚡ Modo Arena
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-1">

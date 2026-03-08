@@ -447,6 +447,22 @@
 .homi-particle-4 { animation: homiParticleExplode4 0.8s ease-out 0.4s forwards; }
 .homi-particle-5 { animation: homiParticleExplode5 0.8s ease-out 0.5s forwards; }
 
+/* ═══ ARENA FULLSCREEN MODE ═══ */
+
+body.arena-mode aside,
+body.arena-mode [data-sidebar="sidebar"] {
+  display: none !important;
+}
+
+body.arena-mode [data-sidebar="sidebar"] + div,
+body.arena-mode .flex-1 {
+  margin-left: 0 !important;
+}
+
+body.arena-mode main {
+  padding: 0 !important;
+}
+
 /* ═══ ARENA DE LIGAÇÃO ═══ */
 
 .arena-bg {
