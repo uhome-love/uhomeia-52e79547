@@ -257,8 +257,8 @@ export default function BaseConhecimento() {
                 </>
               ) : (
                 <>
-                  <Upload className="h-4 w-4" />
-                  Enviar arquivo (.txt, .md)
+                   <Upload className="h-4 w-4" />
+                   📄 Enviar arquivo (.pdf, .txt, .md)
                 </>
               )}
             </Button>
@@ -266,7 +266,7 @@ export default function BaseConhecimento() {
           <input
             ref={fileRef}
             type="file"
-            accept=".txt,.md,.text"
+            accept=".pdf,.txt,.md,.doc,.docx,.text"
             className="hidden"
             onChange={handleFileChange}
           />
