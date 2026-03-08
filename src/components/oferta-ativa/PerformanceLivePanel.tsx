@@ -259,26 +259,6 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
     staleTime: 10000,
   });
 
-  if (isLoading || (teamOnly && !teamMemberUserIds)) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (teamOnly && teamMemberUserIds && teamMemberUserIds.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="font-medium">Nenhum corretor vinculado</p>
-          <p className="text-sm mt-1">Vincule corretores ao seu time em "Meu Time" para ver a performance aqui.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   // Fetch ALL team corretores to show who hasn't started
   const { data: allTeamCorretores = [] } = useQuery({
     queryKey: ["oa-all-team-corretores", teamOnly, user?.id],
@@ -291,19 +271,26 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
           .eq("status", "ativo");
         return (data || []).map(t => ({ id: t.user_id, nome: t.nome })).filter(t => t.id);
       }
-      // Admin: all corretores
-      const { data } = await supabase
+      // Admin: get all users that have role 'corretor' via user_roles
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "user");
+      const userIds = (roleRows || []).map(r => r.user_id);
+      if (userIds.length === 0) return [];
+      const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, nome, role")
-        .eq("role", "corretor");
-      return (data || []).map(p => ({ id: p.user_id, nome: p.nome || "Corretor" }));
+        .select("user_id, nome")
+        .in("user_id", userIds);
+      return (profiles || []).map(p => ({ id: p.user_id, nome: p.nome || "Corretor" }));
     },
     enabled: !!user,
     staleTime: 60_000,
   });
 
-  // Fetch team names for corretores (for empty state display)
   const allCorretorIds = useMemo(() => allTeamCorretores.map(c => c.id).filter(Boolean), [allTeamCorretores]);
+
+  // Fetch team names for corretores (for empty state display)
   const { data: corretorTeamMap = {} } = useQuery({
     queryKey: ["oa-live-team-map", allCorretorIds],
     queryFn: async () => {
@@ -331,6 +318,26 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
     enabled: allCorretorIds.length > 0 && !teamOnly,
     staleTime: 60_000,
   });
+
+  if (isLoading || (teamOnly && !teamMemberUserIds)) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (teamOnly && teamMemberUserIds && teamMemberUserIds.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
+          <p className="font-medium">Nenhum corretor vinculado</p>
+          <p className="text-sm mt-1">Vincule corretores ao seu time em "Meu Time" para ver a performance aqui.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!liveData || liveData.totalCorretores === 0) {
     // Show day summary even when empty
