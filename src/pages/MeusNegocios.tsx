@@ -399,6 +399,8 @@ export default function MeusNegocios() {
                       key={negocio.id}
                       negocio={negocio}
                       corretorNome={negocio.corretor_id ? corretorNomes[negocio.corretor_id] : undefined}
+                      corretorInfo={negocio.corretor_id ? corretorInfoMap[negocio.corretor_id] : undefined}
+                      showCorretor={isAdmin || isGestor}
                       paradoInfo={paradoMap.get(negocio.id)}
                       onDragStart={() => { dragNegocioId.current = negocio.id; }}
                       onClick={() => {
