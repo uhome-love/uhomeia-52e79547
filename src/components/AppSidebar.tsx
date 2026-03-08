@@ -327,7 +327,7 @@ export function AppSidebar() {
     .map(w => w[0]?.toUpperCase())
     .join("");
 
-  const roleLabel = isAdmin ? "Admin" : isGestor ? "Gestor" : "Corretor";
+  
 
   return (
     <Sidebar collapsible="icon">
