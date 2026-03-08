@@ -14,6 +14,7 @@ import RankingOfertaAtiva from "@/components/oferta-ativa/RankingOfertaAtiva";
 import CeoCheckpointViewer from "@/components/ceo/CeoCheckpointViewer";
 import PerformanceLivePanel from "@/components/oferta-ativa/PerformanceLivePanel";
 import CeoTeamComparison from "@/components/ceo/CeoTeamComparison";
+import CeoMonthlyReports from "@/components/ceo/CeoMonthlyReports";
 
 export default function CeoDashboard() {
   const [searchParams] = useSearchParams();
