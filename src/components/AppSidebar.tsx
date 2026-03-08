@@ -144,7 +144,7 @@ export function AppSidebar() {
     }
   }, [alerts]);
 
-
+  const level = getLevel(points);
 
   // ── Build navigation groups by role ──
   function getGroupsByRole(): { topItem: NavItem | null; groups: { label: string; items: NavItem[] }[]; roleLabel: string } {
