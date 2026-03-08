@@ -629,6 +629,13 @@ export default function CeoDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Fila CEO Dispatch Modal */}
+      <FilaCeoDispatchModal
+        open={dispatchOpen}
+        onOpenChange={setDispatchOpen}
+        onDispatched={() => { reload(); loadFilaCeo(); }}
+      />
     </div>
   );
 }
