@@ -4,14 +4,11 @@ import {
   ClipboardCheck,
   Shield,
   LogOut,
-  User,
-  Crown,
   Home,
   FileEdit,
   Bot,
   FileBarChart,
   TrendingUp,
-  FileSpreadsheet,
   BarChart3,
   CalendarDays,
   Trophy,
@@ -28,7 +25,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import AvatarUpload from "@/components/AvatarUpload";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -46,7 +42,56 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSmartAlerts } from "@/hooks/useSmartAlerts";
 import { toast } from "sonner";
+
 const homiMascot = "/images/homi-mascot-opt.png";
+
+type NavItem = { title: string; url: string; icon: React.ComponentType<{ className?: string }> };
+
+function SidebarNavGroup({ label, items, badges, collapsed, index }: {
+  label: string;
+  items: NavItem[];
+  badges: Record<string, number>;
+  collapsed: boolean;
+  index: number;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <SidebarGroup key={label} className="animate-fade-in" style={{ animationDelay: `${index * 60}ms` }}>
+      <SidebarGroupLabel className="text-sidebar-foreground/50 text-[10px] font-medium tracking-wider uppercase px-3 mb-0.5">
+        {label}
+      </SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu className="space-y-px">
+          {items.map((item) => {
+            const badgeCount = badges[item.url] || 0;
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to={item.url}
+                    end
+                    className="group/nav text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent transition-all duration-150 rounded-lg relative py-2 px-3"
+                    activeClassName="!text-sidebar-primary-foreground !bg-primary rounded-lg font-medium"
+                  >
+                    <item.icon className="mr-2.5 h-4 w-4 shrink-0 transition-transform duration-150 group-hover/nav:translate-x-0.5" />
+                    {!collapsed && (
+                      <span className="text-sm">{item.title}</span>
+                    )}
+                    {badgeCount > 0 && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger-500 text-[10px] font-bold text-white px-1 animate-pulse-soft">
+                        {badgeCount}
+                      </span>
+                    )}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -57,7 +102,6 @@ export function AppSidebar() {
   const toastShown = useRef(false);
   const [profile, setProfile] = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
 
-  // Fetch profile for avatar
   useEffect(() => {
     if (!user) return;
     supabase
@@ -70,7 +114,6 @@ export function AppSidebar() {
       });
   }, [user]);
 
-  // Show toast for critical alerts on first load
   useEffect(() => {
     if (toastShown.current || alerts.length === 0) return;
     toastShown.current = true;
@@ -84,184 +127,119 @@ export function AppSidebar() {
     }
   }, [alerts]);
 
-  // === PRINCIPAL (Gestor) ===
-  const principalItems = isAdmin
+  // ── Navigation structure by role ──
+
+  const leadsItems: NavItem[] = isAdmin || isGestor
+    ? [
+        { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
+        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
+        { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
+      ]
+    : [
+        { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
+      ];
+
+  const negociosItems: NavItem[] = [
+    { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+    { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
+    ...(isAdmin || isGestor ? [{ title: "Pós-Vendas", url: "/pos-vendas", icon: Heart }] : []),
+  ];
+
+  const performanceItems: NavItem[] = isAdmin
     ? [
         { title: "Início", url: "/ceo", icon: Home },
+        { title: "Checkpoint e Metas", url: "/checkpoint", icon: ClipboardCheck },
+        { title: "Rankings", url: "/ranking", icon: Trophy },
       ]
     : isGestor
     ? [
         { title: "Início", url: "/", icon: Home },
         { title: "Checkpoint e Metas", url: "/checkpoint", icon: ClipboardCheck },
+        { title: "Rankings", url: "/ranking", icon: Trophy },
       ]
     : [
         { title: "Minha Rotina", url: "/corretor", icon: Phone },
-      ];
-
-  // === GESTÃO DE LEADS (Gestor) ===
-  const gestaoLeadsItems = isAdmin
-    ? [
-        { title: "Pipeline Leads", url: "/pipeline", icon: Kanban },
-        { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
-        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
-        { title: "Scripts", url: "/scripts", icon: FileEdit },
-        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-        { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
-        { title: "Automações", url: "/automacoes", icon: Workflow },
-      ]
-    : isGestor
-    ? [
-        { title: "Pipeline Leads", url: "/pipeline", icon: Kanban },
-        { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
-        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
-        { title: "Scripts", url: "/scripts", icon: FileEdit },
-        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-        { title: "Roleta de Leads", url: "/disponibilidade", icon: LayoutDashboard },
-        { title: "Automações", url: "/automacoes", icon: Workflow },
-      ]
-    : [
-        { title: "Pipeline Leads", url: "/pipeline", icon: Kanban },
-        { title: "Minha Agenda", url: "/agenda-visitas", icon: CalendarDays },
-        { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
-        { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
-        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-      ];
-
-  // === GESTÃO DE NEGÓCIOS (Gestor) ===
-  const gestaoNegociosItems = isAdmin
-    ? [
-        { title: "Pipeline Negócios", url: "/meus-negocios", icon: FileSpreadsheet },
-        { title: "Pós-Vendas", url: "/pos-vendas", icon: Heart },
-      ]
-    : isGestor
-    ? [
-        { title: "Pipeline Negócios", url: "/meus-negocios", icon: FileSpreadsheet },
-        { title: "Pós-Vendas", url: "/pos-vendas", icon: Heart },
-      ]
-    : [
-        { title: "Pipeline Negócios", url: "/meus-negocios", icon: FileSpreadsheet },
-      ];
-
-  // === GESTÃO DE EQUIPE (Gestor) ===
-  const gestaoEquipeItems = isAdmin
-    ? [
-        { title: "Meu Time", url: "/meu-time", icon: Users },
-        { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
+        { title: "Meu Desempenho", url: "/corretor/resumo", icon: BarChart3 },
         { title: "Rankings", url: "/ranking", icon: Trophy },
-      ]
-    : isGestor
-    ? [
-        { title: "Meu Time", url: "/meu-time", icon: Users },
-        { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
-        { title: "Rankings", url: "/ranking", icon: Trophy },
-      ]
-    : [];
+        { title: "Conquistas", url: "/conquistas", icon: Trophy },
+      ];
 
-  // === INTELIGÊNCIA ===
-  const inteligenciaItems = isAdmin
+  const ferramentasItems: NavItem[] = isAdmin
     ? [
         { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
-        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
+        { title: "Scripts", url: "/scripts", icon: FileEdit },
+        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
+        { title: "Automações", url: "/automacoes", icon: Workflow },
         { title: "Notificações", url: "/notificacoes", icon: Bell },
-        { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
-        { title: "Inteligência Marketing", url: "/marketing", icon: TrendingUp },
-        { title: "Auditoria & Saúde", url: "/auditoria", icon: Shield },
       ]
     : isGestor
     ? [
         { title: "HOMI Gerencial", url: "/homi-gerente", icon: Bot },
-        { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
+        { title: "Scripts", url: "/scripts", icon: FileEdit },
+        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
+        { title: "Automações", url: "/automacoes", icon: Workflow },
         { title: "Notificações", url: "/notificacoes", icon: Bell },
       ]
     : [
         { title: "HOMI Assistente", url: "/homi", icon: Bot },
+        { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
+        { title: "Marketplace", url: "/marketplace", icon: BookOpen },
         { title: "Notificações", url: "/notificacoes", icon: Bell },
       ];
 
-  // === CORRETOR PERFORMANCE (só corretor) ===
-  const corretorPerformanceItems = !isGestor && !isAdmin
+  const equipeItems: NavItem[] = isAdmin || isGestor
     ? [
-        { title: "Meu Desempenho", url: "/corretor/resumo", icon: BarChart3 },
-        { title: "Ranking OA", url: "/corretor/ranking-equipes", icon: Trophy },
-        { title: "Ranking Comercial", url: "/ranking", icon: BarChart3 },
-        { title: "Conquistas", url: "/conquistas", icon: Trophy },
+        { title: "Meu Time", url: "/meu-time", icon: Users },
+        { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
       ]
     : [];
 
-  // === SISTEMA (admin only) ===
-  const adminItems = isAdmin
+  const inteligenciaItems: NavItem[] = isAdmin
+    ? [
+        { title: "Central de Dados", url: "/central-dados", icon: BarChart3 },
+        { title: "Inteligência Marketing", url: "/marketing", icon: TrendingUp },
+        { title: "Auditoria & Saúde", url: "/auditoria", icon: Shield },
+      ]
+    : [];
+
+  const sistemaItems: NavItem[] = isAdmin
     ? [
         { title: "Recuperação de Leads", url: "/gestao", icon: LayoutDashboard },
         { title: "Administração", url: "/admin", icon: Shield },
       ]
     : [];
 
-  const configItems = [
+  const configItems: NavItem[] = [
     { title: "Configurações", url: "/configuracoes", icon: Settings },
   ];
 
-  const renderGroup = (label: string, items: typeof principalItems, index: number) => (
-    <SidebarGroup key={label} className="animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
-      <SidebarGroupLabel className="text-sidebar-foreground/30 uppercase text-[10px] tracking-[0.15em] font-bold mb-1 px-3">
-        {label}
-      </SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu className="space-y-0.5">
-          {items.map((item) => {
-            const badgeCount = badges[item.url] || 0;
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to={item.url}
-                    end
-                    className="group/nav hover:bg-sidebar-accent/70 transition-all duration-200 rounded-lg relative py-2.5 px-3"
-                    activeClassName="bg-sidebar-primary/15 text-sidebar-primary font-semibold border-l-[3px] border-sidebar-primary shadow-[inset_0_0_20px_hsl(229_100%_64%/0.06)]"
-                  >
-                    <item.icon className="mr-2.5 h-4 w-4 shrink-0 transition-transform duration-200 group-hover/nav:scale-110" />
-                    {!collapsed && (
-                      <span className="text-[13px] transition-colors duration-200">{item.title}</span>
-                    )}
-                    {badgeCount > 0 && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1 animate-pulse-soft">
-                        {badgeCount}
-                      </span>
-                    )}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
-
   const groups = [
-    { label: "⚙️ Principal", items: principalItems },
-    { label: "🎯 Gestão de Leads", items: gestaoLeadsItems },
-    { label: "💼 Gestão de Negócios", items: gestaoNegociosItems },
-    ...(gestaoEquipeItems.length > 0 ? [{ label: "👥 Gestão de Equipe", items: gestaoEquipeItems }] : []),
-    ...(corretorPerformanceItems.length > 0 ? [{ label: "📈 Performance", items: corretorPerformanceItems }] : []),
-    { label: "🧠 Inteligência", items: inteligenciaItems },
-    ...(adminItems.length > 0 ? [{ label: "🔧 Sistema", items: adminItems }] : []),
+    { label: "Leads", items: leadsItems },
+    { label: "Negócios", items: negociosItems },
+    { label: "Performance", items: performanceItems },
+    ...(equipeItems.length > 0 ? [{ label: "Equipe", items: equipeItems }] : []),
+    { label: "Ferramentas", items: ferramentasItems },
+    ...(inteligenciaItems.length > 0 ? [{ label: "Inteligência", items: inteligenciaItems }] : []),
+    ...(sistemaItems.length > 0 ? [{ label: "Sistema", items: sistemaItems }] : []),
     { label: "Conta", items: configItems },
   ];
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="scrollbar-thin">
-        {/* Logo Section — UhomeSales branding */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border/50">
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-4 h-14 border-b border-sidebar-border/40 shrink-0">
           {collapsed ? (
-            <div className="flex h-11 w-11 items-center justify-center shrink-0">
-              <img src={homiMascot} alt="Homi" className="h-10 w-10 object-contain transition-transform duration-300 hover:scale-110" />
+            <div className="flex h-9 w-9 items-center justify-center shrink-0">
+              <img src={homiMascot} alt="Homi" className="h-8 w-8 object-contain" />
             </div>
           ) : (
-            <div className="flex items-center gap-3 animate-slide-in-left">
-              <img src={homiMascot} alt="Homi AI" className="h-12 w-12 object-contain shrink-0" />
+            <div className="flex items-center gap-2.5 animate-slide-in-left">
+              <img src={homiMascot} alt="Homi AI" className="h-9 w-9 object-contain shrink-0" />
               <div className="flex flex-col">
-                <span className="text-[16px] font-display font-extrabold text-sidebar-foreground tracking-tight leading-tight">
+                <span className="text-sm font-semibold text-sidebar-accent-foreground tracking-tight leading-tight">
                   Uhome<span className="text-sidebar-primary">Sales</span>
                 </span>
                 <span className="text-[9px] font-medium text-sidebar-foreground/40 tracking-wider">
@@ -272,11 +250,20 @@ export function AppSidebar() {
           )}
         </div>
 
-        {groups.map((g, i) => renderGroup(g.label, g.items, i))}
+        {groups.map((g, i) => (
+          <SidebarNavGroup
+            key={g.label}
+            label={g.label}
+            items={g.items}
+            badges={badges}
+            collapsed={collapsed}
+            index={i}
+          />
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="flex items-center gap-2.5 p-3 border-t border-sidebar-border/50 bg-sidebar-accent/20">
+        <div className="flex items-center gap-2.5 p-3 border-t border-sidebar-border/40">
           <AvatarUpload
             avatarUrl={profile.avatar_url}
             nome={profile.nome || user?.email || ""}
@@ -285,19 +272,19 @@ export function AppSidebar() {
           />
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold text-sidebar-foreground truncate">
+              <p className="text-xs font-medium text-sidebar-accent-foreground truncate">
                 {profile.nome || user?.email}
               </p>
-              <p className="text-[9px] text-sidebar-foreground/40 font-medium uppercase tracking-wider">
+              <p className="text-[10px] text-sidebar-foreground/50 font-medium">
                 {isAdmin ? "Admin" : isGestor ? "Gestor" : "Corretor"}
               </p>
             </div>
           )}
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={signOut}
-            className="h-7 w-7 p-0 shrink-0 text-sidebar-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all duration-200 rounded-lg"
+            className="h-7 w-7 shrink-0 text-sidebar-foreground/40 hover:text-danger-500 hover:bg-danger-500/10 transition-all duration-150 rounded-lg"
           >
             <LogOut className="h-3.5 w-3.5" />
           </Button>
