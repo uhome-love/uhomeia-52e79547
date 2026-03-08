@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   LayoutDashboard,
   ClipboardCheck,
@@ -25,6 +25,9 @@ import {
   PanelLeftOpen,
   PanelLeftClose,
   MessageSquare,
+  Building2,
+  Cog,
+  GraduationCap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
