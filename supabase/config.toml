@@ -80,3 +80,9 @@ verify_jwt = false
 
 [functions.oa-session-coaching]
 verify_jwt = false
+
+[functions.generate-monthly-report]
+verify_jwt = false
+
+[functions.referral-public]
+verify_jwt = false
