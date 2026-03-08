@@ -86,9 +86,14 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [objectionInsert, setObjectionInsert] = useState<string | null>(null);
   const [inlineObs, setInlineObs] = useState("");
+  const [showResultPopup, setShowResultPopup] = useState(false);
+  const [selectedResult, setSelectedResult] = useState<string | null>(null);
 
   // Mobile tab
   const [mobileTab, setMobileTab] = useState<"lead" | "script" | "whatsapp">("lead");
+
+  // Script tab (desktop right column)
+  const [scriptTab, setScriptTab] = useState<"ligacao" | "whatsapp">("ligacao");
 
   // Arena overlays
   const [showRound, setShowRound] = useState(false);
