@@ -55,17 +55,38 @@ export default function RoletaStatusBar() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [currentJanela, setCurrentJanela] = useState("");
 
+  const getJanela = useCallback(() => {
+    const h = new Date().getHours();
+    const m = new Date().getMinutes();
+    const decimal = h + m / 60;
+    if (decimal < 9.5) return "manha";
+    if (decimal < 13.5) return "tarde";
+    if (decimal < 23.5) return "noturna";
+    return "manha"; // after 23:30 → next morning
+  }, []);
+
+  const getJanelaLabel = (j: string) => {
+    if (j === "manha") return "Manhã ☀️";
+    if (j === "tarde") return "Tarde 🌤️";
+    if (j === "noturna") return "Noturna 🌙";
+    return j;
+  };
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
-    // Fetch status
+    // Fetch profile id + status
     const { data: profile } = await supabase
       .from("profiles")
-      .select("status_online")
+      .select("id, status_online")
       .eq("user_id", user.id)
       .single();
     if (profile?.status_online) setStatus(profile.status_online as StatusOnline);
+    if (profile?.id) setProfileId(profile.id);
+
+    const janela = getJanela();
+    setCurrentJanela(janela);
 
     // Fetch segmentos with campanhas
     const { data: segs } = await supabase
@@ -88,30 +109,33 @@ export default function RoletaStatusBar() {
     }));
     setSegmentos(segList);
 
-    // Fetch credenciamento — today
+    // Fetch credenciamento — today + current janela
     const today = new Date().toISOString().slice(0, 10);
-    const { data: creds } = await supabase
-      .from("roleta_credenciamentos")
-      .select("segmento_1_id, segmento_2_id, status")
-      .eq("corretor_id", user.id)
-      .eq("data", today)
-      .order("created_at", { ascending: false })
-      .limit(1);
+    if (profile?.id) {
+      const { data: creds } = await supabase
+        .from("roleta_credenciamentos")
+        .select("segmento_1_id, segmento_2_id, status")
+        .eq("corretor_id", profile.id)
+        .eq("data", today)
+        .eq("janela", janela)
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-    if (creds && creds.length > 0) {
-      const c = creds[0];
-      const ids = [c.segmento_1_id, c.segmento_2_id].filter(Boolean) as string[];
-      setMySegmentoIds(ids);
-      setSelectedIds(ids);
-      setCredStatus(c.status || "");
-    } else {
-      setMySegmentoIds([]);
-      setSelectedIds([]);
-      setCredStatus("");
+      if (creds && creds.length > 0) {
+        const c = creds[0];
+        const ids = [c.segmento_1_id, c.segmento_2_id].filter(Boolean) as string[];
+        setMySegmentoIds(ids);
+        setSelectedIds(ids);
+        setCredStatus(c.status || "");
+      } else {
+        setMySegmentoIds([]);
+        setSelectedIds([]);
+        setCredStatus("");
+      }
     }
 
     setLoading(false);
-  }, [user]);
+  }, [user, getJanela]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
