@@ -768,60 +768,63 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                 </div>
               )}
 
-              {/* ⚡ OBJEÇÕES RÁPIDAS — moved here */}
-              <div style={{ background: "#1C2128", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: 14 }} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: 12, color: "#FBBF24", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>⚡ OBJEÇÕES RÁPIDAS</span>
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {objections.map((obj, i) => (
-                    <div key={i}>
-                      <button
-                        onClick={() => setExpandedObj(expandedObj === i ? null : i)}
-                        className="w-full text-left transition-colors"
-                        style={{
-                          background: expandedObj === i ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.04)",
-                          border: expandedObj === i ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: 8,
-                          padding: "8px 12px",
-                          color: expandedObj === i ? "#FCD34D" : "#D1D5DB",
-                          fontSize: 14,
-                        }}
-                      >
-                        {obj.emoji} {obj.label}
-                      </button>
-                      {expandedObj === i && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="mt-1 p-2.5 rounded-lg text-xs leading-relaxed"
-                          style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", color: "#E5E7EB" }}
-                        >
-                          {obj.answer}
-                          <div className="flex items-center gap-2 mt-2">
-                            <button onClick={() => { navigator.clipboard.writeText(obj.answer); toast.success("Resposta copiada!"); }} className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "#9CA3AF" }}>
-                              📋 Copiar
-                            </button>
-                            <button className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(34,197,94,0.1)", color: "#86EFAC" }}>👍 Funcionou</button>
-                            <button className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(239,68,68,0.1)", color: "#FCA5A5" }}>👎 Não</button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               <RecentCallsHistory />
             </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* Right: Scripts */}
+        {/* Right: Scripts + Objections */}
         <div className="space-y-3">
           <div className="sticky top-4 space-y-3">
-            <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode />
+            <div style={{ maxHeight: 480 }} className="overflow-y-auto">
+              <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode />
+            </div>
+
+            {/* ⚡ OBJEÇÕES RÁPIDAS */}
+            <div style={{ background: "#1C2128", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: 12 }} className="space-y-2">
+              <span style={{ fontSize: 11, color: "#FBBF24", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>⚡ OBJEÇÕES RÁPIDAS</span>
+              <div className="flex flex-wrap gap-1.5">
+                {objections.map((obj, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setExpandedObj(expandedObj === i ? null : i)}
+                    className="transition-colors"
+                    style={{
+                      background: expandedObj === i ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.08)",
+                      border: expandedObj === i ? "1px solid rgba(245,158,11,0.5)" : "1px solid rgba(255,255,255,0.15)",
+                      borderRadius: 999,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: expandedObj === i ? "#FCD34D" : "#D1D5DB",
+                    }}
+                  >
+                    {obj.emoji} {obj.label}
+                  </button>
+                ))}
+              </div>
+              <AnimatePresence>
+                {expandedObj !== null && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-2.5 rounded-lg text-xs leading-relaxed"
+                    style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", color: "#E5E7EB", maxHeight: 120, overflowY: "auto" }}
+                  >
+                    {objections[expandedObj].answer}
+                    <div className="flex items-center gap-2 mt-2">
+                      <button onClick={() => { navigator.clipboard.writeText(objections[expandedObj].answer); toast.success("Resposta copiada!"); }} className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "#9CA3AF" }}>
+                        📋 Copiar
+                      </button>
+                      <button className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(34,197,94,0.1)", color: "#86EFAC" }}>👍 Funcionou</button>
+                      <button className="text-[10px] px-2 py-0.5 rounded" style={{ background: "rgba(239,68,68,0.1)", color: "#FCA5A5" }}>👎 Não</button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
