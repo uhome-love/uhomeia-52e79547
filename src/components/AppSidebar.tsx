@@ -19,7 +19,7 @@ import {
   Kanban,
   Bell,
   Heart,
-  Workflow,
+  
   BookOpen,
   Award,
   PanelLeftOpen,
