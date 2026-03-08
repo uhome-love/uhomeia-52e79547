@@ -14,7 +14,6 @@ import CorretorListSelection from "@/components/oferta-ativa/CorretorListSelecti
 import AproveitadosPanel from "@/components/oferta-ativa/AproveitadosPanel";
 import RankingPanel from "@/components/oferta-ativa/RankingPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLevel, getNextLevel, getLevelProgress } from "@/lib/gamification";
 import { toast } from "sonner";
 
