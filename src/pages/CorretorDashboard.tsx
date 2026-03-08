@@ -182,9 +182,9 @@ export default function CorretorDashboard() {
             {greetingData.greeting}
           </h1>
           <p className="text-sm text-muted-foreground truncate">{greetingData.subtitle}</p>
-          {streak.emoji && (
-            <p className={`text-xs font-semibold mt-0.5 ${streak.color}`}>
-              {streak.emoji} {streak.label}
+          {streakData.emoji && (
+            <p className={`text-xs font-semibold mt-0.5 ${streakData.color}`}>
+              {streakData.emoji} {streakData.label}
             </p>
           )}
         </div>
