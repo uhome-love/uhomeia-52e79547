@@ -4,6 +4,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ArrowLeft, Loader2, Users, Search, Zap, Sparkles, Trash2, RotateCcw } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import DialingModeWithScript from "./DialingModeWithScript";
 import CustomListWizard from "./CustomListWizard";
 import { useQuery } from "@tanstack/react-query";
@@ -134,8 +135,16 @@ function ListaCard({ lista, stats, isCustom }: { lista: OALista; stats?: ListaSt
           )}
         </>
       ) : (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />
+        <div className="space-y-3 py-2">
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="text-center space-y-1.5">
+                <Skeleton className="h-8 w-16 mx-auto rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+                <Skeleton className="h-3 w-12 mx-auto rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+              </div>
+            ))}
+          </div>
+          <Skeleton className="h-1.5 w-full rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
         </div>
       )}
 
@@ -252,8 +261,51 @@ export default function CorretorListSelection() {
     );
   }
 
+  // Pagination: show 20 initially, load more on scroll
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const paginatedFiltered = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const hasMore = visibleCount < filtered.length;
+
+  // Reset pagination when search changes
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!hasMore || !sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisibleCount(v => v + PAGE_SIZE); },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, paginatedFiltered.length]);
+
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-blue-400" /></div>;
+    return (
+      <div className="space-y-3" style={{ background: "#0A0F1E" }}>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="arena-card rounded-xl p-5 space-y-3">
+              <Skeleton className="h-5 w-2/3 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+              <Skeleton className="h-3 w-1/3 rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3].map(j => (
+                  <div key={j} className="text-center space-y-1.5">
+                    <Skeleton className="h-8 w-16 mx-auto rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+                    <Skeleton className="h-3 w-12 mx-auto rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+                  </div>
+                ))}
+              </div>
+              <Skeleton className="h-1.5 w-full rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+              <Skeleton className="h-10 w-full rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -341,7 +393,7 @@ export default function CorretorListSelection() {
             <p className="text-sm text-neutral-500 text-center py-4">Nenhuma lista encontrada para "{search}"</p>
           )}
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map(lista => {
+            {paginatedFiltered.map(lista => {
               const stats = statsMap?.[lista.id];
               const hasLeads = (stats?.naFila ?? 0) > 0;
               return (
@@ -351,6 +403,11 @@ export default function CorretorListSelection() {
               );
             })}
           </div>
+          {hasMore && (
+            <div ref={sentinelRef} className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-neutral-500" />
+            </div>
+          )}
         </>
       )}
 
