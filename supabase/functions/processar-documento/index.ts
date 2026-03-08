@@ -7,11 +7,50 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> {
+  // Basic PDF text extraction - decode streams and extract text between BT/ET markers
+  const decoder = new TextDecoder("latin1");
+  const raw = decoder.decode(pdfBytes);
+  
+  const textParts: string[] = [];
+  
+  // Extract text from PDF text objects (between BT and ET)
+  const btEtRegex = /BT\s([\s\S]*?)ET/g;
+  let match;
+  while ((match = btEtRegex.exec(raw)) !== null) {
+    const block = match[1];
+    // Extract text strings in parentheses (Tj/TJ operators)
+    const tjRegex = /\(([^)]*)\)/g;
+    let tjMatch;
+    while ((tjMatch = tjRegex.exec(block)) !== null) {
+      const text = tjMatch[1]
+        .replace(/\\n/g, "\n")
+        .replace(/\\r/g, "\r")
+        .replace(/\\t/g, "\t")
+        .replace(/\\\\/g, "\\")
+        .replace(/\\([()])/g, "$1");
+      if (text.trim()) textParts.push(text);
+    }
+  }
+  
+  // Also try to extract readable text directly (for simple PDFs)
+  if (textParts.length < 5) {
+    const directText = raw
+      .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF\n\r\t]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (directText.length > textParts.join(" ").length) {
+      return directText;
+    }
+  }
+  
+  return textParts.join(" ").replace(/\s+/g, " ").trim();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing authorization");
 
@@ -38,27 +77,57 @@ serve(async (req) => {
       .single();
 
     if (docError || !doc) throw new Error("Document not found");
-    if (!doc.content || doc.content.trim().length === 0) {
-      await supabase.from("homi_documents").update({ status: "error" }).eq("id", documentId);
-      throw new Error("Document has no content");
+
+    let content = doc.content || "";
+
+    // If content is empty but file_url exists, download from storage and extract
+    if ((!content || content.trim().length < 50) && doc.file_url) {
+      console.log(`Downloading file from storage: ${doc.file_url}`);
+      const { data: fileData, error: dlError } = await supabase.storage
+        .from("homi-documents")
+        .download(doc.file_url);
+
+      if (dlError || !fileData) {
+        await supabase.from("homi_documents").update({ status: "error" }).eq("id", documentId);
+        throw new Error("Failed to download file from storage");
+      }
+
+      const fileType = doc.file_type || "";
+      if (fileType === "pdf") {
+        const bytes = new Uint8Array(await fileData.arrayBuffer());
+        content = await extractTextFromPdf(bytes);
+        console.log(`Extracted ${content.length} chars from PDF`);
+      } else {
+        // txt, md, etc.
+        content = await fileData.text();
+      }
+
+      // Save extracted content back to document
+      if (content.trim().length > 0) {
+        await supabase.from("homi_documents").update({ content }).eq("id", documentId);
+      }
     }
 
-    console.log(`Processing document: ${doc.title} (${doc.content.length} chars)`);
+    if (!content || content.trim().length < 50) {
+      await supabase.from("homi_documents").update({ status: "error" }).eq("id", documentId);
+      throw new Error("Document has no extractable content (too short or empty)");
+    }
+
+    console.log(`Processing document: ${doc.title} (${content.length} chars)`);
 
     // Split into chunks (~500 chars with 50 char overlap)
     const chunkSize = 500;
     const overlap = 50;
-    const text = doc.content;
     const chunks: string[] = [];
 
-    for (let i = 0; i < text.length; i += chunkSize - overlap) {
-      const chunk = text.slice(i, i + chunkSize).trim();
+    for (let i = 0; i < content.length; i += chunkSize - overlap) {
+      const chunk = content.slice(i, i + chunkSize).trim();
       if (chunk.length > 20) chunks.push(chunk);
     }
 
     console.log(`Created ${chunks.length} chunks`);
 
-    // Process in batches of 20 (OpenAI embedding API supports batch)
+    // Process in batches of 20
     const batchSize = 20;
     let processedChunks = 0;
 
@@ -86,7 +155,6 @@ serve(async (req) => {
 
       const embeddingData = await embeddingRes.json();
 
-      // Insert chunks with embeddings
       const rows = batch.map((chunk, i) => ({
         document_id: documentId,
         content: chunk,

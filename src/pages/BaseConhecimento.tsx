@@ -69,16 +69,12 @@ export default function BaseConhecimento() {
     onError: () => toast.error("Erro ao remover documento"),
   });
 
-  // Extract text from file
+  // Extract text from text-based files
   const extractText = useCallback(async (file: File): Promise<string> => {
     if (file.type === "text/plain" || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
       return await file.text();
     }
-    // For PDF, read as text (basic extraction)
-    // For more complex PDFs, would need pdfjs-dist
-    const text = await file.text();
-    // Try to clean up PDF text
-    return text.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF\n\r\t]/g, " ").replace(/\s+/g, " ").trim();
+    return "";
   }, []);
 
   // Handle upload
@@ -88,24 +84,50 @@ export default function BaseConhecimento() {
       return;
     }
 
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      toast.error("Arquivo muito grande. Limite: 50MB");
+      return;
+    }
+
     setUploading(true);
     try {
-      const content = await extractText(file);
-      if (content.length < 50) {
-        toast.error("O arquivo tem muito pouco conteúdo para indexar");
-        setUploading(false);
-        return;
+      const ext = file.name.split(".").pop()?.toLowerCase() || "txt";
+      const isPdf = ext === "pdf" || file.type === "application/pdf";
+      const isDoc = ext === "doc" || ext === "docx";
+      const needsStorage = isPdf || isDoc;
+
+      let content = "";
+      let fileUrl: string | null = null;
+
+      if (needsStorage) {
+        // Upload binary file to storage, edge function will extract text
+        const filePath = `${user.id}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("homi-documents")
+          .upload(filePath, file, { contentType: file.type });
+        if (uploadError) throw new Error("Erro no upload: " + uploadError.message);
+        fileUrl = filePath;
+      } else {
+        // Text-based: extract inline
+        content = await extractText(file);
+        if (content.length < 50) {
+          toast.error("O arquivo tem muito pouco conteúdo para indexar");
+          setUploading(false);
+          return;
+        }
       }
 
-      // Insert document
+      // Insert document record
       const { data: doc, error: insertError } = await supabase
         .from("homi_documents")
         .insert({
           title: title.trim(),
           category,
           empreendimento: empreendimento || null,
-          file_type: file.name.split(".").pop() || "txt",
-          content,
+          file_type: ext,
+          file_url: fileUrl,
+          content: content || null,
           status: "processing",
           created_by: user.id,
         })
@@ -117,7 +139,7 @@ export default function BaseConhecimento() {
       toast.info("📄 Documento salvo. Indexando...");
       queryClient.invalidateQueries({ queryKey: ["homi-documents"] });
 
-      // Call edge function to process
+      // Call edge function to process (will download from storage if needed)
       const { data: result, error: fnError } = await supabase.functions.invoke("processar-documento", {
         body: { documentId: doc.id },
       });
@@ -235,8 +257,8 @@ export default function BaseConhecimento() {
                 </>
               ) : (
                 <>
-                  <Upload className="h-4 w-4" />
-                  Enviar arquivo (.txt, .md)
+                   <Upload className="h-4 w-4" />
+                   📄 Enviar arquivo (.pdf, .txt, .md)
                 </>
               )}
             </Button>
@@ -244,7 +266,7 @@ export default function BaseConhecimento() {
           <input
             ref={fileRef}
             type="file"
-            accept=".txt,.md,.text"
+            accept=".pdf,.txt,.md,.doc,.docx,.text"
             className="hidden"
             onChange={handleFileChange}
           />
