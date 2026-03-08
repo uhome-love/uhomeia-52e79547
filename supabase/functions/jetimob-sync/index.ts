@@ -229,10 +229,17 @@ serve(async (req) => {
         const msg = lead.message || "";
         const campanhaNome = extractCampanha(msg);
 
+        // Resolve empreendimento: campanha name → normalize from origem/message/source
+        const origemText = campanhaNome || msg || lead.source || lead.origin || "";
+        let empreendimento = campanhaNome ? normalizeEmpreendimento(campanhaNome) || campanhaNome : null;
+        if (!empreendimento) {
+          empreendimento = normalizeEmpreendimento(origemText) || normalizeEmpreendimento(lead.source) || normalizeEmpreendimento(lead.origin) || null;
+        }
+
         // Determine lead priority based on content
         let prioridadeLead = "media";
         if (msg && msg.length > 10) {
-          prioridadeLead = "alta"; // Lead sent a message → high priority
+          prioridadeLead = "alta";
         }
 
         const { error: insertError } = await adminClient
@@ -242,9 +249,17 @@ serve(async (req) => {
             telefone,
             telefone2,
             email,
-            empreendimento: campanhaNome,
+            empreendimento,
             stage_id: novoLeadStageId,
             origem: campanhaNome || msg || "API Jetimob",
+            origem_detalhe: lead.source || lead.origin || null,
+            jetimob_lead_id: jetimobId,
+            observacoes: msg || null,
+            corretor_id: null,
+            created_by: userId,
+            prioridade_lead: prioridadeLead,
+            aceite_status: "pendente_distribuicao",
+          });
             origem_detalhe: lead.source || lead.origin || null,
             jetimob_lead_id: jetimobId,
             observacoes: msg || null,
