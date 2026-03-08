@@ -707,6 +707,22 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           callDuration={actionTaken === "ligacao" ? callTimer : undefined}
         />
       )}
+
+      {/* Session Coaching Modal */}
+      {sessionMetricsSnapshot && (
+        <SessionCoachingModal
+          open={showCoachingModal}
+          onClose={() => {
+            setShowCoachingModal(false);
+            onBack();
+          }}
+          metrics={sessionMetricsSnapshot}
+          onViewLeadsQuentes={() => {
+            setShowCoachingModal(false);
+            onBack();
+          }}
+        />
+      )}
     </div>
   );
 }
