@@ -4143,6 +4143,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      get_batch_lista_stats: {
+        Args: { p_corretor_id?: string; p_lista_ids: string[] }
+        Returns: Json
+      }
       get_corretor_daily_visitas: {
         Args: { p_user_id?: string }
         Returns: number
