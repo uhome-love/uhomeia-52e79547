@@ -385,16 +385,8 @@ export function AppSidebar() {
             </Tooltip>
           ) : (
             <>
-              <div className="flex items-center gap-2.5 animate-slide-in-left">
-                <img src="/images/uhome-logo-36.png" alt="UhomeSales" className="h-9 w-9 rounded-lg object-contain shrink-0" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold tracking-tight leading-tight">
-                    <span style={{ color: "#FFFFFF", fontWeight: 700 }}>Uhome</span><span style={{ color: "#3B82F6", fontWeight: 700 }}>Sales</span>
-                  </span>
-                  <span className="text-[11px] font-normal tracking-wider" style={{ color: "#9CA3AF" }}>
-                    Powered by Homi AI
-                  </span>
-                </div>
+              <div className="flex items-center animate-slide-in-left">
+                <img src="/images/uhomesales-logo.png" alt="UhomeSales — Powered by Homi AI" className="h-10 w-auto object-contain shrink-0" />
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
