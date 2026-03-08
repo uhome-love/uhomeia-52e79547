@@ -145,7 +145,7 @@ export default function UhomeLogo({ size = "md", showTagline = false, className 
           <span style={{ color: "#3B82F6", fontWeight: 800 }}>Sales</span>
         </span>
         {showTagline && (
-          <span className={cn(c.taglineClass, "leading-tight flex items-center", isVertical ? "justify-center" : "")} style={{ color: "#6B7280", gap: 4 }}>
+          <span className={cn(c.taglineClass, "leading-tight flex items-center", isVertical ? "justify-center" : "")} style={{ color: "#9CA3AF", fontSize: 11, gap: 4 }}>
             Powered by <HomiTaglineIcon size={c.taglineIcon} /> Homi AI
           </span>
         )}
