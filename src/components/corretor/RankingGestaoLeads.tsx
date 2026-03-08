@@ -48,6 +48,8 @@ export default function RankingGestaoLeads({ ranking, loading, userId }: Props) 
   }
 
   const myPosition = ranking.findIndex(r => r.corretor_id === userId) + 1;
+  const allZero = ranking.every(r => r.pontos_total === 0);
+  const onlyOneWithData = ranking.filter(r => r.pontos_total > 0).length <= 1;
 
   return (
     <Card className="border-primary/10 overflow-hidden">
@@ -60,10 +62,12 @@ export default function RankingGestaoLeads({ ranking, loading, userId }: Props) 
             </div>
             <div>
               <h3 className="text-sm font-bold text-foreground">Ranking Gestão de Leads</h3>
-              <p className="text-[10px] text-muted-foreground">Pipeline Leads — Competição do dia</p>
+              <p className="text-[10px] text-muted-foreground">
+                {allZero ? "Sem dados hoje — faça a primeira ligação!" : "Pipeline Leads — Competição do dia"}
+              </p>
             </div>
           </div>
-          {myPosition > 0 && (
+          {myPosition > 0 && !allZero && !onlyOneWithData && (
             <Badge variant="outline" className="gap-1 text-xs font-bold">
               <Medal className="h-3 w-3" /> #{myPosition}
             </Badge>
