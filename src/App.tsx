@@ -51,6 +51,7 @@ const ReferralPage = lazy(() => import("./pages/ReferralPage"));
 const Conquistas = lazy(() => import("./pages/Conquistas"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const MarketplaceScripts = lazy(() => import("./pages/MarketplaceScripts"));
+const CorretorCall = lazy(() => import("./pages/CorretorCall"));
 
 const queryClient = new QueryClient();
 
@@ -115,6 +116,7 @@ const App = () => (
 
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><CorretorDashboard /></ProtectedPage>} />
+            <Route path="/corretor/call" element={<ProtectedPage><CorretorCall /></ProtectedPage>} />
             <Route path="/agenda-visitas" element={<ProtectedPage><AgendaVisitas /></ProtectedPage>} />
             <Route path="/corretor/resumo" element={<ProtectedPage><CorretorResumo /></ProtectedPage>} />
             <Route path="/corretor/ranking-equipes" element={<ProtectedPage><RankingEquipe /></ProtectedPage>} />
