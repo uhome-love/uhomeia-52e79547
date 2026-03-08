@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -10,6 +10,8 @@ interface AvatarUploadProps {
   nome: string;
   size?: "sm" | "md" | "lg";
   onUploaded?: (url: string) => void;
+  onGamifiedGenerated?: (url: string) => void;
+  autoGenerateGamified?: boolean;
 }
 
 const sizeMap = {
@@ -24,7 +26,7 @@ const iconSizeMap = {
   lg: "h-5 w-5",
 };
 
-export default function AvatarUpload({ avatarUrl, nome, size = "md", onUploaded }: AvatarUploadProps) {
+export default function AvatarUpload({ avatarUrl, nome, size = "md", onUploaded, onGamifiedGenerated, autoGenerateGamified = true }: AvatarUploadProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [currentUrl, setCurrentUrl] = useState(avatarUrl);
