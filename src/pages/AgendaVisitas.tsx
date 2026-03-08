@@ -325,13 +325,12 @@ export default function AgendaVisitas() {
 
       {/* ─── PENDING ALERT ─── */}
       {pendingCount > 0 && (
-        <button
-          onClick={() => { setPendingOnly(!pendingOnly); setStatusFilter("all"); }}
+        <div
           className={cn(
             "w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all",
             pendingOnly
               ? "bg-red-100 border-red-400 border-l-4"
-              : "bg-red-50 border-red-300 border-l-4 border-l-red-500 hover:bg-red-100"
+              : "bg-red-50 border-red-300 border-l-4 border-l-red-500"
           )}
         >
           <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
@@ -340,10 +339,23 @@ export default function AgendaVisitas() {
               ⚠️ {pendingCount} visita{pendingCount > 1 ? "s" : ""} sem atualização de status
             </span>
           </div>
-          <span className="text-xs font-semibold text-red-600 underline shrink-0">
-            {pendingOnly ? "Mostrar todas ←" : "Resolver agora →"}
-          </span>
-        </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {isAdmin && (
+              <button
+                onClick={(e) => { e.stopPropagation(); openCobranca(); }}
+                className="text-xs font-semibold text-red-700 bg-red-200 hover:bg-red-300 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1"
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> Cobrar todos
+              </button>
+            )}
+            <button
+              onClick={() => { setPendingOnly(!pendingOnly); setStatusFilter("all"); }}
+              className="text-xs font-semibold text-red-600 underline"
+            >
+              {pendingOnly ? "Mostrar todas ←" : "Resolver agora →"}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ─── DAY SUMMARY ─── */}
