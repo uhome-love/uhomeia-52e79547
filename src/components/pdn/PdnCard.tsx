@@ -72,7 +72,8 @@ const PdnCard = memo(function PdnCard({ entry, readOnly, onUpdate, onDragStart, 
 
   const computed = useMemo(() => {
     const now = getNow();
-    const prob = calcProbabilidade(entry);
+    const smartProb = calcSmartProbabilidade(entry);
+    const prob = smartProb.total;
     const risco = calcRisco(entry);
     const diasParado = differenceInDays(now, new Date(entry.updated_at));
     const isCaiu = entry.situacao === "caiu";
@@ -83,10 +84,10 @@ const PdnCard = memo(function PdnCard({ entry, readOnly, onUpdate, onDragStart, 
       : isAssinado ? BORDER_MAP.assinado
       : BORDER_MAP[risco.nivel];
 
-    return { prob, risco, diasParado, isCaiu, isAssinado, isActive, borderColor };
+    return { prob, smartProb, risco, diasParado, isCaiu, isAssinado, isActive, borderColor };
   }, [entry]);
 
-  const { prob, risco, diasParado, isCaiu, isAssinado, isActive, borderColor } = computed;
+  const { prob, smartProb, risco, diasParado, isCaiu, isAssinado, isActive, borderColor } = computed;
   const riscoConf = RISCO_STYLES[risco.nivel];
   const tempKey = (entry.temperatura in TEMP_STYLES ? entry.temperatura : "morno") as keyof typeof TEMP_STYLES;
   const temp = TEMP_STYLES[tempKey];
