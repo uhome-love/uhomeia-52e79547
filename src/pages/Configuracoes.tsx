@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import AvatarUpload from "@/components/AvatarUpload";
-import { Loader2, Save, Lock, User, Mail, Phone, Volume2, PartyPopper, Sparkles, RefreshCw } from "lucide-react";
+import AvaturnCreatorModal from "@/components/avaturn/AvaturnCreatorModal";
+import { Loader2, Save, Lock, User, Mail, Phone, Volume2, PartyPopper, Gamepad2, RefreshCw } from "lucide-react";
 import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 import MetaAdsSettings from "@/components/marketing/MetaAdsSettings";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -28,13 +29,17 @@ export default function Configuracoes() {
   const [telefone, setTelefone] = useState("");
   const [cargo, setCargo] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [gamifiedAvatarUrl, setGamifiedAvatarUrl] = useState<string | null>(null);
-  const [regenerating, setRegenerating] = useState(false);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+
+  // Avaturn modal
+  const [avaturnOpen, setAvaturnOpen] = useState(false);
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const has3DAvatar = avatarUrl?.includes(".glb") || avatarUrl?.includes(".gltf");
 
   useEffect(() => {
     if (!user) return;
@@ -46,7 +51,7 @@ export default function Configuracoes() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("nome, email, telefone, cargo, avatar_url, avatar_gamificado_url")
+      .select("nome, email, telefone, cargo, avatar_url, avatar_preview_url")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -60,9 +65,30 @@ export default function Configuracoes() {
       setTelefone(data.telefone || "");
       setCargo(data.cargo || "");
       setAvatarUrl(data.avatar_url);
-      setGamifiedAvatarUrl(data.avatar_gamificado_url);
+      setAvatarPreviewUrl(data.avatar_preview_url);
     }
     setLoading(false);
+  }
+
+  async function handleAvatarCreated(glbUrl: string, previewUrl: string) {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        avatar_url: glbUrl,
+        avatar_preview_url: previewUrl || null,
+        avatar_updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+
+    if (error) {
+      toast.error("Erro ao salvar avatar: " + error.message);
+      return;
+    }
+
+    setAvatarUrl(glbUrl);
+    setAvatarPreviewUrl(previewUrl || null);
+    toast.success("Avatar 3D criado com sucesso! 🎮");
   }
 
   async function handleSaveProfile(e: React.FormEvent) {
@@ -145,57 +171,43 @@ export default function Configuracoes() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveProfile} className="space-y-5">
-            {/* Avatar */}
-            <div className="flex items-center gap-4">
+            {/* Avatar Section */}
+            <div className="flex items-start gap-4">
               <AvatarUpload
-                avatarUrl={avatarUrl}
+                avatarUrl={has3DAvatar ? avatarPreviewUrl : avatarUrl}
                 nome={nome}
                 size="lg"
-                onUploaded={(url) => setAvatarUrl(url)}
-                onGamifiedGenerated={(url) => setGamifiedAvatarUrl(url)}
+                onUploaded={(url) => {
+                  setAvatarUrl(url);
+                  setAvatarPreviewUrl(null);
+                }}
               />
-              {gamifiedAvatarUrl && (
-                <div className="relative group">
-                  <div className="h-20 w-20 rounded-full overflow-hidden ring-2 ring-primary/40 shadow-lg">
-                    <img src={gamifiedAvatarUrl} alt="Avatar gamificado" className="h-full w-full object-cover" />
+
+              {/* 3D Avatar preview */}
+              {has3DAvatar && avatarPreviewUrl && (
+                <div className="relative">
+                  <div className="h-20 w-20 rounded-full overflow-hidden ring-2 ring-indigo-500/40 shadow-lg bg-muted">
+                    <img src={avatarPreviewUrl} alt="Avatar 3D preview" className="h-full w-full object-cover" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1">
-                    <Sparkles className="h-3 w-3" />
+                  <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full p-1">
+                    <Gamepad2 className="h-3 w-3" />
                   </div>
                 </div>
               )}
-              <div className="space-y-1">
+
+              <div className="space-y-2 flex-1">
                 <p className="text-sm font-medium text-foreground">{nome || "Seu nome"}</p>
                 <p className="text-xs text-muted-foreground">Clique na foto para alterar</p>
-                {avatarUrl && (
-                  <button
-                    type="button"
-                    disabled={regenerating}
-                    onClick={async () => {
-                      setRegenerating(true);
-                      const toastId = toast.loading("✨ Regenerando avatar gamificado...");
-                      try {
-                        const { data, error } = await supabase.functions.invoke("generate-avatar", {
-                          body: { photo_url: avatarUrl },
-                        });
-                        if (error) throw error;
-                        if (data?.error) throw new Error(data.error);
-                        if (data?.url) {
-                          setGamifiedAvatarUrl(data.url);
-                          toast.success("🎮 Avatar regenerado!", { id: toastId });
-                        }
-                      } catch (err: any) {
-                        toast.error("Erro ao regenerar: " + (err.message || "tente novamente"), { id: toastId });
-                      } finally {
-                        setRegenerating(false);
-                      }
-                    }}
-                    className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                  >
-                    {regenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                    {gamifiedAvatarUrl ? "Regenerar avatar gamificado" : "Gerar avatar gamificado"}
-                  </button>
-                )}
+
+                {/* Avaturn button */}
+                <button
+                  type="button"
+                  onClick={() => setAvaturnOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors shadow-sm"
+                >
+                  <Gamepad2 className="h-3.5 w-3.5" />
+                  {has3DAvatar ? "Recriar avatar 3D" : "🎮 Criar meu avatar 3D"}
+                </button>
               </div>
             </div>
 
@@ -349,6 +361,13 @@ export default function Configuracoes() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Avaturn Modal */}
+      <AvaturnCreatorModal
+        open={avaturnOpen}
+        onClose={() => setAvaturnOpen(false)}
+        onAvatarCreated={handleAvatarCreated}
+      />
     </div>
   );
 }
