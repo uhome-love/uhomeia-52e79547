@@ -94,6 +94,7 @@ export default function PipelineKanban() {
   const [activeTab, setActiveTab] = useState("kanban");
   const [filaCeoFilter, setFilaCeoFilter] = useState(false);
   const [dispatchOpen, setDispatchOpen] = useState(false);
+  const [forecastExpanded, setForecastExpanded] = useState(false);
 
   // Load partnerships
   useEffect(() => {
