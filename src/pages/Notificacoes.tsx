@@ -1,18 +1,16 @@
 import { useState } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationList from "@/components/notifications/NotificationList";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, CheckCheck, Trash2, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { CheckCheck, Loader2 } from "lucide-react";
 
 const FILTER_TABS = [
-  { key: "todas", label: "Todas" },
-  { key: "leads", label: "Leads" },
-  { key: "visitas", label: "Visitas" },
-  { key: "propostas", label: "Propostas" },
-  { key: "vendas", label: "Vendas" },
-  { key: "alertas", label: "Alertas" },
+  { key: "todas", label: "Todas", activeColor: "#2563EB" },
+  { key: "leads", label: "Leads", activeColor: "#2563EB" },
+  { key: "visitas", label: "Visitas", activeColor: "#059669" },
+  { key: "propostas", label: "Propostas", activeColor: "#9333EA" },
+  { key: "vendas", label: "Vendas", activeColor: "#D97706" },
+  { key: "alertas", label: "Alertas", activeColor: "#DC2626" },
 ];
 
 export default function Notificacoes() {
@@ -29,37 +27,58 @@ export default function Notificacoes() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
       </div>
     );
   }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Bell className="h-6 w-6 text-primary" />
-            Central de Notificações
+          <h1 className="font-black text-gray-900" style={{ fontSize: 28 }}>
+            🔔 Central de Notificações
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {unreadCount > 0 ? `${unreadCount} não lida${unreadCount > 1 ? "s" : ""}` : "Tudo em dia!"}
+          <p className="mt-1" style={{ fontSize: 14 }}>
+            {unreadCount > 0 ? (
+              <span className="text-gray-500">{unreadCount} não lida{unreadCount > 1 ? "s" : ""}</span>
+            ) : (
+              <span className="text-green-500 font-medium">Tudo em dia! ✅</span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs gap-1.5"
+          <button
             onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+            className="text-gray-600 font-medium transition-colors"
+            style={{
+              border: "1px solid #E5E7EB",
+              borderRadius: 8,
+              padding: "6px 14px",
+              fontSize: 13,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#F9FAFB"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#E5E7EB"; }}
           >
             {showUnreadOnly ? "Mostrar todas" : "Só não lidas"}
-          </Button>
+          </button>
           {unreadCount > 0 && (
-            <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => markAllAsRead()}>
+            <button
+              onClick={() => markAllAsRead()}
+              className="flex items-center gap-1.5 text-gray-600 font-medium transition-colors"
+              style={{
+                border: "1px solid #E5E7EB",
+                borderRadius: 8,
+                padding: "6px 14px",
+                fontSize: 13,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#F9FAFB"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#E5E7EB"; }}
+            >
               <CheckCheck className="h-3.5 w-3.5" />
               Marcar todas como lidas
-            </Button>
+            </button>
           )}
         </div>
       </div>
@@ -68,27 +87,52 @@ export default function Notificacoes() {
       <div className="flex gap-2 flex-wrap">
         {FILTER_TABS.map((tab) => {
           const count = notifications.filter((n) => tab.key === "todas" || n.tipo === tab.key).length;
+          const isActive = activeFilter === tab.key;
           return (
-            <Button
+            <button
               key={tab.key}
-              variant={activeFilter === tab.key ? "default" : "outline"}
-              size="sm"
-              className="text-xs gap-1.5 h-8"
               onClick={() => setActiveFilter(tab.key)}
+              className="flex items-center gap-1.5 font-medium transition-all"
+              style={{
+                background: isActive ? tab.activeColor : "transparent",
+                color: isActive ? "#fff" : "#4B5563",
+                border: isActive ? `1px solid ${tab.activeColor}` : "1px solid #E5E7EB",
+                borderRadius: 8,
+                padding: "6px 14px",
+                fontSize: 13,
+              }}
+              onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "#F9FAFB"; } }}
+              onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; } }}
             >
               {tab.label}
               {count > 0 && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-1">
+                <span
+                  className="font-semibold"
+                  style={{
+                    fontSize: 10,
+                    background: isActive ? "rgba(255,255,255,0.25)" : "#F3F4F6",
+                    color: isActive ? "#fff" : "#6B7280",
+                    padding: "1px 6px",
+                    borderRadius: 999,
+                  }}
+                >
                   {count}
-                </Badge>
+                </span>
               )}
-            </Button>
+            </button>
           );
         })}
       </div>
 
       {/* Notification list */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div
+        style={{
+          borderRadius: 16,
+          border: "1px solid rgba(0,0,0,0.06)",
+          overflow: "hidden",
+          background: "#fff",
+        }}
+      >
         <NotificationList
           notifications={filtered}
           onMarkAsRead={markAsRead}
