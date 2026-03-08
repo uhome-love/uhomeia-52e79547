@@ -275,7 +275,7 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
       const { data: roleRows } = await supabase
         .from("user_roles")
         .select("user_id")
-        .eq("role", "user");
+        .eq("role", "corretor" as any);
       const userIds = (roleRows || []).map(r => r.user_id);
       if (userIds.length === 0) return [];
       const { data: profiles } = await supabase
