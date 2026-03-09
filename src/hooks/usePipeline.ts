@@ -142,7 +142,13 @@ export function usePipeline(pipelineTipo: string = "leads") {
       console.error("Error loading pipeline leads:", error);
       return;
     }
-    const leadsData = (data || []) as PipelineLead[];
+    // Deduplicate leads by id (in case of duplicate rows)
+    const seenIds = new Set<string>();
+    const leadsData = ((data || []) as PipelineLead[]).filter(l => {
+      if (seenIds.has(l.id)) return false;
+      seenIds.add(l.id);
+      return true;
+    });
     setLeads(leadsData);
 
     // Load corretor + gerente names
