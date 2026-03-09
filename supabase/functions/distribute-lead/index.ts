@@ -327,7 +327,7 @@ Deno.serve(async (req) => {
 // ─── Distribute a single lead ───
 async function distributeSingleLead(
   supabase: any, supabaseUrl: string, serviceKey: string,
-  leadId: string, forceJanela?: string
+  leadId: string, forceJanela?: string, excludeAuthUserId?: string
 ) {
   const { data: lead } = await supabase
     .from("pipeline_leads")
