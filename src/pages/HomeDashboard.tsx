@@ -206,7 +206,7 @@ export default function HomeDashboard() {
   // Fetch checkpoint daily summary
   const fetchCheckpoint = useCallback(async () => {
     if (!user) return;
-    const today = format(new Date(), "yyyy-MM-dd");
+    const today = todayBRT();
 
     // Explicit BRT (-03:00) day boundaries to match server-side timezone
     const startOfToday = `${today}T00:00:00-03:00`;
