@@ -337,7 +337,7 @@ async function distributeSingleLead(
     return { success: false, reason: "already_assigned" };
   }
 
-  const segmentoId = resolveSegmento(lead.empreendimento);
+  const segmentoId = await resolveSegmento(supabase, lead.empreendimento);
   const targetJanela = forceJanela || getCurrentJanela();
   const todayStart = getTodayStartUTC();
   const todayStr = getTodayDateStr();
