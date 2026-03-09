@@ -6,47 +6,38 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ─── Empreendimento → Segmento mapping (pipeline_segmentos IDs) ───
-const MCMV = "21180d72-f202-4d29-96cb-6ab88d37d5e1";
-const MEDIO_ALTO = "c8b24415-3dc1-4f65-aae1-f308ef02cb7a";
-const ALTISSIMO = "5e930c09-634d-40e1-9ccc-981b0a4eae74";
-const INVESTIMENTO = "dd96ad01-7e76-40e9-8324-211166168b26";
+// ─── Dynamic Empreendimento → Roleta Segmento resolution ───
+// Loaded from roleta_campanhas at runtime to stay in sync with the DB
+let cachedMapping: Record<string, string> | null = null;
+let cacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
-const EMPREENDIMENTO_SEGMENTO: Record<string, string> = {
-  // MCMV / Até 500k
-  "open bosque": MCMV,
-  "melnick day": MCMV,
-  "melnick day compactos": MCMV,
-  // Médio-Alto Padrão
-  "casa tua": MEDIO_ALTO,
-  "las casas": MEDIO_ALTO,
-  "vértice - las casas": MEDIO_ALTO,
-  "orygem": MEDIO_ALTO,
-  "me day": MEDIO_ALTO,
-  "alto lindóia": MEDIO_ALTO,
-  "alto lindoia": MEDIO_ALTO,
-  "terrace": MEDIO_ALTO,
-  "alfa": MEDIO_ALTO,
-  "duetto - morana": MEDIO_ALTO,
-  "salzburg": MEDIO_ALTO,
-  // Altíssimo Padrão
-  "lake eyre": ALTISSIMO,
-  "seen": ALTISSIMO,
-  "seen menino deus": ALTISSIMO,
-  "boa vista country club": ALTISSIMO,
-  "boa vista": ALTISSIMO,
-  // Investimento
-  "shift": INVESTIMENTO,
-  "shift - vanguard": INVESTIMENTO,
-  "casa bastian": INVESTIMENTO,
-};
+async function loadEmpreendimentoMapping(supabase: any): Promise<Record<string, string>> {
+  if (cachedMapping && Date.now() - cacheTime < CACHE_TTL) return cachedMapping;
 
-function resolveSegmento(empreendimento: string | null): string | null {
+  const { data } = await supabase
+    .from("roleta_campanhas")
+    .select("empreendimento, segmento_id")
+    .eq("ativo", true);
+
+  const mapping: Record<string, string> = {};
+  for (const row of data || []) {
+    if (row.empreendimento && row.segmento_id) {
+      mapping[row.empreendimento.toLowerCase().trim()] = row.segmento_id;
+    }
+  }
+  cachedMapping = mapping;
+  cacheTime = Date.now();
+  return mapping;
+}
+
+async function resolveSegmento(supabase: any, empreendimento: string | null): Promise<string | null> {
   if (!empreendimento) return null;
+  const mapping = await loadEmpreendimentoMapping(supabase);
   const lower = empreendimento.toLowerCase().trim();
-  if (EMPREENDIMENTO_SEGMENTO[lower]) return EMPREENDIMENTO_SEGMENTO[lower];
+  if (mapping[lower]) return mapping[lower];
   // Fuzzy match
-  for (const [key, segId] of Object.entries(EMPREENDIMENTO_SEGMENTO)) {
+  for (const [key, segId] of Object.entries(mapping)) {
     if (lower.includes(key) || key.includes(lower)) return segId;
   }
   return null;
