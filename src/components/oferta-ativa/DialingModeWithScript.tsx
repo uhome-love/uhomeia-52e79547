@@ -242,6 +242,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
   const handleFinalizarLigacao = () => {
     stopTimer();
+    setShowResultPopup(false); // ensure only one popup
     setShowModal(true);
   };
 
