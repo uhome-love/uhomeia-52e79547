@@ -161,6 +161,7 @@ export default function MeusNegocios() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCorretor, setFilterCorretor] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [addNegocioOpen, setAddNegocioOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const dragNegocioId = useRef<string | null>(null);
   const [dragOverFase, setDragOverFase] = useState<string | null>(null);
