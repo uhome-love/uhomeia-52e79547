@@ -111,7 +111,7 @@ export default function CorretorDashboard() {
       const visitaLeadIds = new Set((visitasHoje || []).map((v: any) => v.pipeline_lead_id).filter(Boolean));
 
       const scored = validLeads.map((lead: any) => {
-        const hrs = differenceInHours(today, new Date(lead.stage_changed_at || lead.updated_at));
+        const hrs = differenceInHours(now, new Date(lead.stage_changed_at || lead.updated_at));
         const diasParado = lead.dias_parado || Math.floor(hrs / 24);
         const stageTipo = lead.pipeline_stages?.tipo || "";
         const stageNome = lead.pipeline_stages?.nome || "—";
