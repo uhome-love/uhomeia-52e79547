@@ -211,14 +211,18 @@ export function usePipeline(pipelineTipo: string = "leads") {
         : l
     ));
 
-    const { error } = await supabase
+    const prevNegocioId = lead.negocio_id;
+
+    const { data: updatedRow, error } = await supabase
       .from("pipeline_leads")
       .update({
         stage_id: newStageId,
         stage_changed_at: new Date().toISOString(),
         motivo_descarte: observacao && stages.find(s => s.id === newStageId)?.tipo === "descarte" ? observacao : undefined,
       })
-      .eq("id", leadId);
+      .eq("id", leadId)
+      .select("negocio_id")
+      .single();
 
     if (error) {
       console.error("Error moving lead:", error);
@@ -228,6 +232,13 @@ export function usePipeline(pipelineTipo: string = "leads") {
         l.id === leadId ? { ...l, stage_id: oldStageId } : l
       ));
       return;
+    }
+
+    // Sync negocio_id (pode ser preenchido via trigger no backend)
+    if (updatedRow?.negocio_id && updatedRow.negocio_id !== prevNegocioId) {
+      setLeads(prev => prev.map(l =>
+        l.id === leadId ? { ...l, negocio_id: updatedRow.negocio_id } : l
+      ));
     }
 
     // Insert history record
