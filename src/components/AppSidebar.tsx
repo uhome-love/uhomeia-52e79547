@@ -327,18 +327,18 @@ export function AppSidebar() {
       topItem: { title: "Minha Rotina", url: "/corretor", icon: Home },
       groups: [
         {
-          label: "Leads",
+          label: "Gestão de Leads",
           items: [
             { title: "Aceite de Leads", url: "/aceite", icon: Inbox },
             { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
             { title: "Oferta Ativa", url: "/corretor/call", icon: Phone },
+            { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
           ],
         },
         {
-          label: "Negócios",
+          label: "Gestão de Negócios",
           items: [
             { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
-            { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
           ],
         },
         {
