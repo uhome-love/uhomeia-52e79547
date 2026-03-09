@@ -44,6 +44,7 @@ interface Segmento {
 
 // TODO: TEMPORÁRIO - ajustar horários após período de teste
 type JanelaKey = "manha" | "tarde" | "noite";
+type JanelaDb = "manha" | "tarde" | "noturna";
 
 interface JanelaConfig {
   key: JanelaKey;
@@ -54,6 +55,9 @@ interface JanelaConfig {
   recebimento: string;
   temRequisitos: boolean;
 }
+
+const toDbJanela = (janela: JanelaKey): JanelaDb => (janela === "noite" ? "noturna" : janela);
+const toUiJanela = (janela: string): JanelaKey => (janela === "noturna" ? "noite" : (janela as JanelaKey));
 
 // Manhã: credenciamento aberto 24h (sem restrição de horário)
 const JANELAS_CONFIG: JanelaConfig[] = [
