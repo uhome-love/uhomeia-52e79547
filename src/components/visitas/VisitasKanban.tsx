@@ -2,11 +2,10 @@ import { useState, type DragEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Building2, CheckCircle2, FileSpreadsheet, Trash2, User, Link2 } from "lucide-react";
+import { Calendar, Clock, Building2, Link2, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { STATUS_LABELS, STATUS_COLORS, ORIGEM_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
-import { useVisitaToPdn } from "@/hooks/useVisitaToPdn";
 
 const KANBAN_COLUMNS: VisitaStatus[] = ["marcada", "confirmada", "realizada", "reagendada", "cancelada", "no_show"];
 
@@ -26,7 +25,6 @@ interface Props {
 }
 
 export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Props) {
-  const { convertToPdn } = useVisitaToPdn();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<VisitaStatus | null>(null);
 
@@ -97,7 +95,6 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
               isOver ? "bg-primary/10 ring-2 ring-primary/30 ring-inset" : ""
             }`}>
               {items.map(v => {
-                  const hasPdn = !!(v as any).linked_pdn_id;
                   const hasPipeline = !!(v as any).pipeline_lead_id;
                   const isDragging = draggingId === v.id;
                 return (
@@ -114,7 +111,6 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
                       <p className="text-xs font-semibold truncate flex-1">{v.nome_cliente}</p>
                       <div className="flex items-center gap-1 shrink-0 ml-1">
                         {hasPipeline && <Link2 className="h-3.5 w-3.5 text-primary" />}
-                        {hasPdn && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
                       </div>
                     </div>
 
@@ -168,16 +164,6 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
                             No Show
                           </Button>
                         </>
-                      )}
-                      {col === "realizada" && !hasPdn && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-5 text-[9px] px-1.5 text-primary border-primary/30"
-                          onClick={() => convertToPdn(v)}
-                        >
-                          <FileSpreadsheet className="h-3 w-3 mr-0.5" /> Enviar PDN
-                        </Button>
                       )}
                       {col === "reagendada" && (
                         <Button size="sm" variant="outline" className="h-5 text-[9px] px-1.5" onClick={() => onUpdateStatus(v.id, "confirmada")}>

@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, FileSpreadsheet, Trash2, Phone } from "lucide-react";
+import { MoreVertical, Trash2, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
-import { useVisitaToPdn } from "@/hooks/useVisitaToPdn";
 import { useState } from "react";
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -61,9 +60,7 @@ interface Props {
 }
 
 export default function VisitaRow({ visita: v, onUpdateStatus, onDelete, showCorretor, showTeam, isPastPending }: Props) {
-  const { convertToPdn } = useVisitaToPdn();
   const [hovered, setHovered] = useState(false);
-  const hasPdn = !!(v as any).linked_pdn_id;
 
   return (
     <div
@@ -116,10 +113,6 @@ export default function VisitaRow({ visita: v, onUpdateStatus, onDelete, showCor
         </div>
       )}
 
-      {/* PDN badge */}
-      {hasPdn && (
-        <Badge className="text-[9px] h-5 bg-emerald-100 text-emerald-700 border-emerald-300 shrink-0">PDN</Badge>
-      )}
 
       {/* Status badge */}
       <div className="w-24 shrink-0">
@@ -160,14 +153,6 @@ export default function VisitaRow({ visita: v, onUpdateStatus, onDelete, showCor
                 {STATUS_EMOJIS[k]} {label}
               </DropdownMenuItem>
             ))}
-          {v.status === "realizada" && !hasPdn && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => convertToPdn(v)} className="text-xs text-primary">
-                <FileSpreadsheet className="h-3 w-3 mr-1.5" /> Enviar para PDN
-              </DropdownMenuItem>
-            </>
-          )}
           {onDelete && (
             <>
               <DropdownMenuSeparator />
