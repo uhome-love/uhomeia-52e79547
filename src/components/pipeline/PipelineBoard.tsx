@@ -127,6 +127,11 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
     }
   }, [stageLeads.length]);
 
+  // DEBUG: loga se a coluna está recebendo IDs duplicados
+  if (import.meta.env.DEV) {
+    console.log("Leads na coluna:", stage.nome, stageLeads.map(l => l.id));
+  }
+
   const visibleLeads = stageLeads.slice(0, visibleCount);
   const hasMore = visibleCount < stageLeads.length;
 
