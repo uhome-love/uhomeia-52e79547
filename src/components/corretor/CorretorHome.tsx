@@ -16,7 +16,7 @@ import DailyProgressCard from "./DailyProgressCard";
 import MissoesDeHoje from "./MissoesDeHoje";
 import RadarLeadsPendentes from "./RadarLeadsPendentes";
 import RankingGestaoLeads from "./RankingGestaoLeads";
-import FollowUpsDoDia from "./FollowUpsDoDia";
+import MinhaAgendaWidget from "./MinhaAgendaWidget";
 import VisitasHojeCard from "./VisitasHojeCard";
 import MiniFunilPessoal from "./MiniFunilPessoal";
 import EvolucaoSemanal from "./EvolucaoSemanal";
@@ -114,9 +114,9 @@ export default function CorretorHome() {
         </motion.div>
       )}
 
-      {/* ⚡ Follow-ups Pendentes — NEW */}
+      {/* 📋 Minha Agenda — replaces Follow-ups */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
-        <FollowUpsDoDia leads={followUps} loading={followUpsLoading} />
+        <MinhaAgendaWidget />
       </motion.div>
 
       {/* 🎮 Missões de Hoje */}

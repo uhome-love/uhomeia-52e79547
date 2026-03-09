@@ -7,6 +7,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { differenceInHours, differenceInMinutes } from "date-fns";
 import { PIPELINE_STAGE_EMOJIS } from "@/lib/celebrations";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PipelineBoardProps {
   stages: PipelineStage[];
@@ -93,6 +95,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
   stageLeads, stage, stages, segmentos, corretorNomes, parcerias,
   selectionMode, selectedLeads, arrivedLeadId,
   onToggleSelect, onSelectLead, onMoveLead, onTransferred, stageIndexMap, handleDragStart,
+  tarefasMap,
 }: {
   stageLeads: PipelineLead[];
   stage: PipelineStage;
@@ -109,6 +112,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
   onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
   stageIndexMap: Map<string, number>;
   handleDragStart: (leadId: string) => void;
+  tarefasMap: Record<string, { tipo: string; vence_em: string | null; hora_vencimento: string | null }>;
 }) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_RENDER);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -186,6 +190,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
                 onMoveLead={selectionMode ? undefined : onMoveLead}
                 onTransferred={onTransferred}
                 stageIndexMap={stageIndexMap}
+                proximaTarefa={tarefasMap[lead.id] || null}
               />
             </PipelineCardHover>
           </div>
@@ -214,6 +219,38 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
   const [activeIndex, setActiveIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Fetch next pending task per lead for all visible leads
+  const leadIds = useMemo(() => leads.map(l => l.id), [leads]);
+  const { data: tarefasMap = {} } = useQuery({
+    queryKey: ["pipeline-tarefas-map", leadIds.length],
+    queryFn: async () => {
+      if (leadIds.length === 0) return {};
+      // Batch fetch in chunks of 200
+      const map: Record<string, { tipo: string; vence_em: string | null; hora_vencimento: string | null }> = {};
+      for (let i = 0; i < leadIds.length; i += 200) {
+        const chunk = leadIds.slice(i, i + 200);
+        const { data } = await supabase
+          .from("pipeline_tarefas")
+          .select("pipeline_lead_id, tipo, vence_em, hora_vencimento")
+          .in("pipeline_lead_id", chunk)
+          .eq("status", "pendente")
+          .order("vence_em", { ascending: true })
+          .order("hora_vencimento", { ascending: true });
+        if (data) {
+          for (const t of data) {
+            // Keep only the earliest task per lead
+            if (!map[t.pipeline_lead_id]) {
+              map[t.pipeline_lead_id] = { tipo: t.tipo || "follow_up", vence_em: t.vence_em, hora_vencimento: t.hora_vencimento };
+            }
+          }
+        }
+      }
+      return map;
+    },
+    enabled: leadIds.length > 0,
+    staleTime: 60_000,
+  });
 
   const leadsByStage = useMemo(() => {
     // Dedup leads by ID before distributing to columns (definitivo)
@@ -521,6 +558,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                   onTransferred={onTransferred}
                   stageIndexMap={stageIndexMap}
                   handleDragStart={handleDragStart}
+                  tarefasMap={tarefasMap}
                 />
               </div>
             );

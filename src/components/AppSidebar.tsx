@@ -127,6 +127,7 @@ export function AppSidebar() {
   const [points, setPoints] = useState(0);
   const [hoverFooter, setHoverFooter] = useState(false);
   const [roletaPendentes, setRoletaPendentes] = useState(0);
+  const [tarefasPendentes, setTarefasPendentes] = useState(0);
 
   const fetchProfile = useCallback(() => {
     if (!user) return;
@@ -166,6 +167,25 @@ export function AppSidebar() {
     const interval = setInterval(fetchRoletaPendentes, 30_000);
     return () => clearInterval(interval);
   }, [fetchRoletaPendentes, isAdmin]);
+
+  // Fetch tarefas pendentes count for corretor badge
+  const fetchTarefasPendentes = useCallback(async () => {
+    if (!user) return;
+    const hoje = new Date().toISOString().slice(0, 10);
+    const { count } = await supabase
+      .from("pipeline_tarefas")
+      .select("id", { count: "exact", head: true })
+      .or(`responsavel_id.eq.${user.id},created_by.eq.${user.id}`)
+      .eq("status", "pendente")
+      .lte("vence_em", hoje);
+    setTarefasPendentes(count ?? 0);
+  }, [user]);
+
+  useEffect(() => {
+    fetchTarefasPendentes();
+    const interval = setInterval(fetchTarefasPendentes, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchTarefasPendentes]);
 
   useEffect(() => {
     if (toastShown.current || alerts.length === 0) return;
@@ -367,7 +387,8 @@ export function AppSidebar() {
   }
 
   const { topItem, groups, roleLabel, extraBadges } = getGroupsByRole();
-  const mergedBadges = { ...badges, ...extraBadges };
+  const tarefaBadges: Record<string, number> = tarefasPendentes > 0 ? { "/minhas-tarefas": tarefasPendentes } : {};
+  const mergedBadges = { ...badges, ...extraBadges, ...tarefaBadges };
 
   // Footer initials
   const initials = (profile.nome || user?.email || "U")

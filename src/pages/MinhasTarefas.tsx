@@ -3,13 +3,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { format, isToday, isTomorrow, isBefore, startOfDay, endOfWeek, addDays, startOfWeek } from "date-fns";
+import { format, isToday, isTomorrow, isBefore, startOfDay, endOfWeek, addDays, addHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, ArrowRight, Building2, User, ClipboardList } from "lucide-react";
+import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, Building2, User, ClipboardList, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 
@@ -31,61 +33,67 @@ interface TarefaComLead {
 }
 
 const TIPO_LABELS: Record<string, string> = {
-  follow_up: "Follow-up",
-  ligar: "Ligar",
-  whatsapp: "WhatsApp",
-  enviar_proposta: "Enviar proposta",
-  enviar_material: "Enviar material",
-  marcar_visita: "Marcar visita",
-  outro: "Outro",
+  follow_up: "Follow-up", ligar: "Ligar", whatsapp: "WhatsApp", enviar_proposta: "Enviar proposta",
+  enviar_material: "Enviar material", marcar_visita: "Marcar visita", confirmar_visita: "Confirmar visita",
+  retornar_cliente: "Retornar cliente", outro: "Outro",
 };
 
 const TIPO_EMOJI: Record<string, string> = {
   follow_up: "🔄", ligar: "📞", whatsapp: "💬", enviar_proposta: "📄",
-  enviar_material: "📎", marcar_visita: "📅", outro: "📋",
+  enviar_material: "📎", marcar_visita: "📅", confirmar_visita: "✅", retornar_cliente: "↩️", outro: "📋",
 };
 
-type TabFilter = "hoje" | "amanha" | "semana" | "atrasadas";
+type TabFilter = "hoje" | "amanha" | "semana" | "atrasadas" | "concluidas";
+
+function formatPhone(phone: string) {
+  const d = phone.replace(/\D/g, "");
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  return phone;
+}
+
+function openWhatsApp(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  const full = digits.startsWith("55") ? digits : `55${digits}`;
+  window.open(`https://wa.me/${full}`, "_blank");
+}
 
 export default function MinhasTarefas() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabFilter>("hoje");
-  const [reagendarId, setReagendarId] = useState<string | null>(null);
-  const [reagendarData, setReagendarData] = useState("");
-  const [reagendarHora, setReagendarHora] = useState("");
+  const [adiarId, setAdiarId] = useState<string | null>(null);
+  const [adiarData, setAdiarData] = useState("");
+  const [adiarHora, setAdiarHora] = useState("");
+  const [showNovaTarefa, setShowNovaTarefa] = useState(false);
+  const [novoTipo, setNovoTipo] = useState("follow_up");
+  const [novoData, setNovoData] = useState("");
+  const [novoHora, setNovoHora] = useState("");
+  const [novoObs, setNovoObs] = useState("");
+  const [leadSearch, setLeadSearch] = useState("");
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [selectedLeadNome, setSelectedLeadNome] = useState("");
 
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ["minhas-tarefas", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      // Get all pending tasks for this user
       const { data, error } = await supabase
         .from("pipeline_tarefas")
         .select("*")
         .or(`responsavel_id.eq.${user.id},created_by.eq.${user.id}`)
-        .in("status", ["pendente"])
-        .order("vence_em", { ascending: true });
-
-      if (error) { console.error("Erro tarefas:", error); return []; }
+        .order("vence_em", { ascending: true })
+        .order("hora_vencimento", { ascending: true });
+      if (error) return [];
       const rows = (data || []) as any[];
-
-      // Fetch lead names
       const leadIds = [...new Set(rows.map(r => r.pipeline_lead_id).filter(Boolean))];
       if (leadIds.length > 0) {
         const { data: leads } = await supabase
-          .from("pipeline_leads")
-          .select("id, nome, telefone, empreendimento")
-          .in("id", leadIds);
+          .from("pipeline_leads").select("id, nome, telefone, empreendimento").in("id", leadIds);
         const leadMap = new Map((leads || []).map(l => [l.id, l]));
         rows.forEach(r => {
           const lead = leadMap.get(r.pipeline_lead_id);
-          if (lead) {
-            r.lead_nome = lead.nome;
-            r.lead_telefone = lead.telefone;
-            r.lead_empreendimento = lead.empreendimento;
-          }
+          if (lead) { r.lead_nome = lead.nome; r.lead_telefone = lead.telefone; r.lead_empreendimento = lead.empreendimento; }
         });
       }
       return rows as TarefaComLead[];
@@ -94,90 +102,124 @@ export default function MinhasTarefas() {
     refetchOnWindowFocus: true,
   });
 
+  const { data: searchLeads = [] } = useQuery({
+    queryKey: ["lead-search-tarefas", leadSearch],
+    queryFn: async () => {
+      if (!user || leadSearch.length < 2) return [];
+      const { data } = await supabase.from("pipeline_leads").select("id, nome, telefone, empreendimento")
+        .eq("corretor_id", user.id).ilike("nome", `%${leadSearch}%`).limit(10);
+      return data || [];
+    },
+    enabled: !!user && leadSearch.length >= 2,
+  });
+
   const now = new Date();
   const todayStart = startOfDay(now);
-  const tomorrowStart = startOfDay(addDays(now, 1));
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-  const atrasadas = useMemo(() => tarefas.filter(t => t.vence_em && isBefore(new Date(t.vence_em), todayStart)), [tarefas]);
-  const hoje = useMemo(() => tarefas.filter(t => t.vence_em && isToday(new Date(t.vence_em))), [tarefas]);
-  const amanha = useMemo(() => tarefas.filter(t => t.vence_em && isTomorrow(new Date(t.vence_em))), [tarefas]);
-  const semana = useMemo(() => tarefas.filter(t => {
+  const pendentes = useMemo(() => tarefas.filter(t => t.status === "pendente"), [tarefas]);
+  const concluidas = useMemo(() => tarefas.filter(t => t.status === "concluida").slice(0, 20), [tarefas]);
+  const atrasadas = useMemo(() => pendentes.filter(t => t.vence_em && isBefore(new Date(t.vence_em), todayStart)), [pendentes]);
+  const hoje = useMemo(() => pendentes.filter(t => t.vence_em && isToday(new Date(t.vence_em))), [pendentes]);
+  const amanha = useMemo(() => pendentes.filter(t => t.vence_em && isTomorrow(new Date(t.vence_em))), [pendentes]);
+  const semana = useMemo(() => pendentes.filter(t => {
     if (!t.vence_em) return false;
     const d = new Date(t.vence_em);
     return d >= todayStart && d <= weekEnd;
-  }), [tarefas]);
+  }), [pendentes]);
 
-  const filteredTarefas = activeTab === "atrasadas" ? atrasadas : activeTab === "hoje" ? hoje : activeTab === "amanha" ? amanha : semana;
+  const filteredTarefas = activeTab === "atrasadas" ? atrasadas : activeTab === "hoje" ? hoje :
+    activeTab === "amanha" ? amanha : activeTab === "concluidas" ? concluidas : semana;
 
   const handleConcluir = async (id: string, leadId: string) => {
-    const { error } = await supabase.from("pipeline_tarefas").update({
-      status: "concluida",
-      concluida_em: new Date().toISOString(),
-    } as any).eq("id", id);
-    if (error) { toast.error("Erro ao concluir"); return; }
-
-    // Update lead ultima_acao_at
-    await supabase.from("pipeline_leads").update({
-      ultima_acao_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as any).eq("id", leadId);
-
+    await supabase.from("pipeline_tarefas").update({ status: "concluida", concluida_em: new Date().toISOString() } as any).eq("id", id);
+    await supabase.from("pipeline_leads").update({ ultima_acao_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any).eq("id", leadId);
     toast.success("Tarefa concluída ✅");
     queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
+    queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
   };
 
-  const handleReagendar = async () => {
-    if (!reagendarId || !reagendarData) return;
-    const { error } = await supabase.from("pipeline_tarefas").update({
-      vence_em: reagendarData,
-      hora_vencimento: reagendarHora || null,
-    } as any).eq("id", reagendarId);
-    if (error) { toast.error("Erro ao reagendar"); return; }
-    toast.success("Tarefa reagendada ✅");
-    setReagendarId(null);
+  const handleAdiarRapido = async (id: string, horas: number) => {
+    const novaData = addHours(new Date(), horas);
+    await supabase.from("pipeline_tarefas").update({ vence_em: format(novaData, "yyyy-MM-dd"), hora_vencimento: format(novaData, "HH:mm") } as any).eq("id", id);
+    toast.success("Tarefa adiada ✅");
     queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
+    queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
   };
 
-  const openWhatsApp = (phone: string) => {
-    const digits = phone.replace(/\D/g, "");
-    const full = digits.startsWith("55") ? digits : `55${digits}`;
-    window.open(`https://wa.me/${full}`, "_blank");
+  const handleAdiarCustom = async () => {
+    if (!adiarId || !adiarData) return;
+    await supabase.from("pipeline_tarefas").update({ vence_em: adiarData, hora_vencimento: adiarHora || null } as any).eq("id", adiarId);
+    toast.success("Tarefa reagendada ✅");
+    setAdiarId(null);
+    queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
+    queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
+  };
+
+  const handleCriarTarefa = async () => {
+    if (!user || !selectedLeadId || !novoData) return;
+    await supabase.from("pipeline_tarefas").insert({
+      pipeline_lead_id: selectedLeadId,
+      titulo: `${TIPO_LABELS[novoTipo] || novoTipo}: ${selectedLeadNome}`,
+      descricao: novoObs || null,
+      tipo: novoTipo,
+      vence_em: novoData,
+      hora_vencimento: novoHora || null,
+      status: "pendente",
+      prioridade: "media",
+      responsavel_id: user.id,
+      created_by: user.id,
+    } as any);
+    toast.success("Tarefa criada ✅");
+    setShowNovaTarefa(false);
+    setSelectedLeadId(null);
+    setSelectedLeadNome("");
+    setLeadSearch("");
+    setNovoObs("");
+    setNovoData("");
+    setNovoHora("");
+    queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
+    queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
   };
 
   const tabs: { key: TabFilter; label: string; count: number }[] = [
-    { key: "hoje", label: "Hoje", count: hoje.length },
-    { key: "amanha", label: "Amanhã", count: amanha.length },
-    { key: "semana", label: "Esta Semana", count: semana.length },
     { key: "atrasadas", label: "🔴 Atrasadas", count: atrasadas.length },
+    { key: "hoje", label: "📅 Hoje", count: hoje.length },
+    { key: "amanha", label: "📅 Amanhã", count: amanha.length },
+    { key: "semana", label: "📅 Semana", count: semana.length },
+    { key: "concluidas", label: "✅ Concluídas", count: concluidas.length },
   ];
 
-  function formatPhone(phone: string) {
-    const d = phone.replace(/\D/g, "");
-    if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-    return phone;
-  }
-
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <ClipboardList className="h-6 w-6 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Minhas Tarefas</h1>
-          <p className="text-sm text-muted-foreground">Acompanhe e gerencie seus follow-ups e ações</p>
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <ClipboardList className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Minhas Tarefas</h1>
+            <p className="text-sm text-muted-foreground">Organize seu dia e nunca perca um follow-up</p>
+          </div>
         </div>
+        <Button size="sm" className="gap-1.5" onClick={() => setShowNovaTarefa(true)}>
+          <Plus className="h-4 w-4" /> Nova Tarefa
+        </Button>
+      </div>
+
+      {/* Summary */}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+        <span>📊 <strong className="text-foreground">Hoje:</strong> {hoje.length} pendentes</span>
+        <span>·</span>
+        <span><strong className="text-destructive">Atrasadas:</strong> {atrasadas.length}</span>
+        <span>·</span>
+        <span><strong className="text-foreground">Amanhã:</strong> {amanha.length}</span>
+        <span>·</span>
+        <span><strong className="text-foreground">Semana:</strong> {semana.length}</span>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
         {tabs.map(tab => (
-          <Button
-            key={tab.key}
-            variant={activeTab === tab.key ? "default" : "outline"}
-            size="sm"
-            className="text-sm gap-1.5"
-            onClick={() => setActiveTab(tab.key)}
-          >
+          <Button key={tab.key} variant={activeTab === tab.key ? "default" : "outline"} size="sm" className="text-sm gap-1.5" onClick={() => setActiveTab(tab.key)}>
             {tab.label}
             <Badge variant="secondary" className="ml-1 text-xs">{tab.count}</Badge>
           </Button>
@@ -189,17 +231,24 @@ export default function MinhasTarefas() {
         <div className="text-center py-12 text-muted-foreground">Carregando...</div>
       ) : filteredTarefas.length === 0 ? (
         <Card className="p-8 text-center">
-          <p className="text-muted-foreground">🎉 Nenhuma tarefa {activeTab === "atrasadas" ? "atrasada" : "para este período"}!</p>
+          <p className="text-muted-foreground">🎉 Nenhuma tarefa {activeTab === "atrasadas" ? "atrasada" : activeTab === "concluidas" ? "concluída recente" : "para este período"}!</p>
         </Card>
       ) : (
         <div className="space-y-3">
           {filteredTarefas.map(tarefa => {
-            const isOverdue = tarefa.vence_em && isBefore(new Date(tarefa.vence_em), todayStart);
+            const isOverdue = tarefa.vence_em && isBefore(new Date(tarefa.vence_em), todayStart) && tarefa.status === "pendente";
+            const isConcluida = tarefa.status === "concluida";
             return (
-              <Card key={tarefa.id} className={`p-4 border ${isOverdue ? "border-red-300 bg-red-50/30 dark:bg-red-950/10" : "border-border/50"}`}>
-                <div className="flex items-start gap-4">
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
+              <Card key={tarefa.id} className={`p-4 border-l-[3px] ${
+                isConcluida ? "border-l-green-500 bg-green-500/5 opacity-70" :
+                isOverdue ? "border-l-red-500 bg-red-500/5" :
+                isToday(new Date(tarefa.vence_em || "")) ? "border-l-yellow-500 bg-yellow-500/5" :
+                "border-l-muted-foreground/40"
+              }`}>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      {isOverdue && <Badge variant="destructive" className="text-[10px]">ATRASADA</Badge>}
                       <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {tarefa.vence_em ? format(new Date(tarefa.vence_em), "dd/MM", { locale: ptBR }) : "Sem data"}
@@ -209,41 +258,42 @@ export default function MinhasTarefas() {
                         {TIPO_EMOJI[tarefa.tipo] || "📋"} {TIPO_LABELS[tarefa.tipo] || tarefa.tipo}
                       </Badge>
                     </div>
-                    <button onClick={() => navigate("/pipeline")} className="text-sm font-semibold text-foreground hover:text-primary transition-colors flex items-center gap-1">
-                      <User className="h-3.5 w-3.5" />
-                      {tarefa.lead_nome || "Lead"}
-                    </button>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {tarefa.lead_empreendimento && (
-                        <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{tarefa.lead_empreendimento}</span>
-                      )}
-                      {tarefa.lead_telefone && (
-                        <span>{formatPhone(tarefa.lead_telefone)}</span>
-                      )}
-                    </div>
-                    {tarefa.descricao && (
-                      <p className="text-xs text-muted-foreground italic">"{tarefa.descricao}"</p>
-                    )}
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {tarefa.lead_telefone && (
-                      <>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Ligar" onClick={() => window.open(`tel:${tarefa.lead_telefone}`, "_self")}>
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="WhatsApp" onClick={() => openWhatsApp(tarefa.lead_telefone!)}>
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                      </>
+                  <button onClick={() => navigate("/pipeline")} className="text-sm font-semibold text-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    <User className="h-3.5 w-3.5" />
+                    {tarefa.lead_nome || "Lead"}
+                  </button>
+
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    {tarefa.lead_empreendimento && (
+                      <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{tarefa.lead_empreendimento}</span>
                     )}
-                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => handleConcluir(tarefa.id, tarefa.pipeline_lead_id)}>
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => { setReagendarId(tarefa.id); setReagendarData(""); setReagendarHora(""); }}>
-                      <Calendar className="h-3.5 w-3.5" /> Adiar
-                    </Button>
+                    {tarefa.lead_telefone && <span>{formatPhone(tarefa.lead_telefone)}</span>}
                   </div>
+
+                  {tarefa.descricao && <p className="text-xs text-muted-foreground italic">📝 "{tarefa.descricao}"</p>}
+
+                  {!isConcluida && (
+                    <div className="flex items-center gap-1 pt-1 flex-wrap">
+                      {tarefa.lead_telefone && (
+                        <>
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1" onClick={() => window.open(`tel:${tarefa.lead_telefone}`, "_self")}>
+                            <Phone className="h-3.5 w-3.5" /> Ligar
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1" onClick={() => openWhatsApp(tarefa.lead_telefone!)}>
+                            <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                          </Button>
+                        </>
+                      )}
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => handleConcluir(tarefa.id, tarefa.pipeline_lead_id)}>
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => { setAdiarId(tarefa.id); setAdiarData(""); setAdiarHora(""); }}>
+                        <Calendar className="h-3.5 w-3.5" /> Adiar
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             );
@@ -251,16 +301,91 @@ export default function MinhasTarefas() {
         </div>
       )}
 
-      {/* Reagendar dialog */}
-      <Dialog open={!!reagendarId} onOpenChange={() => setReagendarId(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Reagendar tarefa</DialogTitle>
-          </DialogHeader>
+      {/* Adiar dialog */}
+      <Dialog open={!!adiarId} onOpenChange={() => setAdiarId(null)}>
+        <DialogContent className="sm:max-w-xs">
+          <DialogHeader><DialogTitle>Adiar tarefa</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" onClick={() => { handleAdiarRapido(adiarId!, 1); setAdiarId(null); }}>Daqui 1h</Button>
+              <Button variant="outline" size="sm" onClick={() => { handleAdiarRapido(adiarId!, 2); setAdiarId(null); }}>Daqui 2h</Button>
+              <Button variant="outline" size="sm" onClick={() => { handleAdiarRapido(adiarId!, 24); setAdiarId(null); }}>Amanhã</Button>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">ou escolha data/hora:</p>
+            <Input type="date" value={adiarData} onChange={e => setAdiarData(e.target.value)} />
+            <Input type="time" value={adiarHora} onChange={e => setAdiarHora(e.target.value)} />
+            <Button className="w-full" onClick={handleAdiarCustom} disabled={!adiarData}>Reagendar ✅</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Nova Tarefa dialog */}
+      <Dialog open={showNovaTarefa} onOpenChange={setShowNovaTarefa}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>➕ Nova Tarefa</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <Input type="date" value={reagendarData} onChange={e => setReagendarData(e.target.value)} />
-            <Input type="time" value={reagendarHora} onChange={e => setReagendarHora(e.target.value)} placeholder="Horário (opcional)" />
-            <Button className="w-full" onClick={handleReagendar} disabled={!reagendarData}>Reagendar ✅</Button>
+            {/* Lead search */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Lead</label>
+              {selectedLeadId ? (
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-sm">{selectedLeadNome}</Badge>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setSelectedLeadId(null); setSelectedLeadNome(""); }}>Trocar</Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Buscar lead..." value={leadSearch} onChange={e => setLeadSearch(e.target.value)} className="pl-8" />
+                  {searchLeads.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {searchLeads.map(l => (
+                        <button key={l.id} className="w-full px-3 py-2 text-left text-sm hover:bg-muted" onClick={() => {
+                          setSelectedLeadId(l.id);
+                          setSelectedLeadNome(l.nome);
+                          setLeadSearch("");
+                        }}>
+                          <p className="font-medium">{l.nome}</p>
+                          <p className="text-xs text-muted-foreground">{l.empreendimento || "Sem empreendimento"} · {l.telefone || ""}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+              <Select value={novoTipo} onValueChange={setNovoTipo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TIPO_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{TIPO_EMOJI[k]} {v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Data</label>
+                <Input type="date" value={novoData} onChange={e => setNovoData(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Hora</label>
+                <Input type="time" value={novoHora} onChange={e => setNovoHora(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Observação</label>
+              <Textarea value={novoObs} onChange={e => setNovoObs(e.target.value)} placeholder="Ex: Retornar sobre financiamento" rows={2} />
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowNovaTarefa(false)}>Cancelar</Button>
+              <Button onClick={handleCriarTarefa} disabled={!selectedLeadId || !novoData}>✅ Criar Tarefa</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
