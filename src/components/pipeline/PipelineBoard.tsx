@@ -217,8 +217,14 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
   const [canScrollRight, setCanScrollRight] = useState(true);
 
   const leadsByStage = useMemo(() => {
-    // Dedup leads by ID before distributing to columns
-    const uniqueLeads = Array.from(new Map(leads.map(l => [l.id, l])).values());
+    // Dedup leads by ID before distributing to columns (definitivo)
+    const seen = new Set<string>();
+    const uniqueLeads = leads.filter((lead) => {
+      if (seen.has(lead.id)) return false;
+      seen.add(lead.id);
+      return true;
+    });
+
     const map = new Map<string, PipelineLead[]>();
     for (const stage of stages) map.set(stage.id, []);
     for (const lead of uniqueLeads) {
