@@ -49,17 +49,40 @@ serve(async (req) => {
     let body;
 
     if (template) {
-      body = {
+      const templateName = typeof template === 'string' ? template : template.name;
+      const templateLang = typeof template === 'string' ? 'pt_BR' : (template.language || 'pt_BR');
+      const templateParams = typeof template === 'object' ? template.parameters : {};
+      
+      const templateBody: any = {
         messaging_product: "whatsapp",
         recipient_type: "individual",
         to: cleanPhone,
         type: "template",
         template: {
-          name: template.name,
-          language: { code: template.language },
-          components: template.components,
-        },
+          name: templateName,
+          language: { code: templateLang },
+        }
       };
+
+      // Se tem parameters como objeto nomeado (ex: { nome: "Lucas", email: "x@y.com" })
+      if (templateParams && Object.keys(templateParams).length > 0) {
+        templateBody.template.components = [
+          {
+            type: "body",
+            parameters: Object.values(templateParams).map((val: any) => ({
+              type: "text",
+              text: String(val)
+            }))
+          }
+        ];
+      }
+      
+      // Se tem components já montados (array)
+      if (typeof template === 'object' && template.components && template.components.length > 0) {
+        templateBody.template.components = template.components;
+      }
+
+      body = templateBody;
     } else if (mensagem) {
       body = {
         messaging_product: "whatsapp",
