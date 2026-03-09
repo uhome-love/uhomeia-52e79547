@@ -252,7 +252,7 @@ export default function MinhasTarefas() {
                       {isOverdue && <Badge variant="destructive" className="text-[10px]">ATRASADA</Badge>}
                       <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {tarefa.vence_em ? format(new Date(tarefa.vence_em), "dd/MM", { locale: ptBR }) : "Sem data"}
+                        {tarefa.vence_em ? format(parseDateBRT(tarefa.vence_em), "dd/MM", { locale: ptBR }) : "Sem data"}
                         {tarefa.hora_vencimento && ` ${tarefa.hora_vencimento.slice(0, 5)}`}
                       </span>
                       <Badge variant="outline" className="text-xs">
