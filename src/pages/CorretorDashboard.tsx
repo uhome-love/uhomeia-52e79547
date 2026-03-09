@@ -619,72 +619,8 @@ export default function CorretorDashboard() {
         </div>
       </div>
 
-      {/* RODAPÉ — full width, atalhos */}
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-4 shrink-0">
-        <Card className="border-border/60">
-          <CardContent className="p-3">
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { label: "Agenda", icon: CalendarDays, path: "/agenda-visitas", color: "text-primary" },
-                { label: "HOMI", icon: Bot, path: "/homi", color: "text-purple-500" },
-                { label: "Scripts", icon: FileEdit, path: "/scripts", color: "text-amber-500" },
-                { label: "Desempenho", icon: BarChart3, path: "/corretor/resumo", color: "text-[#16A34A]" },
-              ].map((item) => (
-                <Button
-                  key={item.label}
-                  variant="ghost"
-                  className="h-auto flex-col gap-1 py-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-150"
-                  onClick={() => navigate(item.path)}
-                >
-                  <item.icon className={`h-5 w-5 ${item.color}`} />
-                  <span className="text-[10px] font-medium">{item.label}</span>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Finalizar — mobile only */}
-        {metaSalva && progress.tentativas > 0 && (
-          <div className="lg:hidden mt-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" className="w-full h-9 gap-2 text-xs text-muted-foreground hover:text-destructive" disabled={finalizando}>
-                  <LogOut className="h-3.5 w-3.5" /> Finalizar Trabalho do Dia
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Finalizar trabalho do dia?</AlertDialogTitle>
-                  <AlertDialogDescription className="space-y-2">
-                    <p>Suas estatísticas serão enviadas ao gerente:</p>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      <div className="text-center p-2 rounded-lg bg-muted">
-                        <p className="text-lg font-bold text-foreground">{progress.tentativas}</p>
-                        <p className="text-[10px] text-muted-foreground">tentativas</p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg bg-muted">
-                        <p className="text-lg font-bold text-success">{progress.aproveitados}</p>
-                        <p className="text-[10px] text-muted-foreground">aproveitados</p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg bg-muted">
-                        <p className="text-lg font-bold text-primary">{progress.pontos}</p>
-                        <p className="text-[10px] text-muted-foreground">pontos</p>
-                      </div>
-                    </div>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Voltar e continuar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleFinalizarTrabalho} className="bg-destructive hover:bg-destructive/90">
-                    {finalizando ? "Enviando..." : "Confirmar e Finalizar"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )}
-      </motion.div>
+
     </div>
   );
 }
