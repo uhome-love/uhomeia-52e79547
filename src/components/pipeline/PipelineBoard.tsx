@@ -558,6 +558,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                   onTransferred={onTransferred}
                   stageIndexMap={stageIndexMap}
                   handleDragStart={handleDragStart}
+                  tarefasMap={tarefasMap}
                 />
               </div>
             );
