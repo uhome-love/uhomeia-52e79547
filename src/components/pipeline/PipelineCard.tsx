@@ -199,7 +199,7 @@ const PipelineCard = memo(function PipelineCard({
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
 
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || "");
-  const status = useMemo(() => getCardStatus(lead, proximaTarefa || null), [lead.ultima_acao_at, lead.stage_changed_at, proximaTarefa]);
+  const status = useMemo(() => getCardStatus(lead, proximaTarefa || null), [(lead as any).ultima_acao_at, lead.stage_changed_at, proximaTarefa]);
 
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
