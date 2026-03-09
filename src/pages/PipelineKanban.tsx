@@ -31,6 +31,7 @@ import BulkActionModal from "@/components/pipeline/BulkActionModal";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -95,6 +96,7 @@ export default function PipelineKanban() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("kanban");
   const [filaCeoFilter, setFilaCeoFilter] = useState(false);
+  const [corretorFilter, setCorretorFilter] = useState<string>("all");
   const [dispatchOpen, setDispatchOpen] = useState(false);
   const [forecastExpanded, setForecastExpanded] = useState(false);
   
@@ -148,8 +150,20 @@ export default function PipelineKanban() {
     if (filaCeoFilter) {
       result = result.filter(l => l.aceite_status === "pendente_distribuicao");
     }
+    if (corretorFilter && corretorFilter !== "all") {
+      if (corretorFilter === "sem_corretor") {
+        result = result.filter(l => !l.corretor_id);
+      } else {
+        result = result.filter(l => l.corretor_id === corretorFilter);
+      }
+    }
     return result;
-  }, [pipeline.leads, filters, pipeline.stages, filaCeoFilter]);
+  }, [pipeline.leads, filters, pipeline.stages, filaCeoFilter, corretorFilter]);
+
+  const corretorOptions = useMemo(() => {
+    const entries = Object.entries(pipeline.corretorNomes).sort((a, b) => a[1].localeCompare(b[1]));
+    return entries;
+  }, [pipeline.corretorNomes]);
 
   const filaCeoCount = useMemo(() =>
     pipeline.leads.filter(l => l.aceite_status === "pendente_distribuicao").length,
@@ -175,6 +189,21 @@ export default function PipelineKanban() {
     setRefreshing(false);
   };
 
+              {/* Filtro rápido por corretor (CEO/Gerente) */}
+              {(isAdmin || isGestor) && (
+                <Select value={corretorFilter} onValueChange={setCorretorFilter}>
+                  <SelectTrigger className="h-8 text-xs w-[160px] sm:w-[200px] bg-card shrink-0">
+                    <SelectValue placeholder="Todos os corretores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os corretores</SelectItem>
+                    {isAdmin && <SelectItem value="sem_corretor">Sem corretor</SelectItem>}
+                    {corretorOptions.map(([id, nome]) => (
+                      <SelectItem key={id} value={id}>{nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
 
   const [intelView, setIntelView] = useState<"funil" | "radar">("funil");
   const [autoView, setAutoView] = useState<"materiais" | "sequencias">("materiais");
