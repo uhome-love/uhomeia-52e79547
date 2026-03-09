@@ -299,21 +299,21 @@ export default function CheckpointGerente() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="bg-white border-b border-gray-200 px-6 py-5">
-        <h1 className="text-2xl font-bold text-gray-900">Checkpoint do <span className="text-blue-600">Gerente</span></h1>
-        <p className="text-sm text-gray-500 mt-0.5">Gestão diária do time comercial com metas, resultados e IA</p>
+    <div className="min-h-screen bg-muted/30 pb-12">
+      <div className="bg-card border-b border-border px-6 py-5">
+        <h1 className="text-2xl font-bold text-foreground">Checkpoint do <span className="text-primary">Gerente</span></h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Gestão diária do time comercial com metas, resultados e IA</p>
       </div>
 
       <div className="max-w-screen-xl mx-auto px-4 mt-5 space-y-4">
         {pendentes.length > 0 && (
-          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
             <AlertCircle className="text-amber-500 mt-0.5 shrink-0" size={18} />
             <div>
-              <p className="text-sm font-semibold text-amber-800">
+              <p className="text-sm font-semibold text-foreground">
                 📋 {rows.length - pendentes.length}/{rows.length} corretores com resultados preenchidos
               </p>
-              <p className="text-xs text-amber-700 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 <span className="font-medium">Pendentes:</span> {pendentes.join(", ")}
               </p>
             </div>
@@ -321,18 +321,18 @@ export default function CheckpointGerente() {
         )}
 
         {/* METAS DO MÊS */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
+        <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Target size={18} className="text-blue-500" />
-            <span className="font-semibold text-gray-800">Metas do Mês —</span>
-            <span className="text-blue-600 font-semibold">
+            <Target size={18} className="text-primary" />
+            <span className="font-semibold text-foreground">Metas do Mês —</span>
+            <span className="text-primary font-semibold">
               {format(new Date(), "MMMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}
             </span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {([
               { label: "Ligações", atual: metasMes.ligacoes_realizado, meta: metasMes.ligacoes_meta, cor: "bg-blue-500", money: false },
-              { label: "VGV Assinado", atual: metasMes.vgv_realizado, meta: metasMes.vgv_meta, cor: "bg-green-500", money: true },
+              { label: "VGV Assinado", atual: metasMes.vgv_realizado, meta: metasMes.vgv_meta, cor: "bg-emerald-500", money: true },
               { label: "Visitas Marcadas", atual: metasMes.visitas_marcadas_realizado, meta: metasMes.visitas_marcadas_meta, cor: "bg-amber-500", money: false },
               { label: "Visitas Realizadas", atual: metasMes.visitas_realizadas_realizado, meta: metasMes.visitas_realizadas_meta, cor: "bg-purple-500", money: false },
             ]).map(({ label, atual, meta, cor, money }) => {
@@ -342,15 +342,15 @@ export default function CheckpointGerente() {
               return (
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-gray-500">{label}</span>
+                    <span className="text-xs text-muted-foreground">{label}</span>
                     <span className={`text-xs font-bold ${textColor} flex items-center gap-1`}>
                       {icon && <span>{icon}</span>} ↗ {p}%
                     </span>
                   </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div className={`h-full ${cor} rounded-full transition-all`} style={{ width: `${Math.min(p, 100)}%` }} />
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {money ? `${fmtR(atual)} / ${fmtR(meta)}` : `${fmt(atual)} / ${fmt(meta)}`}
                   </p>
                 </div>
@@ -359,9 +359,9 @@ export default function CheckpointGerente() {
           </div>
 
           {/* Projeção do Mês */}
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500 flex items-center gap-1.5">
-              📅 <span className="font-medium text-gray-700">Projeção do mês</span> (mantendo este ritmo):
+          <div className="mt-4 pt-3 border-t border-border/50">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              📅 <span className="font-medium text-foreground">Projeção do mês</span> (mantendo este ritmo):
               {(() => {
                 const projLig = projecao(metasMes.ligacoes_realizado);
                 const projVgv = projecao(metasMes.vgv_realizado);
@@ -381,15 +381,15 @@ export default function CheckpointGerente() {
         </div>
 
         {/* TABS */}
-        <div className="flex border-b border-gray-200 bg-white rounded-t-xl overflow-hidden">
+        <div className="flex border-b border-border bg-card rounded-t-xl overflow-hidden">
           {tabs.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-all ${
                 activeTab === tab.key
-                  ? "border-blue-500 text-blue-600 bg-blue-50"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  ? "border-primary text-primary bg-primary/5"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {tab.icon} {tab.label}

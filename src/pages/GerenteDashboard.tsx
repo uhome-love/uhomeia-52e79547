@@ -360,64 +360,64 @@ export default function GerenteDashboard() {
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {/* Ligações */}
-          <div className="rounded-2xl p-4 bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md" style={{ border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="rounded-2xl p-4 bg-card border border-border/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center gap-1.5 mb-2">
               <Phone className="h-4 w-4 text-blue-600" />
-              <span className="text-xs font-medium text-gray-400">Ligações</span>
+              <span className="text-xs font-medium text-muted-foreground">Ligações</span>
             </div>
             <p className="text-4xl font-black text-blue-600">{k.ligacoes}</p>
             <p className={`text-sm font-semibold ${ligPct > 0 ? "text-blue-600" : "text-red-500"}`}>{ligPct}%</p>
-            <p className="text-xs text-gray-400 mt-0.5">{periodLabels[period]} · meta {k.metaLigacoesPorCorretor}/corretor</p>
-            <p className="text-[10px] text-gray-300 mt-0.5">Time: {k.ligacoes}/{k.metaLigacoesTime}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{periodLabels[period]} · meta {k.metaLigacoesPorCorretor}/corretor</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-0.5">Time: {k.ligacoes}/{k.metaLigacoesTime}</p>
             <Progress value={ligPct} className="h-1 mt-2" />
           </div>
 
           {/* Aproveitados */}
-          <div className="rounded-2xl p-4 bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md" style={{ border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="rounded-2xl p-4 bg-card border border-border/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center gap-1.5 mb-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-xs font-medium text-gray-400">Aproveitados</span>
+              <span className="text-xs font-medium text-muted-foreground">Aproveitados</span>
             </div>
             <p className="text-4xl font-black text-green-600">{k.aproveitados}</p>
-            <p className="text-sm text-gray-400">{k.taxa}% conversão</p>
+            <p className="text-sm text-muted-foreground">{k.taxa}% conversão</p>
           </div>
 
           {/* Visitas */}
-          <div className="rounded-2xl p-4 bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md" style={{ border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="rounded-2xl p-4 bg-card border border-border/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center gap-1.5 mb-2">
               <CalendarDays className="h-4 w-4 text-amber-600" />
-              <span className="text-xs font-medium text-gray-400">Visitas</span>
+              <span className="text-xs font-medium text-muted-foreground">Visitas</span>
             </div>
             <p className="text-4xl font-black text-amber-600">{k.visitasHoje}</p>
-            <p className="text-sm text-gray-400">{k.visitasHoje} hoje · {k.visitasSemana} esta semana</p>
+            <p className="text-sm text-muted-foreground">{k.visitasHoje} hoje · {k.visitasSemana} esta semana</p>
           </div>
 
           {/* Negócios */}
-          <div className="rounded-2xl p-4 bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md" style={{ border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="rounded-2xl p-4 bg-card border border-border/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center gap-1.5 mb-2">
               <Building2 className="h-4 w-4 text-purple-600" />
-              <span className="text-xs font-medium text-gray-400">Negócios</span>
+              <span className="text-xs font-medium text-muted-foreground">Negócios</span>
             </div>
             <p className="text-4xl font-black text-purple-600">{k.negociosAtivos}</p>
-            <p className="text-sm text-gray-400">{formatCurrency(k.vgvTotal)}</p>
+            <p className="text-sm text-muted-foreground">{formatCurrency(k.vgvTotal)}</p>
           </div>
 
           {/* Melhor Streak */}
-          <div className="rounded-2xl p-4 bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md" style={{ border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="rounded-2xl p-4 bg-card border border-border/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center gap-1.5 mb-2">
               <Flame className="h-4 w-4 text-orange-500" />
-              <span className="text-xs font-medium text-gray-400">Melhor Streak</span>
+              <span className="text-xs font-medium text-muted-foreground">Melhor Streak</span>
             </div>
             {k.melhorStreak.dias > 0 ? (
               <>
                 <p className="text-4xl font-black text-orange-500">{k.melhorStreak.dias}🔥</p>
-                <p className="text-sm text-gray-400 truncate">{k.melhorStreak.nome}</p>
+                <p className="text-sm text-muted-foreground truncate">{k.melhorStreak.nome}</p>
               </>
             ) : (
               <>
                 <p className="text-4xl font-black text-orange-500">🏆</p>
-                <p className="text-sm text-gray-400">Aguardando atividade</p>
-                <p className="text-[10px] text-gray-300 mt-0.5">Primeiro a ligar ganha destaque!</p>
+                <p className="text-sm text-muted-foreground">Aguardando atividade</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">Primeiro a ligar ganha destaque!</p>
               </>
             )}
           </div>
@@ -434,7 +434,7 @@ export default function GerenteDashboard() {
                 <Trophy className="h-5 w-5 text-amber-500" />
                 <h2 className="text-base font-bold text-foreground">🏆 Ranking do Time — {periodLabels[period]}</h2>
               </div>
-              <span className="flex items-center gap-1 text-xs text-gray-400">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" /> 🔄 Atualiza a cada 60s
               </span>
             </div>
@@ -442,14 +442,14 @@ export default function GerenteDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/40">
-                    <th className="text-left py-2.5 px-2 text-xs text-gray-400 font-medium">#</th>
-                    <th className="text-left py-2.5 px-2 text-xs text-gray-400 font-medium">Corretor</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Ligações</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Aprov.</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Taxa</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Visitas</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Pts</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Status</th>
+                    <th className="text-left py-2.5 px-2 text-xs text-muted-foreground font-medium">#</th>
+                    <th className="text-left py-2.5 px-2 text-xs text-muted-foreground font-medium">Corretor</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Ligações</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Aprov.</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Taxa</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Visitas</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Pts</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -458,14 +458,14 @@ export default function GerenteDashboard() {
                     return (
                       <tr
                         key={r.user_id}
-                        className="border-b border-border/20 hover:bg-gray-50 cursor-pointer transition-colors"
+                        className="border-b border-border/20 hover:bg-accent/50 cursor-pointer transition-colors"
                         onClick={() => setDrawerCorretor({ user_id: r.user_id, nome: r.nome, avatar_url: r.avatar_url })}
                       >
                         <td className="py-3 px-2 font-bold">
                           {i === 0 ? <span className="text-amber-500">👑</span> :
                            i === 1 ? <span>🥈</span> :
                            i === 2 ? <span>🥉</span> :
-                           <span className="text-gray-400">{i + 1}</span>}
+                           <span className="text-muted-foreground">{i + 1}</span>}
                         </td>
                     <td className="py-3 px-2">
                           <div className="flex items-center gap-2.5">
@@ -487,10 +487,10 @@ export default function GerenteDashboard() {
                         <td className="py-3 px-2 text-center">
                           <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${
                             r.status === "online"
-                              ? "bg-green-50 text-green-700"
+                              ? "bg-green-500/10 text-green-600"
                               : r.status === "paused"
-                              ? "bg-yellow-50 text-yellow-700"
-                              : "bg-red-50 text-red-600"
+                              ? "bg-yellow-500/10 text-yellow-600"
+                              : "bg-red-500/10 text-red-600"
                           }`}>
                             <span className={`inline-block h-1.5 w-1.5 rounded-full ${
                               r.status === "online" ? "bg-green-500" :
@@ -518,16 +518,16 @@ export default function GerenteDashboard() {
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-foreground">💼 Pipeline de Negócios</h2>
-              <button className="text-sm text-blue-500 hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/meus-negocios")}>
+              <button className="text-sm text-primary hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/meus-negocios")}>
                 Ver completo <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
 
             {totalPipeCount === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-300 p-8 text-center" style={{ background: "#FAFAFA" }}>
-                <p className="text-lg font-semibold text-gray-500">🎯 Nenhum negócio ainda</p>
-                <p className="text-sm text-gray-400 mt-1">As visitas de hoje vão mudar isso!</p>
-                <button className="text-sm text-blue-500 hover:underline font-medium mt-3 inline-flex items-center gap-1" onClick={() => navigate("/agenda-visitas")}>
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center bg-muted/30">
+                <p className="text-lg font-semibold text-muted-foreground">🎯 Nenhum negócio ainda</p>
+                <p className="text-sm text-muted-foreground mt-1">As visitas de hoje vão mudar isso!</p>
+                <button className="text-sm text-primary hover:underline font-medium mt-3 inline-flex items-center gap-1" onClick={() => navigate("/agenda-visitas")}>
                   Ver agenda de hoje <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -541,10 +541,10 @@ export default function GerenteDashboard() {
                 ] as const).map(col => {
                   const f = pipe.fases[col.key] || { count: 0, vgv: 0 };
                   return (
-                    <div key={col.key} className="rounded-2xl p-4 bg-card text-center" style={{ border: "1px solid rgba(0,0,0,0.06)", borderTop: `3px solid ${col.borderColor}` }}>
+                    <div key={col.key} className="rounded-2xl p-4 bg-card border border-border/60 text-center" style={{ borderTop: `3px solid ${col.borderColor}` }}>
                       <p className="text-2xl font-black text-foreground">{f.count}</p>
-                      <p className="text-xs text-gray-500 font-medium">{col.label}</p>
-                      <p className="text-xs text-gray-400 mt-1">{formatCurrency(f.vgv)}</p>
+                      <p className="text-xs text-muted-foreground font-medium">{col.label}</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">{formatCurrency(f.vgv)}</p>
                     </div>
                   );
                 })}
@@ -563,9 +563,9 @@ export default function GerenteDashboard() {
               <h2 className="text-base font-bold text-foreground">🎓 Academia do Time</h2>
               {(academiaStats?.pctCompleted || 0) === 0 ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-500">0 de {academiaStats?.total || 0} corretores estudou esta semana</p>
+                  <p className="text-sm text-muted-foreground">0 de {academiaStats?.total || 0} corretores estudou esta semana</p>
                   <Progress value={0} className="h-2" />
-                  <p className="text-red-400 text-xs">Nenhum progresso registrado</p>
+                  <p className="text-red-500 text-xs">Nenhum progresso registrado</p>
                   <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs" onClick={() => toast.info("Funcionalidade em breve!")}>
                     📢 Incentivar o time
                   </Button>
@@ -575,11 +575,11 @@ export default function GerenteDashboard() {
                   <div className="flex items-center gap-4">
                     <div className="text-center">
                       <p className="text-2xl font-bold text-primary">{academiaStats?.pctCompleted}%</p>
-                      <p className="text-[10px] text-gray-400">do time estudou</p>
+                      <p className="text-[10px] text-muted-foreground">do time estudou</p>
                     </div>
                     <div className="flex-1">
                       <Progress value={academiaStats?.pctCompleted || 0} className="h-2" />
-                      <p className="text-[10px] text-gray-400 mt-1">{academiaStats?.withProgress || 0} de {academiaStats?.total || 0} corretores</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">{academiaStats?.withProgress || 0} de {academiaStats?.total || 0} corretores</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" className="w-full text-xs gap-1" onClick={() => navigate("/academia/gerenciar")}>
@@ -597,7 +597,7 @@ export default function GerenteDashboard() {
             <CardContent className="p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-bold text-foreground">📅 Agenda de Hoje</h2>
-                <button className="text-sm text-blue-500 hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/agenda-visitas")}>
+                <button className="text-sm text-primary hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/agenda-visitas")}>
                   Ver completa <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -605,7 +605,7 @@ export default function GerenteDashboard() {
               {(todayVisitas || []).length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-lg">😴 Nenhuma visita hoje</p>
-                  <button className="text-sm text-blue-500 hover:underline font-medium mt-2 inline-flex items-center gap-1" onClick={() => navigate("/agenda-visitas")}>
+                  <button className="text-sm text-primary hover:underline font-medium mt-2 inline-flex items-center gap-1" onClick={() => navigate("/agenda-visitas")}>
                     Que tal agendar algumas? <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -618,14 +618,14 @@ export default function GerenteDashboard() {
                         <span className="text-sm font-mono font-semibold text-foreground w-12">{v.hora_visita?.slice(0, 5) || "--:--"}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{v.nome_cliente}</p>
-                          <p className="text-[10px] text-gray-400 truncate">{v.empreendimento}{corretorName ? ` · ${corretorName}` : ""}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{v.empreendimento}{corretorName ? ` · ${corretorName}` : ""}</p>
                         </div>
                         <span className="text-xs">{statusIcons[v.status] || "⚪"} {v.status}</span>
                       </div>
                     );
                   })}
                   {visitasExtra > 0 && (
-                    <button className="text-sm text-blue-500 hover:underline font-medium w-full text-center" onClick={() => navigate("/agenda-visitas")}>
+                    <button className="text-sm text-primary hover:underline font-medium w-full text-center" onClick={() => navigate("/agenda-visitas")}>
                       Ver mais {visitasExtra} visitas →
                     </button>
                   )}
@@ -652,12 +652,11 @@ export default function GerenteDashboard() {
           ].map(item => (
             <button
               key={item.label}
-              className="rounded-xl p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 hover:border-blue-200 cursor-pointer"
-              style={{ border: "1px solid #E5E7EB" }}
+              className="rounded-xl p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/50 cursor-pointer border border-border/60"
               onClick={() => navigate(item.to)}
             >
               <p className="text-sm font-semibold text-foreground">{item.emoji} {item.label}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
             </button>
           ))}
         </div>
