@@ -150,12 +150,12 @@ export function usePipeline(pipelineTipo: string = "leads") {
         .range(from, from + pageSize - 1);
 
       if (isAdmin) {
-        // sem filtro
+        // CEO sees all leads - no filter
       } else if (isGestor) {
         query = query.in("corretor_id", teamUserIds);
       } else {
-        // Corretores: only their own leads
-        query = query.eq("corretor_id", user.id);
+        // Corretores: only their own ACCEPTED leads (pendente ones show on AceiteLeads page)
+        query = query.eq("corretor_id", user.id).eq("aceite_status", "aceito");
       }
 
       const { data, error } = await query;

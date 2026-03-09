@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
+      console.error("Auth failed:", authError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -36,11 +37,12 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { pipeline_lead_id, segmento_id, action } = body;
+    console.log(`Action: ${action}, Lead: ${pipeline_lead_id}, User: ${user.id}`);
 
     // ─── Handle accept / reject ───
     if (action === "aceitar" || action === "rejeitar") {
       const rpcName = action === "aceitar" ? "aceitar_lead" : "rejeitar_lead";
-      const params: any = {
+      const params: Record<string, unknown> = {
         p_lead_id: pipeline_lead_id,
         p_corretor_id: user.id,
       };
@@ -51,13 +53,44 @@ Deno.serve(async (req) => {
         params.p_motivo = body.motivo || "outro";
       }
 
+      console.log(`Calling RPC ${rpcName} with params:`, JSON.stringify(params));
       const { data, error } = await supabase.rpc(rpcName, params);
+      
       if (error) {
+        console.error(`RPC ${rpcName} error:`, error.message);
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      console.log(`RPC ${rpcName} result:`, JSON.stringify(data));
+
+      // After successful acceptance, create notification for the corretor
+      if (action === "aceitar" && data?.success) {
+        try {
+          const { data: leadData } = await supabase
+            .from("pipeline_leads")
+            .select("nome, empreendimento")
+            .eq("id", pipeline_lead_id)
+            .maybeSingle();
+
+          if (leadData) {
+            await supabase.rpc("criar_notificacao", {
+              p_user_id: user.id,
+              p_tipo: "lead",
+              p_categoria: "lead_aceito",
+              p_titulo: "✅ Lead aceito com sucesso!",
+              p_mensagem: `${leadData.nome || "Lead"} - ${leadData.empreendimento || "Sem empreendimento"}. Faça o primeiro contato agora!`,
+              p_dados: { pipeline_lead_id, empreendimento: leadData.empreendimento },
+              p_agrupamento_key: `lead_aceito_${pipeline_lead_id}`,
+            });
+          }
+        } catch (notifErr) {
+          console.error("Accept notification error (non-blocking):", notifErr);
+        }
+      }
+
       return new Response(JSON.stringify(data), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -69,6 +102,7 @@ Deno.serve(async (req) => {
         p_segmento_id: segmento_id || null,
       });
       if (error) {
+        console.error("Redistribution error:", error.message);
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -107,6 +141,8 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log(`Distributing lead ${pipeline_lead_id}, segmento: ${resolvedSegmentoId}`);
+
     // Call the distribution RPC
     const { data, error } = await supabase.rpc("distribuir_lead_roleta", {
       p_pipeline_lead_id: pipeline_lead_id,
@@ -114,16 +150,19 @@ Deno.serve(async (req) => {
     });
 
     if (error) {
-      console.error("Distribution error:", error);
+      console.error("Distribution RPC error:", error.message);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    console.log(`Distribution result:`, JSON.stringify(data));
+
     // After successful distribution, send WhatsApp notification
     if (data && data.success && data.corretor_id) {
       try {
+        // corretor_id from RPC is auth user_id
         const { data: corretor } = await supabase
           .from("profiles")
           .select("telefone, nome")
@@ -136,8 +175,10 @@ Deno.serve(async (req) => {
           .eq("id", pipeline_lead_id)
           .maybeSingle();
 
+        console.log(`Corretor found: ${corretor?.nome}, telefone: ${corretor?.telefone ? "yes" : "no"}`);
+
         if (corretor?.telefone && leadData) {
-          await fetch(`${supabaseUrl}/functions/v1/whatsapp-notificacao`, {
+          const whatsappRes = await fetch(`${supabaseUrl}/functions/v1/whatsapp-notificacao`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${serviceKey}`,
@@ -153,7 +194,7 @@ Deno.serve(async (req) => {
               },
             }),
           });
-          console.log(`WhatsApp notification sent to corretor ${corretor.nome}`);
+          console.log(`WhatsApp notification sent to ${corretor.nome}: status ${whatsappRes.status}`);
         }
       } catch (whatsappErr) {
         console.error("WhatsApp notification error (non-blocking):", whatsappErr);
