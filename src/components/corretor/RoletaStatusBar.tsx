@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Settings, ChevronDown, Check, MapPin, Loader2 } from "lucide-react";
+import { Settings, ChevronDown, Check, MapPin, Loader2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
