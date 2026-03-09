@@ -216,6 +216,7 @@ function SavedListCard({ list, onStart, onDelete }: { list: CustomList; onStart:
 
 export default function CorretorListSelection() {
   const { listas, isLoading } = useOAListas();
+  const { user } = useAuth();
   const [selectedLista, setSelectedLista] = useState<OALista | null>(null);
   const [search, setSearch] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);
