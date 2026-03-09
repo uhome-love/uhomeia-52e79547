@@ -127,10 +127,8 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
     }
   }, [stageLeads.length]);
 
-  // DEBUG: loga se a coluna está recebendo IDs duplicados
-  if (import.meta.env.DEV) {
-    console.log("Leads na coluna:", stage.nome, stageLeads.map(l => l.id));
-  }
+
+
 
   const visibleLeads = stageLeads.slice(0, visibleCount);
   const hasMore = visibleCount < stageLeads.length;
@@ -280,14 +278,21 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     el.scrollTo({ left: idx * (getColumnWidth() + COLUMN_GAP), behavior: "smooth" });
   };
 
-  // Drag to scroll
+  // Drag to scroll — only activates on empty areas (not on draggable cards)
   const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest("[draggable]")) return;
+    // Skip if clicking on a card, button, or any interactive element
+    const target = e.target as HTMLElement;
+    if (target.closest("[draggable]") || target.closest("button") || target.closest("[data-actions-area]") || target.closest("[role='menu']")) return;
     setIsDraggingScroll(true);
     dragScrollStart.current = { x: e.clientX, scrollLeft: scrollRef.current?.scrollLeft || 0 };
   };
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDraggingScroll || !scrollRef.current) return;
+    // Don't interfere with native HTML5 drag (card being dragged)
+    if (dragLeadId.current) { setIsDraggingScroll(false); return; }
+    // Only prevent default if we actually moved enough (avoids blocking clicks)
+    const dx = Math.abs(e.clientX - dragScrollStart.current.x);
+    if (dx < 5) return;
     e.preventDefault();
     scrollRef.current.scrollLeft = dragScrollStart.current.scrollLeft - (e.clientX - dragScrollStart.current.x);
   }, [isDraggingScroll]);
