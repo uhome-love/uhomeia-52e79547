@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePendingLeadAlert } from "@/hooks/usePendingLeadAlert";
 import LeadAcceptanceDialog from "@/components/pipeline/LeadAcceptanceDialog";
 import NewLeadBanner from "@/components/notifications/NewLeadBanner";
+import PushPromptBanner from "@/components/notifications/PushPromptBanner";
 import GlobalSearch from "@/components/GlobalSearch";
 import { Search } from "lucide-react";
 import { HomiProvider } from "@/contexts/HomiContext";
@@ -206,6 +207,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenu>
               </div>
             </header>
+            <PushPromptBanner />
             <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 min-w-0">
               {children}
             </main>
