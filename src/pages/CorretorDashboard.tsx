@@ -305,7 +305,7 @@ export default function CorretorDashboard() {
                     <span className="text-xs font-medium text-muted-foreground">Leads</span>
                   </div>
                   <p className={`text-3xl lg:text-4xl font-bold leading-none ${radar.pendingLeads > 0 ? "text-orange-500" : "text-foreground"}`}>{radar.pendingLeads}</p>
-                  <p className="text-sm text-muted-foreground mt-1.5">p/ contatar</p>
+                  <p className="text-sm text-muted-foreground mt-1.5">p/ atualizar</p>
                   {radar.slaExpired > 0 && (
                     <p className="text-xs text-danger-500 font-medium mt-0.5">{radar.slaExpired} SLA expirado</p>
                   )}
