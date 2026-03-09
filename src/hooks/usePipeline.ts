@@ -407,11 +407,13 @@ export function usePipeline(pipelineTipo: string = "leads") {
         corretor_id: corretorId,
         aceite_status: isCorretorAdding ? "aceito" : undefined,
         aceito_em: isCorretorAdding ? new Date().toISOString() : undefined,
-        origem: origem,
+        origem: origem || "Manual",
         origem_detalhe: lead.origem_detalhe || null,
         observacoes: lead.observacoes || null,
         valor_estimado: lead.valor_estimado || null,
         created_by: user.id,
+        modulo_atual: "pipeline",
+        temperatura: "morno",
       })
       .select()
       .single();
