@@ -175,7 +175,7 @@ export function useVisitas(filters?: {
       empreendimento: visita.empreendimento || null,
       origem: visita.origem || "manual",
       origem_detalhe: visita.origem_detalhe || null,
-      data_visita: visita.data_visita || new Date().toISOString().split("T")[0],
+      data_visita: visita.data_visita || new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
       hora_visita: visita.hora_visita || null,
       local_visita: visita.local_visita || null,
       status: visita.status || "marcada",
