@@ -288,6 +288,8 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
   };
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDraggingScroll || !scrollRef.current) return;
+    // Don't interfere with native HTML5 drag (card being dragged)
+    if (dragLeadId.current) { setIsDraggingScroll(false); return; }
     // Only prevent default if we actually moved enough (avoids blocking clicks)
     const dx = Math.abs(e.clientX - dragScrollStart.current.x);
     if (dx < 5) return;
