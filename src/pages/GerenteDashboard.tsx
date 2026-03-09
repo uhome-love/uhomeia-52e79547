@@ -563,9 +563,9 @@ export default function GerenteDashboard() {
               <h2 className="text-base font-bold text-foreground">🎓 Academia do Time</h2>
               {(academiaStats?.pctCompleted || 0) === 0 ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-500">0 de {academiaStats?.total || 0} corretores estudou esta semana</p>
+                  <p className="text-sm text-muted-foreground">0 de {academiaStats?.total || 0} corretores estudou esta semana</p>
                   <Progress value={0} className="h-2" />
-                  <p className="text-red-400 text-xs">Nenhum progresso registrado</p>
+                  <p className="text-red-500 text-xs">Nenhum progresso registrado</p>
                   <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs" onClick={() => toast.info("Funcionalidade em breve!")}>
                     📢 Incentivar o time
                   </Button>
