@@ -83,9 +83,8 @@ export default function NewLeadBanner() {
         filter: `corretor_id=eq.${user.id}`,
       }, (payload) => {
         const newRow = payload.new as any;
-        const oldRow = payload.old as any;
-        // Only trigger when corretor_id was just set (was null or different)
-        if (oldRow?.corretor_id === newRow?.corretor_id) return;
+        // Only show banner for leads pending acceptance
+        if (newRow?.aceite_status !== "pendente") return;
         if (dismissedRef.current.has(newRow.id)) return;
 
         const lead: BannerLead = {
@@ -131,7 +130,7 @@ export default function NewLeadBanner() {
             index={idx}
             onDismiss={() => dismissBanner(lead.id)}
             onNavigate={() => {
-              navigate(`/pipeline?lead=${lead.id}`);
+              navigate("/aceite");
               dismissBanner(lead.id);
             }}
           />
@@ -201,18 +200,10 @@ function BannerItem({
               SLA: {mins}:{secs.toString().padStart(2, "0")}
             </div>
 
-            <div className="flex items-center gap-1.5 ml-auto">
-              {lead.telefone && (
-                <Button size="sm" variant="outline" className="h-7 text-xs gap-1 px-2" asChild>
-                  <a href={`tel:${lead.telefone}`}>
-                    <Phone className="h-3 w-3" />
-                    Ligar
-                  </a>
-                </Button>
-              )}
-              <Button size="sm" className="h-7 text-xs gap-1 px-2" onClick={onNavigate}>
+            <div className="ml-auto">
+              <Button size="sm" className="h-7 text-xs gap-1 px-3" onClick={onNavigate}>
                 <ExternalLink className="h-3 w-3" />
-                Ver Lead
+                Aceitar Lead
               </Button>
             </div>
           </div>
