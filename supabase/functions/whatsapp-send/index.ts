@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    // Auth check — validate JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Não autenticado" }), {
@@ -22,20 +20,6 @@ serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Token inválido" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
     const PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
@@ -43,24 +27,49 @@ serve(async (req) => {
       throw new Error("WhatsApp credentials not configured");
     }
 
-    const { telefone, mensagem, nome } = await req.json();
+    const { telefone, mensagem, nome, template } = await req.json();
 
-    if (!telefone || !mensagem) {
+    if (!telefone) {
       return new Response(
-        JSON.stringify({ error: "telefone e mensagem são obrigatórios" }),
+        JSON.stringify({ error: "telefone é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Clean phone number: remove non-digits, ensure country code
     let cleanPhone = telefone.replace(/\D/g, "");
-    // If starts with 0, remove it
     if (cleanPhone.startsWith("0")) cleanPhone = cleanPhone.substring(1);
-    // If doesn't start with country code (55 for Brazil), add it
     if (!cleanPhone.startsWith("55")) cleanPhone = "55" + cleanPhone;
 
-    // First, try sending a free-form text message (works within 24h window)
-    const textResponse = await fetch(
+    let body;
+
+    if (template) {
+      body = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "template",
+        template: {
+          name: template.name || "hello_world",
+          language: { code: template.language || "pt_BR" },
+          components: template.components || [],
+        },
+      };
+    } else if (mensagem) {
+      body = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "text",
+        text: { body: mensagem },
+      };
+    } else {
+      return new Response(
+        JSON.stringify({ error: "mensagem ou template é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const response = await fetch(
       `https://graph.facebook.com/v21.0/${PHONE_NUMBER_ID}/messages`,
       {
         method: "POST",
@@ -68,24 +77,17 @@ serve(async (req) => {
           Authorization: `Bearer ${WHATSAPP_TOKEN}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: cleanPhone,
-          type: "text",
-          text: { body: mensagem },
-        }),
+        body: JSON.stringify(body),
       }
     );
 
-    const textResult = await textResponse.json();
+    const result = await response.json();
 
-    if (!textResponse.ok) {
-      console.error("WhatsApp API error:", JSON.stringify(textResult));
+    if (!response.ok) {
+      console.error("WhatsApp API error:", JSON.stringify(result));
 
-      // If error is about template requirement (outside 24h window), inform user
-      const errorCode = textResult?.error?.code;
-      const errorMsg = textResult?.error?.message || "Erro desconhecido";
+      const errorCode = result?.error?.code;
+      const errorMsg = result?.error?.message || "Erro desconhecido";
 
       if (errorCode === 131047 || errorCode === 131026) {
         return new Response(
@@ -99,17 +101,17 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ error: `Erro WhatsApp: ${errorMsg}`, details: textResult }),
-        { status: textResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: `Erro WhatsApp: ${errorMsg}`, details: result }),
+        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("WhatsApp message sent:", JSON.stringify(textResult));
+    console.log("WhatsApp message sent:", JSON.stringify(result));
 
     return new Response(
       JSON.stringify({
         success: true,
-        message_id: textResult.messages?.[0]?.id,
+        message_id: result.messages?.[0]?.id,
         phone: cleanPhone,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
