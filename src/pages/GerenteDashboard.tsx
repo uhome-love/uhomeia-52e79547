@@ -618,7 +618,7 @@ export default function GerenteDashboard() {
                         <span className="text-sm font-mono font-semibold text-foreground w-12">{v.hora_visita?.slice(0, 5) || "--:--"}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{v.nome_cliente}</p>
-                          <p className="text-[10px] text-gray-400 truncate">{v.empreendimento}{corretorName ? ` · ${corretorName}` : ""}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{v.empreendimento}{corretorName ? ` · ${corretorName}` : ""}</p>
                         </div>
                         <span className="text-xs">{statusIcons[v.status] || "⚪"} {v.status}</span>
                       </div>
