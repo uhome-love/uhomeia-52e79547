@@ -95,6 +95,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
   stageLeads, stage, stages, segmentos, corretorNomes, parcerias,
   selectionMode, selectedLeads, arrivedLeadId,
   onToggleSelect, onSelectLead, onMoveLead, onTransferred, stageIndexMap, handleDragStart,
+  tarefasMap,
 }: {
   stageLeads: PipelineLead[];
   stage: PipelineStage;
@@ -111,6 +112,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
   onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
   stageIndexMap: Map<string, number>;
   handleDragStart: (leadId: string) => void;
+  tarefasMap: Record<string, { tipo: string; vence_em: string | null; hora_vencimento: string | null }>;
 }) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_RENDER);
   const scrollRef = useRef<HTMLDivElement>(null);
