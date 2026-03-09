@@ -4,13 +4,30 @@ import NotificationList from "@/components/notifications/NotificationList";
 import { Badge } from "@/components/ui/badge";
 import { CheckCheck, Loader2 } from "lucide-react";
 
+const LEAD_TIPOS = ["leads", "lead_roleta", "lead_timeout", "lead_sem_contato", "lead_parado", "lead_alto_valor", "fila_ceo"];
+const VISITA_TIPOS = ["visitas", "visita_agendada", "visita_confirmada", "visita_noshow"];
+const NEGOCIO_TIPOS = ["propostas", "proposta_assinada", "vendas", "negocio_fechado"];
+const PERF_TIPOS = ["meta_atingida", "xp_conquista", "relatorio_semanal"];
+const ALERTA_TIPOS = ["alertas", "corretor_inativo", "gerente_sem_visita", "zero_ligacoes", "corretor_ajuda"];
+const MSG_TIPOS = ["mensagem_gerente"];
+
+const CATEGORY_MAP: Record<string, string[]> = {
+  leads: LEAD_TIPOS,
+  visitas: VISITA_TIPOS,
+  negocios: NEGOCIO_TIPOS,
+  performance: PERF_TIPOS,
+  alertas: ALERTA_TIPOS,
+  mensagens: MSG_TIPOS,
+};
+
 const FILTER_TABS = [
   { key: "todas", label: "Todas", activeColor: "#2563EB" },
-  { key: "leads", label: "Leads", activeColor: "#2563EB" },
-  { key: "visitas", label: "Visitas", activeColor: "#059669" },
-  { key: "propostas", label: "Propostas", activeColor: "#9333EA" },
-  { key: "vendas", label: "Vendas", activeColor: "#D97706" },
-  { key: "alertas", label: "Alertas", activeColor: "#DC2626" },
+  { key: "leads", label: "⚡ Leads", activeColor: "#2563EB" },
+  { key: "visitas", label: "📅 Visitas", activeColor: "#059669" },
+  { key: "negocios", label: "💼 Negócios", activeColor: "#9333EA" },
+  { key: "performance", label: "🏆 Performance", activeColor: "#D97706" },
+  { key: "alertas", label: "⚠️ Alertas", activeColor: "#DC2626" },
+  { key: "mensagens", label: "💬 Mensagens", activeColor: "#3B82F6" },
 ];
 
 export default function Notificacoes() {
