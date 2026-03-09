@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { format, isBefore, startOfDay, addHours, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { dateToBRT, todayBRT } from "@/lib/utils";
+import { dateToBRT, todayBRT, parseDateBRT } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { PipelineTarefa } from "@/hooks/usePipelineLeadData";
@@ -68,8 +68,8 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
   const today = startOfDay(new Date());
   const pendentes = tarefas.filter(t => t.status === "pendente");
   const concluidas = tarefas.filter(t => t.status === "concluida");
-  const atrasadas = pendentes.filter(t => t.vence_em && isBefore(new Date(t.vence_em), today));
-  const proximas = pendentes.filter(t => !t.vence_em || !isBefore(new Date(t.vence_em), today));
+  const atrasadas = pendentes.filter(t => t.vence_em && isBefore(parseDateBRT(t.vence_em), today));
+  const proximas = pendentes.filter(t => !t.vence_em || !isBefore(parseDateBRT(t.vence_em), today));
 
   const whatsappUrl = leadTelefone ? `https://wa.me/${leadTelefone.replace(/\D/g, "")}` : null;
 
@@ -171,12 +171,12 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
   };
 
   const renderTarefa = (tarefa: PipelineTarefa) => {
-    const isOverdue = tarefa.status === "pendente" && tarefa.vence_em && isBefore(new Date(tarefa.vence_em), today);
+    const isOverdue = tarefa.status === "pendente" && tarefa.vence_em && isBefore(parseDateBRT(tarefa.vence_em), today);
     const isConcluida = tarefa.status === "concluida";
     const dateLabel = tarefa.vence_em
-      ? isToday(new Date(tarefa.vence_em)) ? "Hoje"
-      : isTomorrow(new Date(tarefa.vence_em)) ? "Amanhã"
-      : format(new Date(tarefa.vence_em), "dd/MM", { locale: ptBR })
+      ? isToday(parseDateBRT(tarefa.vence_em)) ? "Hoje"
+      : isTomorrow(parseDateBRT(tarefa.vence_em)) ? "Amanhã"
+      : format(parseDateBRT(tarefa.vence_em), "dd/MM", { locale: ptBR })
       : "Sem data";
     const timeLabel = (tarefa as any).hora_vencimento ? ` ${(tarefa as any).hora_vencimento.slice(0, 5)}` : "";
 

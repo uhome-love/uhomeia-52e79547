@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { format, isToday, isTomorrow, isBefore, startOfDay, endOfWeek, addDays, addHours } from "date-fns";
-import { dateToBRT } from "@/lib/utils";
+import { dateToBRT, parseDateBRT } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
 import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, Building2, User, ClipboardList, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -120,12 +120,12 @@ export default function MinhasTarefas() {
 
   const pendentes = useMemo(() => tarefas.filter(t => t.status === "pendente"), [tarefas]);
   const concluidas = useMemo(() => tarefas.filter(t => t.status === "concluida").slice(0, 20), [tarefas]);
-  const atrasadas = useMemo(() => pendentes.filter(t => t.vence_em && isBefore(new Date(t.vence_em), todayStart)), [pendentes]);
-  const hoje = useMemo(() => pendentes.filter(t => t.vence_em && isToday(new Date(t.vence_em))), [pendentes]);
-  const amanha = useMemo(() => pendentes.filter(t => t.vence_em && isTomorrow(new Date(t.vence_em))), [pendentes]);
+  const atrasadas = useMemo(() => pendentes.filter(t => t.vence_em && isBefore(parseDateBRT(t.vence_em), todayStart)), [pendentes]);
+  const hoje = useMemo(() => pendentes.filter(t => t.vence_em && isToday(parseDateBRT(t.vence_em))), [pendentes]);
+  const amanha = useMemo(() => pendentes.filter(t => t.vence_em && isTomorrow(parseDateBRT(t.vence_em))), [pendentes]);
   const semana = useMemo(() => pendentes.filter(t => {
     if (!t.vence_em) return false;
-    const d = new Date(t.vence_em);
+    const d = parseDateBRT(t.vence_em);
     return d >= todayStart && d <= weekEnd;
   }), [pendentes]);
 
@@ -237,7 +237,7 @@ export default function MinhasTarefas() {
       ) : (
         <div className="space-y-3">
           {filteredTarefas.map(tarefa => {
-            const isOverdue = tarefa.vence_em && isBefore(new Date(tarefa.vence_em), todayStart) && tarefa.status === "pendente";
+            const isOverdue = tarefa.vence_em && isBefore(parseDateBRT(tarefa.vence_em), todayStart) && tarefa.status === "pendente";
             const isConcluida = tarefa.status === "concluida";
             return (
               <Card key={tarefa.id} className={`p-4 border-l-[3px] ${
@@ -252,7 +252,7 @@ export default function MinhasTarefas() {
                       {isOverdue && <Badge variant="destructive" className="text-[10px]">ATRASADA</Badge>}
                       <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {tarefa.vence_em ? format(new Date(tarefa.vence_em), "dd/MM", { locale: ptBR }) : "Sem data"}
+                        {tarefa.vence_em ? format(parseDateBRT(tarefa.vence_em), "dd/MM", { locale: ptBR }) : "Sem data"}
                         {tarefa.hora_vencimento && ` ${tarefa.hora_vencimento.slice(0, 5)}`}
                       </span>
                       <Badge variant="outline" className="text-xs">

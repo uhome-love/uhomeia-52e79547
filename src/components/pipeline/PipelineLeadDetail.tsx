@@ -99,7 +99,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const daysSinceCreation = differenceInDays(new Date(), new Date(lead.created_at));
   const lastActivity = leadData.atividades[0];
   const pendingTasks = leadData.tarefas.filter(t => t.status === "pendente").length;
-  const overdueTasks = leadData.tarefas.filter(t => t.status === "pendente" && t.vence_em && new Date(t.vence_em) < new Date()).length;
+  const overdueTasks = leadData.tarefas.filter(t => t.status === "pendente" && t.vence_em && new Date(t.vence_em + "T12:00:00") < new Date()).length;
 
   const temperatureInfo = TEMPERATURA_MAP[(lead as any).temperatura || "morno"] || TEMPERATURA_MAP.morno;
   const TempIcon = temperatureInfo.icon;
