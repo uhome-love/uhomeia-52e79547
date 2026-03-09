@@ -165,16 +165,6 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
                           </Button>
                         </>
                       )}
-                      {col === "realizada" && !hasPdn && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-5 text-[9px] px-1.5 text-primary border-primary/30"
-                          onClick={() => convertToPdn(v)}
-                        >
-                          <FileSpreadsheet className="h-3 w-3 mr-0.5" /> Enviar PDN
-                        </Button>
-                      )}
                       {col === "reagendada" && (
                         <Button size="sm" variant="outline" className="h-5 text-[9px] px-1.5" onClick={() => onUpdateStatus(v.id, "confirmada")}>
                           Confirmar
