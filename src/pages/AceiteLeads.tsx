@@ -72,7 +72,6 @@ function CountdownRing({ expiresAt }: { expiresAt: string }) {
 
 function LeadPopupCard({ lead, onResult, total, current }: { lead: PendingLead; onResult: () => void; total: number; current: number }) {
   const [mode, setMode] = useState<"initial" | "rejecting">("initial");
-  const [selectedStatus, setSelectedStatus] = useState("ligando_agora");
   const [selectedReason, setSelectedReason] = useState("ocupado");
   const [loading, setLoading] = useState(false);
 
@@ -80,7 +79,7 @@ function LeadPopupCard({ lead, onResult, total, current }: { lead: PendingLead; 
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("distribute-lead", {
-        body: { pipeline_lead_id: lead.id, action: "aceitar", status_inicial: selectedStatus },
+        body: { pipeline_lead_id: lead.id, action: "aceitar" },
       });
       if (error) throw error;
       if (data?.success === false) {
