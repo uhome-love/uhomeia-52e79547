@@ -394,6 +394,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       setCurrentIdempotencyKey(`${user?.id}_${lead.id}_${Date.now()}`);
     }
     if (resultado === "com_interesse" || resultado === "agendar") {
+      setShowResultPopup(false); // ensure only one popup
       setShowModal(true);
       return;
     }
