@@ -15,7 +15,7 @@ import PipelineReportsDashboard from "@/components/pipeline/PipelineReportsDashb
 import type { PipelineStage } from "@/hooks/usePipeline";
 import { useMemo as useMemoReact } from "react";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckSquare, Square, Send, X } from "lucide-react";
 import PipelineAdvancedFilters, {
   EMPTY_FILTERS,
   applyFilters,
@@ -25,8 +25,9 @@ import PipelineAdvancedFilters, {
 import type { PipelineLead } from "@/hooks/usePipeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, RefreshCw, Loader2, Search, LayoutGrid, X, BarChart3, FolderOpen, Zap, Radar, FileText, Brain, Rocket } from "lucide-react";
+import { Plus, RefreshCw, Loader2, Search, LayoutGrid, BarChart3, FolderOpen, Zap, Radar, FileText, Brain, Rocket } from "lucide-react";
 import FilaCeoDispatchModal from "@/components/pipeline/FilaCeoDispatchModal";
+import BulkActionModal from "@/components/pipeline/BulkActionModal";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -96,6 +97,29 @@ export default function PipelineKanban() {
   const [filaCeoFilter, setFilaCeoFilter] = useState(false);
   const [dispatchOpen, setDispatchOpen] = useState(false);
   const [forecastExpanded, setForecastExpanded] = useState(false);
+  
+  // Bulk selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+  const [bulkActionOpen, setBulkActionOpen] = useState(false);
+
+  const toggleLeadSelection = useCallback((leadId: string) => {
+    setSelectedLeads(prev => {
+      const next = new Set(prev);
+      if (next.has(leadId)) next.delete(leadId);
+      else next.add(leadId);
+      return next;
+    });
+  }, []);
+
+  const selectAllVisible = useCallback(() => {
+    setSelectedLeads(new Set(filteredLeads.map(l => l.id)));
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedLeads(new Set());
+    setSelectionMode(false);
+  }, []);
 
   // Load partnerships
   useEffect(() => {
