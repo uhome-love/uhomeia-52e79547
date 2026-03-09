@@ -47,6 +47,7 @@ export interface PipelineLead {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  negocio_id: string | null;
 }
 
 export interface PipelineSegmento {
@@ -108,7 +109,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
     if (!user) return;
     let query = supabase
       .from("pipeline_leads")
-      .select("id, nome, telefone, telefone2, email, segmento_id, produto_id, empreendimento, stage_id, stage_changed_at, ordem_no_stage, corretor_id, gerente_id, temperatura, modo_conducao, complexidade_score, oportunidade_score, escalation_level, last_escalation_at, distribuido_em, aceito_em, aceite_expira_em, origem, origem_detalhe, observacoes, proxima_acao, data_proxima_acao, motivo_descarte, valor_estimado, created_at, updated_at, created_by")
+      .select("id, nome, telefone, telefone2, email, segmento_id, produto_id, empreendimento, stage_id, stage_changed_at, ordem_no_stage, corretor_id, gerente_id, temperatura, modo_conducao, complexidade_score, oportunidade_score, escalation_level, last_escalation_at, distribuido_em, aceito_em, aceite_expira_em, origem, origem_detalhe, observacoes, proxima_acao, data_proxima_acao, motivo_descarte, valor_estimado, created_at, updated_at, created_by, negocio_id")
       .order("updated_at", { ascending: false })
       .limit(1000);
 
@@ -210,14 +211,18 @@ export function usePipeline(pipelineTipo: string = "leads") {
         : l
     ));
 
-    const { error } = await supabase
+    const prevNegocioId = lead.negocio_id;
+
+    const { data: updatedRow, error } = await supabase
       .from("pipeline_leads")
       .update({
         stage_id: newStageId,
         stage_changed_at: new Date().toISOString(),
         motivo_descarte: observacao && stages.find(s => s.id === newStageId)?.tipo === "descarte" ? observacao : undefined,
       })
-      .eq("id", leadId);
+      .eq("id", leadId)
+      .select("negocio_id")
+      .single();
 
     if (error) {
       console.error("Error moving lead:", error);
@@ -227,6 +232,13 @@ export function usePipeline(pipelineTipo: string = "leads") {
         l.id === leadId ? { ...l, stage_id: oldStageId } : l
       ));
       return;
+    }
+
+    // Sync negocio_id (pode ser preenchido via trigger no backend)
+    if (updatedRow?.negocio_id && updatedRow.negocio_id !== prevNegocioId) {
+      setLeads(prev => prev.map(l =>
+        l.id === leadId ? { ...l, negocio_id: updatedRow.negocio_id } : l
+      ));
     }
 
     // Insert history record
@@ -243,6 +255,11 @@ export function usePipeline(pipelineTipo: string = "leads") {
     if (newStage?.tipo === "descarte") {
       toast.info("Lead movido para Descarte. Será enviado para Oferta Ativa.");
     }
+
+    if (newStage?.tipo === "visita_realizada" && !prevNegocioId && updatedRow?.negocio_id) {
+      toast.success(`🎉 Novo negócio criado para ${lead.nome}!`);
+    }
+
     if (newStage?.tipo === "venda") {
       toast.success("🎉 Venda registrada! Parabéns!");
     }
