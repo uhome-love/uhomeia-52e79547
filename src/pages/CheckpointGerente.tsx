@@ -321,11 +321,11 @@ export default function CheckpointGerente() {
         )}
 
         {/* METAS DO MÊS */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
+        <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Target size={18} className="text-blue-500" />
-            <span className="font-semibold text-gray-800">Metas do Mês —</span>
-            <span className="text-blue-600 font-semibold">
+            <Target size={18} className="text-primary" />
+            <span className="font-semibold text-foreground">Metas do Mês —</span>
+            <span className="text-primary font-semibold">
               {format(new Date(), "MMMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}
             </span>
           </div>
