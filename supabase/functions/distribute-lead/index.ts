@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       const distributionLog: Array<{ leadId: string; corretorId: string; segmento: string }> = [];
 
       for (const lead of leads) {
-        const segmentoId = resolveSegmento(lead.empreendimento);
+        const segmentoId = await resolveSegmento(supabase, lead.empreendimento);
         
         // Find eligible corretores for this segment
         const eligible: CorretorCandidate[] = [];
