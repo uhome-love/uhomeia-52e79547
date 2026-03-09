@@ -189,6 +189,29 @@ export default function MinhasTarefas() {
     queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
   };
 
+  const openEditTarefa = (tarefa: TarefaComLead) => {
+    setEditId(tarefa.id);
+    setEditTipo(tarefa.tipo);
+    setEditData(tarefa.vence_em || "");
+    setEditHora(tarefa.hora_vencimento?.slice(0, 5) || "");
+    setEditObs(tarefa.descricao || "");
+  };
+
+  const handleEditTarefa = async () => {
+    if (!editId) return;
+    await supabase.from("pipeline_tarefas").update({
+      tipo: editTipo,
+      vence_em: editData || null,
+      hora_vencimento: editHora || null,
+      descricao: editObs || null,
+      updated_at: new Date().toISOString(),
+    } as any).eq("id", editId);
+    toast.success("Tarefa atualizada ✅");
+    setEditId(null);
+    queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
+    queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
+  };
+
   const tabs: { key: TabFilter; label: string; count: number }[] = [
     { key: "atrasadas", label: "🔴 Atrasadas", count: atrasadas.length },
     { key: "hoje", label: "📅 Hoje", count: hoje.length },
