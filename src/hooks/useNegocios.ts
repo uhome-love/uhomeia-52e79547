@@ -132,7 +132,7 @@ export function useNegocios() {
       setCorretorNomes(nameMap);
       setCorretorInfoMap(infoMap);
     }
-  }, [user]);
+  }, [user, isAdmin, isGestor]);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
