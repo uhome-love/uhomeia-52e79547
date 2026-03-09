@@ -442,14 +442,14 @@ export default function GerenteDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/40">
-                    <th className="text-left py-2.5 px-2 text-xs text-gray-400 font-medium">#</th>
-                    <th className="text-left py-2.5 px-2 text-xs text-gray-400 font-medium">Corretor</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Ligações</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Aprov.</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Taxa</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Visitas</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Pts</th>
-                    <th className="text-center py-2.5 px-2 text-xs text-gray-400 font-medium">Status</th>
+                    <th className="text-left py-2.5 px-2 text-xs text-muted-foreground font-medium">#</th>
+                    <th className="text-left py-2.5 px-2 text-xs text-muted-foreground font-medium">Corretor</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Ligações</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Aprov.</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Taxa</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Visitas</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Pts</th>
+                    <th className="text-center py-2.5 px-2 text-xs text-muted-foreground font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
