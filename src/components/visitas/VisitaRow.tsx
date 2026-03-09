@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, FileSpreadsheet, Trash2, Phone } from "lucide-react";
+import { MoreVertical, Trash2, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
-import { useVisitaToPdn } from "@/hooks/useVisitaToPdn";
 import { useState } from "react";
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
