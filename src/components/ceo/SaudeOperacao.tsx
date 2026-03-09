@@ -51,14 +51,15 @@ export default function SaudeOperacao() {
     const convVisita = totalLeads && totalLeads > 0 ? Math.round(((visitasMarcadas || 0) / totalLeads) * 100) : 0;
     const convNivel: Nivel = convVisita > 8 ? "bom" : convVisita >= 4 ? "atencao" : "critico";
 
-    // 4. Negócios parados no PDN (>10 dias sem atualização, exceto assinado/caiu)
-    const { data: pdnAtivos } = await supabase
-      .from("pdn_entries")
-      .select("updated_at, situacao")
-      .neq("situacao", "assinado")
-      .neq("situacao", "caiu");
+    // 4. Negócios parados (>10 dias sem atualização, exceto assinado/distrato)
+    const { data: negociosAtivos } = await supabase
+      .from("negocios")
+      .select("updated_at, fase")
+      .eq("status", "ativo")
+      .neq("fase", "assinado")
+      .neq("fase", "distrato");
     const now = new Date();
-    const parados = (pdnAtivos || []).filter(p => differenceInDays(now, new Date(p.updated_at)) > 10).length;
+    const parados = (negociosAtivos || []).filter(p => differenceInDays(now, new Date(p.updated_at)) > 10).length;
     const paradosNivel: Nivel = parados === 0 ? "bom" : parados <= 3 ? "atencao" : "critico";
 
     // 5. Presença da equipe — corretor_disponibilidade online hoje
@@ -75,7 +76,7 @@ export default function SaudeOperacao() {
       { id: "sla", label: "Velocidade de Atendimento", valor: `SLA médio: ${slaMin}min`, nivel: slaNivel, icon: Clock, rota: "/pipeline" },
       { id: "aprov", label: "Aproveitamento de Leads", valor: `${taxaAprov}% dos leads`, nivel: aprovNivel, icon: TrendingUp, rota: "/pipeline" },
       { id: "conv", label: "Lead → Visita", valor: `${convVisita}% conversão`, nivel: convNivel, icon: MapPin, rota: "/agenda-visitas" },
-      { id: "pdn", label: "Negócios Parados (PDN)", valor: `${parados} negócios > 10 dias`, nivel: paradosNivel, icon: Activity, rota: "/pdn" },
+      { id: "pdn", label: "Negócios Parados", valor: `${parados} negócios > 10 dias`, nivel: paradosNivel, icon: Activity, rota: "/meus-negocios" },
       { id: "presenca", label: "Presença da Equipe", valor: `${pctPresenca}% presente (${presentes || 0}/${totalCorretores || 0})`, nivel: presNivel, icon: Users, rota: "/disponibilidade" },
       { id: "fila", label: "Leads sem Corretor", valor: `${naFila || 0} na fila`, nivel: filaNivel, icon: UserX, rota: "/pipeline" },
     ]);

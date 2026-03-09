@@ -30,6 +30,7 @@ import OpportunityVisitasTab from "./OpportunityVisitasTab";
 import OpportunityPropostasTab from "./OpportunityPropostasTab";
 import LeadTarefasTab from "./LeadTarefasTab";
 import LeadHistoricoTab from "./LeadHistoricoTab";
+import EmpreendimentoCombobox from "@/components/ui/empreendimento-combobox";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -420,32 +421,12 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   <div className="space-y-3 border rounded-xl p-4 bg-card">
                     <div>
                       <Label className="text-xs text-muted-foreground">Empreendimento</Label>
-                      <Select
-                        value={EMPREENDIMENTOS_UHOME.includes(commercialData.empreendimento) ? commercialData.empreendimento : "__custom__"}
-                        onValueChange={v => {
-                          if (v === "__custom__") {
-                            setCommercialData(p => ({ ...p, empreendimento: "" }));
-                          } else {
-                            setCommercialData(p => ({ ...p, empreendimento: v }));
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {EMPREENDIMENTOS_UHOME.map(e => (
-                            <SelectItem key={e} value={e}>{e}</SelectItem>
-                          ))}
-                          <SelectItem value="__custom__">✏️ Digitar manualmente</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {!EMPREENDIMENTOS_UHOME.includes(commercialData.empreendimento) && (
-                        <Input
-                          className="h-9 text-sm mt-2"
-                          placeholder="Nome do empreendimento"
-                          value={commercialData.empreendimento}
-                          onChange={e => setCommercialData(p => ({ ...p, empreendimento: e.target.value }))}
-                        />
-                      )}
+                      {/* BUG 6 FIX: Use EmpreendimentoCombobox for free-text input */}
+                      <EmpreendimentoCombobox
+                        value={commercialData.empreendimento}
+                        onChange={v => setCommercialData(p => ({ ...p, empreendimento: v }))}
+                        placeholder="Selecione ou digite o empreendimento..."
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -485,21 +466,18 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="w-64 p-2" align="start">
-                            <Input placeholder="Buscar empreendimento..." value={empreendimentoSearch} onChange={e => setEmpreendimentoSearch(e.target.value)} className="h-8 text-xs mb-2" autoFocus />
-                            <div className="max-h-48 overflow-y-auto space-y-0.5">
-                              {EMPREENDIMENTOS_UHOME.filter(e => e.toLowerCase().includes(empreendimentoSearch.toLowerCase())).map(e => (
-                                <button key={e} className={`w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors ${e === lead.empreendimento ? 'bg-primary/10 text-primary font-semibold' : ''}`} onClick={async () => {
-                                  setSavingEmpreendimento(true);
-                                  await onUpdate(lead.id, { empreendimento: e } as any);
-                                  setEmpreendimentoOpen(false);
-                                  setEmpreendimentoSearch("");
-                                  setSavingEmpreendimento(false);
-                                  toast.success("Empreendimento atualizado ✅");
-                                }}>
-                                  {e}
-                                </button>
-                              ))}
-                            </div>
+                            <EmpreendimentoCombobox
+                              value={empreendimentoSearch || lead.empreendimento || ""}
+                              onChange={async (v) => {
+                                setSavingEmpreendimento(true);
+                                await onUpdate(lead.id, { empreendimento: v } as any);
+                                setEmpreendimentoOpen(false);
+                                setEmpreendimentoSearch("");
+                                setSavingEmpreendimento(false);
+                                toast.success("Empreendimento atualizado ✅");
+                              }}
+                              placeholder="Buscar ou digitar empreendimento..."
+                            />
                           </PopoverContent>
                         </Popover>
                       ) : (
@@ -510,21 +488,18 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="w-64 p-2" align="start">
-                            <Input placeholder="Buscar empreendimento..." value={empreendimentoSearch} onChange={e => setEmpreendimentoSearch(e.target.value)} className="h-8 text-xs mb-2" autoFocus />
-                            <div className="max-h-48 overflow-y-auto space-y-0.5">
-                              {EMPREENDIMENTOS_UHOME.filter(e => e.toLowerCase().includes(empreendimentoSearch.toLowerCase())).map(e => (
-                                <button key={e} className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors" onClick={async () => {
-                                  setSavingEmpreendimento(true);
-                                  await onUpdate(lead.id, { empreendimento: e } as any);
-                                  setEmpreendimentoOpen(false);
-                                  setEmpreendimentoSearch("");
-                                  setSavingEmpreendimento(false);
-                                  toast.success("Empreendimento atualizado ✅");
-                                }}>
-                                  {e}
-                                </button>
-                              ))}
-                            </div>
+                            <EmpreendimentoCombobox
+                              value={empreendimentoSearch || ""}
+                              onChange={async (v) => {
+                                setSavingEmpreendimento(true);
+                                await onUpdate(lead.id, { empreendimento: v } as any);
+                                setEmpreendimentoOpen(false);
+                                setEmpreendimentoSearch("");
+                                setSavingEmpreendimento(false);
+                                toast.success("Empreendimento atualizado ✅");
+                              }}
+                              placeholder="Buscar ou digitar empreendimento..."
+                            />
                           </PopoverContent>
                         </Popover>
                       )}
