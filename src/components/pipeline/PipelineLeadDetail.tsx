@@ -34,6 +34,7 @@ import OpportunityVisitasTab from "./OpportunityVisitasTab";
 import OpportunityPropostasTab from "./OpportunityPropostasTab";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface Props {
   lead: PipelineLead;
@@ -70,6 +71,13 @@ const PRIORIDADE_MAP: Record<string, { label: string; color: string }> = {
   baixa: { label: "Baixa", color: "bg-green-500/10 text-green-600 border-green-200" },
 };
 
+const EMPREENDIMENTOS_UHOME = [
+  'Alfa', 'Alto Lindóia', 'Boa Vista Country Club', 'Casa Tua',
+  'Duetto - Morana', 'Lake Eyre', 'Las Casas', 'Me Day',
+  'Melnick Day', 'Melnick Day Compactos', 'Open Bosque',
+  'Orygem', 'Seen', 'Shift - Vanguard', 'Terrace', 'Vértice - Las Casas',
+];
+
 export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNomes = {}, open, onOpenChange, onUpdate, onMove, onDelete }: Props) {
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
@@ -79,6 +87,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [deleting, setDeleting] = useState(false);
   const [homiOpen, setHomiOpen] = useState(false);
   const [showCustomAction, setShowCustomAction] = useState(false);
+  const [empreendimentoSearch, setEmpreendimentoSearch] = useState("");
+  const [empreendimentoOpen, setEmpreendimentoOpen] = useState(false);
+  const [savingEmpreendimento, setSavingEmpreendimento] = useState(false);
 
   // Edit states
   const [editingCommercial, setEditingCommercial] = useState(false);
@@ -440,7 +451,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                     <div>
                       <Label className="text-xs text-muted-foreground">Empreendimento</Label>
                       <Select
-                        value={["OPEN", "ALTO LINDÓIA", "LAS CASAS", "ORYGEM", "CASA TUA", "LAKE EYRE", "CASA BASTIAN", "SHIFT", "MELNICK DAY COMPACTOS"].includes(commercialData.empreendimento) ? commercialData.empreendimento : "__custom__"}
+                        value={EMPREENDIMENTOS_UHOME.includes(commercialData.empreendimento) ? commercialData.empreendimento : "__custom__"}
                         onValueChange={v => {
                           if (v === "__custom__") {
                             setCommercialData(p => ({ ...p, empreendimento: "" }));
@@ -449,21 +460,15 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                           }
                         }}
                       >
-                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione ou digite" /></SelectTrigger>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="OPEN">OPEN</SelectItem>
-                          <SelectItem value="ALTO LINDÓIA">ALTO LINDÓIA</SelectItem>
-                          <SelectItem value="LAS CASAS">LAS CASAS</SelectItem>
-                          <SelectItem value="ORYGEM">ORYGEM</SelectItem>
-                          <SelectItem value="CASA TUA">CASA TUA</SelectItem>
-                          <SelectItem value="LAKE EYRE">LAKE EYRE</SelectItem>
-                          <SelectItem value="CASA BASTIAN">CASA BASTIAN</SelectItem>
-                          <SelectItem value="SHIFT">SHIFT</SelectItem>
-                          <SelectItem value="MELNICK DAY COMPACTOS">MELNICK DAY COMPACTOS</SelectItem>
+                          {EMPREENDIMENTOS_UHOME.map(e => (
+                            <SelectItem key={e} value={e}>{e}</SelectItem>
+                          ))}
                           <SelectItem value="__custom__">✏️ Digitar manualmente</SelectItem>
                         </SelectContent>
                       </Select>
-                      {!["OPEN", "ALTO LINDÓIA", "LAS CASAS", "ORYGEM", "CASA TUA", "LAKE EYRE", "CASA BASTIAN", "SHIFT", "MELNICK DAY COMPACTOS"].includes(commercialData.empreendimento) && (
+                      {!EMPREENDIMENTOS_UHOME.includes(commercialData.empreendimento) && (
                         <Input
                           className="h-9 text-sm mt-2"
                           placeholder="Nome do empreendimento"
@@ -498,11 +503,82 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                     </Button>
                   </div>
                 ) : (
-                  /* Horizontal layout: Empreendimento | Valor | Origem */
+                  /* Horizontal layout: Empreendimento (inline editable) | Valor | Origem */
                   <div className="flex items-center gap-6 flex-wrap text-sm py-2">
-                    <div>
+                    <div className="relative">
                       <span className="text-xs text-muted-foreground">Empreendimento</span>
-                      <p className="font-medium text-foreground">{lead.empreendimento || <span className="text-muted-foreground/60">Não definido</span>}</p>
+                      {lead.empreendimento ? (
+                        <Popover open={empreendimentoOpen} onOpenChange={setEmpreendimentoOpen}>
+                          <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors group">
+                              {lead.empreendimento}
+                              <span className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity text-xs">✏️</span>
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-2" align="start">
+                            <Input
+                              placeholder="Buscar empreendimento..."
+                              value={empreendimentoSearch}
+                              onChange={e => setEmpreendimentoSearch(e.target.value)}
+                              className="h-8 text-xs mb-2"
+                              autoFocus
+                            />
+                            <div className="max-h-48 overflow-y-auto space-y-0.5">
+                              {EMPREENDIMENTOS_UHOME.filter(e => e.toLowerCase().includes(empreendimentoSearch.toLowerCase())).map(e => (
+                                <button
+                                  key={e}
+                                  className={`w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors ${e === lead.empreendimento ? 'bg-primary/10 text-primary font-semibold' : ''}`}
+                                  onClick={async () => {
+                                    setSavingEmpreendimento(true);
+                                    await onUpdate(lead.id, { empreendimento: e } as any);
+                                    setEmpreendimentoOpen(false);
+                                    setEmpreendimentoSearch("");
+                                    setSavingEmpreendimento(false);
+                                    toast.success("Empreendimento atualizado ✅");
+                                  }}
+                                >
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        <Popover open={empreendimentoOpen} onOpenChange={setEmpreendimentoOpen}>
+                          <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors border border-amber-300 dark:border-amber-700">
+                              🏠 Selecionar Empreendimento ▼
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-2" align="start">
+                            <Input
+                              placeholder="Buscar empreendimento..."
+                              value={empreendimentoSearch}
+                              onChange={e => setEmpreendimentoSearch(e.target.value)}
+                              className="h-8 text-xs mb-2"
+                              autoFocus
+                            />
+                            <div className="max-h-48 overflow-y-auto space-y-0.5">
+                              {EMPREENDIMENTOS_UHOME.filter(e => e.toLowerCase().includes(empreendimentoSearch.toLowerCase())).map(e => (
+                                <button
+                                  key={e}
+                                  className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors"
+                                  onClick={async () => {
+                                    setSavingEmpreendimento(true);
+                                    await onUpdate(lead.id, { empreendimento: e } as any);
+                                    setEmpreendimentoOpen(false);
+                                    setEmpreendimentoSearch("");
+                                    setSavingEmpreendimento(false);
+                                    toast.success("Empreendimento atualizado ✅");
+                                  }}
+                                >
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                     </div>
                     <div className="h-8 w-px bg-border" />
                     <div>

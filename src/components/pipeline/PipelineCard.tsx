@@ -365,7 +365,11 @@ const PipelineCard = memo(function PipelineCard({
                 <>
                   {origemLabel && <span>{origemLabel}</span>}
                   {origemLabel && empreendimentoClean && " · "}
-                  {empreendimentoClean && <span className="font-medium text-foreground/80">{empreendimentoClean}</span>}
+                  {empreendimentoClean ? (
+                    <span className="font-medium text-foreground/80">{empreendimentoClean}</span>
+                  ) : (
+                    <span className="text-amber-500/70 font-medium">🏠 Sem empreend.</span>
+                  )}
                 </>
               );
             })()}
