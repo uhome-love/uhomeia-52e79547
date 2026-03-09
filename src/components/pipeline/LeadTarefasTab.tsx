@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus, CheckCircle2, Circle, Trash2, Clock, Phone, MessageCircle,
-  Mail, Calendar, ChevronDown, ChevronUp, Loader2
+  Mail, Calendar, ChevronDown, ChevronUp, Loader2, Pencil
 } from "lucide-react";
 import { format, isBefore, startOfDay, addHours, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
