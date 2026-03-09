@@ -268,7 +268,7 @@ serve(async (req) => {
           prioridadeLead = "alta";
         }
 
-        const { error: insertError } = await adminClient
+        const { data: insertedLead, error: insertError } = await adminClient
           .from("pipeline_leads")
           .insert({
             nome,
@@ -285,7 +285,9 @@ serve(async (req) => {
             created_by: userId,
             prioridade_lead: prioridadeLead,
             aceite_status: "pendente_distribuicao",
-          });
+          })
+          .select("id")
+          .single();
 
         if (insertError) {
           console.error(`Insert error for ${jetimobId}:`, insertError.message);
@@ -293,8 +295,26 @@ serve(async (req) => {
           skipped++;
         } else {
           synced++;
-          // Add phone to set to prevent duplicates within same batch
           if (phone) existingPhones.add(phone);
+
+          // Auto-distribute via distribute-lead edge function (fire and forget)
+          if (insertedLead?.id) {
+            try {
+              await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${serviceRoleKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  action: "distribute_single",
+                  pipeline_lead_id: insertedLead.id,
+                }),
+              });
+            } catch (distErr) {
+              console.warn(`Auto-distribute failed for ${insertedLead.id}:`, distErr);
+            }
+          }
         }
       } catch (leadErr) {
         console.error("Error processing lead:", leadErr);
