@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Check, X, Clock, AlertTriangle, Building2, User, Inbox, ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -19,13 +21,6 @@ interface PendingLead {
   distribuido_em: string | null;
   prioridade_lead: string;
 }
-
-const STATUS_OPTIONS = [
-  { value: "ligando_agora", label: "Ligando agora", icon: Phone },
-  { value: "whatsapp", label: "WhatsApp", icon: MessageCircle },
-  { value: "nao_atendeu", label: "Não atendeu", icon: X },
-  { value: "contato_realizado", label: "Contato feito", icon: Check },
-];
 
 const REJECTION_REASONS = [
   { value: "ocupado", label: "Estou ocupado" },
