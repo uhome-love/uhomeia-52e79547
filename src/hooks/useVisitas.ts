@@ -157,26 +157,30 @@ export function useVisitas(filters?: {
       gerenteId = tm?.gerente_id || user.id;
     }
 
+    const payload = {
+      corretor_id: visita.corretor_id || user.id,
+      gerente_id: gerenteId,
+      lead_id: visita.lead_id || null,
+      pipeline_lead_id: visita.pipeline_lead_id || null,
+      nome_cliente: visita.nome_cliente || "Sem nome",
+      telefone: visita.telefone || null,
+      empreendimento: visita.empreendimento || null,
+      origem: visita.origem || "manual",
+      origem_detalhe: visita.origem_detalhe || null,
+      data_visita: visita.data_visita || new Date().toISOString().split("T")[0],
+      hora_visita: visita.hora_visita || null,
+      local_visita: visita.local_visita || null,
+      status: visita.status || "marcada",
+      observacoes: visita.observacoes || null,
+      created_by: user.id,
+      linked_attempt_id: visita.linked_attempt_id || null,
+    };
+
+    console.log("[createVisita] payload:", JSON.stringify(payload));
+
     const { data, error } = await supabase
       .from("visitas")
-      .insert({
-        corretor_id: visita.corretor_id || user.id,
-        gerente_id: gerenteId,
-        lead_id: visita.lead_id || null,
-        pipeline_lead_id: visita.pipeline_lead_id || null,
-        nome_cliente: visita.nome_cliente || "Sem nome",
-        telefone: visita.telefone || null,
-        empreendimento: visita.empreendimento || null,
-        origem: visita.origem || "manual",
-        origem_detalhe: visita.origem_detalhe || null,
-        data_visita: visita.data_visita || new Date().toISOString().split("T")[0],
-        hora_visita: visita.hora_visita || null,
-        local_visita: visita.local_visita || null,
-        status: visita.status || "marcada",
-        observacoes: visita.observacoes || null,
-        created_by: user.id,
-        linked_attempt_id: visita.linked_attempt_id || null,
-      } as any)
+      .insert(payload as any)
       .select()
       .single();
 
