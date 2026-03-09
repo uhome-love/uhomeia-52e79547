@@ -351,11 +351,21 @@ const PipelineCard = memo(function PipelineCard({
             </span>
           </div>
 
-          {/* Line 2: empreendimento · origem · phone */}
+          {/* Line 2: empreendimento · campanha · source · phone */}
           <div className="text-[10px] text-muted-foreground truncate leading-tight">
-            {displayEmpreendimento && <span className="font-medium">{displayEmpreendimento}</span>}
-            {displayEmpreendimento && lead.origem && " · "}
-            {lead.origem && <span>{cleanOrigem(lead.origem)}</span>}
+            {displayEmpreendimento && <span className="font-medium text-foreground/80">{displayEmpreendimento}</span>}
+            {(() => {
+              const campanha = extractCampanha(lead.origem);
+              const source = extractOrigemSource(lead.origem);
+              const showOrigem = !displayEmpreendimento && lead.origem;
+              return (
+                <>
+                  {campanha && <>{displayEmpreendimento ? " · " : ""}<span>{campanha}</span></>}
+                  {source && <>{(displayEmpreendimento || campanha) ? " · " : ""}<span>{source}</span></>}
+                  {showOrigem && !campanha && !source && <span>{cleanOrigem(lead.origem)}</span>}
+                </>
+              );
+            })()}
             {lead.telefone && <span> · {formatPhone(lead.telefone)}</span>}
           </div>
 
