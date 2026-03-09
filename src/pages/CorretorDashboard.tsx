@@ -553,8 +553,8 @@ export default function CorretorDashboard() {
             transition={{ delay: 0.08 }}
             className={!metaSalva ? "ring-2 ring-amber-400/60 ring-offset-2 ring-offset-background rounded-xl" : ""}
           >
-            {!metaSalva ? (
-              <DailyProgressCard progress={progress} goals={goals} saveGoals={saveGoals} variant="full" />
+            {!metaSalva || editingMeta ? (
+              <DailyProgressCard progress={progress} goals={goals} saveGoals={async (a, b, c, d) => { await saveGoals(a, b, c, d); setEditingMeta(false); }} variant="full" />
             ) : (
               <Card className="border-primary/20">
                 <CardContent className="p-4 space-y-3">
@@ -563,7 +563,7 @@ export default function CorretorDashboard() {
                       <Zap className="h-4 w-4 text-primary" />
                       <span className="text-sm font-semibold text-foreground">Meta do Dia</span>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-6 text-xs text-primary" onClick={() => saveGoals(null)}>Editar</Button>
+                    <Button variant="ghost" size="sm" className="h-6 text-xs text-primary" onClick={() => setEditingMeta(true)}>Editar</Button>
                   </div>
                   {[
                     { emoji: "🔥", label: "Tentativas", value: progress.tentativas, max: goals?.meta_ligacoes || 30, pct: ligPct, barColor: "bg-primary" },

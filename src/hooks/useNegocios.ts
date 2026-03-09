@@ -135,9 +135,9 @@ export function useNegocios() {
   }, [user, isAdmin, isGestor]);
 
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
+    if (!user || roleLoading) { setLoading(false); return; }
     loadNegocios().finally(() => setLoading(false));
-  }, [user, loadNegocios]);
+  }, [user, loadNegocios, roleLoading]);
 
   // Realtime
   useEffect(() => {
