@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Settings, ChevronDown, Check, MapPin, Loader2 } from "lucide-react";
+import { Settings, ChevronDown, Check, MapPin, Loader2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -64,7 +64,14 @@ export default function RoletaStatusBar() {
     if (decimal < 9.5) return "manha";
     if (decimal < 13.5) return "tarde";
     if (decimal < 18.5) return "noturna";
-    return "manha"; // after 18:30 or during noturna active, next morning
+    return "manha";
+  }, []);
+
+  // TODO: TEMPORÁRIO - dia de teste 09/03. Reverter depois.
+  // Credenciamento permitido até 10h da manhã no dia de teste
+  const isCredenciamentoAberto = useCallback(() => {
+    const h = new Date().getHours();
+    return h < 10;
   }, []);
 
   const getJanelaLabel = (j: string) => {
@@ -299,13 +306,17 @@ export default function RoletaStatusBar() {
                 <span className="ml-1 text-amber-600 font-medium">(pendente)</span>
               )}
             </span>
-          ) : (
+          ) : isCredenciamentoAberto() ? (
             <button
               onClick={() => setCredModalOpen(true)}
               className="text-xs text-amber-600 font-medium hover:text-amber-700 transition-colors hidden sm:inline"
             >
               📍 Nenhum segmento — Credenciar-se →
             </button>
+          ) : (
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Credenciamento encerrado para hoje. Amanhã abra antes das 10h.
+            </span>
           )}
           <button
             onClick={() => setCredModalOpen(true)}
@@ -333,62 +344,73 @@ export default function RoletaStatusBar() {
             </span>
           </div>
 
-          <p className="text-sm text-muted-foreground">
-            Selecione até <strong>2 segmentos</strong> para receber leads automaticamente:
-          </p>
+          {/* TODO: TEMPORÁRIO - dia de teste 09/03. Reverter depois. */}
+          {!isCredenciamentoAberto() ? (
+            <div className="text-center py-6 space-y-2">
+              <Clock className="h-8 w-8 mx-auto text-muted-foreground/40" />
+              <p className="text-sm font-medium text-muted-foreground">Credenciamento encerrado para hoje.</p>
+              <p className="text-xs text-muted-foreground/70">Amanhã abra antes das 10h.</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Selecione até <strong>2 segmentos</strong> para receber leads automaticamente:
+              </p>
 
-          <div className="space-y-2 mt-2">
-            {segmentos.map((seg) => {
-              const isChecked = selectedIds.includes(seg.id);
-              return (
-                <button
-                  key={seg.id}
-                  onClick={() => toggleSegmento(seg.id)}
-                  className={`w-full text-left rounded-xl border p-3 transition-all ${
-                    isChecked
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "border-border hover:border-primary/30 hover:bg-muted/30"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      checked={isChecked}
-                      className="mt-0.5"
-                      onCheckedChange={() => toggleSegmento(seg.id)}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{seg.nome}</p>
-                      {seg.empreendimentos.length > 0 && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {seg.empreendimentos.join(", ")}
-                        </p>
-                      )}
-                      {seg.faixa_preco && (
-                        <p className="text-[10px] text-muted-foreground/70 mt-0.5">{seg.faixa_preco}</p>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+              <div className="space-y-2 mt-2">
+                {segmentos.map((seg) => {
+                  const isChecked = selectedIds.includes(seg.id);
+                  return (
+                    <button
+                      key={seg.id}
+                      onClick={() => toggleSegmento(seg.id)}
+                      className={`w-full text-left rounded-xl border p-3 transition-all ${
+                        isChecked
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border hover:border-primary/30 hover:bg-muted/30"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={isChecked}
+                          className="mt-0.5"
+                          onCheckedChange={() => toggleSegmento(seg.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground">{seg.nome}</p>
+                          {seg.empreendimentos.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {seg.empreendimentos.join(", ")}
+                            </p>
+                          )}
+                          {seg.faixa_preco && (
+                            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{seg.faixa_preco}</p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
 
-          {selectedIds.length >= 2 && (
-            <p className="text-xs text-amber-600 font-medium flex items-center gap-1">
-              ⚠️ Máximo 2 segmentos por corretor
-            </p>
+              {selectedIds.length >= 2 && (
+                <p className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                  ⚠️ Máximo 2 segmentos por corretor
+                </p>
+              )}
+
+              <Button
+                onClick={saveCredenciamento}
+                disabled={saving || selectedIds.length === 0}
+                className="w-full mt-2"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Salvar Credenciamento
+              </Button>
+            </>
           )}
-
-          <Button
-            onClick={saveCredenciamento}
-            disabled={saving || selectedIds.length === 0}
-            className="w-full mt-2"
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
-            Salvar Credenciamento
-          </Button>
         </DialogContent>
       </Dialog>
     </>
