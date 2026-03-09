@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { format, isBefore, startOfDay, addHours, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { dateToBRT, todayBRT } from "@/lib/utils";
+import { dateToBRT, todayBRT, parseDateBRT } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { PipelineTarefa } from "@/hooks/usePipelineLeadData";
