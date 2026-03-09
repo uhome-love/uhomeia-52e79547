@@ -3903,11 +3903,13 @@ export type Database = {
           created_at: string
           created_by: string
           descricao: string | null
+          hora_vencimento: string | null
           id: string
           pipeline_lead_id: string
           prioridade: string
           responsavel_id: string | null
           status: string
+          tipo: string | null
           titulo: string
           updated_at: string
           vence_em: string | null
@@ -3917,11 +3919,13 @@ export type Database = {
           created_at?: string
           created_by: string
           descricao?: string | null
+          hora_vencimento?: string | null
           id?: string
           pipeline_lead_id: string
           prioridade?: string
           responsavel_id?: string | null
           status?: string
+          tipo?: string | null
           titulo: string
           updated_at?: string
           vence_em?: string | null
@@ -3931,11 +3935,13 @@ export type Database = {
           created_at?: string
           created_by?: string
           descricao?: string | null
+          hora_vencimento?: string | null
           id?: string
           pipeline_lead_id?: string
           prioridade?: string
           responsavel_id?: string | null
           status?: string
+          tipo?: string | null
           titulo?: string
           updated_at?: string
           vence_em?: string | null
