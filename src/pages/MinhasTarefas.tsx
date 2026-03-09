@@ -74,6 +74,12 @@ export default function MinhasTarefas() {
   const [leadSearch, setLeadSearch] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedLeadNome, setSelectedLeadNome] = useState("");
+  // Edit task state
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editTipo, setEditTipo] = useState("follow_up");
+  const [editData, setEditData] = useState("");
+  const [editHora, setEditHora] = useState("");
+  const [editObs, setEditObs] = useState("");
 
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ["minhas-tarefas", user?.id],
