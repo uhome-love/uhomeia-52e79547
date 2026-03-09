@@ -83,9 +83,8 @@ export default function NewLeadBanner() {
         filter: `corretor_id=eq.${user.id}`,
       }, (payload) => {
         const newRow = payload.new as any;
-        const oldRow = payload.old as any;
-        // Only trigger when corretor_id was just set (was null or different)
-        if (oldRow?.corretor_id === newRow?.corretor_id) return;
+        // Only show banner for leads pending acceptance
+        if (newRow?.aceite_status !== "pendente") return;
         if (dismissedRef.current.has(newRow.id)) return;
 
         const lead: BannerLead = {
