@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { format } from "date-fns";
+import { todayBRT } from "@/lib/utils";
 import { toast } from "sonner";
 
 export type PdnSituacao = "visita" | "gerado" | "assinado" | "caiu";
