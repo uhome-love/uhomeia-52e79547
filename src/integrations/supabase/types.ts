@@ -1926,6 +1926,10 @@ export type Database = {
           pipeline_fase: string | null
           prioridade: Database["public"]["Enums"]["lead_priority"] | null
           recovery_score: number | null
+          roleta_distribuido_em: string | null
+          roleta_expira_em: string | null
+          roleta_respondido_em: string | null
+          roleta_status: string | null
           status: string | null
           status_recuperacao: string | null
           telefone: string | null
@@ -1953,6 +1957,10 @@ export type Database = {
           pipeline_fase?: string | null
           prioridade?: Database["public"]["Enums"]["lead_priority"] | null
           recovery_score?: number | null
+          roleta_distribuido_em?: string | null
+          roleta_expira_em?: string | null
+          roleta_respondido_em?: string | null
+          roleta_status?: string | null
           status?: string | null
           status_recuperacao?: string | null
           telefone?: string | null
@@ -1980,6 +1988,10 @@ export type Database = {
           pipeline_fase?: string | null
           prioridade?: Database["public"]["Enums"]["lead_priority"] | null
           recovery_score?: number | null
+          roleta_distribuido_em?: string | null
+          roleta_expira_em?: string | null
+          roleta_respondido_em?: string | null
+          roleta_status?: string | null
           status?: string | null
           status_recuperacao?: string | null
           telefone?: string | null
