@@ -170,6 +170,12 @@ function getScoreStyle(score: number) {
   return "text-[#ef4444] font-bold";
 }
 
+interface ProximaTarefa {
+  tipo: string;
+  vence_em: string | null;
+  hora_vencimento: string | null;
+}
+
 interface PipelineCardProps {
   lead: PipelineLead;
   stage?: PipelineStage;
@@ -183,6 +189,7 @@ interface PipelineCardProps {
   onMoveLead?: (leadId: string, stageId: string) => void;
   onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
   stageIndexMap?: Map<string, number>;
+  proximaTarefa?: ProximaTarefa | null;
 }
 
 const PipelineCard = memo(function PipelineCard({
