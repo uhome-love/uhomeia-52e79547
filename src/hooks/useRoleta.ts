@@ -188,8 +188,16 @@ export function useRoleta() {
   const [distribuicoes, setDistribuicoes] = useState<RoletaDistribuicao[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   const hoje = format(new Date(), "yyyy-MM-dd");
+
+  // Load profile ID (profiles.id != auth user.id)
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("id").eq("user_id", user.id).single()
+      .then(({ data }) => { if (data) setProfileId(data.id); });
+  }, [user]);
 
   // Load segmentos + campanhas
   const loadSegmentos = useCallback(async () => {
@@ -319,11 +327,11 @@ export function useRoleta() {
   // ─── Corretor Actions ───
 
   const credenciar = useCallback(async (janela: string, segmento1Id: string, segmento2Id: string | null) => {
-    if (!user) return;
+    if (!user || !profileId) return;
     setSubmitting(true);
     try {
       const { error } = await supabase.from("roleta_credenciamentos").insert({
-        corretor_id: user.id,
+        corretor_id: profileId,
         janela,
         segmento_1_id: segmento1Id,
         segmento_2_id: segmento2Id || null,
@@ -339,7 +347,7 @@ export function useRoleta() {
     } finally {
       setSubmitting(false);
     }
-  }, [user, hoje, loadCredenciamentos]);
+  }, [user, profileId, hoje, loadCredenciamentos]);
 
   const sairDaRoleta = useCallback(async (credenciamentoId: string) => {
     if (!user) return;
@@ -448,9 +456,9 @@ export function useRoleta() {
 
   // Current corretor's credenciamento
   const meuCredenciamento = useMemo(() => {
-    if (!user) return null;
-    return credenciamentos.find(c => c.corretor_id === user.id && c.data === hoje && c.status !== "recusado" && c.status !== "saiu") || null;
-  }, [user, credenciamentos, hoje]);
+    if (!profileId) return null;
+    return credenciamentos.find(c => c.corretor_id === profileId && c.data === hoje && c.status !== "recusado" && c.status !== "saiu") || null;
+  }, [profileId, credenciamentos, hoje]);
 
   // Pending count
   const pendentesCount = useMemo(() => {

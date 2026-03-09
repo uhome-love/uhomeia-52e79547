@@ -213,8 +213,7 @@ export default function RoletaStatusBar() {
       janela,
       segmento_1_id: selectedIds[0] || null,
       segmento_2_id: selectedIds[1] || null,
-      status: "aprovado",
-      aprovado: true,
+      status: "pendente",
     } as any);
 
     if (error) {
