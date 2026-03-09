@@ -196,49 +196,26 @@ function LeadPopupCard({ lead, onResult, total, current }: { lead: PendingLead; 
 
           {/* Actions */}
           {mode === "initial" ? (
-            <div className="space-y-3 pt-2">
-              <p className="text-xs font-medium text-muted-foreground text-center">Ao aceitar, qual será sua ação?</p>
-              <RadioGroup value={selectedStatus} onValueChange={setSelectedStatus} className="grid grid-cols-2 gap-2">
-                {STATUS_OPTIONS.map((opt) => {
-                  const Icon = opt.icon;
-                  return (
-                    <Label
-                      key={opt.value}
-                      htmlFor={`s-${lead.id}-${opt.value}`}
-                      className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all text-xs font-medium ${
-                        selectedStatus === opt.value
-                          ? "border-primary bg-primary/10 text-primary shadow-sm"
-                          : "border-border hover:bg-accent hover:border-accent"
-                      }`}
-                    >
-                      <RadioGroupItem value={opt.value} id={`s-${lead.id}-${opt.value}`} className="sr-only" />
-                      <Icon className="h-4 w-4" />
-                      {opt.label}
-                    </Label>
-                  );
-                })}
-              </RadioGroup>
-
-              <div className="flex gap-3 pt-1">
-                <Button
-                  onClick={handleAccept}
-                  disabled={loading}
-                  size="lg"
-                  className="flex-1 gap-2 h-14 text-base font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow"
-                >
-                  <Check className="h-5 w-5" />
-                  Aceitar Lead
-                </Button>
-                <Button
-                  onClick={() => setMode("rejecting")}
-                  disabled={loading}
-                  variant="outline"
-                  size="lg"
-                  className="gap-2 h-14 rounded-xl border-2"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={handleAccept}
+                disabled={loading}
+                size="lg"
+                className="flex-1 gap-2 h-14 text-base font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              >
+                <Check className="h-5 w-5" />
+                Aceitar Lead
+              </Button>
+              <Button
+                onClick={() => setMode("rejecting")}
+                disabled={loading}
+                variant="outline"
+                size="lg"
+                className="gap-2 h-14 rounded-xl border-2"
+              >
+                <X className="h-5 w-5" />
+                Rejeitar
+              </Button>
             </div>
           ) : (
             <div className="space-y-3 pt-2">
