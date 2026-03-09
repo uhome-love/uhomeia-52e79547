@@ -511,7 +511,7 @@ async function handleAcceptReject(supabase: any, body: any, userId: string, supa
       .maybeSingle();
 
     if (leadData) {
-      await supabase.from("notifications").insert({
+      const notifRes2 = await supabase.from("notifications").insert({
         user_id: userId,
         tipo: "lead",
         categoria: "lead_aceito",
@@ -519,7 +519,8 @@ async function handleAcceptReject(supabase: any, body: any, userId: string, supa
         mensagem: `${leadData.nome || "Lead"} - ${leadData.empreendimento || ""}. Faça o primeiro contato agora!`,
         dados: { pipeline_lead_id },
         agrupamento_key: `lead_aceito_${pipeline_lead_id}`,
-      }).catch(() => {});
+      });
+      if (notifRes2.error) console.warn("notification insert:", notifRes2.error.message);
     }
 
     return jsonResponse({ success: true });
