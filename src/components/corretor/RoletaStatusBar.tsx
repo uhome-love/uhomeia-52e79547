@@ -170,7 +170,7 @@ export default function RoletaStatusBar() {
       let activeIds: string[] = [];
       let activeStatus = "";
       (creds || []).forEach(c => {
-        porJanela[c.janela] = true;
+        porJanela[toUiJanela(c.janela)] = true;
         const ids = [c.segmento_1_id, c.segmento_2_id].filter(Boolean) as string[];
         if (ids.length > 0) { activeIds = ids; activeStatus = c.status || ""; }
       });
@@ -207,22 +207,22 @@ export default function RoletaStatusBar() {
     if (!user || !profileId || selectedIds.length === 0) return;
     setSaving(true);
     const today = new Date().toISOString().slice(0, 10);
+    const janelaDb = toDbJanela(janela);
 
-    // Upsert
-    await supabase.from("roleta_credenciamentos").delete().eq("corretor_id", profileId).eq("data", today).eq("janela", janela);
-
-    const { error } = await supabase.from("roleta_credenciamentos").insert({
+    const { error } = await supabase.from("roleta_credenciamentos").upsert({
       corretor_id: profileId,
       data: today,
-      janela,
+      janela: janelaDb,
       segmento_1_id: selectedIds[0] || null,
       segmento_2_id: selectedIds[1] || null,
       status: "pendente",
-    } as any);
+    } as any, {
+      onConflict: "corretor_id,data,janela",
+    });
 
     if (error) {
       console.error("Credenciamento error:", error);
-      toast.error("Erro ao salvar credenciamento");
+      toast.error(`Erro ao salvar credenciamento: ${error.message}`);
       setSaving(false);
       return;
     }
