@@ -502,11 +502,82 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                     </Button>
                   </div>
                 ) : (
-                  /* Horizontal layout: Empreendimento | Valor | Origem */
+                  /* Horizontal layout: Empreendimento (inline editable) | Valor | Origem */
                   <div className="flex items-center gap-6 flex-wrap text-sm py-2">
-                    <div>
+                    <div className="relative">
                       <span className="text-xs text-muted-foreground">Empreendimento</span>
-                      <p className="font-medium text-foreground">{lead.empreendimento || <span className="text-muted-foreground/60">Não definido</span>}</p>
+                      {lead.empreendimento ? (
+                        <Popover open={empreendimentoOpen} onOpenChange={setEmpreendimentoOpen}>
+                          <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors group">
+                              {lead.empreendimento}
+                              <span className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity text-xs">✏️</span>
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-2" align="start">
+                            <Input
+                              placeholder="Buscar empreendimento..."
+                              value={empreendimentoSearch}
+                              onChange={e => setEmpreendimentoSearch(e.target.value)}
+                              className="h-8 text-xs mb-2"
+                              autoFocus
+                            />
+                            <div className="max-h-48 overflow-y-auto space-y-0.5">
+                              {EMPREENDIMENTOS_UHOME.filter(e => e.toLowerCase().includes(empreendimentoSearch.toLowerCase())).map(e => (
+                                <button
+                                  key={e}
+                                  className={`w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors ${e === lead.empreendimento ? 'bg-primary/10 text-primary font-semibold' : ''}`}
+                                  onClick={async () => {
+                                    setSavingEmpreendimento(true);
+                                    await onUpdate(lead.id, { empreendimento: e } as any);
+                                    setEmpreendimentoOpen(false);
+                                    setEmpreendimentoSearch("");
+                                    setSavingEmpreendimento(false);
+                                    toast.success("Empreendimento atualizado ✅");
+                                  }}
+                                >
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        <Popover open={empreendimentoOpen} onOpenChange={setEmpreendimentoOpen}>
+                          <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors border border-amber-300 dark:border-amber-700">
+                              🏠 Selecionar Empreendimento ▼
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-2" align="start">
+                            <Input
+                              placeholder="Buscar empreendimento..."
+                              value={empreendimentoSearch}
+                              onChange={e => setEmpreendimentoSearch(e.target.value)}
+                              className="h-8 text-xs mb-2"
+                              autoFocus
+                            />
+                            <div className="max-h-48 overflow-y-auto space-y-0.5">
+                              {EMPREENDIMENTOS_UHOME.filter(e => e.toLowerCase().includes(empreendimentoSearch.toLowerCase())).map(e => (
+                                <button
+                                  key={e}
+                                  className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors"
+                                  onClick={async () => {
+                                    setSavingEmpreendimento(true);
+                                    await onUpdate(lead.id, { empreendimento: e } as any);
+                                    setEmpreendimentoOpen(false);
+                                    setEmpreendimentoSearch("");
+                                    setSavingEmpreendimento(false);
+                                    toast.success("Empreendimento atualizado ✅");
+                                  }}
+                                >
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                     </div>
                     <div className="h-8 w-px bg-border" />
                     <div>
