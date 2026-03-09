@@ -390,13 +390,13 @@ async function distributeSingleLead(
 
   const authIds = [...profileToAuth.values()];
 
-  // Count today's leads
+  // Count today's leads — only actually assigned (aceito/pendente), NOT pendente_distribuicao
   const { data: todayLeads } = await supabase
     .from("pipeline_leads")
     .select("corretor_id, distribuido_em")
     .in("corretor_id", authIds)
     .gte("distribuido_em", todayStart)
-    .in("aceite_status", ["aceito", "pendente", "pendente_distribuicao"]);
+    .in("aceite_status", ["aceito", "pendente"]);
 
   const leadsCount = new Map<string, number>();
   const lastReceived = new Map<string, string>();
