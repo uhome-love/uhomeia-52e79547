@@ -68,8 +68,8 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
   const today = startOfDay(new Date());
   const pendentes = tarefas.filter(t => t.status === "pendente");
   const concluidas = tarefas.filter(t => t.status === "concluida");
-  const atrasadas = pendentes.filter(t => t.vence_em && isBefore(new Date(t.vence_em), today));
-  const proximas = pendentes.filter(t => !t.vence_em || !isBefore(new Date(t.vence_em), today));
+  const atrasadas = pendentes.filter(t => t.vence_em && isBefore(parseDateBRT(t.vence_em), today));
+  const proximas = pendentes.filter(t => !t.vence_em || !isBefore(parseDateBRT(t.vence_em), today));
 
   const whatsappUrl = leadTelefone ? `https://wa.me/${leadTelefone.replace(/\D/g, "")}` : null;
 
