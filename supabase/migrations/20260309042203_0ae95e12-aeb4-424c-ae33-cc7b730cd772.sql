@@ -1,0 +1,1 @@
+DELETE FROM pipeline_leads WHERE id IN ('4d63ba71-bf69-4dd0-89a5-953fbc540460', '15828f18-0703-4541-8d00-30e1d587164a');
