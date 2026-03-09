@@ -26,7 +26,7 @@ import {
   Trash2, Ban, PhoneOff, Handshake, MoreHorizontal, Bot
 } from "lucide-react";
 import PartnershipDialog from "./PartnershipDialog";
-import GerenteManagementSection from "./GerenteManagementSection";
+// GerenteManagementSection removed per cleanup
 import LeadSequenceSuggestion from "./LeadSequenceSuggestion";
 import HomiLeadAssistant from "./HomiLeadAssistant";
 import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
@@ -739,11 +739,11 @@ function DataField({ label, value }: { label: string; value: string | null | und
 
 function InsightItem({ icon: Icon, label, value, alert }: { icon: any; label: string; value: string; alert?: boolean }) {
   return (
-    <div className={`flex items-center gap-2 p-1.5 rounded ${alert ? "bg-amber-100/50 dark:bg-amber-950/30" : ""}`}>
-      <Icon className={`h-3.5 w-3.5 shrink-0 ${alert ? "text-amber-500" : "text-primary/60"}`} />
+    <div className={`flex items-center gap-3 p-2.5 rounded-lg ${alert ? "bg-amber-100/50 dark:bg-amber-950/30" : "bg-muted/30"}`}>
+      <Icon className={`h-5 w-5 shrink-0 ${alert ? "text-amber-500" : "text-primary/60"}`} />
       <div>
-        <span className="text-[9px] text-muted-foreground">{label}</span>
-        <p className={`text-[11px] font-semibold ${alert ? "text-amber-600" : "text-foreground"}`}>{value}</p>
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <p className={`text-lg font-bold ${alert ? "text-amber-600" : "text-foreground"}`}>{value}</p>
       </div>
     </div>
   );
@@ -751,11 +751,11 @@ function InsightItem({ icon: Icon, label, value, alert }: { icon: any; label: st
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="flex flex-col items-center py-6 text-center">
-      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mb-1.5">
-        <FileText className="h-3.5 w-3.5 text-muted-foreground/40" />
+    <div className="flex flex-col items-center py-8 text-center">
+      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
+        <FileText className="h-4 w-4 text-muted-foreground/40" />
       </div>
-      <span className="text-[11px] text-muted-foreground">{text}</span>
+      <span className="text-sm text-muted-foreground">{text}</span>
     </div>
   );
 }
