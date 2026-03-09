@@ -26,7 +26,7 @@ import {
   Trash2, Ban, PhoneOff, Handshake, MoreHorizontal, Bot
 } from "lucide-react";
 import PartnershipDialog from "./PartnershipDialog";
-import GerenteManagementSection from "./GerenteManagementSection";
+// GerenteManagementSection removed per cleanup
 import LeadSequenceSuggestion from "./LeadSequenceSuggestion";
 import HomiLeadAssistant from "./HomiLeadAssistant";
 import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
@@ -78,6 +78,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [homiOpen, setHomiOpen] = useState(false);
+  const [showCustomAction, setShowCustomAction] = useState(false);
 
   // Edit states
   const [editingCommercial, setEditingCommercial] = useState(false);
@@ -168,21 +169,20 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl p-0 flex flex-col overflow-hidden border-l border-border/50">
+      <SheetContent className="w-full sm:max-w-2xl p-0 flex flex-col overflow-hidden border-l border-border/50 max-h-[100dvh]">
 
         {/* ════════════ ZONA 1 — HEADER FIXO ════════════ */}
         <div className="shrink-0 border-b border-border/50 bg-card">
-          <div className="px-4 pt-4 pb-2 space-y-2">
-            {/* Row 1: Name + Stage badge (clickable) + Days */}
+          <div className="px-6 pt-5 pb-3 space-y-3">
+            {/* Row 1: Name + Stage badge + Temp + Days */}
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <TempIcon className={`h-4 w-4 shrink-0 ${temperatureInfo.color}`} />
-                <h2 className="text-base font-bold text-foreground truncate">{lead.nome}</h2>
+              <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                <h2 className="text-xl font-bold text-foreground truncate">{lead.nome}</h2>
 
                 {/* Stage badge — click to change */}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border cursor-pointer hover:opacity-80 transition-opacity shrink-0" style={{ backgroundColor: currentStage?.cor + "18", color: currentStage?.cor, borderColor: currentStage?.cor + "44" }}>
+                    <button className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold border cursor-pointer hover:opacity-80 transition-opacity shrink-0" style={{ backgroundColor: currentStage?.cor + "18", color: currentStage?.cor, borderColor: currentStage?.cor + "44" }}>
                       <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: currentStage?.cor }} />
                       {currentStage?.nome}
                       <ChevronDown className="h-2.5 w-2.5" />
@@ -200,92 +200,80 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                     </div>
                   </PopoverContent>
                 </Popover>
+
+                {/* Temperatura — discreto ao lado do badge */}
+                <span className={`flex items-center gap-0.5 text-xs font-medium ${temperatureInfo.color}`}>
+                  <TempIcon className="h-3.5 w-3.5" />
+                  {temperatureInfo.label}
+                </span>
+
+                {lead.oportunidade_score != null && (() => {
+                  const s = lead.oportunidade_score!;
+                  const scoreStyle = s >= 81
+                    ? { emoji: "💎", label: `${s}`, cls: "text-red-500 font-black" }
+                    : s >= 61
+                    ? { emoji: "⚡", label: `${s}`, cls: "text-orange-500 font-bold" }
+                    : s >= 31
+                    ? { emoji: "🔥", label: `${s}`, cls: "text-amber-500 font-semibold" }
+                    : { emoji: "🧊", label: `${s}`, cls: "text-blue-500 font-semibold" };
+                  return (
+                    <span className={`text-xs ${scoreStyle.cls}`}>{scoreStyle.emoji} {scoreStyle.label}</span>
+                  );
+                })()}
               </div>
 
-              <span className="text-[11px] text-muted-foreground shrink-0 font-medium">{daysSinceCreation}d</span>
+              <span className="text-xs text-muted-foreground shrink-0 font-medium">{daysSinceCreation}d</span>
             </div>
 
-            {/* Row 2: Empreendimento + Temp + Score */}
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
-              {lead.empreendimento && (
-                <span className="flex items-center gap-1">
-                  <Building2 className="h-3 w-3" />
-                  {lead.empreendimento}
-                </span>
-              )}
-              <span className={`font-medium ${temperatureInfo.color}`}>{temperatureInfo.label}</span>
-              {lead.oportunidade_score != null && (() => {
-                const s = lead.oportunidade_score!;
-                const scoreStyle = s >= 81
-                  ? { emoji: "💎", label: "Hot", cls: "text-red-500 font-black", glow: "0 0 12px rgba(239,68,68,0.4)" }
-                  : s >= 61
-                  ? { emoji: "⚡", label: "Quente", cls: "text-orange-500 font-bold", glow: undefined }
-                  : s >= 31
-                  ? { emoji: "🔥", label: "Morno", cls: "text-amber-500 font-semibold", glow: undefined }
-                  : { emoji: "🧊", label: "Frio", cls: "text-blue-500 font-semibold", glow: undefined };
-                return (
-                  <span className={`flex items-center gap-0.5 ${scoreStyle.cls}`} style={scoreStyle.glow ? { textShadow: scoreStyle.glow } : undefined}>
-                    <Target className="h-3 w-3" /> {scoreStyle.emoji} {s} {scoreStyle.label}
-                  </span>
-                );
-              })()}
-              {lead.valor_estimado ? (
-                <span className="flex items-center gap-0.5 font-semibold text-primary">
-                  <DollarSign className="h-3 w-3" />
-                  R$ {lead.valor_estimado.toLocaleString("pt-BR")}
-                </span>
-              ) : null}
-            </div>
-
-            {/* Row 3: Contact info */}
-            <div className="flex items-center gap-3 text-[11px] flex-wrap">
+            {/* Row 2: Contact info — larger */}
+            <div className="flex items-center gap-4 flex-wrap">
               {lead.telefone && (
-                <a href={`tel:${lead.telefone}`} className="text-foreground hover:text-primary transition-colors flex items-center gap-1">
-                  <Phone className="h-3 w-3" /> {lead.telefone}
+                <a href={`tel:${lead.telefone}`} className="text-base text-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+                  <Phone className="h-4 w-4" /> {lead.telefone}
                 </a>
               )}
               {lead.email && (
-                <a href={`mailto:${lead.email}`} className="text-foreground hover:text-primary transition-colors flex items-center gap-1 truncate">
-                  <Mail className="h-3 w-3" /> {lead.email}
+                <a href={`mailto:${lead.email}`} className="text-base text-foreground hover:text-primary transition-colors flex items-center gap-1.5 truncate">
+                  <Mail className="h-4 w-4" /> {lead.email}
                 </a>
               )}
             </div>
 
-            {/* Row 4: Action buttons */}
-            <div className="flex items-center gap-1.5">
+            {/* Row 3: Action buttons — larger tap targets */}
+            <div className="flex items-center gap-2 flex-wrap">
               {lead.telefone && (
                 <a href={`tel:${lead.telefone}`}>
-                  <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 rounded-full border-border/60 hover:border-primary hover:text-primary">
-                    <Phone className="h-3 w-3" /> Ligar
+                  <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-border/60 hover:border-primary hover:text-primary">
+                    <Phone className="h-3.5 w-3.5" /> Ligar
                   </Button>
                 </a>
               )}
               {whatsappUrl && (
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 rounded-full border-green-300 text-green-600 hover:bg-green-50">
-                    <MessageSquare className="h-3 w-3" /> WhatsApp
+                  <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-green-300 text-green-600 hover:bg-green-50">
+                    <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
                   </Button>
                 </a>
               )}
               {lead.email && (
                 <a href={`mailto:${lead.email}`}>
-                  <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 rounded-full border-border/60 hover:border-primary hover:text-primary">
-                    <Mail className="h-3 w-3" /> Email
+                  <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-border/60 hover:border-primary hover:text-primary">
+                    <Mail className="h-3.5 w-3.5" /> Email
                   </Button>
                 </a>
               )}
-              <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 rounded-full border-blue-300 text-blue-500 hover:bg-blue-50" onClick={() => setComunicacaoOpen(true)}>
-                <MessageSquare className="h-3 w-3" /> 💬 Mensagem
+              <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-blue-300 text-blue-500 hover:bg-blue-50" onClick={() => setComunicacaoOpen(true)}>
+                <MessageSquare className="h-3.5 w-3.5" /> 💬 Mensagem
               </Button>
-              <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 rounded-full" onClick={() => { setActiveTab("historico"); setShowNewAtividade(true); }}>
-                <Plus className="h-3 w-3" /> Ação
+              <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full" onClick={() => { setActiveTab("historico"); setShowNewAtividade(true); }}>
+                <Plus className="h-3.5 w-3.5" /> Ação
               </Button>
 
               {/* ⋯ More menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-full">
-                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  <Button variant="outline" size="sm" className="h-8 w-8 p-0 rounded-full">
+                    <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -309,7 +297,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                     );
                   })()}
                   {onDelete && (
-                    <DropdownMenuItem className="text-destructive" onClick={() => { /* handled by alert dialog below */ }}>
+                    <DropdownMenuItem className="text-destructive">
                       <PhoneOff className="h-3.5 w-3.5 mr-2" /> Contato errado
                     </DropdownMenuItem>
                   )}
@@ -325,19 +313,19 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
         </div>
 
         {/* ════════════ ZONA 2 — PRÓXIMA AÇÃO (fixo) ════════════ */}
-        <div className="shrink-0 border-b border-border/50 bg-accent/20 px-4 py-3 space-y-2">
+        <div className="shrink-0 border-b border-border/50 bg-accent/20 px-6 py-3 space-y-2">
           <div className="flex items-center gap-1.5">
-            <Zap className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[11px] font-bold text-foreground uppercase tracking-wide">Próxima Ação</span>
+            <Zap className="h-4 w-4 text-primary" />
+            <span className="text-xs font-bold text-foreground uppercase tracking-wide">Próxima Ação</span>
             {lead.proxima_acao && lead.data_proxima_acao && (
-              <span className="text-[10px] text-muted-foreground ml-auto">
+              <span className="text-xs text-muted-foreground ml-auto">
                 {format(new Date(lead.data_proxima_acao + "T00:00:00"), "dd/MM", { locale: ptBR })}
               </span>
             )}
           </div>
 
           {/* Quick action chips */}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {[
               { label: "Ligar", icon: "📞", borderColor: "border-orange-300", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" },
               { label: "Enviar material", icon: "📄", borderColor: "border-blue-300", textColor: "text-blue-600", hoverBg: "hover:bg-blue-50" },
@@ -345,13 +333,11 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               { label: "Enviar proposta", icon: "💰", borderColor: "border-purple-300", textColor: "text-purple-600", hoverBg: "hover:bg-purple-50" },
               { label: "Follow-up WhatsApp", icon: "💬", borderColor: "border-emerald-300", textColor: "text-emerald-600", hoverBg: "hover:bg-emerald-50" },
               { label: "Confirmar visita", icon: "✅", borderColor: "border-teal-300", textColor: "text-teal-600", hoverBg: "hover:bg-teal-50" },
-              { label: "Retornar cliente", icon: "🔄", borderColor: "border-border", textColor: "text-foreground", hoverBg: "hover:bg-accent" },
-              { label: "Enviar localização", icon: "📍", borderColor: "border-border", textColor: "text-foreground", hoverBg: "hover:bg-accent" },
             ].map(action => (
               <button
                 key={action.label}
-                onClick={() => setProximaAcao(action.label)}
-                className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors ${
+                onClick={() => { setProximaAcao(action.label); handleSaveProximaAcao(); }}
+                className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
                   proximaAcao === action.label
                     ? "bg-primary text-primary-foreground border-primary"
                     : `bg-background ${action.textColor} ${action.borderColor} ${action.hoverBg}`
@@ -360,63 +346,75 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 {action.icon} {action.label}
               </button>
             ))}
+            {/* + Ação personalizada (collapsed) */}
+            {!showCustomAction && (
+              <button
+                onClick={() => setShowCustomAction(true)}
+                className="text-xs px-2.5 py-1 rounded-md border border-dashed border-muted-foreground/40 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                + Personalizada
+              </button>
+            )}
           </div>
 
-          {/* Input + date + save */}
-          <div className="flex gap-1.5 items-center">
-            <Input className="h-7 text-xs flex-1" value={proximaAcao} onChange={e => setProximaAcao(e.target.value)} placeholder="Ou digite ação personalizada..." />
-            <Input type="date" className="h-7 text-xs w-28" value={dataProximaAcao} onChange={e => setDataProximaAcao(e.target.value)} />
-            <Button size="sm" className="h-7 text-[11px] px-3" onClick={handleSaveProximaAcao} disabled={saving || !proximaAcao}>
-              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar"}
-            </Button>
-          </div>
+          {/* Custom action input — collapsible */}
+          {showCustomAction && (
+            <div className="flex gap-1.5 items-center">
+              <Input className="h-8 text-sm flex-1" value={proximaAcao} onChange={e => setProximaAcao(e.target.value)} placeholder="Descreva a ação..." autoFocus />
+              <Input type="date" className="h-8 text-sm w-32" value={dataProximaAcao} onChange={e => setDataProximaAcao(e.target.value)} />
+              <Button size="sm" className="h-8 text-xs px-3" onClick={() => { handleSaveProximaAcao(); setShowCustomAction(false); }} disabled={saving || !proximaAcao}>
+                {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar"}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setShowCustomAction(false)}>✕</Button>
+            </div>
+          )}
         </div>
 
         {/* ════════════ ZONA 3 — CONTEÚDO (4 Abas) ════════════ */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <div className="shrink-0 mx-4 mt-2 flex items-center gap-2">
-            <TabsList className="bg-muted/50 h-8 flex-1">
-              <TabsTrigger value="inteligencia" className="text-[11px] h-6 data-[state=active]:shadow-sm">
-                <Brain className="h-3 w-3 mr-1" /> Inteligência
+          <div className="shrink-0 mx-6 mt-3 mb-4 flex items-center gap-2">
+            <TabsList className="bg-muted/50 h-9 flex-1">
+              <TabsTrigger value="inteligencia" className="text-sm h-7 data-[state=active]:shadow-sm">
+                <Brain className="h-3.5 w-3.5 mr-1" /> Inteligência
               </TabsTrigger>
-              <TabsTrigger value="historico" className="text-[11px] h-6 data-[state=active]:shadow-sm">
-                <History className="h-3 w-3 mr-1" /> Histórico
+              <TabsTrigger value="historico" className="text-sm h-7 data-[state=active]:shadow-sm">
+                <History className="h-3.5 w-3.5 mr-1" /> Histórico
                 {leadData.atividades.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">{leadData.atividades.length}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value="visitas-propostas" className="text-[11px] h-6 data-[state=active]:shadow-sm">
-                <MapPin className="h-3 w-3 mr-1" /> Visitas
+              <TabsTrigger value="visitas-propostas" className="text-sm h-7 data-[state=active]:shadow-sm">
+                <MapPin className="h-3.5 w-3.5 mr-1" /> Visitas
               </TabsTrigger>
-              <TabsTrigger value="tarefas" className="text-[11px] h-6 data-[state=active]:shadow-sm">
-                <ClipboardList className="h-3 w-3 mr-1" /> Tarefas
+              <TabsTrigger value="tarefas" className="text-sm h-7 data-[state=active]:shadow-sm">
+                <ClipboardList className="h-3.5 w-3.5 mr-1" /> Tarefas
                 {pendingTasks > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">{pendingTasks}</Badge>}
               </TabsTrigger>
             </TabsList>
             <Button
               size="sm"
-              className="h-8 text-[11px] px-3 gap-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md shrink-0"
+              className="h-9 text-xs px-4 gap-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md shrink-0"
               onClick={() => setComunicacaoOpen(true)}
             >
               ✨ HOMI
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 min-h-0">
+          <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: "calc(85vh - 280px)" }}>
             {/* ===== TAB: INTELIGÊNCIA ===== */}
-            <TabsContent value="inteligencia" className="px-4 pb-6 space-y-4 mt-0">
+            <TabsContent value="inteligencia" className="px-6 pb-8 space-y-5 mt-0">
               {/* Lead intelligence card */}
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
-                <h4 className="text-[11px] font-bold text-primary flex items-center gap-1.5">
-                  <Brain className="h-3.5 w-3.5" /> Inteligência do Lead
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <h4 className="text-xs font-bold text-primary flex items-center gap-1.5">
+                  <Brain className="h-4 w-4" /> Inteligência do Lead
                 </h4>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <InsightItem icon={Timer} label="Sem contato" value={lastActivity ? formatDistanceToNow(new Date(lastActivity.created_at), { locale: ptBR }) : "Nenhum"} alert={!lastActivity || differenceInHours(new Date(), new Date(lastActivity.created_at)) > 48} />
                   <InsightItem icon={PhoneCall} label="Tentativas" value={`${leadData.atividades.length}`} />
                   <InsightItem icon={Clock} label="Nesta etapa" value={hoursInStage < 24 ? `${hoursInStage}h` : `${Math.round(hoursInStage / 24)}d`} alert={hoursInStage > 72} />
                   <InsightItem icon={AlertTriangle} label="Atrasadas" value={overdueTasks > 0 ? `${overdueTasks}` : "0"} alert={overdueTasks > 0} />
                 </div>
                 {hoursInStage > 48 && !lastActivity && (
-                  <p className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-1 rounded flex items-center gap-1">
-                    <Zap className="h-3 w-3" /> Faça contato imediato — lead sem interação.
+                  <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-lg flex items-center gap-1.5">
+                    <Zap className="h-4 w-4" /> Faça contato imediato — lead sem interação.
                   </p>
                 )}
               </div>
@@ -426,34 +424,23 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 <LeadSequenceSuggestion leadId={lead.id} leadNome={lead.nome} stageType={currentStage.tipo} empreendimento={lead.empreendimento} />
               )}
 
-              {/* Commercial Data (compact grid) */}
-              <div className="space-y-1.5">
+              {/* Commercial Data — simplified horizontal layout */}
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <TrendingUp className="h-3.5 w-3.5" /> Dados Comerciais
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <TrendingUp className="h-4 w-4" /> Dados Comerciais
                   </h4>
-                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-primary" onClick={() => setEditingCommercial(!editingCommercial)}>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs text-primary" onClick={() => setEditingCommercial(!editingCommercial)}>
                     {editingCommercial ? "Cancelar" : "Editar"}
                   </Button>
                 </div>
                 {editingCommercial ? (
-                  <div className="space-y-2 border rounded-lg p-3 bg-card">
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-3 border rounded-xl p-4 bg-card">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-[10px]">Objetivo</Label>
-                        <Select value={commercialData.objetivo_cliente} onValueChange={v => setCommercialData(p => ({ ...p, objetivo_cliente: v }))}>
-                          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="morar">Morar</SelectItem>
-                            <SelectItem value="investir">Investir</SelectItem>
-                            <SelectItem value="ambos">Ambos</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Temperatura</Label>
+                        <Label className="text-xs text-muted-foreground">Temperatura</Label>
                         <Select value={commercialData.temperatura} onValueChange={v => setCommercialData(p => ({ ...p, temperatura: v }))}>
-                          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="quente">🔥 Quente</SelectItem>
                             <SelectItem value="morno">☀️ Morno</SelectItem>
@@ -462,196 +449,183 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px]">Pagamento</Label>
-                        <Select value={commercialData.forma_pagamento} onValueChange={v => setCommercialData(p => ({ ...p, forma_pagamento: v }))}>
-                          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="financiamento">Financiamento</SelectItem>
-                            <SelectItem value="avista">À vista</SelectItem>
-                            <SelectItem value="parcelado">Parcelado</SelectItem>
-                            <SelectItem value="fgts">FGTS</SelectItem>
-                            <SelectItem value="consorcio">Consórcio</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
+                        <Input type="number" className="h-9 text-sm" value={commercialData.valor_estimado || ""} onChange={e => setCommercialData(p => ({ ...p, valor_estimado: Number(e.target.value) }))} />
                       </div>
-                      <div>
-                        <Label className="text-[10px]">Valor (R$)</Label>
-                        <Input type="number" className="h-7 text-xs" value={commercialData.valor_estimado || ""} onChange={e => setCommercialData(p => ({ ...p, valor_estimado: Number(e.target.value) }))} />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Bairro / Região</Label>
-                      <Input className="h-7 text-xs" value={commercialData.bairro_regiao} onChange={e => setCommercialData(p => ({ ...p, bairro_regiao: e.target.value }))} />
                     </div>
                     <div className="flex items-center gap-2">
                       <Checkbox checked={commercialData.imovel_troca} onCheckedChange={v => setCommercialData(p => ({ ...p, imovel_troca: !!v }))} />
-                      <Label className="text-[10px]">Imóvel na troca</Label>
+                      <Label className="text-xs">Imóvel na troca</Label>
                     </div>
-                    <Button size="sm" className="w-full h-7 text-xs" onClick={handleSaveCommercial} disabled={saving}>
-                      {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar"}
+                    <Button size="sm" className="w-full h-9 text-sm" onClick={handleSaveCommercial} disabled={saving}>
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-[11px]">
-                    <DataField label="Empreendimento" value={lead.empreendimento} />
-                    <DataField label="Objetivo" value={(lead as any).objetivo_cliente ? ((lead as any).objetivo_cliente === "morar" ? "Morar" : (lead as any).objetivo_cliente === "investir" ? "Investir" : "Ambos") : null} />
-                    <DataField label="Valor" value={lead.valor_estimado ? `R$ ${lead.valor_estimado.toLocaleString("pt-BR")}` : null} />
-                    <DataField label="Bairro" value={(lead as any).bairro_regiao} />
-                    <DataField label="Pagamento" value={(lead as any).forma_pagamento} />
-                    <DataField label="Origem" value={lead.origem} />
+                  /* Horizontal layout: Empreendimento | Valor | Origem */
+                  <div className="flex items-center gap-6 flex-wrap text-sm py-2">
+                    <div>
+                      <span className="text-xs text-muted-foreground">Empreendimento</span>
+                      <p className="font-medium text-foreground">{lead.empreendimento || <span className="text-muted-foreground/60">Não definido</span>}</p>
+                    </div>
+                    <div className="h-8 w-px bg-border" />
+                    <div>
+                      <span className="text-xs text-muted-foreground">Valor</span>
+                      <p className="font-medium text-foreground">{lead.valor_estimado ? `R$ ${lead.valor_estimado.toLocaleString("pt-BR")}` : <span className="text-muted-foreground/60">—</span>}</p>
+                    </div>
+                    <div className="h-8 w-px bg-border" />
+                    <div>
+                      <span className="text-xs text-muted-foreground">Origem</span>
+                      <p className="font-medium text-foreground">{lead.origem || <span className="text-muted-foreground/60">—</span>}</p>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Responsabilidade (compact) */}
-              <GerenteManagementSection lead={lead} onUpdate={onUpdate} />
-
               {/* Observações */}
               {lead.observacoes && (
-                <p className="text-[11px] text-muted-foreground bg-muted/50 rounded p-2">
+                <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
                   {lead.observacoes}
                 </p>
               )}
             </TabsContent>
 
             {/* ===== TAB: HISTÓRICO (Atividades + Notas + Timeline) ===== */}
-            <TabsContent value="historico" className="px-4 pb-6 space-y-4 mt-0">
+            <TabsContent value="historico" className="px-6 pb-8 space-y-5 mt-0">
               {/* Timeline visual */}
               <div className="relative">
-                <div className="absolute left-3 top-0 bottom-0 w-px bg-border" />
+                <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
                 <div className="space-y-0">
                   {buildTimeline(leadData.historico, leadData.atividades, leadData.tarefas, stages, lead).slice(0, 10).map((item, i) => (
-                    <div key={i} className="relative flex gap-3 pb-3">
-                      <div className={`relative z-10 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${item.color}`}>
-                        <item.icon className="h-2.5 w-2.5" />
+                    <div key={i} className="relative flex gap-4 pb-4">
+                      <div className={`relative z-10 h-7 w-7 rounded-full flex items-center justify-center shrink-0 ${item.color}`}>
+                        <item.icon className="h-3.5 w-3.5" />
                       </div>
-                      <div className="pt-0">
-                        <p className="text-[11px] font-medium text-foreground">{item.title}</p>
-                        {item.description && <p className="text-[10px] text-muted-foreground">{item.description}</p>}
-                        <p className="text-[9px] text-muted-foreground/60">{format(new Date(item.date), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
+                      <div className="pt-0.5">
+                        <p className="text-sm font-medium text-foreground">{item.title}</p>
+                        {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
+                        <p className="text-xs text-muted-foreground/60">{format(new Date(item.date), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
                       </div>
                     </div>
                   ))}
-                  <div className="relative flex gap-3 pb-3">
-                    <div className="relative z-10 h-5 w-5 rounded-full flex items-center justify-center shrink-0 bg-green-100 text-green-600">
-                      <Plus className="h-2.5 w-2.5" />
+                  <div className="relative flex gap-4 pb-4">
+                    <div className="relative z-10 h-7 w-7 rounded-full flex items-center justify-center shrink-0 bg-green-100 text-green-600">
+                      <Plus className="h-3.5 w-3.5" />
                     </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-foreground">Lead entrou no pipeline</p>
-                      <p className="text-[9px] text-muted-foreground/60">{format(new Date(lead.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
+                    <div className="pt-0.5">
+                      <p className="text-sm font-medium text-foreground">Lead entrou no pipeline</p>
+                      <p className="text-xs text-muted-foreground/60">{format(new Date(lead.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* + Registrar inline */}
-              <div className="border-t border-border/50 pt-3">
-                <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 w-full" onClick={() => setShowNewAtividade(!showNewAtividade)}>
-                  <Plus className="h-3 w-3" /> Registrar atividade
+              <div className="border-t border-border/50 pt-4">
+                <Button variant="outline" size="sm" className="h-9 text-sm gap-1.5 w-full" onClick={() => setShowNewAtividade(!showNewAtividade)}>
+                  <Plus className="h-4 w-4" /> Registrar atividade
                 </Button>
 
                 {showNewAtividade && (
-                  <div className="border border-primary/30 rounded-lg p-3 space-y-2 bg-primary/5 mt-2">
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="border border-primary/30 rounded-xl p-4 space-y-3 bg-primary/5 mt-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <Select value={newAtividade.tipo} onValueChange={v => setNewAtividade(p => ({ ...p, tipo: v }))}>
-                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {ATIVIDADE_TIPOS.map(t => (
                             <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <Input className="h-7 text-xs" value={newAtividade.titulo} onChange={e => setNewAtividade(p => ({ ...p, titulo: e.target.value }))} placeholder="Título" />
+                      <Input className="h-9 text-sm" value={newAtividade.titulo} onChange={e => setNewAtividade(p => ({ ...p, titulo: e.target.value }))} placeholder="Título" />
                     </div>
-                    <div className="flex gap-2">
-                      <Input type="date" className="h-7 text-xs flex-1" value={newAtividade.data} onChange={e => setNewAtividade(p => ({ ...p, data: e.target.value }))} />
-                      <Input type="time" className="h-7 text-xs w-24" value={newAtividade.hora} onChange={e => setNewAtividade(p => ({ ...p, hora: e.target.value }))} />
+                    <div className="flex gap-3">
+                      <Input type="date" className="h-9 text-sm flex-1" value={newAtividade.data} onChange={e => setNewAtividade(p => ({ ...p, data: e.target.value }))} />
+                      <Input type="time" className="h-9 text-sm w-28" value={newAtividade.hora} onChange={e => setNewAtividade(p => ({ ...p, hora: e.target.value }))} />
                     </div>
-                    <Button size="sm" className="w-full h-7 text-xs" onClick={handleAddAtividade} disabled={!newAtividade.titulo}>Salvar</Button>
+                    <Button size="sm" className="w-full h-9 text-sm" onClick={handleAddAtividade} disabled={!newAtividade.titulo}>Salvar</Button>
                   </div>
                 )}
               </div>
 
               {/* Notas (sticky notes) */}
-              <div className="border-t border-border/50 pt-3 space-y-2">
-                <h5 className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
-                  <StickyNote className="h-3 w-3" /> Notas
+              <div className="border-t border-border/50 pt-4 space-y-3">
+                <h5 className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                  <StickyNote className="h-4 w-4" /> Notas
                 </h5>
-                <div className="flex gap-1.5">
-                  <Input className="h-7 text-xs flex-1" placeholder="Adicionar nota..." value={newNota} onChange={e => setNewNota(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddNota()} />
-                  <Button size="sm" className="h-7 w-7 p-0" onClick={handleAddNota} disabled={!newNota.trim()}>
-                    <Send className="h-3 w-3" />
+                <div className="flex gap-2">
+                  <Input className="h-9 text-sm flex-1" placeholder="Adicionar nota..." value={newNota} onChange={e => setNewNota(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddNota()} />
+                  <Button size="sm" className="h-9 w-9 p-0" onClick={handleAddNota} disabled={!newNota.trim()}>
+                    <Send className="h-4 w-4" />
                   </Button>
                 </div>
                 {leadData.anotacoes.map(nota => (
-                  <div key={nota.id} className={`p-2 rounded-lg border text-xs ${nota.fixada ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/20" : "border-border/50 bg-card"}`}>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[10px] font-semibold">{nota.autor_nome || "Usuário"}</span>
-                      <div className="flex items-center gap-0.5">
-                        <span className="text-[9px] text-muted-foreground">{format(new Date(nota.created_at), "dd/MM HH:mm", { locale: ptBR })}</span>
-                        <Button variant="ghost" size="sm" className="h-4 w-4 p-0" onClick={() => leadData.toggleFixarAnotacao(nota.id, nota.fixada)}>
-                          {nota.fixada ? <PinOff className="h-2.5 w-2.5 text-amber-500" /> : <Pin className="h-2.5 w-2.5 text-muted-foreground" />}
+                  <div key={nota.id} className={`p-3 rounded-xl border ${nota.fixada ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/20" : "border-border/50 bg-card"}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold">{nota.autor_nome || "Usuário"}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground">{format(new Date(nota.created_at), "dd/MM HH:mm", { locale: ptBR })}</span>
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => leadData.toggleFixarAnotacao(nota.id, nota.fixada)}>
+                          {nota.fixada ? <PinOff className="h-3 w-3 text-amber-500" /> : <Pin className="h-3 w-3 text-muted-foreground" />}
                         </Button>
                       </div>
                     </div>
-                    <p className="text-[11px] whitespace-pre-wrap">{nota.conteudo}</p>
+                    <p className="text-sm whitespace-pre-wrap">{nota.conteudo}</p>
                   </div>
                 ))}
               </div>
             </TabsContent>
 
             {/* ===== TAB: VISITAS & PROPOSTAS ===== */}
-            <TabsContent value="visitas-propostas" className="px-4 pb-6 space-y-5 mt-0">
+            <TabsContent value="visitas-propostas" className="px-6 pb-8 space-y-6 mt-0">
               <div>
-                <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5" /> Visitas
+                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" /> Visitas
                 </h4>
                 <OpportunityVisitasTab pipelineLeadId={lead.id} />
               </div>
-              <div className="border-t border-border/50 pt-4">
-                <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5" /> Propostas
+              <div className="border-t border-border/50 pt-5">
+                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <DollarSign className="h-4 w-4" /> Propostas
                 </h4>
                 <OpportunityPropostasTab pipelineLeadId={lead.id} valorEstimado={lead.valor_estimado} corretorNomes={corretorNomes} />
               </div>
             </TabsContent>
 
             {/* ===== TAB: TAREFAS ===== */}
-            <TabsContent value="tarefas" className="px-4 pb-6 space-y-3 mt-0">
+            <TabsContent value="tarefas" className="px-6 pb-8 space-y-4 mt-0">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-foreground">Tarefas</h4>
-                <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setShowNewTarefa(!showNewTarefa)}>
-                  <Plus className="h-3 w-3" /> Nova
+                <h4 className="text-sm font-bold text-foreground">Tarefas</h4>
+                <Button variant="outline" size="sm" className="h-9 text-sm gap-1.5" onClick={() => setShowNewTarefa(!showNewTarefa)}>
+                  <Plus className="h-4 w-4" /> Nova
                 </Button>
               </div>
 
               {showNewTarefa && (
-                <div className="border border-primary/30 rounded-lg p-3 space-y-2 bg-primary/5">
-                  <Input className="h-7 text-xs" placeholder="Ex: Enviar tabela de preços" value={newTarefa.titulo} onChange={e => setNewTarefa(p => ({ ...p, titulo: e.target.value }))} />
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="border border-primary/30 rounded-xl p-4 space-y-3 bg-primary/5">
+                  <Input className="h-9 text-sm" placeholder="Ex: Enviar tabela de preços" value={newTarefa.titulo} onChange={e => setNewTarefa(p => ({ ...p, titulo: e.target.value }))} />
+                  <div className="grid grid-cols-2 gap-3">
                     <Select value={newTarefa.prioridade} onValueChange={v => setNewTarefa(p => ({ ...p, prioridade: v }))}>
-                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="alta">Alta</SelectItem>
                         <SelectItem value="media">Média</SelectItem>
                         <SelectItem value="baixa">Baixa</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input type="date" className="h-7 text-xs" value={newTarefa.vence_em} onChange={e => setNewTarefa(p => ({ ...p, vence_em: e.target.value }))} />
+                    <Input type="date" className="h-9 text-sm" value={newTarefa.vence_em} onChange={e => setNewTarefa(p => ({ ...p, vence_em: e.target.value }))} />
                   </div>
-                  <Textarea className="text-xs min-h-[40px]" placeholder="Descrição..." value={newTarefa.descricao} onChange={e => setNewTarefa(p => ({ ...p, descricao: e.target.value }))} />
-                  <Button size="sm" className="w-full h-7 text-xs" onClick={handleAddTarefa} disabled={!newTarefa.titulo}>Criar Tarefa</Button>
+                  <Textarea className="text-sm min-h-[50px]" placeholder="Descrição..." value={newTarefa.descricao} onChange={e => setNewTarefa(p => ({ ...p, descricao: e.target.value }))} />
+                  <Button size="sm" className="w-full h-9 text-sm" onClick={handleAddTarefa} disabled={!newTarefa.titulo}>Criar Tarefa</Button>
                 </div>
               )}
 
-              {/* Overdue tasks first */}
               {leadData.tarefas.length === 0 ? (
                 <EmptyState text="Nenhuma tarefa criada" />
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {[...leadData.tarefas]
                     .sort((a, b) => {
-                      // Overdue first, then pending, then done
                       const aOverdue = a.status === "pendente" && a.vence_em && new Date(a.vence_em) < new Date();
                       const bOverdue = b.status === "pendente" && b.vence_em && new Date(b.vence_em) < new Date();
                       if (aOverdue && !bOverdue) return -1;
@@ -665,7 +639,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                       return (
                         <div
                           key={tarefa.id}
-                          className={`flex items-center gap-2.5 p-2 rounded-lg border transition-colors cursor-pointer ${
+                          className={`flex items-center gap-3 p-3 rounded-xl border transition-colors cursor-pointer ${
                             tarefa.status === "concluida"
                               ? "bg-green-50/50 dark:bg-green-950/20 border-green-200/50"
                               : isOverdue
@@ -675,21 +649,21 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                           onClick={() => leadData.toggleTarefa(tarefa.id, tarefa.status)}
                         >
                           {tarefa.status === "concluida" ? (
-                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                            <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
                           ) : (
-                            <Circle className={`h-3.5 w-3.5 shrink-0 ${isOverdue ? "text-red-400" : "text-muted-foreground"}`} />
+                            <Circle className={`h-4 w-4 shrink-0 ${isOverdue ? "text-red-400" : "text-muted-foreground"}`} />
                           )}
                           <div className="flex-1 min-w-0">
-                            <span className={`text-[11px] font-medium ${tarefa.status === "concluida" ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                            <span className={`text-sm font-medium ${tarefa.status === "concluida" ? "line-through text-muted-foreground" : "text-foreground"}`}>
                               {tarefa.titulo}
                             </span>
                             {tarefa.vence_em && (
-                              <span className={`text-[9px] ml-1.5 ${isOverdue ? "text-red-500 font-semibold" : "text-muted-foreground"}`}>
+                              <span className={`text-xs ml-2 ${isOverdue ? "text-red-500 font-semibold" : "text-muted-foreground"}`}>
                                 {isOverdue && "⚠️ "}{format(new Date(tarefa.vence_em), "dd/MM", { locale: ptBR })}
                               </span>
                             )}
                           </div>
-                          <Badge variant="outline" className={`text-[8px] h-3.5 ${PRIORIDADE_MAP[tarefa.prioridade]?.color || ""}`}>
+                          <Badge variant="outline" className={`text-xs ${PRIORIDADE_MAP[tarefa.prioridade]?.color || ""}`}>
                             {PRIORIDADE_MAP[tarefa.prioridade]?.label || tarefa.prioridade}
                           </Badge>
                         </div>
@@ -763,11 +737,11 @@ function DataField({ label, value }: { label: string; value: string | null | und
 
 function InsightItem({ icon: Icon, label, value, alert }: { icon: any; label: string; value: string; alert?: boolean }) {
   return (
-    <div className={`flex items-center gap-2 p-1.5 rounded ${alert ? "bg-amber-100/50 dark:bg-amber-950/30" : ""}`}>
-      <Icon className={`h-3.5 w-3.5 shrink-0 ${alert ? "text-amber-500" : "text-primary/60"}`} />
+    <div className={`flex items-center gap-3 p-2.5 rounded-lg ${alert ? "bg-amber-100/50 dark:bg-amber-950/30" : "bg-muted/30"}`}>
+      <Icon className={`h-5 w-5 shrink-0 ${alert ? "text-amber-500" : "text-primary/60"}`} />
       <div>
-        <span className="text-[9px] text-muted-foreground">{label}</span>
-        <p className={`text-[11px] font-semibold ${alert ? "text-amber-600" : "text-foreground"}`}>{value}</p>
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <p className={`text-lg font-bold ${alert ? "text-amber-600" : "text-foreground"}`}>{value}</p>
       </div>
     </div>
   );
@@ -775,11 +749,11 @@ function InsightItem({ icon: Icon, label, value, alert }: { icon: any; label: st
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="flex flex-col items-center py-6 text-center">
-      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mb-1.5">
-        <FileText className="h-3.5 w-3.5 text-muted-foreground/40" />
+    <div className="flex flex-col items-center py-8 text-center">
+      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
+        <FileText className="h-4 w-4 text-muted-foreground/40" />
       </div>
-      <span className="text-[11px] text-muted-foreground">{text}</span>
+      <span className="text-sm text-muted-foreground">{text}</span>
     </div>
   );
 }
