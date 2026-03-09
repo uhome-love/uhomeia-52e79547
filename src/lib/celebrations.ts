@@ -78,6 +78,14 @@ interface GreetingContext {
   totalWithPoints?: number;
 }
 
+function getGreetingByHour(nome: string): string {
+  const h = new Date().getHours();
+  if (h < 5) return `Boa madrugada, ${nome}! 🌙`;
+  if (h < 12) return `Bom dia, ${nome}! 👋`;
+  if (h < 18) return `Boa tarde, ${nome}! ☀️`;
+  return `Boa noite, ${nome}! 🌙`;
+}
+
 export function getDynamicGreeting(ctx: GreetingContext): { greeting: string; subtitle: string } {
   const hour = new Date().getHours();
   const { nome, rankingPos, slaExpired, metaBatidaOntem, streak, myPts = 0, totalWithPoints = 0 } = ctx;
@@ -104,14 +112,7 @@ export function getDynamicGreeting(ctx: GreetingContext): { greeting: string; su
 
   // Everyone at 0 or no ranking data — neutral/motivational greeting
   if (myPts === 0 && totalWithPoints === 0) {
-    const hour = new Date().getHours();
-    if (hour < 12) {
-      return { greeting: `Bom dia, ${n}! 👋`, subtitle: "A arena está esperando. Quem ligar primeiro, lidera." };
-    } else if (hour < 18) {
-      return { greeting: `Fala, ${n}! 👋`, subtitle: "A arena está esperando. Quem ligar primeiro, lidera." };
-    } else {
-      return { greeting: `E aí, ${n}! 👋`, subtitle: "A arena está esperando. Quem ligar primeiro, lidera." };
-    }
+    return { greeting: getGreetingByHour(n), subtitle: "A arena está esperando. Quem ligar primeiro, lidera." };
   }
 
   // Time-based
