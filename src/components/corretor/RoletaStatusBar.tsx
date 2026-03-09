@@ -417,8 +417,7 @@ export default function RoletaStatusBar() {
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                         ) : (
                           <>
-                            <RequirementRow ok={nightReqs.visitaMarcada} label="Marcar pelo menos 1 visita" />
-                            <RequirementRow ok={nightReqs.visitaRealizada} label="Realizar pelo menos 1 visita" />
+                            <RequirementRow ok={nightReqs.visitaMarcada || nightReqs.visitaRealizada} label="Marcar ou realizar pelo menos 1 visita" />
                             <RequirementRow ok={nightReqs.sistemaAtualizado} label="Sistema atualizado" />
                           </>
                         )}
