@@ -548,9 +548,9 @@ async function handleAcceptReject(supabase: any, body: any, userId: string, supa
       .eq("status", "pendente")
       .catch(() => {});
 
-    // Try to redistribute immediately
-    const result = await distributeSingleLead(supabase, supabaseUrl, serviceKey, pipeline_lead_id);
-    console.log(`Redistribution after reject:`, JSON.stringify(result));
+    // Try to redistribute immediately, excluding the broker who just rejected
+    const result = await distributeSingleLead(supabase, supabaseUrl, serviceKey, pipeline_lead_id, undefined, userId);
+    console.log(`Redistribution after reject (excluded ${userId}):`, JSON.stringify(result));
 
     return jsonResponse({ success: true, redistributed: result.success });
   }
