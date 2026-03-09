@@ -200,18 +200,10 @@ function BannerItem({
               SLA: {mins}:{secs.toString().padStart(2, "0")}
             </div>
 
-            <div className="flex items-center gap-1.5 ml-auto">
-              {lead.telefone && (
-                <Button size="sm" variant="outline" className="h-7 text-xs gap-1 px-2" asChild>
-                  <a href={`tel:${lead.telefone}`}>
-                    <Phone className="h-3 w-3" />
-                    Ligar
-                  </a>
-                </Button>
-              )}
-              <Button size="sm" className="h-7 text-xs gap-1 px-2" onClick={onNavigate}>
+            <div className="ml-auto">
+              <Button size="sm" className="h-7 text-xs gap-1 px-3" onClick={onNavigate}>
                 <ExternalLink className="h-3 w-3" />
-                Ver Lead
+                Aceitar Lead
               </Button>
             </div>
           </div>
