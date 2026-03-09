@@ -408,7 +408,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
     toast.success("Lead adicionado ao pipeline!");
     await loadLeads();
     return data;
-  }, [user, stages, loadLeads]);
+  }, [user, stages, loadLeads, isGestor, isAdmin]);
 
   const updateLead = useCallback(async (leadId: string, updates: Partial<PipelineLead>) => {
     if (!user) return;
