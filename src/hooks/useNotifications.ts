@@ -54,7 +54,7 @@ export function useNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.lida).length;
 
-  // Realtime subscription
+  // Realtime subscription — no filter to avoid replica identity issues
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -65,13 +65,13 @@ export function useNotifications() {
           event: "INSERT",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          const n = payload.new as Notification;
-          queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
-          // Show toast for new notification
-          toast(n.titulo, { description: n.mensagem });
+          const n = payload.new as any;
+          if (n.user_id === user.id) {
+            queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+            toast(n.titulo, { description: n.mensagem });
+          }
         }
       )
       .subscribe();
@@ -79,6 +79,18 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
+  }, [user, queryClient]);
+
+  // Auto-refresh on tab visibility
+  useEffect(() => {
+    if (!user) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [user, queryClient]);
 
   const markAsRead = useMutation({
