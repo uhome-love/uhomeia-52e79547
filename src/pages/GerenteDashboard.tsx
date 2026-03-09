@@ -434,7 +434,7 @@ export default function GerenteDashboard() {
                 <Trophy className="h-5 w-5 text-amber-500" />
                 <h2 className="text-base font-bold text-foreground">🏆 Ranking do Time — {periodLabels[period]}</h2>
               </div>
-              <span className="flex items-center gap-1 text-xs text-gray-400">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" /> 🔄 Atualiza a cada 60s
               </span>
             </div>
