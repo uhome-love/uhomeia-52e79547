@@ -153,14 +153,6 @@ export default function VisitaRow({ visita: v, onUpdateStatus, onDelete, showCor
                 {STATUS_EMOJIS[k]} {label}
               </DropdownMenuItem>
             ))}
-          {v.status === "realizada" && !hasPdn && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => convertToPdn(v)} className="text-xs text-primary">
-                <FileSpreadsheet className="h-3 w-3 mr-1.5" /> Enviar para PDN
-              </DropdownMenuItem>
-            </>
-          )}
           {onDelete && (
             <>
               <DropdownMenuSeparator />
