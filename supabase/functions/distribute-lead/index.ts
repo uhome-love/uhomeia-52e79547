@@ -500,7 +500,7 @@ async function handleAcceptReject(supabase: any, body: any, userId: string, supa
     const distUpd = await supabase.from("roleta_distribuicoes")
       .update({ status: "aceito", aceito_em: new Date().toISOString() })
       .eq("lead_id", pipeline_lead_id)
-      .eq("status", "pendente");
+      .eq("status", "aguardando");
     if (distUpd.error) console.warn("roleta_distribuicoes update:", distUpd.error.message);
 
     // Notification
