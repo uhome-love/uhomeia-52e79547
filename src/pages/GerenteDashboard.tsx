@@ -458,7 +458,7 @@ export default function GerenteDashboard() {
                     return (
                       <tr
                         key={r.user_id}
-                        className="border-b border-border/20 hover:bg-gray-50 cursor-pointer transition-colors"
+                        className="border-b border-border/20 hover:bg-accent/50 cursor-pointer transition-colors"
                         onClick={() => setDrawerCorretor({ user_id: r.user_id, nome: r.nome, avatar_url: r.avatar_url })}
                       >
                         <td className="py-3 px-2 font-bold">
