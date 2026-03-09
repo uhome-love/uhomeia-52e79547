@@ -181,7 +181,7 @@ function CeoView() {
                             >
                               <div className="flex items-center gap-2">
                                 <span className={`font-bold text-xs w-5 text-center ${idx === 0 ? "text-[hsl(var(--primary))]" : "text-muted-foreground"}`}>
-                                  {f.posicao}
+                                  {idx + 1}
                                 </span>
                                 <Avatar className="h-6 w-6">
                                   <AvatarFallback className="text-[10px]">
