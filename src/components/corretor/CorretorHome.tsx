@@ -16,7 +16,7 @@ import DailyProgressCard from "./DailyProgressCard";
 import MissoesDeHoje from "./MissoesDeHoje";
 import RadarLeadsPendentes from "./RadarLeadsPendentes";
 import RankingGestaoLeads from "./RankingGestaoLeads";
-import FollowUpsDoDia from "./FollowUpsDoDia";
+import MinhaAgendaWidget from "./MinhaAgendaWidget";
 import VisitasHojeCard from "./VisitasHojeCard";
 import MiniFunilPessoal from "./MiniFunilPessoal";
 import EvolucaoSemanal from "./EvolucaoSemanal";
