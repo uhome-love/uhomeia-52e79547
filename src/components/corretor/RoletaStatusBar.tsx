@@ -194,8 +194,9 @@ export default function RoletaStatusBar() {
         janela,
         segmento_1_id: selectedIds[0] || null,
         segmento_2_id: selectedIds[1] || null,
-        status: "pendente",
-      });
+        status: "aprovado",
+        aprovado: true,
+      } as any);
 
     if (error) {
       console.error("Credenciamento error:", error);
@@ -205,10 +206,10 @@ export default function RoletaStatusBar() {
     }
 
     setMySegmentoIds([...selectedIds]);
-    setCredStatus("pendente");
+    setCredStatus("aprovado");
     setCredModalOpen(false);
     setSaving(false);
-    toast.success(`Credenciamento salvo para ${getJanelaLabel(janela)}! Aguardando aprovação.`);
+    toast.success(`Credenciamento ativo para ${getJanelaLabel(janela)}! ✅`);
   };
 
   const currentOpt = STATUS_OPTIONS.find((o) => o.value === status) || STATUS_OPTIONS[3];

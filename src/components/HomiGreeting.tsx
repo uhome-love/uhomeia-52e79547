@@ -44,6 +44,7 @@ const roleTips: Record<string, string[]> = {
 
 function getTimeOfDay(): "morning" | "afternoon" | "evening" {
   const h = new Date().getHours();
+  if (h < 5) return "evening"; // madrugada → boa noite
   if (h < 12) return "morning";
   if (h < 18) return "afternoon";
   return "evening";
