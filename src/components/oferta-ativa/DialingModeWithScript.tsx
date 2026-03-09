@@ -345,13 +345,14 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     }
   };
 
-  // Open result popup
+  // Open result popup (ensure AttemptModal is closed)
   const handleOpenResultPopup = () => {
     if (!actionTaken) {
       setActionTaken("ligacao");
       setCurrentIdempotencyKey(`${user?.id}_${lead?.id}_${Date.now()}`);
     }
     stopTimer();
+    setShowModal(false); // ensure only one popup
     setShowResultPopup(true);
   };
 
