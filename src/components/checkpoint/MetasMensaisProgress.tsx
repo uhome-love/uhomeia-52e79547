@@ -132,11 +132,12 @@ export default function MetasMensaisProgress() {
     if (metaId) {
       ({ error } = await supabase.from("ceo_metas_mensais").update(payload).eq("id", metaId));
     } else {
-      ({ error } = await supabase.from("ceo_metas_mensais").insert(payload));
+      ({ error } = await supabase.from("ceo_metas_mensais").upsert(payload, { onConflict: "gerente_id,mes" }));
     }
 
     setSaving(false);
     if (error) {
+      console.error("Erro ao salvar metas mensais:", error);
       toast.error("Erro ao salvar metas: " + error.message);
       return;
     }
