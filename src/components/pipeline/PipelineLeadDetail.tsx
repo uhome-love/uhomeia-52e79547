@@ -273,6 +273,19 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
+            {/* Row 4: Empreendimento + Campanha/Origem */}
+            <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" />
+                <span className="font-medium text-foreground/80">{lead.empreendimento || 'Sem empreendimento'}</span>
+              </span>
+              {((lead as any).origem_detalhe || (lead as any).origem) && (
+                <span className="flex items-center gap-1.5">
+                  📢 {(lead as any).origem_detalhe || (lead as any).origem}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

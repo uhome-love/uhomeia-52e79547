@@ -319,6 +319,9 @@ export default function MinhasTarefas() {
                       <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => handleConcluir(tarefa.id, tarefa.pipeline_lead_id)}>
                         <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
                       </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => openEditTarefa(tarefa)}>
+                        <Pencil className="h-3.5 w-3.5" /> Editar
+                      </Button>
                       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => { setAdiarId(tarefa.id); setAdiarData(""); setAdiarHora(""); }}>
                         <Calendar className="h-3.5 w-3.5" /> Adiar
                       </Button>
