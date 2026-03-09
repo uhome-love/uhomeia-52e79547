@@ -345,8 +345,22 @@ export default function CorretorListSelection() {
               <SavedListCard
                 key={list.id}
                 list={list}
-                onReuse={() => {
+                onStart={async () => {
+                  if (!user) return;
                   markUsed.mutate(list.id);
+                  toast.loading("Carregando leads da lista...");
+                  const result = await resolveCustomListLeads(user.id, list.filtros);
+                  toast.dismiss();
+                  if (result.count === 0) {
+                    toast.error("Nenhum lead encontrado com esses filtros.");
+                    return;
+                  }
+                  // Navigate to pipeline filtered by these leads
+                  toast.success(`📋 ${result.count} leads encontrados! Abrindo pipeline...`);
+                  // Store lead IDs in sessionStorage for pipeline to pick up
+                  sessionStorage.setItem("custom_list_lead_ids", JSON.stringify(result.ids));
+                  sessionStorage.setItem("custom_list_name", list.nome);
+                  window.location.href = "/pipeline";
                 }}
                 onDelete={() => deleteList.mutate(list.id)}
               />

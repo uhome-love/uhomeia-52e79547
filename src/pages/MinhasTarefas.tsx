@@ -352,6 +352,44 @@ export default function MinhasTarefas() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Tarefa dialog */}
+      <Dialog open={!!editId} onOpenChange={() => setEditId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>✏️ Editar Tarefa</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+              <Select value={editTipo} onValueChange={setEditTipo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TIPO_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{TIPO_EMOJI[k] || "📋"} {v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Data</label>
+                <Input type="date" value={editData} onChange={e => setEditData(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Hora</label>
+                <Input type="time" value={editHora} onChange={e => setEditHora(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Observação</label>
+              <Textarea value={editObs} onChange={e => setEditObs(e.target.value)} rows={2} placeholder="Observação..." />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setEditId(null)}>Cancelar</Button>
+              <Button size="sm" onClick={handleEditTarefa}>💾 Salvar Alterações</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Nova Tarefa dialog */}
       <Dialog open={showNovaTarefa} onOpenChange={setShowNovaTarefa}>
         <DialogContent className="sm:max-w-md">
