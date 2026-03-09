@@ -35,8 +35,10 @@ export interface PipelineTarefa {
   descricao: string | null;
   prioridade: string;
   status: string;
+  tipo: string;
   responsavel_id: string | null;
   vence_em: string | null;
+  hora_vencimento: string | null;
   concluida_em: string | null;
   created_by: string;
   created_at: string;
@@ -146,16 +148,32 @@ export function usePipelineLeadData(leadId: string | null) {
       pipeline_lead_id: leadId,
       titulo: data.titulo || "",
       descricao: data.descricao || null,
+      tipo: data.tipo || "follow_up",
       prioridade: data.prioridade || "media",
       status: "pendente",
       responsavel_id: data.responsavel_id || user.id,
       vence_em: data.vence_em || null,
+      hora_vencimento: data.hora_vencimento || null,
       created_by: user.id,
-    });
-    if (error) { toast.error("Erro ao criar tarefa"); return; }
-    toast.success("Tarefa criada");
+    } as any);
+    if (error) { toast.error("Erro ao criar tarefa: " + error.message); return; }
+
+    // Update ultima_acao_at on the lead
+    await supabase.from("pipeline_leads").update({
+      ultima_acao_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as any).eq("id", leadId);
+
+    toast.success("Tarefa criada ✅");
     loadAll();
   }, [user, leadId, loadAll]);
+
+  const deleteTarefa = useCallback(async (id: string) => {
+    const { error } = await supabase.from("pipeline_tarefas").delete().eq("id", id);
+    if (error) { toast.error("Erro ao excluir tarefa"); return; }
+    toast.success("Tarefa excluída");
+    loadAll();
+  }, [loadAll]);
 
   const toggleTarefa = useCallback(async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "concluida" ? "pendente" : "concluida";
@@ -170,7 +188,7 @@ export function usePipelineLeadData(leadId: string | null) {
     atividades, anotacoes, tarefas, historico, loading,
     addAtividade, updateAtividade,
     addAnotacao, toggleFixarAnotacao,
-    addTarefa, toggleTarefa,
+    addTarefa, toggleTarefa, deleteTarefa,
     reload: loadAll,
   };
 }
