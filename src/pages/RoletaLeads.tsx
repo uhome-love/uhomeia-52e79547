@@ -243,15 +243,17 @@ function CorretorView() {
     setNoturnaReason("");
 
     try {
-      const today = startOfDay(new Date()).toISOString();
+      const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      const amanha = new Date(Date.now() + 86400000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
       const threeHoursAgo = subHours(new Date(), 3).toISOString();
 
-      // Check 1: Has at least 1 visit today (marcada, confirmada, realizada, pendente)
+      // Check 1: Has at least 1 visit today (marcada OR realizada)
       const { count: visitasCount } = await supabase
         .from("visitas")
         .select("id", { count: "exact", head: true })
         .eq("corretor_id", user.id)
-        .gte("data", today)
+        .gte("data_visita", hoje)
+        .lt("data_visita", amanha)
         .in("status", ["confirmada", "realizada", "marcada", "pendente"]);
 
       if (!visitasCount || visitasCount === 0) {
