@@ -3,7 +3,7 @@ import { useOAListas, type OALista } from "@/hooks/useOfertaAtiva";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Phone, ArrowLeft, Loader2, Users, Search, Zap, Sparkles, Trash2, RotateCcw } from "lucide-react";
+import { Phone, ArrowLeft, Loader2, Users, Search, Zap, Sparkles, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DialingModeWithScript from "./DialingModeWithScript";
 import CustomListWizard from "./CustomListWizard";
