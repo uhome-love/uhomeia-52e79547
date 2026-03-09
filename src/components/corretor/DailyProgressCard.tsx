@@ -52,10 +52,15 @@ export default function DailyProgressCard({ progress, goals, saveGoals, variant 
   }, [goals, variant]);
 
   const handleSave = async () => {
-    await saveGoals(parseInt(metaLig) || 30, parseInt(metaAprov) || 5, parseInt(metaVis) || 3);
-    setEditing(false);
-    toast.success("Meta do dia salva!");
-    queryClient.invalidateQueries({ queryKey: ["corretor-daily-goals"] });
+    try {
+      await saveGoals(parseInt(metaLig) || 30, parseInt(metaAprov) || 5, parseInt(metaVis) || 3);
+      setEditing(false);
+      toast.success("Meta do dia salva!");
+      queryClient.invalidateQueries({ queryKey: ["corretor-daily-goals"] });
+    } catch (e: any) {
+      console.error("Erro ao salvar meta:", e);
+      toast.error("Erro ao salvar meta: " + (e?.message || "Erro desconhecido"));
+    }
   };
 
   const openEditor = () => {
