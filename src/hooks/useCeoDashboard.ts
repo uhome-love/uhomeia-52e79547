@@ -146,7 +146,7 @@ export function useCeoDashboard(period: DashPeriod) {
 
   const loadPipeline = useCallback(async () => {
     const { data: stages } = await supabase.from("pipeline_stages").select("id, nome, tipo, ordem").eq("ativo", true).eq("pipeline_tipo", "leads").order("ordem");
-    const { data: leads } = await supabase.from("pipeline_leads").select("id, stage_id, empreendimento, updated_at, created_at, origem");
+    const { data: leads } = await supabase.from("pipeline_leads").select("id, stage_id, empreendimento, updated_at, created_at, origem").limit(1000);
 
     const stageData = (stages || []).map(s => ({
       id: s.id, nome: s.nome, tipo: s.tipo, ordem: s.ordem,
@@ -211,7 +211,7 @@ export function useCeoDashboard(period: DashPeriod) {
   }, []);
 
   const loadNegocios = useCallback(async () => {
-    const { data: negocios } = await supabase.from("negocios").select("id, fase, status, vgv_estimado, vgv_final, corretor_id, updated_at, empreendimento");
+    const { data: negocios } = await supabase.from("negocios").select("id, fase, status, vgv_estimado, vgv_final, corretor_id, updated_at, empreendimento").limit(500);
     
     // Fases
     const faseMap = new Map<string, { count: number; vgv: number }>();
