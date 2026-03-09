@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCustomLists, resolveCustomListLeads, type CustomListFilters } from "@/hooks/useCustomLists";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import HomiInlineSuggestion from "@/components/homi/HomiInlineSuggestion";
 
 const FONTES = [
@@ -248,6 +249,9 @@ export default function CustomListWizard({ open, onClose, onCreated, initialFilt
       const result = await createList.mutateAsync({ nome: listName, filtros });
       onCreated(result.id);
       onClose();
+    } catch (err: any) {
+      console.error("Erro ao criar lista personalizada:", err);
+      toast.error("Erro ao criar lista: " + (err?.message || "Erro desconhecido"));
     } finally {
       setCreating(false);
     }

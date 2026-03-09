@@ -182,7 +182,7 @@ export function useVisitas(filters?: {
 
     if (error) {
       console.error("Erro ao criar visita:", error);
-      toast.error("Erro ao criar visita");
+      toast.error("Erro ao criar visita: " + (error.message || error.code || "Erro desconhecido"));
       return null;
     }
 
