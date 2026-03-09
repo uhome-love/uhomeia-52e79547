@@ -95,7 +95,6 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
               isOver ? "bg-primary/10 ring-2 ring-primary/30 ring-inset" : ""
             }`}>
               {items.map(v => {
-                  const hasPdn = !!(v as any).linked_pdn_id;
                   const hasPipeline = !!(v as any).pipeline_lead_id;
                   const isDragging = draggingId === v.id;
                 return (
