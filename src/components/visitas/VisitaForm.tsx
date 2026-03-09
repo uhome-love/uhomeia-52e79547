@@ -121,7 +121,7 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
     if (!form.nome_cliente.trim()) return;
     setSubmitting(true);
     try {
-      await onSubmit({
+      const result = await onSubmit({
         ...form,
         corretor_id: form.corretor_id || undefined,
         telefone: form.telefone || null,
@@ -130,7 +130,12 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
         observacoes: form.observacoes || null,
         pipeline_lead_id: form.pipeline_lead_id || null,
       } as any);
-      onClose();
+      // Only close if creation succeeded (not null)
+      if (result !== null && result !== undefined) {
+        onClose();
+      }
+    } catch (err) {
+      console.error("Erro ao salvar visita:", err);
     } finally {
       setSubmitting(false);
     }
