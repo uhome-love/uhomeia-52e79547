@@ -10,6 +10,7 @@ import { ORIGEM_LABELS, type Visita } from "@/hooks/useVisitas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import EmpreendimentoCombobox from "@/components/ui/empreendimento-combobox";
 
 interface PipelineLeadOption {
   id: string;
