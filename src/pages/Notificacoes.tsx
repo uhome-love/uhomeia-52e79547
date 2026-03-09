@@ -106,7 +106,8 @@ export default function Notificacoes() {
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
         {FILTER_TABS.map((tab) => {
-          const count = notifications.filter((n) => tab.key === "todas" || n.tipo === tab.key).length;
+          const tipos = CATEGORY_MAP[tab.key];
+          const count = notifications.filter((n) => tab.key === "todas" || (tipos && tipos.includes(n.tipo))).length;
           const isActive = activeFilter === tab.key;
           return (
             <button
