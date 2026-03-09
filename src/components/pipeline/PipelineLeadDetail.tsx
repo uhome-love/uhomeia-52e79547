@@ -549,85 +549,83 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               </div>
 
               {/* Notas (sticky notes) */}
-              <div className="border-t border-border/50 pt-3 space-y-2">
-                <h5 className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
-                  <StickyNote className="h-3 w-3" /> Notas
+              <div className="border-t border-border/50 pt-4 space-y-3">
+                <h5 className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                  <StickyNote className="h-4 w-4" /> Notas
                 </h5>
-                <div className="flex gap-1.5">
-                  <Input className="h-7 text-xs flex-1" placeholder="Adicionar nota..." value={newNota} onChange={e => setNewNota(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddNota()} />
-                  <Button size="sm" className="h-7 w-7 p-0" onClick={handleAddNota} disabled={!newNota.trim()}>
-                    <Send className="h-3 w-3" />
+                <div className="flex gap-2">
+                  <Input className="h-9 text-sm flex-1" placeholder="Adicionar nota..." value={newNota} onChange={e => setNewNota(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddNota()} />
+                  <Button size="sm" className="h-9 w-9 p-0" onClick={handleAddNota} disabled={!newNota.trim()}>
+                    <Send className="h-4 w-4" />
                   </Button>
                 </div>
                 {leadData.anotacoes.map(nota => (
-                  <div key={nota.id} className={`p-2 rounded-lg border text-xs ${nota.fixada ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/20" : "border-border/50 bg-card"}`}>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[10px] font-semibold">{nota.autor_nome || "Usuário"}</span>
-                      <div className="flex items-center gap-0.5">
-                        <span className="text-[9px] text-muted-foreground">{format(new Date(nota.created_at), "dd/MM HH:mm", { locale: ptBR })}</span>
-                        <Button variant="ghost" size="sm" className="h-4 w-4 p-0" onClick={() => leadData.toggleFixarAnotacao(nota.id, nota.fixada)}>
-                          {nota.fixada ? <PinOff className="h-2.5 w-2.5 text-amber-500" /> : <Pin className="h-2.5 w-2.5 text-muted-foreground" />}
+                  <div key={nota.id} className={`p-3 rounded-xl border ${nota.fixada ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/20" : "border-border/50 bg-card"}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold">{nota.autor_nome || "Usuário"}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground">{format(new Date(nota.created_at), "dd/MM HH:mm", { locale: ptBR })}</span>
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => leadData.toggleFixarAnotacao(nota.id, nota.fixada)}>
+                          {nota.fixada ? <PinOff className="h-3 w-3 text-amber-500" /> : <Pin className="h-3 w-3 text-muted-foreground" />}
                         </Button>
                       </div>
                     </div>
-                    <p className="text-[11px] whitespace-pre-wrap">{nota.conteudo}</p>
+                    <p className="text-sm whitespace-pre-wrap">{nota.conteudo}</p>
                   </div>
                 ))}
               </div>
             </TabsContent>
 
             {/* ===== TAB: VISITAS & PROPOSTAS ===== */}
-            <TabsContent value="visitas-propostas" className="px-4 pb-6 space-y-5 mt-0">
+            <TabsContent value="visitas-propostas" className="px-6 pb-8 space-y-6 mt-0">
               <div>
-                <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5" /> Visitas
+                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" /> Visitas
                 </h4>
                 <OpportunityVisitasTab pipelineLeadId={lead.id} />
               </div>
-              <div className="border-t border-border/50 pt-4">
-                <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5" /> Propostas
+              <div className="border-t border-border/50 pt-5">
+                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <DollarSign className="h-4 w-4" /> Propostas
                 </h4>
                 <OpportunityPropostasTab pipelineLeadId={lead.id} valorEstimado={lead.valor_estimado} corretorNomes={corretorNomes} />
               </div>
             </TabsContent>
 
             {/* ===== TAB: TAREFAS ===== */}
-            <TabsContent value="tarefas" className="px-4 pb-6 space-y-3 mt-0">
+            <TabsContent value="tarefas" className="px-6 pb-8 space-y-4 mt-0">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-foreground">Tarefas</h4>
-                <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setShowNewTarefa(!showNewTarefa)}>
-                  <Plus className="h-3 w-3" /> Nova
+                <h4 className="text-sm font-bold text-foreground">Tarefas</h4>
+                <Button variant="outline" size="sm" className="h-9 text-sm gap-1.5" onClick={() => setShowNewTarefa(!showNewTarefa)}>
+                  <Plus className="h-4 w-4" /> Nova
                 </Button>
               </div>
 
               {showNewTarefa && (
-                <div className="border border-primary/30 rounded-lg p-3 space-y-2 bg-primary/5">
-                  <Input className="h-7 text-xs" placeholder="Ex: Enviar tabela de preços" value={newTarefa.titulo} onChange={e => setNewTarefa(p => ({ ...p, titulo: e.target.value }))} />
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="border border-primary/30 rounded-xl p-4 space-y-3 bg-primary/5">
+                  <Input className="h-9 text-sm" placeholder="Ex: Enviar tabela de preços" value={newTarefa.titulo} onChange={e => setNewTarefa(p => ({ ...p, titulo: e.target.value }))} />
+                  <div className="grid grid-cols-2 gap-3">
                     <Select value={newTarefa.prioridade} onValueChange={v => setNewTarefa(p => ({ ...p, prioridade: v }))}>
-                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="alta">Alta</SelectItem>
                         <SelectItem value="media">Média</SelectItem>
                         <SelectItem value="baixa">Baixa</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input type="date" className="h-7 text-xs" value={newTarefa.vence_em} onChange={e => setNewTarefa(p => ({ ...p, vence_em: e.target.value }))} />
+                    <Input type="date" className="h-9 text-sm" value={newTarefa.vence_em} onChange={e => setNewTarefa(p => ({ ...p, vence_em: e.target.value }))} />
                   </div>
-                  <Textarea className="text-xs min-h-[40px]" placeholder="Descrição..." value={newTarefa.descricao} onChange={e => setNewTarefa(p => ({ ...p, descricao: e.target.value }))} />
-                  <Button size="sm" className="w-full h-7 text-xs" onClick={handleAddTarefa} disabled={!newTarefa.titulo}>Criar Tarefa</Button>
+                  <Textarea className="text-sm min-h-[50px]" placeholder="Descrição..." value={newTarefa.descricao} onChange={e => setNewTarefa(p => ({ ...p, descricao: e.target.value }))} />
+                  <Button size="sm" className="w-full h-9 text-sm" onClick={handleAddTarefa} disabled={!newTarefa.titulo}>Criar Tarefa</Button>
                 </div>
               )}
 
-              {/* Overdue tasks first */}
               {leadData.tarefas.length === 0 ? (
                 <EmptyState text="Nenhuma tarefa criada" />
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {[...leadData.tarefas]
                     .sort((a, b) => {
-                      // Overdue first, then pending, then done
                       const aOverdue = a.status === "pendente" && a.vence_em && new Date(a.vence_em) < new Date();
                       const bOverdue = b.status === "pendente" && b.vence_em && new Date(b.vence_em) < new Date();
                       if (aOverdue && !bOverdue) return -1;
@@ -641,7 +639,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                       return (
                         <div
                           key={tarefa.id}
-                          className={`flex items-center gap-2.5 p-2 rounded-lg border transition-colors cursor-pointer ${
+                          className={`flex items-center gap-3 p-3 rounded-xl border transition-colors cursor-pointer ${
                             tarefa.status === "concluida"
                               ? "bg-green-50/50 dark:bg-green-950/20 border-green-200/50"
                               : isOverdue
@@ -651,21 +649,21 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                           onClick={() => leadData.toggleTarefa(tarefa.id, tarefa.status)}
                         >
                           {tarefa.status === "concluida" ? (
-                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                            <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
                           ) : (
-                            <Circle className={`h-3.5 w-3.5 shrink-0 ${isOverdue ? "text-red-400" : "text-muted-foreground"}`} />
+                            <Circle className={`h-4 w-4 shrink-0 ${isOverdue ? "text-red-400" : "text-muted-foreground"}`} />
                           )}
                           <div className="flex-1 min-w-0">
-                            <span className={`text-[11px] font-medium ${tarefa.status === "concluida" ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                            <span className={`text-sm font-medium ${tarefa.status === "concluida" ? "line-through text-muted-foreground" : "text-foreground"}`}>
                               {tarefa.titulo}
                             </span>
                             {tarefa.vence_em && (
-                              <span className={`text-[9px] ml-1.5 ${isOverdue ? "text-red-500 font-semibold" : "text-muted-foreground"}`}>
+                              <span className={`text-xs ml-2 ${isOverdue ? "text-red-500 font-semibold" : "text-muted-foreground"}`}>
                                 {isOverdue && "⚠️ "}{format(new Date(tarefa.vence_em), "dd/MM", { locale: ptBR })}
                               </span>
                             )}
                           </div>
-                          <Badge variant="outline" className={`text-[8px] h-3.5 ${PRIORIDADE_MAP[tarefa.prioridade]?.color || ""}`}>
+                          <Badge variant="outline" className={`text-xs ${PRIORIDADE_MAP[tarefa.prioridade]?.color || ""}`}>
                             {PRIORIDADE_MAP[tarefa.prioridade]?.label || tarefa.prioridade}
                           </Badge>
                         </div>
