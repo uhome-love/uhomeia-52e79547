@@ -1,10 +1,7 @@
 import { useState, useMemo } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,26 +9,27 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import type { PipelineLead, PipelineStage, PipelineSegmento } from "@/hooks/usePipeline";
 import { usePipelineLeadData } from "@/hooks/usePipelineLeadData";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
-  Phone, Mail, MessageSquare, Calendar, MapPin, ArrowRight, Loader2,
-  Clock, User, Building2, Target, DollarSign,
-  Plus, Pin, PinOff, CheckCircle2, Circle, AlertTriangle,
-  FileText, Send, PhoneCall, Video, ChevronRight, ChevronDown,
-  Flame, Snowflake, Sun, Zap, ClipboardList, StickyNote,
-  History, Brain, TrendingUp, AlertCircle, Timer,
-  Trash2, Ban, PhoneOff, Handshake, MoreHorizontal, Bot
+  Phone, Mail, MessageSquare, Calendar, MapPin, Loader2,
+  Clock, Building2, Target, DollarSign,
+  Plus, CheckCircle2, AlertTriangle,
+  FileText, ChevronDown, ClipboardList,
+  Flame, Snowflake, Sun, Zap, Brain, TrendingUp,
+  Trash2, Ban, PhoneOff, Handshake, MoreHorizontal, Bot, History
 } from "lucide-react";
 import PartnershipDialog from "./PartnershipDialog";
-// GerenteManagementSection removed per cleanup
 import LeadSequenceSuggestion from "./LeadSequenceSuggestion";
 import HomiLeadAssistant from "./HomiLeadAssistant";
 import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 import OpportunityVisitasTab from "./OpportunityVisitasTab";
 import OpportunityPropostasTab from "./OpportunityPropostasTab";
+import LeadTarefasTab from "./LeadTarefasTab";
+import LeadHistoricoTab from "./LeadHistoricoTab";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -48,27 +46,10 @@ interface Props {
   onDelete?: (leadId: string) => Promise<void>;
 }
 
-const ATIVIDADE_TIPOS = [
-  { value: "ligacao", label: "Ligação", icon: PhoneCall },
-  { value: "whatsapp", label: "WhatsApp", icon: MessageSquare },
-  { value: "followup", label: "Follow-up", icon: Send },
-  { value: "reuniao", label: "Reunião", icon: Video },
-  { value: "visita", label: "Visita", icon: MapPin },
-  { value: "proposta", label: "Proposta", icon: FileText },
-  { value: "retorno", label: "Retorno combinado", icon: Clock },
-  { value: "pendencia_doc", label: "Pendência documental", icon: ClipboardList },
-];
-
 const TEMPERATURA_MAP: Record<string, { label: string; color: string; icon: any }> = {
   quente: { label: "Quente", color: "text-red-500", icon: Flame },
   morno: { label: "Morno", color: "text-amber-500", icon: Sun },
   frio: { label: "Frio", color: "text-blue-500", icon: Snowflake },
-};
-
-const PRIORIDADE_MAP: Record<string, { label: string; color: string }> = {
-  alta: { label: "Alta", color: "bg-red-500/10 text-red-600 border-red-200" },
-  media: { label: "Média", color: "bg-amber-500/10 text-amber-600 border-amber-200" },
-  baixa: { label: "Baixa", color: "bg-green-500/10 text-green-600 border-green-200" },
 };
 
 const EMPREENDIMENTOS_UHOME = [
@@ -82,11 +63,10 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
   const leadData = usePipelineLeadData(open ? lead.id : null);
-  const [activeTab, setActiveTab] = useState("inteligencia");
+  const [activeTab, setActiveTab] = useState("tarefas");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [homiOpen, setHomiOpen] = useState(false);
-  const [showCustomAction, setShowCustomAction] = useState(false);
   const [empreendimentoSearch, setEmpreendimentoSearch] = useState("");
   const [empreendimentoOpen, setEmpreendimentoOpen] = useState(false);
   const [savingEmpreendimento, setSavingEmpreendimento] = useState(false);
@@ -104,25 +84,10 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
     empreendimento: lead.empreendimento || "",
   });
 
-  // Próxima ação
-  const [proximaAcao, setProximaAcao] = useState(lead.proxima_acao || "");
-  const [dataProximaAcao, setDataProximaAcao] = useState(lead.data_proxima_acao || "");
-
-  // New atividade
-  const [showNewAtividade, setShowNewAtividade] = useState(false);
-  const [newAtividade, setNewAtividade] = useState({ tipo: "ligacao", titulo: "", descricao: "", data: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }), hora: "", prioridade: "media" });
-
-  // New tarefa — enhanced with tipo + hora
-  const [showNewTarefa, setShowNewTarefa] = useState(false);
-  const [newTarefa, setNewTarefa] = useState({ titulo: "", descricao: "", prioridade: "media", vence_em: "", tipo: "follow_up", hora_vencimento: "" });
-
-  // New anotacao
-  const [newNota, setNewNota] = useState("");
-
   // Move stage
   const [moveObs, setMoveObs] = useState("");
 
-  // Partnership
+  // Partnership & Comunicacao
   const [partnerOpen, setPartnerOpen] = useState(false);
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
 
@@ -141,37 +106,23 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
 
   const whatsappUrl = lead.telefone ? `https://wa.me/${lead.telefone.replace(/\D/g, "")}` : null;
 
+  // Next task for indicator
+  const nextTask = useMemo(() => {
+    const pending = leadData.tarefas.filter(t => t.status === "pendente");
+    pending.sort((a, b) => {
+      if (!a.vence_em) return 1;
+      if (!b.vence_em) return -1;
+      return new Date(a.vence_em).getTime() - new Date(b.vence_em).getTime();
+    });
+    return pending[0] || null;
+  }, [leadData.tarefas]);
+
   const handleSaveCommercial = async () => {
     setSaving(true);
     try {
       await onUpdate(lead.id, commercialData as any);
       setEditingCommercial(false);
     } finally { setSaving(false); }
-  };
-
-  const handleSaveProximaAcao = async () => {
-    setSaving(true);
-    try {
-      await onUpdate(lead.id, { proxima_acao: proximaAcao || null, data_proxima_acao: dataProximaAcao || null } as any);
-    } finally { setSaving(false); }
-  };
-
-  const handleAddAtividade = async () => {
-    await leadData.addAtividade(newAtividade);
-    setNewAtividade({ tipo: "ligacao", titulo: "", descricao: "", data: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }), hora: "", prioridade: "media" });
-    setShowNewAtividade(false);
-  };
-
-  const handleAddTarefa = async () => {
-    await leadData.addTarefa(newTarefa);
-    setNewTarefa({ titulo: "", descricao: "", prioridade: "media", vence_em: "", tipo: "follow_up", hora_vencimento: "" });
-    setShowNewTarefa(false);
-  };
-
-  const handleAddNota = async () => {
-    if (!newNota.trim()) return;
-    await leadData.addAnotacao(newNota.trim());
-    setNewNota("");
   };
 
   const handleMoveStage = async (stageId: string) => {
@@ -213,7 +164,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   </PopoverContent>
                 </Popover>
 
-                {/* Temperatura — discreto ao lado do badge */}
+                {/* Temperatura */}
                 <span className={`flex items-center gap-0.5 text-xs font-medium ${temperatureInfo.color}`}>
                   <TempIcon className="h-3.5 w-3.5" />
                   {temperatureInfo.label}
@@ -237,7 +188,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               <span className="text-xs text-muted-foreground shrink-0 font-medium">{daysSinceCreation}d</span>
             </div>
 
-            {/* Row 2: Contact info — larger */}
+            {/* Row 2: Contact info */}
             <div className="flex items-center gap-4 flex-wrap">
               {lead.telefone && (
                 <a href={`tel:${lead.telefone}`} className="text-base text-foreground hover:text-primary transition-colors flex items-center gap-1.5">
@@ -251,7 +202,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               )}
             </div>
 
-            {/* Row 3: Action buttons — larger tap targets */}
+            {/* Row 3: Action buttons */}
             <div className="flex items-center gap-2 flex-wrap">
               {lead.telefone && (
                 <a href={`tel:${lead.telefone}`}>
@@ -277,7 +228,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-blue-300 text-blue-500 hover:bg-blue-50" onClick={() => setComunicacaoOpen(true)}>
                 <MessageSquare className="h-3.5 w-3.5" /> 💬 Mensagem
               </Button>
-              <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full" onClick={() => { setActiveTab("historico"); setShowNewAtividade(true); }}>
+              <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full" onClick={() => { setActiveTab("historico"); }}>
                 <Plus className="h-3.5 w-3.5" /> Ação
               </Button>
 
@@ -289,10 +240,10 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => { setActiveTab("tarefas"); setShowNewTarefa(true); }}>
+                  <DropdownMenuItem onClick={() => setActiveTab("tarefas")}>
                     <ClipboardList className="h-3.5 w-3.5 mr-2" /> Nova Tarefa
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setActiveTab("historico"); setShowNewAtividade(true); }}>
+                  <DropdownMenuItem onClick={() => setActiveTab("historico")}>
                     <Calendar className="h-3.5 w-3.5 mr-2" /> Nova Atividade
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setPartnerOpen(true)}>
@@ -324,81 +275,51 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
           </div>
         </div>
 
-        {/* ════════════ ZONA 2 — PRÓXIMA AÇÃO (fixo) ════════════ */}
-        <div className="shrink-0 border-b border-border/50 bg-accent/20 px-6 py-3 space-y-2">
-          <div className="flex items-center gap-1.5">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="text-xs font-bold text-foreground uppercase tracking-wide">Próxima Ação</span>
-            {lead.proxima_acao && lead.data_proxima_acao && (
-              <span className="text-xs text-muted-foreground ml-auto">
-                {format(new Date(lead.data_proxima_acao + "T00:00:00"), "dd/MM", { locale: ptBR })}
+        {/* ════════════ ZONA 2 — PRÓXIMA TAREFA (indicador compacto) ════════════ */}
+        <div className="shrink-0 border-b border-border/50 bg-accent/20 px-6 py-2.5">
+          {nextTask ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <ClipboardList className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-xs font-semibold text-foreground">Próxima tarefa:</span>
+              <span className="text-xs text-muted-foreground">
+                {nextTask.descricao || nextTask.titulo}
+                {nextTask.vence_em && ` · ${format(new Date(nextTask.vence_em + "T00:00:00"), "dd/MM", { locale: ptBR })}`}
+                {(nextTask as any).hora_vencimento && ` ${(nextTask as any).hora_vencimento.slice(0, 5)}`}
               </span>
-            )}
-          </div>
-
-          {/* Quick action chips */}
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { label: "Ligar", icon: "📞", borderColor: "border-orange-300", textColor: "text-orange-600", hoverBg: "hover:bg-orange-50" },
-              { label: "Enviar material", icon: "📄", borderColor: "border-blue-300", textColor: "text-blue-600", hoverBg: "hover:bg-blue-50" },
-              { label: "Marcar visita", icon: "🏠", borderColor: "border-green-300", textColor: "text-green-600", hoverBg: "hover:bg-green-50" },
-              { label: "Enviar proposta", icon: "💰", borderColor: "border-purple-300", textColor: "text-purple-600", hoverBg: "hover:bg-purple-50" },
-              { label: "Follow-up WhatsApp", icon: "💬", borderColor: "border-emerald-300", textColor: "text-emerald-600", hoverBg: "hover:bg-emerald-50" },
-              { label: "Confirmar visita", icon: "✅", borderColor: "border-teal-300", textColor: "text-teal-600", hoverBg: "hover:bg-teal-50" },
-            ].map(action => (
-              <button
-                key={action.label}
-                onClick={() => { setProximaAcao(action.label); handleSaveProximaAcao(); }}
-                className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
-                  proximaAcao === action.label
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : `bg-background ${action.textColor} ${action.borderColor} ${action.hoverBg}`
-                }`}
-              >
-                {action.icon} {action.label}
-              </button>
-            ))}
-            {/* + Ação personalizada (collapsed) */}
-            {!showCustomAction && (
-              <button
-                onClick={() => setShowCustomAction(true)}
-                className="text-xs px-2.5 py-1 rounded-md border border-dashed border-muted-foreground/40 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-              >
-                + Personalizada
-              </button>
-            )}
-          </div>
-
-          {/* Custom action input — collapsible */}
-          {showCustomAction && (
-            <div className="flex gap-1.5 items-center">
-              <Input className="h-8 text-sm flex-1" value={proximaAcao} onChange={e => setProximaAcao(e.target.value)} placeholder="Descreva a ação..." autoFocus />
-              <Input type="date" className="h-8 text-sm w-32" value={dataProximaAcao} onChange={e => setDataProximaAcao(e.target.value)} />
-              <Button size="sm" className="h-8 text-xs px-3" onClick={() => { handleSaveProximaAcao(); setShowCustomAction(false); }} disabled={saving || !proximaAcao}>
-                {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar"}
+              <div className="ml-auto flex items-center gap-1">
+                <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 gap-1" onClick={() => leadData.toggleTarefa(nextTask.id, nextTask.status)}>
+                  <CheckCircle2 className="h-3 w-3" /> Feito
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground">Sem tarefas agendadas</span>
+              <Button variant="link" size="sm" className="h-6 text-[10px] px-1 text-primary" onClick={() => setActiveTab("tarefas")}>
+                ➕ Criar tarefa
               </Button>
-              <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setShowCustomAction(false)}>✕</Button>
             </div>
           )}
         </div>
 
-        {/* ════════════ ZONA 3 — CONTEÚDO (4 Abas) ════════════ */}
+        {/* ════════════ ZONA 3 — CONTEÚDO (4 Abas reordenadas) ════════════ */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
           <div className="shrink-0 mx-6 mt-3 mb-4 flex items-center gap-2">
             <TabsList className="bg-muted/50 h-9 flex-1">
-              <TabsTrigger value="inteligencia" className="text-sm h-7 data-[state=active]:shadow-sm">
-                <Brain className="h-3.5 w-3.5 mr-1" /> Inteligência
+              <TabsTrigger value="tarefas" className="text-sm h-7 data-[state=active]:shadow-sm">
+                <ClipboardList className="h-3.5 w-3.5 mr-1" /> 📋 Tarefas
+                {pendingTasks > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">{pendingTasks}</Badge>}
               </TabsTrigger>
               <TabsTrigger value="historico" className="text-sm h-7 data-[state=active]:shadow-sm">
-                <History className="h-3.5 w-3.5 mr-1" /> Histórico
+                <History className="h-3.5 w-3.5 mr-1" /> 📝 Histórico
                 {leadData.atividades.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">{leadData.atividades.length}</Badge>}
               </TabsTrigger>
               <TabsTrigger value="visitas-propostas" className="text-sm h-7 data-[state=active]:shadow-sm">
-                <MapPin className="h-3.5 w-3.5 mr-1" /> Visitas
+                <MapPin className="h-3.5 w-3.5 mr-1" /> 📊 Visitas
               </TabsTrigger>
-              <TabsTrigger value="tarefas" className="text-sm h-7 data-[state=active]:shadow-sm">
-                <ClipboardList className="h-3.5 w-3.5 mr-1" /> Tarefas
-                {pendingTasks > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">{pendingTasks}</Badge>}
+              <TabsTrigger value="inteligencia" className="text-sm h-7 data-[state=active]:shadow-sm">
+                <Brain className="h-3.5 w-3.5 mr-1" /> 🧠 Inteligência
               </TabsTrigger>
             </TabsList>
             <Button
@@ -410,7 +331,56 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: "calc(85vh - 280px)" }}>
+          <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: "calc(85vh - 260px)" }}>
+            {/* ===== TAB: TAREFAS (DEFAULT) ===== */}
+            <TabsContent value="tarefas" className="mt-0">
+              <LeadTarefasTab
+                leadId={lead.id}
+                leadNome={lead.nome}
+                leadTelefone={lead.telefone}
+                leadEmail={lead.email}
+                tarefas={leadData.tarefas}
+                onAddTarefa={leadData.addTarefa}
+                onToggleTarefa={leadData.toggleTarefa}
+                onDeleteTarefa={leadData.deleteTarefa}
+                onReload={leadData.reload}
+              />
+            </TabsContent>
+
+            {/* ===== TAB: HISTÓRICO ===== */}
+            <TabsContent value="historico" className="mt-0">
+              <LeadHistoricoTab
+                leadId={lead.id}
+                lead={lead}
+                stages={stages}
+                atividades={leadData.atividades}
+                anotacoes={leadData.anotacoes}
+                tarefas={leadData.tarefas}
+                historico={leadData.historico}
+                onAddAtividade={leadData.addAtividade}
+                onAddAnotacao={leadData.addAnotacao}
+                onToggleFixar={leadData.toggleFixarAnotacao}
+                onAddTarefa={leadData.addTarefa}
+                onReload={leadData.reload}
+              />
+            </TabsContent>
+
+            {/* ===== TAB: VISITAS & PROPOSTAS ===== */}
+            <TabsContent value="visitas-propostas" className="px-6 pb-8 space-y-6 mt-0">
+              <div>
+                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" /> Visitas
+                </h4>
+                <OpportunityVisitasTab pipelineLeadId={lead.id} />
+              </div>
+              <div className="border-t border-border/50 pt-5">
+                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <DollarSign className="h-4 w-4" /> Propostas
+                </h4>
+                <OpportunityPropostasTab pipelineLeadId={lead.id} valorEstimado={lead.valor_estimado} corretorNomes={corretorNomes} />
+              </div>
+            </TabsContent>
+
             {/* ===== TAB: INTELIGÊNCIA ===== */}
             <TabsContent value="inteligencia" className="px-6 pb-8 space-y-5 mt-0">
               {/* Lead intelligence card */}
@@ -419,8 +389,8 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   <Brain className="h-4 w-4" /> Inteligência do Lead
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <InsightItem icon={Timer} label="Sem contato" value={lastActivity ? formatDistanceToNow(new Date(lastActivity.created_at), { locale: ptBR }) : "Nenhum"} alert={!lastActivity || differenceInHours(new Date(), new Date(lastActivity.created_at)) > 48} />
-                  <InsightItem icon={PhoneCall} label="Tentativas" value={`${leadData.atividades.length}`} />
+                  <InsightItem icon={Clock} label="Sem contato" value={lastActivity ? formatDistanceToNow(new Date(lastActivity.created_at), { locale: ptBR }) : "Nenhum"} alert={!lastActivity || differenceInHours(new Date(), new Date(lastActivity.created_at)) > 48} />
+                  <InsightItem icon={Phone} label="Tentativas" value={`${leadData.atividades.length}`} />
                   <InsightItem icon={Clock} label="Nesta etapa" value={hoursInStage < 24 ? `${hoursInStage}h` : `${Math.round(hoursInStage / 24)}d`} alert={hoursInStage > 72} />
                   <InsightItem icon={AlertTriangle} label="Atrasadas" value={overdueTasks > 0 ? `${overdueTasks}` : "0"} alert={overdueTasks > 0} />
                 </div>
@@ -431,12 +401,12 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 )}
               </div>
 
-              {/* Sequence Suggestion (compact) */}
+              {/* Sequence Suggestion */}
               {currentStage && (
                 <LeadSequenceSuggestion leadId={lead.id} leadNome={lead.nome} stageType={currentStage.tipo} empreendimento={lead.empreendimento} />
               )}
 
-              {/* Commercial Data — simplified horizontal layout */}
+              {/* Commercial Data */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -503,7 +473,6 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                     </Button>
                   </div>
                 ) : (
-                  /* Horizontal layout: Empreendimento (inline editable) | Valor | Origem */
                   <div className="flex items-center gap-6 flex-wrap text-sm py-2">
                     <div className="relative">
                       <span className="text-xs text-muted-foreground">Empreendimento</span>
@@ -516,27 +485,17 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="w-64 p-2" align="start">
-                            <Input
-                              placeholder="Buscar empreendimento..."
-                              value={empreendimentoSearch}
-                              onChange={e => setEmpreendimentoSearch(e.target.value)}
-                              className="h-8 text-xs mb-2"
-                              autoFocus
-                            />
+                            <Input placeholder="Buscar empreendimento..." value={empreendimentoSearch} onChange={e => setEmpreendimentoSearch(e.target.value)} className="h-8 text-xs mb-2" autoFocus />
                             <div className="max-h-48 overflow-y-auto space-y-0.5">
                               {EMPREENDIMENTOS_UHOME.filter(e => e.toLowerCase().includes(empreendimentoSearch.toLowerCase())).map(e => (
-                                <button
-                                  key={e}
-                                  className={`w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors ${e === lead.empreendimento ? 'bg-primary/10 text-primary font-semibold' : ''}`}
-                                  onClick={async () => {
-                                    setSavingEmpreendimento(true);
-                                    await onUpdate(lead.id, { empreendimento: e } as any);
-                                    setEmpreendimentoOpen(false);
-                                    setEmpreendimentoSearch("");
-                                    setSavingEmpreendimento(false);
-                                    toast.success("Empreendimento atualizado ✅");
-                                  }}
-                                >
+                                <button key={e} className={`w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors ${e === lead.empreendimento ? 'bg-primary/10 text-primary font-semibold' : ''}`} onClick={async () => {
+                                  setSavingEmpreendimento(true);
+                                  await onUpdate(lead.id, { empreendimento: e } as any);
+                                  setEmpreendimentoOpen(false);
+                                  setEmpreendimentoSearch("");
+                                  setSavingEmpreendimento(false);
+                                  toast.success("Empreendimento atualizado ✅");
+                                }}>
                                   {e}
                                 </button>
                               ))}
@@ -551,27 +510,17 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="w-64 p-2" align="start">
-                            <Input
-                              placeholder="Buscar empreendimento..."
-                              value={empreendimentoSearch}
-                              onChange={e => setEmpreendimentoSearch(e.target.value)}
-                              className="h-8 text-xs mb-2"
-                              autoFocus
-                            />
+                            <Input placeholder="Buscar empreendimento..." value={empreendimentoSearch} onChange={e => setEmpreendimentoSearch(e.target.value)} className="h-8 text-xs mb-2" autoFocus />
                             <div className="max-h-48 overflow-y-auto space-y-0.5">
                               {EMPREENDIMENTOS_UHOME.filter(e => e.toLowerCase().includes(empreendimentoSearch.toLowerCase())).map(e => (
-                                <button
-                                  key={e}
-                                  className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors"
-                                  onClick={async () => {
-                                    setSavingEmpreendimento(true);
-                                    await onUpdate(lead.id, { empreendimento: e } as any);
-                                    setEmpreendimentoOpen(false);
-                                    setEmpreendimentoSearch("");
-                                    setSavingEmpreendimento(false);
-                                    toast.success("Empreendimento atualizado ✅");
-                                  }}
-                                >
+                                <button key={e} className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors" onClick={async () => {
+                                  setSavingEmpreendimento(true);
+                                  await onUpdate(lead.id, { empreendimento: e } as any);
+                                  setEmpreendimentoOpen(false);
+                                  setEmpreendimentoSearch("");
+                                  setSavingEmpreendimento(false);
+                                  toast.success("Empreendimento atualizado ✅");
+                                }}>
                                   {e}
                                 </button>
                               ))}
@@ -599,221 +548,6 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
                   {lead.observacoes}
                 </p>
-              )}
-            </TabsContent>
-
-            {/* ===== TAB: HISTÓRICO (Atividades + Notas + Timeline) ===== */}
-            <TabsContent value="historico" className="px-6 pb-8 space-y-5 mt-0">
-              {/* Timeline visual */}
-              <div className="relative">
-                <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
-                <div className="space-y-0">
-                  {buildTimeline(leadData.historico, leadData.atividades, leadData.tarefas, stages, lead).slice(0, 10).map((item, i) => (
-                    <div key={i} className="relative flex gap-4 pb-4">
-                      <div className={`relative z-10 h-7 w-7 rounded-full flex items-center justify-center shrink-0 ${item.color}`}>
-                        <item.icon className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="pt-0.5">
-                        <p className="text-sm font-medium text-foreground">{item.title}</p>
-                        {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
-                        <p className="text-xs text-muted-foreground/60">{format(new Date(item.date), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="relative flex gap-4 pb-4">
-                    <div className="relative z-10 h-7 w-7 rounded-full flex items-center justify-center shrink-0 bg-green-100 text-green-600">
-                      <Plus className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="pt-0.5">
-                      <p className="text-sm font-medium text-foreground">Lead entrou no pipeline</p>
-                      <p className="text-xs text-muted-foreground/60">{format(new Date(lead.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* + Registrar inline */}
-              <div className="border-t border-border/50 pt-4">
-                <Button variant="outline" size="sm" className="h-9 text-sm gap-1.5 w-full" onClick={() => setShowNewAtividade(!showNewAtividade)}>
-                  <Plus className="h-4 w-4" /> Registrar atividade
-                </Button>
-
-                {showNewAtividade && (
-                  <div className="border border-primary/30 rounded-xl p-4 space-y-3 bg-primary/5 mt-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <Select value={newAtividade.tipo} onValueChange={v => setNewAtividade(p => ({ ...p, tipo: v }))}>
-                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {ATIVIDADE_TIPOS.map(t => (
-                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input className="h-9 text-sm" value={newAtividade.titulo} onChange={e => setNewAtividade(p => ({ ...p, titulo: e.target.value }))} placeholder="Título" />
-                    </div>
-                    <div className="flex gap-3">
-                      <Input type="date" className="h-9 text-sm flex-1" value={newAtividade.data} onChange={e => setNewAtividade(p => ({ ...p, data: e.target.value }))} />
-                      <Input type="time" className="h-9 text-sm w-28" value={newAtividade.hora} onChange={e => setNewAtividade(p => ({ ...p, hora: e.target.value }))} />
-                    </div>
-                    <Button size="sm" className="w-full h-9 text-sm" onClick={handleAddAtividade} disabled={!newAtividade.titulo}>Salvar</Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Notas (sticky notes) */}
-              <div className="border-t border-border/50 pt-4 space-y-3">
-                <h5 className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
-                  <StickyNote className="h-4 w-4" /> Notas
-                </h5>
-                <div className="flex gap-2">
-                  <Input className="h-9 text-sm flex-1" placeholder="Adicionar nota..." value={newNota} onChange={e => setNewNota(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddNota()} />
-                  <Button size="sm" className="h-9 w-9 p-0" onClick={handleAddNota} disabled={!newNota.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-                {leadData.anotacoes.map(nota => (
-                  <div key={nota.id} className={`p-3 rounded-xl border ${nota.fixada ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/20" : "border-border/50 bg-card"}`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold">{nota.autor_nome || "Usuário"}</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground">{format(new Date(nota.created_at), "dd/MM HH:mm", { locale: ptBR })}</span>
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => leadData.toggleFixarAnotacao(nota.id, nota.fixada)}>
-                          {nota.fixada ? <PinOff className="h-3 w-3 text-amber-500" /> : <Pin className="h-3 w-3 text-muted-foreground" />}
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-sm whitespace-pre-wrap">{nota.conteudo}</p>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-
-            {/* ===== TAB: VISITAS & PROPOSTAS ===== */}
-            <TabsContent value="visitas-propostas" className="px-6 pb-8 space-y-6 mt-0">
-              <div>
-                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" /> Visitas
-                </h4>
-                <OpportunityVisitasTab pipelineLeadId={lead.id} />
-              </div>
-              <div className="border-t border-border/50 pt-5">
-                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <DollarSign className="h-4 w-4" /> Propostas
-                </h4>
-                <OpportunityPropostasTab pipelineLeadId={lead.id} valorEstimado={lead.valor_estimado} corretorNomes={corretorNomes} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="tarefas" className="px-6 pb-8 space-y-4 mt-0">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-foreground">📋 Tarefas ({leadData.tarefas.filter(t => t.status === "pendente").length} pendentes)</h4>
-                <Button variant="outline" size="sm" className="h-9 text-sm gap-1.5" onClick={() => setShowNewTarefa(!showNewTarefa)}>
-                  <Plus className="h-4 w-4" /> Nova Tarefa
-                </Button>
-              </div>
-
-              {showNewTarefa && (
-                <div className="border border-primary/30 rounded-xl p-4 space-y-3 bg-primary/5">
-                  <Select value={newTarefa.tipo} onValueChange={v => setNewTarefa(p => ({ ...p, tipo: v }))}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Tipo" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="follow_up">Follow-up</SelectItem>
-                      <SelectItem value="ligar">Ligar</SelectItem>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                      <SelectItem value="enviar_proposta">Enviar proposta</SelectItem>
-                      <SelectItem value="enviar_material">Enviar material</SelectItem>
-                      <SelectItem value="marcar_visita">Marcar visita</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input className="h-9 text-sm" placeholder="Observação / descrição" value={newTarefa.descricao} onChange={e => setNewTarefa(p => ({ ...p, descricao: e.target.value, titulo: e.target.value }))} />
-                  <div className="grid grid-cols-3 gap-3">
-                    <Input type="date" className="h-9 text-sm" value={newTarefa.vence_em} onChange={e => setNewTarefa(p => ({ ...p, vence_em: e.target.value }))} />
-                    <Input type="time" className="h-9 text-sm" value={newTarefa.hora_vencimento} onChange={e => setNewTarefa(p => ({ ...p, hora_vencimento: e.target.value }))} placeholder="Hora" />
-                    <Select value={newTarefa.prioridade} onValueChange={v => setNewTarefa(p => ({ ...p, prioridade: v }))}>
-                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="alta">Alta</SelectItem>
-                        <SelectItem value="media">Média</SelectItem>
-                        <SelectItem value="baixa">Baixa</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 h-9 text-sm" onClick={() => setShowNewTarefa(false)}>Cancelar</Button>
-                    <Button size="sm" className="flex-1 h-9 text-sm" onClick={handleAddTarefa} disabled={!newTarefa.descricao && !newTarefa.titulo}>✅ Criar</Button>
-                  </div>
-                </div>
-              )}
-
-              {leadData.tarefas.length === 0 ? (
-                <EmptyState text="Nenhuma tarefa criada" />
-              ) : (
-                <div className="space-y-2">
-                  {[...leadData.tarefas]
-                    .sort((a, b) => {
-                      const aOverdue = a.status === "pendente" && a.vence_em && new Date(a.vence_em) < new Date();
-                      const bOverdue = b.status === "pendente" && b.vence_em && new Date(b.vence_em) < new Date();
-                      if (aOverdue && !bOverdue) return -1;
-                      if (!aOverdue && bOverdue) return 1;
-                      if (a.status === "pendente" && b.status !== "pendente") return -1;
-                      if (a.status !== "pendente" && b.status === "pendente") return 1;
-                      return 0;
-                    })
-                    .map(tarefa => {
-                      const isOverdue = tarefa.status === "pendente" && tarefa.vence_em && new Date(tarefa.vence_em) < new Date();
-                      const tipoLabels: Record<string, string> = { follow_up: "Follow-up", ligar: "Ligar", whatsapp: "WhatsApp", enviar_proposta: "Enviar proposta", enviar_material: "Enviar material", marcar_visita: "Marcar visita", outro: "Outro" };
-                      return (
-                        <div
-                          key={tarefa.id}
-                          className={`p-3 rounded-xl border transition-colors ${
-                            tarefa.status === "concluida"
-                              ? "bg-green-50/50 dark:bg-green-950/20 border-green-200/50"
-                              : isOverdue
-                              ? "bg-red-50/50 dark:bg-red-950/20 border-red-200/50"
-                              : "border-border/50 bg-card hover:bg-accent/20"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <button onClick={() => leadData.toggleTarefa(tarefa.id, tarefa.status)} className="mt-0.5 shrink-0">
-                              {tarefa.status === "concluida" ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <Circle className={`h-4 w-4 ${isOverdue ? "text-red-400" : "text-muted-foreground"}`} />
-                              )}
-                            </button>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-medium text-primary/70">{tipoLabels[(tarefa as any).tipo] || "Tarefa"}</span>
-                                {tarefa.vence_em && (
-                                  <span className={`text-xs ${isOverdue ? "text-red-500 font-semibold" : "text-muted-foreground"}`}>
-                                    {isOverdue && "🔴 "}{format(new Date(tarefa.vence_em), "dd/MM", { locale: ptBR })}
-                                    {(tarefa as any).hora_vencimento && ` às ${(tarefa as any).hora_vencimento.slice(0, 5)}`}
-                                  </span>
-                                )}
-                              </div>
-                              <span className={`text-sm ${tarefa.status === "concluida" ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                                {tarefa.descricao || tarefa.titulo}
-                              </span>
-                              {tarefa.status === "concluida" && tarefa.concluida_em && (
-                                <span className="text-xs text-green-600 block">✅ {format(new Date(tarefa.concluida_em), "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Badge variant="outline" className={`text-xs ${PRIORIDADE_MAP[tarefa.prioridade]?.color || ""}`}>
-                                {PRIORIDADE_MAP[tarefa.prioridade]?.label || tarefa.prioridade}
-                              </Badge>
-                              {tarefa.status === "pendente" && (
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-red-500" onClick={() => leadData.deleteTarefa(tarefa.id)}>
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
               )}
             </TabsContent>
           </ScrollArea>
@@ -870,15 +604,6 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
 
 // ===== Sub-components =====
 
-function DataField({ label, value }: { label: string; value: string | null | undefined }) {
-  return (
-    <div className="py-0.5">
-      <span className="text-[9px] text-muted-foreground">{label}</span>
-      <p className="text-[11px] font-medium text-foreground">{value || "—"}</p>
-    </div>
-  );
-}
-
 function InsightItem({ icon: Icon, label, value, alert }: { icon: any; label: string; value: string; alert?: boolean }) {
   return (
     <div className={`flex items-center gap-3 p-2.5 rounded-lg ${alert ? "bg-amber-100/50 dark:bg-amber-950/30" : "bg-muted/30"}`}>
@@ -889,72 +614,4 @@ function InsightItem({ icon: Icon, label, value, alert }: { icon: any; label: st
       </div>
     </div>
   );
-}
-
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="flex flex-col items-center py-8 text-center">
-      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
-        <FileText className="h-4 w-4 text-muted-foreground/40" />
-      </div>
-      <span className="text-sm text-muted-foreground">{text}</span>
-    </div>
-  );
-}
-
-interface TimelineItem {
-  title: string;
-  description?: string;
-  date: string;
-  icon: any;
-  color: string;
-}
-
-function buildTimeline(historico: any[], atividades: any[], tarefas: any[], stages: PipelineStage[], lead: PipelineLead): TimelineItem[] {
-  const items: TimelineItem[] = [];
-
-  for (const h of historico) {
-    const from = stages.find(s => s.id === h.stage_anterior_id);
-    const to = stages.find(s => s.id === h.stage_novo_id);
-    items.push({
-      title: `Movido para ${to?.nome || "?"}`,
-      description: from ? `De: ${from.nome}${h.observacao ? ` • ${h.observacao}` : ""}` : h.observacao || undefined,
-      date: h.created_at,
-      icon: ArrowRight,
-      color: "bg-primary/10 text-primary",
-    });
-  }
-
-  const tipoLabels: Record<string, string> = {
-    ligacao: "📞 Ligação", whatsapp: "💬 WhatsApp", followup: "📨 Follow-up",
-    reuniao: "🤝 Reunião", visita: "🏠 Visita", proposta: "📄 Proposta",
-    retorno: "🔁 Retorno", pendencia_doc: "📋 Pendência doc",
-  };
-
-  for (const a of atividades) {
-    const tipoInfo = ATIVIDADE_TIPOS.find(t => t.value === a.tipo);
-    items.push({
-      title: tipoLabels[a.tipo] || a.titulo,
-      description: `${a.titulo} • ${a.status === "concluida" ? "✅" : "⏳"}`,
-      date: a.created_at,
-      icon: tipoInfo?.icon || PhoneCall,
-      color: a.status === "concluida" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600",
-    });
-  }
-
-  for (const t of tarefas) {
-    if (t.status === "concluida" && t.concluida_em) {
-      items.push({ title: `✅ ${t.titulo}`, date: t.concluida_em, icon: CheckCircle2, color: "bg-green-100 text-green-600" });
-    }
-  }
-
-  if (lead.aceito_em) {
-    items.push({ title: "✅ Lead aceito", date: lead.aceito_em, icon: CheckCircle2, color: "bg-emerald-100 text-emerald-600" });
-  }
-  if (lead.distribuido_em) {
-    items.push({ title: "🔄 Lead distribuído", date: lead.distribuido_em, icon: ArrowRight, color: "bg-blue-100 text-blue-600" });
-  }
-
-  items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  return items;
 }
