@@ -434,8 +434,9 @@ export function useRoleta() {
     if (!user) return;
     setSubmitting(true);
     try {
+      const profileId = await getProfileId();
       await supabase.from("roleta_credenciamentos")
-        .update({ status: "recusado", aprovado_por: user.id, aprovado_em: new Date().toISOString() })
+        .update({ status: "recusado", aprovado_por: profileId, aprovado_em: new Date().toISOString() })
         .eq("id", credId);
       toast.success("Credenciamento recusado.");
       await loadCredenciamentos();
