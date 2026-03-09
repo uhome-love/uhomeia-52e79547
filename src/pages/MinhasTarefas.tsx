@@ -237,7 +237,7 @@ export default function MinhasTarefas() {
       ) : (
         <div className="space-y-3">
           {filteredTarefas.map(tarefa => {
-            const isOverdue = tarefa.vence_em && isBefore(new Date(tarefa.vence_em), todayStart) && tarefa.status === "pendente";
+            const isOverdue = tarefa.vence_em && isBefore(parseDateBRT(tarefa.vence_em), todayStart) && tarefa.status === "pendente";
             const isConcluida = tarefa.status === "concluida";
             return (
               <Card key={tarefa.id} className={`p-4 border-l-[3px] ${
