@@ -351,7 +351,8 @@ export default function RoletaStatusBar() {
               {JANELAS_CONFIG.map(j => {
                 const jStatus = getJanelaStatus(j);
                 const jaCredenciado = !!credenciamentosPorJanela[j.key];
-                const nightBlocked = j.temRequisitos && !(nightReqs.visitaMarcada && nightReqs.visitaRealizada && nightReqs.sistemaAtualizado);
+                // Desbloqueia com visita marcada OU realizada (+ sistema atualizado)
+                const nightBlocked = j.temRequisitos && !((nightReqs.visitaMarcada || nightReqs.visitaRealizada) && nightReqs.sistemaAtualizado);
                 const isDisabled = jStatus !== "aberto" || jaCredenciado || (j.temRequisitos && nightBlocked);
                 const Icon = j.icon;
 
