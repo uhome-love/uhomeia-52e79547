@@ -31,6 +31,7 @@ import {
   GraduationCap,
   Handshake,
   ListChecks,
+  Inbox,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -328,6 +329,7 @@ export function AppSidebar() {
         {
           label: "Leads",
           items: [
+            { title: "Aceite de Leads", url: "/aceite", icon: Inbox },
             { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
             { title: "Oferta Ativa", url: "/corretor/call", icon: Phone },
           ],

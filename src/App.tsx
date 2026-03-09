@@ -52,6 +52,7 @@ const Conquistas = lazy(() => import("./pages/Conquistas"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const MarketplaceScripts = lazy(() => import("./pages/MarketplaceScripts"));
 const CorretorCall = lazy(() => import("./pages/CorretorCall"));
+const AceiteLeads = lazy(() => import("./pages/AceiteLeads"));
 
 // Backoffice pages
 const BackofficeDashboard = lazy(() => import("./pages/BackofficeDashboard"));
@@ -144,6 +145,7 @@ const App = () => (
 
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><CorretorDashboard /></ProtectedPage>} />
+            <Route path="/aceite" element={<ProtectedPage><AceiteLeads /></ProtectedPage>} />
             <Route path="/corretor/call" element={<ProtectedPage><CorretorCall /></ProtectedPage>} />
             <Route path="/agenda-visitas" element={<ProtectedPage><AgendaVisitas /></ProtectedPage>} />
             <Route path="/corretor/resumo" element={<ProtectedPage><CorretorResumo /></ProtectedPage>} />
