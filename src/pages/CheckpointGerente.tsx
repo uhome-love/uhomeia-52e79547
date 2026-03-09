@@ -307,13 +307,13 @@ export default function CheckpointGerente() {
 
       <div className="max-w-screen-xl mx-auto px-4 mt-5 space-y-4">
         {pendentes.length > 0 && (
-          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
             <AlertCircle className="text-amber-500 mt-0.5 shrink-0" size={18} />
             <div>
-              <p className="text-sm font-semibold text-amber-800">
+              <p className="text-sm font-semibold text-foreground">
                 📋 {rows.length - pendentes.length}/{rows.length} corretores com resultados preenchidos
               </p>
-              <p className="text-xs text-amber-700 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 <span className="font-medium">Pendentes:</span> {pendentes.join(", ")}
               </p>
             </div>
