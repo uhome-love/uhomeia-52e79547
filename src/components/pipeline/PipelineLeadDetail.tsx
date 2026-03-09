@@ -112,9 +112,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [showNewAtividade, setShowNewAtividade] = useState(false);
   const [newAtividade, setNewAtividade] = useState({ tipo: "ligacao", titulo: "", descricao: "", data: new Date().toISOString().split("T")[0], hora: "", prioridade: "media" });
 
-  // New tarefa
+  // New tarefa — enhanced with tipo + hora
   const [showNewTarefa, setShowNewTarefa] = useState(false);
-  const [newTarefa, setNewTarefa] = useState({ titulo: "", descricao: "", prioridade: "media", vence_em: "" });
+  const [newTarefa, setNewTarefa] = useState({ titulo: "", descricao: "", prioridade: "media", vence_em: "", tipo: "follow_up", hora_vencimento: "" });
 
   // New anotacao
   const [newNota, setNewNota] = useState("");
