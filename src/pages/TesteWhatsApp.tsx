@@ -14,7 +14,7 @@ export default function TesteWhatsApp() {
     try {
       const { data, error } = await supabase.functions.invoke("whatsapp-send", {
         body: {
-          telefone: "5551992935675",
+          telefone: "5551992597097",
           mensagem: "Teste UhomeSales - WhatsApp funcionando!",
           nome: "Lucas",
         },
@@ -40,7 +40,7 @@ export default function TesteWhatsApp() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Telefone: 5551992935675 · Mensagem: "Teste UhomeSales - WhatsApp funcionando!"
+            Telefone: 5551992597097 · Mensagem: "Teste UhomeSales - WhatsApp funcionando!"
           </p>
           <Button onClick={handleTest} disabled={loading} className="gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
