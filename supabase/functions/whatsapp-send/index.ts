@@ -13,12 +13,18 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Não autenticado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const token = authHeader.replace("Bearer ", "");
+    const isServiceRole = token === supabaseServiceKey;
+    console.log("Auth check - isServiceRole:", isServiceRole);
 
     const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
     const PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
