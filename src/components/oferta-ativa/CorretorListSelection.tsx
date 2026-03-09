@@ -3,14 +3,16 @@ import { useOAListas, type OALista } from "@/hooks/useOfertaAtiva";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Phone, ArrowLeft, Loader2, Users, Search, Zap, Sparkles, Trash2, RotateCcw } from "lucide-react";
+import { Phone, ArrowLeft, Loader2, Users, Search, Zap, Sparkles, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import DialingModeWithScript from "./DialingModeWithScript";
 import CustomListWizard from "./CustomListWizard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useCustomLists, type CustomList } from "@/hooks/useCustomLists";
+import { useCustomLists, resolveCustomListLeads, type CustomList } from "@/hooks/useCustomLists";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -165,7 +167,7 @@ function ListaCard({ lista, stats, isCustom }: { lista: OALista; stats?: ListaSt
   );
 }
 
-function SavedListCard({ list, onReuse, onDelete }: { list: CustomList; onReuse: () => void; onDelete: () => void }) {
+function SavedListCard({ list, onStart, onDelete }: { list: CustomList; onStart: () => void; onDelete: () => void }) {
   return (
     <div
       className="rounded-xl p-4 flex items-center justify-between gap-3 transition-all duration-150"
@@ -193,18 +195,18 @@ function SavedListCard({ list, onReuse, onDelete }: { list: CustomList; onReuse:
           {list.vezes_usada > 0 && ` · ${list.vezes_usada}x`}
         </p>
       </div>
-      <div className="flex gap-1 shrink-0">
+      <div className="flex gap-1.5 shrink-0">
         <button
-          onClick={onReuse}
-          title="Reusar"
-          className="h-7 w-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+          onClick={onStart}
+          className="h-8 px-3 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-colors"
+          style={{ background: "linear-gradient(135deg, #16A34A, #15803D)" }}
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <Phone className="h-3.5 w-3.5" /> Iniciar
         </button>
         <button
           onClick={onDelete}
           title="Excluir"
-          className="h-7 w-7 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -215,6 +217,7 @@ function SavedListCard({ list, onReuse, onDelete }: { list: CustomList; onReuse:
 
 export default function CorretorListSelection() {
   const { listas, isLoading } = useOAListas();
+  const { user } = useAuth();
   const [selectedLista, setSelectedLista] = useState<OALista | null>(null);
   const [search, setSearch] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -344,8 +347,22 @@ export default function CorretorListSelection() {
               <SavedListCard
                 key={list.id}
                 list={list}
-                onReuse={() => {
+                onStart={async () => {
+                  if (!user) return;
                   markUsed.mutate(list.id);
+                  toast.loading("Carregando leads da lista...");
+                  const result = await resolveCustomListLeads(user.id, list.filtros);
+                  toast.dismiss();
+                  if (result.count === 0) {
+                    toast.error("Nenhum lead encontrado com esses filtros.");
+                    return;
+                  }
+                  // Navigate to pipeline filtered by these leads
+                  toast.success(`📋 ${result.count} leads encontrados! Abrindo pipeline...`);
+                  // Store lead IDs in sessionStorage for pipeline to pick up
+                  sessionStorage.setItem("custom_list_lead_ids", JSON.stringify(result.ids));
+                  sessionStorage.setItem("custom_list_name", list.nome);
+                  window.location.href = "/pipeline";
                 }}
                 onDelete={() => deleteList.mutate(list.id)}
               />

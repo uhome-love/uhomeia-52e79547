@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus, CheckCircle2, Circle, Trash2, Clock, Phone, MessageCircle,
-  Mail, Calendar, ChevronDown, ChevronUp, Loader2
+  Mail, Calendar, ChevronDown, ChevronUp, Loader2, Pencil
 } from "lucide-react";
 import { format, isBefore, startOfDay, addHours, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -60,6 +60,12 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
   const [adiarId, setAdiarId] = useState<string | null>(null);
   const [adiarData, setAdiarData] = useState("");
   const [adiarHora, setAdiarHora] = useState("");
+  // Edit task state
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editTipo, setEditTipo] = useState("follow_up");
+  const [editData, setEditData] = useState("");
+  const [editHora, setEditHora] = useState("");
+  const [editObs, setEditObs] = useState("");
 
   // Completion prompt
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -227,6 +233,15 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
               )}
               <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => handleConcluir(tarefa)}>
                 <CheckCircle2 className="h-3 w-3" /> Feito
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => {
+                setEditId(tarefa.id);
+                setEditTipo((tarefa as any).tipo || "follow_up");
+                setEditData(tarefa.vence_em || "");
+                setEditHora((tarefa as any).hora_vencimento?.slice(0, 5) || "");
+                setEditObs(tarefa.descricao || "");
+              }}>
+                <Pencil className="h-3 w-3" /> Editar
               </Button>
               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => { setAdiarId(tarefa.id); setAdiarData(""); setAdiarHora(""); }}>
                 <Calendar className="h-3 w-3" /> Adiar

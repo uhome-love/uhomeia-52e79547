@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { format, isToday, isTomorrow, isBefore, startOfDay, endOfWeek, addDays, addHours } from "date-fns";
 import { dateToBRT, parseDateBRT } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
-import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, Building2, User, ClipboardList, Plus, Search } from "lucide-react";
+import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, Building2, User, ClipboardList, Plus, Search, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -74,6 +74,12 @@ export default function MinhasTarefas() {
   const [leadSearch, setLeadSearch] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedLeadNome, setSelectedLeadNome] = useState("");
+  // Edit task state
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editTipo, setEditTipo] = useState("follow_up");
+  const [editData, setEditData] = useState("");
+  const [editHora, setEditHora] = useState("");
+  const [editObs, setEditObs] = useState("");
 
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ["minhas-tarefas", user?.id],
@@ -179,6 +185,29 @@ export default function MinhasTarefas() {
     setNovoObs("");
     setNovoData("");
     setNovoHora("");
+    queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
+    queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
+  };
+
+  const openEditTarefa = (tarefa: TarefaComLead) => {
+    setEditId(tarefa.id);
+    setEditTipo(tarefa.tipo);
+    setEditData(tarefa.vence_em || "");
+    setEditHora(tarefa.hora_vencimento?.slice(0, 5) || "");
+    setEditObs(tarefa.descricao || "");
+  };
+
+  const handleEditTarefa = async () => {
+    if (!editId) return;
+    await supabase.from("pipeline_tarefas").update({
+      tipo: editTipo,
+      vence_em: editData || null,
+      hora_vencimento: editHora || null,
+      descricao: editObs || null,
+      updated_at: new Date().toISOString(),
+    } as any).eq("id", editId);
+    toast.success("Tarefa atualizada ✅");
+    setEditId(null);
     queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
     queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
   };
@@ -290,6 +319,9 @@ export default function MinhasTarefas() {
                       <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => handleConcluir(tarefa.id, tarefa.pipeline_lead_id)}>
                         <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
                       </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => openEditTarefa(tarefa)}>
+                        <Pencil className="h-3.5 w-3.5" /> Editar
+                      </Button>
                       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => { setAdiarId(tarefa.id); setAdiarData(""); setAdiarHora(""); }}>
                         <Calendar className="h-3.5 w-3.5" /> Adiar
                       </Button>
@@ -316,6 +348,44 @@ export default function MinhasTarefas() {
             <Input type="date" value={adiarData} onChange={e => setAdiarData(e.target.value)} />
             <Input type="time" value={adiarHora} onChange={e => setAdiarHora(e.target.value)} />
             <Button className="w-full" onClick={handleAdiarCustom} disabled={!adiarData}>Reagendar ✅</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Tarefa dialog */}
+      <Dialog open={!!editId} onOpenChange={() => setEditId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>✏️ Editar Tarefa</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+              <Select value={editTipo} onValueChange={setEditTipo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TIPO_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{TIPO_EMOJI[k] || "📋"} {v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Data</label>
+                <Input type="date" value={editData} onChange={e => setEditData(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Hora</label>
+                <Input type="time" value={editHora} onChange={e => setEditHora(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Observação</label>
+              <Textarea value={editObs} onChange={e => setEditObs(e.target.value)} rows={2} placeholder="Observação..." />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setEditId(null)}>Cancelar</Button>
+              <Button size="sm" onClick={handleEditTarefa}>💾 Salvar Alterações</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
