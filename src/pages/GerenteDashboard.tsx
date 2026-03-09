@@ -524,10 +524,10 @@ export default function GerenteDashboard() {
             </div>
 
             {totalPipeCount === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-300 p-8 text-center" style={{ background: "#FAFAFA" }}>
-                <p className="text-lg font-semibold text-gray-500">🎯 Nenhum negócio ainda</p>
-                <p className="text-sm text-gray-400 mt-1">As visitas de hoje vão mudar isso!</p>
-                <button className="text-sm text-blue-500 hover:underline font-medium mt-3 inline-flex items-center gap-1" onClick={() => navigate("/agenda-visitas")}>
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center bg-muted/30">
+                <p className="text-lg font-semibold text-muted-foreground">🎯 Nenhum negócio ainda</p>
+                <p className="text-sm text-muted-foreground mt-1">As visitas de hoje vão mudar isso!</p>
+                <button className="text-sm text-primary hover:underline font-medium mt-3 inline-flex items-center gap-1" onClick={() => navigate("/agenda-visitas")}>
                   Ver agenda de hoje <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
