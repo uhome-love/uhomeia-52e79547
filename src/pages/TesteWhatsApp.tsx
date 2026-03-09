@@ -2,14 +2,14 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, FileText } from "lucide-react";
 
 export default function TesteWhatsApp() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
   const [result, setResult] = useState<{ success: boolean; data: any } | null>(null);
 
   const handleTest = async () => {
-    setLoading(true);
+    setLoading("text");
     setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("whatsapp-send", {
@@ -27,7 +27,33 @@ export default function TesteWhatsApp() {
     } catch (e: any) {
       setResult({ success: false, data: { error: e.message } });
     } finally {
-      setLoading(false);
+      setLoading(null);
+    }
+  };
+
+  const handleTestTemplate = async () => {
+    setLoading("template");
+    setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-send", {
+        body: {
+          telefone: "5551992597097",
+          template: {
+            name: "novo_lead",
+            language: "pt_BR",
+            components: [],
+          },
+        },
+      });
+      if (error) {
+        setResult({ success: false, data: { error: error.message, raw: error } });
+      } else {
+        setResult({ success: !!data?.success, data });
+      }
+    } catch (e: any) {
+      setResult({ success: false, data: { error: e.message } });
+    } finally {
+      setLoading(null);
     }
   };
 
@@ -42,10 +68,16 @@ export default function TesteWhatsApp() {
           <p className="text-xs text-muted-foreground">
             Telefone: 5551992597097 · Mensagem: "Teste UhomeSales - WhatsApp funcionando!"
           </p>
-          <Button onClick={handleTest} disabled={loading} className="gap-2">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Testar Envio WhatsApp
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={handleTest} disabled={!!loading} className="gap-2">
+              {loading === "text" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Testar Envio WhatsApp
+            </Button>
+            <Button onClick={handleTestTemplate} disabled={!!loading} variant="outline" className="gap-2">
+              {loading === "template" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              Testar com Template
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
