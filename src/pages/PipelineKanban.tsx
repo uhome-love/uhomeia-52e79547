@@ -146,13 +146,13 @@ export default function PipelineKanban() {
   const filteredLeads = useMemo(() => {
     let result = applyFilters(pipeline.leads, filters, pipeline.stages);
     if (filaCeoFilter) {
-      result = result.filter(l => !l.corretor_id);
+      result = result.filter(l => l.aceite_status === "pendente_distribuicao");
     }
     return result;
   }, [pipeline.leads, filters, pipeline.stages, filaCeoFilter]);
 
   const filaCeoCount = useMemo(() =>
-    pipeline.leads.filter(l => !l.corretor_id || l.corretor_id === "").length,
+    pipeline.leads.filter(l => l.aceite_status === "pendente_distribuicao").length,
     [pipeline.leads]
   );
 
