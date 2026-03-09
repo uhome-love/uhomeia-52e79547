@@ -541,10 +541,10 @@ export default function GerenteDashboard() {
                 ] as const).map(col => {
                   const f = pipe.fases[col.key] || { count: 0, vgv: 0 };
                   return (
-                    <div key={col.key} className="rounded-2xl p-4 bg-card text-center" style={{ border: "1px solid rgba(0,0,0,0.06)", borderTop: `3px solid ${col.borderColor}` }}>
+                    <div key={col.key} className="rounded-2xl p-4 bg-card border border-border/60 text-center" style={{ borderTop: `3px solid ${col.borderColor}` }}>
                       <p className="text-2xl font-black text-foreground">{f.count}</p>
-                      <p className="text-xs text-gray-500 font-medium">{col.label}</p>
-                      <p className="text-xs text-gray-400 mt-1">{formatCurrency(f.vgv)}</p>
+                      <p className="text-xs text-muted-foreground font-medium">{col.label}</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">{formatCurrency(f.vgv)}</p>
                     </div>
                   );
                 })}
