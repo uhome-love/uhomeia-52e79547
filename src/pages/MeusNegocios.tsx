@@ -268,6 +268,9 @@ export default function MeusNegocios() {
           <div className="flex items-center gap-2 mr-auto">
             <Briefcase className="h-5 w-5 text-primary" />
             <h1 className="text-lg font-bold">Pipeline Negócios</h1>
+            <Button size="sm" className="gap-1 h-7 text-xs" onClick={() => setAddNegocioOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Novo
+            </Button>
           </div>
 
           <div className="relative flex-1 min-w-[140px] sm:min-w-[200px] max-w-md">
