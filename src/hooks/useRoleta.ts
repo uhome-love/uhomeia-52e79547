@@ -395,14 +395,24 @@ export function useRoleta() {
 
       if (!cred) throw new Error("Credenciamento não encontrado");
 
-      // Add to fila for each segmento
+      // Add to fila for each segmento (skip if already in fila for that segmento today)
       const segmentoIds = [cred.segmento_1_id, cred.segmento_2_id].filter(Boolean) as string[];
       for (const segId of segmentoIds) {
+        // Check if corretor already has an active entry for this segmento today
+        const { data: alreadyInFila } = await supabase.from("roleta_fila")
+          .select("id")
+          .eq("data", hoje)
+          .eq("segmento_id", segId)
+          .eq("corretor_id", cred.corretor_id)
+          .eq("ativo", true)
+          .limit(1);
+
+        if (alreadyInFila && alreadyInFila.length > 0) continue;
+
         const { data: existing } = await supabase.from("roleta_fila")
           .select("posicao")
           .eq("data", hoje)
           .eq("segmento_id", segId)
-          .eq("janela", cred.janela)
           .eq("ativo", true)
           .order("posicao", { ascending: false })
           .limit(1);
