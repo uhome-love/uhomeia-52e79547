@@ -364,7 +364,7 @@ export function useVisitas(filters?: {
               .from("pipeline_stages")
               .select("id")
               .eq("pipeline_tipo", "leads")
-              .or("tipo.eq.qualificacao,nome.ilike.%qualifica%")
+              .ilike("nome", "%qualifica%")
               .eq("ativo", true)
               .limit(1)
               .maybeSingle();
