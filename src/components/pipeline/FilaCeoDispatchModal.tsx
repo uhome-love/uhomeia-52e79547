@@ -188,7 +188,11 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
           depois: { dispatched, failed, janela: selectedDestino, unidentified: unidentifiedCount },
         });
 
-        toast.success(`✅ ${dispatched} leads disparados para a roleta!${unidentifiedCount > 0 && !includeUnidentified ? ` ${unidentifiedCount} leads sem segmento identificado.` : ""}`);
+        if (dispatched > 0) {
+          toast.success(`✅ ${dispatched} leads disparados para a roleta!${failed > 0 ? ` (${failed} falharam)` : ""}`);
+        } else {
+          toast.error(`❌ Nenhum lead distribuído. ${failed} falharam. Verifique segmentos e corretores ativos.`);
+        }
       }
 
       onOpenChange(false);
