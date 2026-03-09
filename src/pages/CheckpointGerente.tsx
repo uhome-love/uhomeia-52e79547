@@ -359,9 +359,9 @@ export default function CheckpointGerente() {
           </div>
 
           {/* Projeção do Mês */}
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500 flex items-center gap-1.5">
-              📅 <span className="font-medium text-gray-700">Projeção do mês</span> (mantendo este ritmo):
+          <div className="mt-4 pt-3 border-t border-border/50">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              📅 <span className="font-medium text-foreground">Projeção do mês</span> (mantendo este ritmo):
               {(() => {
                 const projLig = projecao(metasMes.ligacoes_realizado);
                 const projVgv = projecao(metasMes.vgv_realizado);
