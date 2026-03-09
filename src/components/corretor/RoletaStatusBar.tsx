@@ -306,13 +306,17 @@ export default function RoletaStatusBar() {
                 <span className="ml-1 text-amber-600 font-medium">(pendente)</span>
               )}
             </span>
-          ) : (
+          ) : isCredenciamentoAberto() ? (
             <button
               onClick={() => setCredModalOpen(true)}
               className="text-xs text-amber-600 font-medium hover:text-amber-700 transition-colors hidden sm:inline"
             >
               📍 Nenhum segmento — Credenciar-se →
             </button>
+          ) : (
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Credenciamento encerrado para hoje. Amanhã abra antes das 10h.
+            </span>
           )}
           <button
             onClick={() => setCredModalOpen(true)}
