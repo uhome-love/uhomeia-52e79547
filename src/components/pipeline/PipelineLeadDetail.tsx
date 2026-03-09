@@ -420,32 +420,12 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   <div className="space-y-3 border rounded-xl p-4 bg-card">
                     <div>
                       <Label className="text-xs text-muted-foreground">Empreendimento</Label>
-                      <Select
-                        value={EMPREENDIMENTOS_UHOME.includes(commercialData.empreendimento) ? commercialData.empreendimento : "__custom__"}
-                        onValueChange={v => {
-                          if (v === "__custom__") {
-                            setCommercialData(p => ({ ...p, empreendimento: "" }));
-                          } else {
-                            setCommercialData(p => ({ ...p, empreendimento: v }));
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {EMPREENDIMENTOS_UHOME.map(e => (
-                            <SelectItem key={e} value={e}>{e}</SelectItem>
-                          ))}
-                          <SelectItem value="__custom__">✏️ Digitar manualmente</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {!EMPREENDIMENTOS_UHOME.includes(commercialData.empreendimento) && (
-                        <Input
-                          className="h-9 text-sm mt-2"
-                          placeholder="Nome do empreendimento"
-                          value={commercialData.empreendimento}
-                          onChange={e => setCommercialData(p => ({ ...p, empreendimento: e.target.value }))}
-                        />
-                      )}
+                      {/* BUG 6 FIX: Use EmpreendimentoCombobox for free-text input */}
+                      <EmpreendimentoCombobox
+                        value={commercialData.empreendimento}
+                        onChange={v => setCommercialData(p => ({ ...p, empreendimento: v }))}
+                        placeholder="Selecione ou digite o empreendimento..."
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
