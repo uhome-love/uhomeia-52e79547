@@ -111,7 +111,6 @@ export default function VisitasKanban({ visitas, onUpdateStatus, onDelete }: Pro
                       <p className="text-xs font-semibold truncate flex-1">{v.nome_cliente}</p>
                       <div className="flex items-center gap-1 shrink-0 ml-1">
                         {hasPipeline && <Link2 className="h-3.5 w-3.5 text-primary" />}
-                        {hasPdn && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
                       </div>
                     </div>
 
