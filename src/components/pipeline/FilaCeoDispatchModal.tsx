@@ -45,6 +45,7 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
     Promise.all([
       supabase.from("pipeline_leads")
         .select("id, nome, empreendimento, telefone, origem")
+        .eq("aceite_status", "pendente_distribuicao")
         .is("corretor_id", null)
         .order("created_at", { ascending: false }),
       supabase.from("roleta_campanhas")
