@@ -202,18 +202,12 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
           {/* Empreendimento */}
           <div>
             <Label className="text-xs font-semibold mb-1 block">Empreendimento</Label>
-            {empreendimentos.length > 0 ? (
-              <Select value={form.empreendimento} onValueChange={v => set("empreendimento", v)}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {empreendimentos.map(e => (
-                    <SelectItem key={e} value={e}>{e}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input value={form.empreendimento} onChange={e => set("empreendimento", e.target.value)} placeholder="Nome do empreendimento" className="h-9 text-sm" />
-            )}
+            <EmpreendimentoCombobox
+              value={form.empreendimento}
+              onChange={(v) => set("empreendimento", v)}
+              extraOptions={empreendimentos}
+              placeholder="Selecione ou digite o empreendimento"
+            />
           </div>
 
           {/* Corretor */}

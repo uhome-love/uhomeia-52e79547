@@ -248,6 +248,9 @@ export default function CustomListWizard({ open, onClose, onCreated, initialFilt
       const result = await createList.mutateAsync({ nome: listName, filtros });
       onCreated(result.id);
       onClose();
+    } catch (err: any) {
+      console.error("Erro ao criar lista personalizada:", err);
+      toast.error("Erro ao criar lista: " + (err?.message || "Erro desconhecido"));
     } finally {
       setCreating(false);
     }
