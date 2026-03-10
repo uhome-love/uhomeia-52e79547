@@ -63,26 +63,26 @@ export function useSmartAlerts() {
         console.error("Alert check checkpoint:", e);
       }
 
-      // 2. PDN não preenchido no mês atual
+      // 2. Negócios não preenchidos no mês atual
       try {
         const currentMonth = format(now, "yyyy-MM");
-        let pdnQuery = supabase.from("pdn_entries").select("id", { count: "exact", head: true }).eq("mes", currentMonth);
-        if (!isAdmin) pdnQuery = pdnQuery.eq("gerente_id", user.id);
-        const { count: pdnCount } = await pdnQuery;
+        let negQuery = supabase.from("negocios").select("id", { count: "exact", head: true }).gte("created_at", `${currentMonth}-01`).lt("created_at", `${currentMonth}-32`);
+        if (!isAdmin) negQuery = negQuery.eq("gerente_id", user.id);
+        const { count: negCount } = await negQuery;
 
-        if (pdnCount === 0 || pdnCount === null) {
+        if (negCount === 0 || negCount === null) {
           result.push({
-            id: "pdn_missing",
+            id: "negocios_missing",
             type: "pdn",
             severity: dayOfMonth > 5 ? "critical" : "warning",
-            title: "PDN do mês não preenchido",
-            description: `A planilha de negócios de ${format(now, "MMMM/yyyy")} ainda não foi iniciada.`,
-            action: { label: "Preencher PDN", url: "/pdn" },
+            title: "Nenhum negócio registrado este mês",
+            description: `O pipeline de negócios de ${format(now, "MMMM/yyyy")} ainda não possui registros.`,
+            action: { label: "Ver Pipeline", url: "/pipeline" },
           });
-          badgeCounts["/pdn"] = (badgeCounts["/pdn"] || 0) + 1;
+          badgeCounts["/pipeline"] = (badgeCounts["/pipeline"] || 0) + 1;
         }
       } catch (e) {
-        console.error("Alert check PDN:", e);
+        console.error("Alert check negocios:", e);
       }
 
       // 3. Metas em risco — check checkpoint_lines vs metas
