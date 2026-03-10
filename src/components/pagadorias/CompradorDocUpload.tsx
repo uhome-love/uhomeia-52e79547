@@ -46,6 +46,7 @@ interface Props {
 
 export default function CompradorDocUpload({ compradores, onChange }: Props) {
   const [extracting, setExtracting] = useState<Record<string, boolean>>({});
+  const [cepLoading, setCepLoading] = useState<Record<number, boolean>>({});
 
   const updateComprador = (idx: number, field: keyof Comprador, value: string | null) => {
     const updated = [...compradores];
