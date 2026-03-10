@@ -244,7 +244,7 @@ export function AppSidebar() {
             label: "Marketing",
             items: [
               { title: "Central de Marketing", url: "/marketing", icon: TrendingUp },
-              { title: "Empreendimentos", url: "/empreendimentos", icon: Building2 },
+              { title: "Imóveis Jetimob", url: "/imoveis", icon: Building2 },
             ],
           },
           {
