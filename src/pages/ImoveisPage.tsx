@@ -79,6 +79,9 @@ export default function ImoveisPage() {
   const [tipo, setTipo] = useState("");
   const [cidade, setCidade] = useState("Porto Alegre");
   const [bairro, setBairro] = useState("");
+  const [dormitorios, setDormitorios] = useState("");
+  const [valorMin, setValorMin] = useState("");
+  const [valorMax, setValorMax] = useState("");
 
   const fetchImoveis = useCallback(async (pageNum: number) => {
     setLoading(true);
@@ -93,6 +96,9 @@ export default function ImoveisPage() {
           tipo: tipo && tipo !== "all" ? tipo : undefined,
           cidade: cidade || undefined,
           bairro: bairro || undefined,
+          dormitorios: dormitorios && dormitorios !== "all" ? dormitorios : undefined,
+          valor_min: valorMin || undefined,
+          valor_max: valorMax || undefined,
         },
       });
 
