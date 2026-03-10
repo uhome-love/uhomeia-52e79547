@@ -202,6 +202,29 @@ export default function RoletaStatusBar() {
     if (error) { toast.error("Erro ao atualizar status"); return; }
     const opt = STATUS_OPTIONS.find(o => o.value === newStatus)!;
     toast.success(`Status atualizado: ${opt.label} ${opt.icon}`);
+
+    // If going offline, remove from roleta (deactivate credenciamentos + fila)
+    if (newStatus === "offline" && profileId) {
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      // Mark credenciamentos as "saiu"
+      await supabase.from("roleta_credenciamentos")
+        .update({ status: "saiu", saiu_em: new Date().toISOString() })
+        .eq("corretor_id", profileId)
+        .eq("data", today)
+        .in("status", ["pendente", "aprovado"]);
+      // Deactivate from fila
+      await supabase.from("roleta_fila")
+        .update({ ativo: false })
+        .eq("corretor_id", profileId)
+        .eq("data", today)
+        .eq("ativo", true);
+      // Reset local state
+      setCredenciamentosPorJanela({});
+      setMySegmentoIds([]);
+      setSelectedIds([]);
+      setCredStatus("");
+      toast.info("Você saiu da roleta automaticamente.");
+    }
   };
 
   const toggleSegmento = (id: string) => {
