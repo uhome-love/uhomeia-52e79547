@@ -23,6 +23,7 @@ import MinhaAgendaWidget from "@/components/corretor/MinhaAgendaWidget";
 import DashboardAgendaPreview from "@/components/corretor/DashboardAgendaPreview";
 import DashboardRankingsPreview from "@/components/corretor/DashboardRankingsPreview";
 import DashboardDesempenhoWidget from "@/components/corretor/DashboardDesempenhoWidget";
+import MiniAcademiaWidget from "@/components/corretor/MiniAcademiaWidget";
 
 import {
   AlertDialog,
