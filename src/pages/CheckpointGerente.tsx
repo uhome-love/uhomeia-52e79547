@@ -72,7 +72,7 @@ export default function CheckpointGerente() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<"checkpoint" | "aproveitados" | "relatorios" | "coach">("checkpoint");
+  const [activeTab, setActiveTab] = useState<"checkpoint" | "negocios" | "aproveitados" | "relatorios" | "coach">("checkpoint");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [checkpointStatus, setCheckpointStatus] = useState<"aberto" | "publicado">("aberto");
   const [rows, setRows] = useState<CheckpointRow[]>([]);
