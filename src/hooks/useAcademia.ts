@@ -179,14 +179,16 @@ export function useAcademia() {
 
     const existing = progresso.find(p => p.aula_id === aulaId);
     if (existing) {
-      await supabase.from("academia_progresso").update({
+      const { error } = await supabase.from("academia_progresso").update({
         status: "concluida", xp_ganho: xp, quiz_score: quizScore ?? existing.quiz_score, concluida_at: new Date().toISOString(),
       }).eq("id", existing.id);
+      if (error) { console.error("Erro ao atualizar progresso:", error); toast.error("Erro ao salvar progresso"); return; }
     } else {
-      await supabase.from("academia_progresso").insert({
+      const { error } = await supabase.from("academia_progresso").insert({
         corretor_id: user.id, trilha_id: trilhaId, aula_id: aulaId,
         status: "concluida", xp_ganho: xp, quiz_score: quizScore ?? null, concluida_at: new Date().toISOString(),
       });
+      if (error) { console.error("Erro ao inserir progresso:", error); toast.error("Erro ao salvar progresso"); return; }
     }
 
     toast(`🎯 +${xp} XP! Aula concluída!`, { duration: 3000 });
