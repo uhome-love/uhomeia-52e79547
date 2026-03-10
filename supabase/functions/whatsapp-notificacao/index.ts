@@ -28,7 +28,7 @@ serve(async (req) => {
     const numeroLimpo = telefone.replace(/\D/g, "");
     const numeroFinal = numeroLimpo.startsWith("55") ? numeroLimpo : `55${numeroLimpo}`;
 
-    console.log(`Sending WhatsApp to ${numeroFinal}, tipo: ${tipo}`);
+    console.log(`Sending WhatsApp to ${numeroFinal}, tipo: ${tipo}, dados:`, JSON.stringify(dados));
 
     // Template-based messages
     const TEMPLATE_MESSAGES: Record<string, () => any> = {
