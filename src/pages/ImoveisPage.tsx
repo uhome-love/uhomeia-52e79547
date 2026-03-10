@@ -194,7 +194,8 @@ function PhotoLightbox({ images, initialIndex, open, onClose }: { images: string
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-none flex flex-col [&>button]:hidden">
+      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-none flex flex-col [&>button]:hidden" aria-describedby={undefined}>
+        <DialogTitle className="sr-only">Fotos do imóvel</DialogTitle>
         <button onClick={onClose} className="absolute top-3 right-3 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white transition-colors">
           <X className="h-5 w-5" />
         </button>
