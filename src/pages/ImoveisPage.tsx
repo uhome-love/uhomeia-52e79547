@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,27 +14,12 @@ import { toast } from "sonner";
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
-/** Extract image URL from any possible Jetimob field structure */
+/** Extract thumbnail URL (fastest) from Jetimob imagens array */
 function extractImage(item: any): string | null {
-  // Direct string fields
-  for (const key of ["foto_principal", "foto_destaque", "foto_capa", "thumb", "thumbnail", "imagem_principal"]) {
-    if (typeof item[key] === "string" && item[key]) return item[key];
+  const arr = item.imagens;
+  if (Array.isArray(arr) && arr.length > 0) {
+    return arr[0].link_thumb || arr[0].link || null;
   }
-  // Array of objects with url field
-  for (const key of ["fotos", "imagens", "galeria", "midias", "photos", "images", "gallery"]) {
-    const arr = item[key];
-    if (Array.isArray(arr) && arr.length > 0) {
-      const first = arr[0];
-      if (typeof first === "string") return first;
-      if (first?.url) return first.url;
-      if (first?.link) return first.link;
-      if (first?.src) return first.src;
-      if (first?.arquivo) return first.arquivo;
-    }
-  }
-  // Nested foto object
-  if (item.foto?.url) return item.foto.url;
-  if (item.foto?.link) return item.foto.link;
   return null;
 }
 
@@ -108,18 +93,10 @@ export default function ImoveisPage() {
         return;
       }
 
-      const results = data?.result || data?.imoveis || data?.data || [];
-      const items = Array.isArray(results) ? results : [];
-      
-      // Debug: log first item to understand API structure
-      if (items.length > 0) {
-        console.log("JETIMOB_KEYS:", Object.keys(items[0]));
-        console.log("JETIMOB_SAMPLE:", JSON.stringify(items[0]).substring(0, 3000));
-      }
-      
+      const items = Array.isArray(data?.data) ? data.data : [];
       setImoveis(items);
-      setTotal(data?.total || data?.count || items.length);
-      setTotalPages(data?.totalPages || data?.pages || Math.ceil((data?.total || items.length) / 20));
+      setTotal(data?.total || items.length);
+      setTotalPages(data?.totalPages || Math.ceil((data?.total || items.length) / 20));
       setPage(pageNum);
     } catch (err) {
       console.error(err);
@@ -129,7 +106,10 @@ export default function ImoveisPage() {
     }
   }, [search, contrato, tipo, cidade, bairro, dormitorios, valorMin, valorMax]);
 
+  const mounted = React.useRef(false);
   useEffect(() => {
+    if (mounted.current) return;
+    mounted.current = true;
     fetchImoveis(1);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -291,9 +271,9 @@ export default function ImoveisPage() {
             {imoveis.map((item, idx) => {
               const img = extractImage(item);
               const loc = extractEndereco(item);
-              const codigo = item.codigo || item.code || item.referencia || item.id;
-              const tipoImovel = item.tipo || "";
-              const subtipo = item.subtipo || "";
+              const codigo = item.codigo;
+              const titulo = item.titulo_anuncio || "";
+              const tipoImovel = item.subtipo || item.tipo || "";
               const dorms = getNum(item, "dormitorios");
               const suites = getNum(item, "suites");
               const banhos = getNum(item, "banheiros");
@@ -303,12 +283,12 @@ export default function ImoveisPage() {
               const disponib = item.situacao || item.status || "";
 
               return (
-                <Card key={item.id || codigo || idx} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <Card key={item.id_imovel || codigo || idx} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="flex">
                     {/* Image */}
                     <div className="w-40 h-40 flex-shrink-0 bg-muted relative">
                       {img ? (
-                        <img src={img} alt={loc.endereco} className="w-full h-full object-cover" loading="lazy" />
+                        <img src={img} alt={titulo || loc.endereco} className="w-full h-full object-cover" loading="lazy" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Home className="h-8 w-8 text-muted-foreground/40" />
@@ -324,23 +304,22 @@ export default function ImoveisPage() {
                     {/* Info */}
                     <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
                       <div className="space-y-1">
-                        {loc.endereco && (
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {loc.endereco}
+                        {titulo && (
+                          <p className="text-sm font-semibold text-foreground truncate" title={titulo}>
+                            {titulo}
                           </p>
                         )}
                         {(loc.bairro || loc.cidade) && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <MapPin className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">
-                              {[loc.bairro, loc.cidade].filter(Boolean).join(" · ")}
+                              {[loc.endereco, loc.bairro, loc.cidade].filter(Boolean).join(" · ")}
                             </span>
                           </p>
                         )}
 
                         <div className="flex items-center gap-1 text-xs flex-wrap">
                           {tipoImovel && <Badge variant="outline" className="text-[10px] h-5">{tipoImovel}</Badge>}
-                          {subtipo && <Badge variant="outline" className="text-[10px] h-5">{subtipo}</Badge>}
                         </div>
 
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
