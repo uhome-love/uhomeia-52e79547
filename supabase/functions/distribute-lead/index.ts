@@ -583,6 +583,24 @@ async function sendWhatsApp(supabase: any, supabaseUrl: string, serviceKey: stri
   }
 }
 
+async function sendPush(supabaseUrl: string, serviceKey: string, authUserId: string, lead: any) {
+  try {
+    await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: authUserId,
+        title: "🚨 Novo Lead!",
+        body: `${lead.nome || "Lead"}${lead.empreendimento ? ` — ${lead.empreendimento}` : ""}. Aceite em 10 min!`,
+        url: "/aceite-leads",
+        data: { tag: `lead_novo_${lead.id}` },
+      }),
+    });
+  } catch (e) {
+    console.warn("Push notification error:", e);
+  }
+}
+
 function getTodayStartUTC(): string {
   // Brazil is UTC-3
   const now = new Date();
