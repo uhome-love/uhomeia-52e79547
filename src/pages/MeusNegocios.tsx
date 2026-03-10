@@ -746,7 +746,7 @@ export default function MeusNegocios() {
           className="flex gap-3 h-full overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-none pb-2 pr-4"
           style={{ scrollSnapType: "x proximity" }}
         >
-          {NEGOCIOS_FASES.map((fase) => {
+          {NEGOCIOS_FASES.filter(f => !("hidden" in f && f.hidden)).map((fase) => {
             const faseNegocios = negociosByFase.get(fase.key) || [];
             const isDragOver = dragOverFase === fase.key;
             const totalFaseVGV = faseNegocios.reduce((sum, n) => sum + (n.vgv_estimado || 0), 0);
