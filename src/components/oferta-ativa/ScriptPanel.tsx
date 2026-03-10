@@ -228,25 +228,50 @@ export default function ScriptPanel({ empreendimento, lead, compact, darkMode, s
                       <BookOpen className="h-3 w-3" /> {s.switchLabel} <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-y-auto">
                     <DropdownMenuItem className="text-xs gap-2" onClick={() => {
                       if (s.key === "ligacao") setScriptLigacao(getDefaultLigacao(scriptMode));
                       else setScriptWhatsApp(getDefaultWhatsApp());
                       setActiveScriptName(prev => ({ ...prev, [s.key]: "Script padrão" }));
                     }}>
                       <Check className={`h-3 w-3 ${activeScriptName[s.key] === "Script padrão" ? "opacity-100" : "opacity-0"}`} />
-                      Script padrão (atual)
+                      Script padrão
                     </DropdownMenuItem>
+
+                    {/* Team scripts */}
+                    {teamScripts.length > 0 && <DropdownMenuSeparator />}
+                    {teamScripts.length > 0 && (
+                      <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">👥 Scripts do Time</p>
+                    )}
+                    {teamScripts.map(ts => (
+                      <DropdownMenuItem key={ts.id} className="text-xs gap-2" onClick={() => {
+                        const content = applyVars(s.key === "ligacao" ? (ts.script_ligacao || "") : (ts.script_whatsapp || ""), leadName, emp);
+                        if (content) {
+                          if (s.key === "ligacao") setScriptLigacao(content);
+                          else setScriptWhatsApp(content);
+                          setActiveScriptName(prev => ({ ...prev, [s.key]: ts.titulo }));
+                          toast.success(`Script "${ts.titulo}" aplicado!`);
+                        } else {
+                          toast.error(`Script "${ts.titulo}" não tem conteúdo para ${s.label}`);
+                        }
+                      }}>
+                        <Check className={`h-3 w-3 ${activeScriptName[s.key] === ts.titulo ? "opacity-100" : "opacity-0"}`} />
+                        <span className="truncate">{ts.titulo}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto">{ts.empreendimento}</span>
+                      </DropdownMenuItem>
+                    ))}
+
+                    {/* Marketplace scripts */}
+                    {filteredMarketplace.length > 0 && <DropdownMenuSeparator />}
+                    {filteredMarketplace.length > 0 && (
+                      <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">📚 Marketplace</p>
+                    )}
                     {filteredMarketplace.map(item => (
                       <DropdownMenuItem key={item.id} className="text-xs gap-2" onClick={() => handleSelectScript(s.key, item)}>
                         <Check className={`h-3 w-3 ${activeScriptName[s.key] === item.titulo ? "opacity-100" : "opacity-0"}`} />
-                        {item.titulo}
+                        <span className="truncate">{item.titulo}</span>
                       </DropdownMenuItem>
                     ))}
-                    {filteredMarketplace.length > 0 && <DropdownMenuSeparator />}
-                    <DropdownMenuItem className="text-xs gap-2" onClick={() => navigate("/marketplace")}>
-                      📚 Ver marketplace completo →
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
