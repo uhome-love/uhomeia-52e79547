@@ -89,6 +89,11 @@ export function useCeoDashboard(period: DashPeriod) {
   // Visitas by empreendimento
   const [visitasPorEmp, setVisitasPorEmp] = useState<{ emp: string; marcadas: number; realizadas: number }[]>([]);
 
+  // Extra KPIs
+  const [totalLeadsPeriodo, setTotalLeadsPeriodo] = useState(0);
+  const [presentesHoje, setPresentesHoje] = useState(0);
+  const [metasDiaTotal, setMetasDiaTotal] = useState({ ligacoes: 0, aproveitados: 0, visitasMarcadas: 0 });
+
   const range = useMemo(() => getRange(period), [period]);
   const prevRange = useMemo(() => getPrevRange(period), [period]);
   const hoje = todayBRT();
