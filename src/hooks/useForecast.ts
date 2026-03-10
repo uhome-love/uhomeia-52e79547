@@ -86,10 +86,10 @@ export function useForecast(): ForecastData {
       lines = data || [];
     }
 
-    // Get PDN entries this month (single source of truth for proposals, sales, VGV)
-    let pdnQuery = supabase.from("pdn_entries").select("*").eq("mes", mesKey);
-    if (!isAdmin) pdnQuery = pdnQuery.eq("gerente_id", user.id);
-    const { data: pdnData } = await pdnQuery;
+    // Get negocios this month (single source of truth for proposals, sales, VGV)
+    let negQuery = supabase.from("negocios").select("*").gte("created_at", `${mesKey}-01`).lt("created_at", `${mesKey}-32`);
+    if (!isAdmin) negQuery = negQuery.eq("gerente_id", user.id);
+    const { data: pdnData } = await negQuery;
 
     // Get ceo_metas_mensais
     let metasQuery = supabase.from("ceo_metas_mensais").select("*").eq("mes", mesKey);
