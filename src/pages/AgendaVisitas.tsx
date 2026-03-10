@@ -22,6 +22,8 @@ import VisitasList from "@/components/visitas/VisitasList";
 import VisitasByCorretor from "@/components/visitas/VisitasByCorretor";
 import VisitasCalendar from "@/components/visitas/VisitasCalendar";
 import VisitaForm from "@/components/visitas/VisitaForm";
+import VisitaTypeSelector from "@/components/visitas/VisitaTypeSelector";
+import ReuniaoNegocioForm from "@/components/visitas/ReuniaoNegocioForm";
 import VisitaResultadoDialog, { type ResultadoVisita } from "@/components/visitas/VisitaResultadoDialog";
 import VisitasEquipe from "@/components/visitas/VisitasEquipe";
 
