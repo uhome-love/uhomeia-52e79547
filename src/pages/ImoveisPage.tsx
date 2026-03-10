@@ -846,6 +846,12 @@ export default function ImoveisPage() {
 
                         <div className="flex items-center gap-1 text-xs flex-wrap">
                           {tipoImovel && <Badge variant="outline" className="text-[10px] h-5">{tipoImovel}</Badge>}
+                          {entrega.emObras && (
+                            <Badge variant="secondary" className="text-[10px] h-5 gap-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                              <CalendarClock className="h-2.5 w-2.5" />
+                              {entrega.previsao ? `Entrega ${entrega.previsao}` : "Em obras"}
+                            </Badge>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
