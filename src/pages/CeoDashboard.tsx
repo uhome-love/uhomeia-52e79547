@@ -92,7 +92,7 @@ export default function CeoDashboard() {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
     pipelineStages, campanhas, alertas, negocioFases, vgvEmRisco, topCorretoresVgv,
     teams, origens, leadsPorEmpreendimento, visitasPorEmp,
-    reload,
+    reload, reloadRoleta,
   } = useCeoDashboard(period);
 
   // Build dashboard data for HOMI
