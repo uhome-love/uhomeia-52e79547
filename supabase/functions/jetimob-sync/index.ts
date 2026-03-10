@@ -191,6 +191,31 @@ serve(async (req) => {
       );
     }
 
+    // Load empreendimento → segmento mapping from roleta_campanhas
+    const { data: campanhasData } = await adminClient
+      .from("roleta_campanhas")
+      .select("empreendimento, segmento_id")
+      .eq("ativo", true);
+
+    const empToSegmento = new Map<string, string>();
+    for (const c of campanhasData || []) {
+      if (c.empreendimento && c.segmento_id) {
+        empToSegmento.set(c.empreendimento.toLowerCase().trim(), c.segmento_id);
+      }
+    }
+
+    // Helper: resolve segmento from empreendimento name
+    function resolveSegmentoId(emp: string | null): string | null {
+      if (!emp) return null;
+      const lower = emp.toLowerCase().trim();
+      if (empToSegmento.has(lower)) return empToSegmento.get(lower)!;
+      // Fuzzy: check if any key is contained
+      for (const [key, segId] of empToSegmento.entries()) {
+        if (lower.includes(key) || key.includes(lower)) return segId;
+      }
+      return null;
+    }
+
     // Get the "novo_lead" stage
     const { data: stageData } = await adminClient
       .from("pipeline_stages")
