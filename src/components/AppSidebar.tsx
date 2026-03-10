@@ -416,7 +416,8 @@ export function AppSidebar() {
 
   const { topItem, groups, roleLabel, extraBadges } = getGroupsByRole();
   const tarefaBadges: Record<string, number> = tarefasPendentes > 0 ? { "/minhas-tarefas": tarefasPendentes } : {};
-  const mergedBadges = { ...badges, ...extraBadges, ...tarefaBadges };
+  const aceiteBadges: Record<string, number> = aceiteLeadsPendentes > 0 ? { "/aceite": aceiteLeadsPendentes } : {};
+  const mergedBadges = { ...badges, ...extraBadges, ...tarefaBadges, ...aceiteBadges };
 
   // Footer initials
   const initials = (profile.nome || user?.email || "U")
