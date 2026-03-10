@@ -159,6 +159,7 @@ export const PIPELINE_STAGE_EMOJIS: Record<string, string> = {
   "Visita Marcada": "📅",
   "Visita Realizada": "✅",
   "Descarte": "🗑️",
+  "Convertido": "🎯",
 };
 
 export const PIPELINE_STAGE_COLORS: Record<string, string> = {
