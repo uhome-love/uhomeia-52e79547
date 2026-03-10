@@ -23,6 +23,7 @@ import MinhaAgendaWidget from "@/components/corretor/MinhaAgendaWidget";
 import DashboardAgendaPreview from "@/components/corretor/DashboardAgendaPreview";
 import DashboardRankingsPreview from "@/components/corretor/DashboardRankingsPreview";
 import DashboardDesempenhoWidget from "@/components/corretor/DashboardDesempenhoWidget";
+import MiniAcademiaWidget from "@/components/corretor/MiniAcademiaWidget";
 
 import {
   AlertDialog,
@@ -398,6 +399,11 @@ export default function CorretorDashboard() {
           {/* Meu Desempenho */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
             <DashboardDesempenhoWidget />
+          </motion.div>
+
+          {/* Mini Academia */}
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+            <MiniAcademiaWidget />
           </motion.div>
         </div>
       </div>
