@@ -72,6 +72,16 @@ const ORDENS = [
   { id: "alfabetica", label: "Ordem alfabética" },
 ];
 
+const CAMPANHAS = [
+  { id: "melnick_day", label: "🏷️ Oferecer Melnick Day" },
+  { id: "follow_up", label: "📞 Follow-up" },
+  { id: "reengajamento", label: "🔄 Reengajamento de leads" },
+  { id: "qualificacao", label: "🎯 Qualificação de leads" },
+  { id: "pos_venda", label: "🤝 Pós-venda / Relacionamento" },
+  { id: "lancamento", label: "🚀 Lançamento / Novidade" },
+  { id: "outro", label: "📋 Outro" },
+];
+
 interface Props {
   open: boolean;
   onClose: () => void;
