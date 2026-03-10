@@ -5489,6 +5489,7 @@ export type Database = {
         Args: { p_corretor_id: string }
         Returns: boolean
       }
+      is_gerente_or_above: { Args: never; Returns: boolean }
       is_lead_in_my_team: { Args: { p_corretor_id: string }; Returns: boolean }
       lock_lead_atomic: {
         Args: {
