@@ -161,8 +161,27 @@ serve(async (req) => {
     } else if (dados.target_user_ids && Array.isArray(dados.target_user_ids)) {
       targetUserIds.push(...dados.target_user_ids);
     } else {
-      // Find users with matching roles
+      // For gestor role: only notify the corretor's gerente, not all gestores
+      const corretorId = dados.corretor_id || dados.target_corretor_id;
+      let gerenteResolved = false;
+
+      if (corretorId && config.roles.includes("gestor")) {
+        const { data: tm } = await supabase
+          .from("team_members")
+          .select("gerente_id")
+          .eq("user_id", corretorId)
+          .eq("status", "ativo")
+          .limit(1)
+          .maybeSingle();
+        if (tm?.gerente_id) {
+          targetUserIds.push(tm.gerente_id);
+          gerenteResolved = true;
+        }
+      }
+
+      // Find users with matching roles (skip gestor if already resolved)
       for (const role of config.roles) {
+        if (role === "gestor" && gerenteResolved) continue;
         const { data: roleUsers } = await supabase
           .from("user_roles")
           .select("user_id")
