@@ -212,7 +212,7 @@ export default function CheckpointTableTab({
               );
             })}
             {rows.length === 0 && (
-              <tr><td colSpan={14} className="py-12 text-center text-gray-400 text-sm">Nenhum corretor no time. Adicione membros em "Painel do Time".</td></tr>
+              <tr><td colSpan={10} className="py-12 text-center text-gray-400 text-sm">Nenhum corretor no time. Adicione membros em "Painel do Time".</td></tr>
             )}
           </tbody>
           <tfoot>
