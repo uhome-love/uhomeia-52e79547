@@ -228,6 +228,19 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
             />
           </div>
 
+          {/* Local da Visita */}
+          <div>
+            <Label className="text-xs font-semibold mb-1 block">Local da Visita</Label>
+            <Select value={form.local_visita} onValueChange={v => set("local_visita", v)}>
+              <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Onde será a visita?" /></SelectTrigger>
+              <SelectContent>
+                {LOCAL_OPTIONS.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Corretor — only show for gestores/admins who manage a team (not for corretores) */}
           {teamMembers.length > 1 && teamMembers.some(m => m.user_id !== user?.id) && (
             <div>
