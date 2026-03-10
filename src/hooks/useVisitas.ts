@@ -277,27 +277,16 @@ export function useVisitas(filters?: {
     if (result) {
       toast.success(`Status atualizado para ${STATUS_LABELS[newStatus]}`);
 
-      // Negócio creation + pipeline stage moves are handled by DB triggers:
-      // - trg_auto_criar_negocio_visita (creates negócio on "realizada")
+      // Pipeline stage moves are handled by DB triggers:
       // - trg_visita_status_pipeline (moves pipeline lead stage)
+      // Note: Negócio creation is now manual via "Criar Negócio" button on the pipeline card
       if (newStatus === "realizada") {
         const visita = visitas.find(v => v.id === id);
         if (visita?.pipeline_lead_id) {
-          // Check if negócio was auto-created by trigger
-          setTimeout(async () => {
-            const { data: neg } = await supabase
-              .from("negocios")
-              .select("id")
-              .eq("pipeline_lead_id", visita.pipeline_lead_id!)
-              .limit(1)
-              .maybeSingle();
-            if (neg) {
-              toast("🎉 Negócio criado automaticamente!", {
-                description: "🎯 Envie a proposta em até 24h!",
-                duration: 5000,
-              });
-            }
-          }, 500);
+          toast("✅ Visita realizada!", {
+            description: "Use o botão 'Criar Negócio' no card do Pipeline para iniciar o negócio.",
+            duration: 5000,
+          });
         }
       }
     }
