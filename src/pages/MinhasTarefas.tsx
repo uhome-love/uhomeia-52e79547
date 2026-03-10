@@ -155,8 +155,10 @@ export default function MinhasTarefas() {
   const todayStart = startOfDay(now);
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-  const pendentes = useMemo(() => tarefas.filter(t => t.status === "pendente"), [tarefas]);
-  const concluidas = useMemo(() => tarefas.filter(t => t.status === "concluida").slice(0, 20), [tarefas]);
+  const activeTarefas = categoria === "leads" ? tarefas : negociosTarefas;
+
+  const pendentes = useMemo(() => activeTarefas.filter(t => t.status === "pendente"), [activeTarefas]);
+  const concluidas = useMemo(() => activeTarefas.filter(t => t.status === "concluida").slice(0, 20), [activeTarefas]);
   const atrasadas = useMemo(() => pendentes.filter(t => t.vence_em && isBefore(parseDateBRT(t.vence_em), todayStart)), [pendentes]);
   const hoje = useMemo(() => pendentes.filter(t => t.vence_em && isToday(parseDateBRT(t.vence_em))), [pendentes]);
   const amanha = useMemo(() => pendentes.filter(t => t.vence_em && isTomorrow(parseDateBRT(t.vence_em))), [pendentes]);
