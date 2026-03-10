@@ -1,6 +1,6 @@
 import { memo, useState, useMemo } from "react";
 import type { PipelineLead, PipelineSegmento, PipelineStage } from "@/hooks/usePipeline";
-import { Phone, MessageCircle, Zap, Calendar, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft, Eye, MapPin, PhoneCall, Send, FileText, Mail } from "lucide-react";
+import { Phone, MessageCircle, Zap, Calendar, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft, Eye, MapPin, PhoneCall, Send, FileText, Mail, MoreVertical, ArrowRight, Trash2 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { differenceInHours } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -341,46 +341,81 @@ const PipelineCard = memo(function PipelineCard({
           {lead.telefone && <span> · {formatPhone(lead.telefone)}</span>}
         </div>
 
-        {/* Line 3: Task status */}
-        {status.text && (
-          <p className={cn("text-[11px] truncate pt-0.5", status.textCls)}>
-            {status.text}
-          </p>
-        )}
+        {/* Line 3: Task status — always show something */}
+        <p className={cn("text-[11px] truncate pt-0.5", status.text ? status.textCls : "text-muted-foreground")}>
+          {status.text || "✅ Em dia"}
+        </p>
       </div>
 
       <div className="h-px bg-border/40" />
 
-      {/* Line 4: Action buttons — clean */}
-      <div data-actions-area className="px-2.5 py-1.5 flex items-center gap-1">
-        {lead.telefone && (
+      {/* Line 4: Action buttons + 3-dot menu */}
+      <div data-actions-area className="px-2 py-1.5 flex items-center justify-between">
+        <div className="flex items-center gap-0.5">
+          {lead.telefone && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-[11px] px-2 gap-1 font-medium hover:bg-accent"
+              onClick={handleCall}
+            >
+              <Phone className="h-3 w-3" /> Ligar
+            </Button>
+          )}
+
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 text-[11px] px-2.5 gap-1 font-medium hover:bg-accent"
-            onClick={handleCall}
+            className="h-7 text-[11px] px-2 gap-1 font-medium text-green-600 dark:text-green-400 hover:bg-green-500/10"
+            onClick={handleWhatsApp}
           >
-            <Phone className="h-3 w-3" /> 📞 Ligar
+            <MessageCircle className="h-3 w-3" /> WhatsApp
           </Button>
-        )}
 
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 text-[11px] px-2.5 gap-1 font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30"
-          onClick={handleWhatsApp}
-        >
-          <MessageCircle className="h-3 w-3" /> 💬 WhatsApp
-        </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 text-[11px] px-2 gap-1 font-medium text-primary hover:bg-primary/10"
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
+          >
+            <Zap className="h-3 w-3" /> Ação
+          </Button>
+        </div>
 
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 text-[11px] px-2.5 gap-1 font-medium text-primary hover:bg-primary/10"
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
-        >
-          <Zap className="h-3 w-3" /> ⚡ Ação
-        </Button>
+        {/* 3-dot quick actions menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-accent" onClick={(e) => e.stopPropagation()}>
+              <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+            {onMoveLead && stages.filter(s => s.id !== lead.stage_id).slice(0, 5).map(s => (
+              <DropdownMenuItem key={s.id} onClick={(e) => handleMoveStage(e as any, s.id)}>
+                <ArrowRight className="h-3.5 w-3.5 mr-2" /> {s.nome}
+              </DropdownMenuItem>
+            ))}
+            {onMoveLead && <DropdownMenuSeparator />}
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setScheduleOpen(true); }}>
+              <Calendar className="h-3.5 w-3.5 mr-2" /> Agendar visita
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setComunicacaoOpen(true); }}>
+              <Send className="h-3.5 w-3.5 mr-2" /> Central de comunicação
+            </DropdownMenuItem>
+            {(isAdmin || lead.corretor_id === user?.id) && (
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTransferOpen(true); }}>
+                <ArrowRightLeft className="h-3.5 w-3.5 mr-2" /> Repassar lead
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setPartnerOpen(true); }}>
+              <Handshake className="h-3.5 w-3.5 mr-2" /> Parceria
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleMarkLost(); }}>
+              <Trash2 className="h-3.5 w-3.5 mr-2" /> Descartar lead
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Dialogs */}
