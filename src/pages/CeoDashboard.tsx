@@ -92,7 +92,7 @@ export default function CeoDashboard() {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
     pipelineStages, campanhas, alertas, negocioFases, vgvEmRisco, topCorretoresVgv,
     teams, origens, leadsPorEmpreendimento, visitasPorEmp,
-    reload,
+    reload, reloadRoleta,
   } = useCeoDashboard(period);
 
   // Build dashboard data for HOMI
@@ -181,7 +181,8 @@ export default function CeoDashboard() {
     // Insert into fila
     await insertFilaForCred(cred);
     toast.success(`✅ ${item?.corretor_nome || "Corretor"} aprovado(a) na Roleta!`);
-  }, [user, localPendentes, getProfileId, insertFilaForCred]);
+    reloadRoleta();
+  }, [user, localPendentes, getProfileId, insertFilaForCred, reloadRoleta]);
 
   const recusar = useCallback(async (id: string) => {
     if (!user) return;
@@ -200,7 +201,8 @@ export default function CeoDashboard() {
       return;
     }
     toast.success(`❌ ${item?.corretor_nome || "Corretor"} recusado(a) da Roleta.`);
-  }, [user, localPendentes, getProfileId]);
+    reloadRoleta();
+  }, [user, localPendentes, getProfileId, reloadRoleta]);
 
   const aprovarTodos = useCallback(async () => {
     if (!user) return;
@@ -221,7 +223,8 @@ export default function CeoDashboard() {
       }
     }
     toast.success(`✅ ${ok} corretor(es) aprovado(s) na Roleta!`);
-  }, [user, localPendentes, getProfileId, insertFilaForCred]);
+    reloadRoleta();
+  }, [user, localPendentes, getProfileId, insertFilaForCred, reloadRoleta]);
 
 
 
