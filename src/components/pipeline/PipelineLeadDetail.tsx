@@ -351,7 +351,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
             <div className="flex items-center gap-2">
               <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="text-xs text-muted-foreground">Sem tarefas agendadas</span>
-              <Button variant="link" size="sm" className="h-6 text-[10px] px-1 text-primary" onClick={() => setActiveTab("tarefas")}>
+              <Button variant="link" size="sm" className="h-6 text-[10px] px-1 text-primary" onClick={() => { setActiveTab("tarefas"); setShowNovaTarefa(true); }}>
                 ➕ Criar tarefa
               </Button>
             </div>
