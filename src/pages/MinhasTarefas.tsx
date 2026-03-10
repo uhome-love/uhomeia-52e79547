@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { format, isToday, isTomorrow, isBefore, startOfDay, endOfWeek, addDays, addHours } from "date-fns";
 import { dateToBRT, parseDateBRT } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
-import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, Building2, User, ClipboardList, Plus, Search, Pencil, BookOpen } from "lucide-react";
+import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, Building2, User, ClipboardList, Plus, Search, Pencil, BookOpen, Target, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -48,6 +48,26 @@ const TIPO_EMOJI: Record<string, string> = {
   enviar_material: "📎", marcar_visita: "📅", confirmar_visita: "✅", retornar_cliente: "↩️", outro: "📋",
 };
 
+const NEGOCIO_TIPO_LABELS: Record<string, string> = {
+  mandar_simulacao: "Mandar simulação",
+  mandar_sugestao_proposta: "Mandar sugestão de proposta",
+  solicitar_documentos: "Solicitar documentos",
+  enviar_minuta: "Enviar minuta de contrato",
+  enviar_contrato_assinar: "Enviar contrato para assinar",
+  assinar_contrato: "Assinar contrato",
+  entregar_presente: "Entregar presente da venda",
+};
+
+const NEGOCIO_TIPO_EMOJI: Record<string, string> = {
+  mandar_simulacao: "📊",
+  mandar_sugestao_proposta: "💡",
+  solicitar_documentos: "📋",
+  enviar_minuta: "📄",
+  enviar_contrato_assinar: "✍️",
+  assinar_contrato: "🖊️",
+  entregar_presente: "🎁",
+};
+
 type TabFilter = "hoje" | "amanha" | "semana" | "atrasadas" | "concluidas";
 
 function formatPhone(phone: string) {
@@ -72,6 +92,8 @@ export default function MinhasTarefas() {
   const [adiarData, setAdiarData] = useState("");
   const [adiarHora, setAdiarHora] = useState("");
   const [showNovaTarefa, setShowNovaTarefa] = useState(false);
+  const [showTipoSelector, setShowTipoSelector] = useState(false);
+  const [showNovaTarefaNegocio, setShowNovaTarefaNegocio] = useState(false);
   const [novoTipo, setNovoTipo] = useState("follow_up");
   const [novoData, setNovoData] = useState("");
   const [novoHora, setNovoHora] = useState("");
@@ -79,6 +101,14 @@ export default function MinhasTarefas() {
   const [leadSearch, setLeadSearch] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedLeadNome, setSelectedLeadNome] = useState("");
+  // Negocio task state
+  const [negocioSearch, setNegocioSearch] = useState("");
+  const [selectedNegocioId, setSelectedNegocioId] = useState<string | null>(null);
+  const [selectedNegocioNome, setSelectedNegocioNome] = useState("");
+  const [negocioTipo, setNegocioTipo] = useState("mandar_simulacao");
+  const [negocioData, setNegocioData] = useState("");
+  const [negocioHora, setNegocioHora] = useState("");
+  const [negocioObs, setNegocioObs] = useState("");
   // Edit task state
   const [editId, setEditId] = useState<string | null>(null);
   const [editTipo, setEditTipo] = useState("follow_up");
@@ -154,6 +184,17 @@ export default function MinhasTarefas() {
       return data || [];
     },
     enabled: !!user && leadSearch.length >= 2,
+  });
+
+  const { data: searchNegocios = [] } = useQuery({
+    queryKey: ["negocio-search-tarefas", negocioSearch],
+    queryFn: async () => {
+      if (!user || negocioSearch.length < 2) return [];
+      const { data } = await supabase.from("negocios").select("id, nome_cliente, empreendimento, fase")
+        .not("fase", "eq", "caiu").ilike("nome_cliente", `%${negocioSearch}%`).limit(10);
+      return (data || []) as { id: string; nome_cliente: string | null; empreendimento: string | null; fase: string | null }[];
+    },
+    enabled: !!user && negocioSearch.length >= 2,
   });
 
   const now = new Date();
@@ -233,6 +274,32 @@ export default function MinhasTarefas() {
     queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
   };
 
+  const handleCriarTarefaNegocio = async () => {
+    if (!user || !selectedNegocioId || !negocioData) return;
+    await supabase.from("negocios_tarefas").insert({
+      negocio_id: selectedNegocioId,
+      titulo: `${NEGOCIO_TIPO_LABELS[negocioTipo] || negocioTipo}: ${selectedNegocioNome}`,
+      descricao: negocioObs || null,
+      tipo: negocioTipo,
+      vence_em: negocioData,
+      hora_vencimento: negocioHora || null,
+      status: "pendente",
+      prioridade: "media",
+      responsavel_id: user.id,
+      created_by: user.id,
+    } as any);
+    toast.success("Tarefa de negócio criada ✅");
+    setShowNovaTarefaNegocio(false);
+    setSelectedNegocioId(null);
+    setSelectedNegocioNome("");
+    setNegocioSearch("");
+    setNegocioObs("");
+    setNegocioData("");
+    setNegocioHora("");
+    queryClient.invalidateQueries({ queryKey: ["minhas-tarefas-negocios"] });
+    queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
+  };
+
   const openEditTarefa = (tarefa: TarefaComLead) => {
     setEditId(tarefa.id);
     setEditTipo(tarefa.tipo);
@@ -274,7 +341,7 @@ export default function MinhasTarefas() {
             <p className="text-sm text-muted-foreground">Organize seu dia e nunca perca um follow-up</p>
           </div>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => setShowNovaTarefa(true)}>
+        <Button size="sm" className="gap-1.5" onClick={() => setShowTipoSelector(true)}>
           <Plus className="h-4 w-4" /> Nova Tarefa
         </Button>
       </div>
@@ -515,6 +582,110 @@ export default function MinhasTarefas() {
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowNovaTarefa(false)}>Cancelar</Button>
               <Button onClick={handleCriarTarefa} disabled={!selectedLeadId || !novoData}>✅ Criar Tarefa</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
+      {/* Type selector dialog */}
+      <Dialog open={showTipoSelector} onOpenChange={setShowTipoSelector}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle className="text-center text-lg font-bold">Qual tipo de tarefa?</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <button
+              onClick={() => { setShowTipoSelector(false); setShowNovaTarefa(true); }}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border/60 bg-card hover:border-primary hover:bg-primary/5 transition-all group"
+            >
+              <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                <Target className="h-7 w-7 text-blue-600" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-foreground">Tarefa de Lead</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Follow-up, ligar, enviar material</p>
+              </div>
+            </button>
+            <button
+              onClick={() => { setShowTipoSelector(false); setShowNovaTarefaNegocio(true); }}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border/60 bg-card hover:border-primary hover:bg-primary/5 transition-all group"
+            >
+              <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                <Briefcase className="h-7 w-7 text-amber-600" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-foreground">Tarefa de Negócio</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Simulação, contrato, presente</p>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Nova Tarefa de Negócio dialog */}
+      <Dialog open={showNovaTarefaNegocio} onOpenChange={setShowNovaTarefaNegocio}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5 text-amber-600" /> Nova Tarefa de Negócio</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Negócio *</label>
+              {selectedNegocioId ? (
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-sm">{selectedNegocioNome}</Badge>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setSelectedNegocioId(null); setSelectedNegocioNome(""); }}>Trocar</Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Buscar negócio..." value={negocioSearch} onChange={e => setNegocioSearch(e.target.value)} className="pl-8" />
+                  {searchNegocios.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {searchNegocios.map((n: any) => (
+                        <button key={n.id} className="w-full px-3 py-2 text-left text-sm hover:bg-muted" onClick={() => {
+                          setSelectedNegocioId(n.id);
+                          setSelectedNegocioNome(n.nome_cliente || "Sem nome");
+                          setNegocioSearch("");
+                        }}>
+                          <p className="font-medium">{n.nome_cliente || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground">{[n.empreendimento, n.fase].filter(Boolean).join(" · ")}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Tipo *</label>
+              <Select value={negocioTipo} onValueChange={setNegocioTipo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(NEGOCIO_TIPO_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{NEGOCIO_TIPO_EMOJI[k]} {v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Data *</label>
+                <Input type="date" value={negocioData} onChange={e => setNegocioData(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Hora</label>
+                <Input type="time" value={negocioHora} onChange={e => setNegocioHora(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Observação</label>
+              <Textarea value={negocioObs} onChange={e => setNegocioObs(e.target.value)} placeholder="Ex: Enviar simulação do apto 301" rows={2} />
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowNovaTarefaNegocio(false)}>Cancelar</Button>
+              <Button onClick={handleCriarTarefaNegocio} disabled={!selectedNegocioId || !negocioData}>✅ Criar Tarefa</Button>
             </div>
           </div>
         </DialogContent>
