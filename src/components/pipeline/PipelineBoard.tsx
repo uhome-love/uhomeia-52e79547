@@ -540,18 +540,23 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
       }
     }
 
-    // Visita Realizada → update visita status
-    if (extra.criarNegocio !== undefined) {
+    // Visita Realizada → update visita status in agenda + register resultado
+    if (extra.registrarVisitaRealizada) {
       const { data: visita } = await supabase
         .from("visitas")
         .select("id")
         .eq("pipeline_lead_id", result.leadId)
-        .eq("status", "confirmada")
-        .order("data", { ascending: false })
+        .in("status", ["confirmada", "marcada"])
+        .order("data_visita", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (visita) {
-        await supabase.from("visitas").update({ status: "realizada" } as any).eq("id", visita.id);
+        await supabase.from("visitas").update({
+          status: "realizada",
+          resultado_visita: extra.interesse || null,
+          observacoes: extra.feedback || null,
+        } as any).eq("id", visita.id);
+        toast.success("📋 Visita registrada como realizada na agenda!");
       }
     }
 
