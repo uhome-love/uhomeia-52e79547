@@ -423,9 +423,16 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
             {/* ===== TAB: VISITAS & PROPOSTAS ===== */}
             <TabsContent value="visitas-propostas" className="px-6 pb-8 space-y-6 mt-0">
               <div>
-                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" /> Visitas
-                </h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4" /> Visitas
+                  </h4>
+                  <a href={`/agenda-visitas?lead=${lead.id}&nome=${encodeURIComponent(lead.nome)}&telefone=${encodeURIComponent(lead.telefone || "")}&empreendimento=${encodeURIComponent(lead.empreendimento || "")}`} target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                      <Calendar className="h-3 w-3" /> + Agendar Visita
+                    </Button>
+                  </a>
+                </div>
                 <OpportunityVisitasTab pipelineLeadId={lead.id} />
               </div>
               <div className="border-t border-border/50 pt-5">
