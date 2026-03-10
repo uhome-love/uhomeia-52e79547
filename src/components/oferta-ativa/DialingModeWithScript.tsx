@@ -16,6 +16,7 @@ import { useCorretorProgress } from "@/hooks/useCorretorProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import AttemptModal from "./AttemptModal";
+import CustomListAttemptModal from "./CustomListAttemptModal";
 import ScriptPanel from "./ScriptPanel";
 import AttemptHistory from "./AttemptHistory";
 import ScoringLegend from "./ScoringLegend";
@@ -360,7 +361,86 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
     }
   };
 
-  // Open AttemptModal directly (single popup flow)
+  // Custom list result handler — records in pipeline history, handles descarte_oa
+  const handleCustomListResult = async (resultado: string, feedback: string, visitaMarcada?: boolean, interesseTipo?: string) => {
+    if (!lead || !actionTaken || submitting) return;
+    setSubmitting(true);
+    try {
+      // Map custom results to registrar-compatible results
+      let mappedResultado = resultado;
+      let mappedInteresse = interesseTipo;
+      if (resultado === "atendeu") {
+        mappedResultado = "com_interesse";
+        // Map sub-options to pipeline stage mappings
+        const subMap: Record<string, string> = {
+          marcou_visita: "visita_marcada",
+          follow_up: "demonstrou_interesse",
+          proposta: "demonstrou_interesse",
+          conversa_geral: "pediu_informacoes",
+        };
+        mappedInteresse = subMap[interesseTipo || ""] || "pediu_informacoes";
+      } else if (resultado === "descarte_oa") {
+        mappedResultado = "sem_interesse";
+        // Also move lead to OA list
+        try {
+          await supabase.from("pipeline_leads").update({
+            temperatura: "frio",
+          } as any).eq("id", lead.id);
+        } catch {}
+      }
+
+      const result = await registrar(lead, actionTaken, mappedResultado, feedback, lista, currentIdempotencyKey || undefined, visitaMarcada, mappedInteresse);
+      if (!result?.success) { setSubmitting(false); return; }
+
+      if (!result.idempotent) {
+        applyOptimisticUpdate(mappedResultado, actionTaken, mappedResultado === "com_interesse" ? 3 : 1, visitaMarcada ?? false);
+
+        if (resultado === "atendeu") {
+          playSoundSuccess();
+          triggerConfetti();
+          const subLabel = interesseTipo === "marcou_visita" ? "Visita Marcada"
+            : interesseTipo === "proposta" ? "Pediu Proposta"
+            : interesseTipo === "follow_up" ? "Follow-up"
+            : "Histórico";
+          toast.success(`✅ Atendeu → ${subLabel}! Registrado no Pipeline.`, { duration: 3000 });
+          if (visitaMarcada && lead) {
+            createVisitaFromOA({
+              corretorId: user!.id,
+              leadId: lead.id,
+              nomeCliente: lead.nome,
+              telefone: lead.telefone || undefined,
+              empreendimento: lead.empreendimento || undefined,
+              observacoes: feedback,
+            });
+            toast.success("📅 Visita registrada na Agenda!");
+          }
+        } else if (resultado === "nao_atendeu") {
+          toast("📝 Não atendeu — registrado no histórico", { duration: 2000 });
+        } else if (resultado === "descarte_oa") {
+          toast("📤 Lead enviado para Oferta Ativa", { duration: 2000 });
+        }
+        checkMilestone(progress.tentativas + 1);
+      }
+
+      stopTimer();
+      stopHeartbeat();
+      setShowModal(false);
+      setActionTaken(null);
+      setCurrentIdempotencyKey(null);
+      setSessionLeadsServed(prev => prev + 1);
+      setInlineObs("");
+      queryClient.invalidateQueries({ queryKey: ["checkpoint"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+
+      await fetchNext();
+    } catch (err: any) {
+      console.error("Erro ao registrar (custom list):", err);
+      toast.error("Erro ao registrar. Tente novamente.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleOpenResultPopup = () => {
     if (!actionTaken) {
       setActionTaken("ligacao");
@@ -991,8 +1071,17 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       {/* Result Popup */}
       {ResultPopup}
 
-      {/* Attempt Modal (for Aproveitado / Agendar Visita details) */}
-      {showModal && lead && (
+      {/* Attempt Modal — different for custom lists vs OA lists */}
+      {showModal && lead && isCustom && (
+        <CustomListAttemptModal
+          open={showModal}
+          onClose={() => { setShowModal(false); setActionTaken(null); stopTimer(); }}
+          onSubmit={handleCustomListResult}
+          leadName={lead.nome}
+          callDuration={actionTaken === "ligacao" ? callTimer : undefined}
+        />
+      )}
+      {showModal && lead && !isCustom && (
         <AttemptModal
           open={showModal}
           onClose={() => { setShowModal(false); setActionTaken(null); stopTimer(); }}
