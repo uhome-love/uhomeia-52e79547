@@ -29,7 +29,7 @@ function extractFullImages(item: any): string[] {
   return arr.map((img: any) => img.link || img.link_thumb).filter(Boolean);
 }
 
-/** Extract origin/responsible info from Jetimob item */
+/** Extract origin/responsible info from Jetimob item (detail response) */
 function extractOrigemExterna(item: any): { sistema?: string; responsavel?: string; telefone?: string; email?: string } | null {
   const proprietario = item.proprietario_nome || item.proprietario?.nome;
   const agenciador = item.agenciador_nome || item.agenciador?.nome;
@@ -38,13 +38,15 @@ function extractOrigemExterna(item: any): { sistema?: string; responsavel?: stri
   const email = item.responsavel_email || item.corretor_email || item.proprietario_email || item.proprietario?.email;
   const sistema = item.origem_sistema || item.sistema_origem;
 
-  const obsText = item.observacoes_internas || item.informacoes_origem_externa || item.obs_internas || "";
+  // Parse text blocks that contain origin info
+  const textFields = [item.observacoes_internas, item.informacoes_origem_externa, item.obs_internas, item.observacoes].filter(Boolean);
   let parsedResp = responsavel;
   let parsedTel = telefone;
   let parsedEmail = email;
   let parsedSistema = sistema;
 
-  if (obsText && typeof obsText === "string") {
+  for (const obsText of textFields) {
+    if (!obsText || typeof obsText !== "string") continue;
     const sysMatch = obsText.match(/Sistema:\s*(.+)/i);
     const respMatch = obsText.match(/Respons[áa]vel\/Corretor:\s*(.+)/i) || obsText.match(/Respons[áa]vel:\s*(.+)/i);
     const telMatch = obsText.match(/Telefone:\s*(.+)/i);
@@ -63,6 +65,73 @@ function extractOrigemExterna(item: any): { sistema?: string; responsavel?: stri
     telefone: parsedTel || undefined,
     email: parsedEmail || undefined,
   };
+}
+
+/** On-demand responsible info button */
+function ResponsavelButton({ codigo }: { codigo: string }) {
+  const [origem, setOrigem] = useState<{ sistema?: string; responsavel?: string; telefone?: string; email?: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetched, setFetched] = useState(false);
+
+  const handleOpen = async (open: boolean) => {
+    if (!open || fetched || !codigo) return;
+    setLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke("jetimob-proxy", {
+        body: { action: "get_imovel", codigo },
+      });
+      const detail = data?.data || data;
+      if (detail && !detail.not_found) {
+        setOrigem(extractOrigemExterna(detail));
+      }
+    } catch (err) {
+      console.error("Erro ao buscar responsável:", err);
+    } finally {
+      setLoading(false);
+      setFetched(true);
+    }
+  };
+
+  return (
+    <Popover onOpenChange={handleOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Responsável">
+          <UserCircle className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3" align="end">
+        <p className="text-xs font-semibold text-foreground mb-2">Responsável / Origem</p>
+        {loading ? (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+            <Loader2 className="h-3 w-3 animate-spin" /> Carregando...
+          </div>
+        ) : !origem ? (
+          <p className="text-xs text-muted-foreground">Informação não disponível para este imóvel.</p>
+        ) : (
+          <div className="space-y-1.5 text-xs">
+            {origem.sistema && (
+              <p className="text-muted-foreground"><span className="font-medium text-foreground">Sistema:</span> {origem.sistema}</p>
+            )}
+            {origem.responsavel && (
+              <p className="text-muted-foreground"><span className="font-medium text-foreground">Responsável:</span> {origem.responsavel}</p>
+            )}
+            {origem.telefone && (
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Phone className="h-3 w-3" />
+                <a href={`tel:${origem.telefone.replace(/[^\d+]/g, "")}`} className="text-primary hover:underline">{origem.telefone}</a>
+              </p>
+            )}
+            {origem.email && (
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Mail className="h-3 w-3" />
+                <a href={`mailto:${origem.email}`} className="text-primary hover:underline">{origem.email}</a>
+              </p>
+            )}
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 /** Mini image slider for property cards */
