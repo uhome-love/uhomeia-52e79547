@@ -182,9 +182,9 @@ export default function CheckpointGerente() {
       const g = goalsMap[uid];
       const hadActivity = (oaLig[uid] || 0) > 0;
       const hadRoletaPresence = presentByRoleta.has(uid);
-      // Auto-detect presence: roleta credenciamento OR OA activity → presente
+      // Auto-detect presence: disponibilidade online OR roleta credenciamento OR OA activity → presente
       let presenca: CheckpointRow["presenca"] = s?.presenca ?? "nao_informado";
-      if (presenca === "nao_informado" && (hadActivity || hadRoletaPresence)) presenca = "presente";
+      if (presenca === "nao_informado" && (hadActivity || hadRoletaPresence || presentByDisponibilidade.has(uid))) presenca = "presente";
       // Map legacy values
       if ((presenca as string) === "home_office") presenca = "presente";
 
