@@ -240,8 +240,8 @@ export default function BuscaLeads() {
       {/* Results */}
       {results.length > 0 ? (
         <Card className="border-border/50">
-          <CardContent className="p-0">
-            <ScrollArea className="max-h-[60vh]">
+          <CardContent className="p-0 overflow-auto max-h-[65vh]">
+            <div className="min-w-[700px]">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">
@@ -307,7 +307,7 @@ export default function BuscaLeads() {
                   ))}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       ) : !isSearching && totalResults === 0 && (
