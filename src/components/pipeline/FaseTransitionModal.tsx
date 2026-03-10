@@ -75,7 +75,7 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
   const [contUnidade, setContUnidade] = useState("");
   const [contEndereco, setContEndereco] = useState("");
   const [contVgv, setContVgv] = useState(
-    negocio.vgv_estimado ? String(Math.round(negocio.vgv_estimado * 100)) : ""
+    negocio.vgv_estimado ? String(Math.round(negocio.vgv_estimado)) : ""
   );
   const [contTaxa, setContTaxa] = useState("5");
   const [contTaxaCustom, setContTaxaCustom] = useState("");
