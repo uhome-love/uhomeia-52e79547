@@ -187,6 +187,24 @@ export function useLeadProgression() {
       vgv_final: params.vgvFinal || null,
     } as any);
 
+    // Create pipeline_lead in pos_vendas Boas-vindas stage
+    const BOAS_VINDAS_STAGE_ID = "6634d176-d596-461b-b854-ad43182f4696";
+    await supabase.from("pipeline_leads").insert({
+      nome: params.nomeCliente,
+      telefone: params.telefone || null,
+      email: params.email || null,
+      empreendimento: params.empreendimento || null,
+      stage_id: BOAS_VINDAS_STAGE_ID,
+      corretor_id: params.corretorId,
+      temperatura: "quente",
+      aceite_status: "aceito",
+      modulo_atual: "pos_vendas",
+      negocio_id: params.negocioId,
+      origem: "venda",
+      observacoes: `Venda assinada — VGV: R$ ${(params.vgvFinal || 0).toLocaleString("pt-BR")}`,
+      created_by: user!.id,
+    } as any);
+
     // Update pipeline_leads if exists
     if (params.pipelineLeadId) {
       await supabase
