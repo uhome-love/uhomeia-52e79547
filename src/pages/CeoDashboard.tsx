@@ -92,6 +92,7 @@ export default function CeoDashboard() {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
     pipelineStages, campanhas, alertas, negocioFases, vgvEmRisco, topCorretoresVgv,
     teams, origens, leadsPorEmpreendimento, visitasPorEmp,
+    totalLeadsPeriodo, presentesHoje, metasDiaTotal,
     reload, reloadRoleta,
   } = useCeoDashboard(period);
 
@@ -382,7 +383,7 @@ export default function CeoDashboard() {
           <Target className="h-4 w-4" /> Gestão de Leads
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiCard icon={Users} label="Total de Leads" value={pipelineStages.reduce((a, s) => a + s.count, 0)} iconColor="text-blue-600" />
+          <KpiCard icon={Users} label="Total de Leads" value={totalLeadsPeriodo} iconColor="text-blue-600" />
           <KpiCard icon={CalendarDays} label="Visitas Marcadas" value={kpis.visitasMarcadas} prev={prevKpis?.visitasMarcadas} iconColor="text-amber-600" />
           <KpiCard
             icon={CalendarCheck}
@@ -396,7 +397,7 @@ export default function CeoDashboard() {
             icon={TrendingDown}
             label="Conversão Lead→Visita"
             value={kpis.visitasMarcadas}
-            displayValue={`${pipelineStages.reduce((a, s) => a + s.count, 0) > 0 ? Math.round((kpis.visitasMarcadas / pipelineStages.reduce((a, s) => a + s.count, 0)) * 100) : 0}%`}
+            displayValue={`${totalLeadsPeriodo > 0 ? Math.round((kpis.visitasMarcadas / totalLeadsPeriodo) * 100) : 0}%`}
             iconColor="text-purple-600"
           />
         </div>
@@ -463,15 +464,15 @@ export default function CeoDashboard() {
           <KpiCard
             icon={Users}
             label="Presentes Hoje"
-            value={teams.reduce((a, t) => a + (t.ligacoes > 0 ? 1 : 0), 0)}
-            displayValue={`${teams.filter(t => t.ligacoes > 0).length} equipes ativas`}
+            value={presentesHoje}
+            displayValue={`${presentesHoje} corretores`}
             iconColor="text-emerald-600"
           />
           <KpiCard
             icon={Target}
             label="Metas do Dia"
-            value={kpis.ligacoes > 0 ? 1 : 0}
-            displayValue={kpis.ligacoes > 0 ? "Em andamento" : "Sem atividade"}
+            value={metasDiaTotal.ligacoes}
+            displayValue={`${metasDiaTotal.ligacoes} lig · ${metasDiaTotal.aproveitados} aprov · ${metasDiaTotal.visitasMarcadas} VM`}
             iconColor="text-blue-600"
           />
           <KpiCard

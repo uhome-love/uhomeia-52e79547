@@ -89,6 +89,11 @@ export function useCeoDashboard(period: DashPeriod) {
   // Visitas by empreendimento
   const [visitasPorEmp, setVisitasPorEmp] = useState<{ emp: string; marcadas: number; realizadas: number }[]>([]);
 
+  // Extra KPIs
+  const [totalLeadsPeriodo, setTotalLeadsPeriodo] = useState(0);
+  const [presentesHoje, setPresentesHoje] = useState(0);
+  const [metasDiaTotal, setMetasDiaTotal] = useState({ ligacoes: 0, aproveitados: 0, visitasMarcadas: 0 });
+
   const range = useMemo(() => getRange(period), [period]);
   const prevRange = useMemo(() => getPrevRange(period), [period]);
   const hoje = todayBRT();
@@ -302,6 +307,36 @@ export function useCeoDashboard(period: DashPeriod) {
     setVisitasPorEmp(Array.from(empMap.entries()).map(([emp, d]) => ({ emp, ...d })).sort((a, b) => b.marcadas - a.marcadas));
   }, [range]);
 
+  const loadExtraKpis = useCallback(async () => {
+    const startTs = `${range.start}T00:00:00`;
+    const endTs = `${range.end}T23:59:59`;
+
+    // Total leads created in the period
+    const { count: leadsCount } = await supabase
+      .from("pipeline_leads")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", startTs)
+      .lte("created_at", endTs);
+    setTotalLeadsPeriodo(leadsCount || 0);
+
+    // Presentes hoje (corretores online via disponibilidade)
+    const { count: onlineCount } = await supabase
+      .from("corretor_disponibilidade")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "online");
+    setPresentesHoje(onlineCount || 0);
+
+    // Metas do dia (sum of all corretor daily goals for today)
+    const { data: goals } = await supabase
+      .from("corretor_daily_goals")
+      .select("meta_ligacoes, meta_aproveitados, meta_visitas_marcadas")
+      .eq("data", hoje);
+    const metaLig = (goals || []).reduce((a, g) => a + (g.meta_ligacoes || 0), 0);
+    const metaAprov = (goals || []).reduce((a, g) => a + (g.meta_aproveitados || 0), 0);
+    const metaVm = (goals || []).reduce((a, g) => a + (g.meta_visitas_marcadas || 0), 0);
+    setMetasDiaTotal({ ligacoes: metaLig, aproveitados: metaAprov, visitasMarcadas: metaVm });
+  }, [range, hoje]);
+
   const loadAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -311,14 +346,14 @@ export function useCeoDashboard(period: DashPeriod) {
       const [currentKpis, previousKpis] = await Promise.all([loadKPIs(range), loadKPIs(prevRange)]);
       setKpis(currentKpis);
       setPrevKpis(previousKpis);
-      await Promise.all([loadPipeline(), loadNegocios(), loadTeams(), loadVisitasPorEmp()]);
+      await Promise.all([loadPipeline(), loadNegocios(), loadTeams(), loadVisitasPorEmp(), loadExtraKpis()]);
     } catch (err) {
       console.error("Erro ao carregar dashboard CEO:", err);
     } finally {
       setLoading(false);
       setLastUpdate(new Date());
     }
-  }, [user, range, prevRange, loadProfile, loadRoleta, loadKPIs, loadPipeline, loadNegocios, loadTeams, loadVisitasPorEmp]);
+  }, [user, range, prevRange, loadProfile, loadRoleta, loadKPIs, loadPipeline, loadNegocios, loadTeams, loadVisitasPorEmp, loadExtraKpis]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
@@ -338,6 +373,7 @@ export function useCeoDashboard(period: DashPeriod) {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
     pipelineStages, campanhas, alertas, negocioFases, vgvEmRisco, topCorretoresVgv,
     teams, origens, leadsPorEmpreendimento, visitasPorEmp,
+    totalLeadsPeriodo, presentesHoje, metasDiaTotal,
     reload: loadAll, reloadRoleta: loadRoleta,
   };
 }
