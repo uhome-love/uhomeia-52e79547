@@ -520,7 +520,6 @@ export default function MeusNegocios() {
   }
 
   return (
-    <div className="flex flex-col w-full max-w-full min-w-0 overflow-hidden" style={{ height: "calc(100vh - 56px - 2rem)" }}>
     <div
       className="flex flex-col w-full max-w-full min-w-0 overflow-hidden rounded-2xl"
       style={{
