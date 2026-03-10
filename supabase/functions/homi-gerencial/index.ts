@@ -45,12 +45,13 @@ serve(async (req) => {
     const teamMemberIds = (teamMembers || []).map(m => m.id);
     const teamUserIds = (teamMembers || []).map(m => m.user_id).filter(Boolean);
 
-    // 2. PDN data (current month)
+    // 2. Negocios data (current month)
     const { data: pdnData } = await adminClient
-      .from("pdn_entries")
+      .from("negocios")
       .select("*")
       .eq("gerente_id", gerenteId)
-      .eq("mes", currentMonth);
+      .gte("created_at", `${currentMonth}-01`)
+      .lt("created_at", `${currentMonth}-32`);
 
     // 3. Checkpoint today
     const { data: checkpointToday } = await adminClient
