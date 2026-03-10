@@ -29,9 +29,13 @@ import {
   Building2,
   Cog,
   GraduationCap,
-  
   ListChecks,
   Inbox,
+  MailCheck,
+  Briefcase,
+  Store,
+  ListTodo,
+  PhoneCall,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -128,6 +132,7 @@ export function AppSidebar() {
   const [hoverFooter, setHoverFooter] = useState(false);
   const [roletaPendentes, setRoletaPendentes] = useState(0);
   const [tarefasPendentes, setTarefasPendentes] = useState(0);
+  const [aceiteLeadsPendentes, setAceiteLeadsPendentes] = useState(0);
 
   const fetchProfile = useCallback(() => {
     if (!user) return;
@@ -186,6 +191,25 @@ export function AppSidebar() {
     const interval = setInterval(fetchTarefasPendentes, 60_000);
     return () => clearInterval(interval);
   }, [fetchTarefasPendentes]);
+
+  // Fetch aceite leads pendentes for corretor
+  const fetchAceitePendentes = useCallback(async () => {
+    if (!user || isAdmin || isGestor || isBackoffice) return;
+    const now = new Date().toISOString();
+    const { count } = await supabase
+      .from("pipeline_leads")
+      .select("id", { count: "exact", head: true })
+      .eq("corretor_id", user.id)
+      .eq("aceite_status", "pendente")
+      .gt("aceite_expira_em", now);
+    setAceiteLeadsPendentes(count ?? 0);
+  }, [user, isAdmin, isGestor, isBackoffice]);
+
+  useEffect(() => {
+    fetchAceitePendentes();
+    const interval = setInterval(fetchAceitePendentes, 15_000);
+    return () => clearInterval(interval);
+  }, [fetchAceitePendentes]);
 
   useEffect(() => {
     if (toastShown.current || alerts.length === 0) return;
@@ -344,23 +368,27 @@ export function AppSidebar() {
     }
 
     // ── Corretor (default) ──
+    const aceiteItem: NavItem[] = aceiteLeadsPendentes > 0
+      ? [{ title: "Aceite de Leads", url: "/aceite", icon: MailCheck }]
+      : [];
+
     return {
       topItem: { title: "Minha Rotina", url: "/corretor", icon: Home },
       groups: [
         {
-          label: "Gestão de Leads",
+          label: "Gestão Comercial",
           items: [
-            { title: "Aceite de Leads", url: "/aceite", icon: Inbox },
+            { title: "Agenda de Tarefas", url: "/minhas-tarefas", icon: ListTodo },
             { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
-            { title: "📋 Minhas Tarefas", url: "/minhas-tarefas", icon: ListChecks },
-            { title: "Oferta Ativa", url: "/corretor/call", icon: Phone },
             { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
+            { title: "Pipeline Negócios", url: "/meus-negocios", icon: Briefcase },
           ],
         },
         {
-          label: "Gestão de Negócios",
+          label: "Prospecção",
           items: [
-            { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+            { title: "Oferta Ativa", url: "/corretor/call", icon: PhoneCall },
+            ...aceiteItem,
           ],
         },
         {
@@ -374,12 +402,11 @@ export function AppSidebar() {
         {
           label: "Ferramentas",
           items: [
+            { title: "Imóveis", url: "/imoveis", icon: Home },
             { title: "HOMI Assistente", url: "/homi", icon: Bot },
-            { title: "Imóveis", url: "/imoveis", icon: Building2 },
-            { title: "🎓 Academia", url: "/academia", icon: Award },
+            { title: "Academia", url: "/academia", icon: GraduationCap },
             { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
-            { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-            { title: "Notificações", url: "/notificacoes", icon: Bell },
+            { title: "Marketplace", url: "/marketplace", icon: Store },
           ],
         },
       ],
@@ -389,7 +416,8 @@ export function AppSidebar() {
 
   const { topItem, groups, roleLabel, extraBadges } = getGroupsByRole();
   const tarefaBadges: Record<string, number> = tarefasPendentes > 0 ? { "/minhas-tarefas": tarefasPendentes } : {};
-  const mergedBadges = { ...badges, ...extraBadges, ...tarefaBadges };
+  const aceiteBadges: Record<string, number> = aceiteLeadsPendentes > 0 ? { "/aceite": aceiteLeadsPendentes } : {};
+  const mergedBadges = { ...badges, ...extraBadges, ...tarefaBadges, ...aceiteBadges };
 
   // Footer initials
   const initials = (profile.nome || user?.email || "U")
