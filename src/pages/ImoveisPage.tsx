@@ -102,13 +102,6 @@ const BAIRROS_POA = [
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
-function extractImage(item: any): string | null {
-  const arr = item.imagens;
-  if (Array.isArray(arr) && arr.length > 0) {
-    return arr[0].link_thumb || arr[0].link || null;
-  }
-  return null;
-}
 
 function extractEndereco(item: any): { endereco: string; bairro: string; cidade: string } {
   const logradouro = item.endereco_logradouro || item.endereco || item.logradouro || "";
