@@ -154,8 +154,6 @@ export default function CheckpointTableTab({
               <th className="px-2 py-2 text-center bg-green-50/30">Aprov.</th>
               <th className="px-2 py-2 text-center bg-green-50/30">V.Marc.</th>
               <th className="px-2 py-2 text-center bg-green-50/30">V.Real.</th>
-              <th className="px-2 py-2 text-center bg-green-50/30">Prop.</th>
-              <th className="px-2 py-2 text-center bg-green-50/30">VGV</th>
               <th className="px-2 py-2 bg-green-50/30" />
               <th className="px-2 py-2" />
             </tr>
