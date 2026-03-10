@@ -86,6 +86,7 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
   const [assDigital, setAssDigital] = useState("digital");
   const [assAtoPago, setAssAtoPago] = useState("sim");
   const [assObs, setAssObs] = useState("");
+  const [assDataAssinatura, setAssDataAssinatura] = useState(new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }));
 
   // Caiu fields
   const [caiuMotivo, setCaiuMotivo] = useState("");
@@ -141,7 +142,7 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
     } else if (targetFase === "assinado") {
       onConfirm({
         fase: "assinado",
-        fields: { tipo_assinatura: assDigital, ato_pago: assAtoPago, observacoes: assObs },
+        fields: { tipo_assinatura: assDigital, ato_pago: assAtoPago, observacoes: assObs, data_assinatura: assDataAssinatura },
       });
     } else if (targetFase === "distrato") {
       if (!caiuMotivo.trim()) return;
@@ -276,6 +277,11 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
                     <Label htmlFor="ato-nao" className="text-xs cursor-pointer">❌ Não</Label>
                   </div>
                 </RadioGroup>
+              </div>
+              <div>
+                <Label className="text-xs">📅 Data real da assinatura</Label>
+                <Input type="date" value={assDataAssinatura} onChange={e => setAssDataAssinatura(e.target.value)} className="h-8 text-xs" />
+                <p className="text-[10px] text-muted-foreground mt-1">Informe a data em que a venda foi realmente fechada</p>
               </div>
               <div><Label className="text-xs">Observações</Label><Textarea value={assObs} onChange={e => setAssObs(e.target.value)} className="text-xs h-20" placeholder="Observações importantes sobre a assinatura..." /></div>
             </div>

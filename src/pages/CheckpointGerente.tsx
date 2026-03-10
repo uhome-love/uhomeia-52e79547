@@ -228,10 +228,10 @@ export default function CheckpointGerente() {
       supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).gte("created_at", `${mesInicio}T00:00:00`).lte("created_at", `${mesFim}T23:59:59`),
       supabase.from("visitas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).gte("data_visita", mesInicio).lte("data_visita", mesFim),
       supabase.from("visitas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).gte("data_visita", mesInicio).lte("data_visita", mesFim).eq("status", "realizada"),
-      supabase.from("negocios").select("vgv_estimado, fase").eq("gerente_id", user.id).gte("created_at", `${mesInicio}T00:00:00`),
+      supabase.from("negocios").select("vgv_estimado, vgv_final, fase, data_assinatura").eq("gerente_id", user.id).in("fase", ["assinado", "vendido"]).gte("data_assinatura", mesInicio).lte("data_assinatura", mesFim),
     ]);
 
-    const vgvReal = (negocios || []).filter(n => n.fase === "assinado").reduce((s, n) => s + Number(n.vgv_estimado || 0), 0);
+    const vgvReal = (negocios || []).reduce((s, n) => s + Number(n.vgv_final || n.vgv_estimado || 0), 0);
 
     setMetasMes(prev => ({
       ...prev,
