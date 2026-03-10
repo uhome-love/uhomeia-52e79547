@@ -22,13 +22,56 @@ function extractImages(item: any): string[] {
   return arr.map((img: any) => img.link_thumb || img.link).filter(Boolean);
 }
 
+/** Extract full-size image URLs for lightbox */
+function extractFullImages(item: any): string[] {
+  const arr = item.imagens;
+  if (!Array.isArray(arr) || arr.length === 0) return [];
+  return arr.map((img: any) => img.link || img.link_thumb).filter(Boolean);
+}
+
+/** Extract origin/responsible info from Jetimob item */
+function extractOrigemExterna(item: any): { sistema?: string; responsavel?: string; telefone?: string; email?: string } | null {
+  const proprietario = item.proprietario_nome || item.proprietario?.nome;
+  const agenciador = item.agenciador_nome || item.agenciador?.nome;
+  const responsavel = item.responsavel_nome || item.corretor_nome || item.responsavel?.nome;
+  const telefone = item.responsavel_telefone || item.corretor_telefone || item.proprietario_telefone || item.proprietario?.telefone;
+  const email = item.responsavel_email || item.corretor_email || item.proprietario_email || item.proprietario?.email;
+  const sistema = item.origem_sistema || item.sistema_origem;
+
+  const obsText = item.observacoes_internas || item.informacoes_origem_externa || item.obs_internas || "";
+  let parsedResp = responsavel;
+  let parsedTel = telefone;
+  let parsedEmail = email;
+  let parsedSistema = sistema;
+
+  if (obsText && typeof obsText === "string") {
+    const sysMatch = obsText.match(/Sistema:\s*(.+)/i);
+    const respMatch = obsText.match(/Respons[áa]vel\/Corretor:\s*(.+)/i) || obsText.match(/Respons[áa]vel:\s*(.+)/i);
+    const telMatch = obsText.match(/Telefone:\s*(.+)/i);
+    const emailMatch = obsText.match(/E-?mail:\s*(.+)/i);
+    if (sysMatch && !parsedSistema) parsedSistema = sysMatch[1].trim();
+    if (respMatch && !parsedResp) parsedResp = respMatch[1].trim();
+    if (telMatch && !parsedTel) parsedTel = telMatch[1].trim();
+    if (emailMatch && !parsedEmail) parsedEmail = emailMatch[1].trim();
+  }
+
+  if (!parsedResp && !parsedTel && !parsedEmail && !parsedSistema && !proprietario && !agenciador) return null;
+
+  return {
+    sistema: parsedSistema || undefined,
+    responsavel: parsedResp || proprietario || agenciador || undefined,
+    telefone: parsedTel || undefined,
+    email: parsedEmail || undefined,
+  };
+}
+
 /** Mini image slider for property cards */
-function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
+function ImageSlider({ images, alt, onClickImage }: { images: string[]; alt: string; onClickImage?: () => void }) {
   const [current, setCurrent] = useState(0);
 
   if (images.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center cursor-pointer" onClick={onClickImage}>
         <Home className="h-8 w-8 text-muted-foreground/40" />
       </div>
     );
@@ -39,8 +82,9 @@ function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
       <img
         src={images[current]}
         alt={alt}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover cursor-pointer"
         loading="lazy"
+        onClick={(e) => { e.stopPropagation(); onClickImage?.(); }}
       />
       {images.length > 1 && (
         <>
@@ -72,6 +116,58 @@ function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
     </div>
   );
 }
+
+/** Fullscreen photo lightbox */
+function PhotoLightbox({ images, initialIndex, open, onClose }: { images: string[]; initialIndex: number; open: boolean; onClose: () => void }) {
+  const [current, setCurrent] = useState(initialIndex);
+  useEffect(() => { setCurrent(initialIndex); }, [initialIndex]);
+  if (!open || images.length === 0) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-none flex flex-col [&>button]:hidden">
+        <button onClick={onClose} className="absolute top-3 right-3 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white transition-colors">
+          <X className="h-5 w-5" />
+        </button>
+        <div className="flex-1 flex items-center justify-center relative min-h-0">
+          <img src={images[current]} alt={`Foto ${current + 1}`} className="max-w-full max-h-full object-contain" />
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={() => setCurrent((p) => (p - 1 + images.length) % images.length)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white transition-colors"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                onClick={() => setCurrent((p) => (p + 1) % images.length)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white transition-colors"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </>
+          )}
+        </div>
+        <div className="flex items-center justify-center gap-1.5 py-3 overflow-x-auto px-4">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={cn(
+                "w-14 h-10 rounded overflow-hidden border-2 flex-shrink-0 transition-all",
+                i === current ? "border-primary opacity-100" : "border-transparent opacity-50 hover:opacity-80"
+              )}
+            >
+              <img src={img} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+        <p className="text-center text-white/60 text-xs pb-2">{current + 1} / {images.length}</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 /** Códigos dos imóveis com campanha de leads ativa */
 const CAMPANHA_CODES: { codigo: string; nome: string }[] = [
