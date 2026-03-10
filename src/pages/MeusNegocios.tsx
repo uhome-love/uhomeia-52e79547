@@ -461,13 +461,26 @@ export default function MeusNegocios() {
     return map;
   }, [filteredNegocios]);
 
-  const handleMoveFase = useCallback(async (negocioId: string, novaFase: string) => {
+  // Phases that require a transition popup
+  const PHASES_WITH_POPUP = ["proposta", "negociacao", "documentacao", "assinado", "distrato"];
+
+  const requestMoveFase = useCallback((negocioId: string, novaFase: string) => {
+    const negocio = negocios.find(n => n.id === negocioId);
+    if (!negocio || negocio.fase === novaFase) return;
+
+    if (PHASES_WITH_POPUP.includes(novaFase)) {
+      setTransitionTarget({ negocioId, fase: novaFase });
+    } else {
+      executeMoveFase(negocioId, novaFase);
+    }
+  }, [negocios]);
+
+  const executeMoveFase = useCallback(async (negocioId: string, novaFase: string) => {
     const negocio = negocios.find(n => n.id === negocioId);
     if (!negocio) return;
 
     await moveFase(negocioId, novaFase);
 
-    // GATILHO 5: If moved to "assinado", trigger pos-vendas + epic celebration
     if (novaFase === "assinado") {
       await onNegocioAssinado({
         negocioId,
@@ -477,7 +490,6 @@ export default function MeusNegocios() {
         corretorId: negocio.corretor_id || user?.id || "",
         vgvFinal: negocio.vgv_estimado || undefined,
       });
-      // Epic celebration screen
       setCelebrationData({
         nomeCliente: negocio.nome_cliente,
         empreendimento: negocio.empreendimento || undefined,
@@ -487,13 +499,52 @@ export default function MeusNegocios() {
     }
   }, [negocios, moveFase, onNegocioAssinado, user, corretorNomes]);
 
+  const handleTransitionConfirm = useCallback(async (data: TransitionData) => {
+    if (!transitionTarget || !user) return;
+    const negocioId = transitionTarget.negocioId;
+    const negocio = negocios.find(n => n.id === negocioId);
+    if (!negocio) return;
+
+    // Log the activity with all the fields
+    const descParts: string[] = [];
+    Object.entries(data.fields).forEach(([k, v]) => {
+      if (v !== "" && v !== null && v !== undefined) descParts.push(`${k}: ${v}`);
+    });
+
+    await supabase.from("negocios_atividades").insert({
+      negocio_id: negocioId,
+      tipo: `transicao_${data.fase}`,
+      titulo: `Movido para ${data.fase}`,
+      descricao: descParts.join(" | "),
+      created_by: user.id,
+    } as any);
+
+    // Update negocio fields based on phase
+    const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (data.fields.imovel) updates.empreendimento = data.fields.imovel;
+    if (data.fields.vgv) updates.vgv_estimado = parseFloat(data.fields.vgv);
+    if (data.fields.valor_proposta) updates.vgv_estimado = parseFloat(data.fields.valor_proposta);
+
+    if (Object.keys(updates).length > 1) {
+      await supabase.from("negocios").update(updates as any).eq("id", negocioId);
+    }
+
+    // Handle "caiu" destination
+    if (data.fase === "distrato" && data.fields.destino === "pipeline" && negocio.pipeline_lead_id) {
+      await supabase.from("pipeline_leads").update({ etapa: "qualificacao", updated_at: new Date().toISOString() } as any).eq("id", negocio.pipeline_lead_id);
+    }
+
+    setTransitionTarget(null);
+    await executeMoveFase(negocioId, data.fase);
+  }, [transitionTarget, user, negocios, executeMoveFase]);
+
   const handleDrop = (e: React.DragEvent, fase: string) => {
     e.preventDefault();
     setDragOverFase(null);
     if (!dragNegocioId.current) return;
     const id = dragNegocioId.current;
     dragNegocioId.current = null;
-    handleMoveFase(id, fase);
+    requestMoveFase(id, fase);
   };
 
   const updateScrollState = useCallback(() => {
