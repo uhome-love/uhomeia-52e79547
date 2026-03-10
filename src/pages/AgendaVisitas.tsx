@@ -184,6 +184,8 @@ const STATUS_EMOJIS: Record<string, string> = {
 export default function AgendaVisitas() {
   const { isAdmin, isGestor } = useUserRole();
   const [showForm, setShowForm] = useState(false);
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showReuniaoForm, setShowReuniaoForm] = useState(false);
   const [editingVisita, setEditingVisita] = useState<Visita | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
