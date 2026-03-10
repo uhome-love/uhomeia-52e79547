@@ -105,7 +105,7 @@ export default function ImoveisPage() {
     return BAIRROS_POA.filter((b) => b.toLowerCase().includes(q));
   }, [bairroSearch]);
 
-  const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva) => {
+  const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva, uhome = uhomeOnly) => {
     setLoading(true);
     try {
       if (campanha) {
