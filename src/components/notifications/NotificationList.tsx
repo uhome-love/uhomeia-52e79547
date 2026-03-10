@@ -2,6 +2,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Bell, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import type { Notification } from "@/hooks/useNotifications";
 
 const TIPO_LABELS: Record<string, string> = {
