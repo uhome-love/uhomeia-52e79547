@@ -525,6 +525,37 @@ export default function AgendaVisitas() {
       {/* ─── DAY SUMMARY ─── */}
       <DaySummary visitas={visitas} showTeamBreakdown={isAdmin} />
 
+      {/* ─── TEAM TABS (CEO/Admin) ─── */}
+      {isAdmin && (
+        <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1 w-fit">
+          {[
+            { key: "all", label: "Todas Equipes", emoji: "👥" },
+            ...FIXED_TEAMS,
+          ].map(t => {
+            const isActive = teamFilter === t.key;
+            const count = t.key === "all"
+              ? visitas.length
+              : visitas.filter(v => (v.equipe || "").toLowerCase().replace(/^equipe\s+/i, "").trim().includes(t.key)).length;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTeamFilter(t.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5",
+                  isActive
+                    ? t.key === "all"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : `${t.className} shadow-sm border`
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t.emoji} {t.label} <Badge variant="secondary" className="text-[10px] ml-0.5 px-1.5 py-0">{count}</Badge>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* ─── FILTERS ROW ─── */}
       <div className="flex flex-wrap items-center gap-2">
         {(isAdmin || isGestor) && corretores.length > 1 && (
