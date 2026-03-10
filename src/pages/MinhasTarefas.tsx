@@ -85,6 +85,7 @@ export default function MinhasTarefas() {
   const [editData, setEditData] = useState("");
   const [editHora, setEditHora] = useState("");
   const [editObs, setEditObs] = useState("");
+  const [scriptsOpen, setScriptsOpen] = useState(false);
 
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ["minhas-tarefas", user?.id],
