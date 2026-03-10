@@ -313,14 +313,14 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
   const [local, setLocal] = useState("stand");
   const [data, setData] = useState("");
   const [horario, setHorario] = useState("");
+  const [responsavel, setResponsavel] = useState("corretor");
   const [parceiro, setParceiro] = useState("");
   const [obs, setObs] = useState("");
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string }[]>([]);
 
   useEffect(() => {
     const load = async () => {
-      const q: any = supabase.from("team_members").select("user_id, nome");
-      const { data } = await q.eq("ativo", true);
+      const { data } = await supabase.from("team_members").select("user_id, nome").eq("status", "ativo");
       if (data) setCorretores(data.filter((c: any) => c.user_id));
     };
     load();
@@ -332,6 +332,13 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
     { value: "videochamada", label: "📹 Videochamada" },
     { value: "decorado", label: "🎨 Decorado" },
     { value: "imovel", label: "🔑 No imóvel específico" },
+  ];
+
+  const RESPONSAVEL_OPTIONS = [
+    { value: "gerente", label: "👔 Gerente" },
+    { value: "corretor", label: "🧑‍💼 Próprio corretor" },
+    { value: "parceiro", label: "🤝 Corretor parceiro" },
+    { value: "especialista", label: "🏗️ Especialista da construtora" },
   ];
 
   return (
@@ -362,6 +369,15 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
           </div>
         </div>
         <div>
+          <Label className="text-xs">Responsável pela visita</Label>
+          <Select value={responsavel} onValueChange={setResponsavel}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {RESPONSAVEL_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
           <Label className="text-xs">Corretor parceiro (opcional)</Label>
           <Select value={parceiro} onValueChange={setParceiro}>
             <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Nenhum parceiro" /></SelectTrigger>
@@ -385,8 +401,8 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
           onClick={() => onConfirm({
             leadId: lead.id,
             targetStageId,
-            observacao: `Visita Marcada | ${data} ${horario} | Local: ${LOCAL_OPTIONS.find(o => o.value === local)?.label || local}${obs ? ` | ${obs}` : ""}`,
-            extraData: { local, data, horario, parceiro: parceiro === "none" ? null : parceiro, observacao: obs, criarVisita: true },
+            observacao: `Visita Marcada | ${data} ${horario} | Local: ${LOCAL_OPTIONS.find(o => o.value === local)?.label || local} | Responsável: ${RESPONSAVEL_OPTIONS.find(o => o.value === responsavel)?.label || responsavel}${obs ? ` | ${obs}` : ""}`,
+            extraData: { local, data, horario, responsavel, parceiro: parceiro === "none" ? null : parceiro, observacao: obs, criarVisita: true },
           })}
         >
           📅 Confirmar e agendar visita

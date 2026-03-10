@@ -478,20 +478,54 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     if (extra.criarVisita && extra.data && extra.horario) {
       if (lead) {
         try {
-          await supabase.from("visitas").insert({
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const userId = authUser?.id;
+
+          // Resolve gerente_id from team_members
+          let gerenteId = lead.corretor_id;
+          if (lead.corretor_id) {
+            const { data: tm } = await supabase.from("team_members")
+              .select("gerente_id").eq("user_id", lead.corretor_id).eq("status", "ativo").limit(1).maybeSingle();
+            if (tm?.gerente_id) gerenteId = tm.gerente_id;
+          }
+
+          const { error: visitaError } = await supabase.from("visitas").insert({
             pipeline_lead_id: result.leadId,
-            cliente_nome: lead.nome,
-            cliente_telefone: lead.telefone || null,
+            nome_cliente: lead.nome,
+            telefone: lead.telefone || null,
             empreendimento: lead.empreendimento || null,
-            data: extra.data,
-            horario: extra.horario,
-            local_tipo: extra.local || "stand",
-            corretor_id: lead.corretor_id || null,
-            parceiro_id: extra.parceiro || null,
-            observacoes: extra.observacao || null,
+            data_visita: extra.data,
+            hora_visita: extra.horario,
+            local_visita: extra.local || "stand",
+            corretor_id: lead.corretor_id || userId,
+            gerente_id: gerenteId || userId,
+            created_by: userId,
+            origem: "crm",
             status: "confirmada",
+            observacoes: extra.observacao || null,
           } as any);
-          toast.success("📅 Visita criada na agenda!");
+
+          if (visitaError) {
+            console.error("Error creating visita:", visitaError);
+            toast.error("Erro ao criar visita na agenda");
+          } else {
+            toast.success("📅 Visita criada na agenda!");
+          }
+
+          // Create partnership if parceiro selected
+          if (extra.parceiro) {
+            await supabase.from("pipeline_parcerias").insert({
+              pipeline_lead_id: result.leadId,
+              corretor_principal_id: lead.corretor_id || userId,
+              corretor_parceiro_id: extra.parceiro,
+              divisao_principal: 50,
+              divisao_parceiro: 50,
+              motivo: "Visita em parceria",
+              criado_por: userId,
+            }).then(({ error }) => {
+              if (error && error.code !== "23505") console.error("Partnership error:", error);
+            });
+          }
         } catch (err) {
           console.error("Error creating visita:", err);
         }
