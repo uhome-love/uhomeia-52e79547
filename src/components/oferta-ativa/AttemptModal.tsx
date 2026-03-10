@@ -151,7 +151,7 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
                 return (
                   <button
                     key={r.key}
-                    onClick={() => { setResultado(r.key); setFeedback(""); }}
+                    onClick={() => { setResultado(r.key); setFeedback(QUICK_FEEDBACKS[r.key]?.[0] || ""); setInteresseTipo(""); }}
                     className={`flex flex-col items-center gap-2 transition-all ${
                       selected ? r.selectedBorder : `border-[rgba(255,255,255,0.15)] ${r.hoverBorder}`
                     }`}
