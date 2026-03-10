@@ -229,12 +229,10 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   </Button>
                 </a>
               )}
-              {whatsappUrl && (
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-green-300 text-green-600 hover:bg-green-50">
-                    <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
-                  </Button>
-                </a>
+              {lead.telefone && (
+                <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-green-300 text-green-600 hover:bg-green-50" onClick={() => setWhatsappTemplatesOpen(true)}>
+                  <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
+                </Button>
               )}
               {lead.email && (
                 <a href={`mailto:${lead.email}`}>
