@@ -328,8 +328,8 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl max-h-screen overflow-hidden flex flex-col p-0">
 
           {/* ════════ HEADER ════════ */}
           <div className="shrink-0 border-b border-border/50 bg-card px-6 pt-5 pb-3 space-y-3">
