@@ -9,6 +9,7 @@ import { PIPELINE_STAGE_EMOJIS, PIPELINE_STAGE_COLORS, PIPELINE_STAGE_BG } from 
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import PipelineStageTransitionPopup, { needsTransitionPopup, type TransitionResult } from "./PipelineStageTransitionPopup";
 
 interface PipelineBoardProps {
   stages: PipelineStage[];
@@ -16,7 +17,7 @@ interface PipelineBoardProps {
   segmentos: PipelineSegmento[];
   corretorNomes: Record<string, string>;
   parcerias: Record<string, string>;
-  onMoveLead: (leadId: string, newStageId: string) => void;
+  onMoveLead: (leadId: string, newStageId: string, observacao?: string) => void;
   onSelectLead: (lead: PipelineLead) => void;
   onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
   selectionMode?: boolean;
@@ -220,6 +221,9 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
+  // Stage transition popup state
+  const [transitionPopup, setTransitionPopup] = useState<{ lead: PipelineLead; targetStage: PipelineStage } | null>(null);
+
   // Fetch next pending task per lead for all visible leads
   const leadIds = useMemo(() => leads.map(l => l.id), [leads]);
   const { data: tarefasMap = {} } = useQuery({
@@ -369,28 +373,18 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     dragLeadId.current = null;
     setDragOverStage(null);
   };
-  const handleDrop = (e: React.DragEvent, stageId: string) => {
-    e.preventDefault();
-    setDragOverStage(null);
-    if (!dragLeadId.current) return;
-    const lid = dragLeadId.current;
+  const completeTransition = useCallback((lid: string, stageId: string, observacao?: string) => {
     const lead = leads.find(l => l.id === lid);
-    if (!lead || lead.stage_id === stageId) { dragLeadId.current = null; return; }
-
     const targetStage = stages.find(s => s.id === stageId);
-    onMoveLead(lid, stageId);
-    dragLeadId.current = null;
+    onMoveLead(lid, stageId, observacao);
 
-    // Flash animation on target column
+    // Flash animation
     setFlashStage(stageId);
     setTimeout(() => setFlashStage(null), 600);
-
-    // Arrived animation on card
     setArrivedLeadId(lid);
     setTimeout(() => setArrivedLeadId(null), 500);
 
-    // Toast
-    if (targetStage) {
+    if (targetStage && lead) {
       const emoji = PIPELINE_STAGE_EMOJIS[targetStage.nome] || "📍";
       toast(`${emoji} ${lead.nome} avançou para ${targetStage.nome}!`, {
         description: "+10 XP",
@@ -403,12 +397,132 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
       spawnConfetti();
       setTimeout(() => {
         toast("👑 BOSS ENCONTRADO!", {
-          description: `${lead.nome} está pronto para fechar negócio! +50 XP`,
+          description: `${lead?.nome} está pronto para fechar negócio! +50 XP`,
           duration: 4000,
         });
       }, 300);
     }
+  }, [leads, stages, onMoveLead]);
+
+  const handleDrop = (e: React.DragEvent, stageId: string) => {
+    e.preventDefault();
+    setDragOverStage(null);
+    if (!dragLeadId.current) return;
+    const lid = dragLeadId.current;
+    const lead = leads.find(l => l.id === lid);
+    if (!lead || lead.stage_id === stageId) { dragLeadId.current = null; return; }
+    dragLeadId.current = null;
+
+    const targetStage = stages.find(s => s.id === stageId);
+    if (!targetStage) return;
+
+    // Check if this stage needs a transition popup
+    if (needsTransitionPopup(targetStage.nome, targetStage.tipo)) {
+      setTransitionPopup({ lead, targetStage });
+      return;
+    }
+
+    completeTransition(lid, stageId);
   };
+
+  const handleTransitionConfirm = useCallback(async (result: TransitionResult) => {
+    setTransitionPopup(null);
+
+    // Move the lead with the observation
+    completeTransition(result.leadId, result.targetStageId, result.observacao);
+
+    // Register in pipeline_historico with extra data
+    if (result.extraData) {
+      // Save extra data as observation in historico (already handled by moveLead)
+      // Handle side effects based on extra data
+      const extra = result.extraData;
+
+      // Visita Marcada → create visita in agenda
+      if (extra.criarVisita && extra.data && extra.horario) {
+        const lead = leads.find(l => l.id === result.leadId);
+        if (lead) {
+          try {
+            await supabase.from("visitas").insert({
+              pipeline_lead_id: result.leadId,
+              cliente_nome: lead.nome,
+              cliente_telefone: lead.telefone || null,
+              empreendimento: lead.empreendimento || null,
+              data: extra.data,
+              horario: extra.horario,
+              local_tipo: extra.local || "stand",
+              corretor_id: lead.corretor_id || null,
+              parceiro_id: extra.parceiro || null,
+              observacoes: extra.observacao || null,
+              status: "confirmada",
+            } as any);
+            toast.success("📅 Visita criada na agenda!");
+          } catch (err) {
+            console.error("Error creating visita:", err);
+          }
+        }
+      }
+
+      // Visita Realizada → update visita status
+      if (extra.criarNegocio !== undefined) {
+        // The negocio creation is handled by usePipeline.moveLead automatically
+        // Just update the visita status if one exists
+        const { data: visita } = await supabase
+          .from("visitas")
+          .select("id")
+          .eq("pipeline_lead_id", result.leadId)
+          .eq("status", "confirmada")
+          .order("data", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (visita) {
+          await supabase.from("visitas").update({ status: "realizada" } as any).eq("id", visita.id);
+        }
+      }
+
+      // Descarte → send to oferta ativa
+      if (extra.enviarOfertaAtiva && extra.listaId) {
+        const lead = leads.find(l => l.id === result.leadId);
+        if (lead) {
+          try {
+            await supabase.from("oferta_ativa_leads").insert({
+              lista_id: extra.listaId,
+              nome: lead.nome,
+              telefone: lead.telefone || "",
+              empreendimento: extra.empreendimento || lead.empreendimento || "",
+              pipeline_lead_id: result.leadId,
+              status: "pendente",
+            } as any);
+            toast.success("📋 Lead enviado para Oferta Ativa!");
+          } catch (err) {
+            console.error("Error sending to OA:", err);
+          }
+        }
+      }
+
+      // Possível Visita → update empreendimento if provided
+      if (extra.empreendimento && extra.imovelTipo === "empreendimento") {
+        await supabase.from("pipeline_leads").update({
+          empreendimento: extra.empreendimento,
+        } as any).eq("id", result.leadId);
+      }
+
+      // Create task for "faltaParaMarcar"
+      if (extra.faltaParaMarcar) {
+        await supabase.from("pipeline_tarefas").insert({
+          pipeline_lead_id: result.leadId,
+          tipo: "follow_up",
+          descricao: extra.faltaParaMarcar,
+          status: "pendente",
+          criado_por: leads.find(l => l.id === result.leadId)?.corretor_id || null,
+        } as any);
+        toast.info("📋 Tarefa criada: " + extra.faltaParaMarcar.substring(0, 50));
+      }
+    }
+  }, [completeTransition, leads]);
+
+  const handleTransitionCancel = useCallback(() => {
+    setTransitionPopup(null);
+  }, []);
 
   return (
     <div className="relative flex flex-col h-full w-full max-w-full min-w-0 overflow-hidden">
@@ -564,7 +678,15 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                   arrivedLeadId={arrivedLeadId}
                   onToggleSelect={onToggleSelect}
                   onSelectLead={onSelectLead}
-                  onMoveLead={onMoveLead}
+                  onMoveLead={(leadId: string, stageId: string) => {
+                    const lead = leads.find(l => l.id === leadId);
+                    const targetStage = stages.find(s => s.id === stageId);
+                    if (lead && targetStage && needsTransitionPopup(targetStage.nome, targetStage.tipo)) {
+                      setTransitionPopup({ lead, targetStage });
+                      return;
+                    }
+                    completeTransition(leadId, stageId);
+                  }}
                   onTransferred={onTransferred}
                   stageIndexMap={stageIndexMap}
                   handleDragStart={handleDragStart}
@@ -575,6 +697,18 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
           })}
         </div>
       </div>
+
+      {/* Stage Transition Popup */}
+      {transitionPopup && (
+        <PipelineStageTransitionPopup
+          open={!!transitionPopup}
+          onOpenChange={(v) => !v && handleTransitionCancel()}
+          lead={transitionPopup.lead}
+          targetStage={transitionPopup.targetStage}
+          onConfirm={handleTransitionConfirm}
+          onCancel={handleTransitionCancel}
+        />
+      )}
     </div>
   );
 }
