@@ -50,6 +50,7 @@ const LOCAL_OPTIONS = [
   { value: "empresa", label: "🏢 Escritório / Empresa" },
   { value: "videochamada", label: "📹 Videochamada" },
   { value: "decorado", label: "🏠 Apartamento decorado" },
+  { value: "no_imovel", label: "🔑 No imóvel específico" },
   { value: "outro", label: "📍 Outro" },
 ];
 
