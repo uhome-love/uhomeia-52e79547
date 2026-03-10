@@ -29,6 +29,9 @@ const TIPO_LABELS: Record<string, string> = {
   corretor_ajuda: "Ajuda",
   zero_ligacoes: "Alerta",
   alertas: "Alertas",
+  lead_urgente: "Urgente",
+  lead_ultimo_alerta: "Último Alerta",
+  automacao: "Automação",
 };
 
 const TIPO_CONFIG: Record<string, { emoji: string; borderColor: string; bgUnread: string }> = {
