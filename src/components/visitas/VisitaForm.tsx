@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CalendarPlus, Search, Handshake, Filter, X } from "lucide-react";
+import { Loader2, CalendarPlus, Search, Handshake, Filter, X, Home, Building2 } from "lucide-react";
 import { type Visita } from "@/hooks/useVisitas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,6 +50,7 @@ const LOCAL_OPTIONS = [
   { value: "empresa", label: "🏢 Escritório / Empresa" },
   { value: "videochamada", label: "📹 Videochamada" },
   { value: "decorado", label: "🏠 Apartamento decorado" },
+  { value: "no_imovel", label: "🔑 No imóvel específico" },
   { value: "outro", label: "📍 Outro" },
 ];
 
@@ -90,6 +91,11 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
   const [isParceria, setIsParceria] = useState(false);
   const [parceiroId, setParceiroId] = useState("");
 
+  // Imóvel Jetimob search
+  const [imovelSearch, setImovelSearch] = useState("");
+  const [imovelResults, setImovelResults] = useState<any[]>([]);
+  const [imovelLoading, setImovelLoading] = useState(false);
+  const [selectedImovel, setSelectedImovel] = useState<any>(null);
   // Reset form state when dialog opens
   useEffect(() => {
     if (open) {
@@ -101,6 +107,9 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
       setFilterStage("");
       setFilterEmp("");
       setShowFilters(false);
+      setImovelSearch("");
+      setImovelResults([]);
+      setSelectedImovel(null);
     }
   }, [open, initialData]);
 
@@ -166,6 +175,44 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
   }, [teamMembers, form.corretor_id, user?.id]);
 
   const hasActiveFilters = !!filterStage || !!filterEmp;
+
+  // Jetimob imovel search
+  const handleImovelSearch = async (term: string) => {
+    setImovelSearch(term);
+    if (term.length < 2) { setImovelResults([]); return; }
+    setImovelLoading(true);
+    try {
+      // Check if searching by code (numeric)
+      const isCode = /^\d{3,}/.test(term.trim());
+      if (isCode) {
+        const { data } = await supabase.functions.invoke("jetimob-proxy", {
+          body: { action: "get_imovel", codigo: term.trim() },
+        });
+        if (data?.imovel) {
+          setImovelResults([data.imovel]);
+        } else {
+          setImovelResults([]);
+        }
+      } else {
+        const { data } = await supabase.functions.invoke("jetimob-proxy", {
+          body: { action: "list_imoveis", cidade: "Porto Alegre", search: term.trim(), per_page: 10 },
+        });
+        setImovelResults(data?.imoveis || []);
+      }
+    } catch { setImovelResults([]); }
+    setImovelLoading(false);
+  };
+
+  const handleSelectImovel = (imovel: any) => {
+    const desc = imovel.descricao_anuncio || imovel.tipo || "";
+    const bairro = imovel.endereco_bairro || "";
+    const codigo = imovel.codigo || "";
+    const label = `${desc}${bairro ? ` - ${bairro}` : ""}${codigo ? ` (${codigo})` : ""}`;
+    setSelectedImovel(imovel);
+    set("empreendimento", label);
+    setImovelSearch("");
+    setImovelResults([]);
+  };
 
   const handleSelectPipelineLead = (leadId: string) => {
     const lead = pipelineLeads.find(l => l.id === leadId);
@@ -407,15 +454,81 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
             )}
           </div>
 
-          {/* === EMPREENDIMENTO (combobox allows manual) === */}
+          {/* === IMÓVEL (Jetimob search + EmpreendimentoCombobox fallback) === */}
           <div>
-            <Label className="text-xs font-semibold mb-1 block">Empreendimento</Label>
-            <EmpreendimentoCombobox
-              value={form.empreendimento}
-              onChange={(v) => set("empreendimento", v)}
-              extraOptions={empreendimentos}
-              placeholder="Selecione ou digite o empreendimento"
-            />
+            <Label className="text-xs font-semibold mb-1 block">Imóvel</Label>
+
+            {selectedImovel ? (
+              <div className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2 border">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold truncate">
+                    {selectedImovel.descricao_anuncio || selectedImovel.tipo || "Imóvel"}
+                    {selectedImovel.codigo && <span className="text-muted-foreground ml-1">({selectedImovel.codigo})</span>}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {[selectedImovel.endereco_bairro, selectedImovel.endereco_logradouro].filter(Boolean).join(" · ")}
+                    {selectedImovel.valor ? ` · R$ ${Number(selectedImovel.valor).toLocaleString("pt-BR")}` : ""}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" className="h-6 text-[10px] text-destructive shrink-0" onClick={() => { setSelectedImovel(null); set("empreendimento", ""); }}>
+                  Trocar
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome, código Jetimob ou empreendimento..."
+                    value={imovelSearch || form.empreendimento}
+                    onChange={e => {
+                      handleImovelSearch(e.target.value);
+                      set("empreendimento", e.target.value);
+                    }}
+                    className="pl-8 h-9 text-sm"
+                  />
+                  {imovelLoading && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                </div>
+
+                {/* Jetimob results */}
+                {imovelResults.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto rounded-lg border bg-card shadow-md">
+                    {imovelResults.map((im: any) => (
+                      <button
+                        key={im.codigo || im.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0"
+                        onClick={() => handleSelectImovel(im)}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold truncate">
+                            <Home className="h-3 w-3 inline mr-1 text-muted-foreground" />
+                            {im.descricao_anuncio || im.tipo || "Imóvel"}
+                          </p>
+                          <Badge variant="outline" className="text-[8px] px-1.5 py-0 shrink-0">{im.codigo}</Badge>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          {[im.endereco_bairro, `${im.dormitorios || 0} dorms`, im.valor ? `R$ ${Number(im.valor).toLocaleString("pt-BR")}` : null].filter(Boolean).join(" · ")}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Empreendimento combobox as fallback for empreendimentos da carteira */}
+                {!imovelSearch && !selectedImovel && (
+                  <div className="mt-1">
+                    <p className="text-[10px] text-muted-foreground mb-1">Ou selecione um empreendimento da carteira:</p>
+                    <EmpreendimentoCombobox
+                      value={form.empreendimento}
+                      onChange={(v) => set("empreendimento", v)}
+                      extraOptions={empreendimentos}
+                      placeholder="Selecione ou digite o empreendimento"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Local da Visita */}
