@@ -271,9 +271,9 @@ export default function ImoveisPage() {
             {imoveis.map((item, idx) => {
               const img = extractImage(item);
               const loc = extractEndereco(item);
-              const codigo = item.codigo || item.code || item.referencia || item.id;
-              const tipoImovel = item.tipo || "";
-              const subtipo = item.subtipo || "";
+              const codigo = item.codigo;
+              const titulo = item.titulo_anuncio || "";
+              const tipoImovel = item.subtipo || item.tipo || "";
               const dorms = getNum(item, "dormitorios");
               const suites = getNum(item, "suites");
               const banhos = getNum(item, "banheiros");
