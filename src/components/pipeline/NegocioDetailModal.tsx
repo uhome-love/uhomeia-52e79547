@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import {
   Briefcase, Save, Loader2, Phone, MessageSquare, Mail, Plus,
   CheckCircle2, Building2, Home, ClipboardList, TrendingUp, Handshake, CalendarDays,
+  MoreHorizontal, Pencil, Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -124,6 +125,11 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
   const [novaTarefaTipo, setNovaTarefaTipo] = useState("follow_up");
   const [novaTarefaData, setNovaTarefaData] = useState("");
   const [novaTarefaHora, setNovaTarefaHora] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTitulo, setEditTitulo] = useState("");
+  const [editTipo, setEditTipo] = useState("");
+  const [editData, setEditData] = useState("");
+  const [editHora, setEditHora] = useState("");
 
   // Popups
   const [propostaPopup, setPropostaPopup] = useState(false);
@@ -343,6 +349,41 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
       concluida_em: newStatus === "concluida" ? new Date().toISOString() : null,
     } as any).eq("id", taskId);
     setTarefas(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+  };
+
+  const deleteTask = async (taskId: string) => {
+    const { error } = await supabase.from("negocios_tarefas").delete().eq("id", taskId);
+    if (!error) {
+      setTarefas(prev => prev.filter(t => t.id !== taskId));
+      toast.success("Tarefa excluída");
+    } else {
+      toast.error("Erro ao excluir tarefa");
+    }
+  };
+
+  const startEditTask = (t: NegocioTarefa) => {
+    setEditingTaskId(t.id);
+    setEditTitulo(t.titulo);
+    setEditTipo(t.tipo);
+    setEditData(t.vence_em || "");
+    setEditHora(t.hora_vencimento || "");
+  };
+
+  const saveEditTask = async () => {
+    if (!editingTaskId || !editTitulo.trim()) return;
+    const { error } = await supabase.from("negocios_tarefas").update({
+      titulo: editTitulo.trim(),
+      tipo: editTipo,
+      vence_em: editData || null,
+      hora_vencimento: editHora || null,
+    } as any).eq("id", editingTaskId);
+    if (!error) {
+      setTarefas(prev => prev.map(t => t.id === editingTaskId ? { ...t, titulo: editTitulo.trim(), tipo: editTipo, vence_em: editData || null, hora_vencimento: editHora || null } : t));
+      setEditingTaskId(null);
+      toast.success("Tarefa atualizada");
+    } else {
+      toast.error("Erro ao atualizar tarefa");
+    }
   };
 
   // ── Agendar Reunião (Visita de Negócio) ──
@@ -582,25 +623,65 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
                 ) : (
                   <div className="space-y-1.5 max-h-[40vh] overflow-y-auto">
                     {tarefas.map(t => (
-                      <div
-                        key={t.id}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors cursor-pointer",
-                          t.status === "concluida" ? "bg-muted/30 border-border/30" : "bg-card hover:bg-accent/30"
-                        )}
-                        onClick={() => toggleTask(t.id, t.status)}
-                      >
-                        <CheckCircle2 className={cn("h-4 w-4 shrink-0", t.status === "concluida" ? "text-green-500" : "text-muted-foreground/40")} />
-                        <div className="flex-1 min-w-0">
-                          <span className={cn("text-xs", t.status === "concluida" && "line-through text-muted-foreground")}>
-                            {t.titulo}
-                          </span>
-                          {t.vence_em && (
-                            <span className="text-[10px] text-muted-foreground ml-2">{t.vence_em}</span>
-                          )}
+                      editingTaskId === t.id ? (
+                        <div key={t.id} className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                          <Input value={editTitulo} onChange={e => setEditTitulo(e.target.value)} className="h-8 text-xs" placeholder="Título da tarefa..." />
+                          <div className="flex gap-2 flex-wrap">
+                            <Select value={editTipo} onValueChange={setEditTipo}>
+                              <SelectTrigger className="h-8 text-xs w-36"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(TAREFA_TIPOS).map(([k, v]) => (
+                                  <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input type="date" value={editData} onChange={e => setEditData(e.target.value)} className="h-8 text-xs w-36" />
+                            <Input type="time" value={editHora} onChange={e => setEditHora(e.target.value)} className="h-8 text-xs w-24" />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setEditingTaskId(null)}>Cancelar</Button>
+                            <Button size="sm" className="text-xs h-7 gap-1" onClick={saveEditTask}><Save className="h-3 w-3" /> Salvar</Button>
+                          </div>
                         </div>
-                        <Badge variant="outline" className="text-[9px] px-1.5">{TAREFA_TIPOS[t.tipo] || t.tipo}</Badge>
-                      </div>
+                      ) : (
+                        <div
+                          key={t.id}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors group",
+                            t.status === "concluida" ? "bg-muted/30 border-border/30" : "bg-card hover:bg-accent/30"
+                          )}
+                        >
+                          <CheckCircle2
+                            className={cn("h-4 w-4 shrink-0 cursor-pointer", t.status === "concluida" ? "text-green-500" : "text-muted-foreground/40")}
+                            onClick={() => toggleTask(t.id, t.status)}
+                          />
+                          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleTask(t.id, t.status)}>
+                            <span className={cn("text-xs", t.status === "concluida" && "line-through text-muted-foreground")}>
+                              {t.titulo}
+                            </span>
+                            {t.vence_em && (
+                              <span className="text-[10px] text-muted-foreground ml-2">{t.vence_em}</span>
+                            )}
+                          </div>
+                          <Badge variant="outline" className="text-[9px] px-1.5">{TAREFA_TIPOS[t.tipo] || t.tipo}</Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-36">
+                              <DropdownMenuItem className="text-xs gap-2" onClick={() => startEditTask(t)}>
+                                <Pencil className="h-3 w-3" /> Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-xs gap-2 text-destructive focus:text-destructive" onClick={() => deleteTask(t.id)}>
+                                <Trash2 className="h-3 w-3" /> Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )
                     ))}
                   </div>
                 )}
