@@ -471,57 +471,57 @@ export default function PipelineKanban() {
 
       {/* Content area — kanban + side panel */}
       <div className="flex-1 min-h-0 overflow-hidden flex">
-        <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
-          {activeTab === "kanban" ? (
-            <PipelineBoard
-              stages={pipeline.stages}
-              leads={filteredLeads}
-              segmentos={pipeline.segmentos}
-              corretorNomes={pipeline.corretorNomes}
-              parcerias={parcerias}
-              onMoveLead={pipeline.moveLead}
-              onSelectLead={selectionMode ? (lead) => toggleLeadSelection(lead.id) : setSelectedLead}
-              onTransferred={() => pipeline.reload()}
-              selectionMode={selectionMode}
-              selectedLeads={selectedLeads}
-              onToggleSelect={toggleLeadSelection}
-            />
-          ) : activeTab === "inteligencia" ? (
-            intelView === "funil" ? (
-              <PipelineFlowDashboard
+        <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+            {activeTab === "kanban" ? (
+              <PipelineBoard
                 stages={pipeline.stages}
                 leads={filteredLeads}
+                segmentos={pipeline.segmentos}
                 corretorNomes={pipeline.corretorNomes}
+                parcerias={parcerias}
+                onMoveLead={pipeline.moveLead}
+                onSelectLead={selectionMode ? (lead) => toggleLeadSelection(lead.id) : setSelectedLead}
+                onTransferred={() => pipeline.reload()}
+                selectionMode={selectionMode}
+                selectedLeads={selectedLeads}
+                onToggleSelect={toggleLeadSelection}
               />
-            ) : (
-              <OpportunityRadar
-                leads={pipeline.leads}
+            ) : activeTab === "inteligencia" ? (
+              intelView === "funil" ? (
+                <PipelineFlowDashboard
+                  stages={pipeline.stages}
+                  leads={filteredLeads}
+                  corretorNomes={pipeline.corretorNomes}
+                />
+              ) : (
+                <OpportunityRadar
+                  leads={pipeline.leads}
+                  stages={pipeline.stages}
+                  corretorNomes={pipeline.corretorNomes}
+                  onSelectLead={setSelectedLead}
+                />
+              )
+            ) : activeTab === "automacoes" ? (
+              autoView === "materiais" ? (
+                <div className="h-full overflow-auto p-1">
+                  <MaterialsLibrary />
+                </div>
+              ) : (
+                <div className="h-full overflow-auto p-1 space-y-6">
+                  <SequenceLibrary onSequenceCreated={() => pipeline.reload()} />
+                  <SequenceBuilder />
+                </div>
+              )
+            ) : activeTab === "relatorios" ? (
+              <PipelineReportsDashboard
                 stages={pipeline.stages}
+                leads={pipeline.leads}
                 corretorNomes={pipeline.corretorNomes}
-                onSelectLead={setSelectedLead}
               />
-            )
-          ) : activeTab === "automacoes" ? (
-            autoView === "materiais" ? (
-              <div className="h-full overflow-auto p-1">
-                <MaterialsLibrary />
-              </div>
-            ) : (
-              <div className="h-full overflow-auto p-1 space-y-6">
-                <SequenceLibrary onSequenceCreated={() => pipeline.reload()} />
-                <SequenceBuilder />
-              </div>
-            )
-          ) : activeTab === "relatorios" ? (
-            <PipelineReportsDashboard
-              stages={pipeline.stages}
-              leads={pipeline.leads}
-              corretorNomes={pipeline.corretorNomes}
-            />
-          ) : null}
-        </Suspense>
+            ) : null}
+          </Suspense>
         </div>
-
       </div>
 
       {/* Dialogs */}
