@@ -87,6 +87,7 @@ export default function ImoveisPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [campanhaAtiva, setCampanhaAtiva] = useState(false);
+  const [uhomeOnly, setUhomeOnly] = useState(false);
 
   const [search, setSearch] = useState("");
   const [contrato, setContrato] = useState("venda");
@@ -104,7 +105,7 @@ export default function ImoveisPage() {
     return BAIRROS_POA.filter((b) => b.toLowerCase().includes(q));
   }, [bairroSearch]);
 
-  const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva) => {
+  const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva, uhome = uhomeOnly) => {
     setLoading(true);
     try {
       if (campanha) {
@@ -134,6 +135,7 @@ export default function ImoveisPage() {
             tipo: tipo && tipo !== "all" ? tipo : undefined,
             cidade: "Porto Alegre",
             bairro: bairro || undefined,
+            search_uhome: uhome ? true : undefined,
             dormitorios: dormitorios && dormitorios !== "all" ? dormitorios : undefined,
             valor_min: valorMin || undefined,
             valor_max: valorMax || undefined,
@@ -158,7 +160,7 @@ export default function ImoveisPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, contrato, tipo, bairro, dormitorios, valorMin, valorMax, campanhaAtiva]);
+  }, [search, contrato, tipo, bairro, dormitorios, valorMin, valorMax, campanhaAtiva, uhomeOnly]);
 
   const mounted = React.useRef(false);
   useEffect(() => {
@@ -169,13 +171,22 @@ export default function ImoveisPage() {
 
   const handleSearch = () => {
     setCampanhaAtiva(false);
-    fetchImoveis(1, false);
+    setUhomeOnly(false);
+    fetchImoveis(1, false, false);
   };
 
   const handleCampanha = () => {
     const next = !campanhaAtiva;
     setCampanhaAtiva(next);
-    fetchImoveis(1, next);
+    setUhomeOnly(false);
+    fetchImoveis(1, next, false);
+  };
+
+  const handleUhome = () => {
+    const next = !uhomeOnly;
+    setUhomeOnly(next);
+    setCampanhaAtiva(false);
+    fetchImoveis(1, false, next);
   };
 
   const getPreco = (item: any): string => {
@@ -199,14 +210,26 @@ export default function ImoveisPage() {
             Porto Alegre · Consulte imóveis para sugerir aos seus clientes
           </p>
         </div>
-        <Button
-          onClick={handleCampanha}
-          variant={campanhaAtiva ? "default" : "outline"}
-          className={cn("gap-2 font-semibold", campanhaAtiva && "bg-primary text-primary-foreground")}
-        >
-          <Megaphone className="h-4 w-4" />
-          {campanhaAtiva ? "Mostrando campanhas ativas" : "Imóveis com Campanha de Leads Ativa"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={handleUhome}
+            variant={uhomeOnly ? "default" : "outline"}
+            size="sm"
+            className={cn("gap-2 font-semibold", uhomeOnly && "bg-primary text-primary-foreground")}
+          >
+            <Building2 className="h-4 w-4" />
+            {uhomeOnly ? "Mostrando uHome" : "Imóveis uHome"}
+          </Button>
+          <Button
+            onClick={handleCampanha}
+            variant={campanhaAtiva ? "default" : "outline"}
+            size="sm"
+            className={cn("gap-2 font-semibold", campanhaAtiva && "bg-primary text-primary-foreground")}
+          >
+            <Megaphone className="h-4 w-4" />
+            {campanhaAtiva ? "Mostrando campanhas" : "Campanha de Leads Ativa"}
+          </Button>
+        </div>
       </div>
 
       {/* Campaign chips when active */}
@@ -221,7 +244,7 @@ export default function ImoveisPage() {
       )}
 
       {/* Filters */}
-      {!campanhaAtiva && (
+      {!campanhaAtiva && !uhomeOnly && (
         <Card className="p-4 space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             <div className="space-y-1 col-span-2 sm:col-span-1">
