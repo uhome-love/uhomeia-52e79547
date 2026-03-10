@@ -213,24 +213,24 @@ export default function PipelineKanban() {
         {/* Top bar */}
         <div className="flex items-center gap-2 flex-wrap">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-shrink-0">
-            <TabsList className="h-8">
-              <TabsTrigger value="kanban" className="text-[11px] gap-1 px-2">
-                <LayoutGrid className="h-3 w-3" />
-                <span className="hidden sm:inline">Kanban</span>
+            <TabsList className="h-9">
+              <TabsTrigger value="kanban" className="text-xs gap-1.5 px-3">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Kanban
               </TabsTrigger>
-              <TabsTrigger value="inteligencia" className="text-[11px] gap-1 px-2">
-                <Brain className="h-3 w-3" />
-                <span className="hidden sm:inline">Inteligência</span>
+              <TabsTrigger value="inteligencia" className="text-xs gap-1.5 px-3">
+                <Brain className="h-3.5 w-3.5" />
+                Inteligência
               </TabsTrigger>
               {canAdd && (
-                <TabsTrigger value="automacoes" className="text-[11px] gap-1 px-2">
-                  <Zap className="h-3 w-3" />
-                  <span className="hidden sm:inline">Automações</span>
+                <TabsTrigger value="automacoes" className="text-xs gap-1.5 px-3">
+                  <Zap className="h-3.5 w-3.5" />
+                  Automações
                 </TabsTrigger>
               )}
-              <TabsTrigger value="relatorios" className="text-[11px] gap-1 px-2">
-                <FileText className="h-3 w-3" />
-                <span className="hidden sm:inline">Relatórios</span>
+              <TabsTrigger value="relatorios" className="text-xs gap-1.5 px-3">
+                <FileText className="h-3.5 w-3.5" />
+                Relatórios
               </TabsTrigger>
             </TabsList>
           </Tabs>
