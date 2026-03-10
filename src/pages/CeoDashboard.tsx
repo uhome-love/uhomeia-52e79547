@@ -92,6 +92,7 @@ export default function CeoDashboard() {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
     pipelineStages, campanhas, alertas, negocioFases, vgvEmRisco, topCorretoresVgv,
     teams, origens, leadsPorEmpreendimento, visitasPorEmp,
+    totalLeadsPeriodo, presentesHoje, metasDiaTotal,
     reload, reloadRoleta,
   } = useCeoDashboard(period);
 
