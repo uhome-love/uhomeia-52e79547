@@ -192,6 +192,25 @@ export function AppSidebar() {
     return () => clearInterval(interval);
   }, [fetchTarefasPendentes]);
 
+  // Fetch aceite leads pendentes for corretor
+  const fetchAceitePendentes = useCallback(async () => {
+    if (!user || isAdmin || isGestor || isBackoffice) return;
+    const now = new Date().toISOString();
+    const { count } = await supabase
+      .from("pipeline_leads")
+      .select("id", { count: "exact", head: true })
+      .eq("corretor_id", user.id)
+      .eq("aceite_status", "pendente")
+      .gt("aceite_expira_em", now);
+    setAceiteLeadsPendentes(count ?? 0);
+  }, [user, isAdmin, isGestor, isBackoffice]);
+
+  useEffect(() => {
+    fetchAceitePendentes();
+    const interval = setInterval(fetchAceitePendentes, 15_000);
+    return () => clearInterval(interval);
+  }, [fetchAceitePendentes]);
+
   useEffect(() => {
     if (toastShown.current || alerts.length === 0) return;
     toastShown.current = true;
