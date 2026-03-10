@@ -391,6 +391,7 @@ export default function ImoveisPage() {
             dormitorios: dormitorios && dormitorios !== "all" ? dormitorios : undefined,
             valor_min: valorMin || undefined,
             valor_max: valorMax || undefined,
+            somente_obras: somenteObras || undefined,
           },
         });
 
