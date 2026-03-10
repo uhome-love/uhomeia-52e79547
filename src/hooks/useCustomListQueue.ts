@@ -13,11 +13,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 /** Convert a pipeline_lead row into an OALead-compatible shape */
-function pipelineLeadToOALead(row: any, listName: string): OALead {
+function pipelineLeadToOALead(row: any): OALead {
   return {
     id: row.id,
-    lista_id: `custom_pipeline`,
-    nome: row.nome || row.nome_lead || "Sem nome",
+    lista_id: "custom_pipeline",
+    nome: row.nome || "Sem nome",
     telefone: row.telefone || null,
     telefone2: row.telefone2 || null,
     email: row.email || null,
@@ -43,7 +43,6 @@ function pipelineLeadToOALead(row: any, listName: string): OALead {
 
 export function useCustomListQueue(lista: OALista) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [currentLead, setCurrentLead] = useState<OALead | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [queueEmpty, setQueueEmpty] = useState(false);
@@ -92,7 +91,7 @@ export function useCustomListQueue(lista: OALista) {
 
       const { data, error } = await supabase
         .from("pipeline_leads")
-        .select("id, nome_lead, telefone, telefone2, email, empreendimento, campanha, origem, observacoes, corretor_id, created_at, updated_at")
+        .select("id, nome, telefone, telefone2, email, empreendimento, campanha, origem, observacoes, corretor_id, created_at, updated_at")
         .eq("id", nextId)
         .single();
 
@@ -102,15 +101,14 @@ export function useCustomListQueue(lista: OALista) {
         return fetchNext();
       }
 
-      const listName = sessionStorage.getItem("custom_list_name") || lista.nome;
-      const oaLead = pipelineLeadToOALead({ ...data, nome: data.nome_lead }, listName);
+      const oaLead = pipelineLeadToOALead(data);
       setCurrentLead(oaLead);
       setQueueEmpty(false);
       return oaLead;
     } finally {
       setIsLoading(false);
     }
-  }, [user, lista.nome]);
+  }, [user]);
 
   // No-op heartbeat/lock for custom lists (pipeline_leads don't use locks)
   const startHeartbeat = useCallback((_leadId: string) => {}, []);
@@ -133,7 +131,7 @@ export function useCustomListQueue(lista: OALista) {
  * Register an attempt for a custom-list lead.
  * Records in:
  * 1) oferta_ativa_tentativas (for stats/ranking/gamification)
- * 2) pipeline_lead_history (for lead timeline)
+ * 2) pipeline_atividades (for lead timeline in pipeline)
  * 3) Updates pipeline_leads.updated_at + ultima_acao_at
  */
 export function useCustomListRegistrar() {
@@ -158,7 +156,7 @@ export function useCustomListRegistrar() {
       const { error: tentError } = await supabase.from("oferta_ativa_tentativas").insert({
         lead_id: lead.id,
         corretor_id: user.id,
-        lista_id: null, // custom list, no OA lista
+        lista_id: null,
         empreendimento: lead.empreendimento,
         canal,
         resultado,
@@ -168,13 +166,12 @@ export function useCustomListRegistrar() {
       } as any);
 
       if (tentError) {
-        // Check for idempotency duplicate
         if (tentError.code === "23505") return { success: true, idempotent: true };
         console.error("Custom registrar tentativa error:", tentError);
         return { success: false, reason: "error" };
       }
 
-      // 2) Insert into pipeline_lead_history
+      // 2) Insert into pipeline_atividades for lead timeline
       const canalLabel = canal === "ligacao" ? "Ligação" : canal === "whatsapp" ? "WhatsApp" : canal === "email" ? "E-mail" : canal;
       const resultLabel = resultado === "com_interesse" ? "Aproveitado"
         : resultado === "nao_atendeu" ? "Não atendeu"
@@ -183,13 +180,15 @@ export function useCustomListRegistrar() {
         : resultado === "agendar" ? "Reagendar"
         : resultado;
 
-      await supabase.from("pipeline_lead_history").insert({
-        lead_id: lead.id,
-        user_id: user.id,
+      await supabase.from("pipeline_atividades").insert({
+        pipeline_lead_id: lead.id,
+        created_by: user.id,
         tipo: "contato",
-        descricao: `[Oferta Ativa] ${canalLabel}: ${resultLabel}${feedback ? ` — ${feedback}` : ""}`,
-      } as any).then(res => {
-        if (res.error) console.warn("History insert error:", res.error);
+        titulo: `[Oferta Ativa] ${canalLabel}: ${resultLabel}`,
+        descricao: feedback || null,
+        status: "concluida",
+        prioridade: "normal",
+        data: new Date().toISOString().slice(0, 10),
       });
 
       // 3) Update pipeline_leads timestamps
@@ -238,4 +237,9 @@ export function useCustomListRegistrar() {
   }, [user, queryClient]);
 
   return { registrar };
+}
+
+/** Check if a lista is a custom (pipeline-based) list */
+export function isCustomList(lista: OALista): boolean {
+  return lista.id.startsWith("custom_") || lista.origem === "custom_list";
 }
