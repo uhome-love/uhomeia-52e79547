@@ -91,10 +91,12 @@ export default function CeoDashboard() {
   const {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
     pipelineStages, campanhas, alertas, negocioFases, vgvEmRisco, topCorretoresVgv,
-    teams, origens, leadsPorEmpreendimento, visitasPorEmp,
+    teams, corretoresRank, origens, leadsPorEmpreendimento, visitasPorEmp,
     totalLeadsPeriodo, presentesHoje, metasDiaTotal,
     reload, reloadRoleta,
   } = useCeoDashboard(period);
+
+  const [rankingView, setRankingView] = useState<"equipe" | "corretores">("equipe");
 
   // Build dashboard data for HOMI
   const dashboardData = useMemo(() => ({
