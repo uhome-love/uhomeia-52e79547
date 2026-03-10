@@ -33,7 +33,8 @@ function getBairro(item: any): string {
 }
 
 function getTipo(item: any): string {
-  return String(item.tipo || item.subtipo || item.tipo_imovel || "").toLowerCase();
+  // Prefer subtipo (e.g. "Apartamento") over tipo (e.g. "Residencial") for more specific matching
+  return String(item.subtipo || item.tipo_imovel || item.tipo || "").toLowerCase();
 }
 
 serve(async (req) => {
