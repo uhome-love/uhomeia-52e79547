@@ -91,7 +91,7 @@ export function useCustomListQueue(lista: OALista) {
 
       const { data, error } = await supabase
         .from("pipeline_leads")
-        .select("id, nome, telefone, telefone2, email, empreendimento, campanha, origem, observacoes, corretor_id, created_at, updated_at")
+        .select("id, nome, telefone, telefone2, email, empreendimento, origem, observacoes, corretor_id, created_at, updated_at")
         .eq("id", nextId)
         .single();
 
