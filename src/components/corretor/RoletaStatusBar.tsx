@@ -241,7 +241,7 @@ export default function RoletaStatusBar() {
     setCredModalOpen(false);
     setSaving(false);
     const jCfg = JANELAS_CONFIG.find(j => j.key === janela)!;
-    toast.success(`Credenciado para ${jCfg.emoji} ${jCfg.label}! ✅`);
+    toast.success(`Credenciamento enviado para ${jCfg.emoji} ${jCfg.label}! Aguardando aprovação ⏳`);
   };
 
   const currentOpt = STATUS_OPTIONS.find(o => o.value === status) || STATUS_OPTIONS[3];
