@@ -1,19 +1,20 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { usePipeline } from "@/hooks/usePipeline";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import PipelineAddLeadDialog from "@/components/pipeline/PipelineAddLeadDialog";
 import PipelineLeadDetail from "@/components/pipeline/PipelineLeadDetail";
-import PipelineFlowDashboard from "@/components/pipeline/PipelineFlowDashboard";
-import MaterialsLibrary from "@/components/pipeline/MaterialsLibrary";
-import SequenceBuilder from "@/components/pipeline/SequenceBuilder";
-import SequenceLibrary from "@/components/pipeline/SequenceLibrary";
-import OpportunityRadar from "@/components/pipeline/OpportunityRadar";
-import PipelineCeoIntelligence from "@/components/pipeline/PipelineCeoIntelligence";
-import PipelineManagerActions from "@/components/pipeline/PipelineManagerActions";
-
-import PipelineReportsDashboard from "@/components/pipeline/PipelineReportsDashboard";
 import type { PipelineStage } from "@/hooks/usePipeline";
 import { useMemo as useMemoReact } from "react";
+
+// Lazy load heavy tab components
+const PipelineFlowDashboard = lazy(() => import("@/components/pipeline/PipelineFlowDashboard"));
+const MaterialsLibrary = lazy(() => import("@/components/pipeline/MaterialsLibrary"));
+const SequenceBuilder = lazy(() => import("@/components/pipeline/SequenceBuilder"));
+const SequenceLibrary = lazy(() => import("@/components/pipeline/SequenceLibrary"));
+const OpportunityRadar = lazy(() => import("@/components/pipeline/OpportunityRadar"));
+const PipelineCeoIntelligence = lazy(() => import("@/components/pipeline/PipelineCeoIntelligence"));
+const PipelineManagerActions = lazy(() => import("@/components/pipeline/PipelineManagerActions"));
+const PipelineReportsDashboard = lazy(() => import("@/components/pipeline/PipelineReportsDashboard"));
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ChevronDown, ChevronUp, CheckSquare, Square, Send, X } from "lucide-react";
 import PipelineAdvancedFilters, {
