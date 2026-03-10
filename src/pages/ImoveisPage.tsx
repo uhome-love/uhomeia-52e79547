@@ -315,7 +315,7 @@ export default function ImoveisPage() {
   
   // Vitrine selection
   const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [creatingVitrine, setCreatingVitrine] = useState(false);
   const [vitrineLink, setVitrineLink] = useState<string | null>(null);
 
@@ -745,7 +745,7 @@ export default function ImoveisPage() {
               const cond = getNum(item, "valor_condominio");
               const disponib = item.situacao || item.status || "";
               const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === codigo);
-              const imovelId = item.id_imovel || item.id || idx;
+              const imovelId = String(codigo || item.id_imovel || item.id || idx);
               const isSelected = selectedIds.has(imovelId);
 
               const toggleSelect = () => {
