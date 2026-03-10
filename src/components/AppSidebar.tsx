@@ -36,6 +36,7 @@ import {
   Store,
   ListTodo,
   PhoneCall,
+  PackageCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -255,6 +256,7 @@ export function AppSidebar() {
             label: "Gestão de Vendas",
             items: [
               { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+              { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
             ],
           },
           {
@@ -310,6 +312,7 @@ export function AppSidebar() {
               { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
               { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
               { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+              { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
               { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
               { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
             ],
@@ -378,6 +381,7 @@ export function AppSidebar() {
             { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
             { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
             { title: "Pipeline Negócios", url: "/meus-negocios", icon: Briefcase },
+            { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
           ],
         },
         {
