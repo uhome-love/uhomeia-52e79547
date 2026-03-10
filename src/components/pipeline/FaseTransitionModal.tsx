@@ -142,7 +142,7 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
     } else if (targetFase === "assinado") {
       onConfirm({
         fase: "assinado",
-        fields: { tipo_assinatura: assDigital, ato_pago: assAtoPago, observacoes: assObs },
+        fields: { tipo_assinatura: assDigital, ato_pago: assAtoPago, observacoes: assObs, data_assinatura: assDataAssinatura },
       });
     } else if (targetFase === "distrato") {
       if (!caiuMotivo.trim()) return;
