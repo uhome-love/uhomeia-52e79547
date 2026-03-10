@@ -139,7 +139,7 @@ export default function CheckpointTableTab({
               <th className="px-2 py-2.5 text-xs font-semibold text-gray-400 w-32">Presença</th>
               <th colSpan={3} className="text-center py-2.5 text-xs font-bold text-blue-600 bg-blue-50/50 border-l border-r border-blue-100">METAS DO DIA</th>
               <th className="px-2 py-2.5 text-xs font-semibold text-gray-400 bg-blue-50/50 border-r border-blue-100 w-40">Obs Gerente</th>
-              <th colSpan={6} className="text-center py-2.5 text-xs font-bold text-green-600 bg-green-50/50 border-r border-green-100">RESULTADO DO DIA</th>
+              <th colSpan={4} className="text-center py-2.5 text-xs font-bold text-green-600 bg-green-50/50 border-r border-green-100">RESULTADO DO DIA</th>
               <th className="px-2 py-2.5 text-xs font-semibold text-gray-400 bg-green-50/50 border-r border-green-100 w-32">Obs Dia</th>
               <th className="px-2 py-2.5 text-xs font-semibold text-gray-400 w-24 text-center">Status</th>
             </tr>
