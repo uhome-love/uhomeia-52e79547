@@ -53,7 +53,7 @@ function playWhoosh() {
 export default function CorretorCall() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { progress, goals } = useCorretorProgress();
+  const { progress, goals, isLoading: progressLoading } = useCorretorProgress();
   const { isGestor, isAdmin } = useUserRole();
   const [phase, setPhase] = useState<CallPhase>("warmup");
   const [nome, setNome] = useState("");
@@ -84,15 +84,15 @@ export default function CorretorCall() {
     };
   }, []);
 
-  // Check meta exists
-  const metaSalva = !!goals;
+  // Check meta exists (only after loading finishes)
+  const metaSalva = progressLoading || !!goals;
 
   useEffect(() => {
-    if (!metaSalva) {
+    if (!progressLoading && !goals) {
       toast.warning("Defina sua meta do dia antes de iniciar o Call!");
       navigate("/corretor", { replace: true });
     }
-  }, [metaSalva, navigate]);
+  }, [progressLoading, goals, navigate]);
 
   useEffect(() => {
     if (!user) return;
