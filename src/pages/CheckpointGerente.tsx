@@ -456,6 +456,10 @@ export default function CheckpointGerente() {
           />
         )}
 
+        {activeTab === "negocios" && (
+          <CheckpointNegociosTab teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
+        )}
+
         {activeTab === "aproveitados" && (
           <AproveitadosTab teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
         )}
