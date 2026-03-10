@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Phone, Lock, Kanban, CalendarDays, Bot, FileEdit, BarChart3, AlertCircle, Zap, LogOut, Clock, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Phone, Lock, Kanban, CalendarDays, AlertCircle, Zap, LogOut } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -14,12 +14,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
 import { differenceInHours } from "date-fns";
-import { getDynamicGreeting, formatStreak } from "@/lib/celebrations";
-import { getLevel, getNextLevel, getLevelProgress } from "@/lib/gamification";
+import { getDynamicGreeting } from "@/lib/celebrations";
 import MetaCelebration from "@/components/corretor/MetaCelebration";
 import ConfettiBurst from "@/components/corretor/ConfettiToast";
 import PulseFeed from "@/components/pulse/PulseFeed";
 import RoletaStatusBar from "@/components/corretor/RoletaStatusBar";
+import MinhaAgendaWidget from "@/components/corretor/MinhaAgendaWidget";
+import DashboardAgendaPreview from "@/components/corretor/DashboardAgendaPreview";
+import DashboardRankingsPreview from "@/components/corretor/DashboardRankingsPreview";
+import DashboardDesempenhoWidget from "@/components/corretor/DashboardDesempenhoWidget";
 
 import {
   AlertDialog,
@@ -33,8 +36,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-
-const homiMascot = "/images/homi-mascot-opt.png";
 
 export default function CorretorDashboard() {
   const { progress, goals, saveGoals } = useCorretorProgress();
@@ -56,8 +57,8 @@ export default function CorretorDashboard() {
     queryKey: ["corretor-radar", user?.id],
     queryFn: async () => {
       const today = todayBRT();
-
       const ontem = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
       const { count: pendingLeads } = await (supabase
         .from("pipeline_leads")
         .select("id", { count: "exact", head: true }) as any)
@@ -66,109 +67,16 @@ export default function CorretorDashboard() {
         .neq("stage_id", "1dd66c25-3848-4053-9f66-82e902989b4d")
         .or(`ultima_acao_at.is.null,ultima_acao_at.lt.${ontem}`);
 
-      const slaThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { count: slaExpired } = await (supabase
-        .from("pipeline_leads")
-        .select("id", { count: "exact", head: true }) as any)
+      const { count: totalNegocios } = await supabase
+        .from("negocios")
+        .select("id", { count: "exact", head: true })
         .eq("corretor_id", user!.id)
-        .lt("stage_changed_at", slaThreshold);
-
-      const { data: visitas } = await (supabase
-        .from("visitas")
-        .select("id, nome_cliente, empreendimento, hora_visita, data_visita, status") as any)
-        .eq("corretor_id", user!.id)
-        .eq("data_visita", today)
-        .order("hora_visita");
+        .neq("fase", "caiu");
 
       const { data: rankingData } = await supabase
         .from("oferta_ativa_tentativas")
         .select("corretor_id")
         .gte("created_at", today + "T00:00:00");
-
-      // Priority leads with proper filtering and scoring
-      const { data: allLeads } = await (supabase
-        .from("pipeline_leads")
-        .select("id, nome, empreendimento, stage_changed_at, telefone, oportunidade_score, valor_estimado, pipeline_fase, dias_parado, prioridade, temperatura, updated_at, stage_id, pipeline_stages!inner(nome, tipo)")
-        .eq("corretor_id", user!.id)
-        .not("stage_id", "is", null)
-        .limit(200) as any);
-
-      // Filter: must have interesse, not descarte
-      const validLeads = (allLeads || []).filter((l: any) => {
-        const interesse = l.interesse || l.empreendimento;
-        if (!interesse || interesse.trim() === "") return false;
-        const tipo = l.pipeline_stages?.tipo;
-        if (tipo === "descarte") return false;
-        return true;
-      });
-
-      // Score each lead
-      const now = new Date();
-      const todayDate = today;
-      
-      // Get today's visitas for this corretor
-      const { data: visitasHoje } = await (supabase
-        .from("visitas")
-        .select("pipeline_lead_id")
-        .eq("corretor_id", user!.id)
-        .eq("data_visita", todayDate)
-        .in("status", ["confirmada", "pendente"]) as any);
-      const visitaLeadIds = new Set((visitasHoje || []).map((v: any) => v.pipeline_lead_id).filter(Boolean));
-
-      const scored = validLeads.map((lead: any) => {
-        const hrs = differenceInHours(now, new Date(lead.stage_changed_at || lead.updated_at));
-        const diasParado = lead.dias_parado || Math.floor(hrs / 24);
-        const stageTipo = lead.pipeline_stages?.tipo || "";
-        const stageNome = lead.pipeline_stages?.nome || "—";
-        const prioridade = lead.prioridade || "";
-        const hasVisitaHoje = visitaLeadIds.has(lead.id);
-        
-        let peso = 0;
-        let motivo = "";
-        let cor = "blue";
-
-        // Peso 5 — URGENTE (vermelho)
-        if (hasVisitaHoje) {
-          peso = 5; motivo = "Visita hoje"; cor = "red";
-        } else if (prioridade === "urgente") {
-          peso = 5; motivo = "Lead urgente"; cor = "red";
-        }
-        // Peso 4 — QUENTE (laranja)
-        else if (stageTipo === "visita_realizada" && hrs >= 24) {
-          peso = 4; motivo = "Pós-visita sem retorno"; cor = "orange";
-        } else if (prioridade === "alta") {
-          peso = 4; motivo = "Lead alta prioridade"; cor = "orange";
-        }
-        // Peso 3 — ATENÇÃO (amarelo)
-        else if (diasParado >= 3) {
-          peso = 3; motivo = `Sem contato há ${diasParado} dias`; cor = "yellow";
-        }
-        // Peso 2 — NORMAL (azul)
-        else if (hrs < 24 && !lead.ultimo_contato) {
-          peso = 2; motivo = "Novo lead — fazer primeiro contato"; cor = "blue";
-        }
-        
-        if (peso === 0) return null;
-
-        const ultimoContato = lead.stage_changed_at || lead.updated_at;
-        const dataStr = ultimoContato ? new Date(ultimoContato).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "—";
-
-        return {
-          id: lead.id,
-          nome: lead.nome,
-          interesse: lead.interesse || lead.empreendimento || "—",
-          telefone: lead.telefone,
-          stageNome,
-          ultimoContatoStr: dataStr,
-          peso,
-          motivo,
-          cor,
-        };
-      }).filter(Boolean);
-
-      // Sort by peso desc, limit 5
-      scored.sort((a: any, b: any) => b.peso - a.peso);
-      const priorityLeads = scored.slice(0, 5);
 
       const counts: Record<string, number> = {};
       rankingData?.forEach((r: any) => { counts[r.corretor_id] = (counts[r.corretor_id] || 0) + 1; });
@@ -180,12 +88,10 @@ export default function CorretorDashboard() {
 
       return {
         pendingLeads: pendingLeads || 0,
-        slaExpired: slaExpired || 0,
-        visitas: visitas || [],
+        totalNegocios: totalNegocios || 0,
         rankingPos: myPos || totalBrokers,
         totalBrokers,
         ptsToNext: Math.max(0, nextAbove),
-        priorityLeads: priorityLeads || [],
         myPts,
         totalWithPoints: sorted.length,
       };
@@ -203,12 +109,10 @@ export default function CorretorDashboard() {
   }, [user]);
 
   const metaSalva = !!goals;
-
   const ligPct = goals ? Math.min(100, Math.round((progress.tentativas / (goals.meta_ligacoes || 30)) * 100)) : 0;
   const aprvPct = goals ? Math.min(100, Math.round((progress.aproveitados / (goals.meta_aproveitados || 5)) * 100)) : 0;
   const visPct = goals ? Math.min(100, Math.round((progress.visitasMarcadas / (goals.meta_visitas_marcadas || 3)) * 100)) : 0;
 
-  // Check all 3 metas complete for celebration
   const allMetasComplete = goals && ligPct >= 100 && aprvPct >= 100 && visPct >= 100;
   useEffect(() => {
     if (allMetasComplete && !metaCelebrated) {
@@ -241,28 +145,23 @@ export default function CorretorDashboard() {
     }
   };
 
-  const radar = radarData || { pendingLeads: 0, slaExpired: 0, visitas: [], rankingPos: 0, totalBrokers: 1, ptsToNext: 0, priorityLeads: [], myPts: 0, totalWithPoints: 0 };
+  const radar = radarData || { pendingLeads: 0, totalNegocios: 0, rankingPos: 0, totalBrokers: 1, ptsToNext: 0, myPts: 0, totalWithPoints: 0 };
 
-  // Dynamic greeting
   const greetingData = getDynamicGreeting({
     nome: nome || "Corretor",
     rankingPos: radar.rankingPos,
-    slaExpired: radar.slaExpired,
+    slaExpired: 0,
     streak: 0,
     myPts: radar.myPts,
     totalWithPoints: radar.totalWithPoints,
   });
-  const streakData = formatStreak(0); // TODO: compute from DB
-  const currentLevel = getLevel(progress.pontos);
-  const nextLevel = getNextLevel(progress.pontos);
-  const levelProgress = getLevelProgress(progress.pontos);
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px-2rem)] px-4 md:px-6 lg:px-8 py-4 overflow-auto">
       <ConfettiBurst trigger={confettiTrigger} intensity="moderate" />
       <MetaCelebration show={showMetaCelebration} nome={nome || "Corretor"} onDismiss={() => setShowMetaCelebration(false)} />
 
-      {/* HEADER — full width */}
+      {/* HEADER */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 mb-4">
         <div className="h-14 w-14 rounded-full shrink-0 overflow-hidden flex items-center justify-center"
           style={{
@@ -279,25 +178,23 @@ export default function CorretorDashboard() {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-semibold text-foreground">
-            {greetingData.greeting}
-          </h1>
+          <h1 className="text-xl font-semibold text-foreground">{greetingData.greeting}</h1>
           <p className="text-sm text-muted-foreground truncate">{greetingData.subtitle}</p>
         </div>
       </motion.div>
 
-      {/* STATUS BAR — Roleta */}
+      {/* STATUS BAR */}
       <div className="mb-4">
         <RoletaStatusBar />
       </div>
 
-      {/* GRID PRINCIPAL — 2 colunas desktop, 1 coluna mobile */}
+      {/* GRID PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-4 flex-1 min-h-0">
 
         {/* ===== COLUNA ESQUERDA ===== */}
         <div className="flex flex-col gap-4">
 
-          {/* Radar do Dia — 3 cards */}
+          {/* 3 Cards Contadores */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <div className="grid grid-cols-3 gap-3">
               <Card className="cursor-pointer hover:border-orange-300 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/pipeline")}>
@@ -308,20 +205,17 @@ export default function CorretorDashboard() {
                   </div>
                   <p className={`text-3xl lg:text-4xl font-bold leading-none ${radar.pendingLeads > 0 ? "text-orange-500" : "text-foreground"}`}>{radar.pendingLeads}</p>
                   <p className="text-sm text-muted-foreground mt-1.5">p/ atualizar</p>
-                  {radar.slaExpired > 0 && (
-                    <p className="text-xs text-danger-500 font-medium mt-0.5">{radar.slaExpired} SLA expirado</p>
-                  )}
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:border-primary/30 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/agenda-visitas")}>
+              <Card className="cursor-pointer hover:border-primary/30 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/negocios")}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-1.5 mb-2">
-                    <CalendarDays className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-medium text-muted-foreground">Agenda</span>
+                    <Zap className="h-4 w-4 text-purple-500" />
+                    <span className="text-xs font-medium text-muted-foreground">Negócios</span>
                   </div>
-                  <p className={`text-3xl lg:text-4xl font-bold leading-none ${radar.visitas.length > 0 ? "text-primary" : "text-foreground"}`}>{radar.visitas.length}</p>
-                  <p className="text-sm text-muted-foreground mt-1.5">{radar.visitas.length === 1 ? "visita" : "visitas"}</p>
+                  <p className={`text-3xl lg:text-4xl font-bold leading-none ${radar.totalNegocios > 0 ? "text-purple-500" : "text-foreground"}`}>{radar.totalNegocios}</p>
+                  <p className="text-sm text-muted-foreground mt-1.5">ativos</p>
                 </CardContent>
               </Card>
 
@@ -383,122 +277,19 @@ export default function CorretorDashboard() {
             )}
           </motion.div>
 
-          {/* Streak + Nível */}
+          {/* Agenda do Dia — Visitas + Reuniões */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-            <Card className="border-border/60">
-              <CardContent className="p-3 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  {/* Streak = 0: motivational text only, no empty bar */}
-                  {progress.pontos === 0 && !streakData.label.includes("dias") ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🔥</span>
-                      <span className="text-sm text-muted-foreground italic">Comece seu streak hoje!</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{streakData.emoji || "🔥"}</span>
-                      <span className={`text-xl font-bold ${streakData.color || "text-muted-foreground"}`}>0</span>
-                      <span className="text-xs text-muted-foreground">dias de streak</span>
-                    </div>
-                  )}
-                  <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${currentLevel.bgColor} ${currentLevel.color}`}>
-                    {currentLevel.emoji} {currentLevel.label}
-                  </span>
-                </div>
-                {/* Only show progress bar if there's actual progress */}
-                {progress.pontos > 0 && (
-                  <>
-                    <div className="relative h-2 rounded-full bg-muted overflow-hidden">
-                      <motion.div
-                        className={`absolute inset-y-0 left-0 rounded-full ${
-                          currentLevel.id === "iniciante" ? "bg-muted-foreground/40"
-                          : currentLevel.id === "ativo" ? "bg-emerald-500"
-                          : currentLevel.id === "engajado" ? "bg-orange-500"
-                          : currentLevel.id === "destaque" ? "bg-amber-500"
-                          : currentLevel.id === "elite" ? "bg-primary"
-                          : "bg-purple-500"
-                        }`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${levelProgress}%` }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] text-muted-foreground font-medium">{progress.pontos}/{nextLevel ? nextLevel.minPoints : "MAX"} pts</p>
-                      <p className="text-[10px] text-muted-foreground italic">{streakData.label}</p>
-                    </div>
-                  </>
-                )}
-                {progress.pontos === 0 && (
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] text-muted-foreground font-medium">0/{nextLevel ? nextLevel.minPoints : "100"} pts</p>
-                    <p className="text-[10px] text-muted-foreground italic">Faça sua primeira ligação!</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <DashboardAgendaPreview />
           </motion.div>
 
-          {/* Ranking Multi-Categoria */}
+          {/* Rankings — 3 tabs preview */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <Card className="border-border/60">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-base">🏆</span>
-                    <span className="text-xs font-semibold text-foreground">Seu melhor ranking hoje</span>
-                  </div>
-                  <Button variant="link" size="sm" className="h-auto p-0 text-[10px] text-primary" onClick={() => navigate("/corretor/ranking-equipes")}>
-                    Ver rankings →
-                  </Button>
-                </div>
-                <div className="space-y-1">
-                  {[
-                    { emoji: "📞", label: "Oferta Ativa", pos: radar.rankingPos || "—", level: currentLevel },
-                    { emoji: "💰", label: "VGV", pos: "—", level: currentLevel },
-                    { emoji: "📋", label: "Gestão Leads", pos: "—", level: currentLevel },
-                  ].map((cat) => (
-                    <div
-                      key={cat.label}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-accent/30 transition-colors"
-                    >
-                      <span className="text-sm">{cat.emoji}</span>
-                      <span className="flex-1 text-foreground font-medium">{cat.label}</span>
-                      <span className="font-bold text-foreground tabular-nums">
-                        {typeof cat.pos === "number" ? `#${cat.pos}` : cat.pos}
-                      </span>
-                      <span className={`text-[10px] font-semibold ${cat.level.color}`}>
-                        {cat.level.emoji} {cat.level.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <DashboardRankingsPreview />
           </motion.div>
 
-          {/* Atalhos Rápidos — Grid 2x2 */}
+          {/* Pulse Feed */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Agenda", emoji: "📅", path: "/agenda-visitas", subtitle: radar.visitas.length > 0 ? `${radar.visitas.length} visita${radar.visitas.length > 1 ? "s" : ""} hoje` : "Livre hoje" },
-                { label: "HOMI", emoji: "🤖", path: "/homi", subtitle: "Assistente IA" },
-                { label: "Scripts", emoji: "📝", path: "/scripts", subtitle: "Roteiros de venda" },
-                { label: "Desempenho", emoji: "📊", path: "/corretor/resumo", subtitle: "Resumo semanal" },
-              ].map((item) => (
-                <Card
-                  key={item.label}
-                  className="cursor-pointer border-border/60 hover:shadow-card-hover hover:border-primary/30 transition-all duration-150"
-                  onClick={() => navigate(item.path)}
-                >
-                  <CardContent className="p-0 h-24 flex flex-col items-center justify-center gap-1.5">
-                    <span className="text-2xl">{item.emoji}</span>
-                    <span className="text-sm font-semibold text-foreground">{item.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{item.subtitle}</span>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <PulseFeed />
           </motion.div>
 
           {/* Finalizar Trabalho do Dia */}
@@ -600,129 +391,17 @@ export default function CorretorDashboard() {
             )}
           </motion.div>
 
-          {/* Prioridades Agora */}
+          {/* Agenda de Tarefas */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🎯</span>
-                    <span className="text-sm font-semibold text-foreground">Prioridades Agora</span>
-                  </div>
-                  {radar.priorityLeads && radar.priorityLeads.length > 0 && (() => {
-                    const topCor = radar.priorityLeads[0]?.cor;
-                    const badgeColor = topCor === "red" ? "bg-red-500" : topCor === "orange" ? "bg-orange-500" : topCor === "yellow" ? "bg-yellow-500" : "bg-blue-500";
-                    return (
-                      <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full text-[10px] font-bold text-white px-1.5 ${badgeColor}`}>
-                        {radar.priorityLeads.length}
-                      </span>
-                    );
-                  })()}
-                </div>
-                {(!radar.priorityLeads || radar.priorityLeads.length === 0) ? (
-                  <div className="text-center py-6 space-y-1">
-                    <p className="text-2xl">✅</p>
-                    <p className="text-sm font-semibold text-foreground">Tudo em dia!</p>
-                    <p className="text-xs text-muted-foreground">Nenhum lead precisa de atenção urgente agora.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {radar.priorityLeads.map((lead: any) => {
-                      const borderColor = lead.cor === "red" ? "border-l-red-500" : lead.cor === "orange" ? "border-l-orange-500" : lead.cor === "yellow" ? "border-l-yellow-500" : "border-l-blue-500";
-                      const tagBg = lead.cor === "red" ? "bg-red-500/10 text-red-600" : lead.cor === "orange" ? "bg-orange-500/10 text-orange-600" : lead.cor === "yellow" ? "bg-yellow-500/10 text-yellow-700" : "bg-blue-500/10 text-blue-600";
-                      const tagEmoji = lead.cor === "red" ? "🔴" : lead.cor === "orange" ? "🟠" : lead.cor === "yellow" ? "🟡" : "🔵";
-                      return (
-                        <div key={lead.id} className={`p-3 rounded-lg border border-border/60 border-l-[3px] ${borderColor} hover:bg-accent/30 transition-colors space-y-1.5`}>
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${tagBg}`}>
-                            {tagEmoji} {lead.motivo}
-                          </span>
-                          <p className="text-sm font-bold text-foreground truncate">👤 {lead.nome}</p>
-                          <p className="text-xs text-muted-foreground truncate">🏠 {lead.interesse}</p>
-                          <div className="flex items-center justify-between">
-                            <p className="text-[10px] text-muted-foreground">
-                              📍 {lead.stageNome} · Último contato: {lead.ultimoContatoStr}
-                            </p>
-                            <div className="flex items-center gap-1 shrink-0">
-                              {lead.telefone && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 px-2 gap-1 text-[10px]"
-                                    onClick={() => navigate("/corretor/call")}
-                                  >
-                                    <Phone className="h-3 w-3" /> Ligar
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 px-2 gap-1 text-[10px] text-emerald-600"
-                                    onClick={() => {
-                                      const phone = lead.telefone.replace(/\D/g, "");
-                                      window.open(`https://wa.me/55${phone}`, "_blank");
-                                    }}
-                                  >
-                                    💬 WhatsApp
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <MinhaAgendaWidget />
           </motion.div>
 
-          {/* Agenda de Hoje */}
+          {/* Meu Desempenho */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">Hoje</span>
-                </div>
-                {radar.visitas.length === 0 ? (
-                  <div className="text-center py-3 space-y-1">
-                    <p className="text-sm text-muted-foreground">😴 Livre hoje. Que tal marcar uma?</p>
-                    <Button variant="link" size="sm" className="text-xs text-primary h-auto p-0" onClick={() => navigate("/agenda-visitas")}>
-                      Abrir agenda →
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    {radar.visitas.map((v: any) => (
-                      <div key={v.id} className="flex items-center gap-3 p-2 rounded-lg border border-border/60">
-                        <span className="text-xs font-bold text-primary shrink-0 w-12">
-                          {v.hora_visita?.slice(0, 5) || "–"}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">{v.nome_cliente}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{v.empreendimento}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <Button variant="link" size="sm" className="text-xs text-primary h-auto p-0" onClick={() => navigate("/agenda-visitas")}>
-                      Ver agenda completa →
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* ⚡ Pulse Feed */}
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
-            <PulseFeed />
+            <DashboardDesempenhoWidget />
           </motion.div>
         </div>
       </div>
-
-
-
     </div>
   );
 }
