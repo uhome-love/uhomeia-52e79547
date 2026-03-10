@@ -387,6 +387,11 @@ const PipelineCard = memo(function PipelineCard({
                 if (error) throw error;
                 if (negocio) {
                   await supabase.from("pipeline_leads").update({ negocio_id: negocio.id } as any).eq("id", lead.id);
+                  // Move lead to Convertido stage
+                  const convertidoStage = stages.find(s => s.tipo === "convertido");
+                  if (convertidoStage && onMoveLead) {
+                    onMoveLead(lead.id, convertidoStage.id);
+                  }
                   toast.success(`🎉 Negócio criado para ${lead.nome}!`, { description: "Envie a proposta em até 24h!" });
                 }
               } catch (err: any) {
