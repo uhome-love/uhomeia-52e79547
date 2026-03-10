@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Building2, Loader2, ChevronLeft, ChevronRight, Home, BedDouble, Bath, Maximize, MapPin, Car, Megaphone, ChevronsUpDown, Check } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Search, Building2, Loader2, ChevronLeft, ChevronRight, Home, BedDouble, Bath, Maximize, MapPin, Car, Megaphone, ChevronsUpDown, Check, UserCircle, Phone, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -21,13 +22,56 @@ function extractImages(item: any): string[] {
   return arr.map((img: any) => img.link_thumb || img.link).filter(Boolean);
 }
 
+/** Extract full-size image URLs for lightbox */
+function extractFullImages(item: any): string[] {
+  const arr = item.imagens;
+  if (!Array.isArray(arr) || arr.length === 0) return [];
+  return arr.map((img: any) => img.link || img.link_thumb).filter(Boolean);
+}
+
+/** Extract origin/responsible info from Jetimob item */
+function extractOrigemExterna(item: any): { sistema?: string; responsavel?: string; telefone?: string; email?: string } | null {
+  const proprietario = item.proprietario_nome || item.proprietario?.nome;
+  const agenciador = item.agenciador_nome || item.agenciador?.nome;
+  const responsavel = item.responsavel_nome || item.corretor_nome || item.responsavel?.nome;
+  const telefone = item.responsavel_telefone || item.corretor_telefone || item.proprietario_telefone || item.proprietario?.telefone;
+  const email = item.responsavel_email || item.corretor_email || item.proprietario_email || item.proprietario?.email;
+  const sistema = item.origem_sistema || item.sistema_origem;
+
+  const obsText = item.observacoes_internas || item.informacoes_origem_externa || item.obs_internas || "";
+  let parsedResp = responsavel;
+  let parsedTel = telefone;
+  let parsedEmail = email;
+  let parsedSistema = sistema;
+
+  if (obsText && typeof obsText === "string") {
+    const sysMatch = obsText.match(/Sistema:\s*(.+)/i);
+    const respMatch = obsText.match(/Respons[áa]vel\/Corretor:\s*(.+)/i) || obsText.match(/Respons[áa]vel:\s*(.+)/i);
+    const telMatch = obsText.match(/Telefone:\s*(.+)/i);
+    const emailMatch = obsText.match(/E-?mail:\s*(.+)/i);
+    if (sysMatch && !parsedSistema) parsedSistema = sysMatch[1].trim();
+    if (respMatch && !parsedResp) parsedResp = respMatch[1].trim();
+    if (telMatch && !parsedTel) parsedTel = telMatch[1].trim();
+    if (emailMatch && !parsedEmail) parsedEmail = emailMatch[1].trim();
+  }
+
+  if (!parsedResp && !parsedTel && !parsedEmail && !parsedSistema && !proprietario && !agenciador) return null;
+
+  return {
+    sistema: parsedSistema || undefined,
+    responsavel: parsedResp || proprietario || agenciador || undefined,
+    telefone: parsedTel || undefined,
+    email: parsedEmail || undefined,
+  };
+}
+
 /** Mini image slider for property cards */
-function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
+function ImageSlider({ images, alt, onClickImage }: { images: string[]; alt: string; onClickImage?: () => void }) {
   const [current, setCurrent] = useState(0);
 
   if (images.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center cursor-pointer" onClick={onClickImage}>
         <Home className="h-8 w-8 text-muted-foreground/40" />
       </div>
     );
@@ -38,8 +82,9 @@ function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
       <img
         src={images[current]}
         alt={alt}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover cursor-pointer"
         loading="lazy"
+        onClick={(e) => { e.stopPropagation(); onClickImage?.(); }}
       />
       {images.length > 1 && (
         <>
@@ -71,6 +116,58 @@ function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
     </div>
   );
 }
+
+/** Fullscreen photo lightbox */
+function PhotoLightbox({ images, initialIndex, open, onClose }: { images: string[]; initialIndex: number; open: boolean; onClose: () => void }) {
+  const [current, setCurrent] = useState(initialIndex);
+  useEffect(() => { setCurrent(initialIndex); }, [initialIndex]);
+  if (!open || images.length === 0) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-none flex flex-col [&>button]:hidden">
+        <button onClick={onClose} className="absolute top-3 right-3 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white transition-colors">
+          <X className="h-5 w-5" />
+        </button>
+        <div className="flex-1 flex items-center justify-center relative min-h-0">
+          <img src={images[current]} alt={`Foto ${current + 1}`} className="max-w-full max-h-full object-contain" />
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={() => setCurrent((p) => (p - 1 + images.length) % images.length)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white transition-colors"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                onClick={() => setCurrent((p) => (p + 1) % images.length)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white transition-colors"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </>
+          )}
+        </div>
+        <div className="flex items-center justify-center gap-1.5 py-3 overflow-x-auto px-4">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={cn(
+                "w-14 h-10 rounded overflow-hidden border-2 flex-shrink-0 transition-all",
+                i === current ? "border-primary opacity-100" : "border-transparent opacity-50 hover:opacity-80"
+              )}
+            >
+              <img src={img} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+        <p className="text-center text-white/60 text-xs pb-2">{current + 1} / {images.length}</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 /** Códigos dos imóveis com campanha de leads ativa */
 const CAMPANHA_CODES: { codigo: string; nome: string }[] = [
@@ -139,8 +236,11 @@ export default function ImoveisPage() {
   const [total, setTotal] = useState(0);
   const [campanhaAtiva, setCampanhaAtiva] = useState(false);
   const [uhomeOnly, setUhomeOnly] = useState(false);
-
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const [search, setSearch] = useState("");
+
   const [contrato, setContrato] = useState("venda");
   const [tipo, setTipo] = useState("");
   const [bairro, setBairro] = useState("");
@@ -479,9 +579,16 @@ export default function ImoveisPage() {
         </Card>
       ) : (
         <>
+          <PhotoLightbox
+            images={lightboxImages}
+            initialIndex={lightboxIndex}
+            open={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {imoveis.map((item, idx) => {
               const images = extractImages(item);
+              const fullImages = extractFullImages(item);
               const loc = extractEndereco(item);
               const codigo = item.codigo;
               const titulo = item.titulo_anuncio || "";
@@ -494,13 +601,22 @@ export default function ImoveisPage() {
               const cond = getNum(item, "valor_condominio");
               const disponib = item.situacao || item.status || "";
               const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === codigo);
+              const origem = extractOrigemExterna(item);
 
               return (
                 <Card key={item.id_imovel || codigo || idx} className={cn("overflow-hidden hover:shadow-lg transition-shadow", isCampanha && "ring-1 ring-primary/30")}>
                   <div className="flex">
                     {/* Image */}
                     <div className="w-40 h-40 flex-shrink-0 bg-muted relative">
-                      <ImageSlider images={images} alt={titulo || loc.endereco} />
+                      <ImageSlider
+                        images={images}
+                        alt={titulo || loc.endereco}
+                        onClickImage={() => {
+                          setLightboxImages(fullImages.length > 0 ? fullImages : images);
+                          setLightboxIndex(0);
+                          setLightboxOpen(true);
+                        }}
+                      />
                       {codigo && (
                         <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px] z-10">
                           {codigo}
@@ -566,11 +682,45 @@ export default function ImoveisPage() {
                             <p className="text-[10px] text-muted-foreground">Cond. {fmtBRL(cond)}</p>
                           )}
                         </div>
-                        {disponib && (
-                          <Badge variant={disponib === "disponivel" ? "default" : "secondary"} className="text-[10px]">
-                            {disponib}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {origem && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                                  <UserCircle className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-72 p-3" align="end">
+                                <p className="text-xs font-semibold text-foreground mb-2">Responsável / Origem</p>
+                                <div className="space-y-1.5 text-xs">
+                                  {origem.sistema && (
+                                    <p className="text-muted-foreground"><span className="font-medium text-foreground">Sistema:</span> {origem.sistema}</p>
+                                  )}
+                                  {origem.responsavel && (
+                                    <p className="text-muted-foreground"><span className="font-medium text-foreground">Responsável:</span> {origem.responsavel}</p>
+                                  )}
+                                  {origem.telefone && (
+                                    <p className="text-muted-foreground flex items-center gap-1">
+                                      <Phone className="h-3 w-3" />
+                                      <a href={`tel:${origem.telefone.replace(/[^\d+]/g, "")}`} className="text-primary hover:underline">{origem.telefone}</a>
+                                    </p>
+                                  )}
+                                  {origem.email && (
+                                    <p className="text-muted-foreground flex items-center gap-1">
+                                      <Mail className="h-3 w-3" />
+                                      <a href={`mailto:${origem.email}`} className="text-primary hover:underline">{origem.email}</a>
+                                    </p>
+                                  )}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                          {disponib && (
+                            <Badge variant={disponib === "disponivel" ? "default" : "secondary"} className="text-[10px]">
+                              {disponib}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
