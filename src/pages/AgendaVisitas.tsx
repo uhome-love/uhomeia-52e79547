@@ -195,8 +195,20 @@ export default function AgendaVisitas() {
   const [showCobranca, setShowCobranca] = useState(false);
   const [cobrancaMsg, setCobrancaMsg] = useState("");
   const [sendingCobranca, setSendingCobranca] = useState(false);
+  const [agendaTipo, setAgendaTipo] = useState<"lead" | "negocio">("lead");
 
-  const { visitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas();
+  const { visitas: allVisitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas();
+
+  // Split visitas by tipo
+  const visitas = useMemo(() => {
+    return allVisitas.filter(v => {
+      const tipo = (v as any).tipo || "lead";
+      return tipo === agendaTipo;
+    });
+  }, [allVisitas, agendaTipo]);
+
+  const negocioCount = useMemo(() => allVisitas.filter(v => (v as any).tipo === "negocio").length, [allVisitas]);
+  const leadCount = useMemo(() => allVisitas.filter(v => (v as any).tipo !== "negocio").length, [allVisitas]);
 
   const handleEdit = useCallback((visita: Visita) => {
     setEditingVisita(visita);
