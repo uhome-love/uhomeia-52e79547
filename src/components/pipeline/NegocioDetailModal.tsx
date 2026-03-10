@@ -125,6 +125,11 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
   const [novaTarefaTipo, setNovaTarefaTipo] = useState("follow_up");
   const [novaTarefaData, setNovaTarefaData] = useState("");
   const [novaTarefaHora, setNovaTarefaHora] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTitulo, setEditTitulo] = useState("");
+  const [editTipo, setEditTipo] = useState("");
+  const [editData, setEditData] = useState("");
+  const [editHora, setEditHora] = useState("");
 
   // Popups
   const [propostaPopup, setPropostaPopup] = useState(false);
