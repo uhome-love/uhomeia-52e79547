@@ -14,27 +14,12 @@ import { toast } from "sonner";
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
-/** Extract image URL from any possible Jetimob field structure */
+/** Extract thumbnail URL (fastest) from Jetimob imagens array */
 function extractImage(item: any): string | null {
-  // Direct string fields
-  for (const key of ["foto_principal", "foto_destaque", "foto_capa", "thumb", "thumbnail", "imagem_principal"]) {
-    if (typeof item[key] === "string" && item[key]) return item[key];
+  const arr = item.imagens;
+  if (Array.isArray(arr) && arr.length > 0) {
+    return arr[0].link_thumb || arr[0].link || null;
   }
-  // Array of objects with url field
-  for (const key of ["fotos", "imagens", "galeria", "midias", "photos", "images", "gallery"]) {
-    const arr = item[key];
-    if (Array.isArray(arr) && arr.length > 0) {
-      const first = arr[0];
-      if (typeof first === "string") return first;
-      if (first?.url) return first.url;
-      if (first?.link) return first.link;
-      if (first?.src) return first.src;
-      if (first?.arquivo) return first.arquivo;
-    }
-  }
-  // Nested foto object
-  if (item.foto?.url) return item.foto.url;
-  if (item.foto?.link) return item.foto.link;
   return null;
 }
 
