@@ -49,7 +49,7 @@ const RESULTADO_LABELS: Record<string, string> = {
 };
 
 export default function BuscaLeads() {
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isGestor } = useUserRole();
   const { results, isSearching, totalResults, buscar, fetchTentativas, executarAcao, fetchCorretores } = useBuscaLeads();
 
   // Search state
