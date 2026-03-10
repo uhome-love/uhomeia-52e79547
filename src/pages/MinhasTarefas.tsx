@@ -308,7 +308,7 @@ export default function MinhasTarefas() {
       </div>
 
       {/* Task list */}
-      {isLoading ? (
+      {(isLoading || isLoadingNegocios) ? (
         <div className="text-center py-12 text-muted-foreground">Carregando...</div>
       ) : filteredTarefas.length === 0 ? (
         <Card className="p-8 text-center">
