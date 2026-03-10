@@ -140,6 +140,7 @@ export default function BuscaLeads() {
     bloquear: "Bloquear (WhatsApp em andamento)",
     desbloquear: "Desbloquear Lead",
     quebrar_reserva: "Quebrar Reserva",
+    incluir_pipeline: "Incluir no Pipeline de Leads",
   };
 
   return (
