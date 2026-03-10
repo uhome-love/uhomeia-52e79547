@@ -116,8 +116,10 @@ serve(async (req) => {
     }
 
     if (action === "list_imoveis") {
-      const { page = 1, pageSize = 30, search, contrato, tipo, cidade, bairro, dormitorios, valor_min, valor_max } = body;
-      let url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${page}&pageSize=${pageSize}`;
+      const { page = 1, pageSize = 30, search, contrato, tipo, cidade, bairro, dormitorios, valor_min, valor_max, search_uhome } = body;
+      // For uHome filter, use larger page to get more results for client-side filtering
+      const fetchSize = search_uhome ? 200 : pageSize;
+      let url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${search_uhome ? 1 : page}&pageSize=${fetchSize}`;
       if (contrato) url += `&contrato=${encodeURIComponent(contrato)}`;
       if (tipo) url += `&tipo=${encodeURIComponent(tipo)}`;
       if (cidade) url += `&cidade=${encodeURIComponent(cidade)}`;
@@ -138,16 +140,18 @@ serve(async (req) => {
         );
       }
 
-      const data = await response.json();
-      // Log first item structure for debugging
-      const items = data?.result || data?.imoveis || data?.data || [];
-      if (Array.isArray(items) && items.length > 0) {
-        console.log("Jetimob first imovel keys:", JSON.stringify(Object.keys(items[0])));
-        console.log("Jetimob first imovel sample:", JSON.stringify(items[0]).substring(0, 1500));
-      } else {
-        console.log("Jetimob response keys:", JSON.stringify(Object.keys(data)));
-        console.log("Jetimob response sample:", JSON.stringify(data).substring(0, 1000));
+      let data = await response.json();
+
+      // Filter uHome properties (codes ending with -UH)
+      if (search_uhome) {
+        const items = data?.result || data?.imoveis || data?.data || [];
+        const uhomeItems = Array.isArray(items) ? items.filter((item: any) => {
+          const codigo = String(item.codigo || "").toUpperCase();
+          return codigo.includes("-UH");
+        }) : [];
+        data = { data: uhomeItems, total: uhomeItems.length, totalPages: 1 };
       }
+
       return new Response(JSON.stringify(data), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
