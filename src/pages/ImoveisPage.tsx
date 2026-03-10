@@ -763,7 +763,11 @@ export default function ImoveisPage() {
             onClose={() => setLightboxOpen(false)}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {imoveis.map((item, idx) => {
+            {imoveis.filter(item => {
+              if (!somenteObras) return true;
+              const { emObras } = extractEntrega(item);
+              return emObras;
+            }).map((item, idx) => {
               const images = extractImages(item);
               const fullImages = extractFullImages(item);
               const loc = extractEndereco(item);
@@ -780,6 +784,7 @@ export default function ImoveisPage() {
               const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === codigo);
               const imovelId = String(codigo || item.id_imovel || item.id || idx);
               const isSelected = selectedIds.has(imovelId);
+              const entrega = extractEntrega(item);
 
               const toggleSelect = () => {
                 setSelectedIds(prev => {
