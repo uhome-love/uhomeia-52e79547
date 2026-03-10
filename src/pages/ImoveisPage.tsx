@@ -38,33 +38,14 @@ function extractImage(item: any): string | null {
   return null;
 }
 
-/** Extract address/location text from any possible field structure */
+/** Extract address/location from Jetimob fields */
 function extractEndereco(item: any): { endereco: string; bairro: string; cidade: string } {
-  const endereco = item.endereco || item.logradouro || item.rua || item.address || item.endereco_completo || "";
-  const numero = item.numero || item.number || "";
-  const bairro = item.bairro || item.neighborhood || item.bairro_nome || "";
-  const cidade = item.cidade || item.city || item.cidade_nome || item.municipio || "";
-  
-  // Some APIs nest inside endereco object
-  if (item.endereco && typeof item.endereco === "object") {
-    return {
-      endereco: `${item.endereco.logradouro || item.endereco.rua || ""}${item.endereco.numero ? `, ${item.endereco.numero}` : ""}`,
-      bairro: item.endereco.bairro || bairro,
-      cidade: item.endereco.cidade || cidade,
-    };
-  }
-  
-  // Nested localizacao object
-  if (item.localizacao && typeof item.localizacao === "object") {
-    return {
-      endereco: `${item.localizacao.logradouro || item.localizacao.endereco || endereco}${item.localizacao.numero ? `, ${item.localizacao.numero}` : (numero ? `, ${numero}` : "")}`,
-      bairro: item.localizacao.bairro || bairro,
-      cidade: item.localizacao.cidade || cidade,
-    };
-  }
-
+  const logradouro = item.endereco_logradouro || item.endereco || item.logradouro || "";
+  const numero = item.endereco_numero || item.numero || "";
+  const bairro = item.endereco_bairro || item.bairro || "";
+  const cidade = item.endereco_cidade || item.cidade || "";
   return {
-    endereco: `${endereco}${numero ? `, ${numero}` : ""}`,
+    endereco: `${logradouro}${numero ? `, ${numero}` : ""}`.trim(),
     bairro,
     cidade,
   };
