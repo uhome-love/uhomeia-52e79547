@@ -130,6 +130,15 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
   const [contratoPopup, setContratoPopup] = useState(false);
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [reuniaoOpen, setReuniaoOpen] = useState(false);
+
+  // Reunião form fields
+  const [reuniaoTipo, setReuniaoTipo] = useState("fechamento");
+  const [reuniaoData, setReuniaoData] = useState("");
+  const [reuniaoHora, setReuniaoHora] = useState("");
+  const [reuniaoLocal, setReuniaoLocal] = useState("empresa");
+  const [reuniaoObs, setReuniaoObs] = useState("");
+  const [salvandoReuniao, setSalvandoReuniao] = useState(false);
 
   // Proposta popup fields
   const [propEmpreendimento, setPropEmpreendimento] = useState("");
