@@ -27,6 +27,7 @@ interface ContractData {
   cliente_email: string;
   cliente_endereco: string;
   cliente_estado_civil?: string;
+  compradores?: { nome: string; cpf: string; rg: string; nacionalidade: string; estado_civil: string; telefone: string; email: string; endereco: string; cidade: string; estado: string }[];
   empreendimento: string;
   unidade: string;
   vgv: number;
