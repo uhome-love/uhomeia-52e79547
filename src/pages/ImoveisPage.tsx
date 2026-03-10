@@ -283,12 +283,12 @@ export default function ImoveisPage() {
               const disponib = item.situacao || item.status || "";
 
               return (
-                <Card key={item.id || codigo || idx} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <Card key={item.id_imovel || codigo || idx} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="flex">
                     {/* Image */}
                     <div className="w-40 h-40 flex-shrink-0 bg-muted relative">
                       {img ? (
-                        <img src={img} alt={loc.endereco} className="w-full h-full object-cover" loading="lazy" />
+                        <img src={img} alt={titulo || loc.endereco} className="w-full h-full object-cover" loading="lazy" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Home className="h-8 w-8 text-muted-foreground/40" />
@@ -304,23 +304,22 @@ export default function ImoveisPage() {
                     {/* Info */}
                     <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
                       <div className="space-y-1">
-                        {loc.endereco && (
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {loc.endereco}
+                        {titulo && (
+                          <p className="text-sm font-semibold text-foreground truncate" title={titulo}>
+                            {titulo}
                           </p>
                         )}
                         {(loc.bairro || loc.cidade) && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <MapPin className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">
-                              {[loc.bairro, loc.cidade].filter(Boolean).join(" · ")}
+                              {[loc.endereco, loc.bairro, loc.cidade].filter(Boolean).join(" · ")}
                             </span>
                           </p>
                         )}
 
                         <div className="flex items-center gap-1 text-xs flex-wrap">
                           {tipoImovel && <Badge variant="outline" className="text-[10px] h-5">{tipoImovel}</Badge>}
-                          {subtipo && <Badge variant="outline" className="text-[10px] h-5">{subtipo}</Badge>}
                         </div>
 
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
