@@ -483,7 +483,7 @@ export default function AgendaVisitas() {
       )}
 
       {/* ─── TEAM VIEW (Visitas do Time) ─── */}
-      {agendaTipo === "lead" && leadSubTab === "time" && (isAdmin || isGestor) ? (
+      {agendaTipo === "lead" && leadSubTab === "time" ? (
         <VisitasEquipe />
       ) : (
       <>
