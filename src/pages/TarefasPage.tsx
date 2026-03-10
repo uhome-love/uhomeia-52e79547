@@ -43,11 +43,11 @@ interface Tarefa {
   updated_at: string;
 }
 
-const COLUMNS: { key: TarefaStatus; label: string; emoji: string; color: string; bg: string }[] = [
-  { key: "a_fazer", label: "A Fazer", emoji: "📋", color: "hsl(var(--muted-foreground))", bg: "hsl(var(--muted) / 0.5)" },
-  { key: "em_andamento", label: "Em Andamento", emoji: "⚡", color: "hsl(220 90% 56%)", bg: "hsl(220 90% 56% / 0.08)" },
-  { key: "revisao", label: "Revisão", emoji: "👀", color: "hsl(38 92% 50%)", bg: "hsl(38 92% 50% / 0.08)" },
-  { key: "concluida", label: "Concluída", emoji: "✅", color: "hsl(142 71% 45%)", bg: "hsl(142 71% 45% / 0.08)" },
+const COLUMNS: { key: TarefaStatus; label: string; emoji: string; color: string; bg: string; cardBg: string; borderAccent: string; headerBg: string }[] = [
+  { key: "a_fazer", label: "A Fazer", emoji: "📋", color: "hsl(var(--muted-foreground))", bg: "hsl(var(--muted) / 0.3)", cardBg: "hsl(var(--muted) / 0.15)", borderAccent: "hsl(var(--muted-foreground) / 0.2)", headerBg: "hsl(var(--muted) / 0.5)" },
+  { key: "em_andamento", label: "Em Andamento", emoji: "⚡", color: "hsl(220 90% 56%)", bg: "hsl(220 90% 56% / 0.06)", cardBg: "hsl(220 90% 56% / 0.04)", borderAccent: "hsl(220 90% 56% / 0.25)", headerBg: "hsl(220 90% 56% / 0.1)" },
+  { key: "revisao", label: "Revisão", emoji: "👀", color: "hsl(38 92% 50%)", bg: "hsl(38 92% 50% / 0.06)", cardBg: "hsl(38 92% 50% / 0.04)", borderAccent: "hsl(38 92% 50% / 0.25)", headerBg: "hsl(38 92% 50% / 0.1)" },
+  { key: "concluida", label: "Concluída", emoji: "✅", color: "hsl(142 71% 45%)", bg: "hsl(142 71% 45% / 0.06)", cardBg: "hsl(142 71% 45% / 0.04)", borderAccent: "hsl(142 71% 45% / 0.25)", headerBg: "hsl(142 71% 45% / 0.1)" },
 ];
 
 const PRIORIDADE_CONFIG: Record<TarefaPrioridade, { label: string; color: string; border: string; badge: string }> = {
@@ -202,14 +202,21 @@ export default function TarefasPage() {
   const weekNum = Math.ceil((now.getDate()) / 7);
   const weekLabel = `Semana ${weekNum} · ${format(weekStart, "d", { locale: ptBR })}–${format(weekEnd, "d 'de' MMMM", { locale: ptBR })}`;
 
+  const [dragOverCol, setDragOverCol] = useState<TarefaStatus | null>(null);
+
   // Drag handlers
   function onDragStart(e: React.DragEvent, id: string) {
     setDraggedId(id);
     e.dataTransfer.effectAllowed = "move";
   }
   function onDragOver(e: React.DragEvent) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }
+  function onDragEnter(status: TarefaStatus) { setDragOverCol(status); }
+  function onDragLeave(e: React.DragEvent, colEl: HTMLDivElement | null) {
+    if (colEl && !colEl.contains(e.relatedTarget as Node)) setDragOverCol(null);
+  }
   function onDrop(e: React.DragEvent, status: TarefaStatus) {
     e.preventDefault();
+    setDragOverCol(null);
     if (draggedId) {
       moveTask.mutate({ id: draggedId, status });
       setDraggedId(null);
@@ -302,63 +309,94 @@ export default function TarefasPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {COLUMNS.map(col => {
             const colTasks = filtered.filter(t => t.status === col.key);
+            const isDragOver = dragOverCol === col.key;
             return (
               <div
                 key={col.key}
-                className="rounded-xl border border-border bg-card min-h-[300px] flex flex-col"
+                ref={(el) => el}
+                className="rounded-2xl min-h-[300px] flex flex-col transition-all duration-300"
+                style={{
+                  background: isDragOver ? col.headerBg : col.bg,
+                  border: `1.5px solid ${isDragOver ? col.color : col.borderAccent}`,
+                  boxShadow: isDragOver ? `0 0 20px ${col.borderAccent}, inset 0 0 30px ${col.cardBg}` : 'none',
+                  transform: isDragOver ? 'scale(1.01)' : 'scale(1)',
+                }}
                 onDragOver={onDragOver}
+                onDragEnter={() => onDragEnter(col.key)}
+                onDragLeave={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  if (!el.contains(e.relatedTarget as Node)) setDragOverCol(null);
+                }}
                 onDrop={e => onDrop(e, col.key)}
               >
                 {/* Column header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <div
+                  className="flex items-center justify-between px-4 py-3 rounded-t-2xl"
+                  style={{ background: col.headerBg, borderBottom: `1.5px solid ${col.borderAccent}` }}
+                >
                   <div className="flex items-center gap-2">
-                    <span>{col.emoji}</span>
-                    <span className="text-sm font-semibold text-foreground">{col.label}</span>
+                    <div
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-sm"
+                      style={{ background: `${col.color}20`, color: col.color }}
+                    >
+                      {col.emoji}
+                    </div>
+                    <span className="text-sm font-bold" style={{ color: col.color }}>{col.label}</span>
                   </div>
-                  <Badge variant="secondary" className="text-xs">{colTasks.length}</Badge>
+                  <div
+                    className="flex h-6 min-w-6 items-center justify-center rounded-full text-xs font-bold"
+                    style={{ background: `${col.color}18`, color: col.color }}
+                  >
+                    {colTasks.length}
+                  </div>
                 </div>
 
                 {/* Cards */}
-                <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[60vh]">
+                <div className="flex-1 p-2.5 space-y-2.5 overflow-y-auto max-h-[60vh]">
                   <AnimatePresence>
                     {colTasks.map(t => {
                       const prio = PRIORIDADE_CONFIG[t.prioridade as TarefaPrioridade];
                       const cat = t.categoria ? CATEGORIA_CONFIG[t.categoria as TarefaCategoria] : null;
                       const prazoInfo = getPrazoStyle(t.prazo);
+                      const isDragging = draggedId === t.id;
                       return (
                         <motion.div
                           key={t.id}
                           layout
                           initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
+                          animate={{ opacity: isDragging ? 0.5 : 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95 }}
                           draggable
                           onDragStart={e => onDragStart(e as unknown as React.DragEvent, t.id)}
-                          className="rounded-lg border border-border bg-background p-3 cursor-grab active:cursor-grabbing hover:-translate-y-0.5 hover:shadow-md transition-all group"
-                          style={{ borderLeft: prio.border }}
+                          className="rounded-xl border bg-card/80 backdrop-blur-sm p-3.5 cursor-grab active:cursor-grabbing hover:-translate-y-1 hover:shadow-lg transition-all duration-200 group"
+                          style={{
+                            borderColor: col.borderAccent,
+                            borderLeft: prio.border,
+                            boxShadow: `0 1px 3px ${col.borderAccent}`,
+                          }}
                         >
                           {/* Badges */}
                           <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                            <Badge variant="outline" className={`text-[10px] ${prio.badge}`}>
+                            <Badge variant="outline" className={`text-[10px] rounded-full px-2 ${prio.badge}`}>
                               {prio.label}
                             </Badge>
                             {cat && (
-                              <Badge variant="outline" className={`text-[10px] ${cat.badge}`}>
+                              <Badge variant="outline" className={`text-[10px] rounded-full px-2 ${cat.badge}`}>
                                 {cat.emoji} {cat.label}
                               </Badge>
                             )}
                           </div>
 
                           {/* Title & desc */}
-                          <p className="font-semibold text-sm text-foreground leading-tight">{t.titulo}</p>
+                          <p className="font-bold text-sm text-foreground leading-tight">{t.titulo}</p>
                           {t.descricao && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.descricao}</p>
+                            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">{t.descricao}</p>
                           )}
 
                           {/* Prazo */}
                           {t.prazo && (
-                            <div className={`flex items-center gap-1 mt-2 text-xs ${prazoInfo.className}`}>
-                              <Calendar className="h-3 w-3" />
+                            <div className={`flex items-center gap-1.5 mt-2.5 text-xs ${prazoInfo.className}`}>
+                              <Calendar className="h-3.5 w-3.5" />
                               Prazo: {prazoInfo.text || format(new Date(t.prazo + "T12:00:00"), "EEE dd/MM", { locale: ptBR })}
                               {t.prazo_hora && ` ${t.prazo_hora.slice(0, 5)}`}
                             </div>
@@ -366,12 +404,12 @@ export default function TarefasPage() {
 
                           {/* Actions */}
                           <div className="flex items-center gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => openEdit(t)}>
+                            <Button size="sm" variant="ghost" className="h-7 text-xs px-2 rounded-lg" onClick={() => openEdit(t)}>
                               <Edit2 className="h-3 w-3 mr-1" /> Editar
                             </Button>
                             {col.key !== "concluida" && (
                               <Button
-                                size="sm" variant="ghost" className="h-7 text-xs px-2"
+                                size="sm" variant="ghost" className="h-7 text-xs px-2 rounded-lg"
                                 onClick={() => {
                                   const nextMap: Record<string, TarefaStatus> = {
                                     a_fazer: "em_andamento", em_andamento: "revisao", revisao: "concluida"
@@ -384,7 +422,7 @@ export default function TarefasPage() {
                             )}
                             {(isAdmin || col.key === "concluida") && (
                               <Button
-                                size="sm" variant="ghost" className="h-7 text-xs px-2 text-red-500 hover:text-red-600"
+                                size="sm" variant="ghost" className="h-7 text-xs px-2 rounded-lg text-destructive hover:text-destructive"
                                 onClick={() => deleteMutation.mutate(t.id)}
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -396,7 +434,10 @@ export default function TarefasPage() {
                     })}
                   </AnimatePresence>
                   {colTasks.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-8">Nenhuma tarefa</p>
+                    <div className="flex flex-col items-center justify-center py-12 opacity-50">
+                      <div className="text-2xl mb-2">{col.emoji}</div>
+                      <p className="text-xs text-muted-foreground">Nenhuma tarefa</p>
+                    </div>
                   )}
                 </div>
               </div>
