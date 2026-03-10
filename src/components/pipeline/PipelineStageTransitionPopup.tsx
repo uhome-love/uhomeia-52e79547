@@ -615,7 +615,7 @@ export function needsTransitionPopup(stageName: string, stageType: string): bool
   if (name.includes("contato inic") || name.includes("contato iniciado")) return true;
   if (name.includes("qualifica")) return true;
   if (name.includes("poss") && name.includes("visita")) return true;
-  // "visita marcada" uses the card's own schedule dialog, not this popup
+  if (name.includes("visita marcada") || (name.includes("visita") && name.includes("marcad"))) return true;
   if (name.includes("visita realizada") || (name.includes("visita") && name.includes("realizad"))) return true;
   if (name.includes("descarte") || stageType === "descarte") return true;
   return false;
