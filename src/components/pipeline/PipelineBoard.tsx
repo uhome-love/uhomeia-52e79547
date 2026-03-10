@@ -678,7 +678,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
           className={`flex gap-3 h-full overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-none ${isDraggingScroll && scrollDragActive.current ? "cursor-grabbing select-none" : ""}`}
           style={{ scrollSnapType: dragLeadId.current ? "none" : "x proximity" }}
         >
-          {stages.map((stage) => {
+          {visibleStages.map((stage) => {
             const stageLeads = leadsByStage.get(stage.id) || [];
             const isDragOver = dragOverStage === stage.id;
             const isFlashing = flashStage === stage.id;
