@@ -67,7 +67,18 @@ export function useSmartAlerts() {
       try {
         const currentMonth = format(now, "yyyy-MM");
         let negQuery = supabase.from("negocios").select("id", { count: "exact", head: true }).gte("created_at", `${currentMonth}-01`).lt("created_at", `${currentMonth}-32`);
-        if (!isAdmin) negQuery = negQuery.eq("gerente_id", user.id);
+        // Admin/CEO vê todos os negócios; gerente filtra pelo seu time (inclui negócios sem gerente_id)
+        if (!isAdmin) {
+          // Buscar corretores do time do gerente
+          const { data: teamMembers } = await supabase
+            .from("team_members")
+            .select("user_id")
+            .eq("gerente_id", user.id)
+            .eq("status", "ativo");
+          const teamIds = teamMembers?.map(m => m.user_id) || [];
+          teamIds.push(user.id); // inclui o próprio gerente
+          negQuery = negQuery.in("corretor_id", teamIds);
+        }
         const { count: negCount } = await negQuery;
 
         if (negCount === 0 || negCount === null) {
