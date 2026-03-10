@@ -282,7 +282,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
                   <ArrowRight className="h-3.5 w-3.5" /> Mover para etapa
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
-                  {NEGOCIOS_FASES.filter(f => f.key !== negocio.fase && f.key !== "distrato").map(f => (
+                  {NEGOCIOS_FASES.filter(f => f.key !== negocio.fase && f.key !== "distrato" && !("hidden" in f && f.hidden)).map(f => (
                     <DropdownMenuItem key={f.key} onClick={() => onMoveFase(negocio.id, f.key)} className="gap-2 cursor-pointer text-xs">
                       <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: f.cor }} />
                       {f.icon} {f.label}
@@ -524,6 +524,7 @@ export default function MeusNegocios() {
         negocioId,
         pipelineLeadId: negocio.pipeline_lead_id || negocio.lead_id || undefined,
         nomeCliente: negocio.nome_cliente,
+        telefone: negocio.telefone || undefined,
         empreendimento: negocio.empreendimento || undefined,
         corretorId: negocio.corretor_id || user?.id || "",
         vgvFinal: negocio.vgv_estimado || undefined,
@@ -534,6 +535,11 @@ export default function MeusNegocios() {
         vgv: negocio.vgv_final || negocio.vgv_estimado || 0,
         corretorNome: negocio.corretor_id ? corretorNomes[negocio.corretor_id] : undefined,
       });
+
+      // Move to hidden "vendido" fase after a short delay
+      setTimeout(async () => {
+        await moveFase(negocioId, "vendido");
+      }, 10000);
     }
   }, [negocios, moveFase, onNegocioAssinado, user, corretorNomes]);
 
@@ -741,7 +747,7 @@ export default function MeusNegocios() {
           className="flex gap-3 h-full overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-none pb-2 pr-4"
           style={{ scrollSnapType: "x proximity" }}
         >
-          {NEGOCIOS_FASES.map((fase) => {
+          {NEGOCIOS_FASES.filter(f => !("hidden" in f && f.hidden)).map((fase) => {
             const faseNegocios = negociosByFase.get(fase.key) || [];
             const isDragOver = dragOverFase === fase.key;
             const totalFaseVGV = faseNegocios.reduce((sum, n) => sum + (n.vgv_estimado || 0), 0);

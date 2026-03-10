@@ -38,6 +38,7 @@ export const NEGOCIOS_FASES = [
   { key: "negociacao", label: "Negociação", cor: "#F59E0B", icon: "🤝" },
   { key: "documentacao", label: "Contrato Gerado", cor: "#8B5CF6", icon: "📄" },
   { key: "assinado", label: "Assinado", cor: "#22C55E", icon: "✅" },
+  { key: "vendido", label: "Vendido", cor: "#16A34A", icon: "🏆", hidden: true },
   { key: "distrato", label: "Caiu", cor: "#EF4444", icon: "❌" },
 ] as const;
 
