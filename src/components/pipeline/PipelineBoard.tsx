@@ -434,23 +434,26 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
         }
       `}</style>
 
-      {/* Mini-map nav pills — compact */}
+      {/* Mini-map nav pills — colored by stage */}
       <div className="shrink-0 flex items-center gap-0.5 mb-1 px-0.5 overflow-x-auto scrollbar-none">
         {stages.map((stage, idx) => {
           const stageLeads = leadsByStage.get(stage.id) || [];
           const isActive = idx === activeIndex;
+          const emoji = PIPELINE_STAGE_EMOJIS[stage.nome] || "📍";
+          const stageColorCls = PIPELINE_STAGE_COLORS[stage.nome] || "";
           return (
             <button
               key={stage.id}
               onClick={() => scrollToIndex(idx)}
               className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all border ${
                 isActive
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  ? `${stageColorCls} border shadow-sm font-bold`
                   : "bg-card text-muted-foreground border-border/40 hover:border-primary/30"
               }`}
             >
+              <span>{emoji}</span>
               <span>{stage.nome}</span>
-              <span className={`font-bold ${isActive ? "text-primary-foreground" : ""}`}>
+              <span className="font-bold">
                 {stageLeads.length}
               </span>
             </button>
