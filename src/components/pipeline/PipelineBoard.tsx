@@ -287,9 +287,9 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
 
   const stageIndexMap = useMemo(() => {
     const m = new Map<string, number>();
-    stages.forEach((s, i) => m.set(s.id, i));
+    visibleStages.forEach((s, i) => m.set(s.id, i));
     return m;
-  }, [stages]);
+  }, [visibleStages]);
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
