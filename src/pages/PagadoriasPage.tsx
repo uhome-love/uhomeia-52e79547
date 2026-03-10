@@ -210,6 +210,8 @@ export default function PagadoriasPage() {
     setComissaoPct(5);
     setVgvAcumuladoCorretor(0);
     setVgvAcumuladoGerente(0);
+    setSelectedCorretorFaixaIdx(0);
+    setSelectedGerenteFaixaIdx(0);
   };
 
   return (
