@@ -4,9 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subWeeks, subMonths } from "date-fns";
 import { todayBRT, dateToBRT } from "@/lib/utils";
 
-export type DashPeriod = "hoje" | "semana" | "mes";
+export type DashPeriod = "hoje" | "semana" | "mes" | "custom";
 
-function getRange(period: DashPeriod) {
+function getRange(period: DashPeriod, customRange?: { start: string; end: string }) {
+  if (period === "custom" && customRange) return customRange;
   const now = new Date();
   if (period === "hoje") { const t = todayBRT(); return { start: t, end: t }; }
   if (period === "semana") return { start: dateToBRT(startOfWeek(now, { weekStartsOn: 1 })), end: dateToBRT(endOfWeek(now, { weekStartsOn: 1 })) };
