@@ -301,38 +301,36 @@ export default function PagadoriasPage() {
           {/* ─── STEP 1 ─── */}
           {step === 1 && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-sm text-muted-foreground">Dados do Negócio</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Cliente</Label><Input value={form.cliente_nome} onChange={e => setForm(f => ({ ...f, cliente_nome: e.target.value }))} placeholder="Nome completo" /></div>
-                <div><Label>CPF</Label><Input value={form.cliente_cpf} onChange={e => setForm(f => ({ ...f, cliente_cpf: e.target.value }))} placeholder="000.000.000-00" /></div>
-                <div><Label>E-mail</Label><Input value={form.cliente_email} onChange={e => setForm(f => ({ ...f, cliente_email: e.target.value }))} /></div>
-                <div><Label>Telefone</Label><Input value={form.cliente_telefone} onChange={e => setForm(f => ({ ...f, cliente_telefone: e.target.value }))} /></div>
-                <div className="col-span-2"><Label>Endereço</Label><Input value={form.cliente_endereco} onChange={e => setForm(f => ({ ...f, cliente_endereco: e.target.value }))} /></div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div><Label>Empreendimento</Label><Input value={form.empreendimento} onChange={e => setForm(f => ({ ...f, empreendimento: e.target.value }))} /></div>
-                <div><Label>Unidade</Label><Input value={form.unidade} onChange={e => setForm(f => ({ ...f, unidade: e.target.value }))} /></div>
-                <div><Label>VGV (R$)</Label><Input type="number" value={form.vgv || ""} onChange={e => setForm(f => ({ ...f, vgv: Number(e.target.value) }))} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Corretor</Label><Input value={form.corretor_nome} onChange={e => setForm(f => ({ ...f, corretor_nome: e.target.value }))} placeholder="Nome do corretor" /></div>
-                <div><Label>Gerente</Label><Input value={form.gerente_nome} onChange={e => setForm(f => ({ ...f, gerente_nome: e.target.value }))} placeholder="Nome do gerente" /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Data da venda</Label><Input type="date" value={form.data_venda} onChange={e => setForm(f => ({ ...f, data_venda: e.target.value }))} /></div>
-                <div>
-                  <Label>Pagamento</Label>
-                  <Select value={form.forma_pagamento} onValueChange={v => setForm(f => ({ ...f, forma_pagamento: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="a_vista">À vista</SelectItem>
-                      <SelectItem value="parcelado">Parcelado</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <h3 className="font-semibold text-sm text-muted-foreground">Dados do(s) Comprador(es)</h3>
+              <CompradorDocUpload compradores={compradores} onChange={setCompradores} />
+
+              <div className="border-t pt-4 space-y-3">
+                <h3 className="font-semibold text-sm text-muted-foreground">Dados do Negócio</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div><Label>Empreendimento</Label><Input value={form.empreendimento} onChange={e => setForm(f => ({ ...f, empreendimento: e.target.value }))} /></div>
+                  <div><Label>Unidade</Label><Input value={form.unidade} onChange={e => setForm(f => ({ ...f, unidade: e.target.value }))} /></div>
+                  <div><Label>VGV (R$)</Label><Input type="number" value={form.vgv || ""} onChange={e => setForm(f => ({ ...f, vgv: Number(e.target.value) }))} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Corretor</Label><Input value={form.corretor_nome} onChange={e => setForm(f => ({ ...f, corretor_nome: e.target.value }))} placeholder="Nome do corretor" /></div>
+                  <div><Label>Gerente</Label><Input value={form.gerente_nome} onChange={e => setForm(f => ({ ...f, gerente_nome: e.target.value }))} placeholder="Nome do gerente" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Data da venda</Label><Input type="date" value={form.data_venda} onChange={e => setForm(f => ({ ...f, data_venda: e.target.value }))} /></div>
+                  <div>
+                    <Label>Pagamento</Label>
+                    <Select value={form.forma_pagamento} onValueChange={v => setForm(f => ({ ...f, forma_pagamento: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="a_vista">À vista</SelectItem>
+                        <SelectItem value="parcelado">Parcelado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end">
-                <Button onClick={() => setStep(2)} disabled={!form.cliente_nome || !form.empreendimento || !form.vgv}>Próximo →</Button>
+                <Button onClick={() => setStep(2)} disabled={!compradores[0]?.nome || !form.empreendimento || !form.vgv}>Próximo →</Button>
               </div>
             </div>
           )}
