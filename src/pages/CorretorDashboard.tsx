@@ -88,7 +88,7 @@ export default function CorretorDashboard() {
       // Priority leads with proper filtering and scoring
       const { data: allLeads } = await (supabase
         .from("pipeline_leads")
-        .select("id, nome, empreendimento, stage_changed_at, telefone, oportunidade_score, valor_estimado, interesse, pipeline_fase, dias_parado, prioridade, temperatura, updated_at, stage_id, pipeline_stages!inner(nome, tipo)")
+        .select("id, nome, empreendimento, stage_changed_at, telefone, oportunidade_score, valor_estimado, pipeline_fase, dias_parado, prioridade, temperatura, updated_at, stage_id, pipeline_stages!inner(nome, tipo)")
         .eq("corretor_id", user!.id)
         .not("stage_id", "is", null)
         .limit(200) as any);
