@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { format, isToday, isTomorrow, isBefore, startOfDay, endOfWeek, addDays, addHours } from "date-fns";
 import { dateToBRT, parseDateBRT } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
-import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, Building2, User, ClipboardList, Plus, Search, Pencil } from "lucide-react";
+import { Phone, MessageCircle, CheckCircle2, Clock, Calendar, Building2, User, ClipboardList, Plus, Search, Pencil, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,7 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
+
+const CorretorScriptsView = lazy(() => import("@/components/scripts/CorretorScriptsView"));
 
 interface TarefaComLead {
   id: string;
@@ -81,6 +85,7 @@ export default function MinhasTarefas() {
   const [editData, setEditData] = useState("");
   const [editHora, setEditHora] = useState("");
   const [editObs, setEditObs] = useState("");
+  const [scriptsOpen, setScriptsOpen] = useState(false);
 
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ["minhas-tarefas", user?.id],
@@ -367,6 +372,9 @@ export default function MinhasTarefas() {
                           </Button>
                         </>
                       )}
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1" onClick={() => setScriptsOpen(true)}>
+                        <BookOpen className="h-3.5 w-3.5" /> Scripts
+                      </Button>
                       <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => handleConcluir(tarefa.id, tarefa.pipeline_lead_id)}>
                         <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
                       </Button>
@@ -511,6 +519,22 @@ export default function MinhasTarefas() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Scripts Marketplace Sheet */}
+      <Sheet open={scriptsOpen} onOpenChange={setScriptsOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" /> Scripts Prontos
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <Suspense fallback={<div className="text-center py-8 text-muted-foreground">Carregando scripts...</div>}>
+              <CorretorScriptsView />
+            </Suspense>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
