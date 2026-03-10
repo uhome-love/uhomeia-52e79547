@@ -253,8 +253,12 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
   const handleFinalizarLigacao = () => {
     stopTimer();
-    setShowModal(false); // ensure only one popup
-    handleOpenResultPopup();
+    setShowResultPopup(false);
+    if (!actionTaken) {
+      setActionTaken("ligacao");
+      setCurrentIdempotencyKey(`${user?.id}_${lead?.id}_${Date.now()}`);
+    }
+    setShowModal(true);
   };
 
   const handleWhatsAppDuringCall = () => {
