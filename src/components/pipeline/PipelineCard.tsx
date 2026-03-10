@@ -328,7 +328,14 @@ const PipelineCard = memo(function PipelineCard({
           )}
         </div>
 
-        {/* Line 2: Empreendimento · Phone · Origin badge */}
+        {/* Line 2: Corretor (for managers) + Empreendimento · Phone · Origin badge */}
+        {corretorNome && (
+          <div className="text-[11px] text-muted-foreground truncate leading-tight flex items-center gap-1">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0 rounded bg-primary/10 text-primary font-medium text-[10px]">
+              👤 {corretorNome.split(" ").slice(0, 2).join(" ")}
+            </span>
+          </div>
+        )}
         <div className="text-xs text-muted-foreground truncate leading-tight flex items-center gap-1">
           <span className="truncate">
             {displayEmpreendimento ? (
