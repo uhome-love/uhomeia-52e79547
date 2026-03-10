@@ -341,7 +341,7 @@ export default function MinhasTarefas() {
             <p className="text-sm text-muted-foreground">Organize seu dia e nunca perca um follow-up</p>
           </div>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => setShowNovaTarefa(true)}>
+        <Button size="sm" className="gap-1.5" onClick={() => setShowTipoSelector(true)}>
           <Plus className="h-4 w-4" /> Nova Tarefa
         </Button>
       </div>
