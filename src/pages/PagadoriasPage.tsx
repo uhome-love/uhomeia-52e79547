@@ -335,6 +335,37 @@ export default function PagadoriasPage() {
                   </div>
                 </div>
               </div>
+
+              {/* ── Dados dos Contratados ── */}
+              <div className="border-t pt-4 space-y-3">
+                <h3 className="font-semibold text-sm text-muted-foreground">Dados dos Contratados (para o contrato)</h3>
+                
+                {/* Corretor */}
+                <Card className="border-primary/20">
+                  <CardContent className="p-3 space-y-2">
+                    <h4 className="font-semibold text-xs text-foreground">🏷️ Corretor</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div><Label className="text-xs">CPF</Label><Input value={form.corretor_cpf} onChange={e => setForm(f => ({ ...f, corretor_cpf: e.target.value }))} placeholder="000.000.000-00" className="h-8 text-sm" /></div>
+                      <div><Label className="text-xs">CRECI</Label><Input value={form.corretor_creci} onChange={e => setForm(f => ({ ...f, corretor_creci: e.target.value }))} placeholder="Nº CRECI" className="h-8 text-sm" /></div>
+                      <div><Label className="text-xs">RG</Label><Input value={form.corretor_rg} onChange={e => setForm(f => ({ ...f, corretor_rg: e.target.value }))} placeholder="Nº RG" className="h-8 text-sm" /></div>
+                      <div><Label className="text-xs">E-mail</Label><Input value={form.corretor_email} onChange={e => setForm(f => ({ ...f, corretor_email: e.target.value }))} placeholder="email@email.com" className="h-8 text-sm" /></div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Gerente */}
+                <Card className="border-primary/20">
+                  <CardContent className="p-3 space-y-2">
+                    <h4 className="font-semibold text-xs text-foreground">🏷️ Gerente</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div><Label className="text-xs">CPF</Label><Input value={form.gerente_cpf} onChange={e => setForm(f => ({ ...f, gerente_cpf: e.target.value }))} placeholder="000.000.000-00" className="h-8 text-sm" /></div>
+                      <div><Label className="text-xs">CRECI</Label><Input value={form.gerente_creci} onChange={e => setForm(f => ({ ...f, gerente_creci: e.target.value }))} placeholder="Nº CRECI" className="h-8 text-sm" /></div>
+                      <div><Label className="text-xs">RG</Label><Input value={form.gerente_rg} onChange={e => setForm(f => ({ ...f, gerente_rg: e.target.value }))} placeholder="Nº RG" className="h-8 text-sm" /></div>
+                      <div><Label className="text-xs">E-mail</Label><Input value={form.gerente_email} onChange={e => setForm(f => ({ ...f, gerente_email: e.target.value }))} placeholder="email@email.com" className="h-8 text-sm" /></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
               <div className="flex justify-end">
                 <Button onClick={() => setStep(2)} disabled={!compradores[0]?.nome || !form.empreendimento || !form.vgv}>Próximo →</Button>
               </div>
