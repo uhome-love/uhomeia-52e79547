@@ -152,38 +152,42 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
       <div
         draggable
         onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; onDragStart(); }}
-        className="group rounded-lg cursor-pointer active:cursor-grabbing hover:brightness-110 transition-all duration-150 select-none overflow-hidden"
+        className="group rounded-xl cursor-pointer active:cursor-grabbing transition-all duration-200 select-none overflow-hidden hover:scale-[1.02] hover:shadow-lg"
         style={{
-          background: "hsl(220 20% 16%)",
-          border: `1px solid hsl(220 15% 22%)`,
-          borderLeftWidth: 3,
-          borderLeftColor: faseInfo?.cor || "#6B7280",
+          background: "rgba(255,255,255,0.04)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          border: `1px solid rgba(255,255,255,0.08)`,
+          boxShadow: `0 0 12px ${faseInfo?.cor || "#6B7280"}15, inset 0 1px 0 rgba(255,255,255,0.05)`,
         }}
       >
+        {/* Glow top bar */}
+        <div className="h-[2px] rounded-t-xl" style={{ background: `linear-gradient(90deg, transparent, ${faseInfo?.cor || "#6B7280"}, transparent)` }} />
+
         {/* Body - click opens modal */}
-        <div className="px-3 pt-2.5 pb-2 space-y-1" onClick={onClick}>
+        <div className="px-3.5 pt-3 pb-2 space-y-1.5" onClick={onClick}>
           {/* Row 1: Nome + Days badge */}
           <div className="flex items-center justify-between">
             <p className="text-[13px] font-bold text-white truncate flex-1">{negocio.nome_cliente}</p>
-            <span className={`text-[10px] font-bold ml-2 shrink-0 ${
-              daysInFase <= 3 ? "text-emerald-400" : daysInFase <= 7 ? "text-amber-400" : "text-red-400"
+            <span className={`text-[10px] font-bold ml-2 shrink-0 px-1.5 py-0.5 rounded-full ${
+              daysInFase <= 3 ? "bg-emerald-500/15 text-emerald-400" : daysInFase <= 7 ? "bg-amber-500/15 text-amber-400" : "bg-red-500/15 text-red-400"
             }`}>
               {daysInFase}d
             </span>
           </div>
 
           {/* Row 2: Imóvel (fase) */}
-          <p className="text-[11px] text-gray-400 truncate">
+          <p className="text-[11px] text-white/50 truncate">
             {negocio.empreendimento || <span className="italic text-amber-400/70">🏠 Sem imóvel</span>}
             {negocio.empreendimento && (
-              <span className="ml-1 text-gray-500">({faseInfo?.label})</span>
+              <span className="ml-1 text-white/30">({faseInfo?.label})</span>
             )}
           </p>
 
-          {/* Row 3: VGV (obrigatório) */}
+          {/* Row 3: VGV */}
           <div className="flex items-center gap-2">
             {negocio.vgv_estimado ? (
-              <span className="text-xs font-semibold text-emerald-400 flex items-center gap-0.5">
+              <span className="text-sm font-bold flex items-center gap-1" style={{ color: faseInfo?.cor || "#22C55E" }}>
                 <TrendingUp className="h-3 w-3" />
                 {formatVGV(negocio.vgv_estimado)}
               </span>
@@ -197,11 +201,11 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             <div className="flex items-center gap-1.5 pt-0.5">
               <Avatar className="h-4 w-4">
                 <AvatarImage src={corretorInfo.avatar_gamificado_url || corretorInfo.avatar_url || undefined} className="object-cover" />
-                <AvatarFallback className="text-[7px] bg-gray-700 text-gray-300">{(corretorInfo.nome || "?")[0]}</AvatarFallback>
+                <AvatarFallback className="text-[7px]" style={{ background: `${faseInfo?.cor || "#6B7280"}30`, color: faseInfo?.cor }}>{(corretorInfo.nome || "?")[0]}</AvatarFallback>
               </Avatar>
-              <span className="text-[10px] text-gray-400 truncate">{corretorInfo.nome?.split(" ")[0]}</span>
+              <span className="text-[10px] text-white/40 truncate">{corretorInfo.nome?.split(" ")[0]}</span>
               {corretorInfo.equipe && (
-                <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-gray-600 text-gray-400">
+                <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-white/10 text-white/30">
                   {corretorInfo.equipe}
                 </Badge>
               )}
@@ -209,8 +213,12 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           )}
         </div>
 
-        {/* Action bar */}
-        <div className="flex items-center gap-0 border-t border-white/5 bg-white/[0.03]" onClick={(e) => e.stopPropagation()}>
+        {/* Action bar - glass effect */}
+        <div
+          className="flex items-center gap-0 border-t border-white/[0.06]"
+          style={{ background: "rgba(255,255,255,0.02)" }}
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Ligar */}
           <button
             onClick={() => setLigarPopup(true)}
