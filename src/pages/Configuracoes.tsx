@@ -14,6 +14,7 @@ import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 import { Loader2, Save, Lock, User, Mail, Phone, Volume2, PartyPopper, Sparkles, Upload } from "lucide-react";
 import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 import MetaAdsSettings from "@/components/marketing/MetaAdsSettings";
+import RoletaCampanhasPanel from "@/components/settings/RoletaCampanhasPanel";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getSoundEnabled, setSoundEnabled, getCelebrationEnabled, setCelebrationEnabled } from "@/lib/celebrations";
 import { emitProfileUpdated } from "@/lib/profileEvents";
@@ -346,6 +347,7 @@ export default function Configuracoes() {
 
       {/* Integrations - Admin only */}
       {isAdmin && <MetaAdsSettings />}
+      {isAdmin && <RoletaCampanhasPanel />}
 
       {/* Notification Preferences */}
       <NotificationPreferences />
