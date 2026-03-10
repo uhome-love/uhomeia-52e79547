@@ -474,6 +474,11 @@ export default function AgendaVisitas() {
         </div>
       )}
 
+      {/* ─── TEAM VIEW (Visitas do Time) ─── */}
+      {agendaTipo === "lead" && leadSubTab === "time" && (isAdmin || isGestor) ? (
+        <VisitasEquipe />
+      ) : (
+      <>
       {/* ─── PENDING ALERT ─── */}
       {pendingCount > 0 && (
         <div
