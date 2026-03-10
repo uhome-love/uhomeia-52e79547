@@ -108,7 +108,8 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
     setSubmitting(true);
     try {
       const isVisita = subOption === "marcou_visita";
-      await onSubmit(resultado, feedback.trim(), isVisita, resultado === "atendeu" ? subOption : undefined);
+      const interesseTipo = resultado === "atendeu" ? subOption : resultado === "sem_interesse" ? subOption : undefined;
+      await onSubmit(resultado, feedback.trim(), isVisita, interesseTipo);
       setResultado("");
       setSubOption("");
       setFeedback("");
