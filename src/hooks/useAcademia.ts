@@ -217,24 +217,24 @@ export function useAcademia() {
     if (completedCount >= trilhaAulas.length) {
       const trilha = trilhas.find(t => t.id === trilhaId);
       const codigo = `UHOME-${Date.now().toString(36).toUpperCase()}`;
-      await supabase.from("academia_certificados").insert({ trilha_id: trilhaId, corretor_id: user.id, codigo });
+      await supabase.from("academia_certificados").insert({ trilha_id: trilhaId, corretor_id: profileId, codigo });
       toast(`🏆 TRILHA CONCLUÍDA! ${trilha?.titulo || ""}`, { description: `+100 XP bônus · Certificado emitido!`, duration: 6000 });
     }
 
     await queryClient.invalidateQueries({ queryKey: ["academia-progresso"] });
     await queryClient.invalidateQueries({ queryKey: ["academia-certificados"] });
-    await queryClient.refetchQueries({ queryKey: ["academia-progresso", user.id] });
-  }, [user, aulas, progresso, trilhas, queryClient]);
+    await queryClient.refetchQueries({ queryKey: ["academia-progresso", profileId] });
+  }, [profileId, aulas, progresso, trilhas, queryClient]);
 
   const startAula = useCallback(async (aulaId: string, trilhaId: string) => {
-    if (!user) return;
+    if (!profileId) return;
     const existing = progresso.find(p => p.aula_id === aulaId);
     if (existing) return;
     await supabase.from("academia_progresso").insert({
-      corretor_id: user.id, trilha_id: trilhaId, aula_id: aulaId, status: "em_andamento", xp_ganho: 0,
+      corretor_id: profileId, trilha_id: trilhaId, aula_id: aulaId, status: "em_andamento", xp_ganho: 0,
     });
     queryClient.invalidateQueries({ queryKey: ["academia-progresso"] });
-  }, [user, progresso, queryClient]);
+  }, [profileId, progresso, queryClient]);
 
   // CRUD for trilhas
   const createTrilha = useCallback(async (data: Partial<Trilha>) => {
