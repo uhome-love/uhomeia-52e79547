@@ -4,13 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
-import { Target, ClipboardList, CheckCircle2, BarChart2, Sparkles, AlertCircle, Loader2 } from "lucide-react";
+import { Target, ClipboardList, CheckCircle2, BarChart2, Sparkles, AlertCircle, Loader2, Briefcase } from "lucide-react";
 import { format, subDays, getDaysInMonth, getDate } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CheckpointTableTab from "@/components/checkpoint/CheckpointTableTab";
 import AproveitadosTab from "@/components/checkpoint/AproveitadosTab";
 import RelatoriosTab from "@/components/checkpoint/RelatoriosTab";
 import CoachIATab from "@/components/checkpoint/CoachIATab";
+import CheckpointNegociosTab from "@/components/checkpoint/CheckpointNegociosTab";
 import CeoCheckpointViewer from "@/components/ceo/CeoCheckpointViewer";
 
 // ─── TYPES ───
@@ -71,7 +72,7 @@ export default function CheckpointGerente() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<"checkpoint" | "aproveitados" | "relatorios" | "coach">("checkpoint");
+  const [activeTab, setActiveTab] = useState<"checkpoint" | "negocios" | "aproveitados" | "relatorios" | "coach">("checkpoint");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [checkpointStatus, setCheckpointStatus] = useState<"aberto" | "publicado">("aberto");
   const [rows, setRows] = useState<CheckpointRow[]>([]);
@@ -328,6 +329,7 @@ export default function CheckpointGerente() {
 
   const tabs = [
     { key: "checkpoint" as const, icon: <ClipboardList size={15} />, label: "Checkpoint" },
+    { key: "negocios" as const, icon: <Briefcase size={15} />, label: "Negócios" },
     { key: "aproveitados" as const, icon: <CheckCircle2 size={15} />, label: "Aproveitados" },
     { key: "relatorios" as const, icon: <BarChart2 size={15} />, label: "Relatórios" },
     { key: "coach" as const, icon: <Sparkles size={15} />, label: "Coach IA" },
@@ -452,6 +454,10 @@ export default function CheckpointGerente() {
             onPublish={publish}
             onUpdateRow={updateRow}
           />
+        )}
+
+        {activeTab === "negocios" && (
+          <CheckpointNegociosTab teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
         )}
 
         {activeTab === "aproveitados" && (
