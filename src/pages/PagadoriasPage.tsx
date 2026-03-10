@@ -206,7 +206,7 @@ export default function PagadoriasPage() {
   const resetWizard = () => {
     setWizardOpen(false);
     setStep(1);
-    setForm({ cliente_nome: "", cliente_cpf: "", cliente_email: "", cliente_telefone: "", cliente_endereco: "", empreendimento: "", unidade: "", vgv: 0, data_venda: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }), forma_pagamento: "a_vista", corretor_nome: "", gerente_nome: "" });
+    setForm({ cliente_nome: "", cliente_cpf: "", cliente_email: "", cliente_telefone: "", cliente_endereco: "", empreendimento: "", unidade: "", vgv: 0, data_venda: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }), forma_pagamento: "a_vista", corretor_nome: "", corretor_cpf: "", corretor_creci: "", corretor_rg: "", corretor_email: "", gerente_nome: "", gerente_cpf: "", gerente_creci: "", gerente_rg: "", gerente_email: "" });
     setCompradores([{ nome: "", cpf: "", rg: "", nacionalidade: "brasileira", estado_civil: "", telefone: "", email: "", cep: "", endereco: "", cidade: "", estado: "", bairro: "", doc_identidade_url: null, doc_comprovante_url: null }]);
     setCredores([]);
     setComissaoPct(5);
