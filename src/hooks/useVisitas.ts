@@ -86,7 +86,7 @@ export function useVisitas(filters?: {
     queryFn: async () => {
       let q = supabase
         .from("visitas")
-        .select("id, corretor_id, gerente_id, lead_id, pipeline_lead_id, nome_cliente, telefone, empreendimento, origem, origem_detalhe, data_visita, hora_visita, local_visita, status, observacoes, created_at, updated_at, created_by, linked_attempt_id, linked_pdn_id, converted_to_pdn_at, converted_to_pdn_by, resultado_visita")
+        .select("id, corretor_id, gerente_id, lead_id, pipeline_lead_id, nome_cliente, telefone, empreendimento, origem, origem_detalhe, data_visita, hora_visita, local_visita, status, observacoes, created_at, updated_at, created_by, linked_attempt_id, linked_pdn_id, converted_to_pdn_at, converted_to_pdn_by, resultado_visita, tipo, negocio_id, tipo_reuniao")
         .order("data_visita", { ascending: true })
         .order("hora_visita", { ascending: true })
         .limit(500);
@@ -185,6 +185,9 @@ export function useVisitas(filters?: {
       observacoes: visita.observacoes || null,
       created_by: user.id,
       linked_attempt_id: visita.linked_attempt_id || null,
+      tipo: visita.tipo || "lead",
+      negocio_id: visita.negocio_id || null,
+      tipo_reuniao: visita.tipo_reuniao || null,
     };
 
     console.log("[createVisita] payload:", JSON.stringify(payload));
