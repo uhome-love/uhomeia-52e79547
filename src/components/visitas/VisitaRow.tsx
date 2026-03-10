@@ -108,7 +108,9 @@ export default function VisitaRow({ visita: v, onUpdateStatus, onDelete, showCor
       {/* Local da visita */}
       <div className="w-28 shrink-0 hidden sm:flex items-center gap-1">
         <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-        <span className="text-xs text-muted-foreground truncate">{v.local_visita || "Não informado"}</span>
+        <span className="text-xs text-muted-foreground truncate">
+          {LOCAL_LABELS[v.local_visita || ""] || v.local_visita || "Não informado"}
+        </span>
       </div>
 
       {/* Corretor + Team */}
