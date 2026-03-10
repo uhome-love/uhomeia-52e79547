@@ -425,9 +425,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             toast.success("📅 Visita registrada na Agenda!");
           }
         } else if (resultado === "nao_atendeu") {
-          toast("📝 Não atendeu — registrado no histórico", { duration: 2000 });
+          toast("📝 Não atendeu — registrado no card do Pipeline", { duration: 2500 });
         } else if (resultado === "sem_interesse") {
-          toast("🚫 Sem interesse — registrado no histórico do Pipeline", { duration: 2000 });
+          toast("🚫 Sem interesse — registrado no card do Pipeline e temperatura atualizada para Frio", { duration: 3000 });
           // Update temperatura to frio
           try {
             await supabase.from("pipeline_leads").update({
@@ -435,7 +435,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             } as any).eq("id", lead.id);
           } catch {}
         } else if (resultado === "descarte_oa") {
-          toast("📤 Lead enviado para Oferta Ativa", { duration: 2000 });
+          toast("📤 Lead enviado para Oferta Ativa — registrado no Pipeline", { duration: 2500 });
         }
         checkMilestone(progress.tentativas + 1);
       }
