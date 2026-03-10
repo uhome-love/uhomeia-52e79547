@@ -87,6 +87,7 @@ export function useCeoDashboard(period: DashPeriod) {
 
   // Teams
   const [teams, setTeams] = useState<TeamData[]>([]);
+  const [corretoresRank, setCorretoresRank] = useState<CorretorRankData[]>([]);
 
   // Marketing
   const [origens, setOrigens] = useState<OrigemData[]>([]);
