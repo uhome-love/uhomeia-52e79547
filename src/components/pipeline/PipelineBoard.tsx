@@ -478,6 +478,9 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     if (extra.criarVisita && extra.data && extra.horario) {
       if (lead) {
         try {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const userId = authUser?.id;
+
           // Resolve gerente_id from team_members
           let gerenteId = lead.corretor_id;
           if (lead.corretor_id) {
@@ -494,9 +497,9 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
             data_visita: extra.data,
             hora_visita: extra.horario,
             local_visita: extra.local || "stand",
-            corretor_id: lead.corretor_id || user?.id,
-            gerente_id: gerenteId || user?.id,
-            created_by: user?.id,
+            corretor_id: lead.corretor_id || userId,
+            gerente_id: gerenteId || userId,
+            created_by: userId,
             origem: "crm",
             status: "confirmada",
             observacoes: extra.observacao || null,
@@ -507,19 +510,18 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
             toast.error("Erro ao criar visita na agenda");
           } else {
             toast.success("📅 Visita criada na agenda!");
-            queryClient.invalidateQueries({ queryKey: ["visitas"] });
           }
 
           // Create partnership if parceiro selected
           if (extra.parceiro) {
             await supabase.from("pipeline_parcerias").insert({
               pipeline_lead_id: result.leadId,
-              corretor_principal_id: lead.corretor_id || user?.id,
+              corretor_principal_id: lead.corretor_id || userId,
               corretor_parceiro_id: extra.parceiro,
               divisao_principal: 50,
               divisao_parceiro: 50,
               motivo: "Visita em parceria",
-              criado_por: user?.id,
+              criado_por: userId,
             }).then(({ error }) => {
               if (error && error.code !== "23505") console.error("Partnership error:", error);
             });
