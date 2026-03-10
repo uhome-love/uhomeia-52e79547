@@ -60,7 +60,7 @@ export default function PagadoriasPage() {
   // Compradores (buyers) with document uploads
   const [compradores, setCompradores] = useState<Comprador[]>([{
     nome: "", cpf: "", rg: "", nacionalidade: "brasileira", estado_civil: "",
-    telefone: "", email: "", endereco: "", cidade: "", estado: "",
+    telefone: "", email: "", cep: "", endereco: "", cidade: "", estado: "", bairro: "",
     doc_identidade_url: null, doc_comprovante_url: null,
   }]);
 
