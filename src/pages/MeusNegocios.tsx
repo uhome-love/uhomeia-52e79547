@@ -796,6 +796,16 @@ export default function MeusNegocios() {
           onDismiss={() => setCelebrationData(null)}
         />
       )}
+
+      {transitionTarget && transitionNegocio && (
+        <FaseTransitionModal
+          open={!!transitionTarget}
+          onOpenChange={(v) => { if (!v) setTransitionTarget(null); }}
+          targetFase={transitionTarget.fase}
+          negocio={transitionNegocio}
+          onConfirm={handleTransitionConfirm}
+        />
+      )}
     </div>
   );
 }
