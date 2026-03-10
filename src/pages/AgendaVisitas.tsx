@@ -22,6 +22,8 @@ import VisitasList from "@/components/visitas/VisitasList";
 import VisitasByCorretor from "@/components/visitas/VisitasByCorretor";
 import VisitasCalendar from "@/components/visitas/VisitasCalendar";
 import VisitaForm from "@/components/visitas/VisitaForm";
+import VisitaTypeSelector from "@/components/visitas/VisitaTypeSelector";
+import ReuniaoNegocioForm from "@/components/visitas/ReuniaoNegocioForm";
 import VisitaResultadoDialog, { type ResultadoVisita } from "@/components/visitas/VisitaResultadoDialog";
 import VisitasEquipe from "@/components/visitas/VisitasEquipe";
 
@@ -182,6 +184,8 @@ const STATUS_EMOJIS: Record<string, string> = {
 export default function AgendaVisitas() {
   const { isAdmin, isGestor } = useUserRole();
   const [showForm, setShowForm] = useState(false);
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showReuniaoForm, setShowReuniaoForm] = useState(false);
   const [editingVisita, setEditingVisita] = useState<Visita | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -383,7 +387,7 @@ export default function AgendaVisitas() {
             {isAdmin ? "Visão consolidada da empresa" : isGestor ? "Visitas da sua equipe" : "Suas visitas agendadas"}
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+        <Button onClick={() => setShowTypeSelector(true)} className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white shadow-md">
           <Plus className="h-4 w-4" /> Nova Visita
         </Button>
       </div>
@@ -616,8 +620,22 @@ export default function AgendaVisitas() {
         )}
       </Tabs>
 
+      {/* ─── TYPE SELECTOR ─── */}
+      <VisitaTypeSelector
+        open={showTypeSelector}
+        onClose={() => setShowTypeSelector(false)}
+        onSelectImovel={() => { setShowTypeSelector(false); setShowForm(true); }}
+        onSelectReuniao={() => { setShowTypeSelector(false); setShowReuniaoForm(true); }}
+      />
+
+      {/* ─── VISITA IMÓVEL FORM ─── */}
       {showForm && (
         <VisitaForm open={showForm} onClose={() => setShowForm(false)} onSubmit={createVisita} />
+      )}
+
+      {/* ─── REUNIÃO NEGÓCIO FORM ─── */}
+      {showReuniaoForm && (
+        <ReuniaoNegocioForm open={showReuniaoForm} onClose={() => setShowReuniaoForm(false)} onSubmit={createVisita} />
       )}
 
       {editingVisita && (
