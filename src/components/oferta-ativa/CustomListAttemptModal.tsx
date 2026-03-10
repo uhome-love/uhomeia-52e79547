@@ -18,6 +18,7 @@ interface Props {
 const RESULTS = [
   { key: "atendeu", label: "Atendeu", emoji: "📞", hoverBorder: "hover:border-green-500/60", selectedBorder: "border-green-500 bg-green-500/20" },
   { key: "nao_atendeu", label: "Não atendeu", emoji: "📵", hoverBorder: "hover:border-orange-500/60", selectedBorder: "border-orange-500 bg-orange-500/20" },
+  { key: "sem_interesse", label: "Sem interesse", emoji: "🚫", hoverBorder: "hover:border-rose-500/60", selectedBorder: "border-rose-500 bg-rose-500/20" },
   { key: "descarte_oa", label: "Enviar p/ Oferta Ativa", emoji: "📤", hoverBorder: "hover:border-red-500/60", selectedBorder: "border-red-500 bg-red-500/20" },
 ];
 
@@ -26,6 +27,13 @@ const ATENDEU_SUB = [
   { key: "follow_up", label: "Follow-up agendado", emoji: "🔄", desc: "→ Tarefa criada" },
   { key: "proposta", label: "Pediu proposta", emoji: "📊", desc: "→ Negociação" },
   { key: "conversa_geral", label: "Conversa geral", emoji: "💬", desc: "→ Registrar no histórico" },
+];
+
+const SEM_INTERESSE_SUB = [
+  { key: "nao_quer_produto", label: "Não quer o produto", emoji: "🏠", desc: "→ Sem interesse no imóvel" },
+  { key: "ja_comprou", label: "Já comprou outro", emoji: "✅", desc: "→ Já adquiriu imóvel" },
+  { key: "sem_condicao", label: "Sem condição financeira", emoji: "💰", desc: "→ Fora do orçamento" },
+  { key: "nao_momento", label: "Não é o momento", emoji: "⏳", desc: "→ Pode retomar futuramente" },
 ];
 
 const QUICK_FEEDBACKS: Record<string, string[]> = {
@@ -39,6 +47,13 @@ const QUICK_FEEDBACKS: Record<string, string[]> = {
     "Chamou e caiu na caixa postal",
     "Chamou mas não atendeu, tentarei novamente",
     "Telefone chamou, desligou sem atender",
+  ],
+  sem_interesse: [
+    "Atendeu mas não tem interesse no produto oferecido",
+    "Disse que já comprou outro imóvel recentemente",
+    "Sem condições financeiras no momento",
+    "Não é o momento, talvez no futuro",
+    "Não gostou da localização/região",
   ],
   descarte_oa: [
     "Lead sem interesse, enviar para lista de oferta ativa",
