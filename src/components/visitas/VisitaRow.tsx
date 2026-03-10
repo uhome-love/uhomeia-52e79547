@@ -63,6 +63,13 @@ const LOCAL_LABELS: Record<string, string> = {
   outro: "Outro",
 };
 
+const RESPONSAVEL_LABELS: Record<string, { label: string; emoji: string }> = {
+  gerente: { label: "Gerente", emoji: "👔" },
+  proprio_corretor: { label: "Corretor", emoji: "👤" },
+  corretor_parceiro: { label: "Parceiro", emoji: "🤝" },
+  responsavel_construtora: { label: "Construtora", emoji: "🏗️" },
+};
+
 const STATUS_LINE_COLORS: Record<string, string> = {
   marcada: "bg-amber-400",
   confirmada: "bg-blue-500",
@@ -110,6 +117,7 @@ export function VisitaRowHeader({ showCorretor, showTeam }: { showCorretor?: boo
       <span style={{ width: "clamp(70px, 10%, 110px)" }} className="shrink-0 hidden md:block">Local</span>
       {showCorretor && <span style={{ width: "clamp(80px, 12%, 130px)" }} className="shrink-0 hidden lg:block">Corretor</span>}
       {showTeam && <span style={{ width: "clamp(70px, 10%, 100px)" }} className="shrink-0 hidden lg:block">Time</span>}
+      {(showCorretor || showTeam) && <span style={{ width: "clamp(70px, 10%, 100px)" }} className="shrink-0 hidden lg:block">Responsável</span>}
       <span className="flex-1" />
       <span className="text-right shrink-0">Status / Ações</span>
       <span className="w-7 shrink-0" />
@@ -187,6 +195,20 @@ export default function VisitaRow({ visita: v, onUpdateStatus, onEdit, onDelete,
           {teamStyle ? (
             <span className={cn("text-[10px] px-2 py-0.5 rounded-full border whitespace-nowrap font-semibold", teamStyle.className)}>
               {teamStyle.emoji} {teamStyle.label}
+            </span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground">—</span>
+          )}
+        </div>
+      )}
+
+      {/* Responsável */}
+      {(showCorretor || showTeam) && (
+        <div className="hidden lg:flex items-center min-w-0 shrink-0" style={{ width: "clamp(70px, 10%, 100px)" }}>
+          {(v as any).responsavel_visita ? (
+            <span className="text-[10px] font-medium text-foreground whitespace-nowrap">
+              {RESPONSAVEL_LABELS[(v as any).responsavel_visita]?.emoji || "👤"}{" "}
+              {RESPONSAVEL_LABELS[(v as any).responsavel_visita]?.label || (v as any).responsavel_visita}
             </span>
           ) : (
             <span className="text-[10px] text-muted-foreground">—</span>

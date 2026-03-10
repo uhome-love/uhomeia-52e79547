@@ -54,6 +54,13 @@ const LOCAL_OPTIONS = [
   { value: "outro", label: "📍 Outro" },
 ];
 
+const RESPONSAVEL_OPTIONS = [
+  { value: "gerente", label: "👔 Gerente" },
+  { value: "proprio_corretor", label: "👤 Próprio corretor" },
+  { value: "corretor_parceiro", label: "🤝 Corretor parceiro" },
+  { value: "responsavel_construtora", label: "🏗️ Responsável da construtora" },
+];
+
 function getDefaultForm(initialData?: Props["initialData"]) {
   return {
     nome_cliente: initialData?.nome_cliente || "",
@@ -66,6 +73,7 @@ function getDefaultForm(initialData?: Props["initialData"]) {
     local_visita: initialData?.local_visita || "",
     observacoes: initialData?.observacoes || "",
     pipeline_lead_id: (initialData as any)?.pipeline_lead_id || "",
+    responsavel_visita: (initialData as any)?.responsavel_visita || "",
   };
 }
 
@@ -243,6 +251,7 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
         observacoes: form.observacoes || null,
         pipeline_lead_id: form.pipeline_lead_id || null,
         lead_id: null,
+        responsavel_visita: form.responsavel_visita || null,
       } as any);
 
       // Create partnership if enabled and we have a pipeline_lead_id
@@ -538,6 +547,19 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
               <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Onde será a visita?" /></SelectTrigger>
               <SelectContent>
                 {LOCAL_OPTIONS.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Responsável pela Visita */}
+          <div>
+            <Label className="text-xs font-semibold mb-1 block">Responsável pela Visita</Label>
+            <Select value={form.responsavel_visita} onValueChange={v => set("responsavel_visita", v)}>
+              <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Quem acompanha a visita?" /></SelectTrigger>
+              <SelectContent>
+                {RESPONSAVEL_OPTIONS.map(o => (
                   <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                 ))}
               </SelectContent>

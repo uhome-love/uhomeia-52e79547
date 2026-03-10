@@ -34,6 +34,7 @@ export interface Visita {
   tipo?: string;
   negocio_id?: string | null;
   tipo_reuniao?: string | null;
+  responsavel_visita?: string | null;
 }
 
 export type VisitaStatus = "marcada" | "confirmada" | "realizada" | "reagendada" | "cancelada" | "no_show";
@@ -86,7 +87,7 @@ export function useVisitas(filters?: {
     queryFn: async () => {
       let q = supabase
         .from("visitas")
-        .select("id, corretor_id, gerente_id, lead_id, pipeline_lead_id, nome_cliente, telefone, empreendimento, origem, origem_detalhe, data_visita, hora_visita, local_visita, status, observacoes, created_at, updated_at, created_by, linked_attempt_id, linked_pdn_id, converted_to_pdn_at, converted_to_pdn_by, resultado_visita, tipo, negocio_id, tipo_reuniao")
+        .select("id, corretor_id, gerente_id, lead_id, pipeline_lead_id, nome_cliente, telefone, empreendimento, origem, origem_detalhe, data_visita, hora_visita, local_visita, status, observacoes, created_at, updated_at, created_by, linked_attempt_id, linked_pdn_id, converted_to_pdn_at, converted_to_pdn_by, resultado_visita, tipo, negocio_id, tipo_reuniao, responsavel_visita")
         .order("data_visita", { ascending: true })
         .order("hora_visita", { ascending: true })
         .limit(500);
@@ -188,6 +189,7 @@ export function useVisitas(filters?: {
       tipo: visita.tipo || "lead",
       negocio_id: visita.negocio_id || null,
       tipo_reuniao: visita.tipo_reuniao || null,
+      responsavel_visita: (visita as any).responsavel_visita || null,
     };
 
     console.log("[createVisita] payload:", JSON.stringify(payload));
