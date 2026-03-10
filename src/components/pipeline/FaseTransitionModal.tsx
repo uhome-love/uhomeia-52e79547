@@ -90,6 +90,23 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
   // Caiu fields
   const [caiuMotivo, setCaiuMotivo] = useState("");
   const [caiuDestino, setCaiuDestino] = useState<"pipeline" | "descarte">("pipeline");
+  const [caiuStageId, setCaiuStageId] = useState("");
+  const [pipelineStages, setPipelineStages] = useState<{ id: string; nome: string }[]>([]);
+
+  // Load pipeline stages for "Voltar para Pipeline" option
+  useEffect(() => {
+    if (targetFase !== "distrato") return;
+    supabase.from("pipeline_stages")
+      .select("id, nome")
+      .eq("pipeline_tipo", "leads")
+      .eq("ativo", true)
+      .order("ordem")
+      .then(({ data }) => {
+        const stages = (data || []).filter((s: any) => !["descarte"].includes(s.nome?.toLowerCase()));
+        setPipelineStages(stages);
+        if (stages.length > 0) setCaiuStageId(stages.find((s: any) => s.nome?.toLowerCase().includes("qualifica"))?.id || stages[0].id);
+      });
+  }, [targetFase]);
 
   const handleConfirm = () => {
     if (targetFase === "proposta") {
