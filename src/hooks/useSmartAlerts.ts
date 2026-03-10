@@ -69,7 +69,7 @@ export function useSmartAlerts() {
         const nextMonth = now.getMonth() === 11
           ? `${now.getFullYear() + 1}-01-01`
           : `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, "0")}-01`;
-        let negQuery = supabase.from("negocios").select("id", { count: "exact", head: true }).gte("created_at", `${currentMonth}-01T00:00:00`).lt("created_at", `${nextMonth}T00:00:00`);
+        let negQuery = supabase.from("negocios").select("id", { count: "exact", head: true }).gte("created_at", `${currentMonth}-01T00:00:00.000Z`).lt("created_at", `${nextMonth}T00:00:00.000Z`);
         // Admin/CEO vê todos os negócios; gerente filtra pelo seu time (inclui negócios sem gerente_id)
         if (!isAdmin) {
           // Buscar corretores do time do gerente
@@ -82,9 +82,9 @@ export function useSmartAlerts() {
           teamIds.push(user.id); // inclui o próprio gerente
           negQuery = negQuery.in("corretor_id", teamIds);
         }
-        const { count: negCount } = await negQuery;
+        const { count: negCount, error: negError } = await negQuery;
 
-        if (negCount === 0 || negCount === null) {
+        if (!negError && negCount !== null && negCount === 0) {
           result.push({
             id: "negocios_missing",
             type: "pdn",
