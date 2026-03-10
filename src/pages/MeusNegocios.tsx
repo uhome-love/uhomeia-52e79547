@@ -625,7 +625,7 @@ export default function MeusNegocios() {
       className="flex flex-col w-full max-w-full min-w-0 overflow-hidden rounded-2xl"
       style={{
         height: "calc(100vh - 56px - 2rem)",
-        background: "linear-gradient(135deg, hsl(220 25% 8%) 0%, hsl(230 20% 12%) 50%, hsl(220 25% 8%) 100%)",
+        background: "hsl(222 47% 11%)",
       }}
     >
       {/* Header */}
