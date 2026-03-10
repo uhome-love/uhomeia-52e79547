@@ -394,12 +394,20 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
     if (!user) return;
     setLoading(true);
     try {
-      await loadProfile();
-      await loadRoleta();
-      const [currentKpis, previousKpis] = await Promise.all([loadKPIs(range), loadKPIs(prevRange)]);
+      // Run ALL loads in parallel — no sequential dependencies
+      const [, , currentKpis, previousKpis] = await Promise.all([
+        loadProfile(),
+        loadRoleta(),
+        loadKPIs(range),
+        loadKPIs(prevRange),
+        loadPipeline(),
+        loadNegocios(),
+        loadTeams(),
+        loadVisitasPorEmp(),
+        loadExtraKpis(),
+      ]);
       setKpis(currentKpis);
       setPrevKpis(previousKpis);
-      await Promise.all([loadPipeline(), loadNegocios(), loadTeams(), loadVisitasPorEmp(), loadExtraKpis()]);
     } catch (err) {
       console.error("Erro ao carregar dashboard CEO:", err);
     } finally {
