@@ -135,6 +135,7 @@ export default function ImoveisPage() {
             tipo: tipo && tipo !== "all" ? tipo : undefined,
             cidade: "Porto Alegre",
             bairro: bairro || undefined,
+            search_uhome: uhome ? true : undefined,
             dormitorios: dormitorios && dormitorios !== "all" ? dormitorios : undefined,
             valor_min: valorMin || undefined,
             valor_max: valorMax || undefined,
