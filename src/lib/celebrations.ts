@@ -159,6 +159,7 @@ export const PIPELINE_STAGE_EMOJIS: Record<string, string> = {
   "Visita Marcada": "📅",
   "Visita Realizada": "✅",
   "Descarte": "🗑️",
+  "Convertido": "🎯",
 };
 
 export const PIPELINE_STAGE_COLORS: Record<string, string> = {
@@ -170,6 +171,7 @@ export const PIPELINE_STAGE_COLORS: Record<string, string> = {
   "Visita Marcada": "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border-cyan-500",
   "Visita Realizada": "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500",
   "Descarte": "bg-red-500/20 text-red-600 dark:text-red-400 border-red-500",
+  "Convertido": "bg-violet-500/20 text-violet-600 dark:text-violet-400 border-violet-500",
 };
 
 // Background colors for pipeline kanban columns (light theme friendly)
@@ -182,6 +184,7 @@ export const PIPELINE_STAGE_BG: Record<string, { bg: string; border: string; hea
   "Visita Marcada": { bg: "rgba(6,182,212,0.06)", border: "rgba(6,182,212,0.18)", headerBg: "rgba(6,182,212,0.10)" },
   "Visita Realizada": { bg: "rgba(34,197,94,0.06)", border: "rgba(34,197,94,0.18)", headerBg: "rgba(34,197,94,0.10)" },
   "Descarte": { bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.18)", headerBg: "rgba(239,68,68,0.10)" },
+  "Convertido": { bg: "rgba(139,92,246,0.06)", border: "rgba(139,92,246,0.18)", headerBg: "rgba(139,92,246,0.10)" },
 };
 
 export const TEMPERATURA_EMOJIS: Record<string, string> = {

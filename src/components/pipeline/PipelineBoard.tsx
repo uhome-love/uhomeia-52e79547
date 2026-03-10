@@ -9,6 +9,7 @@ import { PIPELINE_STAGE_EMOJIS, PIPELINE_STAGE_COLORS, PIPELINE_STAGE_BG } from 
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 import PipelineStageTransitionPopup, { needsTransitionPopup, type TransitionResult } from "./PipelineStageTransitionPopup";
 
 interface PipelineBoardProps {
@@ -210,6 +211,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
 });
 
 export default function PipelineBoard({ stages, leads, segmentos, corretorNomes, parcerias, onMoveLead, onSelectLead, onTransferred, selectionMode, selectedLeads, onToggleSelect }: PipelineBoardProps) {
+  const { isGestor, isAdmin } = useUserRole();
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [flashStage, setFlashStage] = useState<string | null>(null);
   const [arrivedLeadId, setArrivedLeadId] = useState<string | null>(null);
@@ -256,6 +258,12 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     staleTime: 60_000,
   });
 
+  // Filter stages: hide "Convertido" from corretores (only visible to gerente/CEO)
+  const visibleStages = useMemo(() => {
+    if (isGestor || isAdmin) return stages;
+    return stages.filter(s => s.tipo !== "convertido");
+  }, [stages, isGestor, isAdmin]);
+
   const leadsByStage = useMemo(() => {
     // Dedup leads by ID before distributing to columns (definitivo)
     const seen = new Set<string>();
@@ -266,10 +274,8 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     });
 
     const map = new Map<string, PipelineLead[]>();
-    for (const stage of stages) map.set(stage.id, []);
+    for (const stage of visibleStages) map.set(stage.id, []);
     for (const lead of uniqueLeads) {
-      // Hide leads that already have a negócio created (they live in the Negócios pipeline now)
-      if (lead.negocio_id) continue;
       const arr = map.get(lead.stage_id);
       if (arr) arr.push(lead);
     }
@@ -277,13 +283,13 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
       arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     return map;
-  }, [stages, leads]);
+  }, [visibleStages, leads]);
 
   const stageIndexMap = useMemo(() => {
     const m = new Map<string, number>();
-    stages.forEach((s, i) => m.set(s.id, i));
+    visibleStages.forEach((s, i) => m.set(s.id, i));
     return m;
-  }, [stages]);
+  }, [visibleStages]);
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
@@ -292,8 +298,8 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
     const colW = getColumnWidth();
     const idx = Math.round(el.scrollLeft / (colW + COLUMN_GAP));
-    setActiveIndex(Math.min(idx, stages.length - 1));
-  }, [stages.length]);
+    setActiveIndex(Math.min(idx, visibleStages.length - 1));
+  }, [visibleStages.length]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -618,7 +624,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
 
       {/* Mini-map nav pills — colored by stage */}
       <div className="shrink-0 flex items-center gap-1 mb-1 px-0.5 overflow-x-auto scrollbar-none">
-        {stages.map((stage, idx) => {
+        {visibleStages.map((stage, idx) => {
           const stageLeads = leadsByStage.get(stage.id) || [];
           const isActive = idx === activeIndex;
           const emoji = PIPELINE_STAGE_EMOJIS[stage.nome] || "📍";
@@ -672,7 +678,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
           className={`flex gap-3 h-full overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-none ${isDraggingScroll && scrollDragActive.current ? "cursor-grabbing select-none" : ""}`}
           style={{ scrollSnapType: dragLeadId.current ? "none" : "x proximity" }}
         >
-          {stages.map((stage) => {
+          {visibleStages.map((stage) => {
             const stageLeads = leadsByStage.get(stage.id) || [];
             const isDragOver = dragOverStage === stage.id;
             const isFlashing = flashStage === stage.id;

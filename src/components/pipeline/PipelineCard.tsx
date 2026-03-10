@@ -387,6 +387,11 @@ const PipelineCard = memo(function PipelineCard({
                 if (error) throw error;
                 if (negocio) {
                   await supabase.from("pipeline_leads").update({ negocio_id: negocio.id } as any).eq("id", lead.id);
+                  // Move lead to Convertido stage
+                  const convertidoStage = stages.find(s => s.tipo === "convertido");
+                  if (convertidoStage && onMoveLead) {
+                    onMoveLead(lead.id, convertidoStage.id);
+                  }
                   toast.success(`🎉 Negócio criado para ${lead.nome}!`, { description: "Envie a proposta em até 24h!" });
                 }
               } catch (err: any) {
@@ -396,6 +401,32 @@ const PipelineCard = memo(function PipelineCard({
             }}
           >
             <FileText className="h-3 w-3" /> Criar Negócio
+          </Button>
+        </div>
+      )}
+
+      {/* Convertido stage — show "Voltar para Pipeline" button */}
+      {stage?.tipo === "convertido" && (
+        <div data-actions-area className="px-3 pb-1.5 space-y-1">
+          <div className="text-[10px] text-muted-foreground text-center">🎯 Negócio em andamento</div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full h-7 text-[11px] gap-1.5 font-semibold border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!onMoveLead) return;
+              // Move back to Qualificação by default
+              const qualStage = stages.find(s => s.nome.toLowerCase().includes("qualifica"));
+              if (qualStage) {
+                onMoveLead(lead.id, qualStage.id);
+                // Clear negocio_id
+                supabase.from("pipeline_leads").update({ negocio_id: null } as any).eq("id", lead.id).then(() => {});
+                toast.success("🔄 Lead retornado ao Pipeline");
+              }
+            }}
+          >
+            <ArrowRightLeft className="h-3 w-3" /> Voltar para Pipeline
           </Button>
         </div>
       )}
