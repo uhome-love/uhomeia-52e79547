@@ -524,6 +524,7 @@ export default function MeusNegocios() {
         negocioId,
         pipelineLeadId: negocio.pipeline_lead_id || negocio.lead_id || undefined,
         nomeCliente: negocio.nome_cliente,
+        telefone: negocio.telefone || undefined,
         empreendimento: negocio.empreendimento || undefined,
         corretorId: negocio.corretor_id || user?.id || "",
         vgvFinal: negocio.vgv_estimado || undefined,
