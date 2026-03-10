@@ -78,6 +78,7 @@ export default function ReuniaoNegocioForm({ open, onClose, onSubmit }: Props) {
     setForm({
       local_visita: "",
       objetivo: "",
+      responsavel: "",
       data_visita: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
       hora_visita: "",
       telefone: "",
