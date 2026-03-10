@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Negocio } from "@/hooks/useNegocios";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface TransitionData {
   fase: string;
@@ -89,6 +90,23 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
   // Caiu fields
   const [caiuMotivo, setCaiuMotivo] = useState("");
   const [caiuDestino, setCaiuDestino] = useState<"pipeline" | "descarte">("pipeline");
+  const [caiuStageId, setCaiuStageId] = useState("");
+  const [pipelineStages, setPipelineStages] = useState<{ id: string; nome: string }[]>([]);
+
+  // Load pipeline stages for "Voltar para Pipeline" option
+  useEffect(() => {
+    if (targetFase !== "distrato") return;
+    supabase.from("pipeline_stages")
+      .select("id, nome")
+      .eq("pipeline_tipo", "leads")
+      .eq("ativo", true)
+      .order("ordem")
+      .then(({ data }) => {
+        const stages = (data || []).filter((s: any) => !["descarte"].includes(s.nome?.toLowerCase()));
+        setPipelineStages(stages);
+        if (stages.length > 0) setCaiuStageId(stages.find((s: any) => s.nome?.toLowerCase().includes("qualifica"))?.id || stages[0].id);
+      });
+  }, [targetFase]);
 
   const handleConfirm = () => {
     if (targetFase === "proposta") {
@@ -129,7 +147,7 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
       if (!caiuMotivo.trim()) return;
       onConfirm({
         fase: "distrato",
-        fields: { motivo: caiuMotivo, destino: caiuDestino },
+        fields: { motivo: caiuMotivo, destino: caiuDestino, stage_id: caiuDestino === "pipeline" ? caiuStageId : undefined },
       });
     }
   };
@@ -293,6 +311,19 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
                   </div>
                 </RadioGroup>
               </div>
+              {caiuDestino === "pipeline" && pipelineStages.length > 0 && (
+                <div>
+                  <Label className="text-xs mb-1 block">Retornar para qual etapa?</Label>
+                  <Select value={caiuStageId} onValueChange={setCaiuStageId}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione a etapa" /></SelectTrigger>
+                    <SelectContent>
+                      {pipelineStages.map(s => (
+                        <SelectItem key={s.id} value={s.id} className="text-xs">{s.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button size="sm" variant="destructive" onClick={handleConfirm} className="text-xs gap-1" disabled={!caiuMotivo.trim()}>

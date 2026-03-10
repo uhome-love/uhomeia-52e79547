@@ -131,6 +131,9 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [reuniaoOpen, setReuniaoOpen] = useState(false);
+  const [regressOpen, setRegressOpen] = useState(false);
+  const [regressStageId, setRegressStageId] = useState("");
+  const [pipelineStages, setPipelineStages] = useState<{ id: string; nome: string }[]>([]);
 
   // Reunião form fields
   const [reuniaoTipo, setReuniaoTipo] = useState("fechamento");
@@ -183,6 +186,46 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
     };
     load();
   }, [open, negocio.id]);
+
+  // Load pipeline stages for regress option
+  useEffect(() => {
+    if (!open) return;
+    supabase.from("pipeline_stages")
+      .select("id, nome")
+      .eq("pipeline_tipo", "leads")
+      .eq("ativo", true)
+      .order("ordem")
+      .then(({ data }) => {
+        const stages = (data || []).filter((s: any) => !["descarte"].includes(s.nome?.toLowerCase()));
+        setPipelineStages(stages);
+        if (stages.length > 0) setRegressStageId(stages.find((s: any) => s.nome?.toLowerCase().includes("qualifica"))?.id || stages[0].id);
+      });
+  }, [open]);
+
+  // ── Regress to pipeline ──
+  const handleRegressToPipeline = async () => {
+    if (!regressStageId || !fullNeg.pipeline_lead_id || !user) return;
+    // Clear negocio_id on lead and move to selected stage
+    await supabase.from("pipeline_leads").update({
+      stage_id: regressStageId,
+      negocio_id: null,
+      stage_changed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as any).eq("id", fullNeg.pipeline_lead_id);
+    // Move negócio to distrato
+    onMoveFase(negocio.id, "distrato");
+    // Log activity
+    await supabase.from("negocios_atividades").insert({
+      negocio_id: negocio.id,
+      tipo: "regressao_pipeline",
+      titulo: "Regredido para Pipeline de Leads",
+      descricao: `Lead retornado para o Pipeline`,
+      created_by: user.id,
+    } as any);
+    setRegressOpen(false);
+    onOpenChange(false);
+    toast.success("🔄 Lead retornado ao Pipeline de Leads");
+  };
 
   // ── Register activity ──
   const handleRegistrarAtividade = async () => {
@@ -738,10 +781,42 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
                 📄 → Contrato Gerado
               </Button>
             )}
+            {fullNeg.pipeline_lead_id && fullNeg.fase !== "assinado" && fullNeg.fase !== "distrato" && (
+              <Button variant="outline" className="gap-1 text-xs border-destructive/30 text-destructive" onClick={() => setRegressOpen(true)}>
+                🔄 Regredir para Pipeline
+              </Button>
+            )}
             <div className="flex-1" />
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* ── Regress to Pipeline Dialog ── */}
+      <Dialog open={regressOpen} onOpenChange={setRegressOpen}>
+        <DialogContent className="sm:max-w-sm space-y-3">
+          <DialogHeader>
+            <DialogTitle className="text-base">🔄 Regredir para Pipeline de Leads</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">O negócio será movido para "Caiu" e o lead voltará ao Pipeline.</p>
+          <div>
+            <Label className="text-xs mb-1 block">Retornar para qual etapa?</Label>
+            <Select value={regressStageId} onValueChange={setRegressStageId}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione a etapa" /></SelectTrigger>
+              <SelectContent>
+                {pipelineStages.map(s => (
+                  <SelectItem key={s.id} value={s.id} className="text-xs">{s.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setRegressOpen(false)}>Cancelar</Button>
+            <Button size="sm" className="text-xs gap-1" onClick={handleRegressToPipeline} disabled={!regressStageId}>
+              🔄 Confirmar regressão
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Proposta Popup ── */}
       <Dialog open={propostaPopup} onOpenChange={setPropostaPopup}>
