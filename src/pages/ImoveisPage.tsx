@@ -757,7 +757,14 @@ export default function ImoveisPage() {
                 });
                 setVitrineLink(null);
               };
-                <Card key={item.id_imovel || codigo || idx} className={cn("overflow-hidden hover:shadow-lg transition-shadow", isCampanha && "ring-1 ring-primary/30")}>
+
+              return (
+                <Card key={item.id_imovel || codigo || idx} className={cn("overflow-hidden hover:shadow-lg transition-shadow relative", isCampanha && "ring-1 ring-primary/30", selectMode && isSelected && "ring-2 ring-primary")}>
+                  {selectMode && (
+                    <button onClick={toggleSelect} className="absolute top-2 left-2 z-20 bg-background/80 rounded p-0.5">
+                      {isSelected ? <CheckSquare className="h-5 w-5 text-primary" /> : <Square className="h-5 w-5 text-muted-foreground" />}
+                    </button>
+                  )}
                   <div className="flex">
                     {/* Image */}
                     <div className="w-40 h-40 flex-shrink-0 bg-muted relative">
