@@ -38,39 +38,28 @@ function extractImage(item: any): string | null {
   return null;
 }
 
-/** Extract address/location text from any possible field structure */
+/** Extract address/location from Jetimob fields */
 function extractEndereco(item: any): { endereco: string; bairro: string; cidade: string } {
-  const endereco = item.endereco || item.logradouro || item.rua || item.address || item.endereco_completo || "";
-  const numero = item.numero || item.number || "";
-  const bairro = item.bairro || item.neighborhood || item.bairro_nome || "";
-  const cidade = item.cidade || item.city || item.cidade_nome || item.municipio || "";
-  
-  // Some APIs nest inside endereco object
-  if (item.endereco && typeof item.endereco === "object") {
-    return {
-      endereco: `${item.endereco.logradouro || item.endereco.rua || ""}${item.endereco.numero ? `, ${item.endereco.numero}` : ""}`,
-      bairro: item.endereco.bairro || bairro,
-      cidade: item.endereco.cidade || cidade,
-    };
-  }
-  
-  // Nested localizacao object
-  if (item.localizacao && typeof item.localizacao === "object") {
-    return {
-      endereco: `${item.localizacao.logradouro || item.localizacao.endereco || endereco}${item.localizacao.numero ? `, ${item.localizacao.numero}` : (numero ? `, ${numero}` : "")}`,
-      bairro: item.localizacao.bairro || bairro,
-      cidade: item.localizacao.cidade || cidade,
-    };
-  }
-
+  const logradouro = item.endereco_logradouro || item.endereco || item.logradouro || "";
+  const numero = item.endereco_numero || item.numero || "";
+  const bairro = item.endereco_bairro || item.bairro || "";
+  const cidade = item.endereco_cidade || item.cidade || "";
   return {
-    endereco: `${endereco}${numero ? `, ${numero}` : ""}`,
+    endereco: `${logradouro}${numero ? `, ${numero}` : ""}`.trim(),
     bairro,
     cidade,
   };
 }
 
 function getNum(item: any, ...keys: string[]): number | null {
+  for (const k of keys) {
+    const v = item[k];
+    if (v != null && v !== "" && v !== 0 && !isNaN(Number(v))) return Number(v);
+  }
+  return null;
+}
+
+function getNumIncZero(item: any, ...keys: string[]): number | null {
   for (const k of keys) {
     const v = item[k];
     if (v != null && v !== "" && !isNaN(Number(v))) return Number(v);
@@ -90,6 +79,9 @@ export default function ImoveisPage() {
   const [tipo, setTipo] = useState("");
   const [cidade, setCidade] = useState("Porto Alegre");
   const [bairro, setBairro] = useState("");
+  const [dormitorios, setDormitorios] = useState("");
+  const [valorMin, setValorMin] = useState("");
+  const [valorMax, setValorMax] = useState("");
 
   const fetchImoveis = useCallback(async (pageNum: number) => {
     setLoading(true);
@@ -104,6 +96,9 @@ export default function ImoveisPage() {
           tipo: tipo && tipo !== "all" ? tipo : undefined,
           cidade: cidade || undefined,
           bairro: bairro || undefined,
+          dormitorios: dormitorios && dormitorios !== "all" ? dormitorios : undefined,
+          valor_min: valorMin || undefined,
+          valor_max: valorMax || undefined,
         },
       });
 
@@ -132,7 +127,7 @@ export default function ImoveisPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, contrato, tipo, cidade, bairro]);
+  }, [search, contrato, tipo, cidade, bairro, dormitorios, valorMin, valorMax]);
 
   useEffect(() => {
     fetchImoveis(1);
@@ -163,9 +158,9 @@ export default function ImoveisPage() {
 
       {/* Filters */}
       <Card className="p-4 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Busca</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="space-y-1 col-span-2 sm:col-span-1">
+            <label className="text-xs font-medium text-muted-foreground">Busca livre</label>
             <Input
               placeholder="Endereço, código, condomínio..."
               value={search}
@@ -195,15 +190,62 @@ export default function ImoveisPage() {
                 <SelectItem value="terreno">Terreno</SelectItem>
                 <SelectItem value="comercial">Comercial</SelectItem>
                 <SelectItem value="cobertura">Cobertura</SelectItem>
+                <SelectItem value="duplex">Duplex</SelectItem>
+                <SelectItem value="loft">Loft</SelectItem>
+                <SelectItem value="kitnet">Kitnet</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Dormitórios</label>
+            <Select value={dormitorios} onValueChange={setDormitorios}>
+              <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="1">1+</SelectItem>
+                <SelectItem value="2">2+</SelectItem>
+                <SelectItem value="3">3+</SelectItem>
+                <SelectItem value="4">4+</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Bairro</label>
             <Input
               placeholder="Qualquer bairro"
               value={bairro}
               onChange={(e) => setBairro(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Cidade</label>
+            <Input
+              placeholder="Porto Alegre"
+              value={cidade}
+              onChange={(e) => setCidade(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Valor mínimo</label>
+            <Input
+              type="number"
+              placeholder="Ex: 300000"
+              value={valorMin}
+              onChange={(e) => setValorMin(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Valor máximo</label>
+            <Input
+              type="number"
+              placeholder="Ex: 800000"
+              value={valorMax}
+              onChange={(e) => setValorMax(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
@@ -250,15 +292,15 @@ export default function ImoveisPage() {
               const img = extractImage(item);
               const loc = extractEndereco(item);
               const codigo = item.codigo || item.code || item.referencia || item.id;
-              const tipoImovel = item.tipo || item.type || item.finalidade || "";
-              const subtipo = item.subtipo || item.subtype || item.categoria || "";
-              const dorms = getNum(item, "dormitorios", "quartos", "bedrooms", "dorms");
-              const suites = getNum(item, "suites", "suite");
-              const banhos = getNum(item, "banheiros", "bathrooms", "wcs");
-              const area = getNum(item, "area_privativa", "area_util", "area_total", "area", "metragem");
-              const vagas = getNum(item, "vagas", "garagem", "parking");
-              const cond = getNum(item, "condominio", "valor_condominio");
-              const disponib = item.disponibilidade || item.status || "";
+              const tipoImovel = item.tipo || "";
+              const subtipo = item.subtipo || "";
+              const dorms = getNum(item, "dormitorios");
+              const suites = getNum(item, "suites");
+              const banhos = getNum(item, "banheiros");
+              const area = getNumIncZero(item, "area_privativa", "area_util", "area_total");
+              const vagas = getNum(item, "garagens", "vagas");
+              const cond = getNum(item, "valor_condominio");
+              const disponib = item.situacao || item.status || "";
 
               return (
                 <Card key={item.id || codigo || idx} className="overflow-hidden hover:shadow-lg transition-shadow">

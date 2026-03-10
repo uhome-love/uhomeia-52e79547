@@ -116,13 +116,16 @@ serve(async (req) => {
     }
 
     if (action === "list_imoveis") {
-      const { page = 1, pageSize = 30, search, contrato, tipo, cidade, bairro } = body;
+      const { page = 1, pageSize = 30, search, contrato, tipo, cidade, bairro, dormitorios, valor_min, valor_max } = body;
       let url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${page}&pageSize=${pageSize}`;
       if (contrato) url += `&contrato=${encodeURIComponent(contrato)}`;
       if (tipo) url += `&tipo=${encodeURIComponent(tipo)}`;
       if (cidade) url += `&cidade=${encodeURIComponent(cidade)}`;
       if (bairro) url += `&bairro=${encodeURIComponent(bairro)}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (dormitorios) url += `&dormitorios=${encodeURIComponent(dormitorios)}`;
+      if (valor_min) url += `&valor_min=${encodeURIComponent(valor_min)}`;
+      if (valor_max) url += `&valor_max=${encodeURIComponent(valor_max)}`;
 
       const response = await fetch(url, { headers: { "Accept": "application/json" } });
 
