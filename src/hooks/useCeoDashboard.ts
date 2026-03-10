@@ -61,7 +61,7 @@ export interface OrigemData {
   origem: string; count: number;
 }
 
-export function useCeoDashboard(period: DashPeriod) {
+export function useCeoDashboard(period: DashPeriod, customRange?: { start: string; end: string }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
