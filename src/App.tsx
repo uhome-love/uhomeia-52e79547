@@ -124,6 +124,7 @@ const App = () => (
             <Route path="/welcome" element={<Suspense fallback={<PageLoader />}><Welcome /></Suspense>} />
             <Route path="/visita/:token" element={<Suspense fallback={<PageLoader />}><VisitaConfirmacao /></Suspense>} />
             <Route path="/indica/:codigo" element={<Suspense fallback={<PageLoader />}><ReferralPage /></Suspense>} />
+            <Route path="/vitrine/:id" element={<Suspense fallback={<PageLoader />}><VitrinePage /></Suspense>} />
             {/* Acessível a todos os autenticados */}
             <Route path="/" element={<ProtectedPage><HomeDashboard /></ProtectedPage>} />
 
