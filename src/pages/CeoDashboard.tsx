@@ -181,7 +181,8 @@ export default function CeoDashboard() {
     // Insert into fila
     await insertFilaForCred(cred);
     toast.success(`✅ ${item?.corretor_nome || "Corretor"} aprovado(a) na Roleta!`);
-  }, [user, localPendentes, getProfileId, insertFilaForCred]);
+    reloadRoleta();
+  }, [user, localPendentes, getProfileId, insertFilaForCred, reloadRoleta]);
 
   const recusar = useCallback(async (id: string) => {
     if (!user) return;
