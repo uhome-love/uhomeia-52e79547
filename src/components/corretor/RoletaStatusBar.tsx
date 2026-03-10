@@ -247,7 +247,7 @@ export default function RoletaStatusBar() {
   const currentOpt = STATUS_OPTIONS.find(o => o.value === status) || STATUS_OPTIONS[3];
   const isAvailable = status === "na_empresa" || status === "em_plantao";
   const hasSegmentos = mySegmentoIds.length > 0;
-  const isActiveRoleta = isAvailable && hasSegmentos;
+  const isActiveRoleta = isAvailable && hasSegmentos && credStatus === "aprovado";
 
   const segNames = mySegmentoIds.map(id => segmentos.find(s => s.id === id)?.nome).filter(Boolean);
 
