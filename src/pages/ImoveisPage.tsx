@@ -498,16 +498,17 @@ export default function ImoveisPage() {
                   setCreatingVitrine(true);
                   try {
                     const { data, error } = await supabase
-                      .from("vitrines" as any)
+                      .from("vitrines")
                       .insert({
                         created_by: user.id,
                         titulo: "Seleção de Imóveis",
-                        imovel_ids: [...selectedIds],
-                      } as any)
+                        imovel_ids: [...selectedIds] as any,
+                      })
                       .select("id")
                       .single();
                     if (error) throw error;
-                    const link = `https://uhomesales.com/vitrine/${(data as any).id}`;
+                    const baseUrl = window.location.origin;
+                    const link = `${baseUrl}/vitrine/${data.id}`;
                     setVitrineLink(link);
                     navigator.clipboard.writeText(link);
                     toast.success("Vitrine criada! Link copiado.");
