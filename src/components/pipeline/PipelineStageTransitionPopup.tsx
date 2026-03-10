@@ -588,7 +588,6 @@ export default function PipelineStageTransitionPopup({ open, onOpenChange, lead,
       return <PossivelVisitaForm lead={lead} onConfirm={onConfirm} targetStageId={targetStage.id} />;
     }
     // visita marcada is handled by PipelineCard's own schedule dialog
-    }
     if (stageName.includes("visita realizada") || (stageName.includes("visita") && stageName.includes("realizad"))) {
       return <VisitaRealizadaForm lead={lead} onConfirm={onConfirm} targetStageId={targetStage.id} />;
     }
