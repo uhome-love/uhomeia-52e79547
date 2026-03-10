@@ -149,7 +149,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
 }
 
 export default function MeusNegocios() {
-  const { negocios, corretorNomes, corretorInfoMap, loading, moveFase, reload } = useNegocios();
+  const { negocios, corretorNomes, corretorInfoMap, loading, moveFase, updateNegocio, reload } = useNegocios();
   const { onNegocioAssinado } = useLeadProgression();
   const { user } = useAuth();
   const { isGestor, isAdmin } = useUserRole();
