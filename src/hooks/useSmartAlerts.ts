@@ -148,25 +148,26 @@ export function useSmartAlerts() {
         console.error("Alert check metas:", e);
       }
 
-      // 4. PDN entries with overdue actions
+      // 4. Negócios parados (sem atualização há mais de 7 dias)
       try {
-        let pdnActionsQuery = supabase.from("pdn_entries").select("id, nome, data_proxima_acao, proxima_acao").lt("data_proxima_acao", today).not("data_proxima_acao", "is", null);
-        if (!isAdmin) pdnActionsQuery = pdnActionsQuery.eq("gerente_id", user.id);
-        const { data: overduePdn } = await pdnActionsQuery;
+        const sevenDaysAgo = format(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), "yyyy-MM-dd");
+        let stalledQuery = supabase.from("negocios").select("id, nome_cliente, fase, updated_at").lt("updated_at", sevenDaysAgo).not("fase", "eq", "assinado").neq("status", "perdido");
+        if (!isAdmin) stalledQuery = stalledQuery.eq("gerente_id", user.id);
+        const { data: stalledNegocios } = await stalledQuery;
 
-        if (overduePdn && overduePdn.length > 0) {
+        if (stalledNegocios && stalledNegocios.length > 0) {
           result.push({
-            id: "pdn_overdue",
+            id: "negocios_stalled",
             type: "pdn",
             severity: "warning",
-            title: `${overduePdn.length} ação(ões) PDN atrasada(s)`,
-            description: `Existem ações pendentes no PDN que já passaram da data prevista. Ex: ${overduePdn[0].nome}`,
-            action: { label: "Ver PDN", url: "/pdn" },
+            title: `${stalledNegocios.length} negócio(s) parado(s)`,
+            description: `Existem negócios sem atualização há mais de 7 dias. Ex: ${stalledNegocios[0].nome_cliente}`,
+            action: { label: "Ver Negócios", url: "/negocios" },
           });
-          badgeCounts["/pdn"] = (badgeCounts["/pdn"] || 0) + overduePdn.length;
+          badgeCounts["/negocios"] = (badgeCounts["/negocios"] || 0) + stalledNegocios.length;
         }
       } catch (e) {
-        console.error("Alert check PDN actions:", e);
+        console.error("Alert check stalled negocios:", e);
       }
 
       setAlerts(result.sort((a, b) => {
