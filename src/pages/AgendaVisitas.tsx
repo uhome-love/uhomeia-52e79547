@@ -454,8 +454,8 @@ export default function AgendaVisitas() {
         </button>
       </div>
 
-      {/* Sub-tab: Minhas vs Time (only for leads, only for gerente/admin) */}
-      {agendaTipo === "lead" && (isAdmin || isGestor) && (
+      {/* Sub-tab: Minhas vs Time (for all roles with leads tab) */}
+      {agendaTipo === "lead" && (
         <div className="flex items-center gap-1 bg-muted/40 rounded-lg p-0.5 w-fit">
           <button
             onClick={() => setLeadSubTab("minhas")}
@@ -483,7 +483,7 @@ export default function AgendaVisitas() {
       )}
 
       {/* ─── TEAM VIEW (Visitas do Time) ─── */}
-      {agendaTipo === "lead" && leadSubTab === "time" && (isAdmin || isGestor) ? (
+      {agendaTipo === "lead" && leadSubTab === "time" ? (
         <VisitasEquipe />
       ) : (
       <>
