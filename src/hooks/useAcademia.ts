@@ -136,14 +136,14 @@ export function useAcademia() {
 
   // Load user progress
   const { data: progresso = [], isLoading: progressoLoading } = useQuery({
-    queryKey: ["academia-progresso", user?.id],
+    queryKey: ["academia-progresso", profileId],
     queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase.from("academia_progresso").select("*").eq("corretor_id", user.id);
+      if (!profileId) return [];
+      const { data, error } = await supabase.from("academia_progresso").select("*").eq("corretor_id", profileId);
       if (error) throw error;
       return (data || []) as Progresso[];
     },
-    enabled: !!user,
+    enabled: !!profileId,
     staleTime: 30000,
   });
 
