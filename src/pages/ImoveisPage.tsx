@@ -752,38 +752,7 @@ export default function ImoveisPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-1">
-                          {origem && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                                  <UserCircle className="h-4 w-4" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-72 p-3" align="end">
-                                <p className="text-xs font-semibold text-foreground mb-2">Responsável / Origem</p>
-                                <div className="space-y-1.5 text-xs">
-                                  {origem.sistema && (
-                                    <p className="text-muted-foreground"><span className="font-medium text-foreground">Sistema:</span> {origem.sistema}</p>
-                                  )}
-                                  {origem.responsavel && (
-                                    <p className="text-muted-foreground"><span className="font-medium text-foreground">Responsável:</span> {origem.responsavel}</p>
-                                  )}
-                                  {origem.telefone && (
-                                    <p className="text-muted-foreground flex items-center gap-1">
-                                      <Phone className="h-3 w-3" />
-                                      <a href={`tel:${origem.telefone.replace(/[^\d+]/g, "")}`} className="text-primary hover:underline">{origem.telefone}</a>
-                                    </p>
-                                  )}
-                                  {origem.email && (
-                                    <p className="text-muted-foreground flex items-center gap-1">
-                                      <Mail className="h-3 w-3" />
-                                      <a href={`mailto:${origem.email}`} className="text-primary hover:underline">{origem.email}</a>
-                                    </p>
-                                  )}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          )}
+                          {codigo && <ResponsavelButton codigo={codigo} />}
                           {disponib && (
                             <Badge variant={disponib === "disponivel" ? "default" : "secondary"} className="text-[10px]">
                               {disponib}
