@@ -445,12 +445,12 @@ function buildPerManagerBreakdown(
     const teamCpIds = checkpoints.filter(c => c.gerente_id === gId).map(c => c.id);
     const teamCpLines = cpLines.filter(l => teamCpIds.includes(l.checkpoint_id));
 
-    const pdnAssinado = teamPdn.filter(p => p.situacao === "assinado");
-    const vgv = pdnAssinado.reduce((s: number, p: any) => s + (p.vgv || 0), 0);
+    const pdnAssinado = teamPdn.filter(p => p.fase === "assinado");
+    const vgv = pdnAssinado.reduce((s: number, p: any) => s + Number(p.vgv_final || p.vgv_estimado || 0), 0);
     const totalLig = teamCpLines.reduce((s: number, l: any) => s + (l.real_ligacoes || 0), 0);
 
     return `\n🏷️ ${name} (${teamMembers.length} corretores)
-  PDN: ${teamPdn.length} neg. | ${pdnAssinado.length} assinados | VGV R$ ${(vgv / 1000).toFixed(0)}k
+  Negócios: ${teamPdn.length} neg. | ${pdnAssinado.length} assinados | VGV R$ ${(vgv / 1000).toFixed(0)}k
   Checkpoint hoje: ${teamCpLines.length} preenchidos | ${totalLig} ligações
   Visitas semana: ${teamVisitas.length}
   Corretores: ${teamMembers.map(m => m.nome).join(", ")}`;
