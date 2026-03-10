@@ -1,19 +1,20 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { usePipeline } from "@/hooks/usePipeline";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import PipelineAddLeadDialog from "@/components/pipeline/PipelineAddLeadDialog";
 import PipelineLeadDetail from "@/components/pipeline/PipelineLeadDetail";
-import PipelineFlowDashboard from "@/components/pipeline/PipelineFlowDashboard";
-import MaterialsLibrary from "@/components/pipeline/MaterialsLibrary";
-import SequenceBuilder from "@/components/pipeline/SequenceBuilder";
-import SequenceLibrary from "@/components/pipeline/SequenceLibrary";
-import OpportunityRadar from "@/components/pipeline/OpportunityRadar";
-import PipelineCeoIntelligence from "@/components/pipeline/PipelineCeoIntelligence";
-import PipelineManagerActions from "@/components/pipeline/PipelineManagerActions";
-
-import PipelineReportsDashboard from "@/components/pipeline/PipelineReportsDashboard";
 import type { PipelineStage } from "@/hooks/usePipeline";
 import { useMemo as useMemoReact } from "react";
+
+// Lazy load heavy tab components
+const PipelineFlowDashboard = lazy(() => import("@/components/pipeline/PipelineFlowDashboard"));
+const MaterialsLibrary = lazy(() => import("@/components/pipeline/MaterialsLibrary"));
+const SequenceBuilder = lazy(() => import("@/components/pipeline/SequenceBuilder"));
+const SequenceLibrary = lazy(() => import("@/components/pipeline/SequenceLibrary"));
+const OpportunityRadar = lazy(() => import("@/components/pipeline/OpportunityRadar"));
+const PipelineCeoIntelligence = lazy(() => import("@/components/pipeline/PipelineCeoIntelligence"));
+const PipelineManagerActions = lazy(() => import("@/components/pipeline/PipelineManagerActions"));
+const PipelineReportsDashboard = lazy(() => import("@/components/pipeline/PipelineReportsDashboard"));
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ChevronDown, ChevronUp, CheckSquare, Square, Send, X } from "lucide-react";
 import PipelineAdvancedFilters, {
@@ -471,55 +472,56 @@ export default function PipelineKanban() {
       {/* Content area — kanban + side panel */}
       <div className="flex-1 min-h-0 overflow-hidden flex">
         <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
-          {activeTab === "kanban" ? (
-            <PipelineBoard
-              stages={pipeline.stages}
-              leads={filteredLeads}
-              segmentos={pipeline.segmentos}
-              corretorNomes={pipeline.corretorNomes}
-              parcerias={parcerias}
-              onMoveLead={pipeline.moveLead}
-              onSelectLead={selectionMode ? (lead) => toggleLeadSelection(lead.id) : setSelectedLead}
-              onTransferred={() => pipeline.reload()}
-              selectionMode={selectionMode}
-              selectedLeads={selectedLeads}
-              onToggleSelect={toggleLeadSelection}
-            />
-          ) : activeTab === "inteligencia" ? (
-            intelView === "funil" ? (
-              <PipelineFlowDashboard
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+            {activeTab === "kanban" ? (
+              <PipelineBoard
                 stages={pipeline.stages}
                 leads={filteredLeads}
+                segmentos={pipeline.segmentos}
                 corretorNomes={pipeline.corretorNomes}
+                parcerias={parcerias}
+                onMoveLead={pipeline.moveLead}
+                onSelectLead={selectionMode ? (lead) => toggleLeadSelection(lead.id) : setSelectedLead}
+                onTransferred={() => pipeline.reload()}
+                selectionMode={selectionMode}
+                selectedLeads={selectedLeads}
+                onToggleSelect={toggleLeadSelection}
               />
-            ) : (
-              <OpportunityRadar
-                leads={pipeline.leads}
+            ) : activeTab === "inteligencia" ? (
+              intelView === "funil" ? (
+                <PipelineFlowDashboard
+                  stages={pipeline.stages}
+                  leads={filteredLeads}
+                  corretorNomes={pipeline.corretorNomes}
+                />
+              ) : (
+                <OpportunityRadar
+                  leads={pipeline.leads}
+                  stages={pipeline.stages}
+                  corretorNomes={pipeline.corretorNomes}
+                  onSelectLead={setSelectedLead}
+                />
+              )
+            ) : activeTab === "automacoes" ? (
+              autoView === "materiais" ? (
+                <div className="h-full overflow-auto p-1">
+                  <MaterialsLibrary />
+                </div>
+              ) : (
+                <div className="h-full overflow-auto p-1 space-y-6">
+                  <SequenceLibrary onSequenceCreated={() => pipeline.reload()} />
+                  <SequenceBuilder />
+                </div>
+              )
+            ) : activeTab === "relatorios" ? (
+              <PipelineReportsDashboard
                 stages={pipeline.stages}
+                leads={pipeline.leads}
                 corretorNomes={pipeline.corretorNomes}
-                onSelectLead={setSelectedLead}
               />
-            )
-          ) : activeTab === "automacoes" ? (
-            autoView === "materiais" ? (
-              <div className="h-full overflow-auto p-1">
-                <MaterialsLibrary />
-              </div>
-            ) : (
-              <div className="h-full overflow-auto p-1 space-y-6">
-                <SequenceLibrary onSequenceCreated={() => pipeline.reload()} />
-                <SequenceBuilder />
-              </div>
-            )
-          ) : activeTab === "relatorios" ? (
-            <PipelineReportsDashboard
-              stages={pipeline.stages}
-              leads={pipeline.leads}
-              corretorNomes={pipeline.corretorNomes}
-            />
-          ) : null}
+            ) : null}
+          </Suspense>
         </div>
-
       </div>
 
       {/* Dialogs */}
