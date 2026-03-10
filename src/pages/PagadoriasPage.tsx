@@ -565,8 +565,12 @@ export default function PagadoriasPage() {
                       comissao_total: totalComissao,
                       credores,
                       parcelas: [],
-                      corretor_cpf: "", corretor_creci: "", corretor_email: "",
-                      gerente_cpf: "", gerente_creci: "", gerente_email: "",
+                      corretor_cpf: form.corretor_cpf,
+                      corretor_creci: form.corretor_creci,
+                      corretor_email: form.corretor_email,
+                      gerente_cpf: form.gerente_cpf,
+                      gerente_creci: form.gerente_creci,
+                      gerente_email: form.gerente_email,
                       data_assinatura: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
                     });
                     setContratoOpen(true);
