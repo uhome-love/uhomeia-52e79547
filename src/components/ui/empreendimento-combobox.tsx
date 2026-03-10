@@ -31,6 +31,8 @@ const DEFAULT_EMPREENDIMENTOS = [
 interface Props {
   value: string;
   onChange: (value: string) => void;
+  /** Called only when user picks from dropdown list (not on every keystroke) */
+  onSelect?: (value: string) => void;
   extraOptions?: string[];
   placeholder?: string;
   className?: string;
@@ -39,6 +41,7 @@ interface Props {
 export default function EmpreendimentoCombobox({
   value,
   onChange,
+  onSelect,
   extraOptions = [],
   placeholder = "Selecione ou digite o empreendimento",
   className,
@@ -72,6 +75,7 @@ export default function EmpreendimentoCombobox({
 
   const handleSelect = (option: string) => {
     onChange(option);
+    if (onSelect) onSelect(option);
     setSearch("");
     setOpen(false);
   };
