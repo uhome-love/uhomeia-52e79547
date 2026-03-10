@@ -507,20 +507,14 @@ export default function ImoveisPage() {
                   <div className="flex">
                     {/* Image */}
                     <div className="w-40 h-40 flex-shrink-0 bg-muted relative">
-                      {img ? (
-                        <img src={img} alt={titulo || loc.endereco} className="w-full h-full object-cover" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Home className="h-8 w-8 text-muted-foreground/40" />
-                        </div>
-                      )}
+                      <ImageSlider images={images} alt={titulo || loc.endereco} />
                       {codigo && (
-                        <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px]">
+                        <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px] z-10">
                           {codigo}
                         </Badge>
                       )}
                       {isCampanha && (
-                        <Badge className="absolute top-1 right-1 text-[10px] bg-primary text-primary-foreground">
+                        <Badge className="absolute top-1 right-1 text-[10px] bg-primary text-primary-foreground z-10">
                           <Megaphone className="h-2.5 w-2.5 mr-0.5" /> Campanha
                         </Badge>
                       )}
