@@ -302,6 +302,57 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
     setTarefas(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
   };
 
+  // ── Agendar Reunião (Visita de Negócio) ──
+  const handleAgendarReuniao = async () => {
+    if (!reuniaoData || !reuniaoHora || !user) return;
+    setSalvandoReuniao(true);
+    try {
+      const TIPO_LABELS: Record<string, string> = {
+        fechamento: "Reunião de Fechamento",
+        negociacao: "Reunião de Negociação",
+        assinatura: "Assinatura de Contrato",
+        outro: "Reunião",
+      };
+      await supabase.from("visitas").insert({
+        nome_cliente: fullNeg.nome_cliente,
+        telefone: fullNeg.telefone || null,
+        empreendimento: fullNeg.empreendimento || null,
+        data_visita: reuniaoData,
+        hora_visita: reuniaoHora,
+        local_visita: reuniaoLocal,
+        corretor_id: fullNeg.corretor_id,
+        gerente_id: fullNeg.gerente_id,
+        created_by: user.id,
+        status: "confirmada",
+        origem: "negocio",
+        origem_detalhe: TIPO_LABELS[reuniaoTipo] || reuniaoTipo,
+        observacoes: reuniaoObs || null,
+        tipo: "negocio",
+        negocio_id: negocio.id,
+        tipo_reuniao: reuniaoTipo,
+      } as any);
+
+      // Register activity
+      await supabase.from("negocios_atividades").insert({
+        negocio_id: negocio.id,
+        tipo: "reuniao",
+        titulo: `${TIPO_LABELS[reuniaoTipo]} agendada — ${reuniaoData} ${reuniaoHora}`,
+        created_by: user.id,
+      } as any);
+
+      toast.success(`📅 ${TIPO_LABELS[reuniaoTipo]} agendada!`, {
+        description: `${reuniaoData} às ${reuniaoHora}`,
+      });
+      setReuniaoOpen(false);
+      setReuniaoData(""); setReuniaoHora(""); setReuniaoObs("");
+      // Reload activities
+      const { data } = await supabase.from("negocios_atividades").select("*").eq("negocio_id", negocio.id).order("created_at", { ascending: false }).limit(50);
+      setAtividades((data || []) as NegocioAtividade[]);
+    } finally {
+      setSalvandoReuniao(false);
+    }
+  };
+
   // ── Save imóvel tab ──
   const handleSaveImovel = async () => {
     setSaving(true);
