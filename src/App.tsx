@@ -73,6 +73,7 @@ const GerenteDashboard = lazy(() => import("./pages/GerenteDashboard"));
 const RoletaLeads = lazy(() => import("./pages/RoletaLeads"));
 const ImoveisPage = lazy(() => import("./pages/ImoveisPage"));
 const VitrinePage = lazy(() => import("./pages/VitrinePage"));
+const PosVendas = lazy(() => import("./pages/PosVendas"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
