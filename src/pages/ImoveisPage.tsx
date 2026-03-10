@@ -315,7 +315,7 @@ export default function ImoveisPage() {
   
   // Vitrine selection
   const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [creatingVitrine, setCreatingVitrine] = useState(false);
   const [vitrineLink, setVitrineLink] = useState<string | null>(null);
 
