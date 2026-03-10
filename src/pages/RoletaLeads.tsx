@@ -229,6 +229,55 @@ function CeoView() {
           <RoletagensTab />
         </TabsContent>
       </Tabs>
+
+      {/* Modal: Incluir manualmente na roleta */}
+      <Dialog open={showIncluirModal} onOpenChange={setShowIncluirModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              Incluir Corretor na Roleta
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Corretor</label>
+              <Select value={selectedCorretor} onValueChange={setSelectedCorretor}>
+                <SelectTrigger><SelectValue placeholder="Selecione o corretor" /></SelectTrigger>
+                <SelectContent>
+                  {allCorretores.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Segmento</label>
+              <Select value={selectedSegmento} onValueChange={setSelectedSegmento}>
+                <SelectTrigger><SelectValue placeholder="Selecione o segmento" /></SelectTrigger>
+                <SelectContent>
+                  {segmentos.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              className="w-full"
+              disabled={!selectedCorretor || !selectedSegmento || submitting}
+              onClick={async () => {
+                await incluirManualNaFila(selectedCorretor, selectedSegmento, windowInfo.janela === "madrugada" ? "manha" : windowInfo.janela);
+                setSelectedCorretor("");
+                setSelectedSegmento("");
+                setShowIncluirModal(false);
+              }}
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
+              Incluir na Fila
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
