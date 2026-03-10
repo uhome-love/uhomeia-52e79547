@@ -368,23 +368,27 @@ export function AppSidebar() {
     }
 
     // ── Corretor (default) ──
+    const aceiteItem: NavItem[] = aceiteLeadsPendentes > 0
+      ? [{ title: "Aceite de Leads", url: "/aceite", icon: MailCheck }]
+      : [];
+
     return {
       topItem: { title: "Minha Rotina", url: "/corretor", icon: Home },
       groups: [
         {
-          label: "Gestão de Leads",
+          label: "Gestão Comercial",
           items: [
-            { title: "Aceite de Leads", url: "/aceite", icon: Inbox },
+            { title: "Agenda de Tarefas", url: "/minhas-tarefas", icon: ListTodo },
             { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
-            { title: "📋 Minhas Tarefas", url: "/minhas-tarefas", icon: ListChecks },
-            { title: "Oferta Ativa", url: "/corretor/call", icon: Phone },
             { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
+            { title: "Pipeline Negócios", url: "/meus-negocios", icon: Briefcase },
           ],
         },
         {
-          label: "Gestão de Negócios",
+          label: "Prospecção",
           items: [
-            { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+            { title: "Oferta Ativa", url: "/corretor/call", icon: PhoneCall },
+            ...aceiteItem,
           ],
         },
         {
@@ -398,12 +402,11 @@ export function AppSidebar() {
         {
           label: "Ferramentas",
           items: [
+            { title: "Imóveis", url: "/imoveis", icon: Home },
             { title: "HOMI Assistente", url: "/homi", icon: Bot },
-            { title: "Imóveis", url: "/imoveis", icon: Building2 },
-            { title: "🎓 Academia", url: "/academia", icon: Award },
+            { title: "Academia", url: "/academia", icon: GraduationCap },
             { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
-            { title: "Marketplace", url: "/marketplace", icon: BookOpen },
-            { title: "Notificações", url: "/notificacoes", icon: Bell },
+            { title: "Marketplace", url: "/marketplace", icon: Store },
           ],
         },
       ],
