@@ -440,27 +440,26 @@ export default function MeusNegocios() {
         onOpenChange={setAddNegocioOpen}
         onCreated={() => reload()}
       />
+
+      {selectedNegocio && (
+        <NegocioDetailModal
+          open={!!selectedNegocio}
+          onOpenChange={(open) => { if (!open) setSelectedNegocio(null); }}
+          negocio={selectedNegocio}
+          onUpdate={updateNegocio}
+          onMoveFase={handleMoveFase}
+        />
+      )}
+
+      {celebrationData && (
+        <VendaCelebration
+          nomeCliente={celebrationData.nomeCliente}
+          empreendimento={celebrationData.empreendimento}
+          vgv={celebrationData.vgv}
+          corretorNome={celebrationData.corretorNome}
+          onDismiss={() => setCelebrationData(null)}
+        />
+      )}
     </div>
   );
-}
-
-// Confetti helper
-function spawnConfetti() {
-  const colors = ["#22C55E", "#F59E0B", "#3B82F6", "#8B5CF6", "#FFFFFF"];
-  const container = document.createElement("div");
-  container.style.cssText = "position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden";
-  document.body.appendChild(container);
-  for (let i = 0; i < 50; i++) {
-    const p = document.createElement("div");
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    const left = Math.random() * 100;
-    const delay = Math.random() * 0.5;
-    const size = 6 + Math.random() * 8;
-    p.style.cssText = `position:absolute;top:-10px;left:${left}%;width:${size}px;height:${size}px;background:${color};border-radius:${Math.random() > 0.5 ? "50%" : "2px"};opacity:0.9;animation:confettiNeg ${2 + Math.random()}s ease-in ${delay}s forwards`;
-    container.appendChild(p);
-  }
-  const style = document.createElement("style");
-  style.textContent = `@keyframes confettiNeg { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`;
-  container.appendChild(style);
-  setTimeout(() => container.remove(), 4000);
 }
