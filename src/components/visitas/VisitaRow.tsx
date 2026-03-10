@@ -255,3 +255,6 @@ export default function VisitaRow({ visita: v, onUpdateStatus, onEdit, onDelete,
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+    </div>
+  );
+}
