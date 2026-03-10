@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils";
 
 interface NegocioOption {
   id: string;
-  cliente_nome: string;
-  imovel: string | null;
-  vgv: number | null;
+  nome_cliente: string | null;
+  imovel_interesse: string | null;
+  vgv_estimado: number | null;
   fase: string | null;
   corretor_id: string | null;
 }
