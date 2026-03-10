@@ -368,9 +368,6 @@ export function AppSidebar() {
     }
 
     // ── Corretor (default) ──
-    const aceiteItem: NavItem[] = aceiteLeadsPendentes > 0
-      ? [{ title: "Aceite de Leads", url: "/aceite", icon: MailCheck }]
-      : [];
 
     return {
       topItem: { title: "Minha Rotina", url: "/corretor", icon: Home },
