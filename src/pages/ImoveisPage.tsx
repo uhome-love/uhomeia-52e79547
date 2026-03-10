@@ -54,6 +54,14 @@ function extractEndereco(item: any): { endereco: string; bairro: string; cidade:
 function getNum(item: any, ...keys: string[]): number | null {
   for (const k of keys) {
     const v = item[k];
+    if (v != null && v !== "" && v !== 0 && !isNaN(Number(v))) return Number(v);
+  }
+  return null;
+}
+
+function getNumIncZero(item: any, ...keys: string[]): number | null {
+  for (const k of keys) {
+    const v = item[k];
     if (v != null && v !== "" && !isNaN(Number(v))) return Number(v);
   }
   return null;
