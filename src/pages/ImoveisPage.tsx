@@ -576,9 +576,16 @@ export default function ImoveisPage() {
         </Card>
       ) : (
         <>
+          <PhotoLightbox
+            images={lightboxImages}
+            initialIndex={lightboxIndex}
+            open={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {imoveis.map((item, idx) => {
               const images = extractImages(item);
+              const fullImages = extractFullImages(item);
               const loc = extractEndereco(item);
               const codigo = item.codigo;
               const titulo = item.titulo_anuncio || "";
@@ -591,13 +598,22 @@ export default function ImoveisPage() {
               const cond = getNum(item, "valor_condominio");
               const disponib = item.situacao || item.status || "";
               const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === codigo);
+              const origem = extractOrigemExterna(item);
 
               return (
                 <Card key={item.id_imovel || codigo || idx} className={cn("overflow-hidden hover:shadow-lg transition-shadow", isCampanha && "ring-1 ring-primary/30")}>
                   <div className="flex">
                     {/* Image */}
                     <div className="w-40 h-40 flex-shrink-0 bg-muted relative">
-                      <ImageSlider images={images} alt={titulo || loc.endereco} />
+                      <ImageSlider
+                        images={images}
+                        alt={titulo || loc.endereco}
+                        onClickImage={() => {
+                          setLightboxImages(fullImages.length > 0 ? fullImages : images);
+                          setLightboxIndex(0);
+                          setLightboxOpen(true);
+                        }}
+                      />
                       {codigo && (
                         <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px] z-10">
                           {codigo}
@@ -663,11 +679,45 @@ export default function ImoveisPage() {
                             <p className="text-[10px] text-muted-foreground">Cond. {fmtBRL(cond)}</p>
                           )}
                         </div>
-                        {disponib && (
-                          <Badge variant={disponib === "disponivel" ? "default" : "secondary"} className="text-[10px]">
-                            {disponib}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {origem && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                                  <UserCircle className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-72 p-3" align="end">
+                                <p className="text-xs font-semibold text-foreground mb-2">Responsável / Origem</p>
+                                <div className="space-y-1.5 text-xs">
+                                  {origem.sistema && (
+                                    <p className="text-muted-foreground"><span className="font-medium text-foreground">Sistema:</span> {origem.sistema}</p>
+                                  )}
+                                  {origem.responsavel && (
+                                    <p className="text-muted-foreground"><span className="font-medium text-foreground">Responsável:</span> {origem.responsavel}</p>
+                                  )}
+                                  {origem.telefone && (
+                                    <p className="text-muted-foreground flex items-center gap-1">
+                                      <Phone className="h-3 w-3" />
+                                      <a href={`tel:${origem.telefone.replace(/[^\d+]/g, "")}`} className="text-primary hover:underline">{origem.telefone}</a>
+                                    </p>
+                                  )}
+                                  {origem.email && (
+                                    <p className="text-muted-foreground flex items-center gap-1">
+                                      <Mail className="h-3 w-3" />
+                                      <a href={`mailto:${origem.email}`} className="text-primary hover:underline">{origem.email}</a>
+                                    </p>
+                                  )}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                          {disponib && (
+                            <Badge variant={disponib === "disponivel" ? "default" : "secondary"} className="text-[10px]">
+                              {disponib}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
