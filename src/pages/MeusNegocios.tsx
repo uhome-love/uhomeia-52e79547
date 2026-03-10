@@ -325,7 +325,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
               if (!quickVgvId || !quickVgvValue) return;
               const val = parseInt(quickVgvValue, 10);
               if (!val) return;
-              await updateNegocio(quickVgvId, { vgv_estimado: val });
+              await onUpdateNegocio(quickVgvId, { vgv_estimado: val });
               toast.success("VGV atualizado!");
               setQuickVgvId(null);
             }}>Salvar VGV</Button>
