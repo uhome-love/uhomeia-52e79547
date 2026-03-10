@@ -361,14 +361,20 @@ const PipelineCard = memo(function PipelineCard({
             <MessageCircle className="h-3 w-3" /> WhatsApp
           </Button>
 
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 text-[11px] px-2 gap-1 font-medium text-primary hover:bg-primary/10"
-            onClick={(e) => { e.stopPropagation(); onClick(); }}
+          <QuickActionMenu
+            leadId={lead.id}
+            leadNome={lead.nome}
+            onOpenDetail={onClick}
+            onScheduleVisit={() => setScheduleOpen(true)}
           >
-            <Zap className="h-3 w-3" /> Ação
-          </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-[11px] px-2 gap-1 font-medium text-primary hover:bg-primary/10"
+            >
+              <Zap className="h-3 w-3" /> Ação
+            </Button>
+          </QuickActionMenu>
         </div>
 
         {/* 3-dot quick actions menu */}
