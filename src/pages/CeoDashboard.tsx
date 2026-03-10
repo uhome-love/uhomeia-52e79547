@@ -183,6 +183,25 @@ export default function CeoDashboard() {
     toast.success(`✅ ${item?.corretor_nome || "Corretor"} aprovado(a) na Roleta!`);
   }, [user, localPendentes, getProfileId, insertFilaForCred]);
 
+  const recusar = useCallback(async (id: string) => {
+    if (!user) return;
+    const profileId = await getProfileId();
+    if (!profileId) return;
+    const item = localPendentes.find((c: any) => c.id === id);
+    setLocalPendentes(prev => prev.filter((c: any) => c.id !== id));
+
+    const { error } = await supabase.from("roleta_credenciamentos")
+      .update({ status: "recusado", aprovado_por: profileId, aprovado_em: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao recusar");
+      setLocalPendentes(prev => [...prev, item].filter(Boolean));
+      return;
+    }
+    toast.success(`❌ ${item?.corretor_nome || "Corretor"} recusado(a) da Roleta.`);
+  }, [user, localPendentes, getProfileId]);
+
   const aprovarTodos = useCallback(async () => {
     if (!user) return;
     const profileId = await getProfileId();
