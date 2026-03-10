@@ -110,9 +110,8 @@ export default function PagadoriasPage() {
   // Recalc when comissaoPct or vgv changes
   useEffect(() => {
     if (credores.length > 0) {
-      // Update corretor/gerente auto percentuals
-      const corretorPct = getFaixaPercentual(corretorFaixas, vgvAcumuladoCorretor);
-      const gerentePct = getFaixaPercentual(gerenteFaixas, vgvAcumuladoGerente);
+      const corretorPct = corretorFaixas[selectedCorretorFaixaIdx]?.percentual ?? 0;
+      const gerentePct = gerenteFaixas[selectedGerenteFaixaIdx]?.percentual ?? 0;
       const updated = credores.map(c => {
         if (c.credor_tipo === "corretor") return { ...c, percentual: corretorPct };
         if (c.credor_tipo === "gerente") return { ...c, percentual: gerentePct };
@@ -120,7 +119,7 @@ export default function PagadoriasPage() {
       });
       setCredores(recalcCredores(totalComissao, updated));
     }
-  }, [comissaoPct, form.vgv, vgvAcumuladoCorretor, vgvAcumuladoGerente]);
+  }, [comissaoPct, form.vgv, selectedCorretorFaixaIdx, selectedGerenteFaixaIdx]);
 
   const recalcCredores = (total: number, creds: Credor[]) => {
     const sumPctExcUhome = creds.filter(c => c.credor_tipo !== "uhome").reduce((s, c) => s + c.percentual, 0);
