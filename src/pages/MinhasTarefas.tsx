@@ -110,6 +110,36 @@ export default function MinhasTarefas() {
     refetchOnWindowFocus: true,
   });
 
+  // ── Negocios tasks ──
+  const { data: negociosTarefas = [], isLoading: isLoadingNegocios } = useQuery({
+    queryKey: ["minhas-tarefas-negocios", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("negocios_tarefas")
+        .select("*")
+        .or(`responsavel_id.eq.${user.id},created_by.eq.${user.id}`)
+        .order("vence_em", { ascending: true })
+        .order("hora_vencimento", { ascending: true });
+      if (error) return [];
+      const rows = (data || []) as any[];
+      // Enrich with negocio info
+      const negIds = [...new Set(rows.map(r => r.negocio_id).filter(Boolean))];
+      if (negIds.length > 0) {
+        const { data: negs } = await supabase
+          .from("negocios").select("id, nome_cliente, telefone, empreendimento").in("id", negIds);
+        const negMap = new Map((negs || []).map(n => [n.id, n]));
+        rows.forEach(r => {
+          const neg = negMap.get(r.negocio_id);
+          if (neg) { r.lead_nome = neg.nome_cliente; r.lead_telefone = neg.telefone; r.lead_empreendimento = neg.empreendimento; r.pipeline_lead_id = neg.id; }
+        });
+      }
+      return rows as TarefaComLead[];
+    },
+    enabled: !!user,
+    refetchOnWindowFocus: true,
+  });
+
   const { data: searchLeads = [] } = useQuery({
     queryKey: ["lead-search-tarefas", leadSearch],
     queryFn: async () => {
