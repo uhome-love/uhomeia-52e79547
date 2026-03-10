@@ -452,16 +452,28 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
             {contratadosList.map((c, i) => (
               <div key={`contratado-${i}`}>
                 <div style={{ borderTop: "1px solid #000", width: "70%", margin: "40px auto 5px auto" }} />
+                <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "0px" }}>
+                  <b>CONTRATADO:</b>
+                </p>
+                <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "0px" }}>
+                  <b>CORRETOR{c.tipo === "Corretora" ? "A" : ""}:</b>
+                </p>
                 <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "3px" }}>
-                  <b>CONTRATADO — CORRETOR(A):</b> {c.nome}
+                  {c.nome}
                 </p>
               </div>
             ))}
 
             {/* UHOME / IMOBILIÁRIA */}
             <div style={{ borderTop: "1px solid #000", width: "70%", margin: "40px auto 5px auto" }} />
+            <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "0px" }}>
+              <b>CONTRATADO:</b>
+            </p>
+            <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "0px" }}>
+              <b>IMOBILIÁRIA:</b>
+            </p>
             <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "3px" }}>
-              <b>CONTRATADO — IMOBILIÁRIA:</b> UHOME NEGÓCIOS IMOBILIÁRIOS
+              UHOME NEGÓCIOS IMOBILIÁRIOS
             </p>
           </div>
 
