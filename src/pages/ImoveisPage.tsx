@@ -106,7 +106,10 @@ export default function ImoveisPage() {
     }
   }, [search, contrato, tipo, cidade, bairro, dormitorios, valorMin, valorMax]);
 
+  const mounted = React.useRef(false);
   useEffect(() => {
+    if (mounted.current) return;
+    mounted.current = true;
     fetchImoveis(1);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
