@@ -50,6 +50,12 @@ export interface TeamData {
   visitasMarcadas: number; visitasRealizadas: number; propostas: number; vgv: number;
 }
 
+export interface CorretorRankData {
+  corretor_id: string; nome: string; gerente_nome: string;
+  ligacoes: number; aproveitados: number; taxa: number;
+  visitasMarcadas: number; visitasRealizadas: number; propostas: number; vgv: number;
+}
+
 export interface OrigemData {
   origem: string; count: number;
 }
