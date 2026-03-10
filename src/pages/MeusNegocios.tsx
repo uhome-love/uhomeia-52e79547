@@ -165,6 +165,10 @@ export default function MeusNegocios() {
   const [refreshing, setRefreshing] = useState(false);
   const [addNegocioOpen, setAddNegocioOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedNegocio, setSelectedNegocio] = useState<Negocio | null>(null);
+  const [celebrationData, setCelebrationData] = useState<{
+    nomeCliente: string; empreendimento?: string; vgv: number; corretorNome?: string;
+  } | null>(null);
   const dragNegocioId = useRef<string | null>(null);
   const [dragOverFase, setDragOverFase] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
