@@ -197,7 +197,7 @@ Seja direto, use dados concretos. Máximo 300 palavras. Período: ${periodo || "
 ═══ DADOS REAIS CONSOLIDADOS — VISÃO CEO ═══
 Data: ${today} | Mês: ${currentMonth}
 
-📊 PDN GLOBAL — ${currentMonth}
+📊 NEGÓCIOS GLOBAL — ${currentMonth}
 ${pdnGlobal}
 
 📋 CHECKPOINT CONSOLIDADO HOJE
