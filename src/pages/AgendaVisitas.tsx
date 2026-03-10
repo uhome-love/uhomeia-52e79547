@@ -620,8 +620,22 @@ export default function AgendaVisitas() {
         )}
       </Tabs>
 
+      {/* ─── TYPE SELECTOR ─── */}
+      <VisitaTypeSelector
+        open={showTypeSelector}
+        onClose={() => setShowTypeSelector(false)}
+        onSelectImovel={() => { setShowTypeSelector(false); setShowForm(true); }}
+        onSelectReuniao={() => { setShowTypeSelector(false); setShowReuniaoForm(true); }}
+      />
+
+      {/* ─── VISITA IMÓVEL FORM ─── */}
       {showForm && (
         <VisitaForm open={showForm} onClose={() => setShowForm(false)} onSubmit={createVisita} />
+      )}
+
+      {/* ─── REUNIÃO NEGÓCIO FORM ─── */}
+      {showReuniaoForm && (
+        <ReuniaoNegocioForm open={showReuniaoForm} onClose={() => setShowReuniaoForm(false)} onSubmit={createVisita} />
       )}
 
       {editingVisita && (
