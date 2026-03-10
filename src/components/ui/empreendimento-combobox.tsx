@@ -41,6 +41,7 @@ interface Props {
 export default function EmpreendimentoCombobox({
   value,
   onChange,
+  onSelect,
   extraOptions = [],
   placeholder = "Selecione ou digite o empreendimento",
   className,
