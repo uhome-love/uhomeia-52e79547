@@ -488,7 +488,7 @@ export default function ImoveisPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {imoveis.map((item, idx) => {
-              const img = extractImage(item);
+              const images = extractImages(item);
               const loc = extractEndereco(item);
               const codigo = item.codigo;
               const titulo = item.titulo_anuncio || "";
