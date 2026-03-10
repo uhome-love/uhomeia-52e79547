@@ -63,7 +63,7 @@ const toUiJanela = (janela: string): JanelaKey => (janela === "noturna" ? "noite
 const JANELAS_CONFIG: JanelaConfig[] = [
   { key: "manha", label: "Manhã", emoji: "🌅", icon: Sun, credAberto: { inicio: 7.5, fim: 9.5 }, recebimento: "7h30 — 9h30", temRequisitos: false },
   { key: "tarde", label: "Tarde", emoji: "🌞", icon: Sunset, credAberto: { inicio: 12, fim: 13.5 }, recebimento: "13h30 — 18h", temRequisitos: false },
-  { key: "noite", label: "Noite", emoji: "🌙", icon: Moon, credAberto: { inicio: 18.5, fim: 20.5 }, recebimento: "18h30 — 20h30", temRequisitos: true },
+  { key: "noite", label: "Noite", emoji: "🌙", icon: Moon, credAberto: { inicio: 18.5, fim: 20.5 }, recebimento: "18h — 23h30", temRequisitos: true },
 ];
 
 function getHoraDecimal() {
@@ -440,7 +440,7 @@ export default function RoletaStatusBar() {
                                 : jStatus === "encerrado"
                                   ? "Encerrado"
                                   : jStatus === "futuro"
-                                    ? `Abre às ${j.credAberto.inicio}h`
+                                    ? `Abre às ${j.credAberto.inicio === 7.5 ? "07:30" : j.credAberto.inicio === 12 ? "12:00" : j.credAberto.inicio === 18.5 ? "18:30" : j.credAberto.inicio + "h"}`
                                     : `Aberto até ${j.credAberto.fim === 13.5 ? "13:30" : j.credAberto.fim === 9.5 ? "09:30" : j.credAberto.fim === 20.5 ? "20:30" : j.credAberto.fim + "h"}`
                             }
                           </p>
