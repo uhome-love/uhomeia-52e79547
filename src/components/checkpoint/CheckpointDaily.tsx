@@ -199,10 +199,10 @@ export default function CheckpointDaily() {
       const oa = oaStats[m.id];
       const cGoal = goalsMap[m.id];
       if (existing) {
-        // Auto-fill metas from corretor goals if checkpoint meta is still 0 and corretor set a goal
-        const autoLig = (existing.meta_ligacoes === 0 || existing.meta_ligacoes == null) && cGoal ? cGoal.meta_ligacoes : (existing.meta_ligacoes ?? 0);
-        const autoLeads = (existing.meta_leads === 0 || existing.meta_leads == null) && cGoal ? cGoal.meta_aproveitados : (existing.meta_leads ?? 0);
-        const autoVisitas = (existing.meta_visitas_marcadas === 0 || existing.meta_visitas_marcadas == null) && cGoal ? cGoal.meta_visitas_marcadas : (existing.meta_visitas_marcadas ?? 0);
+        // Always sync metas from corretor goals when available
+        const autoLig = cGoal ? cGoal.meta_ligacoes : (existing.meta_ligacoes ?? 0);
+        const autoLeads = cGoal ? cGoal.meta_aproveitados : (existing.meta_leads ?? 0);
+        const autoVisitas = cGoal ? cGoal.meta_visitas_marcadas : (existing.meta_visitas_marcadas ?? 0);
         allLines.push({
           id: existing.id, corretor_id: m.id, corretor_nome: m.nome,
           meta_ligacoes: autoLig, meta_presenca: existing.meta_presenca ?? "sim",
