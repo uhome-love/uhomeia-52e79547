@@ -70,6 +70,7 @@ const AcademiaAulaPage = lazy(() => import("./pages/AcademiaAulaPage"));
 const AcademiaGerenciarPage = lazy(() => import("./pages/AcademiaGerenciarPage"));
 const GerenteDashboard = lazy(() => import("./pages/GerenteDashboard"));
 const RoletaLeads = lazy(() => import("./pages/RoletaLeads"));
+const ImoveisPage = lazy(() => import("./pages/ImoveisPage"));
 
 
 const queryClient = new QueryClient({
