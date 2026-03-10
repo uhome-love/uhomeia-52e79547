@@ -708,7 +708,17 @@ export default function ImoveisPage() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={somenteObras}
+                onChange={(e) => setSomenteObras(e.target.checked)}
+                className="rounded border-border"
+              />
+              <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-muted-foreground font-medium">Somente em obras / na planta</span>
+            </label>
             <Button onClick={handleSearch} disabled={loading} className="gap-2">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               Buscar
