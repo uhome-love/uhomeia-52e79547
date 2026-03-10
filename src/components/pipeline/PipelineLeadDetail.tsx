@@ -291,7 +291,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               </DropdownMenu>
             </div>
 
-            {/* Row 4: Empreendimento + Canal + Campanha */}
+            {/* Row 4: Empreendimento + Canal + Campanha + Jetimob */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1.5">
                 <Building2 className="h-3.5 w-3.5" />
@@ -306,6 +306,16 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 <span className="flex items-center gap-1 text-xs">
                   📢 {(lead as any).origem_detalhe}
                 </span>
+              )}
+              {jetimobCode && (
+                <span className="flex items-center gap-1 text-xs">
+                  <Tag className="h-3 w-3" /> {jetimobCode}
+                </span>
+              )}
+              {callAttempts > 0 && (
+                <Badge variant={callAttempts >= 4 ? "destructive" : "secondary"} className="text-[10px] h-5 px-1.5">
+                  📞 {callAttempts}/4 tentativas
+                </Badge>
               )}
             </div>
 
