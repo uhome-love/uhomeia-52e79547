@@ -48,6 +48,26 @@ const TIPO_EMOJI: Record<string, string> = {
   enviar_material: "📎", marcar_visita: "📅", confirmar_visita: "✅", retornar_cliente: "↩️", outro: "📋",
 };
 
+const NEGOCIO_TIPO_LABELS: Record<string, string> = {
+  mandar_simulacao: "Mandar simulação",
+  mandar_sugestao_proposta: "Mandar sugestão de proposta",
+  solicitar_documentos: "Solicitar documentos",
+  enviar_minuta: "Enviar minuta de contrato",
+  enviar_contrato_assinar: "Enviar contrato para assinar",
+  assinar_contrato: "Assinar contrato",
+  entregar_presente: "Entregar presente da venda",
+};
+
+const NEGOCIO_TIPO_EMOJI: Record<string, string> = {
+  mandar_simulacao: "📊",
+  mandar_sugestao_proposta: "💡",
+  solicitar_documentos: "📋",
+  enviar_minuta: "📄",
+  enviar_contrato_assinar: "✍️",
+  assinar_contrato: "🖊️",
+  entregar_presente: "🎁",
+};
+
 type TabFilter = "hoje" | "amanha" | "semana" | "atrasadas" | "concluidas";
 
 function formatPhone(phone: string) {
