@@ -109,6 +109,56 @@ export default function BuscaLeads() {
   const executeAction = async () => {
     if (!actionModal) return;
     const { acao, lead } = actionModal;
+
+    // Pipeline inclusion — handled separately
+    if (acao === "incluir_pipeline") {
+      if (!selectedCorretor) {
+        toast.error("Selecione o corretor");
+        return;
+      }
+      setExecuting(true);
+      try {
+        // Check duplicate by phone
+        if (lead.telefone) {
+          const { data: existing } = await supabase
+            .from("pipeline_leads")
+            .select("id")
+            .eq("telefone", lead.telefone)
+            .eq("corretor_id", selectedCorretor)
+            .limit(1);
+          if (existing && existing.length > 0) {
+            toast.error("Este lead já existe no pipeline deste corretor");
+            setExecuting(false);
+            return;
+          }
+        }
+
+        const { error } = await supabase.from("pipeline_leads").insert({
+          nome: lead.nome,
+          telefone: lead.telefone,
+          email: lead.email,
+          empreendimento: lead.empreendimento,
+          campanha: lead.campanha,
+          origem: lead.origem || "oferta_ativa",
+          corretor_id: selectedCorretor,
+          estagio: "novo",
+          aceite_status: "aceito",
+          status_temp: "morno",
+          observacoes: motivo || `Incluído via Busca de Leads (OA)`,
+        });
+        if (error) throw error;
+        toast.success("✅ Lead incluído no pipeline do corretor!");
+        setActionModal(null);
+        setSelectedLead(null);
+        handleSearch();
+      } catch (err: any) {
+        console.error(err);
+        toast.error("Erro ao incluir no pipeline");
+      }
+      setExecuting(false);
+      return;
+    }
+
     if ((acao === "aproveitado" || acao === "transferir") && !selectedCorretor) {
       toast.error("Selecione o corretor");
       return;
