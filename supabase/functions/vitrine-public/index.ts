@@ -6,39 +6,59 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function fetchImovelFromJetimob(apiKey: string, codigo: number) {
-  const url = `https://api.jetimob.com/webservice/${apiKey}/imoveis/codigo/${codigo}?v=6`;
-  console.log(`Fetching imovel ${codigo} from Jetimob...`);
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) {
-    console.warn(`Jetimob returned ${res.status} for codigo ${codigo}`);
-    return null;
+async function fetchImovelFromJetimob(apiKey: string, imovelId: number) {
+  // imovel_ids stores internal Jetimob IDs (id_imovel), not property codes
+  // Try fetching by internal ID first, then fallback to codigo
+  const urls = [
+    `https://api.jetimob.com/webservice/${apiKey}/imoveis/${imovelId}?v=6`,
+    `https://api.jetimob.com/webservice/${apiKey}/imoveis/codigo/${imovelId}?v=6`,
+  ];
+
+  let item: any = null;
+  for (const url of urls) {
+    console.log(`Trying: ${url}`);
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (res.ok) {
+      const data = await res.json();
+      const result = data?.result || data?.data || data;
+      if (result && (result.id || result.codigo || result.id_imovel)) {
+        item = result;
+        console.log(`Success for imovel ${imovelId} via ${url}`);
+        break;
+      }
+    } else {
+      console.warn(`${url} returned ${res.status}`);
+    }
   }
-  const data = await res.json();
-  const item = data?.result || data;
-  if (!item || (!item.id && !item.codigo)) {
-    console.warn(`No result for codigo ${codigo}`);
+
+  if (!item) {
+    console.warn(`No result for imovel ${imovelId} on any endpoint`);
     return null;
   }
 
-  const fotos = (item.fotos || []).slice(0, 10).map((f: any) => f.link || f.link_thumb || f.url).filter(Boolean);
+  // Extract images - try multiple field names
+  const imgArr = item.imagens || item.fotos || [];
+  const fotos = imgArr.slice(0, 10).map((f: any) => f.link || f.link_thumb || f.url).filter(Boolean);
+
+  const codigo = item.codigo || "";
 
   return {
-    id: item.id || item.codigo || codigo,
-    titulo: item.titulo || item.descricao_curta || `Imóvel ${codigo}`,
+    id: item.id_imovel || item.id || imovelId,
+    codigo,
+    titulo: item.titulo || item.descricao_curta || `Imóvel ${codigo || imovelId}`,
     endereco: item.endereco?.logradouro
       ? `${item.endereco.logradouro}${item.endereco.bairro ? `, ${item.endereco.bairro}` : ""}${item.endereco.cidade ? ` — ${item.endereco.cidade}` : ""}`
-      : null,
-    bairro: item.endereco?.bairro || null,
-    cidade: item.endereco?.cidade || null,
-    area: item.area_util || item.area_total || null,
+      : (item.bairro ? `${item.bairro}${item.cidade ? ` — ${item.cidade}` : ""}` : null),
+    bairro: item.endereco?.bairro || item.bairro || null,
+    cidade: item.endereco?.cidade || item.cidade || null,
+    area: item.area_util || item.area_total || item.area || null,
     quartos: item.quartos || item.dormitorios || null,
     suites: item.suites || null,
     vagas: item.vagas || item.garagens || null,
     banheiros: item.banheiros || null,
     valor: item.valor_venda || item.valor || null,
     fotos,
-    empreendimento: item.empreendimento?.nome || null,
+    empreendimento: item.empreendimento?.nome || item.empreendimento || null,
     descricao: item.descricao_curta || item.titulo || null,
   };
 }
