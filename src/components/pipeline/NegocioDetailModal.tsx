@@ -105,7 +105,7 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fullNeg, setFullNeg] = useState<NegocioExtended>(negocio as NegocioExtended);
-  const [activeTab, setActiveTab] = useState("tarefas");
+  const [activeTab, setActiveTab] = useState("historico");
 
   // Data
   const [atividades, setAtividades] = useState<NegocioAtividade[]>([]);
