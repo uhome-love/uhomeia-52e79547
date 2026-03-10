@@ -783,7 +783,7 @@ export default function MeusNegocios() {
           onOpenChange={(open) => { if (!open) setSelectedNegocio(null); }}
           negocio={selectedNegocio}
           onUpdate={updateNegocio}
-          onMoveFase={handleMoveFase}
+          onMoveFase={requestMoveFase}
         />
       )}
 
