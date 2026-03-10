@@ -70,20 +70,20 @@ export function getCurrentWindowInfo(): {
   credenciamentoAberto = true;
   credenciamentoJanela = "manha";
 
-  if (mins < t1000) {
-    // 00:00 — 10:00: Madrugada/acúmulo.
+  if (mins < t0730) {
+    // 00:00 — 07:30: Madrugada/acúmulo.
     janela = "madrugada";
     emoji = "🌅";
     descricao = "Credenciamento manhã aberto";
-    nextTransitionMins = t1000;
-  } else if (mins < t1200) {
-    // 10:00 — 12:00: Manhã ativa.
+    nextTransitionMins = t0730;
+  } else if (mins < t0930) {
+    // 07:30 — 09:30: Manhã ativa.
     janela = "manha";
     emoji = "☀️";
     descricao = "Roleta da manhã ativa · Cred manhã aberto";
-    nextTransitionMins = t1200;
+    nextTransitionMins = t0930;
   } else if (mins < t1330) {
-    // 12:00 — 13:30: Intervalo, cred tarde aberto.
+    // 09:30 — 13:30: Intervalo, cred tarde aberto.
     janela = "manha";
     emoji = "☀️";
     descricao = "Cred manhã e tarde abertos";
