@@ -62,6 +62,7 @@ export default function MinhasTarefas() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [categoria, setCategoria] = useState<"leads" | "negocios">("leads");
   const [activeTab, setActiveTab] = useState<TabFilter>("hoje");
   const [adiarId, setAdiarId] = useState<string | null>(null);
   const [adiarData, setAdiarData] = useState("");
