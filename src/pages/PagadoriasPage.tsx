@@ -16,6 +16,7 @@ import { DollarSign, Plus, Search, FileText, Link, Loader2, Trash2, Settings, Fi
 import { toast } from "sonner";
 import PagadoriaConfigModal from "@/components/pagadorias/PagadoriaConfigModal";
 import ContratoIntermediacao from "@/components/pagadorias/ContratoIntermediacao";
+import CompradorDocUpload, { type Comprador } from "@/components/pagadorias/CompradorDocUpload";
 
 const STATUS_MAP: Record<string, { label: string }> = {
   rascunho: { label: "Rascunho" },
