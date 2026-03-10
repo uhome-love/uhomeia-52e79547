@@ -110,12 +110,12 @@ export default function MinhaAgendaWidget() {
       if (negIds.length > 0) {
         const { data: negs } = await supabase
           .from("negocios")
-          .select("id, nome")
+          .select("id, nome_cliente")
           .in("id", negIds);
         const negMap = new Map((negs || []).map(n => [n.id, n]));
         rows.forEach(r => {
           const neg = negMap.get(r.negocio_id);
-          if (neg) { r.negocio_nome = neg.nome; }
+          if (neg) { r.negocio_nome = neg.nome_cliente; }
         });
       }
       return rows.map(r => ({ ...r, _source: "negocio" as const })) as TarefaAgenda[];
