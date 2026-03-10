@@ -341,9 +341,9 @@ export default function MinhasTarefas() {
                     </div>
                   </div>
 
-                  <button onClick={() => navigate("/pipeline")} className="text-sm font-semibold text-foreground hover:text-primary transition-colors flex items-center gap-1">
+                  <button onClick={() => navigate(categoria === "negocios" ? "/meus-negocios" : "/pipeline")} className="text-sm font-semibold text-foreground hover:text-primary transition-colors flex items-center gap-1">
                     <User className="h-3.5 w-3.5" />
-                    {tarefa.lead_nome || "Lead"}
+                    {tarefa.lead_nome || (categoria === "negocios" ? "Negócio" : "Lead")}
                   </button>
 
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
