@@ -361,26 +361,25 @@ export default function PagadoriasPage() {
               {/* SEÇÃO B — Tabela Progressiva do Corretor */}
               <div className="space-y-2 border rounded-lg p-3">
                 <h4 className="font-semibold text-sm">Comissão do Corretor (tabela progressiva)</h4>
-                <div className="flex gap-2 flex-wrap text-xs">
-                  {corretorFaixas.map((f, i) => {
-                    const active = getFaixaPercentual(corretorFaixas, vgvAcumuladoCorretor) === f.percentual;
-                    return (
-                      <span key={i} className={`px-2 py-1 rounded ${active ? "bg-primary/20 text-primary font-semibold border border-primary/40" : "bg-muted"}`}>
-                        {fmtVgv(f.vgv_max)} → {f.percentual}%
-                      </span>
-                    );
-                  })}
-                </div>
                 <div className="grid grid-cols-2 gap-3 items-end">
                   <div>
-                    <Label className="text-xs">VGV acumulado do corretor no mês</Label>
-                    <Input type="number" value={vgvAcumuladoCorretor || ""} onChange={e => setVgvAcumuladoCorretor(Number(e.target.value))} className="h-8 text-sm" />
+                    <Label className="text-xs">Faixa do corretor</Label>
+                    <Select value={String(selectedCorretorFaixaIdx)} onValueChange={v => setSelectedCorretorFaixaIdx(Number(v))}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {corretorFaixas.map((f, i) => (
+                          <SelectItem key={i} value={String(i)}>
+                            {fmtVgv(f.vgv_max)} → {f.percentual}%
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="text-sm">
                     <span className="text-muted-foreground">Corretor recebe </span>
-                    <strong className="text-primary">{getFaixaPercentual(corretorFaixas, vgvAcumuladoCorretor)}%</strong>
+                    <strong className="text-primary">{corretorFaixas[selectedCorretorFaixaIdx]?.percentual ?? 0}%</strong>
                     <span className="text-muted-foreground"> → </span>
-                    <strong>{fmtR((getFaixaPercentual(corretorFaixas, vgvAcumuladoCorretor) / 100) * totalComissao)}</strong>
+                    <strong>{fmtR(((corretorFaixas[selectedCorretorFaixaIdx]?.percentual ?? 0) / 100) * totalComissao)}</strong>
                   </div>
                 </div>
               </div>
