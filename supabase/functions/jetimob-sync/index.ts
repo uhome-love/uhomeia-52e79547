@@ -203,16 +203,32 @@ serve(async (req) => {
       );
     }
 
-    // Load empreendimento → segmento mapping from roleta_campanhas
-    const { data: campanhasData } = await adminClient
-      .from("roleta_campanhas")
-      .select("empreendimento, segmento_id")
-      .eq("ativo", true);
+    // Load empreendimento → pipeline_segmento mapping
+    // roleta_campanhas uses roleta_segmentos IDs, but pipeline_leads FK references pipeline_segmentos
+    // We resolve by matching segment names between the two tables
+    const [campanhasRes, roletaSegsRes, pipelineSegsRes] = await Promise.all([
+      adminClient.from("roleta_campanhas").select("empreendimento, segmento_id").eq("ativo", true),
+      adminClient.from("roleta_segmentos").select("id, nome"),
+      adminClient.from("pipeline_segmentos").select("id, nome"),
+    ]);
 
+    // Build roleta_segmento_id → pipeline_segmento_id mapping
+    const roletaToPipeline = new Map<string, string>();
+    for (const rs of roletaSegsRes.data || []) {
+      const ps = (pipelineSegsRes.data || []).find(
+        (p: any) => p.nome.toLowerCase().trim() === rs.nome.toLowerCase().trim()
+      );
+      if (ps) roletaToPipeline.set(rs.id, ps.id);
+    }
+
+    // Build empreendimento → pipeline_segmento_id mapping
     const empToSegmento = new Map<string, string>();
-    for (const c of campanhasData || []) {
+    for (const c of campanhasRes.data || []) {
       if (c.empreendimento && c.segmento_id) {
-        empToSegmento.set(c.empreendimento.toLowerCase().trim(), c.segmento_id);
+        const pipelineSegId = roletaToPipeline.get(c.segmento_id);
+        if (pipelineSegId) {
+          empToSegmento.set(c.empreendimento.toLowerCase().trim(), pipelineSegId);
+        }
       }
     }
 
