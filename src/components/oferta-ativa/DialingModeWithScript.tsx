@@ -484,9 +484,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const timerColorClass = callTimer <= 30 ? "arena-timer-green" : callTimer <= 60 ? "arena-timer-amber" : "arena-timer-red";
 
   const objections = [
-    { emoji: "💰", label: "Está caro", answer: `Para o ${lead.empreendimento || "empreendimento"}: compare o m² com a região. Temos condições de entrada facilitada e financiamento. Posso montar uma simulação?` },
-    { emoji: "🤔", label: "Preciso pensar", answer: `Faz sentido! Que tal uma visita sem compromisso? Muitos clientes decidem ao ver pessoalmente. Posso agendar algo rápido de 20 min?` },
-    { emoji: "❌", label: "Não é o momento", answer: `Entendo! Mas o ${lead.empreendimento || "empreendimento"} já vendeu boa parte. As melhores unidades vão primeiro. Reservar sem custo garante a oportunidade.` },
+    { emoji: "💰", label: "Está caro", answer: `Compare o custo-benefício com imóveis similares da região. Temos condições de entrada facilitada e financiamento direto. Posso montar uma simulação personalizada?` },
+    { emoji: "🤔", label: "Preciso pensar", answer: `Faz sentido! Que tal uma visita sem compromisso? Muitos clientes decidem ao conhecer pessoalmente. Posso agendar algo rápido de 20 min?` },
+    { emoji: "❌", label: "Não é o momento", answer: `Entendo! Mas as melhores unidades são as primeiras a sair. Reservar sem custo garante a oportunidade quando for a hora certa.` },
     { emoji: "👫", label: "Falar c/ cônjuge", answer: `Claro! Que tal agendar uma visita juntos? Assim vocês conhecem e decidem juntos. Qual o melhor dia?` },
   ];
 
@@ -725,12 +725,12 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           scrollbarWidth: "thin",
         }}
       >
-        <ScriptPanel empreendimento={lista.empreendimento} lead={lead} compact darkMode scriptFilter={scriptTab} hideCta />
+        <ScriptPanel empreendimento={selectedEmp} lead={lead} compact darkMode scriptFilter={scriptTab} hideCta onEmpChange={setSelectedEmp} />
       </div>
 
       {/* Ficha Rápida — between script and CTA */}
       <div className="shrink-0 px-2 py-2" style={{ background: "#161B22" }}>
-        <FichaRapida empreendimento={selectedEmp} />
+        <FichaRapida empreendimento={selectedEmp} onEmpChange={setSelectedEmp} />
       </div>
 
       {/* CTA Final — pinned at bottom */}
