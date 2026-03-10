@@ -2408,6 +2408,7 @@ export type Database = {
         Row: {
           corretor_id: string | null
           created_at: string | null
+          data_assinatura: string | null
           documentacao_situacao: string | null
           empreendimento: string | null
           fase: string | null
@@ -2437,6 +2438,7 @@ export type Database = {
         Insert: {
           corretor_id?: string | null
           created_at?: string | null
+          data_assinatura?: string | null
           documentacao_situacao?: string | null
           empreendimento?: string | null
           fase?: string | null
@@ -2466,6 +2468,7 @@ export type Database = {
         Update: {
           corretor_id?: string | null
           created_at?: string | null
+          data_assinatura?: string | null
           documentacao_situacao?: string | null
           empreendimento?: string | null
           fase?: string | null
