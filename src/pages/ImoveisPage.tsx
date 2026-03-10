@@ -14,6 +14,64 @@ import { cn } from "@/lib/utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/** Extract all image URLs from Jetimob imagens array */
+function extractImages(item: any): string[] {
+  const arr = item.imagens;
+  if (!Array.isArray(arr) || arr.length === 0) return [];
+  return arr.map((img: any) => img.link_thumb || img.link).filter(Boolean);
+}
+
+/** Mini image slider for property cards */
+function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
+  const [current, setCurrent] = useState(0);
+
+  if (images.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Home className="h-8 w-8 text-muted-foreground/40" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full relative group">
+      <img
+        src={images[current]}
+        alt={alt}
+        className="w-full h-full object-cover"
+        loading="lazy"
+      />
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); setCurrent((p) => (p - 1 + images.length) % images.length); }}
+            className="absolute left-0.5 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background/90 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Foto anterior"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setCurrent((p) => (p + 1) % images.length); }}
+            className="absolute right-0.5 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background/90 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Próxima foto"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {images.slice(0, 8).map((_, i) => (
+              <span
+                key={i}
+                className={cn("w-1.5 h-1.5 rounded-full", i === current ? "bg-primary" : "bg-background/60")}
+              />
+            ))}
+            {images.length > 8 && <span className="text-[8px] text-background/80 ml-0.5">+{images.length - 8}</span>}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Códigos dos imóveis com campanha de leads ativa */
 const CAMPANHA_CODES: { codigo: string; nome: string }[] = [
   { codigo: "97325-UH", nome: "Shift" },
