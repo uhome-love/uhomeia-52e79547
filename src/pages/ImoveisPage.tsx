@@ -171,13 +171,22 @@ export default function ImoveisPage() {
 
   const handleSearch = () => {
     setCampanhaAtiva(false);
-    fetchImoveis(1, false);
+    setUhomeOnly(false);
+    fetchImoveis(1, false, false);
   };
 
   const handleCampanha = () => {
     const next = !campanhaAtiva;
     setCampanhaAtiva(next);
-    fetchImoveis(1, next);
+    setUhomeOnly(false);
+    fetchImoveis(1, next, false);
+  };
+
+  const handleUhome = () => {
+    const next = !uhomeOnly;
+    setUhomeOnly(next);
+    setCampanhaAtiva(false);
+    fetchImoveis(1, false, next);
   };
 
   const getPreco = (item: any): string => {
