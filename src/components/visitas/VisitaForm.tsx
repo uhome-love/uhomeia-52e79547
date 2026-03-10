@@ -34,6 +34,14 @@ interface Props {
 
 const QUICK_TIMES = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
 
+const LOCAL_OPTIONS = [
+  { value: "stand", label: "🏗️ Stand do empreendimento" },
+  { value: "empresa", label: "🏢 Escritório / Empresa" },
+  { value: "videochamada", label: "📹 Videochamada" },
+  { value: "decorado", label: "🏠 Apartamento decorado" },
+  { value: "outro", label: "📍 Outro" },
+];
+
 function getDefaultForm(initialData?: Props["initialData"]) {
   return {
     nome_cliente: initialData?.nome_cliente || "",
@@ -43,6 +51,7 @@ function getDefaultForm(initialData?: Props["initialData"]) {
     origem: initialData?.origem || "manual",
     data_visita: initialData?.data_visita || new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
     hora_visita: initialData?.hora_visita || "",
+    local_visita: initialData?.local_visita || "",
     observacoes: initialData?.observacoes || "",
     pipeline_lead_id: (initialData as any)?.pipeline_lead_id || "",
   };
