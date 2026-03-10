@@ -322,14 +322,17 @@ serve(async (req) => {
         }
 
         // Resolve segmento from empreendimento
-        const segmentoId = resolveSegmentoId(empreendimento);
+        // For campaign-specific segments (e.g. "Melnick Day Compactos" → Investimento),
+        // try the full campanha name first before falling back to empreendimento
+        let segmentoId = campanhaNome ? resolveSegmentoId(campanhaNome) : null;
+        if (!segmentoId) {
+          segmentoId = resolveSegmentoId(empreendimento);
+        }
 
-        // Extract campaign detail (e.g. "Vídeo Lucas", "Video Gabriel")
-        const campanhaDetalhe = campanhaNome || msg || null;
-        // Clean origin: just empreendimento name for display; full text goes to origem_detalhe
-        const origemClean = empreendimento !== "Avulso" ? empreendimento : (lead.source || lead.origin || "API Jetimob");
-        // Detect canal (Meta Ads, TikTok, Portal, etc.)
+        // origem = channel (TikTok, Meta Ads, etc.) — detected from message/source
         const canalOrigem = detectCanal(msg, lead.source, lead.origin);
+        // origem_detalhe = full campaign name from the form (e.g. "Melnick Day Compactos (Video Gabriel)")
+        const campanhaDetalhe = campanhaNome || null;
 
         const { data: insertedLead, error: insertError } = await adminClient
           .from("pipeline_leads")
@@ -341,7 +344,7 @@ serve(async (req) => {
             empreendimento,
             segmento_id: segmentoId,
             stage_id: novoLeadStageId,
-            origem: origemClean,
+            origem: canalOrigem,
             origem_detalhe: campanhaDetalhe,
             jetimob_lead_id: jetimobId,
             observacoes: msg || null,

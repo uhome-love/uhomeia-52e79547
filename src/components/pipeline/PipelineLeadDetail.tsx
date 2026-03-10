@@ -274,18 +274,32 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               </DropdownMenu>
             </div>
 
-            {/* Row 4: Empreendimento + Campanha/Origem */}
-            <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+            {/* Row 4: Empreendimento + Canal + Campanha */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1.5">
                 <Building2 className="h-3.5 w-3.5" />
                 <span className="font-medium text-foreground/80">{lead.empreendimento || 'Sem empreendimento'}</span>
               </span>
-              {((lead as any).origem_detalhe || (lead as any).origem) && (
-                <span className="flex items-center gap-1.5">
-                  📢 {(lead as any).origem_detalhe || (lead as any).origem}
+              {(lead as any).origem && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium">
+                  {(lead as any).origem}
+                </Badge>
+              )}
+              {(lead as any).origem_detalhe && (
+                <span className="flex items-center gap-1 text-xs">
+                  📢 {(lead as any).origem_detalhe}
                 </span>
               )}
             </div>
+
+            {/* Row 5: Full message from Jetimob (if present) */}
+            {(lead as any).observacoes && (
+              <div className="rounded-md bg-muted/40 border border-border/30 px-3 py-2">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  💬 {(lead as any).observacoes}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
