@@ -38,10 +38,12 @@ interface ContractData {
   corretor_nome: string;
   corretor_cpf: string;
   corretor_creci: string;
+  corretor_rg?: string;
   corretor_email: string;
   gerente_nome: string;
   gerente_cpf: string;
   gerente_creci: string;
+  gerente_rg?: string;
   gerente_email: string;
   data_assinatura: string;
 }
