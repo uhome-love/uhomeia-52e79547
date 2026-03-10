@@ -781,10 +781,42 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
                 📄 → Contrato Gerado
               </Button>
             )}
+            {fullNeg.pipeline_lead_id && fullNeg.fase !== "assinado" && fullNeg.fase !== "distrato" && (
+              <Button variant="outline" className="gap-1 text-xs border-destructive/30 text-destructive" onClick={() => setRegressOpen(true)}>
+                🔄 Regredir para Pipeline
+              </Button>
+            )}
             <div className="flex-1" />
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* ── Regress to Pipeline Dialog ── */}
+      <Dialog open={regressOpen} onOpenChange={setRegressOpen}>
+        <DialogContent className="sm:max-w-sm space-y-3">
+          <DialogHeader>
+            <DialogTitle className="text-base">🔄 Regredir para Pipeline de Leads</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">O negócio será movido para "Caiu" e o lead voltará ao Pipeline.</p>
+          <div>
+            <Label className="text-xs mb-1 block">Retornar para qual etapa?</Label>
+            <Select value={regressStageId} onValueChange={setRegressStageId}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione a etapa" /></SelectTrigger>
+              <SelectContent>
+                {pipelineStages.map(s => (
+                  <SelectItem key={s.id} value={s.id} className="text-xs">{s.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setRegressOpen(false)}>Cancelar</Button>
+            <Button size="sm" className="text-xs gap-1" onClick={handleRegressToPipeline} disabled={!regressStageId}>
+              🔄 Confirmar regressão
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Proposta Popup ── */}
       <Dialog open={propostaPopup} onOpenChange={setPropostaPopup}>
