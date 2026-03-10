@@ -374,37 +374,234 @@ export default function CeoDashboard() {
         </CardContent>
       </Card>
 
-      {/* ─── SEÇÃO 2: KPIs ─── */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ─── SEÇÃO 2: GESTÃO DE LEADS ─── */}
+      {/* ═══════════════════════════════════════════════════════ */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">📊 Processo</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+          <Target className="h-4 w-4" /> Gestão de Leads
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiCard icon={Phone} label="Ligações" value={kpis.ligacoes} prev={prevKpis?.ligacoes} iconColor="text-blue-600" />
-          <KpiCard icon={ThumbsUp} label="Aproveitados" value={kpis.aproveitados} displayValue={`${kpis.aproveitados} (${kpis.taxaConversao}%)`} prev={prevKpis?.aproveitados} iconColor="text-emerald-600" />
+          <KpiCard icon={Users} label="Total de Leads" value={pipelineStages.reduce((a, s) => a + s.count, 0)} iconColor="text-blue-600" />
           <KpiCard icon={CalendarDays} label="Visitas Marcadas" value={kpis.visitasMarcadas} prev={prevKpis?.visitasMarcadas} iconColor="text-amber-600" />
-          <KpiCard icon={CalendarCheck} label="Visitas Realizadas" value={kpis.visitasRealizadas} displayValue={`${kpis.visitasRealizadas} (${kpis.taxaRealizacao}%)`} prev={prevKpis?.visitasRealizadas} iconColor="text-emerald-600" />
-        </div>
-      </div>
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">💰 Resultado</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiCard icon={DollarSign} label="VGV Gerado" value={kpis.vgvGerado} displayValue={formatCurrency(kpis.vgvGerado)} prev={prevKpis?.vgvGerado} iconColor="text-emerald-600" />
-          <KpiCard icon={Trophy} label="VGV Assinado" value={kpis.vgvAssinado} displayValue={formatCurrency(kpis.vgvAssinado)} prev={prevKpis?.vgvAssinado} iconColor="text-amber-600" />
-          <KpiCard icon={FileText} label="Propostas" value={kpis.propostas} prev={prevKpis?.propostas} iconColor="text-blue-600" />
-          <KpiCard icon={TrendingDown} label="Negócios Perdidos" value={kpis.negociosPerdidos} prev={prevKpis?.negociosPerdidos} iconColor="text-destructive" />
+          <KpiCard
+            icon={CalendarCheck}
+            label="Visitas Realizadas"
+            value={kpis.visitasRealizadas}
+            displayValue={`${kpis.visitasRealizadas} (${kpis.taxaRealizacao}%)`}
+            prev={prevKpis?.visitasRealizadas}
+            iconColor="text-emerald-600"
+          />
+          <KpiCard
+            icon={TrendingDown}
+            label="Conversão Lead→Visita"
+            value={kpis.visitasMarcadas}
+            displayValue={`${pipelineStages.reduce((a, s) => a + s.count, 0) > 0 ? Math.round((kpis.visitasMarcadas / pipelineStages.reduce((a, s) => a + s.count, 0)) * 100) : 0}%`}
+            iconColor="text-purple-600"
+          />
         </div>
       </div>
 
-      {/* ─── SEÇÃO 3: GESTÃO DE LEADS ─── */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ─── SEÇÃO 3: GESTÃO DE NEGÓCIOS ─── */}
+      {/* ═══════════════════════════════════════════════════════ */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-          <Target className="h-4 w-4" /> Gestão de Leads — Funil e Gargalos
+          <DollarSign className="h-4 w-4" /> Gestão de Negócios
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <KpiCard
+            icon={FileText}
+            label="Nº Negócios"
+            value={negocioFases.reduce((a, f) => a + f.count, 0)}
+            iconColor="text-blue-600"
+          />
+          <KpiCard
+            icon={FileText}
+            label="Propostas"
+            value={negocioFases.filter(f => f.fase === "proposta").reduce((a, f) => a + f.count, 0)}
+            prev={prevKpis?.propostas}
+            iconColor="text-amber-600"
+          />
+          <KpiCard
+            icon={FileText}
+            label="Negociação"
+            value={negocioFases.filter(f => f.fase === "negociacao").reduce((a, f) => a + f.count, 0)}
+            iconColor="text-orange-600"
+          />
+          <KpiCard
+            icon={FileText}
+            label="Contratos Gerados"
+            value={negocioFases.filter(f => f.fase === "documentacao" || f.fase === "contrato").reduce((a, f) => a + f.count, 0)}
+            iconColor="text-purple-600"
+          />
+          <KpiCard
+            icon={Trophy}
+            label="Assinados"
+            value={negocioFases.filter(f => f.fase === "assinado").reduce((a, f) => a + f.count, 0)}
+            iconColor="text-emerald-600"
+          />
+          <KpiCard
+            icon={DollarSign}
+            label="VGV Assinado"
+            value={kpis.vgvAssinado}
+            displayValue={formatCurrency(kpis.vgvAssinado)}
+            prev={prevKpis?.vgvAssinado}
+            iconColor="text-emerald-600"
+          />
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ─── SEÇÃO 4: PROSPECÇÃO ─── */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+          <Phone className="h-4 w-4" /> Prospecção
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <KpiCard
+            icon={Users}
+            label="Presentes Hoje"
+            value={teams.reduce((a, t) => a + (t.ligacoes > 0 ? 1 : 0), 0)}
+            displayValue={`${teams.filter(t => t.ligacoes > 0).length} equipes ativas`}
+            iconColor="text-emerald-600"
+          />
+          <KpiCard
+            icon={Target}
+            label="Metas do Dia"
+            value={kpis.ligacoes > 0 ? 1 : 0}
+            displayValue={kpis.ligacoes > 0 ? "Em andamento" : "Sem atividade"}
+            iconColor="text-blue-600"
+          />
+          <KpiCard
+            icon={Phone}
+            label="Nº Tentativas"
+            value={kpis.ligacoes}
+            prev={prevKpis?.ligacoes}
+            iconColor="text-blue-600"
+          />
+          <KpiCard
+            icon={ThumbsUp}
+            label="Aproveitados"
+            value={kpis.aproveitados}
+            displayValue={`${kpis.aproveitados} (${kpis.taxaConversao}%)`}
+            prev={prevKpis?.aproveitados}
+            iconColor="text-emerald-600"
+          />
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ─── SEÇÃO 5: RANKINGS ─── */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+          <Trophy className="h-4 w-4" /> Rankings
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Ranking Gestão de Leads */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Target className="h-4 w-4 text-blue-600" /> Gestão de Leads
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {teams
+                  .sort((a, b) => (b.visitasMarcadas + b.visitasRealizadas) - (a.visitasMarcadas + a.visitasRealizadas))
+                  .slice(0, 5)
+                  .map((t, i) => (
+                    <div key={t.gerente_id} className="flex items-center justify-between text-xs p-2 rounded-lg hover:bg-muted/30">
+                      <span className="flex items-center gap-2">
+                        <span className={`font-bold text-sm ${i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-amber-700" : "text-muted-foreground"}`}>
+                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                        </span>
+                        <span className="font-medium">{t.gerente_nome}</span>
+                      </span>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <span title="V. Marcadas">{t.visitasMarcadas} VM</span>
+                        <span title="V. Realizadas" className="font-semibold text-foreground">{t.visitasRealizadas} VR</span>
+                      </div>
+                    </div>
+                  ))}
+                {teams.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ranking Gestão de Negócios */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-emerald-600" /> Gestão de Negócios
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {topCorretoresVgv.map((c, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs p-2 rounded-lg hover:bg-muted/30">
+                    <span className="flex items-center gap-2">
+                      <span className={`font-bold text-sm ${i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-amber-700" : "text-muted-foreground"}`}>
+                        {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                      </span>
+                      <span className="font-medium">{c.nome}</span>
+                    </span>
+                    <span className="font-semibold">{formatCurrency(c.vgv)}</span>
+                  </div>
+                ))}
+                {topCorretoresVgv.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ranking Prospecção / Oferta Ativa */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Phone className="h-4 w-4 text-blue-600" /> Prospecção OA
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {teams
+                  .sort((a, b) => b.ligacoes - a.ligacoes)
+                  .slice(0, 5)
+                  .map((t, i) => (
+                    <div key={t.gerente_id} className="flex items-center justify-between text-xs p-2 rounded-lg hover:bg-muted/30">
+                      <span className="flex items-center gap-2">
+                        <span className={`font-bold text-sm ${i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-amber-700" : "text-muted-foreground"}`}>
+                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                        </span>
+                        <span className="font-medium">{t.gerente_nome}</span>
+                      </span>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <span>{t.ligacoes} lig</span>
+                        <span className="font-semibold text-foreground">{t.aproveitados} aprov ({t.taxa}%)</span>
+                      </div>
+                    </div>
+                  ))}
+                {teams.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ─── SEÇÃO 6: FUNIL E GARGALOS ─── */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+          <BarChart3 className="h-4 w-4" /> Gestão de Leads — Funil e Gargalos
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
           {/* Funil (40%) */}
           <Card className="lg:col-span-4">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Funil do Pipeline</CardTitle></CardHeader>
             <CardContent className="space-y-1.5">
-              {pipelineStages.map((s, idx) => {
+              {pipelineStages.map((s) => {
                 const maxCount = Math.max(...pipelineStages.map(x => x.count), 1);
                 const pct = Math.round((s.count / maxCount) * 100);
                 return (
@@ -449,7 +646,7 @@ export default function CeoDashboard() {
             <CardContent>
               <div className="space-y-2">
                 {alertas.map((a, i) => (
-                  <div key={i} className={`flex items-start gap-2 p-2 rounded-md text-xs ${a.tipo === "red" ? "bg-destructive/5 text-destructive" : a.tipo === "yellow" ? "bg-amber-50 dark:bg-amber-950/20 text-amber-700" : "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"}`}>
+                  <div key={i} className={`flex items-start gap-2 p-2 rounded-md text-xs ${a.tipo === "red" ? "bg-destructive/5 text-destructive" : a.tipo === "yellow" ? "bg-amber-500/5 text-amber-600" : "bg-emerald-500/5 text-emerald-600"}`}>
                     <span>{a.tipo === "red" ? "🔴" : a.tipo === "yellow" ? "🟡" : "🟢"}</span>
                     <span>{a.mensagem}</span>
                   </div>
@@ -461,124 +658,7 @@ export default function CeoDashboard() {
         </div>
       </div>
 
-      {/* ─── SEÇÃO 4: VISITAS ─── */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-          <CalendarDays className="h-4 w-4" /> Visitas
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 mb-2"><CalendarDays className="h-4 w-4 text-blue-600" /><span className="text-sm font-medium">Marcadas</span></div>
-              <p className="text-3xl font-bold">{kpis.visitasMarcadas}</p>
-              {prevKpis && <Variation current={kpis.visitasMarcadas} previous={prevKpis.visitasMarcadas} suffix=" vs anterior" />}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 mb-2"><CalendarCheck className="h-4 w-4 text-emerald-600" /><span className="text-sm font-medium">Realizadas</span></div>
-              <p className="text-3xl font-bold">{kpis.visitasRealizadas} <span className="text-sm text-muted-foreground">({kpis.taxaRealizacao}%)</span></p>
-              {prevKpis && <Variation current={kpis.visitasRealizadas} previous={prevKpis.visitasRealizadas} />}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 mb-2"><AlertTriangle className="h-4 w-4 text-destructive" /><span className="text-sm font-medium">No-shows</span></div>
-              <p className="text-3xl font-bold">{kpis.noShows} <span className="text-sm text-muted-foreground">({kpis.visitasMarcadas > 0 ? Math.round((kpis.noShows / kpis.visitasMarcadas) * 100) : 0}%)</span></p>
-            </CardContent>
-          </Card>
-        </div>
-        {visitasPorEmp.length > 0 && (
-          <Card className="mt-3">
-            <CardContent className="pt-4">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Visitas por empreendimento</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead><tr className="border-b text-muted-foreground"><th className="text-left pb-1.5">Empreendimento</th><th className="text-right pb-1.5">Marcadas</th><th className="text-right pb-1.5">Realizadas</th><th className="text-right pb-1.5">Taxa</th></tr></thead>
-                  <tbody>
-                    {visitasPorEmp.slice(0, 8).map(v => (
-                      <tr key={v.emp} className="border-b last:border-0">
-                        <td className="py-1.5 font-medium">{v.emp}</td>
-                        <td className="py-1.5 text-right">{v.marcadas}</td>
-                        <td className="py-1.5 text-right">{v.realizadas}</td>
-                        <td className="py-1.5 text-right">{v.marcadas > 0 ? Math.round((v.realizadas / v.marcadas) * 100) : 0}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* ─── SEÇÃO 5: NEGÓCIOS E PROPOSTAS ─── */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-          <DollarSign className="h-4 w-4" /> Negócios e Propostas
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-1"><CardTitle className="text-xs text-muted-foreground">Negócios por Fase</CardTitle></CardHeader>
-            <CardContent>
-              <div className="space-y-1.5">
-                {negocioFases.map(f => (
-                  <div key={f.fase} className="flex items-center justify-between text-xs">
-                    <span className="capitalize">{f.fase}</span>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">{f.count}</Badge>
-                      <span className="text-muted-foreground">{formatCurrency(f.vgv)}</span>
-                    </div>
-                  </div>
-                ))}
-                {negocioFases.length === 0 && <p className="text-xs text-muted-foreground">Sem negócios</p>}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className={vgvEmRisco > 0 ? "border-destructive/30" : ""}>
-            <CardHeader className="pb-1"><CardTitle className="text-xs text-muted-foreground">VGV em Risco</CardTitle></CardHeader>
-            <CardContent>
-              <p className={`text-2xl font-bold ${vgvEmRisco > 0 ? "text-destructive" : ""}`}>{formatCurrency(vgvEmRisco)}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Negócios parados &gt;15 dias</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-1"><CardTitle className="text-xs text-muted-foreground">Top 5 Corretores VGV</CardTitle></CardHeader>
-            <CardContent>
-              <div className="space-y-1.5">
-                {topCorretoresVgv.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5">
-                      <span className={`font-bold ${i === 0 ? "text-amber-500" : "text-muted-foreground"}`}>{i + 1}.</span>
-                      {c.nome}
-                    </span>
-                    <span className="font-semibold">{formatCurrency(c.vgv)}</span>
-                  </div>
-                ))}
-                {topCorretoresVgv.length === 0 && <p className="text-xs text-muted-foreground">Sem dados</p>}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-1"><CardTitle className="text-xs text-muted-foreground">Leads por Empreendimento</CardTitle></CardHeader>
-            <CardContent>
-              <div className="space-y-1.5">
-                {leadsPorEmpreendimento.slice(0, 5).map(l => (
-                  <div key={l.emp} className="flex items-center justify-between text-xs">
-                    <span className="truncate mr-2">{l.emp}</span>
-                    <Badge variant="outline" className="text-[10px]">{l.count}</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* ─── SEÇÃO 6: PERFORMANCE POR EQUIPE ─── */}
+      {/* ─── SEÇÃO 7: PERFORMANCE POR EQUIPE ─── */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
           <Users className="h-4 w-4" /> Performance por Equipe
@@ -635,7 +715,7 @@ export default function CeoDashboard() {
         </Card>
       </div>
 
-      {/* ─── SEÇÃO 7: MARKETING ─── */}
+      {/* ─── SEÇÃO 8: MARKETING ─── */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
           <BarChart3 className="h-4 w-4" /> Marketing e Origem
