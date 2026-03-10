@@ -840,6 +840,70 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
           leadId={negocio.pipeline_lead_id || negocio.id}
         />
       )}
+      {/* ── Reunião Dialog ── */}
+      <Dialog open={reuniaoOpen} onOpenChange={setReuniaoOpen}>
+        <DialogContent className="sm:max-w-md space-y-3">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-2">📅 Agendar Reunião de Negócio</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">Cliente: <strong>{fullNeg.nome_cliente}</strong> {fullNeg.empreendimento && <Badge variant="outline" className="ml-1 text-[10px]">{fullNeg.empreendimento}</Badge>}</p>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs mb-2 block">Tipo de reunião *</Label>
+              <Select value={reuniaoTipo} onValueChange={setReuniaoTipo}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fechamento">🤝 Reunião de Fechamento</SelectItem>
+                  <SelectItem value="negociacao">💼 Reunião de Negociação</SelectItem>
+                  <SelectItem value="assinatura">📝 Assinatura de Contrato</SelectItem>
+                  <SelectItem value="apresentacao">📊 Apresentação de Proposta</SelectItem>
+                  <SelectItem value="outro">📋 Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Data *</Label>
+                <Input type="date" value={reuniaoData} onChange={e => setReuniaoData(e.target.value)} className="h-8 text-xs" />
+              </div>
+              <div>
+                <Label className="text-xs">Horário *</Label>
+                <Input type="time" value={reuniaoHora} onChange={e => setReuniaoHora(e.target.value)} className="h-8 text-xs" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Local</Label>
+              <Select value={reuniaoLocal} onValueChange={setReuniaoLocal}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="empresa">🏢 Escritório</SelectItem>
+                  <SelectItem value="stand">🏗️ Stand</SelectItem>
+                  <SelectItem value="videochamada">📹 Videochamada</SelectItem>
+                  <SelectItem value="cartorio">📜 Cartório</SelectItem>
+                  <SelectItem value="outro">📍 Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Observação</Label>
+              <Textarea value={reuniaoObs} onChange={e => setReuniaoObs(e.target.value)} className="text-xs h-16" placeholder="Detalhes da reunião..." />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setReuniaoOpen(false)}>Cancelar</Button>
+            <Button
+              size="sm"
+              className="text-xs gap-1"
+              disabled={!reuniaoData || !reuniaoHora || salvandoReuniao}
+              onClick={handleAgendarReuniao}
+            >
+              {salvandoReuniao ? <Loader2 className="h-3 w-3 animate-spin" /> : "📅"} Agendar reunião
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
