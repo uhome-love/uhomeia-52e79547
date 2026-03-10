@@ -107,7 +107,7 @@ serve(async (req) => {
 ═══ DADOS REAIS DO SISTEMA ═══
 Data: ${today} | Mês: ${currentMonth}
 
-📊 PDN (Planilha de Negócios) — ${currentMonth}
+📊 NEGÓCIOS (Pipeline de Negócios) — ${currentMonth}
 ${pdnStats}
 
 📋 CHECKPOINT HOJE
