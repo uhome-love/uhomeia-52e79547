@@ -201,7 +201,8 @@ export default function CeoDashboard() {
       return;
     }
     toast.success(`❌ ${item?.corretor_nome || "Corretor"} recusado(a) da Roleta.`);
-  }, [user, localPendentes, getProfileId]);
+    reloadRoleta();
+  }, [user, localPendentes, getProfileId, reloadRoleta]);
 
   const aprovarTodos = useCallback(async () => {
     if (!user) return;
