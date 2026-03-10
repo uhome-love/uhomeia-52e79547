@@ -132,6 +132,10 @@ interface Props {
 export default function VisitaRow({ visita: v, onUpdateStatus, onEdit, onDelete, showCorretor, showTeam, isPastPending }: Props) {
   const [hovered, setHovered] = useState(false);
 
+  const isNegocio = v.tipo === "negocio";
+  const negocioMeta = isNegocio ? parseNegocioMeta(v.observacoes) : { objetivo: null, responsavel: null };
+  const missingNegocioInfo = isNegocio && (!negocioMeta.objetivo || !negocioMeta.responsavel);
+
   return (
     <div
       className={cn(
