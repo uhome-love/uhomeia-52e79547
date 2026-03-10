@@ -71,8 +71,22 @@ const LOCAL_LABELS: Record<string, string> = {
   empresa: "🏢 Escritório",
   videochamada: "📹 Videochamada",
   decorado: "🏠 Decorado",
+  cartorio: "📜 Cartório",
   outro: "📍 Outro",
 };
+
+/** Parse objetivo and responsável from observacoes stored as "Objetivo: X | Responsável: Y | notes" */
+function parseNegocioMeta(obs: string | null) {
+  if (!obs) return { objetivo: null, responsavel: null };
+  const parts = obs.split("|").map(s => s.trim());
+  let objetivo: string | null = null;
+  let responsavel: string | null = null;
+  for (const p of parts) {
+    if (p.startsWith("Objetivo:")) objetivo = p.replace("Objetivo:", "").trim();
+    if (p.startsWith("Responsável:")) responsavel = p.replace("Responsável:", "").trim();
+  }
+  return { objetivo, responsavel };
+}
 
 const STATUS_LINE_COLORS: Record<string, string> = {
   marcada: "bg-amber-400",
