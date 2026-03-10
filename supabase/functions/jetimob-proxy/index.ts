@@ -146,39 +146,86 @@ serve(async (req) => {
       // Determine if we have active filters that require client-side post-filtering
       const hasLocalFilters = !!(bairro || valor_min || valor_max || dormitorios || tipo || somente_obras);
       
-      // Fetch larger batches when we need to filter locally, to ensure enough results
-      const fetchSize = (search_uhome || hasLocalFilters) ? 500 : pageSize;
-      const fetchPage = (search_uhome || hasLocalFilters) ? 1 : page;
+      // Build base URL
+      const baseParams = new URLSearchParams({ v: "6" });
+      if (contrato) baseParams.set("contrato", contrato);
+      if (cidade) baseParams.set("cidade", cidade);
+      if (search) baseParams.set("search", search);
+      // Pass bairro as search term to narrow API results when no free-text search
+      if (bairro && !search) baseParams.set("search", bairro);
 
-      // Build URL — only pass params that Jetimob API reliably supports (contrato, cidade, search)
-      let url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${fetchPage}&pageSize=${fetchSize}`;
-      if (contrato) url += `&contrato=${encodeURIComponent(contrato)}`;
-      if (cidade) url += `&cidade=${encodeURIComponent(cidade)}`;
-      if (search) url += `&search=${encodeURIComponent(search)}`;
+      let allItems: any[] = [];
 
-      console.log("Jetimob list_imoveis URL:", url, "| Filters:", JSON.stringify({ bairro, tipo, dormitorios, valor_min, valor_max, somente_obras }));
-
-      const response = await fetch(url, { headers: { "Accept": "application/json" } });
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Jetimob API error:", response.status, text);
-        return new Response(
-          JSON.stringify({ error: `Erro ao listar imóveis: ${response.status}` }),
-          { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (search_uhome || hasLocalFilters) {
+        // Fetch multiple pages to have enough data for local filtering
+        const batchSize = 500;
+        const maxPages = 4; // Up to 2000 items
+        
+        for (let p = 1; p <= maxPages; p++) {
+          const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?${baseParams.toString()}&page=${p}&pageSize=${batchSize}`;
+          if (p === 1) console.log("Jetimob list_imoveis URL:", url, "| Filters:", JSON.stringify({ bairro, tipo, dormitorios, valor_min, valor_max, somente_obras }));
+          
+          const response = await fetch(url, { headers: { "Accept": "application/json" } });
+          if (!response.ok) {
+            if (p === 1) {
+              const text = await response.text();
+              console.error("Jetimob API error:", response.status, text);
+              return new Response(
+                JSON.stringify({ error: `Erro ao listar imóveis: ${response.status}` }),
+                { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+            break; // Stop paginating on error for subsequent pages
+          }
+          
+          const rawData = await response.json();
+          let items: any[] = Array.isArray(rawData) ? rawData 
+            : (rawData?.result || rawData?.imoveis || rawData?.data || []);
+          if (!Array.isArray(items)) items = [];
+          
+          allItems = allItems.concat(items);
+          console.log(`Jetimob page ${p}: ${items.length} items, total so far: ${allItems.length}`);
+          
+          // Stop if we got fewer items than requested (last page)
+          const rawTotal = rawData?.total || rawData?.totalResults || rawData?.total_results || 0;
+          if (items.length < batchSize || (rawTotal > 0 && allItems.length >= rawTotal)) break;
+        }
+      } else {
+        // Simple pagination — no local filters, pass through to API
+        const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?${baseParams.toString()}&page=${page}&pageSize=${pageSize}`;
+        console.log("Jetimob list_imoveis URL:", url);
+        
+        const response = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("Jetimob API error:", response.status, text);
+          return new Response(
+            JSON.stringify({ error: `Erro ao listar imóveis: ${response.status}` }),
+            { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        const rawData = await response.json();
+        let items: any[] = Array.isArray(rawData) ? rawData 
+          : (rawData?.result || rawData?.imoveis || rawData?.data || []);
+        if (!Array.isArray(items)) items = [];
+        allItems = items;
+        
+        // For non-filtered requests, return API pagination directly
+        const rawTotal = rawData?.total || rawData?.totalResults || rawData?.total_results || items.length;
+        console.log("Jetimob raw items:", items.length, "rawTotal:", rawTotal);
+        
+        return new Response(JSON.stringify({ 
+          data: items, 
+          total: rawTotal, 
+          totalPages: Math.ceil(rawTotal / pageSize) || 1 
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      const rawData = await response.json();
-      
-      // Normalize response format
-      let items: any[] = Array.isArray(rawData) ? rawData 
-        : (rawData?.result || rawData?.imoveis || rawData?.data || []);
-      if (!Array.isArray(items)) items = [];
-      
-      const rawTotal = rawData?.total || rawData?.totalResults || rawData?.total_results || items.length;
-
-      console.log("Jetimob raw items:", items.length, "rawTotal:", rawTotal);
+      let items = allItems;
+      console.log("Jetimob total fetched for filtering:", items.length);
 
       // ─── Apply server-side post-filters ───
 
