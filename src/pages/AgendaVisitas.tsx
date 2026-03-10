@@ -536,6 +536,7 @@ export default function AgendaVisitas() {
             const count = t.key === "all"
               ? visitas.length
               : visitas.filter(v => (v.equipe || "").toLowerCase().replace(/^equipe\s+/i, "").trim().includes(t.key)).length;
+            const teamMeta = FIXED_TEAMS.find(ft => ft.key === t.key);
             return (
               <button
                 key={t.key}
@@ -545,7 +546,7 @@ export default function AgendaVisitas() {
                   isActive
                     ? t.key === "all"
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : `${t.className} shadow-sm border`
+                      : `${teamMeta?.className || ""} shadow-sm border`
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
