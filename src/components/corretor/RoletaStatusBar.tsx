@@ -307,8 +307,12 @@ export default function RoletaStatusBar() {
           </AnimatePresence>
 
           <div className="h-5 w-px bg-border" />
-          <span className={`text-xs font-medium ${isActiveRoleta ? "text-emerald-600" : "text-muted-foreground"}`}>
-            {isActiveRoleta ? "🟢 Ativo na Roleta" : "⚪ Inativo na Roleta"}
+          <span className={`text-xs font-medium ${
+            isActiveRoleta ? "text-emerald-600" : 
+            credStatus === "pendente" ? "text-amber-600" : "text-muted-foreground"
+          }`}>
+            {isActiveRoleta ? "🟢 Ativo na Roleta" : 
+             credStatus === "pendente" ? "⏳ Aguardando aprovação" : "⚪ Inativo na Roleta"}
           </span>
         </div>
 
