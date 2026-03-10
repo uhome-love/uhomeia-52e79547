@@ -176,6 +176,44 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
 
   const hasActiveFilters = !!filterStage || !!filterEmp;
 
+  // Jetimob imovel search
+  const handleImovelSearch = async (term: string) => {
+    setImovelSearch(term);
+    if (term.length < 2) { setImovelResults([]); return; }
+    setImovelLoading(true);
+    try {
+      // Check if searching by code (numeric)
+      const isCode = /^\d{3,}/.test(term.trim());
+      if (isCode) {
+        const { data } = await supabase.functions.invoke("jetimob-proxy", {
+          body: { action: "get_imovel", codigo: term.trim() },
+        });
+        if (data?.imovel) {
+          setImovelResults([data.imovel]);
+        } else {
+          setImovelResults([]);
+        }
+      } else {
+        const { data } = await supabase.functions.invoke("jetimob-proxy", {
+          body: { action: "list_imoveis", cidade: "Porto Alegre", search: term.trim(), per_page: 10 },
+        });
+        setImovelResults(data?.imoveis || []);
+      }
+    } catch { setImovelResults([]); }
+    setImovelLoading(false);
+  };
+
+  const handleSelectImovel = (imovel: any) => {
+    const desc = imovel.descricao_anuncio || imovel.tipo || "";
+    const bairro = imovel.endereco_bairro || "";
+    const codigo = imovel.codigo || "";
+    const label = `${desc}${bairro ? ` - ${bairro}` : ""}${codigo ? ` (${codigo})` : ""}`;
+    setSelectedImovel(imovel);
+    set("empreendimento", label);
+    setImovelSearch("");
+    setImovelResults([]);
+  };
+
   const handleSelectPipelineLead = (leadId: string) => {
     const lead = pipelineLeads.find(l => l.id === leadId);
     if (lead) {
