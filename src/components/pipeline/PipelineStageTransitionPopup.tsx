@@ -461,7 +461,7 @@ function VisitaRealizadaForm({ lead, onConfirm, targetStageId }: { lead: Pipelin
             leadId: lead.id,
             targetStageId,
             observacao: `Visita Realizada | Interesse: ${interesse.replace(/_/g, " ")} | ${feedback}`,
-            extraData: { interesse, feedback, criarNegocio: interesse === "muito_interessado" || interesse === "interessado" },
+            extraData: { interesse, feedback, registrarVisitaRealizada: true },
           })}
         >
           ✅ Confirmar visita realizada
