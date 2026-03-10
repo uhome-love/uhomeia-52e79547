@@ -398,12 +398,13 @@ export default function AgendaVisitas() {
     return list;
   }, [allVisitas, searchTerm, dateFrom, dateTo, statusFilter, corretorFilter, empreendimentoFilter]);
 
-  const hasFilters = statusFilter !== "all" || corretorFilter !== "all" || empreendimentoFilter !== "all" || !!dateFrom || !!dateTo || searchTerm.trim() || pendingOnly;
+  const hasFilters = statusFilter !== "all" || corretorFilter !== "all" || empreendimentoFilter !== "all" || !!dateFrom || !!dateTo || searchTerm.trim() || pendingOnly || teamFilter !== "all";
 
   const clearAll = () => {
     setStatusFilter("all");
     setCorretorFilter("all");
     setEmpreendimentoFilter("all");
+    setTeamFilter("all");
     setDateFrom(undefined);
     setDateTo(undefined);
     setSearchTerm("");
