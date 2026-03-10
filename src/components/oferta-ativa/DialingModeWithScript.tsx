@@ -864,9 +864,19 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
       {/* Subheader — clean */}
       <div className="flex items-center justify-between px-1 py-1" style={{ fontSize: "13px" }}>
-        <span className="text-neutral-500">
-          Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> · ROUND {sessionLeadsServed + 1} · {lead.empreendimento}
-        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 gap-1 text-neutral-500 hover:text-white hover:bg-white/5 text-[11px]"
+            onClick={onBack}
+          >
+            <ArrowLeft className="h-3 w-3" /> Listas
+          </Button>
+          <span className="text-neutral-500">
+            Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> · ROUND {sessionLeadsServed + 1} · {lead.empreendimento}
+          </span>
+        </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-emerald-400/70">🔒 Reservado</span>
           <span className="text-[10px] text-neutral-600 flex items-center gap-1"><Clock className="h-3 w-3" />{formatSessionTime(sessionSeconds)}</span>
