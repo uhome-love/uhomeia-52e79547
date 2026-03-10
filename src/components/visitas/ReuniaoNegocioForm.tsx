@@ -19,7 +19,15 @@ interface NegocioOption {
   vgv_estimado: number | null;
   fase: string | null;
   corretor_id: string | null;
+  telefone: string | null;
 }
+
+const RESPONSAVEL_OPTIONS = [
+  { value: "gerente", label: "👔 Gerente" },
+  { value: "corretor", label: "🏠 Próprio Corretor" },
+  { value: "corretor_parceiro", label: "🤝 Corretor Parceiro" },
+  { value: "construtora", label: "🏗️ Responsável Construtora" },
+];
 
 const OBJETIVO_OPTIONS = [
   { value: "negociacao", label: "🤝 Negociação" },
@@ -56,6 +64,7 @@ export default function ReuniaoNegocioForm({ open, onClose, onSubmit }: Props) {
   const [form, setForm] = useState({
     local_visita: "",
     objetivo: "",
+    responsavel: "",
     data_visita: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
     hora_visita: "",
     telefone: "",
@@ -69,6 +78,7 @@ export default function ReuniaoNegocioForm({ open, onClose, onSubmit }: Props) {
     setForm({
       local_visita: "",
       objetivo: "",
+      responsavel: "",
       data_visita: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
       hora_visita: "",
       telefone: "",
@@ -78,7 +88,7 @@ export default function ReuniaoNegocioForm({ open, onClose, onSubmit }: Props) {
     (async () => {
       const { data } = await supabase
         .from("negocios")
-        .select("id, nome_cliente, imovel_interesse, vgv_estimado, fase, corretor_id")
+        .select("id, nome_cliente, imovel_interesse, vgv_estimado, fase, corretor_id, telefone")
         .not("fase", "eq", "caiu")
         .order("updated_at", { ascending: false })
         .limit(200);
@@ -109,7 +119,7 @@ export default function ReuniaoNegocioForm({ open, onClose, onSubmit }: Props) {
         local_visita: form.local_visita || null,
         data_visita: form.data_visita,
         hora_visita: form.hora_visita || null,
-        observacoes: [objetivoLabel ? `Objetivo: ${objetivoLabel}` : "", form.observacoes].filter(Boolean).join(" | ") || null,
+        observacoes: [objetivoLabel ? `Objetivo: ${objetivoLabel}` : "", form.responsavel ? `Responsável: ${RESPONSAVEL_OPTIONS.find(o => o.value === form.responsavel)?.label || ""}` : "", form.observacoes].filter(Boolean).join(" | ") || null,
         origem: "crm",
         tipo: "negocio" as any,
         negocio_id: selectedNegocio.id as any,
@@ -169,7 +179,10 @@ export default function ReuniaoNegocioForm({ open, onClose, onSubmit }: Props) {
                         key={n.id}
                         type="button"
                         className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0"
-                        onClick={() => setSelectedNegocio(n)}
+                        onClick={() => {
+                          setSelectedNegocio(n);
+                          if (n.telefone) set("telefone", n.telefone);
+                        }}
                       >
                         <span className="text-sm font-medium">{n.nome_cliente}</span>
                         <span className="text-[10px] text-muted-foreground ml-2">
@@ -181,6 +194,21 @@ export default function ReuniaoNegocioForm({ open, onClose, onSubmit }: Props) {
                 )}
               </div>
             )}
+          </div>
+
+          {/* Responsável */}
+          <div>
+            <Label className="text-xs font-semibold">Responsável</Label>
+            <Select value={form.responsavel} onValueChange={v => set("responsavel", v)}>
+              <SelectTrigger className="mt-1 h-9 text-sm">
+                <SelectValue placeholder="Quem será o responsável?" />
+              </SelectTrigger>
+              <SelectContent>
+                {RESPONSAVEL_OPTIONS.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Objetivo */}
