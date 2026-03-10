@@ -47,20 +47,22 @@ export default function ScriptPanel({ empreendimento, lead, compact, darkMode, s
   const [editingScript, setEditingScript] = useState<"ligacao" | "whatsapp" | null>(null);
   const [scriptMode, setScriptMode] = useState<"generico" | "personalizado">("generico");
 
-  const { data: teamScript } = useQuery({
-    queryKey: ["team-script-for-dialing", empreendimento, user?.id],
+  const { data: teamScripts = [] } = useQuery({
+    queryKey: ["team-scripts-for-dialing", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("team_scripts")
         .select("*")
-        .eq("empreendimento", empreendimento)
         .eq("ativo", true)
         .order("created_at", { ascending: false })
-        .limit(1);
-      return (data && data.length > 0) ? data[0] : null;
+        .limit(20);
+      return data || [];
     },
-    enabled: !!user && !!empreendimento,
+    enabled: !!user,
+    staleTime: 60_000,
   });
+
+  const teamScript = teamScripts.find(s => s.empreendimento === empreendimento) || null;
 
   const { data: marketplaceScripts = [] } = useQuery({
     queryKey: ["marketplace-scripts-for-selector"],
@@ -71,7 +73,7 @@ export default function ScriptPanel({ empreendimento, lead, compact, darkMode, s
         .eq("status", "aprovado")
         .in("categoria", ["script_ligacao", "whatsapp"])
         .order("total_usos", { ascending: false })
-        .limit(10);
+        .limit(20);
       return data || [];
     },
     enabled: !!user,
