@@ -131,6 +131,9 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [reuniaoOpen, setReuniaoOpen] = useState(false);
+  const [regressOpen, setRegressOpen] = useState(false);
+  const [regressStageId, setRegressStageId] = useState("");
+  const [pipelineStages, setPipelineStages] = useState<{ id: string; nome: string }[]>([]);
 
   // Reunião form fields
   const [reuniaoTipo, setReuniaoTipo] = useState("fechamento");
