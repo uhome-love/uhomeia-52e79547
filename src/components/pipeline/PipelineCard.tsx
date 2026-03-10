@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import PartnershipDialog from "./PartnershipDialog";
 import PipelineTransferDialog from "./PipelineTransferDialog";
 import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
+import WhatsAppTemplatesDialog from "./WhatsAppTemplatesDialog";
+import QuickActionMenu from "./QuickActionMenu";
 import { format, isToday as isTodayFn, isTomorrow as isTomorrowFn, isYesterday as isYesterdayFn, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
