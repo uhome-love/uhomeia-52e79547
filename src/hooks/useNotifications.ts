@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,10 +35,12 @@ export function useNotifications() {
   const queryClient = useQueryClient();
   const cargo = roleToCargo(roles);
 
+  // Track already-toasted notification IDs to prevent duplicate toasts
+  const toastedIds = useRef(new Set<string>());
+
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications", user?.id, cargo],
     queryFn: async () => {
-      // Fetch notifications: either targeted to this cargo OR without cargo filter (null = all)
       const { data, error } = await supabase
         .from("notifications")
         .select("id, user_id, tipo, categoria, titulo, mensagem, dados, lida, lida_em, agrupamento_key, agrupamento_count, cargo_destino, created_at")
@@ -47,7 +49,10 @@ export function useNotifications() {
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data as unknown as Notification[];
+      const results = data as unknown as Notification[];
+      // Seed toastedIds with existing IDs so we never toast old notifications
+      results.forEach(n => toastedIds.current.add(n.id));
+      return results;
     },
     enabled: !!user,
     refetchInterval: 30000,
@@ -55,7 +60,7 @@ export function useNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.lida).length;
 
-  // Realtime subscription — no filter to avoid replica identity issues
+  // Realtime subscription — deduplicated toasts
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -69,10 +74,18 @@ export function useNotifications() {
         },
         (payload) => {
           const n = payload.new as any;
-          if (n.user_id === user.id) {
-            queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
-            toast(n.titulo, { description: n.mensagem });
+          if (n.user_id !== user.id) return;
+          // Skip if already toasted (prevents repeats on reconnect/remount)
+          if (toastedIds.current.has(n.id)) return;
+          toastedIds.current.add(n.id);
+          // Cap the set size to prevent memory leaks
+          if (toastedIds.current.size > 200) {
+            const arr = Array.from(toastedIds.current);
+            toastedIds.current = new Set(arr.slice(-100));
           }
+          queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+          // Use toast id to prevent sonner from showing duplicates
+          toast(n.titulo, { description: n.mensagem, id: `notif-${n.id}` });
         }
       )
       .subscribe();
