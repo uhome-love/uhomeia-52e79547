@@ -63,6 +63,13 @@ const LOCAL_LABELS: Record<string, string> = {
   outro: "Outro",
 };
 
+const RESPONSAVEL_LABELS: Record<string, { label: string; emoji: string }> = {
+  gerente: { label: "Gerente", emoji: "👔" },
+  proprio_corretor: { label: "Corretor", emoji: "👤" },
+  corretor_parceiro: { label: "Parceiro", emoji: "🤝" },
+  responsavel_construtora: { label: "Construtora", emoji: "🏗️" },
+};
+
 const STATUS_LINE_COLORS: Record<string, string> = {
   marcada: "bg-amber-400",
   confirmada: "bg-blue-500",
