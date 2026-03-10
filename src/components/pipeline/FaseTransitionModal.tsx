@@ -86,6 +86,7 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
   const [assDigital, setAssDigital] = useState("digital");
   const [assAtoPago, setAssAtoPago] = useState("sim");
   const [assObs, setAssObs] = useState("");
+  const [assDataAssinatura, setAssDataAssinatura] = useState(new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }));
 
   // Caiu fields
   const [caiuMotivo, setCaiuMotivo] = useState("");
