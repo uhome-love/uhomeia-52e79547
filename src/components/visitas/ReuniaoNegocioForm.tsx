@@ -119,7 +119,7 @@ export default function ReuniaoNegocioForm({ open, onClose, onSubmit }: Props) {
         local_visita: form.local_visita || null,
         data_visita: form.data_visita,
         hora_visita: form.hora_visita || null,
-        observacoes: [objetivoLabel ? `Objetivo: ${objetivoLabel}` : "", form.observacoes].filter(Boolean).join(" | ") || null,
+        observacoes: [objetivoLabel ? `Objetivo: ${objetivoLabel}` : "", form.responsavel ? `Responsável: ${RESPONSAVEL_OPTIONS.find(o => o.value === form.responsavel)?.label || ""}` : "", form.observacoes].filter(Boolean).join(" | ") || null,
         origem: "crm",
         tipo: "negocio" as any,
         negocio_id: selectedNegocio.id as any,
