@@ -311,6 +311,19 @@ export default function FaseTransitionModal({ open, onOpenChange, targetFase, ne
                   </div>
                 </RadioGroup>
               </div>
+              {caiuDestino === "pipeline" && pipelineStages.length > 0 && (
+                <div>
+                  <Label className="text-xs mb-1 block">Retornar para qual etapa?</Label>
+                  <Select value={caiuStageId} onValueChange={setCaiuStageId}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione a etapa" /></SelectTrigger>
+                    <SelectContent>
+                      {pipelineStages.map(s => (
+                        <SelectItem key={s.id} value={s.id} className="text-xs">{s.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button size="sm" variant="destructive" onClick={handleConfirm} className="text-xs gap-1" disabled={!caiuMotivo.trim()}>

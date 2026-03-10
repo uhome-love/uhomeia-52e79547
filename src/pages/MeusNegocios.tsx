@@ -565,9 +565,18 @@ export default function MeusNegocios() {
       await supabase.from("negocios").update(updates as any).eq("id", negocioId);
     }
 
-    // Handle "caiu" destination
+    // Handle "caiu" destination — return lead to pipeline
     if (data.fase === "distrato" && data.fields.destino === "pipeline" && negocio.pipeline_lead_id) {
-      await supabase.from("pipeline_leads").update({ etapa: "qualificacao", updated_at: new Date().toISOString() } as any).eq("id", negocio.pipeline_lead_id);
+      const stageId = data.fields.stage_id;
+      if (stageId) {
+        await supabase.from("pipeline_leads").update({
+          stage_id: stageId,
+          negocio_id: null,
+          stage_changed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as any).eq("id", negocio.pipeline_lead_id);
+        toast.success("🔄 Lead retornado ao Pipeline de Leads");
+      }
     }
 
     setTransitionTarget(null);
