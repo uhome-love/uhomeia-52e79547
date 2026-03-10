@@ -992,8 +992,17 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       {/* Result Popup */}
       {ResultPopup}
 
-      {/* Attempt Modal (for Aproveitado / Agendar Visita details) */}
-      {showModal && lead && (
+      {/* Attempt Modal — different for custom lists vs OA lists */}
+      {showModal && lead && isCustom && (
+        <CustomListAttemptModal
+          open={showModal}
+          onClose={() => { setShowModal(false); setActionTaken(null); stopTimer(); }}
+          onSubmit={handleCustomListResult}
+          leadName={lead.nome}
+          callDuration={actionTaken === "ligacao" ? callTimer : undefined}
+        />
+      )}
+      {showModal && lead && !isCustom && (
         <AttemptModal
           open={showModal}
           onClose={() => { setShowModal(false); setActionTaken(null); stopTimer(); }}
