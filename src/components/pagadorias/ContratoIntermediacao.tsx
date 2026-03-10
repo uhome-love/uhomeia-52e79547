@@ -97,30 +97,66 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
   const agilitasTotal = agilitasCredores.reduce((s, c) => s + c.valor, 0);
   const uhomeTotal = uhomeCredor?.valor || 0;
 
-  // Build contratados list from credores (everyone except uhome)
-  const contratadosList: { nome: string; cpf: string; creci: string; rg: string; email: string; tipo: string }[] = [];
-  
-  // Add all non-uhome credores as contratados
+  // Build contratados list from credores (everyone except UHome)
+  const resolveAssinaturaTipo = (credorTipo: string, credorNome: string) => {
+    const tipo = (credorTipo || "").toLowerCase();
+    const nome = (credorNome || "").toLowerCase();
+
+    if (tipo === "corretor") return "CORRETOR(A)";
+    if (tipo === "gerente") return "GERENTE";
+    if (tipo === "adm" || tipo === "administrativo") return "ADMINISTRATIVO";
+    if (tipo === "mkt" || tipo === "marketing" || nome.includes("mkt")) return "MARKETING";
+    if (tipo === "diretoria") return "DIRETORIA";
+
+    return "CREDOR";
+  };
+
+  const contratadosList: {
+    nome: string;
+    cpf: string;
+    creci: string;
+    rg: string;
+    email: string;
+    assinaturaTipo: string;
+  }[] = [];
+
+  const seenContratados = new Set<string>();
+
   for (const c of credoresAtivos) {
     if (c.credor_tipo === "uhome") continue;
-    
-    let cpf = "", creci = "", email = "", rg = "", tipo = "Corretor(a)";
-    
+    if (!c.credor_nome?.trim()) continue;
+
+    let cpf = "";
+    let creci = "";
+    let email = "";
+    let rg = "";
+
     if (c.credor_tipo === "corretor") {
       cpf = data.corretor_cpf;
       creci = data.corretor_creci;
       rg = data.corretor_rg || "";
       email = data.corretor_email;
-      tipo = "Corretor(a)";
     } else if (c.credor_tipo === "gerente") {
       cpf = data.gerente_cpf;
       creci = data.gerente_creci;
       rg = data.gerente_rg || "";
       email = data.gerente_email;
-      tipo = "Corretor(a)";
     }
-    
-    contratadosList.push({ nome: c.credor_nome, cpf, creci, rg, email, tipo });
+
+    const assinaturaTipo = resolveAssinaturaTipo(c.credor_tipo, c.credor_nome);
+    const dedupeKey = `${c.credor_nome.trim().toLowerCase()}::${assinaturaTipo}`;
+
+    if (seenContratados.has(dedupeKey)) continue;
+    seenContratados.add(dedupeKey);
+
+    contratadosList.push({
+      nome: c.credor_nome,
+      cpf,
+      creci,
+      rg,
+      email,
+      assinaturaTipo,
+    });
   }
 
   const handleDownload = async () => {
