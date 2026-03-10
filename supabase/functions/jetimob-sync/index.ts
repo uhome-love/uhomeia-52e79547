@@ -52,6 +52,18 @@ function normalizeEmpreendimento(text: string | null | undefined): string | null
   return null;
 }
 
+/** Detect origin channel from message/source fields */
+function detectCanal(msg: string | null, source: string | null, origin: string | null): string {
+  const all = `${msg || ""} ${source || ""} ${origin || ""}`.toLowerCase();
+  if (all.includes("tik tok") || all.includes("tiktok")) return "TikTok";
+  if (all.includes("meta") || all.includes("facebook") || all.includes("instagram")) return "Meta Ads";
+  if (all.includes("google")) return "Google Ads";
+  if (all.includes("portal") || all.includes("zap") || all.includes("olx") || all.includes("viva real")) return "Portal";
+  if (all.includes("site") || all.includes("website") || all.includes("código")) return "Site";
+  if (all.includes("formulário") || all.includes("formulario")) return "Formulário";
+  return "Outro";
+}
+
 /** Build a unique ID for deduplication (API has no id field) */
 function buildJetimobId(lead: any): string {
   const phone = lead.phones?.[0] || lead.phone || "";
@@ -191,6 +203,47 @@ serve(async (req) => {
       );
     }
 
+    // Load empreendimento → pipeline_segmento mapping
+    // roleta_campanhas uses roleta_segmentos IDs, but pipeline_leads FK references pipeline_segmentos
+    // We resolve by matching segment names between the two tables
+    const [campanhasRes, roletaSegsRes, pipelineSegsRes] = await Promise.all([
+      adminClient.from("roleta_campanhas").select("empreendimento, segmento_id").eq("ativo", true),
+      adminClient.from("roleta_segmentos").select("id, nome"),
+      adminClient.from("pipeline_segmentos").select("id, nome"),
+    ]);
+
+    // Build roleta_segmento_id → pipeline_segmento_id mapping
+    const roletaToPipeline = new Map<string, string>();
+    for (const rs of roletaSegsRes.data || []) {
+      const ps = (pipelineSegsRes.data || []).find(
+        (p: any) => p.nome.toLowerCase().trim() === rs.nome.toLowerCase().trim()
+      );
+      if (ps) roletaToPipeline.set(rs.id, ps.id);
+    }
+
+    // Build empreendimento → pipeline_segmento_id mapping
+    const empToSegmento = new Map<string, string>();
+    for (const c of campanhasRes.data || []) {
+      if (c.empreendimento && c.segmento_id) {
+        const pipelineSegId = roletaToPipeline.get(c.segmento_id);
+        if (pipelineSegId) {
+          empToSegmento.set(c.empreendimento.toLowerCase().trim(), pipelineSegId);
+        }
+      }
+    }
+
+    // Helper: resolve segmento from empreendimento name
+    function resolveSegmentoId(emp: string | null): string | null {
+      if (!emp) return null;
+      const lower = emp.toLowerCase().trim();
+      if (empToSegmento.has(lower)) return empToSegmento.get(lower)!;
+      // Fuzzy: check if any key is contained
+      for (const [key, segId] of empToSegmento.entries()) {
+        if (lower.includes(key) || key.includes(lower)) return segId;
+      }
+      return null;
+    }
+
     // Get the "novo_lead" stage
     const { data: stageData } = await adminClient
       .from("pipeline_stages")
@@ -268,6 +321,16 @@ serve(async (req) => {
           prioridadeLead = "alta";
         }
 
+        // Resolve segmento from empreendimento
+        const segmentoId = resolveSegmentoId(empreendimento);
+
+        // Extract campaign detail (e.g. "Vídeo Lucas", "Video Gabriel")
+        const campanhaDetalhe = campanhaNome || msg || null;
+        // Clean origin: just empreendimento name for display; full text goes to origem_detalhe
+        const origemClean = empreendimento !== "Avulso" ? empreendimento : (lead.source || lead.origin || "API Jetimob");
+        // Detect canal (Meta Ads, TikTok, Portal, etc.)
+        const canalOrigem = detectCanal(msg, lead.source, lead.origin);
+
         const { data: insertedLead, error: insertError } = await adminClient
           .from("pipeline_leads")
           .insert({
@@ -276,9 +339,10 @@ serve(async (req) => {
             telefone2,
             email,
             empreendimento,
+            segmento_id: segmentoId,
             stage_id: novoLeadStageId,
-            origem: campanhaNome || msg || "API Jetimob",
-            origem_detalhe: lead.source || lead.origin || null,
+            origem: origemClean,
+            origem_detalhe: campanhaDetalhe,
             jetimob_lead_id: jetimobId,
             observacoes: msg || null,
             corretor_id: null,
