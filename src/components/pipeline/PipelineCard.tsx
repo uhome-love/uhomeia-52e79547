@@ -336,6 +336,13 @@ const PipelineCard = memo(function PipelineCard({
           {lead.telefone && <span> · {formatPhone(lead.telefone)}</span>}
         </div>
 
+        {/* Negócio criado badge */}
+        {lead.negocio_id && (
+          <div className="flex items-center gap-1 pt-0.5">
+            <span className="text-[10px] font-semibold text-green-600 dark:text-green-400">✅ Negócio criado</span>
+          </div>
+        )}
+
         {/* Line 3: Task status — always show something */}
         <p className={cn("text-[11px] truncate pt-0.5", status.text ? status.textCls : "text-muted-foreground")}>
           {status.text || "✅ Em dia"}

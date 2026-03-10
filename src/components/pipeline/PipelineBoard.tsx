@@ -268,6 +268,8 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     const map = new Map<string, PipelineLead[]>();
     for (const stage of stages) map.set(stage.id, []);
     for (const lead of uniqueLeads) {
+      // Hide leads that already have a negócio created (they live in the Negócios pipeline now)
+      if (lead.negocio_id) continue;
       const arr = map.get(lead.stage_id);
       if (arr) arr.push(lead);
     }
