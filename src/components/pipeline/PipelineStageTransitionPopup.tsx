@@ -319,7 +319,8 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from("team_members").select("user_id, nome").eq("ativo", true) as any;
+      const q: any = supabase.from("team_members").select("user_id, nome");
+      const { data } = await q.eq("ativo", true);
       if (data) setCorretores(data.filter((c: any) => c.user_id));
     };
     load();
