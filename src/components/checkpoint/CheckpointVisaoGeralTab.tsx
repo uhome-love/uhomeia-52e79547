@@ -74,7 +74,8 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
 
     // Split queries - cast as any to avoid TS2589
     const q1: any = supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, canal").in("corretor_id", teamUserIds).gte("created_at", `${dateStr}T00:00:00`).lte("created_at", `${dateStr}T23:59:59`);
-    const q2: any = supabase.from("pipeline_leads").select("corretor_id, etapa").in("corretor_id", teamUserIds).neq("etapa", "descarte");
+    const q2base = supabase.from("pipeline_leads").select("corretor_id, etapa");
+    const q2: any = q2base.in("corretor_id", teamUserIds).neq("etapa", "descarte");
     const q3: any = supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final, nome_cliente, updated_at, fase_changed_at, empreendimento").in("corretor_id", teamUserIds).not("fase", "in", "(perdido,cancelado)");
     const q4: any = supabase.from("visitas").select("corretor_id, status, empreendimento, horario").in("corretor_id", teamUserIds).eq("data_visita", dateStr);
     const q5: any = supabase.from("negocios").select("id, nome_cliente, fase, corretor_id, vgv_estimado, updated_at, fase_changed_at, empreendimento").in("corretor_id", teamUserIds).not("fase", "in", "(perdido,cancelado,assinado,vendido)").order("updated_at", { ascending: true }).limit(50);
