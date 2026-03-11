@@ -324,20 +324,31 @@ export default function VendasRealizadas() {
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-4 w-4 text-yellow-500" />
               <h2 className="text-sm font-bold text-foreground">Estimativa de Comissão</h2>
-              <span className="text-[10px] text-muted-foreground ml-auto">Baseado no VGV total do período</span>
+              <span className="text-[10px] text-muted-foreground ml-auto">Corretagem = VGV × 5%</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <p className="text-[11px] text-muted-foreground mb-3">
+              Faixa do corretor: <strong>32%</strong> (até R$ 1,5M/ano) → <strong>34%</strong> (≥ R$ 1,5M) → <strong>36%</strong> (≥ R$ 3M). Gerente: 15% da corretagem.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3.5 text-center">
                 <p className="text-[10px] font-medium text-emerald-600 mb-1">Corretor (32%)</p>
                 <p className="text-xl font-black text-emerald-500">{formatCurrencyFull(comissaoCorretor32)}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">VGV anual {'<'} R$ 1,5M</p>
+              </div>
+              <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3.5 text-center">
+                <p className="text-[10px] font-medium text-emerald-600 mb-1">Corretor (34%)</p>
+                <p className="text-xl font-black text-emerald-500">{formatCurrencyFull(comissaoCorretor34)}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">VGV anual ≥ R$ 1,5M</p>
               </div>
               <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3.5 text-center">
                 <p className="text-[10px] font-medium text-emerald-600 mb-1">Corretor (36%)</p>
                 <p className="text-xl font-black text-emerald-500">{formatCurrencyFull(comissaoCorretor36)}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">VGV anual ≥ R$ 3M</p>
               </div>
               <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3.5 text-center">
                 <p className="text-[10px] font-medium text-blue-600 mb-1">Gerente (15%)</p>
                 <p className="text-xl font-black text-blue-500">{formatCurrencyFull(comissaoGerente)}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">15% da corretagem</p>
               </div>
             </div>
           </CardContent>
