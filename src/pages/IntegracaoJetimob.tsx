@@ -170,29 +170,31 @@ function StatusIcon({ status }: { status: string }) {
   return <AlertTriangle className="h-4 w-4 text-destructive" />;
 }
 
+// ── Helper: get field options by category ──
+function getJetimobFields(cat: string) {
+  return cat === "imoveis" ? JETIMOB_IMOVEL_FIELDS : JETIMOB_LEAD_FIELDS;
+}
+function getUhomeFields(cat: string) {
+  return cat === "imoveis" ? UHOME_IMOVEL_FIELDS : UHOME_LEAD_FIELDS;
+}
+
 // ── Editable Row ──
-function EditableRow({ mapping, onSave, onDelete }: { mapping: FieldMapping; onSave: (m: FieldMapping) => void; onDelete: (id: string) => void }) {
+function EditableRow({ mapping, onSave, onDelete, categoria }: { mapping: FieldMapping; onSave: (m: FieldMapping) => void; onDelete: (id: string) => void; categoria: string }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(mapping);
 
-  const handleSave = () => {
-    onSave(draft);
-    setEditing(false);
-  };
+  const jetimobOpts = getJetimobFields(categoria);
+  const uhomeOpts = getUhomeFields(categoria);
 
-  const handleCancel = () => {
-    setDraft(mapping);
-    setEditing(false);
-  };
+  const handleSave = () => { onSave(draft); setEditing(false); };
+  const handleCancel = () => { setDraft(mapping); setEditing(false); };
 
   if (editing) {
     return (
       <tr className="border-b bg-primary/5">
         <td className="px-3 py-2">
           <Select value={draft.status} onValueChange={(v) => setDraft({ ...draft, status: v })}>
-            <SelectTrigger className="h-8 w-24 text-xs">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ok">✅ Mapeado</SelectItem>
               <SelectItem value="warning">⚠️ Parcial</SelectItem>
@@ -201,15 +203,40 @@ function EditableRow({ mapping, onSave, onDelete }: { mapping: FieldMapping; onS
           </Select>
         </td>
         <td className="px-3 py-2">
-          <Input className="h-8 text-xs font-mono" value={draft.jetimob_field} onChange={(e) => setDraft({ ...draft, jetimob_field: e.target.value })} />
+          <Select value={draft.jetimob_field} onValueChange={(v) => setDraft({ ...draft, jetimob_field: v })}>
+            <SelectTrigger className="h-8 text-xs font-mono min-w-[220px]">
+              <SelectValue placeholder="Selecione campo Jetimob" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {jetimobOpts.map((f) => (
+                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input className="h-7 text-xs mt-1" placeholder="Descrição" value={draft.jetimob_description || ""} onChange={(e) => setDraft({ ...draft, jetimob_description: e.target.value })} />
         </td>
         <td className="px-3 py-2"><ArrowRight className="h-3.5 w-3.5 text-muted-foreground" /></td>
         <td className="px-3 py-2">
-          <Input className="h-8 text-xs font-mono" value={draft.uhome_field} onChange={(e) => setDraft({ ...draft, uhome_field: e.target.value })} />
+          <Select value={draft.uhome_field} onValueChange={(v) => setDraft({ ...draft, uhome_field: v })}>
+            <SelectTrigger className="h-8 text-xs font-mono min-w-[220px]">
+              <SelectValue placeholder="Selecione campo uHome" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {uhomeOpts.map((f) => (
+                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </td>
         <td className="px-3 py-2">
-          <Input className="h-8 text-xs" value={draft.uhome_table} onChange={(e) => setDraft({ ...draft, uhome_table: e.target.value })} />
+          <Select value={draft.uhome_table} onValueChange={(v) => setDraft({ ...draft, uhome_table: v })}>
+            <SelectTrigger className="h-8 text-xs min-w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {UHOME_TABLES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </td>
         <td className="px-3 py-2">
           <Input className="h-8 text-xs" placeholder="Transformação" value={draft.transform || ""} onChange={(e) => setDraft({ ...draft, transform: e.target.value || null })} />
