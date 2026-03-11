@@ -204,7 +204,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
         <div className="px-4 pt-3.5 pb-2.5 space-y-2" onClick={onClick}>
           {/* Row 1: Nome + Days badge */}
           <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-foreground truncate flex-1">{negocio.nome_cliente}</p>
+            <p className="text-[15px] font-bold text-white truncate flex-1">{negocio.nome_cliente}</p>
             <span className={`text-[11px] font-bold ml-2 shrink-0 px-2 py-0.5 rounded-full ${
               daysInFase <= 3 ? "bg-emerald-500/15 text-emerald-400" : daysInFase <= 7 ? "bg-amber-500/15 text-amber-400" : "bg-red-500/15 text-red-400"
             }`}>
@@ -213,8 +213,8 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           </div>
 
           {/* Row 2: Imóvel */}
-          <p className="text-xs text-muted-foreground truncate">
-            {negocio.empreendimento || <span className="italic text-amber-400/70">🏠 Sem imóvel</span>}
+          <p className="text-[13px] font-medium text-white/70 truncate">
+            {negocio.empreendimento || <span className="italic text-amber-400/80 font-semibold">🏠 Sem imóvel</span>}
           </p>
 
           {/* Row 3: Corretor responsável (only for admin/gestor) */}
@@ -225,7 +225,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
                   <AvatarImage src={corretorInfo.avatar_gamificado_url || corretorInfo.avatar_url || undefined} className="object-cover" />
                   <AvatarFallback className="text-[8px]" style={{ background: `${faseInfo?.cor || "#6B7280"}30`, color: faseInfo?.cor }}>{(corretorInfo.nome || "?")[0]}</AvatarFallback>
                 </Avatar>
-                <span className="text-[11px] text-muted-foreground truncate">{corretorInfo.nome?.split(" ")[0]}</span>
+                <span className="text-[12px] font-medium text-white/60 truncate">{corretorInfo.nome?.split(" ")[0]}</span>
                 {corretorInfo.equipe && (
                   <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-border/40 text-muted-foreground">
                     {corretorInfo.equipe}
@@ -240,14 +240,14 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           {/* Row 4: VGV with quick-fill */}
           <div className="flex items-center gap-2">
             {negocio.vgv_estimado ? (
-              <span className="text-[15px] font-extrabold flex items-center gap-1" style={{ color: faseInfo?.cor || "#22C55E" }}>
-                <TrendingUp className="h-3.5 w-3.5" />
+              <span className="text-[16px] font-extrabold flex items-center gap-1" style={{ color: faseInfo?.cor || "#22C55E" }}>
+                <TrendingUp className="h-4 w-4" />
                 {formatVGV(negocio.vgv_estimado)}
               </span>
             ) : (
               <button
                 onClick={(e) => { e.stopPropagation(); setQuickVgvId(negocio.id); setQuickVgvValue(""); }}
-                className="text-xs text-amber-400/80 font-semibold hover:text-amber-300 transition-colors flex items-center gap-1"
+                className="text-[13px] text-amber-400/90 font-bold hover:text-amber-300 transition-colors flex items-center gap-1"
               >
                 ⚠️ Preencher VGV
               </button>
@@ -273,13 +273,13 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             <button onClick={() => { setTaskText(nextTask?.titulo || ""); setEditingTask(true); }} className="w-full text-left group/task">
               {nextTask ? (
                 <div className="flex items-center gap-1.5">
-                  <Clock className="h-3 w-3 text-blue-400 shrink-0" />
-                  <span className="text-[11px] text-blue-300/80 truncate group-hover/task:text-blue-200 transition-colors">{nextTask.titulo}</span>
+                  <Clock className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                  <span className="text-[12px] font-medium text-blue-300/90 truncate group-hover/task:text-blue-200 transition-colors">{nextTask.titulo}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5">
-                  <Plus className="h-3 w-3 text-white/20 shrink-0" />
-                  <span className="text-[11px] text-white/25 italic group-hover/task:text-white/40 transition-colors">Definir próximo passo...</span>
+                  <Plus className="h-3.5 w-3.5 text-white/25 shrink-0" />
+                  <span className="text-[12px] text-white/30 italic group-hover/task:text-white/50 transition-colors">Definir próximo passo...</span>
                 </div>
               )}
             </button>
@@ -295,29 +295,29 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           {/* Ligar */}
           <button
             onClick={() => setLigarPopup(true)}
-            className="flex-1 flex items-center justify-center gap-1 py-2 text-[10px] text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-white/50 hover:text-white hover:bg-white/5 transition-colors"
           >
-            <Phone className="h-3 w-3" /> Ligar
+            <Phone className="h-3.5 w-3.5" /> Ligar
           </button>
 
           {/* WhatsApp */}
           {whatsappUrl ? (
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-green-500 hover:text-green-400 hover:bg-white/5 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-green-400 hover:text-green-300 hover:bg-white/5 transition-colors"
             >
-              <MessageSquare className="h-3 w-3" /> WhatsApp
+              <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
             </a>
           ) : (
-            <span className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-gray-600">
-              <MessageSquare className="h-3 w-3" /> WhatsApp
+            <span className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-gray-600">
+              <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
             </span>
           )}
 
           {/* ⚡ Ação */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-white/5 transition-colors">
-                <Zap className="h-3 w-3" /> Ação
+              <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-amber-400 hover:text-amber-300 hover:bg-white/5 transition-colors">
+                <Zap className="h-3.5 w-3.5" /> Ação
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
