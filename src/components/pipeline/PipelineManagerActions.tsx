@@ -274,7 +274,7 @@ export default function PipelineManagerActions({ leads, corretorNomes }: Props) 
     });
   };
 
-  const parados3h = [...leadsParadosByCorretor.values()].flat().length;
+  const desatualizados = [...leadsParadosByCorretor.values()].flat().length;
 
   return (
     <>
@@ -285,7 +285,7 @@ export default function PipelineManagerActions({ leads, corretorNomes }: Props) 
         >
           <span className="flex items-center gap-2 text-xs font-semibold text-foreground">
             ⚡ Ações Rápidas do Time
-            {parados3h > 0 && <Badge variant="destructive" className="text-[9px] h-4 px-1">{parados3h} parados</Badge>}
+            {desatualizados > 0 && <Badge variant="destructive" className="text-[9px] h-4 px-1">{desatualizados} sem tarefa</Badge>}
           </span>
           {expanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
         </button>
