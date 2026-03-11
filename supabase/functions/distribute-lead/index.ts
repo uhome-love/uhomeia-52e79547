@@ -56,6 +56,7 @@ interface CorretorCandidate {
   corretorId: string;  // profiles.id (FK for credenciamentos)
   authUserId: string;  // auth.users.id (for pipeline_leads.corretor_id)
   leadsHoje: number;
+  totalAtivos: number; // total active pipeline leads (not in descarte/venda)
   lastReceivedAt: string | null;
 }
 
