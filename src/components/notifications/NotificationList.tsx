@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Bell, X, Check } from "lucide-react";
+import { Bell, X, Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import type { Notification } from "@/hooks/useNotifications";
@@ -78,11 +78,19 @@ function getNotificationRoute(n: Notification): string | null {
   const categoria = n.categoria;
 
   // Lead notifications → pipeline with lead context
-  if (["leads", "lead_roleta", "lead_urgente", "lead_ultimo_alerta", "lead_sem_contato", "lead_parado", "lead_alto_valor"].includes(tipo)) {
-    if (d.lead_id) return `/pipeline?lead=${d.lead_id}`;
+  if (["leads", "lead", "lead_roleta", "lead_urgente", "lead_ultimo_alerta", "lead_sem_contato", "lead_parado", "lead_alto_valor"].includes(tipo)) {
+    const leadId = d.pipeline_lead_id || d.lead_id;
+    if (leadId) return `/pipeline?lead=${leadId}`;
     return "/pipeline";
   }
   if (tipo === "fila_ceo" || categoria === "fila_ceo") return "/pipeline";
+
+  // Lead categories
+  if (["lead_novo", "lead_aceito", "lead_retorno", "lead_atribuido"].includes(categoria)) {
+    const leadId = d.pipeline_lead_id || d.lead_id;
+    if (leadId) return `/pipeline?lead=${leadId}`;
+    return "/pipeline";
+  }
 
   // Visita notifications → agenda
   if (["visitas", "visita_agendada", "visita_confirmada", "visita_noshow"].includes(tipo) || categoria?.startsWith("visita")) {
@@ -124,6 +132,33 @@ function getNotificationRoute(n: Notification): string | null {
   return null;
 }
 
+/** Extract contextual details from notification data for display */
+function getContextDetails(n: Notification): { leadName?: string; detail?: string } {
+  const d = n.dados || {};
+
+  // Try to extract lead name from dados or mensagem
+  let leadName = d.lead_nome || d.nome;
+  if (!leadName && n.mensagem) {
+    // Try to extract name from patterns like "Você recebeu o lead João" or "João - Empreendimento"
+    const matchRecebeu = n.mensagem.match(/lead\s+([^(.\n]+?)(?:\s*\(|\.|\s*-|\s*$)/i);
+    const matchDash = n.mensagem.match(/^([^-–]+?)\s*[-–]\s/);
+    if (matchRecebeu?.[1]) leadName = matchRecebeu[1].trim();
+    else if (matchDash?.[1] && matchDash[1].length < 40) leadName = matchDash[1].trim();
+  }
+
+  // Build detail line with empreendimento/canal/campanha
+  const parts: string[] = [];
+  if (d.empreendimento || d.novo_empreendimento) parts.push(d.novo_empreendimento || d.empreendimento);
+  if (d.canal) parts.push(d.canal);
+  if (d.campanha) parts.push(d.campanha);
+  if (d.origem) parts.push(d.origem);
+
+  return {
+    leadName: leadName || undefined,
+    detail: parts.length > 0 ? parts.join(" · ") : undefined,
+  };
+}
+
 export default function NotificationList({ notifications, onMarkAsRead, onDelete, compact }: Props) {
   const navigate = useNavigate();
 
@@ -159,11 +194,14 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
     <div>
       {notifications.map((n) => {
         const config = TIPO_CONFIG[n.tipo] || { emoji: "🔔", borderColor: "#9CA3AF", bgUnread: "#F9FAFB" };
+        const route = getNotificationRoute(n);
+        const isClickable = !!route;
+        const { leadName, detail } = getContextDetails(n);
 
         return (
           <div
             key={n.id}
-            className="flex gap-3 px-4 py-4 cursor-pointer group transition-colors"
+            className={`flex gap-3 px-4 py-3.5 group transition-colors ${isClickable ? "cursor-pointer" : ""}`}
             style={{
               borderLeft: `3px solid ${!n.lida ? config.borderColor : "transparent"}`,
               background: !n.lida ? config.bgUnread : "#fff",
@@ -213,9 +251,31 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
                   </Button>
                 </div>
               </div>
-              {!compact && (
+
+              {/* Context details: lead name + empreendimento/campanha */}
+              {(leadName || detail) && (
+                <div className="mt-1 space-y-0.5">
+                  {leadName && (
+                    <p style={{ fontSize: 12, fontWeight: 600, color: !n.lida ? "#374151" : "#6B7280" }} className="truncate">
+                      👤 {leadName}
+                    </p>
+                  )}
+                  {detail && (
+                    <p style={{ fontSize: 11, color: "#9CA3AF" }} className="truncate">
+                      🏠 {detail}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Message preview (non-compact only, and only if no context already shown) */}
+              {!compact && !leadName && !detail && n.mensagem && (
                 <p className="text-gray-500 mt-1 line-clamp-2" style={{ fontSize: 12 }}>{n.mensagem}</p>
               )}
+              {!compact && (leadName || detail) && n.mensagem && (
+                <p className="text-gray-400 mt-0.5 line-clamp-1" style={{ fontSize: 11 }}>{n.mensagem}</p>
+              )}
+
               <div className="flex items-center gap-2 mt-1.5">
                 <span className="text-gray-400" style={{ fontSize: 11 }}>
                   {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: ptBR })}
@@ -229,8 +289,11 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
                     color: "#6B7280",
                   }}
                 >
-                  {TIPO_LABELS[n.tipo] || n.tipo}
+                  {TIPO_LABELS[n.tipo] || TIPO_LABELS[n.categoria] || n.tipo}
                 </span>
+                {isClickable && (
+                  <ChevronRight className="h-3 w-3 text-gray-300 ml-auto shrink-0" />
+                )}
               </div>
             </div>
           </div>
