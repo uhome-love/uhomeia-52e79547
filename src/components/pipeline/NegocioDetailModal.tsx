@@ -22,6 +22,7 @@ import EmpreendimentoCombobox from "@/components/ui/empreendimento-combobox";
 import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 import WhatsAppTemplatesDialog from "./WhatsAppTemplatesDialog";
 import { cn } from "@/lib/utils";
+import SolicitarPagadoriaDialog from "./SolicitarPagadoriaDialog";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
