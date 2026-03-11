@@ -3544,6 +3544,12 @@ export type Database = {
           prioridade_lead: string
           produto_id: string | null
           proxima_acao: string | null
+          radar_atualizado_em: string | null
+          radar_bairros: string[] | null
+          radar_quartos: number | null
+          radar_status_imovel: string | null
+          radar_tipologia: string | null
+          radar_valor_max: number | null
           segmento_id: string | null
           stage_changed_at: string
           stage_id: string
@@ -3593,6 +3599,12 @@ export type Database = {
           prioridade_lead?: string
           produto_id?: string | null
           proxima_acao?: string | null
+          radar_atualizado_em?: string | null
+          radar_bairros?: string[] | null
+          radar_quartos?: number | null
+          radar_status_imovel?: string | null
+          radar_tipologia?: string | null
+          radar_valor_max?: number | null
           segmento_id?: string | null
           stage_changed_at?: string
           stage_id: string
@@ -3642,6 +3654,12 @@ export type Database = {
           prioridade_lead?: string
           produto_id?: string | null
           proxima_acao?: string | null
+          radar_atualizado_em?: string | null
+          radar_bairros?: string[] | null
+          radar_quartos?: number | null
+          radar_status_imovel?: string | null
+          radar_tipologia?: string | null
+          radar_valor_max?: number | null
           segmento_id?: string | null
           stage_changed_at?: string
           stage_id?: string

@@ -34,6 +34,7 @@ import LeadHistoricoTab from "./LeadHistoricoTab";
 import WhatsAppTemplatesDialog from "./WhatsAppTemplatesDialog";
 import QuickActionMenu from "./QuickActionMenu";
 import EmpreendimentoCombobox from "@/components/ui/empreendimento-combobox";
+import RadarImoveisTab from "./RadarImoveisTab";
 import { format, formatDistanceToNow, differenceInHours, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -393,7 +394,10 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 <MapPin className="h-3.5 w-3.5 mr-1" /> 📊 Visitas
               </TabsTrigger>
               <TabsTrigger value="inteligencia" className="text-sm h-7 data-[state=active]:shadow-sm">
-                <Brain className="h-3.5 w-3.5 mr-1" /> 🧠 Inteligência
+                <Brain className="h-3.5 w-3.5 mr-1" /> 🧠
+              </TabsTrigger>
+              <TabsTrigger value="radar" className="text-sm h-7 data-[state=active]:shadow-sm">
+                <Building2 className="h-3.5 w-3.5 mr-1" /> 📡 Radar
               </TabsTrigger>
             </TabsList>
             <Button
@@ -625,6 +629,23 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   {lead.observacoes}
                 </p>
               )}
+            </TabsContent>
+
+            {/* ===== TAB: RADAR IMÓVEIS ===== */}
+            <TabsContent value="radar" className="mt-0">
+              <RadarImoveisTab
+                leadId={lead.id}
+                leadNome={lead.nome}
+                leadTelefone={lead.telefone}
+                currentProfile={{
+                  radar_quartos: (lead as any).radar_quartos,
+                  radar_valor_max: (lead as any).radar_valor_max,
+                  radar_tipologia: (lead as any).radar_tipologia,
+                  radar_bairros: (lead as any).radar_bairros,
+                  radar_status_imovel: (lead as any).radar_status_imovel,
+                }}
+                onUpdate={onUpdate}
+              />
             </TabsContent>
           </ScrollArea>
         </Tabs>
