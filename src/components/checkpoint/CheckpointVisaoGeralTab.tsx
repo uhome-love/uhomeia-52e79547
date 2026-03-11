@@ -60,8 +60,8 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
         .from("oferta_ativa_tentativas")
         .select("corretor_id, resultado, canal")
         .in("corretor_id", teamUserIds)
-        .gte("created_at", `${today}T00:00:00`)
-        .lte("created_at", `${today}T23:59:59`),
+        .gte("created_at", `${dateStr}T00:00:00`)
+        .lte("created_at", `${dateStr}T23:59:59`),
       // Pipeline leads ativos
       supabase
         .from("pipeline_leads")
