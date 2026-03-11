@@ -510,6 +510,26 @@ export default function MeusNegocios() {
     corretor_id: n.corretor_id,
   })), isGestor || isAdmin ? undefined : user?.id);
 
+  // Load next pending task per negócio
+  const [taskMap, setTaskMap] = useState<Record<string, NegocioTask>>({});
+  const loadTasks = useCallback(async () => {
+    if (!negocios.length) return;
+    const ids = negocios.map(n => n.id);
+    const { data } = await supabase
+      .from("negocios_tarefas")
+      .select("id, negocio_id, titulo, vence_em, status")
+      .in("negocio_id", ids)
+      .eq("status", "pendente")
+      .order("vence_em", { ascending: true, nullsFirst: false });
+    const map: Record<string, NegocioTask> = {};
+    (data || []).forEach((t: any) => {
+      if (!map[t.negocio_id]) map[t.negocio_id] = t;
+    });
+    setTaskMap(map);
+  }, [negocios]);
+
+  useEffect(() => { loadTasks(); }, [loadTasks]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCorretor, setFilterCorretor] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
