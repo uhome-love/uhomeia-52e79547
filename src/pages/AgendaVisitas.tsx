@@ -620,6 +620,11 @@ export default function AgendaVisitas() {
               <Users className="h-3.5 w-3.5" /> Por Corretor
             </TabsTrigger>
           )}
+          {pendingCount > 0 && (
+            <TabsTrigger value="alertas" className="gap-1.5 text-xs h-8 px-3 text-destructive">
+              <AlertTriangle className="h-3.5 w-3.5" /> Alertas <Badge variant="destructive" className="text-[10px] ml-0.5 px-1.5 py-0">{pendingCount}</Badge>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="performance" className="gap-1.5 text-xs h-8 px-3">
             <BarChart3 className="h-3.5 w-3.5" /> Performance
           </TabsTrigger>
