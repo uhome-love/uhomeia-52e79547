@@ -192,7 +192,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, curren
     valor_max: valorMax ? parseFloat(valorMax) : null,
     tipologia,
     bairros: selectedBairros,
-    status_imovel: statusImovel,
+    status_imovel: statusImovel === "qualquer" ? "" : statusImovel,
   };
 
   const toggleBairro = (b: string) => {
