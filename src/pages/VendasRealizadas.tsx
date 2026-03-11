@@ -261,6 +261,44 @@ export default function VendasRealizadas() {
 
   const medalEmojis = ["🥇", "🥈", "🥉"];
 
+  // ═══ ORIGIN ANALYTICS ═══
+  const origemAnalytics = useMemo(() => {
+    const byOrigem: Record<string, { count: number; vgv: number; empreendimentos: Set<string>; detalhe: Set<string> }> = {};
+    const detailRows: { cliente: string; empreendimento: string | null; vgv: number; origem: string; detalhe: string | null; dataAssinatura: string | null; dataEntrada: string | null; corretor: string }[] = [];
+    
+    filtered.forEach(v => {
+      const plId = v.pipeline_lead_id;
+      const info = plId ? origemMap[plId] : null;
+      const origem = info?.origem || "Não identificado";
+      const detalhe = info?.origem_detalhe || null;
+      const vgv = v.vgv_final || v.vgv_estimado || 0;
+      const corr = v.corretor_id ? profiles[v.corretor_id] : null;
+
+      if (!byOrigem[origem]) byOrigem[origem] = { count: 0, vgv: 0, empreendimentos: new Set(), detalhe: new Set() };
+      byOrigem[origem].count++;
+      byOrigem[origem].vgv += vgv;
+      if (v.empreendimento) byOrigem[origem].empreendimentos.add(v.empreendimento);
+      if (detalhe) byOrigem[origem].detalhe.add(detalhe);
+
+      detailRows.push({
+        cliente: v.nome_cliente,
+        empreendimento: v.empreendimento,
+        vgv,
+        origem,
+        detalhe,
+        dataAssinatura: v.data_assinatura,
+        dataEntrada: info?.created_at_lead || null,
+        corretor: corr?.nome || "—",
+      });
+    });
+
+    const sorted = Object.entries(byOrigem)
+      .map(([origem, d]) => ({ origem, ...d, empreendimentos: [...d.empreendimentos], detalhe: [...d.detalhe] }))
+      .sort((a, b) => b.vgv - a.vgv);
+
+    return { breakdown: sorted, details: detailRows, totalVGV };
+  }, [filtered, origemMap, profiles, totalVGV]);
+
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
