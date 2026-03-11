@@ -114,6 +114,42 @@ export default function CeoCheckpointViewer() {
       }
     }
 
+    // Fetch corretor daily goals for metas
+    const goalsMap: Record<string, { meta_ligacoes: number; meta_aproveitados: number; meta_visitas_marcadas: number }> = {};
+    if (userIds.length > 0) {
+      const { data: goals } = await supabase
+        .from("corretor_daily_goals")
+        .select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas")
+        .in("corretor_id", userIds)
+        .eq("data", date);
+      for (const g of (goals || []) as any[]) {
+        const member = linkedMembers.find(m => m.user_id === g.corretor_id);
+        if (member) {
+          goalsMap[member.id] = { meta_ligacoes: g.meta_ligacoes, meta_aproveitados: g.meta_aproveitados, meta_visitas_marcadas: g.meta_visitas_marcadas ?? 0 };
+        }
+      }
+      // Fallback to most recent goals for corretores without today's goals
+      const foundIds = new Set((goals || []).map((g: any) => g.corretor_id));
+      const missingIds = userIds.filter(id => !foundIds.has(id));
+      if (missingIds.length > 0) {
+        const { data: recentGoals } = await supabase
+          .from("corretor_daily_goals")
+          .select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas, data")
+          .in("corretor_id", missingIds)
+          .lte("data", date)
+          .order("data", { ascending: false });
+        const seenRecent = new Set<string>();
+        for (const g of (recentGoals || []) as any[]) {
+          if (seenRecent.has(g.corretor_id)) continue;
+          seenRecent.add(g.corretor_id);
+          const member = linkedMembers.find(m => m.user_id === g.corretor_id);
+          if (member) {
+            goalsMap[member.id] = { meta_ligacoes: g.meta_ligacoes, meta_aproveitados: g.meta_aproveitados, meta_visitas_marcadas: g.meta_visitas_marcadas ?? 0 };
+          }
+        }
+      }
+    }
+
     const cpIds = (cps || []).map(c => c.id);
     const { data: allLines } = cpIds.length > 0
       ? await supabase.from("checkpoint_lines").select("*").in("checkpoint_id", cpIds)
