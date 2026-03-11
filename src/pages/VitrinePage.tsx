@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Phone, MapPin, BedDouble, Car, Maximize, ChevronLeft, ChevronRight, X, Bath, Ruler, Building2, ArrowRight } from "lucide-react";
+import { Loader2, Phone, MapPin, BedDouble, Car, Maximize, ChevronLeft, ChevronRight, X, Bath, Ruler, Building2, ArrowRight, Home, Shield, TreePine } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatBRL } from "@/lib/utils";
@@ -21,7 +21,6 @@ interface VitrineImovel {
   fotos: string[];
   empreendimento: string | null;
   descricao: string | null;
-  // Melnick Day extras
   precoDe?: string | null;
   precoPor?: string | null;
   descontoMax?: string | null;
@@ -38,42 +37,53 @@ interface VitrineData {
   imoveis: VitrineImovel[];
 }
 
-function PhotoCarousel({ fotos, onOpen }: { fotos: string[]; onOpen: (idx: number) => void }) {
+/* ═══════════════ Photo Carousel ═══════════════ */
+function PhotoCarousel({ fotos, onOpen, large }: { fotos: string[]; onOpen: (idx: number) => void; large?: boolean }) {
   const [current, setCurrent] = useState(0);
   if (fotos.length === 0) {
     return (
-      <div className="aspect-[4/3] bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
+      <div className={`${large ? "aspect-[16/9]" : "aspect-[4/3]"} bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center`}>
         <Building2 className="h-12 w-12 text-slate-400" />
       </div>
     );
   }
   return (
-    <div className="relative aspect-[4/3] overflow-hidden group cursor-pointer" onClick={() => onOpen(current)}>
-      <img src={fotos[current]} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+    <div className={`relative ${large ? "aspect-[16/9]" : "aspect-[4/3]"} overflow-hidden group cursor-pointer`} onClick={() => onOpen(current)}>
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={current}
+          src={fotos[current]}
+          alt=""
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="w-full h-full object-cover absolute inset-0"
+        />
+      </AnimatePresence>
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       {fotos.length > 1 && (
         <>
           <button
             onClick={(e) => { e.stopPropagation(); setCurrent((current - 1 + fotos.length) % fotos.length); }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm text-slate-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm text-slate-800 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setCurrent((current + 1) % fotos.length); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm text-slate-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm text-slate-800 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </button>
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
-            {fotos.slice(0, 6).map((_, i) => (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {fotos.map((_, i) => (
               <button
                 key={i}
                 onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
-                className={`h-1.5 rounded-full transition-all ${i === current ? "w-6 bg-white" : "w-1.5 bg-white/50"}`}
+                className={`h-2 rounded-full transition-all ${i === current ? "w-8 bg-white" : "w-2 bg-white/50"}`}
               />
             ))}
-            {fotos.length > 6 && <span className="text-[10px] text-white/70 ml-1">+{fotos.length - 6}</span>}
           </div>
         </>
       )}
@@ -86,6 +96,215 @@ function PhotoCarousel({ fotos, onOpen }: { fotos: string[]; onOpen: (idx: numbe
   );
 }
 
+/* ═══════════════ Single Property Layout ═══════════════ */
+function SinglePropertyView({ imovel, corretor, vitrine, onOpenLightbox, whatsappLink }: {
+  imovel: VitrineImovel;
+  corretor: VitrineData["corretor"];
+  vitrine: VitrineData["vitrine"];
+  onOpenLightbox: (fotos: string[], idx: number) => void;
+  whatsappLink: string | null;
+}) {
+  const specs = [
+    imovel.area && { icon: Ruler, label: `${imovel.area}m²` },
+    imovel.quartos && { icon: BedDouble, label: `${imovel.quartos} quarto${imovel.quartos > 1 ? "s" : ""}` },
+    imovel.suites && { icon: Home, label: `${imovel.suites} suíte${imovel.suites > 1 ? "s" : ""}` },
+    imovel.banheiros && { icon: Bath, label: `${imovel.banheiros} banh.` },
+    imovel.vagas && { icon: Car, label: `${imovel.vagas} vaga${imovel.vagas > 1 ? "s" : ""}` },
+  ].filter(Boolean) as { icon: any; label: string }[];
+
+  const nome = imovel.empreendimento || imovel.titulo || vitrine.titulo;
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* ─── Hero with full-width photo slider ─── */}
+      <div className="relative">
+        <PhotoCarousel fotos={imovel.fotos} onOpen={(idx) => onOpenLightbox(imovel.fotos, idx)} large />
+        {/* Gradient overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent" />
+        {/* Title overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            {imovel.segmento && (
+              <span className="inline-block text-[11px] font-bold text-amber-300 bg-amber-500/20 backdrop-blur-sm px-3 py-1 rounded-full uppercase tracking-wider mb-3">
+                {imovel.segmento}
+              </span>
+            )}
+            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-lg">{nome}</h1>
+            {(imovel.endereco || imovel.bairro) && (
+              <p className="text-white/80 text-base sm:text-lg mt-2 flex items-center gap-2">
+                <MapPin className="h-4 w-4 shrink-0" />
+                {imovel.bairro}{imovel.cidade ? ` — ${imovel.cidade}` : ""}
+              </p>
+            )}
+          </motion.div>
+        </div>
+        {/* Corretor badge */}
+        {corretor && (
+          <div className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2.5 bg-black/40 backdrop-blur-md rounded-full pr-4 pl-1 py-1">
+            {corretor.avatar_url ? (
+              <img src={corretor.avatar_url} alt={corretor.nome} className="w-9 h-9 rounded-full border-2 border-white/30 object-cover" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-blue-600/40 border-2 border-white/30 flex items-center justify-center text-white font-bold text-sm">
+                {corretor.nome.charAt(0)}
+              </div>
+            )}
+            <div>
+              <p className="text-white/60 text-[10px] uppercase tracking-widest">Seleção por</p>
+              <p className="text-white font-semibold text-sm">{corretor.nome}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Content ─── */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+        {/* Price + Specs row */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            {imovel.descontoMax && (
+              <span className="inline-block text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full mb-2">
+                {imovel.descontoMax} OFF
+              </span>
+            )}
+            {imovel.precoDe && (
+              <p className="text-base text-slate-400 line-through">{imovel.precoDe}</p>
+            )}
+            {imovel.precoPor ? (
+              <p className="text-3xl sm:text-4xl font-black text-emerald-600">{imovel.precoPor}</p>
+            ) : imovel.valor ? (
+              <p className="text-3xl sm:text-4xl font-black text-slate-900">{formatBRL(imovel.valor)}</p>
+            ) : null}
+            {imovel.condicoes && (
+              <p className="text-sm text-slate-500 mt-1">{imovel.condicoes}</p>
+            )}
+          </div>
+          {whatsappLink && (
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3.5 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 shrink-0"
+            >
+              <Phone className="h-5 w-5" />
+              Falar com {corretor?.nome?.split(" ")[0] || "corretor"}
+              <ArrowRight className="h-5 w-5" />
+            </a>
+          )}
+        </motion.div>
+
+        {/* Specs pills */}
+        {specs.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-3">
+            {specs.map((s, i) => (
+              <div key={i} className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-slate-700">
+                <s.icon className="h-5 w-5 text-slate-400" />
+                <span className="text-sm font-medium">{s.label}</span>
+              </div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Description */}
+        {imovel.descricao && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="space-y-3">
+            <h2 className="text-xl font-bold text-slate-900">Sobre o empreendimento</h2>
+            <p className="text-slate-600 leading-relaxed text-base whitespace-pre-line">{imovel.descricao}</p>
+          </motion.div>
+        )}
+
+        {/* Dorms / Metragens if available */}
+        {(imovel.dorms || imovel.metragens) && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="grid sm:grid-cols-2 gap-4">
+            {imovel.dorms && (
+              <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-4">
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Tipologias</p>
+                <p className="text-sm text-slate-700 font-medium">{imovel.dorms}</p>
+              </div>
+            )}
+            {imovel.metragens && (
+              <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-4">
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Metragens</p>
+                <p className="text-sm text-slate-700 font-medium">{imovel.metragens}</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Photo thumbnails grid */}
+        {imovel.fotos.length > 1 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+            <h2 className="text-xl font-bold text-slate-900 mb-3">Galeria</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {imovel.fotos.map((foto, i) => (
+                <div
+                  key={i}
+                  className="aspect-[4/3] rounded-xl overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => onOpenLightbox(imovel.fotos, i)}
+                >
+                  <img src={foto} alt="" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Vitrine message */}
+        {vitrine.mensagem && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center"
+          >
+            <p className="text-slate-600 italic">"{vitrine.mensagem}"</p>
+            {corretor && <p className="text-sm text-slate-400 mt-2">— {corretor.nome}</p>}
+          </motion.div>
+        )}
+      </div>
+
+      {/* ─── CTA Footer ─── */}
+      {whatsappLink && (
+        <section className="bg-gradient-to-r from-slate-900 to-blue-900 py-12">
+          <div className="max-w-3xl mx-auto px-4 text-center space-y-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">Interessado?</h2>
+            <p className="text-white/60">Fale agora com {corretor?.nome} e agende uma visita.</p>
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3.5 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 text-lg"
+            >
+              <Phone className="h-5 w-5" />
+              Falar pelo WhatsApp
+              <ArrowRight className="h-5 w-5" />
+            </a>
+          </div>
+        </section>
+      )}
+
+      {/* Footer */}
+      <footer className="py-8 border-t border-slate-100">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <p className="text-sm text-slate-400">
+            Seleção personalizada por <span className="font-medium text-slate-600">{corretor?.nome || "UHome"}</span>
+          </p>
+          <p className="text-xs text-slate-300 mt-1">UHome Sales</p>
+        </div>
+      </footer>
+
+      {/* Floating WhatsApp (mobile) */}
+      {whatsappLink && (
+        <a
+          href={whatsappLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 sm:hidden bg-emerald-500 text-white rounded-full p-4 shadow-2xl shadow-emerald-500/30 hover:bg-emerald-600 transition-all"
+        >
+          <Phone className="h-6 w-6" />
+        </a>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════ Multi-Property Card ═══════════════ */
 function MelnickDayCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImovel; index: number; onOpenLightbox: (fotos: string[], idx: number) => void }) {
   return (
     <motion.div
@@ -109,7 +328,7 @@ function MelnickDayCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImov
           </p>
         )}
         {imovel.descricao && (
-          <p className="text-sm text-slate-500">{imovel.descricao}</p>
+          <p className="text-sm text-slate-500 line-clamp-3">{imovel.descricao}</p>
         )}
         {imovel.descontoMax && (
           <span className="inline-block text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
@@ -117,29 +336,20 @@ function MelnickDayCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImov
           </span>
         )}
         <div className="pt-2 border-t border-slate-100 space-y-0.5">
-          {imovel.precoDe && (
-            <p className="text-sm text-slate-400 line-through">{imovel.precoDe}</p>
-          )}
-          {imovel.precoPor && (
+          {imovel.precoDe && <p className="text-sm text-slate-400 line-through">{imovel.precoDe}</p>}
+          {imovel.precoPor ? (
             <p className="text-2xl font-black text-emerald-600">{imovel.precoPor}</p>
-          )}
-          {!imovel.precoPor && imovel.valor && (
-            <p className="text-2xl font-black text-slate-900">
-              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(imovel.valor)}
-            </p>
-          )}
+          ) : imovel.valor ? (
+            <p className="text-2xl font-black text-slate-900">{formatBRL(imovel.valor)}</p>
+          ) : null}
         </div>
-        {imovel.condicoes && (
-          <p className="text-xs text-slate-500 italic">{imovel.condicoes}</p>
-        )}
+        {imovel.condicoes && <p className="text-xs text-slate-500 italic">{imovel.condicoes}</p>}
       </div>
     </motion.div>
   );
 }
 
 function ImovelCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImovel; index: number; onOpenLightbox: (fotos: string[], idx: number) => void }) {
-  const formatCurrency = (v: number) => formatBRL(v);
-
   const specs = [
     imovel.area && { icon: Ruler, label: `${imovel.area}m²` },
     imovel.quartos && { icon: BedDouble, label: `${imovel.quartos} quarto${imovel.quartos > 1 ? "s" : ""}` },
@@ -155,23 +365,22 @@ function ImovelCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImovel; 
       className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 group"
     >
       <PhotoCarousel fotos={imovel.fotos} onOpen={(idx) => onOpenLightbox(imovel.fotos, idx)} />
-
       <div className="p-5 space-y-3">
         {imovel.empreendimento && (
           <span className="inline-block text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
             {imovel.empreendimento}
           </span>
         )}
-
         <h3 className="text-lg font-bold text-slate-900 leading-tight">{imovel.titulo}</h3>
-
         {(imovel.endereco || imovel.bairro) && (
           <p className="text-sm text-slate-500 flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
             {imovel.endereco || imovel.bairro}
           </p>
         )}
-
+        {imovel.descricao && (
+          <p className="text-sm text-slate-500 line-clamp-3">{imovel.descricao}</p>
+        )}
         {specs.length > 0 && (
           <div className="flex flex-wrap gap-3 pt-1">
             {specs.map((s, i) => (
@@ -182,10 +391,9 @@ function ImovelCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImovel; 
             ))}
           </div>
         )}
-
         {imovel.valor && (
           <div className="pt-2 border-t border-slate-100">
-            <p className="text-2xl font-black text-slate-900">{formatCurrency(imovel.valor)}</p>
+            <p className="text-2xl font-black text-slate-900">{formatBRL(imovel.valor)}</p>
           </div>
         )}
       </div>
@@ -193,6 +401,7 @@ function ImovelCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImovel; 
   );
 }
 
+/* ═══════════════ Main Page ═══════════════ */
 export default function VitrinePage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<VitrineData | null>(null);
@@ -246,9 +455,10 @@ export default function VitrinePage() {
       </div>
     );
   }
-  const isMelnickDay = data?.vitrine?.tipo === "melnick_day";
 
+  const isMelnickDay = data?.vitrine?.tipo === "melnick_day";
   const { vitrine, corretor, imoveis } = data;
+  const isSingle = imoveis.length === 1;
 
   const whatsappLink = corretor?.telefone
     ? `https://wa.me/55${corretor.telefone.replace(/\D/g, "")}?text=${encodeURIComponent(
@@ -256,156 +466,128 @@ export default function VitrinePage() {
       )}`
     : null;
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* ─── Hero Section ─── */}
-      <header className={`relative overflow-hidden ${isMelnickDay ? "bg-gradient-to-br from-[#0a1628] via-[#0d2137] to-[#1a3a5c]" : "bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900"}`}>
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: "radial-gradient(circle at 25% 50%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 75% 50%, rgba(59,130,246,0.15) 0%, transparent 50%)"
-          }} />
-        </div>
+  const openLightbox = (fotos: string[], idx: number) => setLightbox({ fotos, idx });
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center space-y-5"
-          >
-            {/* Corretor avatar + name */}
-            {corretor && (
-              <div className="flex items-center justify-center gap-3">
-                {corretor.avatar_url ? (
-                  <img src={corretor.avatar_url} alt={corretor.nome} className="w-12 h-12 rounded-full border-2 border-white/20 object-cover" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-blue-600/30 border-2 border-white/20 flex items-center justify-center text-white font-bold text-lg">
-                    {corretor.nome.charAt(0)}
+  return (
+    <>
+      {/* Single property = immersive dedicated layout */}
+      {isSingle ? (
+        <SinglePropertyView
+          imovel={imoveis[0]}
+          corretor={corretor}
+          vitrine={vitrine}
+          onOpenLightbox={openLightbox}
+          whatsappLink={whatsappLink}
+        />
+      ) : (
+        /* Multi-property = grid layout */
+        <div className="min-h-screen bg-white">
+          {/* Hero */}
+          <header className={`relative overflow-hidden ${isMelnickDay ? "bg-gradient-to-br from-[#0a1628] via-[#0d2137] to-[#1a3a5c]" : "bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900"}`}>
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0" style={{
+                backgroundImage: "radial-gradient(circle at 25% 50%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 75% 50%, rgba(59,130,246,0.15) 0%, transparent 50%)"
+              }} />
+            </div>
+            <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center space-y-5">
+                {corretor && (
+                  <div className="flex items-center justify-center gap-3">
+                    {corretor.avatar_url ? (
+                      <img src={corretor.avatar_url} alt={corretor.nome} className="w-12 h-12 rounded-full border-2 border-white/20 object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-blue-600/30 border-2 border-white/20 flex items-center justify-center text-white font-bold text-lg">
+                        {corretor.nome.charAt(0)}
+                      </div>
+                    )}
+                    <div className="text-left">
+                      <p className="text-white/60 text-xs uppercase tracking-widest">Seleção por</p>
+                      <p className="text-white font-semibold text-lg">{corretor.nome}</p>
+                    </div>
                   </div>
                 )}
-                <div className="text-left">
-                  <p className="text-white/60 text-xs uppercase tracking-widest">Seleção por</p>
-                  <p className="text-white font-semibold text-lg">{corretor.nome}</p>
+                <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">{vitrine.titulo}</h1>
+                {vitrine.mensagem && (
+                  <p className="text-white/70 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">{vitrine.mensagem}</p>
+                )}
+                <div className="flex items-center justify-center gap-6 text-white/50 text-sm pt-2">
+                  <span className="flex items-center gap-1.5">
+                    <Building2 className="h-4 w-4" />
+                    {imoveis.length} imóve{imoveis.length !== 1 ? "is" : "l"}
+                  </span>
+                  {whatsappLink && (
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-2.5 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
+                    >
+                      <Phone className="h-4 w-4" />
+                      Falar com {corretor?.nome?.split(" ")[0]}
+                      <ArrowRight className="h-4 w-4" />
+                    </a>
+                  )}
                 </div>
+              </motion.div>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0">
+              <svg viewBox="0 0 1440 60" fill="none" className="w-full">
+                <path d="M0 60L48 55C96 50 192 40 288 35C384 30 480 30 576 33.3C672 36.7 768 43.3 864 45C960 46.7 1056 43.3 1152 40C1248 36.7 1344 33.3 1392 31.7L1440 30V60H0Z" fill="white" />
+              </svg>
+            </div>
+          </header>
+
+          {/* Grid */}
+          <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+            {imoveis.length === 0 ? (
+              <div className="text-center py-20 space-y-4">
+                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
+                  <Building2 className="h-10 w-10 text-slate-300" />
+                </div>
+                <p className="text-slate-500 text-lg">Nenhum imóvel encontrado nesta seleção.</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {imoveis.map((imovel, i) => (
+                  isMelnickDay ? (
+                    <MelnickDayCard key={imovel.id} imovel={imovel} index={i} onOpenLightbox={openLightbox} />
+                  ) : (
+                    <ImovelCard key={imovel.id} imovel={imovel} index={i} onOpenLightbox={openLightbox} />
+                  )
+                ))}
               </div>
             )}
+          </main>
 
-            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-              {vitrine.titulo}
-            </h1>
-
-            {vitrine.mensagem && (
-              <p className="text-white/70 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-                {vitrine.mensagem}
-              </p>
-            )}
-
-            <div className="flex items-center justify-center gap-6 text-white/50 text-sm pt-2">
-              <span className="flex items-center gap-1.5">
-                <Building2 className="h-4 w-4" />
-                {imoveis.length} imóve{imoveis.length !== 1 ? "is" : "l"}
-              </span>
-              {whatsappLink && (
-                <a
-                  href={whatsappLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-2.5 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
+          {/* CTA Footer */}
+          {whatsappLink && (
+            <section className="bg-gradient-to-r from-slate-900 to-blue-900 py-12">
+              <div className="max-w-3xl mx-auto px-4 text-center space-y-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">Gostou de algum imóvel?</h2>
+                <p className="text-white/60">Entre em contato com {corretor?.nome} para agendar uma visita ou tirar dúvidas.</p>
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3.5 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 text-lg"
                 >
-                  <Phone className="h-4 w-4" />
-                  Falar com {corretor?.nome?.split(" ")[0]}
-                  <ArrowRight className="h-4 w-4" />
+                  <Phone className="h-5 w-5" />
+                  Falar pelo WhatsApp
+                  <ArrowRight className="h-5 w-5" />
                 </a>
-              )}
+              </div>
+            </section>
+          )}
+
+          <footer className="py-8 border-t border-slate-100">
+            <div className="max-w-6xl mx-auto px-4 text-center">
+              <p className="text-sm text-slate-400">Seleção personalizada por <span className="font-medium text-slate-600">{corretor?.nome || "UHome"}</span></p>
+              <p className="text-xs text-slate-300 mt-1">UHome Sales</p>
             </div>
-          </motion.div>
-        </div>
+          </footer>
 
-        {/* Bottom wave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none" className="w-full">
-            <path d="M0 60L48 55C96 50 192 40 288 35C384 30 480 30 576 33.3C672 36.7 768 43.3 864 45C960 46.7 1056 43.3 1152 40C1248 36.7 1344 33.3 1392 31.7L1440 30V60H0Z" fill="white" />
-          </svg>
-        </div>
-      </header>
-
-      {/* ─── Properties Grid ─── */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {imoveis.length === 0 ? (
-          <div className="text-center py-20 space-y-4">
-            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
-              <Building2 className="h-10 w-10 text-slate-300" />
-            </div>
-            <p className="text-slate-500 text-lg">Nenhum imóvel encontrado nesta seleção.</p>
-          </div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {imoveis.map((imovel, i) => (
-              isMelnickDay ? (
-                <MelnickDayCard
-                  key={imovel.id}
-                  imovel={imovel}
-                  index={i}
-                  onOpenLightbox={(fotos, idx) => setLightbox({ fotos, idx })}
-                />
-              ) : (
-                <ImovelCard
-                  key={imovel.id}
-                  imovel={imovel}
-                  index={i}
-                  onOpenLightbox={(fotos, idx) => setLightbox({ fotos, idx })}
-                />
-              )
-            ))}
-          </div>
-        )}
-      </main>
-
-      {/* ─── CTA Footer ─── */}
-      {whatsappLink && (
-        <section className="bg-gradient-to-r from-slate-900 to-blue-900 py-12">
-          <div className="max-w-3xl mx-auto px-4 text-center space-y-4">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Gostou de algum imóvel?
-            </h2>
-            <p className="text-white/60">
-              Entre em contato com {corretor?.nome} para agendar uma visita ou tirar dúvidas.
-            </p>
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3.5 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 text-lg"
+          {whatsappLink && (
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer"
+              className="fixed bottom-6 right-6 z-50 sm:hidden bg-emerald-500 text-white rounded-full p-4 shadow-2xl shadow-emerald-500/30 hover:bg-emerald-600 transition-all"
             >
-              <Phone className="h-5 w-5" />
-              Falar pelo WhatsApp
-              <ArrowRight className="h-5 w-5" />
+              <Phone className="h-6 w-6" />
             </a>
-          </div>
-        </section>
-      )}
-
-      {/* ─── Footer ─── */}
-      <footer className="py-8 border-t border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-sm text-slate-400">
-            Seleção personalizada por <span className="font-medium text-slate-600">{corretor?.nome || "UHome"}</span>
-          </p>
-          <p className="text-xs text-slate-300 mt-1">UHome Sales</p>
+          )}
         </div>
-      </footer>
-
-      {/* ─── Floating WhatsApp Button (mobile) ─── */}
-      {whatsappLink && (
-        <a
-          href={whatsappLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 sm:hidden bg-emerald-500 text-white rounded-full p-4 shadow-2xl shadow-emerald-500/30 hover:bg-emerald-600 transition-all"
-        >
-          <Phone className="h-6 w-6" />
-        </a>
       )}
 
       {/* ─── Lightbox ─── */}
@@ -419,11 +601,7 @@ export default function VitrinePage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="relative"
               >
-                <img
-                  src={lightbox.fotos[lightbox.idx]}
-                  alt=""
-                  className="w-full max-h-[85vh] object-contain"
-                />
+                <img src={lightbox.fotos[lightbox.idx]} alt="" className="w-full max-h-[85vh] object-contain" />
                 <button
                   onClick={() => setLightbox(null)}
                   className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm text-white rounded-full p-2 hover:bg-white/20 transition-colors"
@@ -454,6 +632,6 @@ export default function VitrinePage() {
           </Dialog>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
