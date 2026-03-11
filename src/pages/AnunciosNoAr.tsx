@@ -380,9 +380,15 @@ function MaterialSection({
 
       {/* Upload area (CEO/Gerente only) */}
       {canUpload && (
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-1 flex-wrap">
+          <Input
+            value={uploadNome}
+            onChange={(e) => setUploadNome(e.target.value)}
+            placeholder="Nome do arquivo..."
+            className="h-8 text-[11px] w-[160px]"
+          />
           <Select value={uploadTipo} onValueChange={setUploadTipo}>
-            <SelectTrigger className="h-8 text-[11px] w-[160px]">
+            <SelectTrigger className="h-8 text-[11px] w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
