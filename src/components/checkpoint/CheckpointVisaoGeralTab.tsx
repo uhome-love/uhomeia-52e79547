@@ -72,14 +72,7 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
     if (teamUserIds.length === 0) return;
     setLoading(true);
 
-    const [
-      { data: tentativas },
-      { data: pipelineLeads },
-      { data: negocios },
-      { data: visitasDia },
-      { data: negParados },
-      { data: leadsPendentes },
-    ] = await Promise.all([
+    const results = await Promise.all([
       // OA do dia
       supabase
         .from("oferta_ativa_tentativas")
