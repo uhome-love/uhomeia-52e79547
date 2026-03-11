@@ -1,106 +1,233 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, AlertTriangle, RefreshCw, Database, Building2, Users, Zap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, CheckCircle2, AlertTriangle, RefreshCw, Database, Building2, Users, Zap, Pencil, Save, X, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 
-// ── Field mapping definitions ──
-
+// ── Types ──
 interface FieldMapping {
-  jetimobField: string;
-  jetimobDescription: string;
-  uhomeField: string;
-  uhomeTable: string;
-  transform?: string;
-  status: "ok" | "warning" | "missing";
-  notes?: string;
+  id: string;
+  categoria: string;
+  jetimob_field: string;
+  jetimob_description: string | null;
+  uhome_field: string;
+  uhome_table: string;
+  transform: string | null;
+  status: string;
+  notes: string | null;
+  ativo: boolean;
+  ordem: number;
 }
 
-const LEAD_FIELD_MAPPINGS: FieldMapping[] = [
-  { jetimobField: "full_name / name / nome", jetimobDescription: "Nome completo do lead", uhomeField: "nome", uhomeTable: "pipeline_leads", status: "ok" },
-  { jetimobField: "phones[0]", jetimobDescription: "Telefone principal", uhomeField: "telefone", uhomeTable: "pipeline_leads", status: "ok" },
-  { jetimobField: "phones[1]", jetimobDescription: "Telefone secundário", uhomeField: "telefone2", uhomeTable: "pipeline_leads", status: "ok" },
-  { jetimobField: "emails[0]", jetimobDescription: "E-mail principal", uhomeField: "email", uhomeTable: "pipeline_leads", status: "ok" },
-  { jetimobField: "message", jetimobDescription: "Mensagem do formulário", uhomeField: "observacoes", uhomeTable: "pipeline_leads", status: "ok", transform: "Texto livre; usado para extrair campanha" },
-  { jetimobField: "message (parsed)", jetimobDescription: "Nome do formulário dentro da mensagem", uhomeField: "empreendimento", uhomeTable: "pipeline_leads", status: "ok", transform: "extractCampanha() → normalizeEmpreendimento()" },
-  { jetimobField: "message (parsed)", jetimobDescription: "Nome da campanha completa", uhomeField: "origem_detalhe", uhomeTable: "pipeline_leads", status: "ok", transform: "extractCampanha() direto" },
-  { jetimobField: "source / origin / message", jetimobDescription: "Canal de origem", uhomeField: "origem", uhomeTable: "pipeline_leads", status: "ok", transform: "detectCanal() → Meta Ads / TikTok / Google / Portal / Site / Outro" },
-  { jetimobField: "created_at", jetimobDescription: "Data de criação no Jetimob", uhomeField: "created_at", uhomeTable: "pipeline_leads", status: "ok", notes: "Filtro CUTOFF: apenas >= 2026-03-07" },
-  { jetimobField: "campaign_id", jetimobDescription: "ID da campanha no Jetimob", uhomeField: "(usado no jetimob_lead_id)", uhomeTable: "pipeline_leads", status: "ok", transform: "Parte do buildJetimobId()" },
-  { jetimobField: "broker_id / responsavel_id", jetimobDescription: "Responsável no Jetimob", uhomeField: "(não mapeado)", uhomeTable: "—", status: "warning", notes: "Usado apenas para filtro manual; a distribuição é feita pela roleta" },
-  { jetimobField: "cpf", jetimobDescription: "CPF do lead", uhomeField: "(não mapeado)", uhomeTable: "—", status: "missing", notes: "Campo disponível na API mas não coletado" },
-  { jetimobField: "address", jetimobDescription: "Endereço do lead", uhomeField: "(não mapeado)", uhomeTable: "—", status: "missing", notes: "Campo disponível mas não coletado" },
-  { jetimobField: "gender", jetimobDescription: "Gênero", uhomeField: "(não mapeado)", uhomeTable: "—", status: "missing", notes: "Campo disponível mas não coletado" },
-  { jetimobField: "birthday", jetimobDescription: "Data de nascimento", uhomeField: "(não mapeado)", uhomeTable: "—", status: "missing", notes: "Campo disponível mas não coletado" },
+// ── Empreendimento mappings (from normalizeEmpreendimento in jetimob-sync) ──
+const EMPREENDIMENTO_MAPPINGS = [
+  { jetimobName: "Casa Tua", uhomeName: "Casa Tua", segmento: "Altíssimo" },
+  { jetimobName: "Orygem", uhomeName: "Orygem", segmento: "Médio-Alto" },
+  { jetimobName: "Lake Eyre", uhomeName: "Lake Eyre", segmento: "Altíssimo" },
+  { jetimobName: "Open Bosque", uhomeName: "Open Bosque", segmento: "Médio-Alto" },
+  { jetimobName: "Casa Bastian", uhomeName: "Casa Bastian", segmento: "Altíssimo" },
+  { jetimobName: "Shift", uhomeName: "Shift", segmento: "Médio-Alto" },
+  { jetimobName: "Seen Menino Deus", uhomeName: "Seen Menino Deus", segmento: "Médio-Alto" },
+  { jetimobName: "Botanique", uhomeName: "Botanique", segmento: "Altíssimo" },
+  { jetimobName: "Me Day", uhomeName: "Me Day", segmento: "MCMV" },
+  { jetimobName: "Melnick Day", uhomeName: "Melnick Day", segmento: "MCMV" },
+  { jetimobName: "Go Carlos Bosque", uhomeName: "Go Carlos Bosque", segmento: "Médio-Alto" },
+  { jetimobName: "Go Carlos Gomes", uhomeName: "Go Carlos Gomes", segmento: "Médio-Alto" },
+  { jetimobName: "Vista Menino Deus", uhomeName: "Vista Menino Deus", segmento: "Médio-Alto" },
+  { jetimobName: "Nilo Square", uhomeName: "Nilo Square", segmento: "Médio-Alto" },
+  { jetimobName: "High Garden Iguatemi", uhomeName: "High Garden Iguatemi", segmento: "Altíssimo" },
+  { jetimobName: "High Garden Rio Branco", uhomeName: "High Garden Rio Branco", segmento: "Altíssimo" },
+  { jetimobName: "Las Casas (Vértice)", uhomeName: "Las Casas", segmento: "Altíssimo" },
+  { jetimobName: "Essenza Club", uhomeName: "Essenza Club", segmento: "Médio-Alto" },
+  { jetimobName: "Prime Wish", uhomeName: "Prime Wish", segmento: "Altíssimo" },
+  { jetimobName: "Alto Lindóia", uhomeName: "Alto Lindóia", segmento: "MCMV" },
+  { jetimobName: "San Andreas", uhomeName: "San Andreas", segmento: "Médio-Alto" },
+  { jetimobName: "Supreme", uhomeName: "Supreme", segmento: "Altíssimo" },
+  { jetimobName: "Boa Vista Country Club", uhomeName: "Boa Vista Country Club", segmento: "Altíssimo" },
+  { jetimobName: "Pontal", uhomeName: "Pontal", segmento: "Médio-Alto" },
+  { jetimobName: "Alfa", uhomeName: "Alfa", segmento: "Médio-Alto" },
+  { jetimobName: "Avulso Canoas", uhomeName: "Avulso Canoas", segmento: "MCMV" },
 ];
 
-const IMOVEL_FIELD_MAPPINGS: FieldMapping[] = [
-  { jetimobField: "codigo / referencia", jetimobDescription: "Código de referência do imóvel", uhomeField: "codigo (busca)", uhomeTable: "jetimob-proxy", status: "ok", transform: "isCodigoMatch() — normaliza e compara" },
-  { jetimobField: "titulo / nome", jetimobDescription: "Título do imóvel", uhomeField: "titulo (exibição)", uhomeTable: "jetimob-proxy", status: "ok" },
-  { jetimobField: "valor_venda / preco_venda", jetimobDescription: "Valor de venda", uhomeField: "valor (exibição)", uhomeTable: "jetimob-proxy", status: "ok", transform: "getPrice() — fallback para locação" },
-  { jetimobField: "valor_locacao / preco_locacao", jetimobDescription: "Valor de locação", uhomeField: "valor (fallback)", uhomeTable: "jetimob-proxy", status: "ok" },
-  { jetimobField: "dormitorios / quartos / suites", jetimobDescription: "Número de dormitórios", uhomeField: "dormitorios (filtro)", uhomeTable: "jetimob-proxy", status: "ok", transform: "getDorms()" },
-  { jetimobField: "endereco_bairro / bairro", jetimobDescription: "Bairro do imóvel", uhomeField: "bairro (filtro)", uhomeTable: "jetimob-proxy", status: "ok", transform: "getBairro()" },
-  { jetimobField: "subtipo / tipo_imovel / tipo", jetimobDescription: "Tipo do imóvel", uhomeField: "tipo (filtro)", uhomeTable: "jetimob-proxy", status: "ok", transform: "getTipo() — prefere subtipo" },
-  { jetimobField: "fotos[] / imagens[]", jetimobDescription: "Galeria de fotos", uhomeField: "imagens (exibição)", uhomeTable: "jetimob-proxy", status: "ok", transform: "normalizeImages() — 9 campos + 10 sub-props" },
-  { jetimobField: "area_total / area_privativa", jetimobDescription: "Metragem", uhomeField: "area (exibição)", uhomeTable: "jetimob-proxy", status: "ok" },
-  { jetimobField: "descricao", jetimobDescription: "Descrição completa", uhomeField: "descricao (exibição)", uhomeTable: "jetimob-proxy", status: "ok" },
-  { jetimobField: "situacao / status", jetimobDescription: "Situação do imóvel", uhomeField: "status (filtro)", uhomeTable: "jetimob-proxy", status: "ok" },
-  { jetimobField: "plantas[]", jetimobDescription: "Plantas do imóvel", uhomeField: "(não mapeado)", uhomeTable: "—", status: "missing", notes: "Campo disponível mas não exibido na UI" },
-  { jetimobField: "videos[]", jetimobDescription: "Vídeos do imóvel", uhomeField: "(não mapeado)", uhomeTable: "—", status: "missing", notes: "Campo disponível mas não exibido na UI" },
-  { jetimobField: "caracteristicas[]", jetimobDescription: "Características (piscina, churrasqueira...)", uhomeField: "(não mapeado)", uhomeTable: "—", status: "missing", notes: "Campo disponível mas não filtrado" },
-];
-
-const EMPREENDIMENTO_MAPPINGS: { jetimobName: string; uhomeName: string; segmento: string; status: "ok" | "warning" }[] = [
-  { jetimobName: "Casa Tua", uhomeName: "Casa Tua", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Orygem", uhomeName: "Orygem", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Lake Eyre", uhomeName: "Lake Eyre", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Open Bosque", uhomeName: "Open Bosque", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Casa Bastian", uhomeName: "Casa Bastian", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Shift", uhomeName: "Shift", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Seen Menino Deus", uhomeName: "Seen Menino Deus", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Botanique", uhomeName: "Botanique", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Me Day", uhomeName: "Me Day", segmento: "MCMV", status: "ok" },
-  { jetimobName: "Melnick Day", uhomeName: "Melnick Day", segmento: "MCMV", status: "ok" },
-  { jetimobName: "Go Carlos Bosque", uhomeName: "Go Carlos Bosque", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Go Carlos Gomes", uhomeName: "Go Carlos Gomes", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Vista Menino Deus", uhomeName: "Vista Menino Deus", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Nilo Square", uhomeName: "Nilo Square", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "High Garden Iguatemi", uhomeName: "High Garden Iguatemi", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "High Garden Rio Branco", uhomeName: "High Garden Rio Branco", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Las Casas (Vértice)", uhomeName: "Las Casas", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Essenza Club", uhomeName: "Essenza Club", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Prime Wish", uhomeName: "Prime Wish", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Alto Lindóia", uhomeName: "Alto Lindóia", segmento: "MCMV", status: "ok" },
-  { jetimobName: "San Andreas", uhomeName: "San Andreas", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Supreme", uhomeName: "Supreme", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Boa Vista Country Club", uhomeName: "Boa Vista Country Club", segmento: "Altíssimo", status: "ok" },
-  { jetimobName: "Pontal", uhomeName: "Pontal", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Alfa", uhomeName: "Alfa", segmento: "Médio-Alto", status: "ok" },
-  { jetimobName: "Avulso Canoas", uhomeName: "Avulso Canoas", segmento: "MCMV", status: "ok" },
-];
-
-function StatusIcon({ status }: { status: "ok" | "warning" | "missing" }) {
+function StatusIcon({ status }: { status: string }) {
   if (status === "ok") return <CheckCircle2 className="h-4 w-4 text-green-500" />;
   if (status === "warning") return <AlertTriangle className="h-4 w-4 text-amber-500" />;
   return <AlertTriangle className="h-4 w-4 text-destructive" />;
 }
 
-function StatusBadge({ status }: { status: "ok" | "warning" | "missing" }) {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    ok: "default",
-    warning: "secondary",
-    missing: "destructive",
+// ── Editable Row ──
+function EditableRow({ mapping, onSave, onDelete }: { mapping: FieldMapping; onSave: (m: FieldMapping) => void; onDelete: (id: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(mapping);
+
+  const handleSave = () => {
+    onSave(draft);
+    setEditing(false);
   };
-  const labels: Record<string, string> = { ok: "Mapeado", warning: "Parcial", missing: "Não mapeado" };
-  return <Badge variant={variants[status]}>{labels[status]}</Badge>;
+
+  const handleCancel = () => {
+    setDraft(mapping);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <tr className="border-b bg-primary/5">
+        <td className="px-3 py-2">
+          <Select value={draft.status} onValueChange={(v) => setDraft({ ...draft, status: v })}>
+            <SelectTrigger className="h-8 w-24 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ok">✅ Mapeado</SelectItem>
+              <SelectItem value="warning">⚠️ Parcial</SelectItem>
+              <SelectItem value="missing">❌ Pendente</SelectItem>
+            </SelectContent>
+          </Select>
+        </td>
+        <td className="px-3 py-2">
+          <Input className="h-8 text-xs font-mono" value={draft.jetimob_field} onChange={(e) => setDraft({ ...draft, jetimob_field: e.target.value })} />
+          <Input className="h-7 text-xs mt-1" placeholder="Descrição" value={draft.jetimob_description || ""} onChange={(e) => setDraft({ ...draft, jetimob_description: e.target.value })} />
+        </td>
+        <td className="px-3 py-2"><ArrowRight className="h-3.5 w-3.5 text-muted-foreground" /></td>
+        <td className="px-3 py-2">
+          <Input className="h-8 text-xs font-mono" value={draft.uhome_field} onChange={(e) => setDraft({ ...draft, uhome_field: e.target.value })} />
+        </td>
+        <td className="px-3 py-2">
+          <Input className="h-8 text-xs" value={draft.uhome_table} onChange={(e) => setDraft({ ...draft, uhome_table: e.target.value })} />
+        </td>
+        <td className="px-3 py-2">
+          <Input className="h-8 text-xs" placeholder="Transformação" value={draft.transform || ""} onChange={(e) => setDraft({ ...draft, transform: e.target.value || null })} />
+        </td>
+        <td className="px-3 py-2">
+          <Input className="h-8 text-xs" placeholder="Notas" value={draft.notes || ""} onChange={(e) => setDraft({ ...draft, notes: e.target.value || null })} />
+        </td>
+        <td className="px-3 py-2">
+          <div className="flex gap-1">
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSave}><Save className="h-3.5 w-3.5 text-green-600" /></Button>
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleCancel}><X className="h-3.5 w-3.5" /></Button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr className={`border-b last:border-0 group ${mapping.status === "missing" ? "bg-destructive/5" : mapping.status === "warning" ? "bg-amber-500/5" : ""}`}>
+      <td className="px-3 py-2.5"><StatusIcon status={mapping.status} /></td>
+      <td className="px-3 py-2.5">
+        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{mapping.jetimob_field}</span>
+        {mapping.jetimob_description && <p className="text-xs text-muted-foreground mt-0.5">{mapping.jetimob_description}</p>}
+      </td>
+      <td className="px-3 py-2.5"><ArrowRight className="h-3.5 w-3.5 text-muted-foreground" /></td>
+      <td className="px-3 py-2.5">
+        <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${mapping.status === "missing" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+          {mapping.uhome_field}
+        </span>
+      </td>
+      <td className="px-3 py-2.5 text-xs text-muted-foreground">{mapping.uhome_table}</td>
+      <td className="px-3 py-2.5 text-xs text-muted-foreground max-w-[180px] truncate">{mapping.transform || "—"}</td>
+      <td className="px-3 py-2.5 text-xs text-muted-foreground max-w-[160px]">{mapping.notes || "—"}</td>
+      <td className="px-3 py-2.5">
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(true)}><Pencil className="h-3.5 w-3.5" /></Button>
+          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => onDelete(mapping.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+        </div>
+      </td>
+    </tr>
+  );
 }
 
-function FieldMappingTable({ mappings, title }: { mappings: FieldMapping[]; title: string }) {
+// ── Editable Mapping Table ──
+function EditableFieldMappingTable({ categoria, title }: { categoria: string; title: string }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [adding, setAdding] = useState(false);
+  const [newRow, setNewRow] = useState({ jetimob_field: "", jetimob_description: "", uhome_field: "", uhome_table: "pipeline_leads", transform: "", notes: "", status: "missing" });
+
+  const { data: mappings = [], isLoading } = useQuery({
+    queryKey: ["integracao-mappings", categoria],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("integracao_field_mappings")
+        .select("*")
+        .eq("categoria", categoria)
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return data as FieldMapping[];
+    },
+  });
+
+  const handleSave = useCallback(async (m: FieldMapping) => {
+    const { error } = await supabase
+      .from("integracao_field_mappings")
+      .update({
+        jetimob_field: m.jetimob_field,
+        jetimob_description: m.jetimob_description,
+        uhome_field: m.uhome_field,
+        uhome_table: m.uhome_table,
+        transform: m.transform,
+        status: m.status,
+        notes: m.notes,
+        updated_at: new Date().toISOString(),
+        updated_by: user?.id,
+      })
+      .eq("id", m.id);
+    if (error) {
+      toast.error("Erro ao salvar: " + error.message);
+    } else {
+      toast.success("Campo atualizado!");
+      queryClient.invalidateQueries({ queryKey: ["integracao-mappings", categoria] });
+    }
+  }, [user, categoria, queryClient]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    const { error } = await supabase
+      .from("integracao_field_mappings")
+      .update({ ativo: false, updated_by: user?.id })
+      .eq("id", id);
+    if (error) {
+      toast.error("Erro ao remover: " + error.message);
+    } else {
+      toast.success("Campo removido");
+      queryClient.invalidateQueries({ queryKey: ["integracao-mappings", categoria] });
+    }
+  }, [user, categoria, queryClient]);
+
+  const handleAddNew = useCallback(async () => {
+    if (!newRow.jetimob_field) { toast.error("Campo Jetimob é obrigatório"); return; }
+    const { error } = await supabase
+      .from("integracao_field_mappings")
+      .insert({
+        categoria,
+        jetimob_field: newRow.jetimob_field,
+        jetimob_description: newRow.jetimob_description || null,
+        uhome_field: newRow.uhome_field || "(não mapeado)",
+        uhome_table: newRow.uhome_table || "—",
+        transform: newRow.transform || null,
+        notes: newRow.notes || null,
+        status: newRow.status,
+        ordem: (mappings.length + 1) * 10,
+        updated_by: user?.id,
+      });
+    if (error) {
+      toast.error("Erro ao adicionar: " + error.message);
+    } else {
+      toast.success("Novo campo adicionado!");
+      setAdding(false);
+      setNewRow({ jetimob_field: "", jetimob_description: "", uhome_field: "", uhome_table: "pipeline_leads", transform: "", notes: "", status: "missing" });
+      queryClient.invalidateQueries({ queryKey: ["integracao-mappings", categoria] });
+    }
+  }, [newRow, categoria, user, mappings.length, queryClient]);
+
   const okCount = mappings.filter(m => m.status === "ok").length;
   const warnCount = mappings.filter(m => m.status === "warning").length;
   const missCount = mappings.filter(m => m.status === "missing").length;
@@ -110,49 +237,73 @@ function FieldMappingTable({ mappings, title }: { mappings: FieldMapping[]; titl
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">{title}</CardTitle>
-          <div className="flex gap-2 text-xs">
-            <Badge variant="default" className="bg-green-600">{okCount} mapeados</Badge>
-            {warnCount > 0 && <Badge variant="secondary">{warnCount} parciais</Badge>}
-            {missCount > 0 && <Badge variant="destructive">{missCount} pendentes</Badge>}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-2 text-xs">
+              <Badge variant="default" className="bg-green-600">{okCount} mapeados</Badge>
+              {warnCount > 0 && <Badge variant="secondary">{warnCount} parciais</Badge>}
+              {missCount > 0 && <Badge variant="destructive">{missCount} pendentes</Badge>}
+            </div>
+            <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setAdding(!adding)}>
+              <Plus className="h-3.5 w-3.5" /> Novo Campo
+            </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Campo Jetimob</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground w-8"><ArrowRight className="h-3.5 w-3.5" /></th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Campo uHome</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Tabela</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Transformação</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Notas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mappings.map((m, i) => (
-                <tr key={i} className={`border-b last:border-0 ${m.status === "missing" ? "bg-destructive/5" : m.status === "warning" ? "bg-amber-500/5" : ""}`}>
-                  <td className="px-4 py-2.5"><StatusIcon status={m.status} /></td>
-                  <td className="px-4 py-2.5">
-                    <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{m.jetimobField}</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">{m.jetimobDescription}</p>
-                  </td>
-                  <td className="px-4 py-2.5"><ArrowRight className="h-3.5 w-3.5 text-muted-foreground" /></td>
-                  <td className="px-4 py-2.5">
-                    <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${m.status === "missing" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
-                      {m.uhomeField}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-xs text-muted-foreground">{m.uhomeTable}</td>
-                  <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[200px] truncate">{m.transform || "—"}</td>
-                  <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[180px]">{m.notes || "—"}</td>
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground text-sm">Carregando mapeamentos...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-3 py-2.5 text-left font-medium text-muted-foreground w-20">Status</th>
+                  <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">Campo Jetimob</th>
+                  <th className="px-3 py-2.5 text-left font-medium text-muted-foreground w-8"><ArrowRight className="h-3.5 w-3.5" /></th>
+                  <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">Campo uHome</th>
+                  <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">Tabela</th>
+                  <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">Transformação</th>
+                  <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">Notas</th>
+                  <th className="px-3 py-2.5 text-left font-medium text-muted-foreground w-20">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {adding && (
+                  <tr className="border-b bg-accent/10">
+                    <td className="px-3 py-2">
+                      <Select value={newRow.status} onValueChange={(v) => setNewRow({ ...newRow, status: v })}>
+                        <SelectTrigger className="h-8 w-24 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ok">✅ Mapeado</SelectItem>
+                          <SelectItem value="warning">⚠️ Parcial</SelectItem>
+                          <SelectItem value="missing">❌ Pendente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <Input className="h-8 text-xs font-mono" placeholder="Campo Jetimob" value={newRow.jetimob_field} onChange={(e) => setNewRow({ ...newRow, jetimob_field: e.target.value })} />
+                      <Input className="h-7 text-xs mt-1" placeholder="Descrição" value={newRow.jetimob_description} onChange={(e) => setNewRow({ ...newRow, jetimob_description: e.target.value })} />
+                    </td>
+                    <td className="px-3 py-2"><ArrowRight className="h-3.5 w-3.5 text-muted-foreground" /></td>
+                    <td className="px-3 py-2"><Input className="h-8 text-xs font-mono" placeholder="Campo uHome" value={newRow.uhome_field} onChange={(e) => setNewRow({ ...newRow, uhome_field: e.target.value })} /></td>
+                    <td className="px-3 py-2"><Input className="h-8 text-xs" placeholder="Tabela" value={newRow.uhome_table} onChange={(e) => setNewRow({ ...newRow, uhome_table: e.target.value })} /></td>
+                    <td className="px-3 py-2"><Input className="h-8 text-xs" placeholder="Transformação" value={newRow.transform} onChange={(e) => setNewRow({ ...newRow, transform: e.target.value })} /></td>
+                    <td className="px-3 py-2"><Input className="h-8 text-xs" placeholder="Notas" value={newRow.notes} onChange={(e) => setNewRow({ ...newRow, notes: e.target.value })} /></td>
+                    <td className="px-3 py-2">
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleAddNew}><Save className="h-3.5 w-3.5 text-green-600" /></Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAdding(false)}><X className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {mappings.map((m) => (
+                  <EditableRow key={m.id} mapping={m} onSave={handleSave} onDelete={handleDelete} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -161,7 +312,6 @@ function FieldMappingTable({ mappings, title }: { mappings: FieldMapping[]; titl
 export default function IntegracaoJetimob() {
   const [syncing, setSyncing] = useState(false);
 
-  // Live stats
   const { data: stats } = useQuery({
     queryKey: ["integracao-stats"],
     queryFn: async () => {
@@ -179,6 +329,21 @@ export default function IntegracaoJetimob() {
     staleTime: 30_000,
   });
 
+  const { data: leadMappings = [] } = useQuery({
+    queryKey: ["integracao-mappings", "leads"],
+    queryFn: async () => {
+      const { data } = await supabase.from("integracao_field_mappings").select("status").eq("categoria", "leads").eq("ativo", true);
+      return data || [];
+    },
+  });
+  const { data: imovelMappings = [] } = useQuery({
+    queryKey: ["integracao-mappings-count", "imoveis"],
+    queryFn: async () => {
+      const { data } = await supabase.from("integracao_field_mappings").select("status").eq("categoria", "imoveis").eq("ativo", true);
+      return data || [];
+    },
+  });
+
   const handleManualSync = async () => {
     setSyncing(true);
     try {
@@ -192,10 +357,10 @@ export default function IntegracaoJetimob() {
     }
   };
 
-  const leadOk = LEAD_FIELD_MAPPINGS.filter(m => m.status === "ok").length;
-  const leadTotal = LEAD_FIELD_MAPPINGS.length;
-  const imovelOk = IMOVEL_FIELD_MAPPINGS.filter(m => m.status === "ok").length;
-  const imovelTotal = IMOVEL_FIELD_MAPPINGS.length;
+  const leadOk = leadMappings.filter((m: any) => m.status === "ok").length;
+  const leadTotal = leadMappings.length;
+  const imovelOk = imovelMappings.filter((m: any) => m.status === "ok").length;
+  const imovelTotal = imovelMappings.length;
 
   return (
     <div className="space-y-6">
@@ -206,7 +371,7 @@ export default function IntegracaoJetimob() {
             Integração Jetimob ↔ uHome Sales
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Mapeamento completo de campos entre o Jetimob e o sistema uHome Sales
+            Mapeamento editável de campos — clique no lápis para alterar qualquer campo
           </p>
         </div>
         <Button onClick={handleManualSync} disabled={syncing} variant="outline" className="gap-2">
@@ -256,11 +421,11 @@ export default function IntegracaoJetimob() {
         </TabsList>
 
         <TabsContent value="leads">
-          <FieldMappingTable mappings={LEAD_FIELD_MAPPINGS} title="Mapeamento de Leads — Jetimob → pipeline_leads" />
+          <EditableFieldMappingTable categoria="leads" title="Mapeamento de Leads — Jetimob → pipeline_leads" />
         </TabsContent>
 
         <TabsContent value="imoveis">
-          <FieldMappingTable mappings={IMOVEL_FIELD_MAPPINGS} title="Mapeamento de Imóveis — Jetimob API → jetimob-proxy" />
+          <EditableFieldMappingTable categoria="imoveis" title="Mapeamento de Imóveis — Jetimob API → jetimob-proxy" />
         </TabsContent>
 
         <TabsContent value="empreendimentos">
