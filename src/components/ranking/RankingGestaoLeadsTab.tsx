@@ -23,7 +23,6 @@ interface GestaoRow {
   qualificados: number;
   visitas_marcadas: number;
   visitas_realizadas: number;
-  propostas: number;
 }
 
 export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "semana" | "mes" }) {
