@@ -255,6 +255,37 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           </div>
         </div>
 
+        {/* Row 5: Próximo passo — editable */}
+        <div className="px-3.5 pb-2.5 border-t border-white/[0.04] pt-2" onClick={(e) => e.stopPropagation()}>
+          {editingTask ? (
+            <div className="flex items-center gap-1.5">
+              <input
+                autoFocus
+                value={taskText}
+                onChange={(e) => setTaskText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveTask(); if (e.key === "Escape") setEditingTask(false); }}
+                placeholder="Definir próximo passo..."
+                className="flex-1 text-[11px] bg-white/5 border border-white/10 rounded px-2 py-1 text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+              />
+              <button onClick={handleSaveTask} className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium shrink-0">Salvar</button>
+            </div>
+          ) : (
+            <button onClick={() => { setTaskText(nextTask?.titulo || ""); setEditingTask(true); }} className="w-full text-left group/task">
+              {nextTask ? (
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3 text-blue-400 shrink-0" />
+                  <span className="text-[11px] text-blue-300/80 truncate group-hover/task:text-blue-200 transition-colors">{nextTask.titulo}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <Plus className="h-3 w-3 text-white/20 shrink-0" />
+                  <span className="text-[11px] text-white/25 italic group-hover/task:text-white/40 transition-colors">Definir próximo passo...</span>
+                </div>
+              )}
+            </button>
+          )}
+        </div>
+
         {/* Action bar - glass effect */}
         <div
           className="flex items-center gap-0 border-t border-white/[0.06]"
