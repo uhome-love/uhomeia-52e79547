@@ -65,7 +65,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
   showCorretor?: boolean;
   paradoInfo?: { diasParado: number; severity: "warning" | "danger" };
   nextTask?: NegocioTask | null;
-  parceriaLabel?: string;
+  parceriaInfo?: { label: string; isParceria: boolean } | null;
   onDragStart: () => void;
   onClick: () => void;
   onMoveFase: (id: string, fase: string) => void;
