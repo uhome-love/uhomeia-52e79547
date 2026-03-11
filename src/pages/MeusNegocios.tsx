@@ -163,6 +163,26 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
     toast.success("📝 Contrato → coluna Contrato Gerado");
   };
 
+  const handleSaveTask = async () => {
+    if (!user || !taskText.trim()) { setEditingTask(false); return; }
+    if (nextTask) {
+      await supabase.from("negocios_tarefas").update({ titulo: taskText.trim(), updated_at: new Date().toISOString() }).eq("id", nextTask.id);
+    } else {
+      await supabase.from("negocios_tarefas").insert({
+        negocio_id: negocio.id,
+        titulo: taskText.trim(),
+        tipo: "follow_up",
+        status: "pendente",
+        prioridade: "media",
+        created_by: user.id,
+      });
+    }
+    setEditingTask(false);
+    setTaskText("");
+    onTaskSaved?.();
+    toast.success("✅ Próximo passo salvo");
+  };
+
   return (
     <>
       <div
