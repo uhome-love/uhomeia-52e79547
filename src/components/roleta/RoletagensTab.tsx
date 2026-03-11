@@ -353,7 +353,7 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
         </Card>
       )}
 
-      {/* All roletagens table */}
+      {showRoletagens && (
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Histórico de Roletagens</CardTitle>
