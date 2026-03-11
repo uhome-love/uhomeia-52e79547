@@ -602,6 +602,15 @@ export default function MeusNegocios() {
   const [transitionTarget, setTransitionTarget] = useState<{ negocioId: string; fase: string } | null>(null);
   const transitionNegocio = transitionTarget ? negocios.find(n => n.id === transitionTarget.negocioId) : null;
 
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const handleDeleteNegocio = useCallback(async (id: string) => {
+    const { error } = await supabase.from("negocios").delete().eq("id", id);
+    if (error) { toast.error("Erro ao excluir negócio"); return; }
+    toast.success("🗑️ Negócio excluído");
+    reload();
+  }, [reload]);
+
   const dragNegocioId = useRef<string | null>(null);
   const [dragOverFase, setDragOverFase] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
