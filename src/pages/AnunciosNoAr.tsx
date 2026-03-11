@@ -797,6 +797,22 @@ export default function AnunciosNoAr() {
   const [imoveis, setImoveis] = useState<Record<string, JetimobImovel>>({});
   const [loading, setLoading] = useState(true);
   const [materiais, setMateriais] = useState<Material[]>([]);
+  const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
+  const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
+
+  // Fetch overrides from DB
+  const fetchOverrides = useCallback(async () => {
+    const { data } = await supabase
+      .from("empreendimento_overrides")
+      .select("*");
+    if (data) {
+      const map: Record<string, EmpreendimentoOverride> = {};
+      for (const row of data) {
+        map[row.codigo] = row as any as EmpreendimentoOverride;
+      }
+      setOverrides(map);
+    }
+  }, []);
 
   // Fetch all imóveis from Jetimob
   useEffect(() => {
@@ -846,10 +862,8 @@ export default function AnunciosNoAr() {
         }
       } catch (batchError) {
         console.warn("Falha no batch, tentando fallback individual:", batchError);
-        // Immediately stop loading so cards render with basic info
         if (!cancelled) setLoading(false);
 
-        // Fallback: fetch individually in parallel with short timeout
         try {
           const settled = await Promise.allSettled(
             codigos.map((codigo) =>
@@ -877,10 +891,11 @@ export default function AnunciosNoAr() {
     }
 
     fetchAll();
+    fetchOverrides();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchOverrides]);
 
   // Fetch materials
   const fetchMateriais = useCallback(async () => {
@@ -894,12 +909,23 @@ export default function AnunciosNoAr() {
   useEffect(() => { fetchMateriais(); }, [fetchMateriais]);
 
   const totalAnuncios = SEGMENTOS.reduce((acc, s) => acc + s.empreendimentos.length, 0);
+  const editingConfig = editingCodigo ? SEGMENTOS.flatMap(s => s.empreendimentos).find(e => e.codigo === editingCodigo) : null;
 
   return (
     <div className="space-y-6 pb-8">
+      {/* Edit Override Modal */}
+      {editingConfig && (
+        <EditOverrideModal
+          open={!!editingCodigo}
+          onOpenChange={(v) => { if (!v) setEditingCodigo(null); }}
+          config={editingConfig}
+          override={overrides[editingConfig.codigo] || null}
+          onSaved={fetchOverrides}
+        />
+      )}
+
       {/* ─── HEADER ─── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[hsl(222,47%,11%)] via-[hsl(222,47%,15%)] to-[hsl(222,47%,20%)] p-6 border border-border/20">
-        {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
@@ -923,7 +949,6 @@ export default function AnunciosNoAr() {
             </div>
           </div>
 
-          {/* Segment summary pills */}
           <div className="flex flex-wrap gap-2 mt-4">
             {SEGMENTOS.map(seg => (
               <a
@@ -947,7 +972,6 @@ export default function AnunciosNoAr() {
       {SEGMENTOS.map(seg => (
         <Collapsible key={seg.key} defaultOpen asChild>
           <section id={`seg-${seg.key}`} className="space-y-4">
-            {/* Segment header */}
             <CollapsibleTrigger asChild>
               <div className={cn(
                 "rounded-xl p-4 bg-gradient-to-r text-white relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity",
@@ -974,7 +998,6 @@ export default function AnunciosNoAr() {
               </div>
             </CollapsibleTrigger>
 
-            {/* Cards grid */}
             <CollapsibleContent>
               <div className={cn(
                 "grid gap-4 pt-1",
@@ -994,6 +1017,8 @@ export default function AnunciosNoAr() {
                     materiais={materiais}
                     canUpload={canUpload}
                     onRefreshMateriais={fetchMateriais}
+                    override={overrides[emp.codigo] || null}
+                    onEditOverride={() => setEditingCodigo(emp.codigo)}
                   />
                 ))}
               </div>
@@ -1004,4 +1029,3 @@ export default function AnunciosNoAr() {
     </div>
   );
 }
-
