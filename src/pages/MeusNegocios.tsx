@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNegocios, NEGOCIOS_FASES, type Negocio, type CorretorInfo } from "@/hooks/useNegocios";
 import { useLeadProgression } from "@/hooks/useLeadProgression";
 import { useLeadsParados } from "@/hooks/useLeadsParados";
@@ -51,16 +51,25 @@ const CARD_QUICK_ACTIONS = [
   { id: "contrato", emoji: "📝", label: "Enviei contrato", tipo: "contrato", titulo: "Contrato enviado", openPopup: "contrato" },
 ];
 
-function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, onDragStart, onClick, onMoveFase, onUpdateNegocio }: {
+interface NegocioTask {
+  id: string;
+  titulo: string;
+  vence_em: string | null;
+  status: string;
+}
+
+function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, nextTask, onDragStart, onClick, onMoveFase, onUpdateNegocio, onTaskSaved }: {
   negocio: Negocio;
   corretorNome?: string;
   corretorInfo?: CorretorInfo;
   showCorretor?: boolean;
   paradoInfo?: { diasParado: number; severity: "warning" | "danger" };
+  nextTask?: NegocioTask | null;
   onDragStart: () => void;
   onClick: () => void;
   onMoveFase: (id: string, fase: string) => void;
   onUpdateNegocio: (id: string, updates: Partial<Negocio>) => Promise<void>;
+  onTaskSaved?: () => void;
 }) {
   const { user } = useAuth();
   const faseInfo = NEGOCIOS_FASES.find(f => f.key === negocio.fase);
@@ -84,6 +93,9 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
   const [contVgv, setContVgv] = useState(negocio.vgv_estimado ? String(negocio.vgv_estimado) : "");
   const [contTipo, setContTipo] = useState("digital");
 
+  // Inline task editing
+  const [editingTask, setEditingTask] = useState(false);
+  const [taskText, setTaskText] = useState("");
   const whatsappUrl = negocio.telefone ? `https://wa.me/${negocio.telefone.replace(/\D/g, "")}` : null;
 
   const handleLigarRegistro = async () => {
@@ -149,6 +161,26 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
     onMoveFase(negocio.id, "documentacao");
     setContratoPopup(false);
     toast.success("📝 Contrato → coluna Contrato Gerado");
+  };
+
+  const handleSaveTask = async () => {
+    if (!user || !taskText.trim()) { setEditingTask(false); return; }
+    if (nextTask) {
+      await supabase.from("negocios_tarefas").update({ titulo: taskText.trim(), updated_at: new Date().toISOString() }).eq("id", nextTask.id);
+    } else {
+      await supabase.from("negocios_tarefas").insert({
+        negocio_id: negocio.id,
+        titulo: taskText.trim(),
+        tipo: "follow_up",
+        status: "pendente",
+        prioridade: "media",
+        created_by: user.id,
+      });
+    }
+    setEditingTask(false);
+    setTaskText("");
+    onTaskSaved?.();
+    toast.success("✅ Próximo passo salvo");
   };
 
   return (
@@ -221,6 +253,37 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
               </button>
             )}
           </div>
+        </div>
+
+        {/* Row 5: Próximo passo — editable */}
+        <div className="px-3.5 pb-2.5 border-t border-white/[0.04] pt-2" onClick={(e) => e.stopPropagation()}>
+          {editingTask ? (
+            <div className="flex items-center gap-1.5">
+              <input
+                autoFocus
+                value={taskText}
+                onChange={(e) => setTaskText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveTask(); if (e.key === "Escape") setEditingTask(false); }}
+                placeholder="Definir próximo passo..."
+                className="flex-1 text-[11px] bg-white/5 border border-white/10 rounded px-2 py-1 text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+              />
+              <button onClick={handleSaveTask} className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium shrink-0">Salvar</button>
+            </div>
+          ) : (
+            <button onClick={() => { setTaskText(nextTask?.titulo || ""); setEditingTask(true); }} className="w-full text-left group/task">
+              {nextTask ? (
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3 text-blue-400 shrink-0" />
+                  <span className="text-[11px] text-blue-300/80 truncate group-hover/task:text-blue-200 transition-colors">{nextTask.titulo}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <Plus className="h-3 w-3 text-white/20 shrink-0" />
+                  <span className="text-[11px] text-white/25 italic group-hover/task:text-white/40 transition-colors">Definir próximo passo...</span>
+                </div>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Action bar - glass effect */}
@@ -446,6 +509,26 @@ export default function MeusNegocios() {
     modulo_atual: "negocios",
     corretor_id: n.corretor_id,
   })), isGestor || isAdmin ? undefined : user?.id);
+
+  // Load next pending task per negócio
+  const [taskMap, setTaskMap] = useState<Record<string, NegocioTask>>({});
+  const loadTasks = useCallback(async () => {
+    if (!negocios.length) return;
+    const ids = negocios.map(n => n.id);
+    const { data } = await supabase
+      .from("negocios_tarefas")
+      .select("id, negocio_id, titulo, vence_em, status")
+      .in("negocio_id", ids)
+      .eq("status", "pendente")
+      .order("vence_em", { ascending: true, nullsFirst: false });
+    const map: Record<string, NegocioTask> = {};
+    (data || []).forEach((t: any) => {
+      if (!map[t.negocio_id]) map[t.negocio_id] = t;
+    });
+    setTaskMap(map);
+  }, [negocios]);
+
+  useEffect(() => { loadTasks(); }, [loadTasks]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCorretor, setFilterCorretor] = useState("all");
@@ -813,10 +896,12 @@ export default function MeusNegocios() {
                       corretorInfo={negocio.corretor_id ? corretorInfoMap[negocio.corretor_id] : undefined}
                       showCorretor={isAdmin || isGestor}
                       paradoInfo={paradoMap.get(negocio.id)}
+                      nextTask={taskMap[negocio.id] || null}
                       onDragStart={() => { dragNegocioId.current = negocio.id; }}
                       onClick={() => setSelectedNegocio(negocio)}
                       onMoveFase={requestMoveFase}
                       onUpdateNegocio={updateNegocio}
+                      onTaskSaved={loadTasks}
                     />
                   ))}
                 </div>
