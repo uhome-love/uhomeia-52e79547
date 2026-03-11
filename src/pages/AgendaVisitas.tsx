@@ -392,6 +392,45 @@ export default function AgendaVisitas() {
     return list;
   }, [allVisitas, searchTerm, dateFrom, dateTo, statusFilter, corretorFilter, empreendimentoFilter]);
 
+  // Filtered past visitas based on anteriores period selector
+  const anterioresFiltered = useMemo(() => {
+    const today = startOfDay(new Date());
+    let pastList = filtered.filter(v => {
+      const d = new Date(v.data_visita + "T12:00:00");
+      return isBefore(d, today);
+    });
+
+    if (anterioresPeriodo === "personalizado") {
+      if (anterioresCustomFrom) {
+        const fromStr = format(anterioresCustomFrom, "yyyy-MM-dd");
+        pastList = pastList.filter(v => v.data_visita >= fromStr);
+      }
+      if (anterioresCustomTo) {
+        const toStr = format(anterioresCustomTo, "yyyy-MM-dd");
+        pastList = pastList.filter(v => v.data_visita <= toStr);
+      }
+    } else {
+      let periodStart: Date;
+      if (anterioresPeriodo === "mes-atual") {
+        periodStart = startOfMonth(today);
+      } else if (anterioresPeriodo === "mes-1") {
+        periodStart = startOfMonth(subMonths(today, 1));
+      } else if (anterioresPeriodo === "mes-2") {
+        periodStart = startOfMonth(subMonths(today, 2));
+      } else if (anterioresPeriodo === "mes-3") {
+        periodStart = startOfMonth(subMonths(today, 3));
+      } else {
+        periodStart = startOfMonth(today);
+      }
+      const periodEnd = anterioresPeriodo === "mes-atual" ? today : endOfMonth(periodStart);
+      const fromStr = format(periodStart, "yyyy-MM-dd");
+      const toStr = format(periodEnd, "yyyy-MM-dd");
+      pastList = pastList.filter(v => v.data_visita >= fromStr && v.data_visita <= toStr);
+    }
+
+    return pastList;
+  }, [filtered, anterioresPeriodo, anterioresCustomFrom, anterioresCustomTo]);
+
   const hasFilters = statusFilter !== "all" || corretorFilter !== "all" || empreendimentoFilter !== "all" || !!dateFrom || !!dateTo || searchTerm.trim() || pendingOnly || teamFilter !== "all";
 
   const clearAll = () => {
