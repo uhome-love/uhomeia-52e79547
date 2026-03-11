@@ -501,6 +501,7 @@ export type Database = {
           gerente_id: string
           id: string
           mes: string
+          meta_ligacoes: number
           meta_vgv_assinado: number
           meta_visitas_marcadas: number
           meta_visitas_realizadas: number
@@ -511,6 +512,7 @@ export type Database = {
           gerente_id: string
           id?: string
           mes: string
+          meta_ligacoes?: number
           meta_vgv_assinado?: number
           meta_visitas_marcadas?: number
           meta_visitas_realizadas?: number
@@ -521,6 +523,7 @@ export type Database = {
           gerente_id?: string
           id?: string
           mes?: string
+          meta_ligacoes?: number
           meta_vgv_assinado?: number
           meta_visitas_marcadas?: number
           meta_visitas_realizadas?: number

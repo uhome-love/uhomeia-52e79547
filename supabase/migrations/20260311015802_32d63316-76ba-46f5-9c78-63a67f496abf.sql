@@ -1,0 +1,1 @@
+ALTER TABLE public.ceo_metas_mensais ADD COLUMN IF NOT EXISTS meta_ligacoes integer NOT NULL DEFAULT 0;

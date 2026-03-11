@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
-import { Target, ClipboardList, CheckCircle2, BarChart2, AlertCircle, Loader2, Briefcase } from "lucide-react";
+import { Target, ClipboardList, CheckCircle2, BarChart2, AlertCircle, Loader2, Briefcase, Pencil, Save } from "lucide-react";
 import { format, subDays, getDaysInMonth, getDate } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CheckpointTableTab from "@/components/checkpoint/CheckpointTableTab";
@@ -83,10 +83,12 @@ export default function CheckpointGerente() {
     visitas_realizadas_meta: 100, visitas_realizadas_realizado: 0,
     ligacoes_meta: 680, ligacoes_realizado: 0,
   });
-  const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [teamUserIds, setTeamUserIds] = useState<string[]>([]);
-  const [teamNameMap, setTeamNameMap] = useState<Record<string, string>>({});
+   const [saving, setSaving] = useState(false);
+   const [syncing, setSyncing] = useState(false);
+   const [teamUserIds, setTeamUserIds] = useState<string[]>([]);
+   const [teamNameMap, setTeamNameMap] = useState<Record<string, string>>({});
+   const [editingMetas, setEditingMetas] = useState(false);
+   const [savingMetas, setSavingMetas] = useState(false);
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const dateFmt = format(selectedDate, "dd/MM/yyyy");
@@ -226,23 +228,44 @@ export default function CheckpointGerente() {
     const mesInicio = `${mesAtual}-01`;
     const mesFim = format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), "yyyy-MM-dd");
 
-    const [{ count: ligR }, { count: vmR }, { count: vrR }, { data: negocios }] = await Promise.all([
+    const [{ count: ligR }, { count: vmR }, { count: vrR }, { data: negocios }, { data: metasSalvas }] = await Promise.all([
       supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).gte("created_at", `${mesInicio}T00:00:00`).lte("created_at", `${mesFim}T23:59:59`),
       supabase.from("visitas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).gte("data_visita", mesInicio).lte("data_visita", mesFim),
       supabase.from("visitas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).gte("data_visita", mesInicio).lte("data_visita", mesFim).eq("status", "realizada"),
-      supabase.from("negocios").select("vgv_estimado, vgv_final, fase, data_assinatura").eq("gerente_id", user.id).in("fase", ["assinado", "vendido"]).gte("data_assinatura", mesInicio).lte("data_assinatura", mesFim),
+      supabase.from("negocios").select("vgv_estimado, vgv_final, fase, data_assinatura").in("corretor_id", teamUserIds).in("fase", ["assinado", "vendido"]).gte("data_assinatura", mesInicio).lte("data_assinatura", mesFim),
+      supabase.from("ceo_metas_mensais").select("*").eq("gerente_id", user.id).eq("mes", mesAtual).maybeSingle(),
     ]);
 
     const vgvReal = (negocios || []).reduce((s, n) => s + Number(n.vgv_final || n.vgv_estimado || 0), 0);
 
-    setMetasMes(prev => ({
-      ...prev,
+    setMetasMes({
+      ligacoes_meta: (metasSalvas as any)?.meta_ligacoes || 680,
       ligacoes_realizado: ligR || 0,
-      visitas_marcadas_realizado: vmR || 0,
-      visitas_realizadas_realizado: vrR || 0,
+      vgv_meta: (metasSalvas as any)?.meta_vgv_assinado || 3_000_000,
       vgv_realizado: vgvReal,
-    }));
+      visitas_marcadas_meta: (metasSalvas as any)?.meta_visitas_marcadas || 200,
+      visitas_marcadas_realizado: vmR || 0,
+      visitas_realizadas_meta: (metasSalvas as any)?.meta_visitas_realizadas || 100,
+      visitas_realizadas_realizado: vrR || 0,
+    });
   }, [user, teamUserIds]);
+
+  const saveMetasMes = async () => {
+    if (!user) return;
+    setSavingMetas(true);
+    const mesAtual = format(new Date(), "yyyy-MM");
+    const { error } = await supabase.from("ceo_metas_mensais").upsert({
+      gerente_id: user.id,
+      mes: mesAtual,
+      meta_ligacoes: metasMes.ligacoes_meta,
+      meta_vgv_assinado: metasMes.vgv_meta,
+      meta_visitas_marcadas: metasMes.visitas_marcadas_meta,
+      meta_visitas_realizadas: metasMes.visitas_realizadas_meta,
+    }, { onConflict: "gerente_id,mes" });
+    setSavingMetas(false);
+    if (error) toast({ title: "Erro ao salvar metas", variant: "destructive" });
+    else { toast({ title: "✅ Metas salvas!" }); setEditingMetas(false); }
+  };
 
   // ─── ACTIONS ───
   const syncOA = async () => { setSyncing(true); await loadCheckpoint(); setSyncing(false); toast({ title: "✅ Sincronizado!", description: "Dados da Oferta Ativa e Visitas atualizados." }); };
@@ -360,20 +383,31 @@ export default function CheckpointGerente() {
 
         {/* METAS DO MÊS */}
         <div className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Target size={18} className="text-primary" />
-            <span className="font-semibold text-foreground">Metas do Mês —</span>
-            <span className="text-primary font-semibold">
-              {format(new Date(), "MMMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}
-            </span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Target size={18} className="text-primary" />
+              <span className="font-semibold text-foreground">Metas do Mês —</span>
+              <span className="text-primary font-semibold">
+                {format(new Date(), "MMMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}
+              </span>
+            </div>
+            {editingMetas ? (
+              <button onClick={saveMetasMes} disabled={savingMetas} className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                <Save size={14} /> {savingMetas ? "Salvando..." : "Salvar Metas"}
+              </button>
+            ) : (
+              <button onClick={() => setEditingMetas(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <Pencil size={13} /> Editar Metas
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {([
-              { label: "Ligações", atual: metasMes.ligacoes_realizado, meta: metasMes.ligacoes_meta, cor: "bg-blue-500", money: false },
-              { label: "VGV Assinado", atual: metasMes.vgv_realizado, meta: metasMes.vgv_meta, cor: "bg-emerald-500", money: true },
-              { label: "Visitas Marcadas", atual: metasMes.visitas_marcadas_realizado, meta: metasMes.visitas_marcadas_meta, cor: "bg-amber-500", money: false },
-              { label: "Visitas Realizadas", atual: metasMes.visitas_realizadas_realizado, meta: metasMes.visitas_realizadas_meta, cor: "bg-purple-500", money: false },
-            ]).map(({ label, atual, meta, cor, money }) => {
+              { label: "Ligações", atual: metasMes.ligacoes_realizado, meta: metasMes.ligacoes_meta, cor: "bg-blue-500", money: false, metaKey: "ligacoes_meta" as const },
+              { label: "VGV Assinado", atual: metasMes.vgv_realizado, meta: metasMes.vgv_meta, cor: "bg-emerald-500", money: true, metaKey: "vgv_meta" as const },
+              { label: "Visitas Marcadas", atual: metasMes.visitas_marcadas_realizado, meta: metasMes.visitas_marcadas_meta, cor: "bg-amber-500", money: false, metaKey: "visitas_marcadas_meta" as const },
+              { label: "Visitas Realizadas", atual: metasMes.visitas_realizadas_realizado, meta: metasMes.visitas_realizadas_meta, cor: "bg-purple-500", money: false, metaKey: "visitas_realizadas_meta" as const },
+            ]).map(({ label, atual, meta, cor, money, metaKey }) => {
               const p = pct(atual, meta);
               const icon = p >= 100 ? "🏆" : p < 20 ? "❌" : p < 50 ? "⚠️" : "";
               const textColor = p >= 100 ? "text-green-600" : p < 20 ? "text-red-500" : p < 50 ? "text-amber-500" : "text-green-500";
@@ -388,9 +422,21 @@ export default function CheckpointGerente() {
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div className={`h-full ${cor} rounded-full transition-all`} style={{ width: `${Math.min(p, 100)}%` }} />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {money ? `${fmtR(atual)} / ${fmtR(meta)}` : `${fmt(atual)} / ${fmt(meta)}`}
-                  </p>
+                  {editingMetas ? (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs text-muted-foreground">{money ? fmtR(atual) : fmt(atual)} /</span>
+                      <input
+                        type="number"
+                        value={meta}
+                        onChange={(e) => setMetasMes(prev => ({ ...prev, [metaKey]: Number(e.target.value) }))}
+                        className="w-20 text-xs border border-border rounded px-1.5 py-0.5 bg-background text-foreground"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {money ? `${fmtR(atual)} / ${fmtR(meta)}` : `${fmt(atual)} / ${fmt(meta)}`}
+                    </p>
+                  )}
                 </div>
               );
             })}
