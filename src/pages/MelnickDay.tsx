@@ -12,7 +12,7 @@ import {
   Maximize2, Tag, Clock, ChevronDown, ChevronUp, Sparkles,
   Trophy, Plane, Users, Target, Star, TrendingUp, ShieldCheck,
   Car, FileText, Zap, ArrowRight, Gift, Search, DollarSign, Home,
-  Share2, Link2, Loader2, CheckSquare, Send
+  Share2, Link2, Loader2, CheckSquare, Send, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -362,6 +362,51 @@ function CountdownTimer() {
           <div className="text-[10px] text-white/60 uppercase tracking-wider">{u.l}</div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function ImageSlider({ images, alt, onToggle, desconto, status }: { images: string[]; alt: string; onToggle: () => void; desconto?: string | null; status: string }) {
+  const [current, setCurrent] = useState(0);
+  if (images.length === 0) {
+    return (
+      <div className="relative h-32 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center cursor-pointer" onClick={onToggle}>
+        <Building2 className="h-8 w-8 text-muted-foreground/30" />
+      </div>
+    );
+  }
+  return (
+    <div className="relative h-32 group cursor-pointer" onClick={onToggle}>
+      <img src={images[current]} alt={alt} className="w-full h-full object-cover" loading="lazy" />
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); setCurrent((p) => (p - 1 + images.length) % images.length); }}
+            className="absolute left-1 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background/90 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            aria-label="Anterior"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setCurrent((p) => (p + 1) % images.length); }}
+            className="absolute right-1 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background/90 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            aria-label="Próxima"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+          <div className="absolute bottom-7 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {images.slice(0, 8).map((_, i) => (
+              <span key={i} className={`w-1.5 h-1.5 rounded-full ${i === current ? "bg-primary" : "bg-background/60"}`} />
+            ))}
+          </div>
+        </>
+      )}
+      {desconto && (
+        <span className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
+          -{typeof desconto === "string" && desconto.startsWith("-") ? desconto.slice(1) : desconto}
+        </span>
+      )}
+      <Badge className="absolute bottom-2 left-2 text-[9px] py-0 z-10" variant="secondary">{status}</Badge>
     </div>
   );
 }
