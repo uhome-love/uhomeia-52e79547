@@ -12,7 +12,7 @@ import {
   Maximize2, Tag, Clock, ChevronDown, ChevronUp, Sparkles,
   Trophy, Plane, Users, Target, Star, TrendingUp, ShieldCheck,
   Car, FileText, Zap, ArrowRight, Gift, Search, DollarSign, Home,
-  Share2, Link2, Loader2, CheckSquare, Send
+  Share2, Link2, Loader2, CheckSquare, Send, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
