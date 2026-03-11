@@ -479,6 +479,28 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           toast("📤 Lead enviado para Oferta Ativa — registrado no Pipeline", { duration: 2500 });
         }
         checkMilestone(progress.tentativas + 1);
+
+        // Create pipeline task if próxima ação was requested
+        if (proximaAcao && user) {
+          try {
+            await supabase.from("pipeline_tarefas").insert({
+              pipeline_lead_id: lead.id,
+              tipo: proximaAcao.tipo,
+              titulo: proximaAcao.titulo,
+              descricao: proximaAcao.descricao || null,
+              vence_em: proximaAcao.venceEm,
+              hora_vencimento: proximaAcao.horaVencimento || null,
+              responsavel_id: user.id,
+              created_by: user.id,
+              status: "pendente",
+              prioridade: "normal",
+            });
+            toast.success("📌 Próxima ação criada no Pipeline!", { duration: 2500 });
+          } catch (e) {
+            console.warn("[OA] Erro ao criar tarefa:", e);
+            toast.error("Não foi possível criar a tarefa. Crie manualmente no Pipeline.");
+          }
+        }
       }
 
       stopTimer();
