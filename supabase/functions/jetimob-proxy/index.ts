@@ -37,6 +37,47 @@ function getTipo(item: any): string {
   return String(item.subtipo || item.tipo_imovel || item.tipo || "").toLowerCase();
 }
 
+function normalizeCodigoValue(value: unknown): string {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .trim();
+}
+
+function extractCodigoNumber(value: unknown): string {
+  return (String(value || "").match(/\d+/g) || []).join("");
+}
+
+function isCodigoMatch(item: any, requestedCodigo: string): boolean {
+  const requestedNorm = normalizeCodigoValue(requestedCodigo);
+  const requestedNum = extractCodigoNumber(requestedCodigo);
+  const candidates = [
+    item?.codigo,
+    item?.codigo_imovel,
+    item?.referencia,
+    item?.id_imovel,
+    item?.id,
+    item?.slug,
+  ];
+
+  const directMatch = candidates.some((candidate) => {
+    const candidateNorm = normalizeCodigoValue(candidate);
+    if (!candidateNorm) return false;
+    if (candidateNorm === requestedNorm) return true;
+
+    const candidateNum = extractCodigoNumber(candidate);
+    return !!requestedNum && !!candidateNum && candidateNum === requestedNum;
+  });
+
+  if (directMatch) return true;
+
+  // Last-resort fuzzy match on metadata strings (avoids returning first random item)
+  const meta = normalizeCodigoValue(
+    [item?.titulo_anuncio, item?.url, item?.link, item?.referencia_externa].filter(Boolean).join(" ")
+  );
+  return !!requestedNum && !!meta && meta.includes(requestedNum);
+}
+
 /** Extract and normalize all image URLs from a Jetimob imovel object */
 function normalizeImages(imovel: any, logCodigo?: string): string[] {
   const fotos: string[] = [];
@@ -59,6 +100,87 @@ function normalizeImages(imovel: any, logCodigo?: string): string[] {
     }
   }
   return fotos;
+}
+
+let jetimobCatalogCache: { fetchedAt: number; items: any[] } | null = null;
+const JETIMOB_CATALOG_TTL_MS = 3 * 60 * 1000;
+
+async function fetchJetimobCatalog(apiKey: string): Promise<any[]> {
+  if (jetimobCatalogCache && Date.now() - jetimobCatalogCache.fetchedAt < JETIMOB_CATALOG_TTL_MS) {
+    return jetimobCatalogCache.items;
+  }
+
+  const batchSize = 500;
+  const maxPages = 8;
+  let allItems: any[] = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const url = `https://api.jetimob.com/webservice/${apiKey}/imoveis/todos?v=6&page=${page}&pageSize=${batchSize}`;
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (!response.ok) break;
+
+    const raw = await response.json();
+    const items = Array.isArray(raw?.data)
+      ? raw.data
+      : Array.isArray(raw?.result)
+        ? raw.result
+        : Array.isArray(raw)
+          ? raw
+          : [];
+
+    if (!items.length) break;
+    allItems = allItems.concat(items);
+
+    const rawTotal = raw?.total || raw?.totalResults || raw?.total_results || 0;
+    if (items.length < batchSize || (rawTotal > 0 && allItems.length >= rawTotal)) break;
+  }
+
+  jetimobCatalogCache = { fetchedAt: Date.now(), items: allItems };
+  console.log("Jetimob catalog cache refreshed:", allItems.length, "items");
+  return allItems;
+}
+
+async function findImoveisByCodigos(apiKey: string, codigos: string[]): Promise<Record<string, any | null>> {
+  const wanted = codigos.map((c) => String(c || "").trim()).filter(Boolean);
+  const pending = new Set(wanted);
+  const found = new Map<string, any>();
+
+  const batchSize = 200;
+  const maxPages = 20;
+
+  for (let page = 1; page <= maxPages && pending.size > 0; page++) {
+    const url = `https://api.jetimob.com/webservice/${apiKey}/imoveis/todos?v=6&page=${page}&pageSize=${batchSize}`;
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (!response.ok) break;
+
+    const raw = await response.json();
+    const items = Array.isArray(raw?.data)
+      ? raw.data
+      : Array.isArray(raw?.result)
+        ? raw.result
+        : Array.isArray(raw)
+          ? raw
+          : [];
+
+    if (!items.length) break;
+
+    for (const item of items) {
+      for (const codigo of Array.from(pending)) {
+        if (isCodigoMatch(item, codigo)) {
+          found.set(codigo, item);
+          pending.delete(codigo);
+        }
+      }
+      if (pending.size === 0) break;
+    }
+
+    const rawTotal = raw?.total || raw?.totalResults || raw?.total_results || 0;
+    if (items.length < batchSize || (rawTotal > 0 && page * batchSize >= rawTotal)) break;
+  }
+
+  const out: Record<string, any | null> = {};
+  for (const codigo of wanted) out[codigo] = found.get(codigo) || null;
+  return out;
 }
 
 serve(async (req) => {
@@ -97,67 +219,120 @@ serve(async (req) => {
     const { action, codigo, broker_id } = body;
 
     if (action === "get_imovel") {
-      // Try direct codigo endpoint first
-      const directUrl = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/codigo/${codigo}?v=6`;
-      const response = await fetch(directUrl, { headers: { "Accept": "application/json" } });
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Jetimob API error:", response.status, text);
-        if (response.status === 404) {
-          return new Response(
-            JSON.stringify({ data: null, not_found: true }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
+      const requestedCodigo = String(codigo || "").trim();
+      if (!requestedCodigo) {
         return new Response(
-          JSON.stringify({ error: `Erro ao buscar imóvel: ${response.status}` }),
-          { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Código do imóvel é obrigatório" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const raw = await response.json();
-      console.log("Jetimob get_imovel raw keys:", JSON.stringify(Object.keys(raw)), "codigo:", codigo);
-
-      // Normalize: extract the actual property object from various response formats
-      let imovel: any = null;
-      if (Array.isArray(raw?.data) && raw.data.length > 0) {
-        imovel = raw.data[0];
-      } else if (raw?.imovel) {
-        imovel = raw.imovel;
-      } else if (raw?.codigo) {
-        imovel = raw;
+      const requestedCodigoNum = extractCodigoNumber(requestedCodigo);
+      const directCandidates = [requestedCodigo];
+      if (requestedCodigoNum && requestedCodigoNum !== requestedCodigo) {
+        directCandidates.push(requestedCodigoNum);
       }
 
-      // If data array was empty, try searching via list endpoint with codigo as search term
+      let imovel: any = null;
+
+      // 1) Try direct codigo endpoint with both full code and numeric-only fallback
+      for (const directCandidate of directCandidates) {
+        const directUrl = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/codigo/${encodeURIComponent(directCandidate)}?v=6`;
+        const response = await fetch(directUrl, { headers: { "Accept": "application/json" } });
+
+        if (!response.ok) {
+          if (response.status === 404) continue;
+          const text = await response.text();
+          console.error("Jetimob API error:", response.status, text);
+          return new Response(
+            JSON.stringify({ error: `Erro ao buscar imóvel: ${response.status}` }),
+            { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const raw = await response.json();
+        console.log("Jetimob get_imovel raw keys:", JSON.stringify(Object.keys(raw)), "codigo:", requestedCodigo, "candidate:", directCandidate);
+
+        const directItems = Array.isArray(raw?.data)
+          ? raw.data
+          : raw?.imovel
+            ? [raw.imovel]
+            : raw?.codigo || raw?.id_imovel
+              ? [raw]
+              : [];
+
+        imovel = directItems.find((item: any) => isCodigoMatch(item, requestedCodigo)) || null;
+        if (imovel) break;
+      }
+
+      // 2) Search fallback using full code and numeric-only term
       if (!imovel) {
-        console.log("Jetimob get_imovel: direct lookup empty, trying search for codigo:", codigo);
-        const searchUrl = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&search=${encodeURIComponent(codigo)}&pageSize=10`;
-        const searchResp = await fetch(searchUrl, { headers: { "Accept": "application/json" } });
-        if (searchResp.ok) {
+        const searchTerms = [requestedCodigo, requestedCodigoNum].filter((term, idx, arr) => !!term && arr.indexOf(term) === idx);
+
+        for (const term of searchTerms) {
+          console.log("Jetimob get_imovel: direct lookup empty, trying search for term:", term, "original codigo:", requestedCodigo);
+          const searchUrl = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&search=${encodeURIComponent(term)}&pageSize=50`;
+          const searchResp = await fetch(searchUrl, { headers: { "Accept": "application/json" } });
+          if (!searchResp.ok) continue;
+
           const searchRaw = await searchResp.json();
-          const searchItems = Array.isArray(searchRaw?.data) ? searchRaw.data 
-            : Array.isArray(searchRaw?.result) ? searchRaw.result 
-            : Array.isArray(searchRaw) ? searchRaw : [];
-          console.log("Jetimob search fallback for", codigo, "returned", searchItems.length, "items");
-          // Find exact match by codigo
-          const codigoNorm = String(codigo).toUpperCase().trim();
-          imovel = searchItems.find((item: any) => String(item.codigo || "").toUpperCase().trim() === codigoNorm) || null;
+          const searchItems = Array.isArray(searchRaw?.data)
+            ? searchRaw.data
+            : Array.isArray(searchRaw?.result)
+              ? searchRaw.result
+              : Array.isArray(searchRaw)
+                ? searchRaw
+                : [];
+
+          console.log("Jetimob search fallback for", requestedCodigo, "term", term, "returned", searchItems.length, "items");
+          imovel = searchItems.find((item: any) => isCodigoMatch(item, requestedCodigo)) || null;
+          if (imovel) break;
         }
       }
 
+      if (!imovel) {
+        const foundMap = await findImoveisByCodigos(JETIMOB_API_KEY, [requestedCodigo]);
+        imovel = foundMap[requestedCodigo] || null;
+        console.log("Jetimob paged fallback for", requestedCodigo, "match:", !!imovel);
+      }
+
       if (imovel) {
-        // Log ALL keys for debugging image issues
-        console.log("Jetimob imovel keys:", codigo, JSON.stringify(Object.keys(imovel)).substring(0, 500));
-        
-        const fotos = normalizeImages(imovel, codigo);
+
+        const fotos = normalizeImages(imovel, requestedCodigo);
         imovel._fotos_normalized = fotos;
-        console.log("Jetimob imovel normalized:", codigo, "fotos:", fotos.length);
+        console.log("Jetimob imovel normalized:", requestedCodigo, "fotos:", fotos.length);
       } else {
-        console.log("Jetimob imovel NOT FOUND for codigo:", codigo);
+        console.log("Jetimob imovel NOT FOUND for codigo:", requestedCodigo);
       }
 
       return new Response(JSON.stringify({ imovel, not_found: !imovel }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "get_imoveis_by_codigos") {
+      const codigos = Array.isArray(body?.codigos)
+        ? body.codigos.map((c: any) => String(c || "").trim()).filter(Boolean)
+        : [];
+
+      if (!codigos.length) {
+        return new Response(
+          JSON.stringify({ error: "Lista de códigos é obrigatória" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const foundMap = await findImoveisByCodigos(JETIMOB_API_KEY, codigos);
+      const imoveis: Record<string, any> = {};
+
+      for (const requestedCodigo of codigos) {
+        const matched = foundMap[requestedCodigo] || null;
+        imoveis[requestedCodigo] = matched
+          ? { ...matched, _fotos_normalized: normalizeImages(matched, requestedCodigo) }
+          : null;
+      }
+
+      return new Response(JSON.stringify({ imoveis }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
