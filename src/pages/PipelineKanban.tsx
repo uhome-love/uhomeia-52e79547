@@ -208,6 +208,13 @@ export default function PipelineKanban() {
   const isKanbanOrIntel = activeTab === "kanban" || activeTab === "inteligencia";
 
   return (
+    <ErrorBoundary fallback={
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
+        <span className="text-destructive font-semibold">Erro ao carregar o Pipeline</span>
+        <span className="text-sm text-muted-foreground">Tente recarregar a página (Ctrl+F5)</span>
+        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm">Recarregar</button>
+      </div>
+    }>
     <div className="flex flex-col w-full max-w-full min-w-0 overflow-hidden" style={{ height: "calc(100vh - 56px - 2rem)" }}>
       {/* Controls — fixed top area */}
       <div className="shrink-0 space-y-1 pb-1">
