@@ -436,6 +436,10 @@ export default function CheckpointGerente() {
           ))}
         </div>
 
+        {activeTab === "visao_geral" && (
+          <CheckpointVisaoGeralTab teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
+        )}
+
         {activeTab === "checkpoint" && (
           <CheckpointTableTab
             rows={rows}
