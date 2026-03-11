@@ -297,7 +297,7 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
       )}
 
       {/* Leads Perdidos por Timeout */}
-      {leadsPerdidos.length > 0 && (
+      {showPerdidos && leadsPerdidos.length > 0 && (
         <Card className="border-orange-400/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
