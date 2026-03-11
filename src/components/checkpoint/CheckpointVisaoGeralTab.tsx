@@ -72,14 +72,18 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
     if (teamUserIds.length === 0) return;
     setLoading(true);
 
+    // Load pipeline stage definitions first
+    const { data: stagesDef } = await supabase.from("pipeline_stages").select("id, tipo, nome").eq("ativo", true).eq("pipeline_tipo", "leads");
+    const stageMap: Record<string, string> = {};
+    (stagesDef || []).forEach((s: any) => { stageMap[s.id] = s.tipo; });
+
     // Split queries - cast as any to avoid TS2589
     const q1: any = supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, canal").in("corretor_id", teamUserIds).gte("created_at", `${dateStr}T00:00:00`).lte("created_at", `${dateStr}T23:59:59`);
-    const q2base = supabase.from("pipeline_leads").select("corretor_id, etapa");
-    const q2: any = q2base.in("corretor_id", teamUserIds).neq("etapa", "descarte");
+    const q2: any = supabase.from("pipeline_leads").select("corretor_id, stage_id").in("corretor_id", teamUserIds);
     const q3: any = supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final, nome_cliente, updated_at, fase_changed_at, empreendimento").in("corretor_id", teamUserIds).not("fase", "in", "(perdido,cancelado)");
     const q4: any = supabase.from("visitas").select("corretor_id, status, empreendimento, horario").in("corretor_id", teamUserIds).eq("data_visita", dateStr);
     const q5: any = supabase.from("negocios").select("id, nome_cliente, fase, corretor_id, vgv_estimado, updated_at, fase_changed_at, empreendimento").in("corretor_id", teamUserIds).not("fase", "in", "(perdido,cancelado,assinado,vendido)").order("updated_at", { ascending: true }).limit(50);
-    const q6: any = supabase.from("pipeline_leads").select("id, corretor_id, nome, created_at").in("corretor_id", teamUserIds).in("etapa", ["novo_lead", "sem_contato"]).lt("created_at", new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()).limit(50);
+    const q6: any = supabase.from("pipeline_leads").select("id, corretor_id, nome, created_at, stage_id").in("corretor_id", teamUserIds).lt("created_at", new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()).limit(50);
 
     const [r1, r2, r3, r4, r5, r6] = await Promise.all([q1, q2, q3, q4, q5, q6]);
     const tentativas = r1.data;
