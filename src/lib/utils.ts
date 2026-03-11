@@ -7,6 +7,33 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Formats a number as Brazilian Real (BRL) — full format.
+ * E.g. 1500000 → "R$ 1.500.000,00"
+ *      240000  → "R$ 240.000,00"
+ * @param decimals number of decimal places (default 0 for imobiliário)
+ */
+export function formatBRL(v: number, decimals = 0): string {
+  return v.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
+/**
+ * Compact BRL for KPI cards and small spaces.
+ * E.g. 1500000 → "R$ 1,5M"
+ *      240000  → "R$ 240k"
+ *      800     → "R$ 800"
+ */
+export function formatBRLCompact(v: number): string {
+  if (Math.abs(v) >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
+  if (Math.abs(v) >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}k`;
+  return formatBRL(v);
+}
+
 function parseDateValue(value: string | Date | null | undefined, dateOnly = false): Date | null {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? null : value;
