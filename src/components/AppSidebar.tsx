@@ -239,15 +239,15 @@ export function AppSidebar() {
           {
             label: "Visão Geral",
             items: [
-              { title: "Painel da Equipe", url: "/meu-time", icon: Users },
-{ title: "Central do Gerente", url: "/checkpoint", icon: ClipboardCheck },
+              { title: "Meu Time", url: "/meu-time", icon: Users },
+              { title: "Central do Gerente", url: "/central-do-gerente", icon: ClipboardCheck },
             ],
           },
           {
             label: "Gestão de Leads",
             items: [
               { title: "Roleta de Leads", url: "/roleta", icon: Cog },
-              { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+              { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
               { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
               { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
               { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
@@ -256,7 +256,7 @@ export function AppSidebar() {
           {
             label: "Gestão de Vendas",
             items: [
-              { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+              { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Kanban },
               { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
             ],
           },
@@ -304,16 +304,16 @@ export function AppSidebar() {
           {
             label: "Visão Geral",
             items: [
-              { title: "Painel do Time", url: "/meu-time", icon: Users },
-              { title: "Central do Gerente", url: "/checkpoint", icon: ClipboardCheck },
+              { title: "Meu Time", url: "/meu-time", icon: Users },
+              { title: "Central do Gerente", url: "/central-do-gerente", icon: ClipboardCheck },
             ],
           },
           {
             label: "Operação",
             items: [
-              { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+              { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
               { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
-              { title: "Pipeline Negócios", url: "/meus-negocios", icon: Kanban },
+              { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Kanban },
               { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
               { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
               { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
@@ -382,9 +382,9 @@ export function AppSidebar() {
           label: "Gestão Comercial",
           items: [
             { title: "Agenda de Tarefas", url: "/minhas-tarefas", icon: ListTodo },
-            { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+            { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
             { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
-            { title: "Pipeline Negócios", url: "/meus-negocios", icon: Briefcase },
+            { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Briefcase },
             { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
           ],
         },

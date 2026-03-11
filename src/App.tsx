@@ -134,7 +134,7 @@ const App = () => (
 
             {/* Gestão Comercial — gestor + admin */}
             <Route path="/gerente/dashboard" element={<ProtectedPage roles={["gestor", "admin"]}><GerenteDashboard /></ProtectedPage>} />
-            <Route path="/checkpoint" element={<ProtectedPage roles={["gestor", "admin"]}><CheckpointGerente /></ProtectedPage>} />
+            <Route path="/central-do-gerente" element={<ProtectedPage roles={["gestor", "admin"]}><CheckpointGerente /></ProtectedPage>} />
             
             <Route path="/central-dados" element={<ProtectedPage roles={["gestor", "admin"]}><CentralDados /></ProtectedPage>} />
             <Route path="/scripts" element={<ProtectedPage><ScriptsGenerator /></ProtectedPage>} />
@@ -145,7 +145,7 @@ const App = () => (
             <Route path="/oferta-ativa" element={<ProtectedPage><OfertaAtiva /></ProtectedPage>} />
             <Route path="/roleta" element={<ProtectedPage roles={["admin"]}><RoletaLeads /></ProtectedPage>} />
             <Route path="/marketplace" element={<ProtectedPage><MarketplaceScripts /></ProtectedPage>} />
-            <Route path="/pipeline" element={<ProtectedPage><PipelineKanban /></ProtectedPage>} />
+            <Route path="/pipeline-leads" element={<ProtectedPage><PipelineKanban /></ProtectedPage>} />
             <Route path="/escala-diaria" element={<ProtectedPage roles={["admin"]}><EscalaDiaria /></ProtectedPage>} />
             <Route path="/disponibilidade" element={<ProtectedPage roles={["gestor", "admin"]}><DisponibilidadePage /></ProtectedPage>} />
             <Route path="/automacoes" element={<ProtectedPage roles={["gestor", "admin"]}><AutomacoesPage /></ProtectedPage>} />
@@ -169,7 +169,7 @@ const App = () => (
             <Route path="/homi-gerente" element={<ProtectedPage roles={["gestor", "admin"]}><HomiGerencial /></ProtectedPage>} />
             <Route path="/homi-ceo" element={<ProtectedPage roles={["admin"]}><HomiCeo /></ProtectedPage>} />
             <Route path="/homi/base-conhecimento" element={<ProtectedPage roles={["admin", "gestor"]}><BaseConhecimento /></ProtectedPage>} />
-            <Route path="/meus-negocios" element={<ProtectedPage><MeusNegocios /></ProtectedPage>} />
+            <Route path="/pipeline-negocios" element={<ProtectedPage><MeusNegocios /></ProtectedPage>} />
             <Route path="/pos-vendas" element={<ProtectedPage><PosVendas /></ProtectedPage>} />
             <Route path="/imoveis" element={<ProtectedPage><ImoveisPage /></ProtectedPage>} />
             <Route path="/melnick-day" element={<ProtectedPage><MelnickDay /></ProtectedPage>} />

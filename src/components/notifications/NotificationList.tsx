@@ -80,16 +80,16 @@ function getNotificationRoute(n: Notification): string | null {
   // Lead notifications → pipeline with lead context
   if (["leads", "lead", "lead_roleta", "lead_urgente", "lead_ultimo_alerta", "lead_sem_contato", "lead_parado", "lead_alto_valor"].includes(tipo)) {
     const leadId = d.pipeline_lead_id || d.lead_id;
-    if (leadId) return `/pipeline?lead=${leadId}`;
-    return "/pipeline";
+    if (leadId) return `/pipeline-leads?lead=${leadId}`;
+    return "/pipeline-leads";
   }
-  if (tipo === "fila_ceo" || categoria === "fila_ceo") return "/pipeline";
+  if (tipo === "fila_ceo" || categoria === "fila_ceo") return "/pipeline-leads";
 
   // Lead categories
   if (["lead_novo", "lead_aceito", "lead_retorno", "lead_atribuido"].includes(categoria)) {
     const leadId = d.pipeline_lead_id || d.lead_id;
-    if (leadId) return `/pipeline?lead=${leadId}`;
-    return "/pipeline";
+    if (leadId) return `/pipeline-leads?lead=${leadId}`;
+    return "/pipeline-leads";
   }
 
   // Visita notifications → agenda
@@ -100,13 +100,13 @@ function getNotificationRoute(n: Notification): string | null {
 
   // Pipeline visita_realizada → pipeline lead
   if (tipo === "pipeline" && categoria === "visita_realizada") {
-    if (d.lead_id) return `/pipeline?lead=${d.lead_id}`;
-    return "/pipeline";
+    if (d.lead_id) return `/pipeline-leads?lead=${d.lead_id}`;
+    return "/pipeline-leads";
   }
 
-  // Propostas / vendas / negócios → meus-negocios
+  // Propostas / vendas / negócios
   if (["propostas", "proposta_assinada", "vendas", "negocio_fechado"].includes(tipo)) {
-    return "/meus-negocios";
+    return "/pipeline-negocios";
   }
 
   // Performance / conquistas
@@ -114,20 +114,20 @@ function getNotificationRoute(n: Notification): string | null {
   if (tipo === "relatorio_semanal") return "/corretor/resumo";
 
   // Alertas de gestão
-  if (categoria === "corretor_parado" || categoria === "corretor_inativo") return "/checkpoint";
-  if (categoria === "lead_sem_atendimento") return "/pipeline";
+  if (categoria === "corretor_parado" || categoria === "corretor_inativo") return "/central-do-gerente";
+  if (categoria === "lead_sem_atendimento") return "/pipeline-leads";
   if (categoria === "meta_abaixo") return "/gerente/dashboard";
   if (categoria === "escala_solicitada" || categoria === "escala_aprovado" || categoria === "escala_rejeitado") return "/escala-diaria";
-  if (categoria === "problema_atendimento") return "/pipeline";
-  if (categoria === "volume_leads") return "/pipeline";
+  if (categoria === "problema_atendimento") return "/pipeline-leads";
+  if (categoria === "volume_leads") return "/pipeline-leads";
   if (categoria === "alerta_previsao") return "/ceo";
-  if (categoria === "venda_assinada") return "/meus-negocios";
+  if (categoria === "venda_assinada") return "/pipeline-negocios";
 
   // Mensagens
   if (tipo === "mensagem_gerente") return "/notificacoes";
 
   // Automação / sequências
-  if (tipo === "automacao" || tipo === "sequencias") return "/pipeline";
+  if (tipo === "automacao" || tipo === "sequencias") return "/pipeline-leads";
 
   return null;
 }

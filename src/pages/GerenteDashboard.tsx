@@ -319,7 +319,7 @@ export default function GerenteDashboard() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-bold text-foreground">🔥 Negócios Próximos de Fechamento</h2>
-                <button className="text-xs text-primary hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/meus-negocios")}>
+                <button className="text-xs text-primary hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/pipeline-negocios")}>
                   Ver pipeline <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
@@ -327,7 +327,7 @@ export default function GerenteDashboard() {
                 {negociosQuentes.map(n => (
                   <motion.div key={n.id} whileHover={{ scale: 1.005 }}
                     className="p-3.5 rounded-xl border border-border/40 hover:bg-accent/40 transition-colors cursor-pointer"
-                    onClick={() => navigate("/meus-negocios")}>
+                    onClick={() => navigate("/pipeline-negocios")}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -367,7 +367,7 @@ export default function GerenteDashboard() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-foreground">⚠️ Negócios que Pedem Ação</h2>
-              <button className="text-xs text-primary hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/meus-negocios")}>
+              <button className="text-xs text-primary hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/pipeline-negocios")}>
                 Ver pipeline <ArrowRight className="h-3 w-3" />
               </button>
             </div>
@@ -381,7 +381,7 @@ export default function GerenteDashboard() {
                 {negociosAcao.map(n => (
                   <motion.div key={n.id} whileHover={{ scale: 1.005 }}
                     className="p-3.5 rounded-xl border border-border/40 hover:bg-accent/40 transition-colors cursor-pointer"
-                    onClick={() => navigate("/meus-negocios")}>
+                    onClick={() => navigate("/pipeline-negocios")}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -593,7 +593,7 @@ export default function GerenteDashboard() {
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { emoji: "📋", label: "Checkpoint", desc: "Presença e produtividade", to: "/checkpoint" },
+            { emoji: "📋", label: "Central", desc: "Presença e produtividade", to: "/central-do-gerente" },
             { emoji: "👥", label: "Meu Time", desc: "Gestão dos corretores", to: "/meu-time" },
             { emoji: "📊", label: "Relatórios 1:1", desc: "Reuniões individuais", to: "/relatorios" },
             { emoji: "🤖", label: "HOMI Gerente", desc: "IA para gestão", to: "/homi-gerente" },

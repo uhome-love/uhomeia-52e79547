@@ -22,7 +22,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   // Dia 1-3 — Primeiras ações
   { id: "primeira_ligacao", phase: "actions", phaseLabel: "Dia 1-3 — Primeiras ações", label: "Faça sua primeira ligação", description: "Realize uma ligação pela Oferta Ativa", route: "/oferta-ativa", autoDetect: true },
   { id: "registrar_resultado", phase: "actions", phaseLabel: "Dia 1-3 — Primeiras ações", label: "Registre resultado de ligação", description: "Registre o feedback de uma tentativa de contato", route: "/oferta-ativa", autoDetect: true },
-  { id: "mover_lead_pipeline", phase: "actions", phaseLabel: "Dia 1-3 — Primeiras ações", label: "Mova um lead no pipeline", description: "Avance um lead de etapa no funil de vendas", route: "/pipeline", autoDetect: true },
+  { id: "mover_lead_pipeline", phase: "actions", phaseLabel: "Dia 1-3 — Primeiras ações", label: "Mova um lead no pipeline", description: "Avance um lead de etapa no funil de vendas", route: "/pipeline-leads", autoDetect: true },
   { id: "primeira_visita", phase: "actions", phaseLabel: "Dia 1-3 — Primeiras ações", label: "Agende sua primeira visita", description: "Marque uma visita com um cliente potencial", route: "/agenda-visitas", autoDetect: true },
   // Semana 1
   { id: "meta_batida", phase: "week1", phaseLabel: "Semana 1", label: "Bata sua meta diária", description: "Cumpra todas as metas de um dia", route: "/corretor", autoDetect: true },

@@ -55,9 +55,9 @@ export function useSmartAlerts() {
             severity: "critical",
             title: "Checkpoint não preenchido",
             description: "O checkpoint de hoje ainda não foi preenchido. Preencha para manter o controle do time.",
-            action: { label: "Preencher agora", url: "/checkpoint" },
+            action: { label: "Preencher agora", url: "/central-do-gerente" },
           });
-          badgeCounts["/checkpoint"] = (badgeCounts["/checkpoint"] || 0) + 1;
+          badgeCounts["/central-do-gerente"] = (badgeCounts["/central-do-gerente"] || 0) + 1;
         }
       } catch (e) {
         console.error("Alert check checkpoint:", e);
@@ -108,7 +108,7 @@ export function useSmartAlerts() {
                   severity: "critical",
                   title: "Meta de visitas em risco",
                   description: `Apenas ${Math.round(visPct * 100)}% da meta de visitas atingida com ${Math.round(pctMonthElapsed * 100)}% do mês transcorrido.`,
-                  action: { label: "Ver checkpoint", url: "/checkpoint" },
+                  action: { label: "Ver central", url: "/central-do-gerente" },
                 });
               }
               if (propPct < 0.4) {
@@ -118,7 +118,7 @@ export function useSmartAlerts() {
                   severity: "warning",
                   title: "Meta de propostas em risco",
                   description: `Apenas ${Math.round(propPct * 100)}% da meta de propostas atingida. Intensifique o acompanhamento.`,
-                  action: { label: "Ver checkpoint", url: "/checkpoint" },
+                  action: { label: "Ver central", url: "/central-do-gerente" },
                 });
               }
             }

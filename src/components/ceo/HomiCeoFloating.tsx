@@ -51,14 +51,14 @@ export default function HomiCeoFloating({ dashboardData }: Props) {
         icon: "⏰",
         message: `${filaCeo} leads na Fila CEO aguardando distribuição`,
         action: "Ver pipeline",
-        link: "/pipeline",
+        link: "/pipeline-leads",
       });
     }
 
     // Leads parados
     for (const a of alertas) {
       if (a.tipo === "red") {
-        als.push({ icon: "📉", message: a.mensagem, action: "Ver pipeline", link: "/pipeline" });
+        als.push({ icon: "📉", message: a.mensagem, action: "Ver pipeline", link: "/pipeline-leads" });
       }
     }
 
@@ -78,7 +78,7 @@ export default function HomiCeoFloating({ dashboardData }: Props) {
         icon: "💰",
         message: `${kpis.propostas} propostas ativas sem VGV assinado`,
         action: "Ver negócios",
-        link: "/negocios",
+        link: "/pipeline-negocios",
       });
     }
 
@@ -89,7 +89,7 @@ export default function HomiCeoFloating({ dashboardData }: Props) {
         icon: "🔥",
         message: `${qualStage.count} leads acumulados em ${qualStage.nome}`,
         action: "Ver pipeline",
-        link: "/pipeline",
+        link: "/pipeline-leads",
       });
     }
 

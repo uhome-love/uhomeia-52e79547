@@ -197,7 +197,7 @@ export default function CorretorDashboard() {
           {/* 3 Cards Contadores */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <div className="grid grid-cols-3 gap-3">
-              <Card className="cursor-pointer hover:border-orange-300 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/pipeline")}>
+              <Card className="cursor-pointer hover:border-orange-300 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/pipeline-leads")}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-1.5 mb-2">
                     <AlertCircle className="h-4 w-4 text-danger-500" />
@@ -208,7 +208,7 @@ export default function CorretorDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:border-primary/30 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/negocios")}>
+              <Card className="cursor-pointer hover:border-primary/30 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/pipeline-negocios")}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-1.5 mb-2">
                     <Zap className="h-4 w-4 text-purple-500" />
@@ -261,7 +261,7 @@ export default function CorretorDashboard() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="h-16 rounded-xl flex items-center gap-3 px-4 bg-gradient-to-br from-[#1E40AF] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#2563EB] text-white shadow-[0_4px_14px_rgba(29,78,216,0.35)] transition-all duration-200"
-                onClick={() => navigate("/pipeline")}
+                onClick={() => navigate("/pipeline-leads")}
               >
                 <Kanban className="h-6 w-6 shrink-0" />
                 <div className="text-left">

@@ -196,14 +196,14 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const diff = Math.floor((now.getTime() - new Date(l.updated_at || l.created_at).getTime()) / 86400000);
       return diff > 7;
     }).length;
-    if (parados7d > 0) als.push({ tipo: "red", mensagem: `${parados7d} leads parados >7 dias sem contato`, link: "/pipeline" });
+    if (parados7d > 0) als.push({ tipo: "red", mensagem: `${parados7d} leads parados >7 dias sem contato`, link: "/pipeline-leads" });
     
     const semCorretor = (leads || []).filter(l => !l.stage_id).length; // Approximate
     const filaCeo = (leads || []).filter(l => {
       const st = stageData.find(s => s.id === l.stage_id);
       return st?.tipo === "novo_lead";
     }).length;
-    if (filaCeo > 5) als.push({ tipo: "yellow", mensagem: `${filaCeo} leads na Fila CEO aguardando distribuição`, link: "/pipeline" });
+    if (filaCeo > 5) als.push({ tipo: "yellow", mensagem: `${filaCeo} leads na Fila CEO aguardando distribuição`, link: "/pipeline-leads" });
 
     // Find best campaign
     const bestCamp = Array.from(empMap.entries()).sort((a, b) => {
@@ -211,7 +211,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const pB = b[1].leads > 0 ? b[1].avancou / b[1].leads : 0;
       return pB - pA;
     })[0];
-    if (bestCamp && bestCamp[1].leads >= 3) als.push({ tipo: "green", mensagem: `Campanha ${bestCamp[0]} com melhor taxa de conversão`, link: "/pipeline" });
+    if (bestCamp && bestCamp[1].leads >= 3) als.push({ tipo: "green", mensagem: `Campanha ${bestCamp[0]} com melhor taxa de conversão`, link: "/pipeline-leads" });
 
     setAlertas(als);
 
