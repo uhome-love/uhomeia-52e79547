@@ -227,7 +227,7 @@ export default function PipelineKanban() {
         <span className="text-sm text-muted-foreground">Tente recarregar a página (Ctrl+F5)</span>
         <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm">Recarregar</button>
       </div>
-    }>
+    } onError={(err) => console.error("[PipelineKanban] Render crash:", err.message, err.stack)}>
     <div className="flex flex-col w-full max-w-full min-w-0 overflow-hidden" style={{ height: "calc(100vh - 56px - 2rem)" }}>
       {/* Controls — fixed top area */}
       <div className="shrink-0 space-y-1 pb-1">
