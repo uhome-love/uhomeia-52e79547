@@ -105,9 +105,9 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: ClipboardList, label: "Tentativas", value: totals.leads, color: "text-primary" },
-          { icon: CheckCircle, label: "Visitas", value: totals.visitas, color: "text-emerald-600" },
-          { icon: TrendingUp, label: "Propostas", value: totals.propostas, color: "text-purple-600" },
+          { icon: ClipboardList, label: "Contatos", value: totals.contatos, color: "text-primary" },
+          { icon: CheckCircle, label: "Qualificados", value: totals.qualificados, color: "text-emerald-600" },
+          { icon: TrendingUp, label: "Visitas", value: totals.visitas, color: "text-purple-600" },
           { icon: Clock, label: "Total Pontos", value: totals.pontos, color: "text-warning" },
         ].map(kpi => (
           <Card key={kpi.label}>
