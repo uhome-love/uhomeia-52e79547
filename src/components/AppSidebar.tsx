@@ -38,6 +38,7 @@ import {
   PhoneCall,
   PackageCheck,
   Zap,
+  Radio,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
