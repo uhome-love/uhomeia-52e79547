@@ -58,7 +58,7 @@ interface NegocioTask {
   status: string;
 }
 
-function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, nextTask, parceriaInfo, onDragStart, onClick, onMoveFase, onUpdateNegocio, onTaskSaved }: {
+function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, nextTask, parceriaInfo, onDragStart, onClick, onMoveFase, onUpdateNegocio, onTaskSaved, onDelete, isAdmin: cardIsAdmin }: {
   negocio: Negocio;
   corretorNome?: string;
   corretorInfo?: CorretorInfo;
@@ -71,6 +71,8 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
   onMoveFase: (id: string, fase: string) => void;
   onUpdateNegocio: (id: string, updates: Partial<Negocio>) => Promise<void>;
   onTaskSaved?: () => void;
+  onDelete?: (id: string) => void;
+  isAdmin?: boolean;
 }) {
   const { user } = useAuth();
   const faseInfo = NEGOCIOS_FASES.find(f => f.key === negocio.fase);
