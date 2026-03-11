@@ -437,36 +437,57 @@ function MaterialSection({
 
       {/* Upload area (CEO/Gerente only) */}
       {canUpload && (
-        <div className="flex items-center gap-2 pt-1 flex-wrap">
-          <Input
-            value={uploadNome}
-            onChange={(e) => setUploadNome(e.target.value)}
-            placeholder="Nome do arquivo..."
-            className="h-8 text-[11px] w-[160px]"
-          />
-          <Select value={uploadTipo} onValueChange={setUploadTipo}>
-            <SelectTrigger className="h-8 text-[11px] w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="criativo">🎬 Criativo</SelectItem>
-              <SelectItem value="tabela">📊 Tabela</SelectItem>
-              <SelectItem value="book">📖 Book</SelectItem>
-              <SelectItem value="material">📎 Outro</SelectItem>
-            </SelectContent>
-          </Select>
-          <label className="cursor-pointer">
-            <input type="file" className="hidden" accept="image/*,video/*,.pdf,.xlsx,.xls,.pptx" onChange={handleUpload} disabled={uploading} />
-            <div className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border border-dashed",
-              uploading
-                ? "bg-muted/50 text-muted-foreground border-border cursor-wait"
-                : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-            )}>
-              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-              {uploading ? "Enviando..." : "Enviar"}
-            </div>
-          </label>
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Input
+              value={uploadNome}
+              onChange={(e) => setUploadNome(e.target.value)}
+              placeholder="Nome do arquivo..."
+              className="h-8 text-[11px] w-[160px]"
+            />
+            <Select value={uploadTipo} onValueChange={setUploadTipo}>
+              <SelectTrigger className="h-8 text-[11px] w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="criativo">🎬 Criativo</SelectItem>
+                <SelectItem value="tabela">📊 Tabela</SelectItem>
+                <SelectItem value="book">📖 Book</SelectItem>
+                <SelectItem value="material">📎 Outro</SelectItem>
+              </SelectContent>
+            </Select>
+            <label className="cursor-pointer">
+              <input type="file" className="hidden" accept="image/*,video/*,.pdf,.xlsx,.xls,.pptx" onChange={handleUpload} disabled={uploading} />
+              <div className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border border-dashed",
+                uploading
+                  ? "bg-muted/50 text-muted-foreground border-border cursor-wait"
+                  : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+              )}>
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                {uploading ? "Enviando..." : "Enviar arquivo"}
+              </div>
+            </label>
+          </div>
+          {/* Link input (Instagram/video URL) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Input
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="Cole o link do Instagram ou vídeo..."
+              className="h-8 text-[11px] flex-1 min-w-[200px]"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-[11px] gap-1.5"
+              disabled={!linkUrl.trim() || uploading}
+              onClick={handleSaveLink}
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
+              Salvar link
+            </Button>
+          </div>
         </div>
       )}
 
