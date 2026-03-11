@@ -354,7 +354,15 @@ export default function CorretorDashboard() {
                       <Zap className="h-4 w-4 text-primary" />
                       <span className="text-sm font-semibold text-foreground">Meta do Dia</span>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-6 text-xs text-primary" onClick={() => setEditingMeta(true)}>Editar</Button>
+                    <div className="flex items-center gap-2">
+                      {goals?.status === "aprovado" && (
+                        <Badge variant="secondary" className="text-[10px] gap-1 bg-emerald-500/15 text-emerald-700 border-emerald-500/30">✅ Aprovada</Badge>
+                      )}
+                      {goals?.status === "pendente" && (
+                        <Badge variant="secondary" className="text-[10px] gap-1 bg-amber-500/15 text-amber-700 border-amber-500/30">⏳ Aguardando aprovação</Badge>
+                      )}
+                      <Button variant="ghost" size="sm" className="h-6 text-xs text-primary" onClick={() => setEditingMeta(true)}>Editar</Button>
+                    </div>
                   </div>
                   {[
                     { emoji: "🔥", label: "Tentativas", value: progress.tentativas, max: goals?.meta_ligacoes || 30, pct: ligPct, barColor: "bg-primary" },
