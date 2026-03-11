@@ -39,6 +39,7 @@ import {
   PackageCheck,
   Zap,
   Radio,
+  Megaphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -389,6 +390,7 @@ export function AppSidebar() {
           label: "Gestão Comercial",
           items: [
             { title: "Agenda de Tarefas", url: "/minhas-tarefas", icon: ListTodo },
+            { title: "Anúncios no Ar", url: "/anuncios", icon: Megaphone },
             { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
             { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
             { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Briefcase },
@@ -415,7 +417,6 @@ export function AppSidebar() {
           label: "Ferramentas",
           items: [
             { title: "Imóveis", url: "/imoveis", icon: Home },
-            { title: "Melnick Day", url: "/melnick-day", icon: Zap },
             { title: "HOMI Assistente", url: "/homi", icon: Bot },
             { title: "Academia", url: "/academia", icon: GraduationCap },
             { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
