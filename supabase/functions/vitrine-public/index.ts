@@ -93,7 +93,53 @@ Deno.serve(async (req) => {
         .eq("user_id", vitrine.created_by)
         .maybeSingle();
 
-      // Fetch properties from Jetimob using codigos
+      // Handle Melnick Day vitrines (data stored in dados_custom)
+      if (vitrine.tipo === "melnick_day" && vitrine.dados_custom) {
+        const customData = vitrine.dados_custom as any[];
+        const imoveis = customData.map((item: any, idx: number) => ({
+          id: idx + 1,
+          titulo: item.nome,
+          endereco: item.bairro ? `${item.bairro} — Porto Alegre` : null,
+          bairro: item.bairro || null,
+          cidade: "Porto Alegre",
+          area: null,
+          quartos: null,
+          suites: null,
+          vagas: null,
+          banheiros: null,
+          valor: item.precoPor ? parseFloat(item.precoPor.replace(/[^0-9.,]/g, "").replace(/\./g, "").replace(",", ".")) : null,
+          fotos: item.imagem ? [item.imagem] : [],
+          empreendimento: item.nome,
+          descricao: `${item.metragens} · ${item.dorms} · ${item.status}`,
+          // Melnick Day extras
+          precoDe: item.precoDe || null,
+          precoPor: item.precoPor || null,
+          descontoMax: item.descontoMax || null,
+          status: item.status || null,
+          metragens: item.metragens || null,
+          dorms: item.dorms || null,
+          condicoes: item.condicoes || null,
+          segmento: item.segmento || null,
+        }));
+
+        return jsonResponse({
+          vitrine: {
+            id: vitrine.id,
+            titulo: vitrine.titulo,
+            mensagem: vitrine.mensagem_corretor,
+            created_at: vitrine.created_at,
+            tipo: "melnick_day",
+          },
+          corretor: corretor ? {
+            nome: corretor.nome,
+            telefone: corretor.telefone,
+            avatar_url: corretor.avatar_url,
+          } : null,
+          imoveis,
+        });
+      }
+
+      // Standard Jetimob vitrine
       let imoveis: any[] = [];
       const ids = (vitrine.imovel_ids as string[]) || [];
       console.log(`Vitrine ${vitrine_id} has ${ids.length} imovel_ids:`, ids);

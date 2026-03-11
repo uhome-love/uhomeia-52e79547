@@ -3,14 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Building2, Phone, MessageSquare, Copy, ExternalLink, MapPin,
   Maximize2, Tag, Clock, ChevronDown, ChevronUp, Sparkles,
   Trophy, Plane, Users, Target, Star, TrendingUp, ShieldCheck,
-  Car, FileText, Zap, ArrowRight, Gift, Search, DollarSign, Home
+  Car, FileText, Zap, ArrowRight, Gift, Search, DollarSign, Home,
+  Share2, Link2, Loader2, CheckSquare, Send
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ═══════════════════════════════════════════
    DATA — Empreendimentos
@@ -360,32 +366,77 @@ function CountdownTimer() {
   );
 }
 
-function EmpreendimentoCard({ emp }: { emp: Empreendimento }) {
+function EmpreendimentoCard({ emp, segKey, selected, onToggle }: { emp: Empreendimento; segKey: string; selected: boolean; onToggle: () => void }) {
   const desconto = emp.descontoMax || calcDesconto(emp.precoDe, emp.precoPor);
+  
+  const gerarMsgWhatsApp = () => {
+    let msg = `🏠 *${emp.nome}* — Melnick Day 2026\n`;
+    msg += `📍 ${emp.bairro}\n`;
+    msg += `📐 ${emp.metragens} · ${emp.dorms}\n`;
+    if (emp.precoDe && emp.precoPor) msg += `💰 De ~${emp.precoDe}~ por *${emp.precoPor}*\n`;
+    else if (emp.precoPor) msg += `💰 *${emp.precoPor}*\n`;
+    if (desconto) msg += `🔥 Desconto de até ${typeof desconto === "string" && desconto.startsWith("-") ? desconto.slice(1) : desconto}\n`;
+    msg += `📅 Condições exclusivas até 21/03!\n`;
+    msg += `\nQuer saber mais? Me chama! 😊`;
+    return msg;
+  };
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 border-border/50 group cursor-pointer">
+    <Card className={`overflow-hidden hover:shadow-lg transition-all duration-200 border-border/50 group relative ${selected ? "ring-2 ring-primary border-primary" : ""}`}>
+      {/* Selection checkbox */}
+      <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+        <Checkbox
+          checked={selected}
+          onCheckedChange={onToggle}
+          className="bg-white/90 border-2"
+        />
+      </div>
+      
+      {/* Share button */}
+      <div className="absolute top-2 right-2 z-10 flex gap-1" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={() => {
+            const msg = gerarMsgWhatsApp();
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+          }}
+          className="bg-emerald-500 text-white rounded-full p-1.5 shadow-lg hover:bg-emerald-600 transition-colors"
+          title="Enviar por WhatsApp"
+        >
+          <Phone className="h-3 w-3" />
+        </button>
+        <button
+          onClick={() => {
+            copyToClipboard(gerarMsgWhatsApp());
+          }}
+          className="bg-white/90 text-slate-700 rounded-full p-1.5 shadow-lg hover:bg-white transition-colors"
+          title="Copiar mensagem"
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+      </div>
+
       {emp.imagem ? (
-        <div className="relative h-32 overflow-hidden bg-muted">
+        <div className="relative h-32 overflow-hidden bg-muted cursor-pointer" onClick={onToggle}>
           <img src={emp.imagem} alt={emp.nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
           {desconto && (
-            <span className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
+            <span className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
               -{typeof desconto === "string" && desconto.startsWith("-") ? desconto.slice(1) : desconto}
             </span>
           )}
-          <Badge className="absolute top-2 left-2 text-[9px] py-0" variant="secondary">{emp.status}</Badge>
+          <Badge className="absolute bottom-2 left-2 text-[9px] py-0" variant="secondary">{emp.status}</Badge>
         </div>
       ) : (
-        <div className="relative h-20 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+        <div className="relative h-20 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center cursor-pointer" onClick={onToggle}>
           <Building2 className="h-8 w-8 text-muted-foreground/30" />
           {desconto && (
-            <span className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            <span className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
               -{typeof desconto === "string" && desconto.startsWith("-") ? desconto.slice(1) : desconto}
             </span>
           )}
-          <Badge className="absolute top-2 left-2 text-[9px] py-0" variant="secondary">{emp.status}</Badge>
+          <Badge className="absolute bottom-2 left-2 text-[9px] py-0" variant="secondary">{emp.status}</Badge>
         </div>
       )}
-      <CardContent className="p-3 space-y-1">
+      <CardContent className="p-3 space-y-1 cursor-pointer" onClick={onToggle}>
         <h4 className="font-bold text-sm text-foreground leading-tight truncate">{emp.nome}</h4>
         <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
           <MapPin className="h-3 w-3 shrink-0" /> {emp.bairro}
@@ -492,12 +543,27 @@ export default function MelnickDay() {
   const segKeys = Object.keys(SEGMENTOS);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("mcmv");
+  const [selectedEmps, setSelectedEmps] = useState<Set<string>>(new Set());
+  const [showVitrineDialog, setShowVitrineDialog] = useState(false);
+  const [vitrineTitle, setVitrineTitle] = useState("Ofertas Melnick Day 2026");
+  const [vitrineMsg, setVitrineMsg] = useState("");
+  const [creatingVitrine, setCreatingVitrine] = useState(false);
+  const [vitrineLink, setVitrineLink] = useState<string | null>(null);
 
-  const filteredEmpreendimentos = (emps: Empreendimento[]) => {
-    if (!search.trim()) return emps;
-    const q = search.toLowerCase();
-    return emps.filter((e) => e.nome.toLowerCase().includes(q) || e.bairro.toLowerCase().includes(q));
+  const toggleEmp = (empName: string) => {
+    setSelectedEmps((prev) => {
+      const next = new Set(prev);
+      if (next.has(empName)) next.delete(empName);
+      else next.add(empName);
+      return next;
+    });
   };
+
+  const allEmps = segKeys.flatMap((k) =>
+    SEGMENTOS[k].empreendimentos.map((emp) => ({ ...emp, segmento: SEGMENTOS[k].label }))
+  );
+
+  const selectedEmpData = allEmps.filter((emp) => selectedEmps.has(emp.nome));
 
   return (
     <div className="space-y-5 pb-24">
@@ -690,7 +756,8 @@ export default function MelnickDay() {
 
         {segKeys.map((k) => {
           const seg = SEGMENTOS[k];
-          const emps = filteredEmpreendimentos(seg.empreendimentos);
+          const q = search.toLowerCase().trim();
+          const emps = q ? seg.empreendimentos.filter((e) => e.nome.toLowerCase().includes(q) || e.bairro.toLowerCase().includes(q)) : seg.empreendimentos;
           return (
             <TabsContent key={k} value={k} className="space-y-4 mt-0">
               {/* Condições do segmento */}
@@ -718,16 +785,41 @@ export default function MelnickDay() {
 
               {/* Empreendimentos */}
               <div>
-                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Empreendimentos ({emps.length})
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    Empreendimentos ({emps.length})
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[11px] gap-1 h-7"
+                    onClick={() => {
+                      const allNames = emps.map((e) => e.nome);
+                      const allSelected = allNames.every((n) => selectedEmps.has(n));
+                      setSelectedEmps((prev) => {
+                        const next = new Set(prev);
+                        allNames.forEach((n) => allSelected ? next.delete(n) : next.add(n));
+                        return next;
+                      });
+                    }}
+                  >
+                    <CheckSquare className="h-3 w-3" />
+                    {emps.every((e) => selectedEmps.has(e.nome)) ? "Desmarcar todos" : "Selecionar todos"}
+                  </Button>
+                </div>
                 {emps.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-8">Nenhum empreendimento encontrado para "{search}"</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                     {emps.map((emp, i) => (
-                      <EmpreendimentoCard key={i} emp={emp} />
+                      <EmpreendimentoCard
+                        key={i}
+                        emp={emp}
+                        segKey={k}
+                        selected={selectedEmps.has(emp.nome)}
+                        onToggle={() => toggleEmp(emp.nome)}
+                      />
                     ))}
                   </div>
                 )}
@@ -768,6 +860,183 @@ export default function MelnickDay() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── FLOATING SELECTION BAR ── */}
+      {selectedEmps.size > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 max-w-lg w-[calc(100%-2rem)] animate-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+              <span className="text-sm font-bold text-primary-foreground">{selectedEmps.size}</span>
+            </div>
+            <span className="text-sm font-medium truncate">
+              {selectedEmps.size === 1 ? "1 oferta selecionada" : `${selectedEmps.size} ofertas selecionadas`}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="gap-1.5 text-xs"
+              onClick={() => {
+                // Generate WhatsApp message with all selected
+                let msg = `🔥 *Melnick Day 2026* — Ofertas selecionadas:\n\n`;
+                selectedEmpData.forEach((emp) => {
+                  msg += `🏠 *${emp.nome}* — ${emp.bairro}\n`;
+                  msg += `📐 ${emp.metragens} · ${emp.dorms}\n`;
+                  if (emp.precoPor) msg += `💰 ${emp.precoPor}`;
+                  if (emp.precoDe) msg += ` (era ${emp.precoDe})`;
+                  msg += `\n\n`;
+                });
+                msg += `📅 Condições válidas até 21/03!\nMe chama para saber mais! 😊`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+              }}
+            >
+              <Send className="h-3 w-3" /> WhatsApp
+            </Button>
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => setShowVitrineDialog(true)}
+            >
+              <Link2 className="h-3 w-3" /> Criar Vitrine
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ── VITRINE CREATION DIALOG ── */}
+      <Dialog open={showVitrineDialog} onOpenChange={setShowVitrineDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-primary" />
+              Criar Vitrine Melnick Day
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Título da vitrine</label>
+              <Input
+                value={vitrineTitle}
+                onChange={(e) => setVitrineTitle(e.target.value)}
+                placeholder="Ex: Ofertas exclusivas para você"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Mensagem personalizada (opcional)</label>
+              <Textarea
+                value={vitrineMsg}
+                onChange={(e) => setVitrineMsg(e.target.value)}
+                placeholder="Ex: Oi João, separei essas ofertas especiais do Melnick Day pensando no seu perfil..."
+                rows={3}
+              />
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+              <p className="text-xs font-semibold text-foreground">{selectedEmps.size} ofertas selecionadas:</p>
+              <div className="flex flex-wrap gap-1">
+                {selectedEmpData.slice(0, 8).map((emp) => (
+                  <Badge key={emp.nome} variant="secondary" className="text-[10px]">{emp.nome}</Badge>
+                ))}
+                {selectedEmpData.length > 8 && (
+                  <Badge variant="outline" className="text-[10px]">+{selectedEmpData.length - 8}</Badge>
+                )}
+              </div>
+            </div>
+
+            {vitrineLink && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-semibold text-emerald-700">✅ Vitrine criada!</p>
+                <div className="flex items-center gap-2">
+                  <Input value={vitrineLink} readOnly className="text-xs h-8 flex-1" />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2"
+                    onClick={() => {
+                      navigator.clipboard.writeText(vitrineLink);
+                      toast.success("Link copiado!");
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`${vitrineMsg || vitrineTitle}\n\nConfira as ofertas: ${vitrineLink}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button size="sm" className="w-full gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white mt-1">
+                    <Phone className="h-3.5 w-3.5" /> Enviar via WhatsApp
+                  </Button>
+                </a>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            {!vitrineLink && (
+              <Button
+                onClick={async () => {
+                  setCreatingVitrine(true);
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) {
+                      toast.error("Faça login para criar uma vitrine");
+                      return;
+                    }
+
+                    const dadosCustom = selectedEmpData.map((emp) => ({
+                      nome: emp.nome,
+                      bairro: emp.bairro,
+                      metragens: emp.metragens,
+                      dorms: emp.dorms,
+                      status: emp.status,
+                      precoDe: emp.precoDe,
+                      precoPor: emp.precoPor,
+                      descontoMax: emp.descontoMax,
+                      imagem: emp.imagem,
+                      condicoes: emp.condicoes,
+                      segmento: emp.segmento,
+                      m2: emp.m2,
+                    }));
+
+                    const { data, error } = await supabase
+                      .from("vitrines")
+                      .insert({
+                        created_by: user.id,
+                        titulo: vitrineTitle,
+                        mensagem_corretor: vitrineMsg || null,
+                        tipo: "melnick_day",
+                        dados_custom: dadosCustom as any,
+                      })
+                      .select("id")
+                      .single();
+
+                    if (error) throw error;
+                    const link = `${window.location.origin}/vitrine/${data.id}`;
+                    setVitrineLink(link);
+                    navigator.clipboard.writeText(link);
+                    toast.success("Vitrine criada! Link copiado.");
+                  } catch (err) {
+                    console.error(err);
+                    toast.error("Erro ao criar vitrine");
+                  } finally {
+                    setCreatingVitrine(false);
+                  }
+                }}
+                disabled={creatingVitrine || selectedEmps.size === 0}
+                className="gap-1.5"
+              >
+                {creatingVitrine ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Link2 className="h-4 w-4" />
+                )}
+                Gerar Link da Vitrine
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

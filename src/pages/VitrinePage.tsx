@@ -20,10 +20,19 @@ interface VitrineImovel {
   fotos: string[];
   empreendimento: string | null;
   descricao: string | null;
+  // Melnick Day extras
+  precoDe?: string | null;
+  precoPor?: string | null;
+  descontoMax?: string | null;
+  status?: string | null;
+  metragens?: string | null;
+  dorms?: string | null;
+  condicoes?: string | null;
+  segmento?: string | null;
 }
 
 interface VitrineData {
-  vitrine: { id: string; titulo: string; mensagem: string | null; created_at: string };
+  vitrine: { id: string; titulo: string; mensagem: string | null; created_at: string; tipo?: string };
   corretor: { nome: string; telefone: string | null; avatar_url: string | null } | null;
   imoveis: VitrineImovel[];
 }
@@ -73,6 +82,57 @@ function PhotoCarousel({ fotos, onOpen }: { fotos: string[]; onOpen: (idx: numbe
         </div>
       )}
     </div>
+  );
+}
+
+function MelnickDayCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImovel; index: number; onOpenLightbox: (fotos: string[], idx: number) => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 group"
+    >
+      <PhotoCarousel fotos={imovel.fotos} onOpen={(idx) => onOpenLightbox(imovel.fotos, idx)} />
+      <div className="p-5 space-y-3">
+        {imovel.segmento && (
+          <span className="inline-block text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+            {imovel.segmento}
+          </span>
+        )}
+        <h3 className="text-lg font-bold text-slate-900 leading-tight">{imovel.titulo}</h3>
+        {imovel.bairro && (
+          <p className="text-sm text-slate-500 flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            {imovel.bairro} — Porto Alegre
+          </p>
+        )}
+        {imovel.descricao && (
+          <p className="text-sm text-slate-500">{imovel.descricao}</p>
+        )}
+        {imovel.descontoMax && (
+          <span className="inline-block text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+            {imovel.descontoMax} OFF
+          </span>
+        )}
+        <div className="pt-2 border-t border-slate-100 space-y-0.5">
+          {imovel.precoDe && (
+            <p className="text-sm text-slate-400 line-through">{imovel.precoDe}</p>
+          )}
+          {imovel.precoPor && (
+            <p className="text-2xl font-black text-emerald-600">{imovel.precoPor}</p>
+          )}
+          {!imovel.precoPor && imovel.valor && (
+            <p className="text-2xl font-black text-slate-900">
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(imovel.valor)}
+            </p>
+          )}
+        </div>
+        {imovel.condicoes && (
+          <p className="text-xs text-slate-500 italic">{imovel.condicoes}</p>
+        )}
+      </div>
+    </motion.div>
   );
 }
 
@@ -186,6 +246,7 @@ export default function VitrinePage() {
       </div>
     );
   }
+  const isMelnickDay = data?.vitrine?.tipo === "melnick_day";
 
   const { vitrine, corretor, imoveis } = data;
 
@@ -198,7 +259,7 @@ export default function VitrinePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* ─── Hero Section ─── */}
-      <header className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 overflow-hidden">
+      <header className={`relative overflow-hidden ${isMelnickDay ? "bg-gradient-to-br from-[#0a1628] via-[#0d2137] to-[#1a3a5c]" : "bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900"}`}>
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -281,12 +342,21 @@ export default function VitrinePage() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {imoveis.map((imovel, i) => (
-              <ImovelCard
-                key={imovel.id}
-                imovel={imovel}
-                index={i}
-                onOpenLightbox={(fotos, idx) => setLightbox({ fotos, idx })}
-              />
+              isMelnickDay ? (
+                <MelnickDayCard
+                  key={imovel.id}
+                  imovel={imovel}
+                  index={i}
+                  onOpenLightbox={(fotos, idx) => setLightbox({ fotos, idx })}
+                />
+              ) : (
+                <ImovelCard
+                  key={imovel.id}
+                  imovel={imovel}
+                  index={i}
+                  onOpenLightbox={(fotos, idx) => setLightbox({ fotos, idx })}
+                />
+              )
             ))}
           </div>
         )}
