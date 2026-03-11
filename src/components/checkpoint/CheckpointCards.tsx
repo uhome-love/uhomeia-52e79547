@@ -400,7 +400,7 @@ export default function CheckpointCards({ teamUserIds, teamNameMap }: Props) {
                 </div>
               </div>
 
-              {/* Metas */}
+              {/* Metas + Approve */}
               <div className="flex items-center gap-1.5 mb-2.5">
                 <span className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wide">Meta:</span>
                 <input type="number" min={0} value={card.meta_ligacoes || ""} onChange={e => updateCard(card.user_id, "meta_ligacoes", parseInt(e.target.value) || 0)}
@@ -409,6 +409,17 @@ export default function CheckpointCards({ teamUserIds, teamNameMap }: Props) {
                   className="w-10 text-center text-xs border border-border rounded-md py-0.5 bg-background text-foreground" title="Aproveit." />
                 <input type="number" min={0} value={card.meta_visitas_marcar || ""} onChange={e => updateCard(card.user_id, "meta_visitas_marcar", parseInt(e.target.value) || 0)}
                   className="w-10 text-center text-xs border border-border rounded-md py-0.5 bg-background text-foreground" title="Visitas" />
+                {card.goal_status === "pendente" && (
+                  <button
+                    onClick={() => approveGoal(card)}
+                    className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-500/30 transition-colors"
+                  >
+                    <CheckCircle2 size={11} /> Aprovar
+                  </button>
+                )}
+                {card.goal_status === "aprovado" && (
+                  <span className="ml-auto text-[10px] font-semibold text-emerald-600">✅</span>
+                )}
               </div>
 
               {/* Feedback */}
