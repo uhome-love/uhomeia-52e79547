@@ -32,9 +32,10 @@ interface GestaoRow {
   corretor_id: string;
   corretor_nome: string;
   pontos_total: number;
-  tentativas: number;
-  leads_responderam: number;
+  contatos: number;
+  qualificados: number;
   visitas_marcadas: number;
+  visitas_realizadas: number;
   propostas: number;
 }
 
