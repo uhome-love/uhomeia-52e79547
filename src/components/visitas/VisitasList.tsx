@@ -15,6 +15,7 @@ interface Props {
   onDelete?: (id: string) => void;
   showCorretor?: boolean;
   showTeam?: boolean;
+  mode?: "upcoming" | "past" | "all";
 }
 
 interface DateGroup {
