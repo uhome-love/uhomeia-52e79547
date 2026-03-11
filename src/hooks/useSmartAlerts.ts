@@ -42,26 +42,7 @@ export function useSmartAlerts() {
       const daysInMonth = endOfMonth(now).getDate();
       const pctMonthElapsed = dayOfMonth / daysInMonth;
 
-      // 1. Checkpoint não preenchido hoje
-      try {
-        let cpQuery = supabase.from("checkpoints").select("id").eq("data", today);
-        if (!isAdmin) cpQuery = cpQuery.eq("gerente_id", user.id);
-        const { data: todayCps } = await cpQuery;
-
-        if (!todayCps || todayCps.length === 0) {
-          result.push({
-            id: "checkpoint_missing",
-            type: "checkpoint",
-            severity: "critical",
-            title: "Checkpoint não preenchido",
-            description: "O checkpoint de hoje ainda não foi preenchido. Preencha para manter o controle do time.",
-            action: { label: "Preencher agora", url: "/central-do-gerente" },
-          });
-          badgeCounts["/central-do-gerente"] = (badgeCounts["/central-do-gerente"] || 0) + 1;
-        }
-      } catch (e) {
-        console.error("Alert check checkpoint:", e);
-      }
+      // 1. Checkpoint não preenchido hoje — desativado a pedido do usuário
 
       // 2. Negócios check removed — was generating false-positive toasts for CEO/gerente
 
