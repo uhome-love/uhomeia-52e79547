@@ -397,7 +397,7 @@ export function useGerenteDashboard(period: Period) {
 
   // ── Negócios por fase (proposta, negociacao, documentacao) ──
   const { data: negociosPorFase } = useQuery({
-    queryKey: ["gerente-negocios-por-fase", user?.id],
+    queryKey: ["gerente-negocios-por-fase", user?.id, profileId],
     queryFn: async () => {
       const { data } = await supabase.from("negocios")
         .select("id, nome_cliente, empreendimento, vgv_estimado, fase, corretor_id, updated_at, unidade, proposta_valor")
