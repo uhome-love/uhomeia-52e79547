@@ -576,29 +576,6 @@ export default function AgendaVisitas() {
           </Select>
         )}
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-9 text-xs gap-1", dateFrom && "border-primary text-primary")}>
-              <CalendarIcon className="h-3.5 w-3.5" />
-              {dateFrom ? format(dateFrom, "dd/MM") : "De"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
-          </PopoverContent>
-        </Popover>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-9 text-xs gap-1", dateTo && "border-primary text-primary")}>
-              <CalendarIcon className="h-3.5 w-3.5" />
-              {dateTo ? format(dateTo, "dd/MM") : "Até"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
-          </PopoverContent>
-        </Popover>
 
         <Button variant="outline" size="sm" className="h-9 text-xs gap-1" onClick={() => setSortOrder(s => s === "asc" ? "desc" : "asc")}>
           <ArrowUpDown className="h-3.5 w-3.5" />
