@@ -118,7 +118,7 @@ export function useSmartAlerts() {
                   severity: "warning",
                   title: "Meta de propostas em risco",
                   description: `Apenas ${Math.round(propPct * 100)}% da meta de propostas atingida. Intensifique o acompanhamento.`,
-                  action: { label: "Ver checkpoint", url: "/checkpoint" },
+                  action: { label: "Ver central", url: "/central-do-gerente" },
                 });
               }
             }
