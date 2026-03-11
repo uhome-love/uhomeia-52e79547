@@ -137,61 +137,58 @@ export default function RankingVGVTab({ period }: { period: "hoje" | "semana" | 
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-xs text-muted-foreground">
-                  <th className="py-2 px-3 text-left w-10">#</th>
-                  <th className="py-2 px-3 text-left">Corretor</th>
-                  <th className="py-2 px-3 text-center">Propostas</th>
-                  <th className="py-2 px-3 text-center">VGV Prop.</th>
-                  <th className="py-2 px-3 text-center">Vendas</th>
-                  <th className="py-2 px-3 text-center">VGV Real</th>
-                  <th className="py-2 px-3 text-center">Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((c, i) => {
-                  const isMe = c.corretor_id === user?.id;
-                  const level = getLevel(c.score);
-                  const hasVenda = c.real_vgv_assinado > 0;
-                  const av = avatarMap[c.corretor_id];
-                  const imgSrc = av?.gamificado || av?.avatar;
-                  return (
-                    <tr
-                      key={c.corretor_id}
-                      className={`border-b border-border transition-colors ${isMe ? "bg-primary/5 border-l-2 border-l-primary" : i % 2 ? "bg-muted/5" : ""}`}
-                    >
-                      <td className="py-2.5 px-3">
-                        {i < 3 ? <span className="text-base">{medals[i]}</span> : <span className="text-sm text-muted-foreground font-bold">{i + 1}</span>}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-full shrink-0 overflow-hidden flex items-center justify-center" style={{ background: "#F3F4F6" }}>
-                            {imgSrc ? (
-                              <img src={imgSrc} alt={c.corretor_nome} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-[10px] font-bold text-gray-500">{getInitials(c.corretor_nome)}</span>
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="font-medium truncate block">{c.corretor_nome}</span>
-                            <span className={`text-[10px] font-semibold ${level.color}`}>{level.emoji} {level.label}</span>
-                          </div>
-                          {isMe && <span className="text-[10px] text-primary font-medium">← você</span>}
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3 text-center">{c.real_propostas}</td>
-                      <td className="py-2.5 px-3 text-center text-blue-600 font-medium">{fmtBRL(c.real_vgv_gerado)}</td>
-                      <td className="py-2.5 px-3 text-center">{hasVenda ? "✅" : "—"}</td>
-                      <td className={`py-2.5 px-3 text-center font-bold ${hasVenda ? "text-emerald-600" : "text-muted-foreground"}`}>
-                        {hasVenda ? fmtBRL(c.real_vgv_assinado) : "—"}
-                      </td>
-                      <td className="py-2.5 px-3 text-center font-bold text-primary">{c.score}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+             <table className="w-full text-sm">
+               <thead>
+                 <tr className="border-b border-border text-xs text-muted-foreground">
+                   <th className="py-2 px-3 text-left w-10">#</th>
+                   <th className="py-2 px-3 text-left">Corretor</th>
+                   <th className="py-2 px-3 text-center">Propostas</th>
+                   <th className="py-2 px-3 text-center">VGV em Proposta</th>
+                   <th className="py-2 px-3 text-center">Vendas</th>
+                   <th className="py-2 px-3 text-center">VGV Assinado</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {sorted.map((c, i) => {
+                   const isMe = c.corretor_id === user?.id;
+                   const hasVenda = c.real_vgv_assinado > 0;
+                   const av = avatarMap[c.corretor_id];
+                   const imgSrc = av?.gamificado || av?.avatar;
+                   return (
+                     <tr
+                       key={c.corretor_id}
+                       className={`border-b border-border transition-colors ${isMe ? "bg-primary/5 border-l-2 border-l-primary" : i % 2 ? "bg-muted/5" : ""}`}
+                     >
+                       <td className="py-2.5 px-3">
+                         {i < 3 ? <span className="text-base">{medals[i]}</span> : <span className="text-sm text-muted-foreground font-bold">{i + 1}</span>}
+                       </td>
+                       <td className="py-2.5 px-3">
+                         <div className="flex items-center gap-2">
+                           <div className="h-8 w-8 rounded-full shrink-0 overflow-hidden flex items-center justify-center bg-accent">
+                             {imgSrc ? (
+                               <img src={imgSrc} alt={c.corretor_nome} className="w-full h-full object-cover" />
+                             ) : (
+                               <span className="text-[10px] font-bold text-muted-foreground">{getInitials(c.corretor_nome)}</span>
+                             )}
+                           </div>
+                           <div className="min-w-0">
+                             <span className="font-medium truncate block">{c.corretor_nome}</span>
+                             <span className="text-[10px] text-muted-foreground">Equipe {c.gerente_nome}</span>
+                           </div>
+                           {isMe && <span className="text-[10px] text-primary font-medium">← você</span>}
+                         </div>
+                       </td>
+                       <td className="py-2.5 px-3 text-center">{c.real_propostas}</td>
+                       <td className="py-2.5 px-3 text-center text-blue-600 font-medium">{fmtBRL(c.real_vgv_gerado)}</td>
+                       <td className="py-2.5 px-3 text-center">{hasVenda ? "✅" : "—"}</td>
+                       <td className={`py-2.5 px-3 text-center font-bold text-lg ${hasVenda ? "text-emerald-600" : "text-muted-foreground"}`}>
+                         {hasVenda ? fmtBRL(c.real_vgv_assinado) : "—"}
+                       </td>
+                     </tr>
+                   );
+                 })}
+               </tbody>
+             </table>
           </div>
         </CardContent>
       </Card>

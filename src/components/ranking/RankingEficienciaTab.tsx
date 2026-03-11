@@ -181,12 +181,12 @@ export default function RankingEficienciaTab({ period }: { period: "hoje" | "sem
             <thead>
               <tr className="border-b border-border">
                 <th className="py-2.5 px-3 text-left w-10 text-xs text-muted-foreground font-medium">#</th>
-                <th className="py-2.5 px-3 text-left text-xs text-muted-foreground font-medium">Corretor</th>
-                <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium">Leads</th>
-                <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium">Visitas</th>
-                <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium">Lead→Vis</th>
-                <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium">Vis→Neg</th>
-                <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium">Score</th>
+                 <th className="py-2.5 px-3 text-left text-xs text-muted-foreground font-medium">Corretor</th>
+                 <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium">Ligações</th>
+                 <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium">Visitas</th>
+                 <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium" title="40% do score">Lig→Vis</th>
+                 <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium" title="60% do score">Vis→Neg</th>
+                 <th className="py-2.5 px-3 text-center text-xs text-muted-foreground font-medium">Score</th>
               </tr>
             </thead>
             <tbody>
