@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TrendingUp, ShieldCheck, Target } from "lucide-react";
 import type { PipelineLead } from "@/hooks/usePipeline";
+import { formatBRL, formatBRLCompact } from "@/lib/utils";
 
 interface Stage {
   id: string;
