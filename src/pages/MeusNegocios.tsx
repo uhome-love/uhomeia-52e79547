@@ -530,6 +530,37 @@ export default function MeusNegocios() {
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
+  // Load partnerships for negocios
+  const [parceriaMap, setParceriaMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!negocios.length) return;
+    const leadIds = negocios.map(n => n.pipeline_lead_id).filter(Boolean) as string[];
+    if (!leadIds.length) return;
+    (async () => {
+      const { data } = await supabase
+        .from("pipeline_parcerias")
+        .select("pipeline_lead_id, corretor_principal_id, corretor_parceiro_id")
+        .eq("status", "ativa")
+        .in("pipeline_lead_id", leadIds);
+      if (!data || !data.length) return;
+      const allUserIds = [...new Set(data.flatMap(p => [p.corretor_principal_id, p.corretor_parceiro_id]))];
+      const { data: profiles } = await supabase.from("profiles").select("user_id, nome").in("user_id", allUserIds);
+      const { data: members } = await supabase.from("team_members").select("user_id, nome").in("user_id", allUserIds);
+      const nameMap: Record<string, string> = {};
+      (profiles || []).forEach((p: any) => { if (p.user_id && p.nome) nameMap[p.user_id] = p.nome; });
+      (members || []).forEach((m: any) => { if (m.user_id && m.nome) nameMap[m.user_id] = m.nome; });
+      const result: Record<string, string> = {};
+      // For each negocio's lead, show the partner name (the other person)
+      data.forEach(p => {
+        const parceiroNome = nameMap[p.corretor_parceiro_id] || "Parceiro";
+        const principalNome = nameMap[p.corretor_principal_id] || "Principal";
+        // Show both names: "Fulano ↔ Ciclano"
+        result[p.pipeline_lead_id] = `${principalNome.split(" ")[0]} ↔ ${parceiroNome.split(" ")[0]}`;
+      });
+      setParceriaMap(result);
+    })();
+  }, [negocios]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCorretor, setFilterCorretor] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
