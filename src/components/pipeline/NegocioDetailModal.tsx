@@ -627,9 +627,10 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
           {/* ════════ TABS ════════ */}
           <div className="flex-1 overflow-y-auto px-6 pb-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-3">
-              <TabsList className="grid w-full grid-cols-3 h-9">
+              <TabsList className="grid w-full grid-cols-4 h-9">
                 <TabsTrigger value="historico" className="text-xs gap-1">🕐 Histórico</TabsTrigger>
                 <TabsTrigger value="tarefas" className="text-xs gap-1">📋 Tarefas</TabsTrigger>
+                <TabsTrigger value="jornada" className="text-xs gap-1">🗺️ Jornada</TabsTrigger>
                 <TabsTrigger value="imovel" className="text-xs gap-1">🏠 Imóvel</TabsTrigger>
               </TabsList>
 
