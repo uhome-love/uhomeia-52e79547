@@ -208,7 +208,7 @@ export default function CorretorDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:border-primary/30 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/negocios")}>
+              <Card className="cursor-pointer hover:border-primary/30 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/pipeline-negocios")}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-1.5 mb-2">
                     <Zap className="h-4 w-4 text-purple-500" />
