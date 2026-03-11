@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils";
+import { cn, formatBRL, formatBRLCompact } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ═══════════════════════════════════════════════
