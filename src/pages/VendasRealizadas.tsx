@@ -630,6 +630,139 @@ export default function VendasRealizadas() {
           </div>
         </motion.div>
       )}
+        </TabsContent>
+
+        {/* ═══ ORIGENS & CAMPANHAS TAB ═══ */}
+        {(isAdmin || isGestor) && (
+          <TabsContent value="origens" className="space-y-5 mt-0">
+            {/* Breakdown por Origem */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+              <Card className="border-border/60">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Megaphone className="h-4 w-4 text-primary" />
+                    <h2 className="text-sm font-bold text-foreground">Performance por Origem</h2>
+                    <Badge variant="outline" className="text-[10px] ml-auto">{origemAnalytics.breakdown.length} origens</Badge>
+                  </div>
+
+                  {origemAnalytics.breakdown.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground text-sm">Nenhuma venda com origem rastreada no período</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {origemAnalytics.breakdown.map((item, i) => {
+                        const pct = origemAnalytics.totalVGV > 0 ? (item.vgv / origemAnalytics.totalVGV) * 100 : 0;
+                        const barColors = [
+                          "bg-primary", "bg-emerald-500", "bg-blue-500", "bg-amber-500", "bg-violet-500", "bg-rose-500",
+                        ];
+                        const barColor = barColors[i % barColors.length];
+
+                        return (
+                          <motion.div key={item.origem}
+                            initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.03 * i }}
+                            className="rounded-xl border border-border/40 p-3.5 bg-accent/20 hover:bg-accent/40 transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={cn("h-3 w-3 rounded-full shrink-0", barColor)} />
+                                <span className="text-sm font-bold text-foreground">{item.origem}</span>
+                                <Badge variant="secondary" className="text-[9px] h-4">{item.count} venda{item.count > 1 ? "s" : ""}</Badge>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-sm font-black text-emerald-500">{formatCurrency(item.vgv)}</span>
+                                <span className="text-[10px] text-muted-foreground ml-1.5">({pct.toFixed(1)}%)</span>
+                              </div>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div className="h-2 rounded-full bg-muted/50 overflow-hidden mb-2">
+                              <motion.div
+                                initial={{ width: 0 }} animate={{ width: `${pct}%` }}
+                                transition={{ delay: 0.1 + 0.05 * i, duration: 0.6 }}
+                                className={cn("h-full rounded-full", barColor)}
+                              />
+                            </div>
+
+                            {/* Detail chips */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {item.detalhe.length > 0 && item.detalhe.map(d => (
+                                <span key={d} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                                  📋 {d}
+                                </span>
+                              ))}
+                              {item.empreendimentos.slice(0, 5).map(emp => (
+                                <span key={emp} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  🏢 {emp}
+                                </span>
+                              ))}
+                              {item.empreendimentos.length > 5 && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  +{item.empreendimentos.length - 5}
+                                </span>
+                              )}
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Tabela detalhada — rastreio completo */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+              <Card className="border-border/60">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Target className="h-4 w-4 text-primary" />
+                    <h2 className="text-sm font-bold text-foreground">Rastreio Completo — Lead → Venda</h2>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border/40">
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Cliente</th>
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Empreendimento</th>
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Origem / Campanha</th>
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Formulário / Detalhe</th>
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Corretor</th>
+                          <th className="text-center py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Entrada</th>
+                          <th className="text-center py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Assinatura</th>
+                          <th className="text-right py-2.5 px-3 text-[10px] text-muted-foreground font-medium">VGV</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {origemAnalytics.details.map((row, i) => (
+                          <tr key={i} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
+                            <td className="py-2.5 px-3 text-xs font-semibold text-foreground">{row.cliente}</td>
+                            <td className="py-2.5 px-3 text-xs text-foreground">{row.empreendimento || "—"}</td>
+                            <td className="py-2.5 px-3">
+                              <Badge variant="secondary" className="text-[10px]">{row.origem}</Badge>
+                            </td>
+                            <td className="py-2.5 px-3 text-xs text-muted-foreground">{row.detalhe || "—"}</td>
+                            <td className="py-2.5 px-3 text-xs text-foreground">{row.corretor}</td>
+                            <td className="py-2.5 px-3 text-center text-[10px] text-muted-foreground">
+                              {row.dataEntrada ? format(new Date(row.dataEntrada), "dd/MM/yy") : "—"}
+                            </td>
+                            <td className="py-2.5 px-3 text-center text-[10px] text-muted-foreground">
+                              {row.dataAssinatura ? format(new Date(row.dataAssinatura + "T12:00:00"), "dd/MM/yy") : "—"}
+                            </td>
+                            <td className="py-2.5 px-3 text-right text-xs font-black text-emerald-500">{formatCurrency(row.vgv)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }
