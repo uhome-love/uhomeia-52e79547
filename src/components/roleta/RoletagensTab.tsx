@@ -81,7 +81,7 @@ function getStatusConfig(status: string, expiresAt: string | null) {
   return { label: status, color: "bg-muted text-muted-foreground", icon: Clock };
 }
 
-export default function RoletagensTab() {
+export default function RoletagensTab({ view = "all" }: { view?: "all" | "roletagens" | "perdidos" }) {
   const [roletagens, setRoletagens] = useState<Roletagem[]>([]);
   const [leadsPerdidos, setLeadsPerdidos] = useState<LeadPerdido[]>([]);
   const [loading, setLoading] = useState(true);
