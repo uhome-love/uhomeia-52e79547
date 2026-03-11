@@ -58,14 +58,14 @@ interface NegocioTask {
   status: string;
 }
 
-function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, nextTask, parceriaLabel, onDragStart, onClick, onMoveFase, onUpdateNegocio, onTaskSaved }: {
+function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, nextTask, parceriaInfo, onDragStart, onClick, onMoveFase, onUpdateNegocio, onTaskSaved }: {
   negocio: Negocio;
   corretorNome?: string;
   corretorInfo?: CorretorInfo;
   showCorretor?: boolean;
   paradoInfo?: { diasParado: number; severity: "warning" | "danger" };
   nextTask?: NegocioTask | null;
-  parceriaLabel?: string;
+  parceriaInfo?: { label: string; isParceria: boolean } | null;
   onDragStart: () => void;
   onClick: () => void;
   onMoveFase: (id: string, fase: string) => void;
@@ -238,12 +238,15 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             )
           )}
 
-          {/* Row 4: VGV with quick-fill */}
+          {/* Row 4: VGV with quick-fill — show half if partnership */}
           <div className="flex items-center gap-2">
             {negocio.vgv_estimado ? (
               <span className="text-[14px] font-extrabold flex items-center gap-1" style={{ color: faseInfo?.cor || "#22C55E" }}>
                 <TrendingUp className="h-3.5 w-3.5" />
-                {formatVGV(negocio.vgv_estimado)}
+                {parceriaInfo?.isParceria
+                  ? `${formatVGV(negocio.vgv_estimado / 2)} (50%)`
+                  : formatVGV(negocio.vgv_estimado)
+                }
               </span>
             ) : (
               <button
@@ -256,10 +259,10 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           </div>
 
           {/* Partnership badge */}
-          {parceriaLabel && (
+          {parceriaInfo && (
             <div className="flex items-center gap-1">
               <span className="text-[10px] font-bold text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                <Handshake className="h-3 w-3" /> {parceriaLabel}
+                <Handshake className="h-3 w-3" /> 🤝 {parceriaInfo.label}
               </span>
             </div>
           )}
@@ -541,7 +544,7 @@ export default function MeusNegocios() {
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
   // Load partnerships for negocios
-  const [parceriaMap, setParceriaMap] = useState<Record<string, string>>({});
+  const [parceriaMap, setParceriaMap] = useState<Record<string, { label: string; isParceria: boolean }>>({});
   useEffect(() => {
     if (!negocios.length) return;
     const leadIds = negocios.map(n => n.pipeline_lead_id).filter(Boolean) as string[];
@@ -559,13 +562,14 @@ export default function MeusNegocios() {
       const nameMap: Record<string, string> = {};
       (profiles || []).forEach((p: any) => { if (p.user_id && p.nome) nameMap[p.user_id] = p.nome; });
       (members || []).forEach((m: any) => { if (m.user_id && m.nome) nameMap[m.user_id] = m.nome; });
-      const result: Record<string, string> = {};
-      // For each negocio's lead, show the partner name (the other person)
+      const result: Record<string, { label: string; isParceria: boolean }> = {};
       data.forEach(p => {
         const parceiroNome = nameMap[p.corretor_parceiro_id] || "Parceiro";
         const principalNome = nameMap[p.corretor_principal_id] || "Principal";
-        // Show both names: "Fulano ↔ Ciclano"
-        result[p.pipeline_lead_id] = `${principalNome.split(" ")[0]} ↔ ${parceiroNome.split(" ")[0]}`;
+        result[p.pipeline_lead_id] = {
+          label: `${principalNome.split(" ")[0]} ↔ ${parceiroNome.split(" ")[0]}`,
+          isParceria: true,
+        };
       });
       setParceriaMap(result);
     })();
@@ -609,8 +613,12 @@ export default function MeusNegocios() {
   }, [corretorNomes]);
 
   const totalVGV = useMemo(() =>
-    filteredNegocios.reduce((sum, n) => sum + (n.vgv_estimado || 0), 0),
-    [filteredNegocios]
+    filteredNegocios.reduce((sum, n) => {
+      const vgv = n.vgv_estimado || 0;
+      const isParceria = n.pipeline_lead_id ? parceriaMap[n.pipeline_lead_id]?.isParceria : false;
+      return sum + (isParceria ? vgv / 2 : vgv);
+    }, 0),
+    [filteredNegocios, parceriaMap]
   );
 
   const negociosByFase = useMemo(() => {
@@ -876,7 +884,11 @@ export default function MeusNegocios() {
           {NEGOCIOS_FASES.filter(f => !("hidden" in f && f.hidden) || ((isAdmin || isGestor) && f.key === "vendido")).map((fase) => {
             const faseNegocios = negociosByFase.get(fase.key) || [];
             const isDragOver = dragOverFase === fase.key;
-            const totalFaseVGV = faseNegocios.reduce((sum, n) => sum + (n.vgv_estimado || 0), 0);
+            const totalFaseVGV = faseNegocios.reduce((sum, n) => {
+              const vgv = n.vgv_estimado || 0;
+              const isParceria = n.pipeline_lead_id ? parceriaMap[n.pipeline_lead_id]?.isParceria : false;
+              return sum + (isParceria ? vgv / 2 : vgv);
+            }, 0);
 
             return (
               <div
@@ -938,7 +950,7 @@ export default function MeusNegocios() {
                       corretorInfo={negocio.corretor_id ? corretorInfoMap[negocio.corretor_id] : undefined}
                       showCorretor={isAdmin || isGestor}
                       paradoInfo={paradoMap.get(negocio.id)}
-                      parceriaLabel={negocio.pipeline_lead_id ? parceriaMap[negocio.pipeline_lead_id] : undefined}
+                      parceriaInfo={negocio.pipeline_lead_id ? parceriaMap[negocio.pipeline_lead_id] : undefined}
                       nextTask={taskMap[negocio.id] || null}
                       onDragStart={() => { dragNegocioId.current = negocio.id; }}
                       onClick={() => setSelectedNegocio(negocio)}
