@@ -593,7 +593,7 @@ export default function GerenteDashboard() {
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { emoji: "📋", label: "Checkpoint", desc: "Presença e produtividade", to: "/checkpoint" },
+            { emoji: "📋", label: "Central", desc: "Presença e produtividade", to: "/central-do-gerente" },
             { emoji: "👥", label: "Meu Time", desc: "Gestão dos corretores", to: "/meu-time" },
             { emoji: "📊", label: "Relatórios 1:1", desc: "Reuniões individuais", to: "/relatorios" },
             { emoji: "🤖", label: "HOMI Gerente", desc: "IA para gestão", to: "/homi-gerente" },

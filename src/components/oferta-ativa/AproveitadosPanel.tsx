@@ -241,7 +241,7 @@ export default function AproveitadosPanel() {
                 <div className="flex items-center gap-2 text-xs" style={{ color: "#60A5FA" }}>
                   <CheckCircle className="h-3.5 w-3.5" />
                   <span>Já existe no Pipeline</span>
-                  <a href="/pipeline" className="flex items-center gap-1 ml-2 underline" style={{ color: "#60A5FA" }}>
+                  <a href="/pipeline-leads" className="flex items-center gap-1 ml-2 underline" style={{ color: "#60A5FA" }}>
                     <ExternalLink className="h-3 w-3" /> Ver Pipeline
                   </a>
                 </div>

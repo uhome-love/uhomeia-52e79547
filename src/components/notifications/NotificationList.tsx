@@ -114,8 +114,8 @@ function getNotificationRoute(n: Notification): string | null {
   if (tipo === "relatorio_semanal") return "/corretor/resumo";
 
   // Alertas de gestão
-  if (categoria === "corretor_parado" || categoria === "corretor_inativo") return "/checkpoint";
-  if (categoria === "lead_sem_atendimento") return "/pipeline";
+  if (categoria === "corretor_parado" || categoria === "corretor_inativo") return "/central-do-gerente";
+  if (categoria === "lead_sem_atendimento") return "/pipeline-leads";
   if (categoria === "meta_abaixo") return "/gerente/dashboard";
   if (categoria === "escala_solicitada" || categoria === "escala_aprovado" || categoria === "escala_rejeitado") return "/escala-diaria";
   if (categoria === "problema_atendimento") return "/pipeline";

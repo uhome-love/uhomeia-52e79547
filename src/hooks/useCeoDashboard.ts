@@ -211,7 +211,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const pB = b[1].leads > 0 ? b[1].avancou / b[1].leads : 0;
       return pB - pA;
     })[0];
-    if (bestCamp && bestCamp[1].leads >= 3) als.push({ tipo: "green", mensagem: `Campanha ${bestCamp[0]} com melhor taxa de conversão`, link: "/pipeline" });
+    if (bestCamp && bestCamp[1].leads >= 3) als.push({ tipo: "green", mensagem: `Campanha ${bestCamp[0]} com melhor taxa de conversão`, link: "/pipeline-leads" });
 
     setAlertas(als);
 

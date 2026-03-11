@@ -89,7 +89,7 @@ export default function HomiCeoFloating({ dashboardData }: Props) {
         icon: "🔥",
         message: `${qualStage.count} leads acumulados em ${qualStage.nome}`,
         action: "Ver pipeline",
-        link: "/pipeline",
+        link: "/pipeline-leads",
       });
     }
 

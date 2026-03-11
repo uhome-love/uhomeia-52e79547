@@ -139,7 +139,7 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
       newAlerts.push({ id: "sem-ligacao", type: "warning", icon: "📵", message: `${semLigacao.map(uid => teamNameMap[uid]).join(", ")} ainda não fizeram ligações hoje`, action: { label: "Ver OA", route: "/oferta-ativa" } });
     }
     if (leadsSemContatoList.length > 0) {
-      newAlerts.push({ id: "leads-sem-contato", type: "danger", icon: "🚨", message: `${leadsSemContatoList.length} leads sem contato há mais de 48h`, action: { label: "Ver Pipeline", route: "/pipeline" } });
+      newAlerts.push({ id: "leads-sem-contato", type: "danger", icon: "🚨", message: `${leadsSemContatoList.length} leads sem contato há mais de 48h`, action: { label: "Ver Pipeline", route: "/pipeline-leads" } });
     }
     if (parados.length > 0) {
       newAlerts.push({ id: "negocios-parados", type: "warning", icon: "⏸️", message: `${parados.length} negócios parados há 5+ dias (VGV: ${fmtCurrency(parados.reduce((s, n) => s + Number(n.vgv_estimado || 0), 0))})`, action: { label: "Ver Negócios", route: "/negocios" } });
