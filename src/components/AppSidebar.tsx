@@ -475,10 +475,10 @@ export function AppSidebar() {
           )}
         </div>
 
-        {/* Minha Rotina — special top item (corretor only) */}
+        {/* Top item + Melnick Day promo (until 2026-03-31) */}
         {topItem && (
           <div className={`border-b border-white/10 pb-3 mb-1 ${collapsed ? "px-1" : ""}`}>
-            <SidebarMenu className="px-1 pt-3">
+            <SidebarMenu className="px-1 pt-3 gap-0.5">
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={topItem.title}>
                   <NavLink
@@ -492,6 +492,21 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {new Date() <= new Date("2026-03-31T23:59:59") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Melnick Day">
+                    <NavLink
+                      to="/melnick-day"
+                      end
+                      className={`group/nav text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-all duration-150 rounded-lg relative py-1.5 font-medium ${collapsed ? "px-0 justify-center" : "px-3"}`}
+                      activeClassName="!text-amber-200 !font-semibold !bg-amber-500/15 border-l-2 !border-l-amber-400 !rounded-l-none rounded-r-lg"
+                    >
+                      <Zap className={`${collapsed ? "" : "mr-2.5"} h-4 w-4 shrink-0 text-amber-400`} />
+                      {!collapsed && <span className="text-sm">⚡ Melnick Day</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </div>
         )}
