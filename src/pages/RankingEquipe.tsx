@@ -37,9 +37,8 @@ const explanations = {
       { label: "Contato Iniciado", peso: "5 pts", desc: "Lead avançou para a fase 'Contato Iniciado' no pipeline. Mostra proatividade no primeiro contato." },
       { label: "Qualificação", peso: "10 pts", desc: "Lead foi qualificado — corretor validou interesse e perfil do lead." },
       { label: "Visita Marcada", peso: "30 pts", desc: "Lead evoluiu para uma visita agendada — indicador forte de avanço no funil." },
-      { label: "Visita Realizada", peso: "50 pts", desc: "Visita efetivamente realizada — confirmação de engajamento do lead." },
-      { label: "Proposta / Negociação", peso: "80 pts", desc: "Lead chegou à fase de proposta ou negociação — estágio avançado de conversão." },
-      { label: "Cálculo", desc: "Total = (Contatos × 5) + (Qualificados × 10) + (V. Marcadas × 30) + (V. Realizadas × 50) + (Propostas × 80). Quem mais evolui leads no funil, mais pontua." },
+      { label: "Visita Realizada", peso: "50 pts", desc: "Visita efetivamente realizada — confirmação de engajamento do lead. Último estágio do pipeline de leads." },
+      { label: "Cálculo", desc: "Total = (Contatos × 5) + (Qualificados × 10) + (V. Marcadas × 30) + (V. Realizadas × 50). Quem mais evolui leads no funil, mais pontua." },
     ],
   },
   vgv: {

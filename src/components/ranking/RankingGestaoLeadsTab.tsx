@@ -23,7 +23,6 @@ interface GestaoRow {
   qualificados: number;
   visitas_marcadas: number;
   visitas_realizadas: number;
-  propostas: number;
 }
 
 export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "semana" | "mes" }) {
@@ -68,10 +67,9 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
         contatos: acc.contatos + Number(r.contatos),
         qualificados: acc.qualificados + Number(r.qualificados),
         visitas: acc.visitas + Number(r.visitas_marcadas) + Number(r.visitas_realizadas),
-        propostas: acc.propostas + Number(r.propostas),
         pontos: acc.pontos + Number(r.pontos_total),
       }),
-      { contatos: 0, qualificados: 0, visitas: 0, propostas: 0, pontos: 0 }
+      { contatos: 0, qualificados: 0, visitas: 0, pontos: 0 }
     );
   }, [ranking]);
 
@@ -141,9 +139,8 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
                    <th className="py-2 px-3 text-center" title="Contato Iniciado (×5pts)">Contatos</th>
                    <th className="py-2 px-3 text-center" title="Qualificação (×10pts)">Qualif.</th>
                    <th className="py-2 px-3 text-center" title="Visita Marcada (×30pts)">V.Marc</th>
-                   <th className="py-2 px-3 text-center" title="Visita Realizada (×50pts)">V.Real</th>
-                   <th className="py-2 px-3 text-center" title="Proposta/Negociação (×80pts)">Prop.</th>
-                   <th className="py-2 px-3 text-center">Total Pts</th>
+                    <th className="py-2 px-3 text-center" title="Visita Realizada (×50pts)">V.Real</th>
+                    <th className="py-2 px-3 text-center">Total Pts</th>
                  </tr>
                </thead>
                <tbody>
@@ -156,8 +153,7 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
                    const ptsContatos = Number(r.contatos) * 5;
                    const ptsQualif = Number(r.qualificados) * 10;
                    const ptsVM = Number(r.visitas_marcadas) * 30;
-                   const ptsVR = Number(r.visitas_realizadas) * 50;
-                   const ptsProp = Number(r.propostas) * 80;
+                    const ptsVR = Number(r.visitas_realizadas) * 50;
                    return (
                      <tr
                        key={r.corretor_id}
@@ -194,15 +190,11 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
                          <span className="block">{r.visitas_marcadas}</span>
                          <span className="text-[9px] text-muted-foreground">{ptsVM}pts</span>
                        </td>
-                       <td className="py-2.5 px-3 text-center">
-                         <span className="block font-semibold">{r.visitas_realizadas}</span>
-                         <span className="text-[9px] text-muted-foreground">{ptsVR}pts</span>
-                       </td>
-                       <td className="py-2.5 px-3 text-center">
-                         <span className="block text-purple-600 font-semibold">{r.propostas}</span>
-                         <span className="text-[9px] text-muted-foreground">{ptsProp}pts</span>
-                       </td>
-                       <td className="py-2.5 px-3 text-center font-bold text-primary text-lg">{r.pontos_total}</td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className="block font-semibold">{r.visitas_realizadas}</span>
+                          <span className="text-[9px] text-muted-foreground">{ptsVR}pts</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center font-bold text-primary text-lg">{r.pontos_total}</td>
                      </tr>
                    );
                  })}
