@@ -365,7 +365,7 @@ export function useGerenteDashboard(period: Period) {
 
   // ── Negócios Quentes (mais avançados) ──
   const { data: negociosQuentes } = useQuery({
-    queryKey: ["gerente-negocios-quentes", user?.id],
+    queryKey: ["gerente-negocios-quentes", user?.id, profileId],
     queryFn: async () => {
       const { data } = await supabase.from("negocios").select("id, nome_cliente, empreendimento, vgv_estimado, fase, corretor_id, updated_at, unidade, proposta_valor").eq("gerente_id", profileId!).not("fase", "in", '("perdido","cancelado","distrato","assinado","vendido")');
       if (!data || data.length === 0) return [];
