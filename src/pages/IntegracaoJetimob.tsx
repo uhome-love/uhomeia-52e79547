@@ -170,12 +170,32 @@ function StatusIcon({ status }: { status: string }) {
   return <AlertTriangle className="h-4 w-4 text-destructive" />;
 }
 
-// ── Helper: get field options by category ──
-function getJetimobFields(cat: string) {
-  return cat === "imoveis" ? JETIMOB_IMOVEL_FIELDS : JETIMOB_LEAD_FIELDS;
+// ── Helper: get field options by category, ensuring current value is always included ──
+function ensureValueInOptions(options: { value: string; label: string }[], currentValue: string) {
+  if (!currentValue) return options;
+  const exists = options.some((o) => o.value === currentValue);
+  if (exists) return options;
+  return [{ value: currentValue, label: `${currentValue} (atual)` }, ...options];
 }
-function getUhomeFields(cat: string) {
-  return cat === "imoveis" ? UHOME_IMOVEL_FIELDS : UHOME_LEAD_FIELDS;
+
+function getJetimobFields(cat: string, currentValue?: string) {
+  const base = cat === "imoveis" ? JETIMOB_IMOVEL_FIELDS : JETIMOB_LEAD_FIELDS;
+  return currentValue ? ensureValueInOptions(base, currentValue) : base;
+}
+function getUhomeFields(cat: string, currentValue?: string) {
+  const base = cat === "imoveis" ? UHOME_IMOVEL_FIELDS : UHOME_LEAD_FIELDS;
+  return currentValue ? ensureValueInOptions(base, currentValue) : base;
+}
+function getTableOptions(currentValue?: string) {
+  const base = [
+    { value: "pipeline_leads", label: "pipeline_leads" },
+    { value: "jetimob-proxy", label: "jetimob-proxy (API)" },
+    { value: "empreendimento_overrides", label: "empreendimento_overrides" },
+    { value: "distribuicao_historico", label: "distribuicao_historico" },
+    { value: "jetimob_processed", label: "jetimob_processed" },
+    { value: "—", label: "— (nenhuma)" },
+  ];
+  return currentValue ? ensureValueInOptions(base, currentValue) : base;
 }
 
 // ── Editable Row ──
@@ -183,8 +203,9 @@ function EditableRow({ mapping, onSave, onDelete, categoria }: { mapping: FieldM
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(mapping);
 
-  const jetimobOpts = getJetimobFields(categoria);
-  const uhomeOpts = getUhomeFields(categoria);
+  const jetimobOpts = getJetimobFields(categoria, draft.jetimob_field);
+  const uhomeOpts = getUhomeFields(categoria, draft.uhome_field);
+  const tableOpts = getTableOptions(draft.uhome_table);
 
   const handleSave = () => { onSave(draft); setEditing(false); };
   const handleCancel = () => { setDraft(mapping); setEditing(false); };
@@ -232,7 +253,7 @@ function EditableRow({ mapping, onSave, onDelete, categoria }: { mapping: FieldM
           <Select value={draft.uhome_table} onValueChange={(v) => setDraft({ ...draft, uhome_table: v })}>
             <SelectTrigger className="h-8 text-xs min-w-[170px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {UHOME_TABLES.map((t) => (
+              {tableOpts.map((t) => (
                 <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
               ))}
             </SelectContent>
