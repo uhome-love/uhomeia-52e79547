@@ -291,9 +291,9 @@ serve(async (req) => {
       }
 
       if (!imovel) {
-        const catalogItems = await fetchJetimobCatalog(JETIMOB_API_KEY);
-        imovel = catalogItems.find((item: any) => isCodigoMatch(item, requestedCodigo)) || null;
-        console.log("Jetimob catalog fallback for", requestedCodigo, "match:", !!imovel);
+        const foundMap = await findImoveisByCodigos(JETIMOB_API_KEY, [requestedCodigo]);
+        imovel = foundMap[requestedCodigo] || null;
+        console.log("Jetimob paged fallback for", requestedCodigo, "match:", !!imovel);
       }
 
       if (imovel) {
