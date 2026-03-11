@@ -298,25 +298,30 @@ export function AppSidebar() {
 
     // ── Gestor ──
     if (isGestor) {
+      const melnickDayItem: NavItem[] = new Date() <= new Date("2026-03-31T23:59:59") ? [{ title: "Melnick Day", url: "/melnick-day", icon: Zap }] : [];
       return {
         topItem: { title: "Dashboard", url: "/gerente/dashboard", icon: Home },
         groups: [
           {
-            label: "Visão Geral",
+            label: "Principal",
             items: [
-              { title: "Meu Time", url: "/meu-time", icon: Users },
-              { title: "Central do Gerente", url: "/central-do-gerente", icon: ClipboardCheck },
+              ...melnickDayItem,
             ],
           },
           {
-            label: "Operação",
+            label: "Gestão de Leads",
             items: [
-              { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
               { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
-              { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Kanban },
-              { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
+              { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
               { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
               { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
+            ],
+          },
+          {
+            label: "Gestão de Negócios",
+            items: [
+              { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Kanban },
+              { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
             ],
           },
           {
@@ -332,7 +337,6 @@ export function AppSidebar() {
               { title: "HOMI Gerente", url: "/homi-gerente", icon: Bot },
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
               { title: "Imóveis", url: "/imoveis", icon: Building2 },
-              { title: "Melnick Day", url: "/melnick-day", icon: Zap },
               { title: "Academia", url: "/academia/gerenciar", icon: Award },
               { title: "Templates", url: "/templates-comunicacao", icon: MessageSquare },
               { title: "Marketplace", url: "/marketplace", icon: BookOpen },
