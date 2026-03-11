@@ -196,7 +196,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const diff = Math.floor((now.getTime() - new Date(l.updated_at || l.created_at).getTime()) / 86400000);
       return diff > 7;
     }).length;
-    if (parados7d > 0) als.push({ tipo: "red", mensagem: `${parados7d} leads parados >7 dias sem contato`, link: "/pipeline" });
+    if (parados7d > 0) als.push({ tipo: "red", mensagem: `${parados7d} leads parados >7 dias sem contato`, link: "/pipeline-leads" });
     
     const semCorretor = (leads || []).filter(l => !l.stage_id).length; // Approximate
     const filaCeo = (leads || []).filter(l => {
