@@ -140,6 +140,49 @@ async function fetchJetimobCatalog(apiKey: string): Promise<any[]> {
   return allItems;
 }
 
+async function findImoveisByCodigos(apiKey: string, codigos: string[]): Promise<Record<string, any | null>> {
+  const wanted = codigos.map((c) => String(c || "").trim()).filter(Boolean);
+  const pending = new Set(wanted);
+  const found = new Map<string, any>();
+
+  const batchSize = 200;
+  const maxPages = 20;
+
+  for (let page = 1; page <= maxPages && pending.size > 0; page++) {
+    const url = `https://api.jetimob.com/webservice/${apiKey}/imoveis/todos?v=6&page=${page}&pageSize=${batchSize}`;
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (!response.ok) break;
+
+    const raw = await response.json();
+    const items = Array.isArray(raw?.data)
+      ? raw.data
+      : Array.isArray(raw?.result)
+        ? raw.result
+        : Array.isArray(raw)
+          ? raw
+          : [];
+
+    if (!items.length) break;
+
+    for (const item of items) {
+      for (const codigo of Array.from(pending)) {
+        if (isCodigoMatch(item, codigo)) {
+          found.set(codigo, item);
+          pending.delete(codigo);
+        }
+      }
+      if (pending.size === 0) break;
+    }
+
+    const rawTotal = raw?.total || raw?.totalResults || raw?.total_results || 0;
+    if (items.length < batchSize || (rawTotal > 0 && page * batchSize >= rawTotal)) break;
+  }
+
+  const out: Record<string, any | null> = {};
+  for (const codigo of wanted) out[codigo] = found.get(codigo) || null;
+  return out;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
