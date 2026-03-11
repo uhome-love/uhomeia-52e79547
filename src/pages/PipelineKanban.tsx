@@ -602,5 +602,6 @@ export default function PipelineKanban() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
