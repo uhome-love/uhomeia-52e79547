@@ -107,11 +107,12 @@ const SEGMENTOS: Record<string, {
     ],
     metodologia: "REPRESADO — 2D e 3D residencial. Vendas concentradas no Dia D (21/03). A partir de R$ 1M vendido = viagem.",
     empreendimentos: [
-      { nome: "Supreme Altos do Central Parque", bairro: "Jardim do Salso", metragens: "59 a 70 m²", dorms: "2 e 3 dorms", status: "Pronto", precoDe: "R$ 657.169", precoPor: "R$ 499.448", imagens: ["https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2026/03/03122731/supreme.png"] },
-      { nome: "Grand Park Lindóia", bairro: "São Sebastião", metragens: "56 a 81 m²", dorms: "2 e 3 dorms", status: "Pronto", precoDe: "R$ 622.810", precoPor: "R$ 485.792", imagens: ["https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2026/03/03122658/Camada-933.png"] },
+      { nome: "Supreme Altos do Central Parque", bairro: "Jardim do Salso", metragens: "59 a 70 m²", dorms: "2 e 3 dorms", status: "Pronto", precoDe: "R$ 657.168", precoPor: "R$ 499.448", descontoMax: "-24%", m2: "R$ 8.465/m²", condicoes: "Apenas 3 un.", imagens: ["https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2026/03/03122731/supreme.png"] },
+      { nome: "Grand Park Lindóia", bairro: "São Sebastião", metragens: "56 a 81 m²", dorms: "2 e 3 dorms", status: "Pronto", precoDe: "R$ 622.810", precoPor: "R$ 485.792", descontoMax: "-22%", m2: "R$ 7.915/m²", imagens: ["https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2026/03/03122658/Camada-933.png"] },
       { nome: "Vida Viva Linked", bairro: "Teresópolis", metragens: "55 e 67 m²", dorms: "2 e 3 dorms", status: "Pronto", precoDe: "R$ 656.978", precoPor: "R$ 499.303", imagens: ["https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2026/03/03122656/Camada-932.png"] },
       { nome: "Grand Park Moinhos", bairro: "Canoas", metragens: "56 a 87 m²", dorms: "2 e 3 dorms", status: "Em obras", precoDe: "R$ 546.932", precoPor: "R$ 464.892", imagens: ["https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2022/06/31110805/Fotomontagem.webp"] },
       { nome: "High Garden Iguatemi", bairro: "Boa Vista", metragens: "102 a 125 m²", dorms: "Até 3 suítes", status: "Entrega 2029", precoDe: "R$ 1.649.477", precoPor: "R$ 1.099.722", descontoMax: "-8%", m2: "R$ 10.770/m²", condicoes: "Stand de Vendas", imagens: ["https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2026/03/03122629/Camada-7.png"] },
+      { nome: "GO Moinhos", bairro: "Moinhos de Vento", metragens: "106 m²", dorms: "3 dorms", status: "Entrega 2025", precoDe: "R$ 1.890.885", precoPor: "R$ 1.543.682", descontoMax: "-12%", m2: "R$ 14.461/m²", imagens: ["https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2026/03/03122621/Camada-1.png"] },
     ],
   },
   alto: {
