@@ -108,7 +108,7 @@ export function useSmartAlerts() {
                   severity: "critical",
                   title: "Meta de visitas em risco",
                   description: `Apenas ${Math.round(visPct * 100)}% da meta de visitas atingida com ${Math.round(pctMonthElapsed * 100)}% do mês transcorrido.`,
-                  action: { label: "Ver checkpoint", url: "/checkpoint" },
+                  action: { label: "Ver central", url: "/central-do-gerente" },
                 });
               }
               if (propPct < 0.4) {
