@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import {
   Briefcase, Save, Loader2, Phone, MessageSquare, Mail, Plus,
   CheckCircle2, Building2, Home, ClipboardList, TrendingUp, Handshake, CalendarDays,
-  MoreHorizontal, Pencil, Trash2,
+  MoreHorizontal, Pencil, Trash2, FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
