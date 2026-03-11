@@ -167,6 +167,13 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
   const [imovelVgv, setImovelVgv] = useState("");
   const [imovelObs, setImovelObs] = useState("");
 
+  // Pagadoria
+  const [pagadoriaOpen, setPagadoriaOpen] = useState(false);
+  const [pagadoriaStatus, setPagadoriaStatus] = useState<string | null>(null);
+
+  // Lead history (from pipeline)
+  const [leadHistory, setLeadHistory] = useState<{ tipo: string; observacao: string | null; created_at: string; stage_nome?: string }[]>([]);
+
   const faseInfo = NEGOCIOS_FASES.find(f => f.key === fullNeg.fase);
 
   // ── Load data ──
