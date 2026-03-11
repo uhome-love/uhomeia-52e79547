@@ -97,7 +97,7 @@ export default function OpportunityRadar({ leads, stages, corretorNomes, onSelec
       if (!stage || ["venda", "descarte"].includes(stage.tipo)) continue;
 
       const { score, reasons } = computeRadarScore(lead, stage);
-      const hoursInStage = differenceInHours(now, new Date(lead.stage_changed_at));
+      const hoursInStage = differenceInHoursSafe(lead.stage_changed_at) ?? Number.POSITIVE_INFINITY;
       const sla = getSlaStatus(stage.tipo, lead.stage_changed_at);
 
       let category: "hot" | "warm" | "reengage";
