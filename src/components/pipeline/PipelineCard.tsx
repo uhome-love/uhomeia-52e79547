@@ -194,7 +194,7 @@ const PipelineCard = memo(function PipelineCard({
   onDragStart, onClick, onMoveLead, onTransferred, stageIndexMap, proximaTarefa,
 }: PipelineCardProps) {
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isGestor } = useUserRole();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date>();
   const [scheduleTime, setScheduleTime] = useState("10:00");
