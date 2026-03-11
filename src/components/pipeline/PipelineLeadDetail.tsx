@@ -378,7 +378,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
           {/* Alert: No contact for 24h+ and no tasks */}
           {!nextTask && (() => {
             const lastContact = (lead as any).ultima_acao_at;
-            const hoursSince = lastContact ? differenceInHours(new Date(), new Date(lastContact)) : 999;
+            const hoursSince = differenceInHoursSafe(lastContact) ?? 999;
             if (leadData.atividades.length === 0 || hoursSince > 24) {
               const severity = hoursSince > 48 ? "red" : "amber";
               const bgCls = severity === "red" ? "bg-red-50 dark:bg-red-900/20 border-red-300/50 dark:border-red-600/30" : "bg-amber-50 dark:bg-amber-900/20 border-amber-300/50 dark:border-amber-600/30";
