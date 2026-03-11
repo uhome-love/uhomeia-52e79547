@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Phone, UserCheck, MapPin, Users, TrendingUp, Briefcase, BarChart3, Eye } from "lucide-react";
-import { format } from "date-fns";
+import { Phone, UserCheck, MapPin, Users, TrendingUp, Briefcase, BarChart3, Eye, CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, subDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface Props {
   teamUserIds: string[];
@@ -41,9 +45,10 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
   const [pipelineData, setPipelineData] = useState<Record<string, Record<string, number>>>({});
   const [negociosData, setNegociosData] = useState<Record<string, { count: number; vgv: number }[]>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  const mesInicio = format(new Date(), "yyyy-MM") + "-01";
+  const dateStr = format(selectedDate, "yyyy-MM-dd");
+  const dateFmt = format(selectedDate, "dd/MM/yyyy");
 
   const loadData = useCallback(async () => {
     if (teamUserIds.length === 0) return;
@@ -55,8 +60,8 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
         .from("oferta_ativa_tentativas")
         .select("corretor_id, resultado, canal")
         .in("corretor_id", teamUserIds)
-        .gte("created_at", `${today}T00:00:00`)
-        .lte("created_at", `${today}T23:59:59`),
+        .gte("created_at", `${dateStr}T00:00:00`)
+        .lte("created_at", `${dateStr}T23:59:59`),
       // Pipeline leads ativos
       supabase
         .from("pipeline_leads")
@@ -113,7 +118,7 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
     setNegociosData(neg);
 
     setLoading(false);
-  }, [teamUserIds, user, today]);
+  }, [teamUserIds, user, dateStr]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -153,18 +158,52 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
 
   const sortedTeam = [...teamUserIds].sort((a, b) => (oaData[b]?.ligacoes || 0) - (oaData[a]?.ligacoes || 0));
 
+  const isToday = dateStr === format(new Date(), "yyyy-MM-dd");
+
   return (
     <div className="space-y-6">
+      {/* ═══ DATE PICKER ═══ */}
+      <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedDate(d => subDays(d, 1))}>
+          <ChevronLeft size={16} />
+        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="min-w-[160px] justify-center gap-2 font-medium">
+              <CalendarIcon size={14} />
+              {dateFmt}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="center">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(d) => d && setSelectedDate(d)}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedDate(d => addDays(d, 1))}>
+          <ChevronRight size={16} />
+        </Button>
+        {!isToday && (
+          <Button variant="outline" size="sm" className="text-xs ml-2" onClick={() => setSelectedDate(new Date())}>
+            Hoje
+          </Button>
+        )}
+      </div>
+
       {/* ═══ HEADER CARDS ═══ */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <SummaryCard icon={<Phone size={18} />} label="Ligações Hoje" value={totalOA.ligacoes} accent="text-blue-600 bg-blue-500/10" />
+        <SummaryCard icon={<Phone size={18} />} label={isToday ? "Ligações Hoje" : `Ligações ${dateFmt}`} value={totalOA.ligacoes} accent="text-blue-600 bg-blue-500/10" />
         <SummaryCard icon={<UserCheck size={18} />} label="Aproveitados" value={totalOA.aproveitados} sub={`${taxa}% taxa`} accent="text-emerald-600 bg-emerald-500/10" />
         <SummaryCard icon={<Users size={18} />} label="Leads no Pipeline" value={totalLeads} accent="text-primary bg-primary/10" />
         <SummaryCard icon={<Briefcase size={18} />} label="Negócios Ativos" value={totalNegCount} sub={fmtCurrency(totalVGV)} accent="text-amber-600 bg-amber-500/10" />
       </div>
 
       {/* ═══ BLOCO 1: OA DO TIME ═══ */}
-      <Section icon={<Phone size={16} />} title="Oferta Ativa — Hoje" badge={`${totalOA.ligacoes} ligações`}>
+      <Section icon={<Phone size={16} />} title={`Oferta Ativa — ${isToday ? "Hoje" : dateFmt}`} badge={`${totalOA.ligacoes} ligações`}>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
