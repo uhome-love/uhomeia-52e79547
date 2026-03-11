@@ -250,6 +250,7 @@ function MaterialSection({
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [uploadTipo, setUploadTipo] = useState("criativo");
+  const [uploadNome, setUploadNome] = useState("");
 
   const myMateriais = materiais.filter(m => m.empreendimento_codigo === empreendimentoCodigo);
 
@@ -273,7 +274,7 @@ function MaterialSection({
         empreendimento_nome: empreendimentoNome,
         segmento,
         tipo: uploadTipo,
-        nome_arquivo: file.name,
+        nome_arquivo: uploadNome.trim() || file.name,
         url: publicUrl,
         mime_type: file.type,
         uploaded_by: user.id,
@@ -286,6 +287,7 @@ function MaterialSection({
       toast.error("Erro ao enviar: " + (err.message || "tente novamente"));
     } finally {
       setUploading(false);
+      setUploadNome("");
       e.target.value = "";
     }
   };
@@ -378,9 +380,15 @@ function MaterialSection({
 
       {/* Upload area (CEO/Gerente only) */}
       {canUpload && (
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-1 flex-wrap">
+          <Input
+            value={uploadNome}
+            onChange={(e) => setUploadNome(e.target.value)}
+            placeholder="Nome do arquivo..."
+            className="h-8 text-[11px] w-[160px]"
+          />
           <Select value={uploadTipo} onValueChange={setUploadTipo}>
-            <SelectTrigger className="h-8 text-[11px] w-[160px]">
+            <SelectTrigger className="h-8 text-[11px] w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
