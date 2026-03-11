@@ -4,13 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
-import { Target, ClipboardList, CheckCircle2, BarChart2, Sparkles, AlertCircle, Loader2, Briefcase } from "lucide-react";
+import { Target, ClipboardList, CheckCircle2, BarChart2, AlertCircle, Loader2, Briefcase } from "lucide-react";
 import { format, subDays, getDaysInMonth, getDate } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CheckpointTableTab from "@/components/checkpoint/CheckpointTableTab";
 import AproveitadosTab from "@/components/checkpoint/AproveitadosTab";
 import RelatoriosTab from "@/components/checkpoint/RelatoriosTab";
-import CoachIATab from "@/components/checkpoint/CoachIATab";
+
 import CheckpointNegociosTab from "@/components/checkpoint/CheckpointNegociosTab";
 import CheckpointVisaoGeralTab from "@/components/checkpoint/CheckpointVisaoGeralTab";
 import CeoCheckpointViewer from "@/components/ceo/CeoCheckpointViewer";
@@ -73,7 +73,7 @@ export default function CheckpointGerente() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<"visao_geral" | "checkpoint" | "negocios" | "aproveitados" | "relatorios" | "coach">("visao_geral");
+  const [activeTab, setActiveTab] = useState<"visao_geral" | "checkpoint" | "negocios" | "aproveitados" | "relatorios">("visao_geral");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [checkpointStatus, setCheckpointStatus] = useState<"aberto" | "publicado">("aberto");
   const [rows, setRows] = useState<CheckpointRow[]>([]);
@@ -334,13 +334,12 @@ export default function CheckpointGerente() {
     { key: "negocios" as const, icon: <Briefcase size={15} />, label: "Negócios" },
     { key: "aproveitados" as const, icon: <CheckCircle2 size={15} />, label: "Aproveitados" },
     { key: "relatorios" as const, icon: <BarChart2 size={15} />, label: "Relatórios" },
-    { key: "coach" as const, icon: <Sparkles size={15} />, label: "Coach IA" },
   ];
 
   return (
     <div className="min-h-screen bg-muted/30 pb-12">
       <div className="bg-card border-b border-border px-6 py-5">
-        <h1 className="text-2xl font-bold text-foreground">Checkpoint do <span className="text-primary">Gerente</span></h1>
+        <h1 className="text-2xl font-bold text-foreground">Central do <span className="text-primary">Gerente</span></h1>
         <p className="text-sm text-muted-foreground mt-0.5">Gestão diária do time comercial com metas, resultados e IA</p>
       </div>
 
@@ -474,9 +473,6 @@ export default function CheckpointGerente() {
           <RelatoriosTab teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
         )}
 
-        {activeTab === "coach" && (
-          <CoachIATab rows={rows} metasMes={metasMes} dateFmt={dateFmt} teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
-        )}
       </div>
     </div>
   );

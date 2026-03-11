@@ -67,13 +67,12 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
         .from("pipeline_leads")
         .select("corretor_id, stage")
         .in("corretor_id", teamUserIds)
-        .not("stage", "eq", "descarte")
-        .eq("aceite_status", "aceito"),
+        .not("stage", "eq", "descarte"),
       // Negócios ativos
       supabase
         .from("negocios")
         .select("corretor_id, fase, vgv_estimado, vgv_final")
-        .eq("gerente_id", user!.id)
+        .in("corretor_id", teamUserIds)
         .not("fase", "in", "(perdido,cancelado)"),
     ]);
 
