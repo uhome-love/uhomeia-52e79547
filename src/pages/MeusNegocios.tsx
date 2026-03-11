@@ -295,29 +295,29 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           {/* Ligar */}
           <button
             onClick={() => setLigarPopup(true)}
-            className="flex-1 flex items-center justify-center gap-1 py-2 text-[10px] text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-white/50 hover:text-white hover:bg-white/5 transition-colors"
           >
-            <Phone className="h-3 w-3" /> Ligar
+            <Phone className="h-3.5 w-3.5" /> Ligar
           </button>
 
           {/* WhatsApp */}
           {whatsappUrl ? (
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-green-500 hover:text-green-400 hover:bg-white/5 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-green-400 hover:text-green-300 hover:bg-white/5 transition-colors"
             >
-              <MessageSquare className="h-3 w-3" /> WhatsApp
+              <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
             </a>
           ) : (
-            <span className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-gray-600">
-              <MessageSquare className="h-3 w-3" /> WhatsApp
+            <span className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-gray-600">
+              <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
             </span>
           )}
 
           {/* ⚡ Ação */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-white/5 transition-colors">
-                <Zap className="h-3 w-3" /> Ação
+              <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-amber-400 hover:text-amber-300 hover:bg-white/5 transition-colors">
+                <Zap className="h-3.5 w-3.5" /> Ação
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
