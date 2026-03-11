@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, CheckCircle2, AlertTriangle, Database, Building2, Users, Zap, Pencil, Save, X, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, AlertTriangle, Database, Building2, Users, Zap, Pencil, Save, X, Plus, Trash2, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -494,6 +494,210 @@ function EditableFieldMappingTable({ categoria, title }: { categoria: string; ti
   );
 }
 
+// ── Campaign → Empreendimento Map Panel ──
+const SEGMENTO_OPTIONS = [
+  { value: "MCMV", label: "MCMV" },
+  { value: "Médio-Alto", label: "Médio-Alto" },
+  { value: "Altíssimo", label: "Altíssimo" },
+  { value: "Investimento", label: "Investimento" },
+];
+
+function CampaignMapPanel() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [draft, setDraft] = useState({ campaign_id: "", empreendimento: "", segmento: "", notas: "" });
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["jetimob-campaign-map"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("jetimob_campaign_map")
+        .select("*")
+        .order("empreendimento", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const filtered = search
+    ? items.filter((i: any) =>
+        i.campaign_id.toLowerCase().includes(search.toLowerCase()) ||
+        i.empreendimento.toLowerCase().includes(search.toLowerCase())
+      )
+    : items;
+
+  const handleSave = async () => {
+    if (!draft.campaign_id || !draft.empreendimento) {
+      toast.error("Campaign ID e Empreendimento são obrigatórios");
+      return;
+    }
+    if (editId) {
+      const { error } = await supabase
+        .from("jetimob_campaign_map")
+        .update({
+          campaign_id: draft.campaign_id,
+          empreendimento: draft.empreendimento,
+          segmento: draft.segmento || null,
+          notas: draft.notas || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", editId);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success("Atualizado!");
+    } else {
+      const { error } = await supabase
+        .from("jetimob_campaign_map")
+        .insert({
+          campaign_id: draft.campaign_id,
+          empreendimento: draft.empreendimento,
+          segmento: draft.segmento || null,
+          notas: draft.notas || null,
+        });
+      if (error) {
+        if (error.code === "23505") toast.error("Esse Campaign ID já está cadastrado!");
+        else toast.error("Erro: " + error.message);
+        return;
+      }
+      toast.success("Cadastrado!");
+    }
+    setDraft({ campaign_id: "", empreendimento: "", segmento: "", notas: "" });
+    setAdding(false);
+    setEditId(null);
+    queryClient.invalidateQueries({ queryKey: ["jetimob-campaign-map"] });
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("jetimob_campaign_map").delete().eq("id", id);
+    if (error) { toast.error("Erro: " + error.message); return; }
+    toast.success("Removido!");
+    queryClient.invalidateQueries({ queryKey: ["jetimob-campaign-map"] });
+  };
+
+  const startEdit = (item: any) => {
+    setEditId(item.id);
+    setDraft({ campaign_id: item.campaign_id, empreendimento: item.empreendimento, segmento: item.segmento || "", notas: item.notas || "" });
+    setAdding(true);
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setDraft({ campaign_id: "", empreendimento: "", segmento: "", notas: "" });
+    setAdding(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base">Campanhas Jetimob → Empreendimento</CardTitle>
+            <CardDescription>Mapeie o campaign_id de cada campanha do Jetimob ao empreendimento correto</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">{items.length} cadastrados</Badge>
+            <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => { cancelEdit(); setAdding(!adding); }}>
+              <Plus className="h-3.5 w-3.5" /> Novo
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Search */}
+        <div className="relative max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+          <Input placeholder="Buscar por ID ou empreendimento..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-9 text-xs" />
+        </div>
+
+        {/* Add/Edit form */}
+        {adding && (
+          <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground">{editId ? "Editar mapeamento" : "Novo mapeamento"}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Campaign ID *</label>
+                <Input value={draft.campaign_id} onChange={(e) => setDraft({ ...draft, campaign_id: e.target.value })} placeholder="Ex: 120215..." className="h-9 text-xs font-mono" />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Empreendimento *</label>
+                <Input value={draft.empreendimento} onChange={(e) => setDraft({ ...draft, empreendimento: e.target.value })} placeholder="Ex: Casa Tua" className="h-9 text-xs" />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Segmento</label>
+                <Select value={draft.segmento} onValueChange={(v) => setDraft({ ...draft, segmento: v })}>
+                  <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {SEGMENTO_OPTIONS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Notas</label>
+                <Input value={draft.notas} onChange={(e) => setDraft({ ...draft, notas: e.target.value })} placeholder="Opcional" className="h-9 text-xs" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" className="h-8 gap-1 text-xs" onClick={handleSave}><Save className="h-3.5 w-3.5" /> {editId ? "Atualizar" : "Salvar"}</Button>
+              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={cancelEdit}>Cancelar</Button>
+            </div>
+          </div>
+        )}
+
+        {/* Table */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Campaign ID</th>
+                  <th className="px-4 py-2.5 text-left font-medium text-muted-foreground w-8"><ArrowRight className="h-3.5 w-3.5" /></th>
+                  <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Empreendimento</th>
+                  <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Segmento</th>
+                  <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Notas</th>
+                  <th className="px-4 py-2.5 text-left font-medium text-muted-foreground w-20">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((item: any) => (
+                  <tr key={item.id} className="border-b last:border-0 group hover:bg-muted/20">
+                    <td className="px-4 py-2.5 font-mono text-xs">{item.campaign_id}</td>
+                    <td className="px-4 py-2.5"><ArrowRight className="h-3.5 w-3.5 text-muted-foreground" /></td>
+                    <td className="px-4 py-2.5 font-medium text-sm">{item.empreendimento}</td>
+                    <td className="px-4 py-2.5">
+                      {item.segmento ? (
+                        <Badge variant={item.segmento === "MCMV" ? "default" : item.segmento === "Altíssimo" ? "secondary" : "outline"}>
+                          {item.segmento}
+                        </Badge>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[200px] truncate">{item.notas || "—"}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(item)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDelete(item.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-xs text-muted-foreground">
+                    {search ? "Nenhum resultado encontrado" : "Nenhum mapeamento cadastrado. Clique em \"Novo\" para começar."}
+                  </td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function IntegracaoJetimob() {
   const { data: stats } = useQuery({
     queryKey: ["integracao-stats"],
@@ -580,7 +784,7 @@ export default function IntegracaoJetimob() {
         <TabsList>
           <TabsTrigger value="leads" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Leads ({leadOk}/{leadTotal})</TabsTrigger>
           <TabsTrigger value="imoveis" className="gap-1.5"><Building2 className="h-3.5 w-3.5" /> Imóveis ({imovelOk}/{imovelTotal})</TabsTrigger>
-          <TabsTrigger value="empreendimentos" className="gap-1.5"><Zap className="h-3.5 w-3.5" /> Empreendimentos ({EMPREENDIMENTO_MAPPINGS.length})</TabsTrigger>
+          <TabsTrigger value="empreendimentos" className="gap-1.5"><Building2 className="h-3.5 w-3.5" /> Campanhas → Empreend.</TabsTrigger>
           <TabsTrigger value="dedup" className="gap-1.5"><Database className="h-3.5 w-3.5" /> Deduplicação</TabsTrigger>
         </TabsList>
 
@@ -593,40 +797,7 @@ export default function IntegracaoJetimob() {
         </TabsContent>
 
         <TabsContent value="empreendimentos">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Normalização de Empreendimentos</CardTitle>
-              <CardDescription>Como nomes de campanha do Jetimob são traduzidos para empreendimentos no uHome</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Nome Jetimob</th>
-                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground w-8"><ArrowRight className="h-3.5 w-3.5" /></th>
-                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Nome uHome</th>
-                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Segmento</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {EMPREENDIMENTO_MAPPINGS.map((e, i) => (
-                      <tr key={i} className="border-b last:border-0">
-                        <td className="px-4 py-2.5 font-mono text-xs">{e.jetimobName}</td>
-                        <td className="px-4 py-2.5"><ArrowRight className="h-3.5 w-3.5 text-muted-foreground" /></td>
-                        <td className="px-4 py-2.5 font-medium">{e.uhomeName}</td>
-                        <td className="px-4 py-2.5">
-                          <Badge variant={e.segmento === "MCMV" ? "default" : e.segmento === "Altíssimo" ? "secondary" : "outline"}>
-                            {e.segmento}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+          <CampaignMapPanel />
         </TabsContent>
 
         <TabsContent value="dedup">
