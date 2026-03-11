@@ -280,6 +280,9 @@ serve(async (req) => {
               ? [raw]
               : [];
 
+        if (directItems.length > 0 && directItems.length <= 5) {
+          console.log("Jetimob direct items codigos:", directItems.map((i: any) => ({ codigo: i.codigo, referencia: i.referencia, id: i.id_imovel || i.id })));
+        }
         imovel = directItems.find((item: any) => isCodigoMatch(item, requestedCodigo)) || null;
         if (imovel) break;
       }
