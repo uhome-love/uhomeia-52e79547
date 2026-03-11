@@ -246,6 +246,7 @@ export default function VitrinePage() {
       </div>
     );
   }
+  const isMelnickDay = data?.vitrine?.tipo === "melnick_day";
 
   const { vitrine, corretor, imoveis } = data;
 
