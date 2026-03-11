@@ -564,8 +564,12 @@ export default function AnunciosNoAr() {
             const { data, error } = await supabase.functions.invoke("jetimob-proxy", {
               body: { action: "get_imovel", codigo },
             });
-            if (!error && data?.imovel) {
-              results[codigo] = data.imovel;
+            if (!error && data) {
+              // Jetimob API may return { data: [...] } or the object directly
+              const imovel = Array.isArray(data.data) ? data.data[0] : data.imovel || data;
+              if (imovel && typeof imovel === "object") {
+                results[codigo] = imovel;
+              }
             }
           } catch (e) {
             console.warn(`Failed to fetch ${codigo}:`, e);
