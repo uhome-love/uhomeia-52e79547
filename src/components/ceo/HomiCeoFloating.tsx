@@ -58,7 +58,7 @@ export default function HomiCeoFloating({ dashboardData }: Props) {
     // Leads parados
     for (const a of alertas) {
       if (a.tipo === "red") {
-        als.push({ icon: "📉", message: a.mensagem, action: "Ver pipeline", link: "/pipeline" });
+        als.push({ icon: "📉", message: a.mensagem, action: "Ver pipeline", link: "/pipeline-leads" });
       }
     }
 
