@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner";
 import {
   Phone, UserCheck, MapPin, CalendarIcon, ChevronLeft, ChevronRight,
-  MessageSquare, Save, Lock, Pencil, Send,
+  MessageSquare, Save, Lock, Pencil, Send, CheckCircle2,
 } from "lucide-react";
 
 interface CorretorCard {
@@ -30,6 +30,8 @@ interface CorretorCard {
   obs_gerente: string;
   obs_dia: string;
   status_online: string | null;
+  goal_status: string | null;
+  goal_id: string | null;
 }
 
 interface Props {
@@ -103,7 +105,7 @@ export default function CheckpointCards({ teamUserIds, teamNameMap }: Props) {
     const q3: any = supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado").in("corretor_id", teamUserIds).gte("created_at", `${dateStr}T00:00:00`).lte("created_at", `${dateStr}T23:59:59`);
     const q4: any = supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).eq("data_visita", dateStr);
     const q5: any = supabase.from("checkpoint_diario").select("*").eq("data", dateStr).in("corretor_id", teamUserIds);
-    const q6: any = supabase.from("corretor_daily_goals").select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas").in("corretor_id", teamUserIds).eq("data", dateStr);
+    const q6: any = supabase.from("corretor_daily_goals").select("id, corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas, status").in("corretor_id", teamUserIds).eq("data", dateStr);
     const q7: any = supabase.from("corretor_disponibilidade").select("user_id, status").in("user_id", teamUserIds);
 
     const [r1, r2, r3, r4, r5, r6, r7] = await Promise.all([q1, q2, q3, q4, q5, q6, q7]);
@@ -149,6 +151,8 @@ export default function CheckpointCards({ teamUserIds, teamNameMap }: Props) {
         res_propostas: s?.res_propostas ?? 0,
         obs_gerente: s?.obs_gerente ?? "", obs_dia: s?.obs_dia ?? "",
         status_online: prof?.status_online || (isOnline ? "online" : null),
+        goal_status: g?.status || null,
+        goal_id: g?.id || null,
       };
     });
 
@@ -200,6 +204,22 @@ export default function CheckpointCards({ teamUserIds, teamNameMap }: Props) {
     const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
     const msg = `${saudacao}, ${card.nome.split(" ")[0]}! 📊\n\n📞 Ligações: ${card.res_ligacoes}/${card.meta_ligacoes}\n✅ Aproveitados: ${card.res_aproveitados}\n📅 Visitas: ${card.res_visitas_marcadas}\n\nBora aumentar esses números! 💪🔥`;
     window.open(getWhatsAppUrl(card.telefone, msg), "_blank");
+  };
+
+  const approveGoal = async (card: CorretorCard) => {
+    if (!card.goal_id || !user) return;
+    const { error } = await supabase
+      .from("corretor_daily_goals")
+      .update({
+        status: "aprovado",
+        aprovado_por: user.id,
+        meta_ligacoes_aprovada: card.meta_ligacoes,
+        meta_aproveitados_aprovada: card.meta_aproveitados,
+      })
+      .eq("id", card.goal_id);
+    if (error) { toast.error("Erro ao aprovar"); return; }
+    setCards(prev => prev.map(c => c.user_id === card.user_id ? { ...c, goal_status: "aprovado" } : c));
+    toast.success(`✅ Meta de ${card.nome.split(" ")[0]} aprovada!`);
   };
 
   const nudgeAllBelowTarget = () => {
@@ -380,7 +400,7 @@ export default function CheckpointCards({ teamUserIds, teamNameMap }: Props) {
                 </div>
               </div>
 
-              {/* Metas */}
+              {/* Metas + Approve */}
               <div className="flex items-center gap-1.5 mb-2.5">
                 <span className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wide">Meta:</span>
                 <input type="number" min={0} value={card.meta_ligacoes || ""} onChange={e => updateCard(card.user_id, "meta_ligacoes", parseInt(e.target.value) || 0)}
@@ -389,6 +409,17 @@ export default function CheckpointCards({ teamUserIds, teamNameMap }: Props) {
                   className="w-10 text-center text-xs border border-border rounded-md py-0.5 bg-background text-foreground" title="Aproveit." />
                 <input type="number" min={0} value={card.meta_visitas_marcar || ""} onChange={e => updateCard(card.user_id, "meta_visitas_marcar", parseInt(e.target.value) || 0)}
                   className="w-10 text-center text-xs border border-border rounded-md py-0.5 bg-background text-foreground" title="Visitas" />
+                {card.goal_status === "pendente" && (
+                  <button
+                    onClick={() => approveGoal(card)}
+                    className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-500/30 transition-colors"
+                  >
+                    <CheckCircle2 size={11} /> Aprovar
+                  </button>
+                )}
+                {card.goal_status === "aprovado" && (
+                  <span className="ml-auto text-[10px] font-semibold text-emerald-600">✅</span>
+                )}
               </div>
 
               {/* Feedback */}
