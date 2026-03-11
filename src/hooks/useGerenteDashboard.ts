@@ -286,7 +286,7 @@ export function useGerenteDashboard(period: Period) {
 
       // Leads sem tarefa
       const { count: leadsSemTarefa } = await supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).is("prioridade_lead", null);
-      if ((leadsSemTarefa || 0) > 0) alerts.push({ id: "leads_sem_tarefa", type: "info", icon: "📝", label: "leads sem tarefa", count: leadsSemTarefa || 0, route: "/pipeline" });
+      if ((leadsSemTarefa || 0) > 0) alerts.push({ id: "leads_sem_tarefa", type: "info", icon: "📝", label: "leads sem tarefa", count: leadsSemTarefa || 0, route: "/pipeline-leads" });
 
       return alerts;
     },

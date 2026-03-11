@@ -127,7 +127,7 @@ function getNotificationRoute(n: Notification): string | null {
   if (tipo === "mensagem_gerente") return "/notificacoes";
 
   // Automação / sequências
-  if (tipo === "automacao" || tipo === "sequencias") return "/pipeline";
+  if (tipo === "automacao" || tipo === "sequencias") return "/pipeline-leads";
 
   return null;
 }
