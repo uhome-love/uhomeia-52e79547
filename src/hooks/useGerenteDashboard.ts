@@ -357,7 +357,7 @@ export function useGerenteDashboard(period: Period) {
   const { data: negociosQuentes } = useQuery({
     queryKey: ["gerente-negocios-quentes", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("negocios").select("id, nome_cliente, empreendimento, vgv_estimado, fase, corretor_id, updated_at").eq("gerente_id", user!.id).not("fase", "in", '("perdido","cancelado","distrato","assinado","vendido")');
+      const { data } = await supabase.from("negocios").select("id, nome_cliente, empreendimento, vgv_estimado, fase, corretor_id, updated_at, unidade, proposta_valor").eq("gerente_id", user!.id).not("fase", "in", '("perdido","cancelado","distrato","assinado","vendido")');
       if (!data || data.length === 0) return [];
       const corrIds = [...new Set(data.map(n => n.corretor_id).filter(Boolean))];
       const { data: profs } = corrIds.length > 0 ? await supabase.from("profiles").select("user_id, nome").in("user_id", corrIds as string[]) : { data: [] };
@@ -367,9 +367,10 @@ export function useGerenteDashboard(period: Period) {
         .map(n => ({
           id: n.id, nome_cliente: n.nome_cliente || "Cliente", empreendimento: n.empreendimento || "—",
           vgv: Number(n.vgv_estimado || 0), fase: n.fase,
-          corretor_nome: n.corretor_id ? (nameMap[n.corretor_id]?.split(" ")[0] || "Corretor") : "—",
+          corretor_nome: n.corretor_id ? (nameMap[n.corretor_id] || "Corretor") : "—",
           updated_at: n.updated_at,
           horas_desde_update: Math.round((Date.now() - new Date(n.updated_at).getTime()) / 3600000),
+          unidade: n.unidade || "", proposta_valor: Number(n.proposta_valor || 0),
         }))
         .sort((a, b) => {
           const pA = FASE_PRIORITY[a.fase] || 0;
