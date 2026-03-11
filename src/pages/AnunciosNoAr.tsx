@@ -279,8 +279,35 @@ function MaterialSection({
   const [uploading, setUploading] = useState(false);
   const [uploadTipo, setUploadTipo] = useState("criativo");
   const [uploadNome, setUploadNome] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
 
   const myMateriais = materiais.filter(m => m.empreendimento_codigo === empreendimentoCodigo);
+
+  const handleSaveLink = async () => {
+    if (!linkUrl.trim() || !user) return;
+    setUploading(true);
+    try {
+      const { error: dbError } = await supabase.from("anuncio_materiais").insert({
+        empreendimento_codigo: empreendimentoCodigo,
+        empreendimento_nome: empreendimentoNome,
+        segmento,
+        tipo: uploadTipo,
+        nome_arquivo: uploadNome.trim() || "Vídeo Instagram",
+        url: linkUrl.trim(),
+        mime_type: "text/uri-list",
+        uploaded_by: user.id,
+      });
+      if (dbError) throw dbError;
+      toast.success("✅ Link salvo com sucesso!");
+      onRefresh();
+    } catch (err: any) {
+      toast.error("Erro ao salvar: " + (err.message || "tente novamente"));
+    } finally {
+      setUploading(false);
+      setUploadNome("");
+      setLinkUrl("");
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -358,6 +385,8 @@ function MaterialSection({
                   {items.map(mat => {
                     const isImage = mat.mime_type?.startsWith("image/");
                     const isVideo = mat.mime_type?.startsWith("video/");
+                    const isLink = mat.mime_type === "text/uri-list";
+                    const isInstagram = isLink && mat.url.includes("instagram.com");
                     return (
                       <div key={mat.id} className="group/mat relative">
                         {isImage ? (
@@ -375,8 +404,8 @@ function MaterialSection({
                             rel="noopener noreferrer"
                             className="h-16 w-24 rounded-lg border border-border/40 bg-muted/30 flex flex-col items-center justify-center gap-1 hover:bg-accent/30 transition-colors"
                           >
-                            {isVideo ? <Video className="h-5 w-5 text-primary" /> : <FileText className="h-5 w-5 text-primary" />}
-                            <span className="text-[8px] text-muted-foreground truncate max-w-[80px] px-1">{mat.nome_arquivo}</span>
+                            {isInstagram ? <span className="text-lg">📸</span> : isVideo ? <Video className="h-5 w-5 text-primary" /> : isLink ? <ExternalLink className="h-5 w-5 text-primary" /> : <FileText className="h-5 w-5 text-primary" />}
+                            <span className="text-[8px] text-muted-foreground truncate max-w-[80px] px-1">{isInstagram ? "Instagram" : mat.nome_arquivo}</span>
                           </a>
                         )}
                         <div className="absolute -top-1 -right-1 flex gap-0.5">
@@ -408,36 +437,57 @@ function MaterialSection({
 
       {/* Upload area (CEO/Gerente only) */}
       {canUpload && (
-        <div className="flex items-center gap-2 pt-1 flex-wrap">
-          <Input
-            value={uploadNome}
-            onChange={(e) => setUploadNome(e.target.value)}
-            placeholder="Nome do arquivo..."
-            className="h-8 text-[11px] w-[160px]"
-          />
-          <Select value={uploadTipo} onValueChange={setUploadTipo}>
-            <SelectTrigger className="h-8 text-[11px] w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="criativo">🎬 Criativo</SelectItem>
-              <SelectItem value="tabela">📊 Tabela</SelectItem>
-              <SelectItem value="book">📖 Book</SelectItem>
-              <SelectItem value="material">📎 Outro</SelectItem>
-            </SelectContent>
-          </Select>
-          <label className="cursor-pointer">
-            <input type="file" className="hidden" accept="image/*,video/*,.pdf,.xlsx,.xls,.pptx" onChange={handleUpload} disabled={uploading} />
-            <div className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border border-dashed",
-              uploading
-                ? "bg-muted/50 text-muted-foreground border-border cursor-wait"
-                : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-            )}>
-              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-              {uploading ? "Enviando..." : "Enviar"}
-            </div>
-          </label>
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Input
+              value={uploadNome}
+              onChange={(e) => setUploadNome(e.target.value)}
+              placeholder="Nome do arquivo..."
+              className="h-8 text-[11px] w-[160px]"
+            />
+            <Select value={uploadTipo} onValueChange={setUploadTipo}>
+              <SelectTrigger className="h-8 text-[11px] w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="criativo">🎬 Criativo</SelectItem>
+                <SelectItem value="tabela">📊 Tabela</SelectItem>
+                <SelectItem value="book">📖 Book</SelectItem>
+                <SelectItem value="material">📎 Outro</SelectItem>
+              </SelectContent>
+            </Select>
+            <label className="cursor-pointer">
+              <input type="file" className="hidden" accept="image/*,video/*,.pdf,.xlsx,.xls,.pptx" onChange={handleUpload} disabled={uploading} />
+              <div className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border border-dashed",
+                uploading
+                  ? "bg-muted/50 text-muted-foreground border-border cursor-wait"
+                  : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+              )}>
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                {uploading ? "Enviando..." : "Enviar arquivo"}
+              </div>
+            </label>
+          </div>
+          {/* Link input (Instagram/video URL) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Input
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="Cole o link do Instagram ou vídeo..."
+              className="h-8 text-[11px] flex-1 min-w-[200px]"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-[11px] gap-1.5"
+              disabled={!linkUrl.trim() || uploading}
+              onClick={handleSaveLink}
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
+              Salvar link
+            </Button>
+          </div>
         </div>
       )}
 
