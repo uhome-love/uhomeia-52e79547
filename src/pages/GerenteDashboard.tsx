@@ -367,7 +367,7 @@ export default function GerenteDashboard() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-foreground">⚠️ Negócios que Pedem Ação</h2>
-              <button className="text-xs text-primary hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/meus-negocios")}>
+              <button className="text-xs text-primary hover:underline font-medium flex items-center gap-1" onClick={() => navigate("/pipeline-negocios")}>
                 Ver pipeline <ArrowRight className="h-3 w-3" />
               </button>
             </div>
