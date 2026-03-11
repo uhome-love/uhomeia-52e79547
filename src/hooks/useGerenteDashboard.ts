@@ -471,7 +471,7 @@ export function useGerenteDashboard(period: Period) {
 
   return {
     user, profile, teamUserIds, teamNameMap, teamMembers,
-    kpis: kpis || { ligacoes: 0, metaTime: 0, aproveitados: 0, taxa: 0, visitasHoje: 0, visitasSemana: 0, negociosAtivos: 0, vgvTotal: 0, melhorStreak: { nome: "-", count: 0 } },
+    kpis: kpis || { ligacoes: 0, metaTime: 0, aproveitados: 0, taxa: 0, visitasHoje: 0, visitasSemana: 0, visitasMarcadas: 0, visitasRealizadas: 0, totalLeads: 0, negociosAtivos: 0, vgvTotal: 0, melhorStreak: { nome: "-", count: 0 } },
     kpisLoading,
     ranking: ranking || [],
     radarAlerts: radarAlerts || [],
