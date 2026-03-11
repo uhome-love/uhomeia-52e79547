@@ -19,9 +19,10 @@ interface GestaoRow {
   corretor_id: string;
   corretor_nome: string;
   pontos_total: number;
-  tentativas: number;
-  leads_responderam: number;
+  contatos: number;
+  qualificados: number;
   visitas_marcadas: number;
+  visitas_realizadas: number;
   propostas: number;
 }
 
@@ -64,12 +65,13 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
   const totals = useMemo(() => {
     return ranking.reduce(
       (acc, r) => ({
-        leads: acc.leads + Number(r.tentativas),
-        visitas: acc.visitas + Number(r.visitas_marcadas),
+        contatos: acc.contatos + Number(r.contatos),
+        qualificados: acc.qualificados + Number(r.qualificados),
+        visitas: acc.visitas + Number(r.visitas_marcadas) + Number(r.visitas_realizadas),
         propostas: acc.propostas + Number(r.propostas),
         pontos: acc.pontos + Number(r.pontos_total),
       }),
-      { leads: 0, visitas: 0, propostas: 0, pontos: 0 }
+      { contatos: 0, qualificados: 0, visitas: 0, propostas: 0, pontos: 0 }
     );
   }, [ranking]);
 
@@ -103,9 +105,9 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: ClipboardList, label: "Tentativas", value: totals.leads, color: "text-primary" },
-          { icon: CheckCircle, label: "Visitas", value: totals.visitas, color: "text-emerald-600" },
-          { icon: TrendingUp, label: "Propostas", value: totals.propostas, color: "text-purple-600" },
+          { icon: ClipboardList, label: "Contatos", value: totals.contatos, color: "text-primary" },
+          { icon: CheckCircle, label: "Qualificados", value: totals.qualificados, color: "text-emerald-600" },
+          { icon: TrendingUp, label: "Visitas", value: totals.visitas, color: "text-purple-600" },
           { icon: Clock, label: "Total Pontos", value: totals.pontos, color: "text-warning" },
         ].map(kpi => (
           <Card key={kpi.label}>
@@ -136,8 +138,8 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
                 <tr className="border-b border-border text-xs text-muted-foreground">
                   <th className="py-2 px-3 text-left w-10">#</th>
                   <th className="py-2 px-3 text-left">Corretor</th>
-                  <th className="py-2 px-3 text-center">Tentativas</th>
-                  <th className="py-2 px-3 text-center">Responderam</th>
+                  <th className="py-2 px-3 text-center">Contatos</th>
+                  <th className="py-2 px-3 text-center">Qualificados</th>
                   <th className="py-2 px-3 text-center">Visitas</th>
                   <th className="py-2 px-3 text-center">Propostas</th>
                   <th className="py-2 px-3 text-center">Pts</th>
@@ -173,8 +175,8 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
                           {isMe && <span className="text-[10px] text-primary font-medium">← você</span>}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-center">{r.tentativas}</td>
-                      <td className="py-2.5 px-3 text-center text-emerald-600 font-semibold">{r.leads_responderam}</td>
+                      <td className="py-2.5 px-3 text-center">{r.contatos}</td>
+                      <td className="py-2.5 px-3 text-center text-emerald-600 font-semibold">{r.qualificados}</td>
                       <td className="py-2.5 px-3 text-center">{r.visitas_marcadas}</td>
                       <td className="py-2.5 px-3 text-center text-purple-600 font-semibold">{r.propostas}</td>
                       <td className="py-2.5 px-3 text-center font-bold text-primary">{r.pontos_total}</td>
