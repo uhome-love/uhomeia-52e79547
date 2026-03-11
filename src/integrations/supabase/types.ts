@@ -1900,6 +1900,36 @@ export type Database = {
         }
         Relationships: []
       }
+      jetimob_campaign_map: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          empreendimento: string
+          id: string
+          notas: string | null
+          segmento: string | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          empreendimento: string
+          id?: string
+          notas?: string | null
+          segmento?: string | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          empreendimento?: string
+          id?: string
+          notas?: string | null
+          segmento?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       jetimob_processed: {
         Row: {
           created_at: string
