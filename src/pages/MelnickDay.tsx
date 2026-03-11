@@ -756,7 +756,8 @@ export default function MelnickDay() {
 
         {segKeys.map((k) => {
           const seg = SEGMENTOS[k];
-          const emps = filteredEmpreendimentos(seg.empreendimentos);
+          const q = search.toLowerCase().trim();
+          const emps = q ? seg.empreendimentos.filter((e) => e.nome.toLowerCase().includes(q) || e.bairro.toLowerCase().includes(q)) : seg.empreendimentos;
           return (
             <TabsContent key={k} value={k} className="space-y-4 mt-0">
               {/* Condições do segmento */}
@@ -784,16 +785,41 @@ export default function MelnickDay() {
 
               {/* Empreendimentos */}
               <div>
-                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Empreendimentos ({emps.length})
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    Empreendimentos ({emps.length})
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[11px] gap-1 h-7"
+                    onClick={() => {
+                      const allNames = emps.map((e) => e.nome);
+                      const allSelected = allNames.every((n) => selectedEmps.has(n));
+                      setSelectedEmps((prev) => {
+                        const next = new Set(prev);
+                        allNames.forEach((n) => allSelected ? next.delete(n) : next.add(n));
+                        return next;
+                      });
+                    }}
+                  >
+                    <CheckSquare className="h-3 w-3" />
+                    {emps.every((e) => selectedEmps.has(e.nome)) ? "Desmarcar todos" : "Selecionar todos"}
+                  </Button>
+                </div>
                 {emps.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-8">Nenhum empreendimento encontrado para "{search}"</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                     {emps.map((emp, i) => (
-                      <EmpreendimentoCard key={i} emp={emp} />
+                      <EmpreendimentoCard
+                        key={i}
+                        emp={emp}
+                        segKey={k}
+                        selected={selectedEmps.has(emp.nome)}
+                        onToggle={() => toggleEmp(emp.nome)}
+                      />
                     ))}
                   </div>
                 )}
