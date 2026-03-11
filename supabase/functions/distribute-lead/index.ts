@@ -320,7 +320,7 @@ Deno.serve(async (req) => {
           console.warn("Push notify error:", e)
         );
 
-        distributionLog.push({ leadId: lead.id, corretorId: chosen.authUserId, segmento: segmentoId || "unknown" });
+          distributionLog.push({ leadId: lead.id, corretorId: chosen.authUserId, segmento: segmentoId || "unknown", leadsHoje: chosen.leadsHoje, totalAtivos: chosen.totalAtivos });
         dispatched++;
       }
 
