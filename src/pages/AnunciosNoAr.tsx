@@ -166,7 +166,7 @@ function getPrice(item: JetimobImovel): number {
 
 function formatPrice(v: number): string {
   if (!v) return "Sob consulta";
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 });
+  return formatBRL(v);
 }
 
 function getImages(item: JetimobImovel): string[] {
