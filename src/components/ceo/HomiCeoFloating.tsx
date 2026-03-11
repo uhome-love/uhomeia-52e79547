@@ -78,7 +78,7 @@ export default function HomiCeoFloating({ dashboardData }: Props) {
         icon: "💰",
         message: `${kpis.propostas} propostas ativas sem VGV assinado`,
         action: "Ver negócios",
-        link: "/negocios",
+        link: "/pipeline-negocios",
       });
     }
 
