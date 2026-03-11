@@ -717,12 +717,83 @@ export default function AgendaVisitas() {
           )}
         </TabsContent>
 
-        <TabsContent value="anteriores" className="mt-3">
+        <TabsContent value="anteriores" className="mt-3 space-y-3">
+          {/* Period selector */}
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { key: "mes-atual", label: "Mês atual" },
+              { key: "mes-1", label: format(subMonths(new Date(), 1), "MMMM", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) },
+              { key: "mes-2", label: format(subMonths(new Date(), 2), "MMMM", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) },
+              { key: "mes-3", label: format(subMonths(new Date(), 3), "MMMM", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) },
+              { key: "personalizado", label: "Personalizado" },
+            ].map(p => (
+              <button
+                key={p.key}
+                onClick={() => setAnterioresPeriodo(p.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border",
+                  anterioresPeriodo === p.key
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-muted/60 text-muted-foreground border-transparent hover:bg-muted"
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {anterioresPeriodo === "personalizado" && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-9 text-xs gap-1", anterioresCustomFrom && "border-primary text-primary")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {anterioresCustomFrom ? format(anterioresCustomFrom, "dd/MM/yyyy") : "Data início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={anterioresCustomFrom}
+                    onSelect={setAnterioresCustomFrom}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <span className="text-xs text-muted-foreground">até</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-9 text-xs gap-1", anterioresCustomTo && "border-primary text-primary")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {anterioresCustomTo ? format(anterioresCustomTo, "dd/MM/yyyy") : "Data fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={anterioresCustomTo}
+                    onSelect={setAnterioresCustomTo}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {(anterioresCustomFrom || anterioresCustomTo) && (
+                <Button variant="ghost" size="sm" className="h-9 text-xs text-destructive" onClick={() => { setAnterioresCustomFrom(undefined); setAnterioresCustomTo(undefined); }}>
+                  <X className="h-3.5 w-3.5 mr-1" /> Limpar
+                </Button>
+              )}
+            </div>
+          )}
+
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
           ) : (
             <VisitasList
-              visitas={filtered}
+              visitas={anterioresFiltered}
               onUpdateStatus={handleUpdateStatus}
               onEdit={handleEdit}
               onDelete={deleteVisita}
