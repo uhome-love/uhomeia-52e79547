@@ -153,8 +153,7 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
                    const ptsContatos = Number(r.contatos) * 5;
                    const ptsQualif = Number(r.qualificados) * 10;
                    const ptsVM = Number(r.visitas_marcadas) * 30;
-                   const ptsVR = Number(r.visitas_realizadas) * 50;
-                   const ptsProp = Number(r.propostas) * 80;
+                    const ptsVR = Number(r.visitas_realizadas) * 50;
                    return (
                      <tr
                        key={r.corretor_id}
