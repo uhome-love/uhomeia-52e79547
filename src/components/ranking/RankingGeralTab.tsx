@@ -260,7 +260,7 @@ export default function RankingGeralTab({ period }: { period: "hoje" | "semana" 
           {
             label: "Gestão de Leads",
             peso: `${PESO_GESTAO}%`,
-            desc: "Transições de etapa no pipeline: Contato Iniciado (×5) + Qualificação (×10) + V.Marcada (×30) + V.Realizada (×50) + Proposta (×80).",
+            desc: "Transições de etapa no pipeline: Contato Iniciado (×5) + Qualificação (×10) + V.Marcada (×30) + V.Realizada (×50). Pipeline encerra em Visita Realizada.",
           },
           {
             label: "Vendas (VGV)",

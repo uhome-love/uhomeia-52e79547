@@ -190,15 +190,11 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
                          <span className="block">{r.visitas_marcadas}</span>
                          <span className="text-[9px] text-muted-foreground">{ptsVM}pts</span>
                        </td>
-                       <td className="py-2.5 px-3 text-center">
-                         <span className="block font-semibold">{r.visitas_realizadas}</span>
-                         <span className="text-[9px] text-muted-foreground">{ptsVR}pts</span>
-                       </td>
-                       <td className="py-2.5 px-3 text-center">
-                         <span className="block text-purple-600 font-semibold">{r.propostas}</span>
-                         <span className="text-[9px] text-muted-foreground">{ptsProp}pts</span>
-                       </td>
-                       <td className="py-2.5 px-3 text-center font-bold text-primary text-lg">{r.pontos_total}</td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className="block font-semibold">{r.visitas_realizadas}</span>
+                          <span className="text-[9px] text-muted-foreground">{ptsVR}pts</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center font-bold text-primary text-lg">{r.pontos_total}</td>
                      </tr>
                    );
                  })}
