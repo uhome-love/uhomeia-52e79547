@@ -613,8 +613,12 @@ export default function MeusNegocios() {
   }, [corretorNomes]);
 
   const totalVGV = useMemo(() =>
-    filteredNegocios.reduce((sum, n) => sum + (n.vgv_estimado || 0), 0),
-    [filteredNegocios]
+    filteredNegocios.reduce((sum, n) => {
+      const vgv = n.vgv_estimado || 0;
+      const isParceria = n.pipeline_lead_id ? parceriaMap[n.pipeline_lead_id]?.isParceria : false;
+      return sum + (isParceria ? vgv / 2 : vgv);
+    }, 0),
+    [filteredNegocios, parceriaMap]
   );
 
   const negociosByFase = useMemo(() => {
