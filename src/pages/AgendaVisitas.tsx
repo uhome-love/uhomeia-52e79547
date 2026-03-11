@@ -461,59 +461,77 @@ export default function AgendaVisitas() {
         </Button>
       </div>
 
-      {/* ─── TIPO TABS (Lead / Negócio) ─── */}
-      <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1 w-fit">
-        <button
-          onClick={() => setAgendaTipo("lead")}
-          className={cn(
-            "px-4 py-2 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5",
-            agendaTipo === "lead"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          🏠 Visitas de Leads <Badge variant="secondary" className="text-[10px] ml-1 px-1.5 py-0">{leadCount}</Badge>
-        </button>
-        <button
-          onClick={() => setAgendaTipo("negocio")}
-          className={cn(
-            "px-4 py-2 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5",
-            agendaTipo === "negocio"
-              ? "bg-amber-600 text-white shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          💼 Reuniões de Negócios <Badge variant="secondary" className="text-[10px] ml-1 px-1.5 py-0">{negocioCount}</Badge>
-        </button>
-      </div>
-
-      {/* Sub-tab: Minhas vs Time (for all roles with leads tab) */}
-      {agendaTipo === "lead" && (
-        <div className="flex items-center gap-1 bg-muted/40 rounded-lg p-0.5 w-fit">
+      {/* ─── TIPO TABS + FILTERS (inline) ─── */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
           <button
-            onClick={() => setLeadSubTab("minhas")}
+            onClick={() => setAgendaTipo("lead")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5",
-              leadSubTab === "minhas"
-                ? "bg-card text-foreground shadow-sm"
+              "px-4 py-2 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5",
+              agendaTipo === "lead"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            📋 Minhas Visitas
+            🏠 Visitas de Leads <Badge variant="secondary" className="text-[10px] ml-1 px-1.5 py-0">{leadCount}</Badge>
           </button>
           <button
-            onClick={() => setLeadSubTab("time")}
+            onClick={() => setAgendaTipo("negocio")}
             className={cn(
-              "px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5",
-              leadSubTab === "time"
-                ? "bg-card text-foreground shadow-sm"
+              "px-4 py-2 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5",
+              agendaTipo === "negocio"
+                ? "bg-amber-600 text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Users2 className="h-3.5 w-3.5" /> Visitas do Time
+            💼 Reuniões de Negócios <Badge variant="secondary" className="text-[10px] ml-1 px-1.5 py-0">{negocioCount}</Badge>
           </button>
         </div>
-      )}
+
+        {(isAdmin || isGestor) && corretores.length > 1 && (
+          <Select value={corretorFilter} onValueChange={setCorretorFilter}>
+            <SelectTrigger className="h-9 w-[160px] text-xs">
+              <SelectValue placeholder="Todos corretores" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos corretores</SelectItem>
+              {corretores.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {empreendimentos.length > 1 && (
+          <Select value={empreendimentoFilter} onValueChange={setEmpreendimentoFilter}>
+            <SelectTrigger className="h-9 w-[160px] text-xs">
+              <SelectValue placeholder="Todos empreend." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos empreend.</SelectItem>
+              {empreendimentos.map(e => (
+                <SelectItem key={e} value={e}>{e}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        <div className="relative flex-1 min-w-[160px] max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Buscar cliente, corretor..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="text-xs h-9 pl-9"
+          />
+        </div>
+
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={clearAll} className="h-9 text-xs gap-1 text-destructive">
+            <X className="h-3.5 w-3.5" /> Limpar
+          </Button>
+        )}
+      </div>
 
       {/* ─── TEAM VIEW (Visitas do Time) ─── */}
       {agendaTipo === "lead" && leadSubTab === "time" ? (
