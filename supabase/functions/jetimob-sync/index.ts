@@ -364,7 +364,7 @@ serve(async (req) => {
                     user_id: existingLead.corretor_id,
                     title: "🔄 Lead reativado!",
                     body: `${existingLead.nome || nome} — ${interestLabel} (${canalOrigem})`,
-                    url: `/pipeline-kanban?lead=${existingLead.id}`,
+                    url: `/pipeline-leads?lead=${existingLead.id}`,
                   }),
                 });
               } catch (e) { console.warn("Push dedup error:", e); }
