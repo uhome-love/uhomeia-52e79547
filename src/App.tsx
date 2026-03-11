@@ -188,6 +188,7 @@ const App = () => (
             {/* Backoffice — Ana Paula */}
             <Route path="/backoffice" element={<ProtectedPage roles={["backoffice", "admin"]}><BackofficeDashboard /></ProtectedPage>} />
             <Route path="/backoffice/pagadorias" element={<ProtectedPage roles={["backoffice", "admin"]}><PagadoriasPage /></ProtectedPage>} />
+            <Route path="/backoffice/solicitacoes-pagadoria" element={<ProtectedPage roles={["backoffice", "admin"]}><PagadoriaSolicitacoes /></ProtectedPage>} />
             <Route path="/backoffice/comissoes" element={<ProtectedPage roles={["backoffice", "admin"]}><ComissoesPage /></ProtectedPage>} />
             <Route path="/backoffice/marketing" element={<ProtectedPage roles={["backoffice", "admin"]}><MarketingCentral /></ProtectedPage>} />
             <Route path="/backoffice/homi-ana" element={<ProtectedPage roles={["backoffice", "admin"]}><HomiAna /></ProtectedPage>} />
