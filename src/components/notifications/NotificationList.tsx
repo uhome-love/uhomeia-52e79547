@@ -118,10 +118,10 @@ function getNotificationRoute(n: Notification): string | null {
   if (categoria === "lead_sem_atendimento") return "/pipeline-leads";
   if (categoria === "meta_abaixo") return "/gerente/dashboard";
   if (categoria === "escala_solicitada" || categoria === "escala_aprovado" || categoria === "escala_rejeitado") return "/escala-diaria";
-  if (categoria === "problema_atendimento") return "/pipeline";
-  if (categoria === "volume_leads") return "/pipeline";
+  if (categoria === "problema_atendimento") return "/pipeline-leads";
+  if (categoria === "volume_leads") return "/pipeline-leads";
   if (categoria === "alerta_previsao") return "/ceo";
-  if (categoria === "venda_assinada") return "/meus-negocios";
+  if (categoria === "venda_assinada") return "/pipeline-negocios";
 
   // Mensagens
   if (tipo === "mensagem_gerente") return "/notificacoes";
