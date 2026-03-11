@@ -15,6 +15,7 @@ interface Props {
   onDelete?: (id: string) => void;
   showCorretor?: boolean;
   showTeam?: boolean;
+  mode?: "upcoming" | "past" | "all";
 }
 
 interface DateGroup {
@@ -154,16 +155,20 @@ function DateGroupCard({
   );
 }
 
-export default function VisitasList({ visitas, onUpdateStatus, onEdit, onDelete, showCorretor, showTeam }: Props) {
+export default function VisitasList({ visitas, onUpdateStatus, onEdit, onDelete, showCorretor, showTeam, mode = "upcoming" }: Props) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [showPast, setShowPast] = useState(false);
 
-  const { upcoming, past } = useMemo(() => {
+  const displayGroups = useMemo(() => {
     const groups = buildGroups(visitas);
-    const upcoming = groups.filter(g => !g.isPast).sort((a, b) => a.dateStr.localeCompare(b.dateStr));
-    const past = groups.filter(g => g.isPast).sort((a, b) => b.dateStr.localeCompare(a.dateStr));
-    return { upcoming, past };
-  }, [visitas]);
+    if (mode === "past") {
+      return groups.filter(g => g.isPast).sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+    }
+    if (mode === "all") {
+      return groups.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+    }
+    // upcoming (default)
+    return groups.filter(g => !g.isPast).sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+  }, [visitas, mode]);
 
   const toggle = (dateStr: string) => {
     setCollapsed(prev => {
@@ -173,77 +178,32 @@ export default function VisitasList({ visitas, onUpdateStatus, onEdit, onDelete,
     });
   };
 
-  if (visitas.length === 0) {
-    return <p className="text-sm text-muted-foreground text-center py-8">Nenhuma visita encontrada.</p>;
+  if (displayGroups.length === 0) {
+    return (
+      <div className="text-center py-6 rounded-xl border border-dashed border-border/50 bg-muted/20">
+        <CalendarDays className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+        <p className="text-sm text-muted-foreground">
+          {mode === "past" ? "Nenhuma visita anterior encontrada" : mode === "all" ? "Nenhuma visita encontrada" : "Nenhuma visita futura agendada"}
+        </p>
+      </div>
+    );
   }
-
-  const totalPastVisitas = past.reduce((s, g) => s + g.total, 0);
 
   return (
     <div className="space-y-3">
-      {/* Upcoming / Today — always visible and expanded */}
-      {upcoming.length > 0 && (
-        <div className="space-y-3">
-          {upcoming.map(g => (
-            <DateGroupCard
-              key={g.dateStr}
-              g={g}
-              isOpen={!collapsed.has(g.dateStr)}
-              onToggle={() => toggle(g.dateStr)}
-              showCorretor={showCorretor}
-              showTeam={showTeam}
-              onUpdateStatus={onUpdateStatus}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
-      )}
-
-      {upcoming.length === 0 && (
-        <div className="text-center py-6 rounded-xl border border-dashed border-border/50 bg-muted/20">
-          <CalendarDays className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-          <p className="text-sm text-muted-foreground">Nenhuma visita futura agendada</p>
-        </div>
-      )}
-
-      {/* Past visits — collapsed by default */}
-      {past.length > 0 && (
-        <Collapsible open={showPast} onOpenChange={setShowPast}>
-          <CollapsibleTrigger className="w-full flex items-center gap-2 px-4 py-3 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors group">
-            {showPast
-              ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              : <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            }
-            <History className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-bold text-muted-foreground">
-              Visitas anteriores
-            </span>
-            <Badge variant="secondary" className="text-[10px] font-bold">
-              {totalPastVisitas} visita{totalPastVisitas !== 1 ? "s" : ""}
-            </Badge>
-            <span className="flex-1" />
-            <span className="text-[11px] text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
-              {showPast ? "Recolher" : "Expandir"}
-            </span>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 pt-3">
-            {past.map(g => (
-              <DateGroupCard
-                key={g.dateStr}
-                g={g}
-                isOpen={!collapsed.has(g.dateStr)}
-                onToggle={() => toggle(g.dateStr)}
-                showCorretor={showCorretor}
-                showTeam={showTeam}
-                onUpdateStatus={onUpdateStatus}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+      {displayGroups.map(g => (
+        <DateGroupCard
+          key={g.dateStr}
+          g={g}
+          isOpen={!collapsed.has(g.dateStr)}
+          onToggle={() => toggle(g.dateStr)}
+          showCorretor={showCorretor}
+          showTeam={showTeam}
+          onUpdateStatus={onUpdateStatus}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      ))}
     </div>
   );
 }

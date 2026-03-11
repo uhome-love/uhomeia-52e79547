@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, List, Users, Plus, CalendarIcon, X, ArrowUpDown, Search, AlertTriangle, CheckCircle2, XCircle, Clock, RefreshCw, TrendingUp, MessageCircle, Users2 } from "lucide-react";
+import { CalendarDays, List, Users, Plus, CalendarIcon, X, ArrowUpDown, Search, AlertTriangle, CheckCircle2, XCircle, Clock, RefreshCw, TrendingUp, MessageCircle, Users2, History, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVisitas, STATUS_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
 import { getTeamBadgeStyle } from "@/components/visitas/VisitaRow";
@@ -26,6 +26,7 @@ import VisitaTypeSelector from "@/components/visitas/VisitaTypeSelector";
 import ReuniaoNegocioForm from "@/components/visitas/ReuniaoNegocioForm";
 import VisitaResultadoDialog, { type ResultadoVisita } from "@/components/visitas/VisitaResultadoDialog";
 import VisitasEquipe from "@/components/visitas/VisitasEquipe";
+import VisitasPerformance from "@/components/visitas/VisitasPerformance";
 
 
 const FIXED_TEAMS = [
@@ -658,18 +659,27 @@ export default function AgendaVisitas() {
 
       {/* ─── VIEWS ─── */}
       <Tabs defaultValue="lista">
-        <TabsList className="h-9">
-          <TabsTrigger value="lista" className="gap-1.5 text-xs h-8 px-4">
-            <List className="h-3.5 w-3.5" /> 📋 Lista
+        <TabsList className="h-9 flex-wrap">
+          <TabsTrigger value="lista" className="gap-1.5 text-xs h-8 px-3">
+            <List className="h-3.5 w-3.5" /> Visitas
           </TabsTrigger>
-          <TabsTrigger value="calendario" className="gap-1.5 text-xs h-8 px-4">
-            <CalendarDays className="h-3.5 w-3.5" /> 📅 Calendário
+          <TabsTrigger value="anteriores" className="gap-1.5 text-xs h-8 px-3">
+            <History className="h-3.5 w-3.5" /> Anteriores
+          </TabsTrigger>
+          <TabsTrigger value="geral" className="gap-1.5 text-xs h-8 px-3">
+            <CalendarDays className="h-3.5 w-3.5" /> Visitas Geral
+          </TabsTrigger>
+          <TabsTrigger value="calendario" className="gap-1.5 text-xs h-8 px-3">
+            <CalendarDays className="h-3.5 w-3.5" /> Calendário
           </TabsTrigger>
           {(isAdmin || isGestor) && (
-            <TabsTrigger value="por-corretor" className="gap-1.5 text-xs h-8 px-4">
-              <Users className="h-3.5 w-3.5" /> 👥 Por Corretor
+            <TabsTrigger value="por-corretor" className="gap-1.5 text-xs h-8 px-3">
+              <Users className="h-3.5 w-3.5" /> Por Corretor
             </TabsTrigger>
           )}
+          <TabsTrigger value="performance" className="gap-1.5 text-xs h-8 px-3">
+            <BarChart3 className="h-3.5 w-3.5" /> Performance
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="lista" className="mt-3">
@@ -683,7 +693,45 @@ export default function AgendaVisitas() {
               onDelete={deleteVisita}
               showCorretor={isAdmin || isGestor}
               showTeam={isAdmin}
+              mode="upcoming"
             />
+          )}
+        </TabsContent>
+
+        <TabsContent value="anteriores" className="mt-3">
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
+          ) : (
+            <VisitasList
+              visitas={filtered}
+              onUpdateStatus={handleUpdateStatus}
+              onEdit={handleEdit}
+              onDelete={deleteVisita}
+              showCorretor={isAdmin || isGestor}
+              showTeam={isAdmin}
+              mode="past"
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="geral" className="mt-3">
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
+          ) : (
+            <>
+              <DaySummary visitas={visitas} showTeamBreakdown={isAdmin} />
+              <div className="mt-3">
+                <VisitasList
+                  visitas={filtered}
+                  onUpdateStatus={handleUpdateStatus}
+                  onEdit={handleEdit}
+                  onDelete={deleteVisita}
+                  showCorretor={isAdmin || isGestor}
+                  showTeam={isAdmin}
+                  mode="all"
+                />
+              </div>
+            </>
           )}
         </TabsContent>
 
@@ -696,6 +744,10 @@ export default function AgendaVisitas() {
             <VisitasByCorretor visitas={filtered} onUpdateStatus={handleUpdateStatus} onDelete={deleteVisita} showTeam={isAdmin} />
           </TabsContent>
         )}
+
+        <TabsContent value="performance" className="mt-3">
+          <VisitasPerformance visitas={visitas} showCorretor={isAdmin || isGestor} />
+        </TabsContent>
       </Tabs>
       </>
       )}
