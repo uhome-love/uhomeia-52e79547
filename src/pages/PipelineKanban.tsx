@@ -149,7 +149,7 @@ export default function PipelineKanban() {
   const filteredLeads = useMemo(() => {
     let result = applyFilters(pipeline.leads, filters, pipeline.stages);
     if (filaCeoFilter) {
-      result = result.filter(l => l.aceite_status === "pendente_distribuicao");
+      result = result.filter(l => !l.corretor_id);
     }
     if (corretorFilter && corretorFilter !== "all") {
       if (corretorFilter === "sem_corretor") {
