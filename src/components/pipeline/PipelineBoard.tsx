@@ -754,6 +754,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                   stages={stages}
                   segmentos={segmentos}
                   corretorNomes={corretorNomes}
+                  corretorAvatars={corretorAvatars}
                   parcerias={parcerias}
                   selectionMode={selectionMode}
                   selectedLeads={selectedLeads}
