@@ -205,15 +205,22 @@ export default function PipelineKanban() {
     );
   }
 
-  // Defensive: if stages failed to load, show a retry UI instead of crashing
-  if (!pipeline.stages || pipeline.stages.length === 0) {
+  // Show error state with retry
+  if (pipeline.error || !pipeline.stages || pipeline.stages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
-        <span className="text-destructive font-semibold">Erro ao carregar etapas do Pipeline</span>
-        <span className="text-sm text-muted-foreground">Nenhuma etapa foi encontrada. Tente recarregar.</span>
-        <button onClick={() => pipeline.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm">
-          Recarregar
-        </button>
+        <span className="text-destructive font-semibold">Erro ao carregar o Pipeline</span>
+        <span className="text-sm text-muted-foreground">
+          {pipeline.error || "Nenhuma etapa foi encontrada. Tente recarregar."}
+        </span>
+        <div className="flex gap-2">
+          <button onClick={() => pipeline.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm">
+            Tentar novamente
+          </button>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-muted text-muted-foreground rounded-md text-sm">
+            Recarregar página
+          </button>
+        </div>
       </div>
     );
   }
