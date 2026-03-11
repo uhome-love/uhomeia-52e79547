@@ -37,6 +37,7 @@ import {
   ListTodo,
   PhoneCall,
   PackageCheck,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -271,6 +272,7 @@ export function AppSidebar() {
             items: [
               { title: "Central de Marketing", url: "/marketing", icon: TrendingUp },
               { title: "Imóveis Jetimob", url: "/imoveis", icon: Building2 },
+              { title: "Melnick Day", url: "/melnick-day", icon: Zap },
             ],
           },
           {
@@ -330,6 +332,7 @@ export function AppSidebar() {
               { title: "HOMI Gerente", url: "/homi-gerente", icon: Bot },
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
               { title: "Imóveis", url: "/imoveis", icon: Building2 },
+              { title: "Melnick Day", url: "/melnick-day", icon: Zap },
               { title: "Academia", url: "/academia/gerenciar", icon: Award },
               { title: "Templates", url: "/templates-comunicacao", icon: MessageSquare },
               { title: "Marketplace", url: "/marketplace", icon: BookOpen },
@@ -403,6 +406,7 @@ export function AppSidebar() {
           label: "Ferramentas",
           items: [
             { title: "Imóveis", url: "/imoveis", icon: Home },
+            { title: "Melnick Day", url: "/melnick-day", icon: Zap },
             { title: "HOMI Assistente", url: "/homi", icon: Bot },
             { title: "Academia", url: "/academia", icon: GraduationCap },
             { title: "Meus Scripts", url: "/scripts", icon: FileEdit },
