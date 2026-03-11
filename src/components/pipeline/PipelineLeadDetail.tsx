@@ -474,18 +474,6 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
           <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: "calc(85vh - 260px)" }}>
             {/* ===== TAB: TAREFAS (DEFAULT) ===== */}
             <TabsContent value="tarefas" className="mt-0">
-              {/* Sequence suggestions at top of tasks tab */}
-              {currentStage && leadData.tarefas.filter(t => t.status === "pendente").length < 3 && (
-                <div className="px-6 pt-4 pb-2">
-                  <LeadSequenceSuggestion
-                    leadId={lead.id}
-                    leadNome={lead.nome}
-                    stageType={currentStage.tipo}
-                    empreendimento={lead.empreendimento}
-                    onTasksCreated={leadData.reload}
-                  />
-                </div>
-              )}
               <LeadTarefasTab
                 leadId={lead.id}
                 leadNome={lead.nome}
@@ -497,6 +485,24 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 onDeleteTarefa={leadData.deleteTarefa}
                 onReload={leadData.reload}
               />
+              {/* Sequence suggestions — collapsed by default, below tasks */}
+              {currentStage && (
+                <Collapsible className="px-6 pb-6">
+                  <CollapsibleTrigger className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors w-full group">
+                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-90" />
+                    🤖 Sequências sugeridas
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-3">
+                    <LeadSequenceSuggestion
+                      leadId={lead.id}
+                      leadNome={lead.nome}
+                      stageType={currentStage.tipo}
+                      empreendimento={lead.empreendimento}
+                      onTasksCreated={leadData.reload}
+                    />
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
             </TabsContent>
 
             {/* ===== TAB: HISTÓRICO ===== */}
