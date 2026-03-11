@@ -58,13 +58,14 @@ interface NegocioTask {
   status: string;
 }
 
-function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, nextTask, onDragStart, onClick, onMoveFase, onUpdateNegocio, onTaskSaved }: {
+function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, nextTask, parceriaLabel, onDragStart, onClick, onMoveFase, onUpdateNegocio, onTaskSaved }: {
   negocio: Negocio;
   corretorNome?: string;
   corretorInfo?: CorretorInfo;
   showCorretor?: boolean;
   paradoInfo?: { diasParado: number; severity: "warning" | "danger" };
   nextTask?: NegocioTask | null;
+  parceriaLabel?: string;
   onDragStart: () => void;
   onClick: () => void;
   onMoveFase: (id: string, fase: string) => void;
