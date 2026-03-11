@@ -387,6 +387,14 @@ serve(async (req) => {
             }
           }
 
+          // Mark as processed even for re-entries
+          await adminClient.from("jetimob_processed").upsert({
+            jetimob_lead_id: jetimobId,
+            telefone: phone,
+          }, { onConflict: "jetimob_lead_id" }).then(r => {
+            if (r.error) console.warn("jetimob_processed upsert (reentry):", r.error.message);
+          });
+
           // Mark this jetimob ID as processed to avoid re-processing
           existingIds.add(jetimobId);
           skipped++;
