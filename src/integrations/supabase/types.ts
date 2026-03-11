@@ -5567,15 +5567,16 @@ export type Database = {
       get_individual_oa_ranking: { Args: { p_period?: string }; Returns: Json }
       get_profile_id_for_auth: { Args: never; Returns: string }
       get_ranking_gestao_leads: {
-        Args: { p_periodo?: string }
+        Args: { p_periodo: string }
         Returns: {
+          contatos: number
           corretor_id: string
           corretor_nome: string
-          leads_responderam: number
           pontos_total: number
           propostas: number
-          tentativas: number
+          qualificados: number
           visitas_marcadas: number
+          visitas_realizadas: number
         }[]
       }
       get_ranking_pipeline_leads: {
