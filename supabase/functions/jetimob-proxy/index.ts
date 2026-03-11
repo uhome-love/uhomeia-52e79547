@@ -132,32 +132,9 @@ serve(async (req) => {
 
       if (imovel) {
         // Log ALL keys for debugging image issues
-        const allKeys = Object.keys(imovel);
-        console.log("Jetimob imovel keys:", codigo, JSON.stringify(allKeys));
+        console.log("Jetimob imovel keys:", codigo, JSON.stringify(Object.keys(imovel)));
         
-        // Normalize images into a flat array of URLs
-        const fotos: string[] = [];
-        if (imovel.foto_principal) fotos.push(imovel.foto_principal);
-        if (imovel.foto_destaque) fotos.push(imovel.foto_destaque);
-        
-        // Handle various image array formats from Jetimob API
-        const imgFieldNames = ["imagens", "fotos", "galeria", "photos", "images", "fotos_imovel", "galeria_fotos", "midia", "midias"];
-        for (const fieldName of imgFieldNames) {
-          const arr = imovel[fieldName];
-          if (Array.isArray(arr) && arr.length > 0) {
-            console.log(`Jetimob ${codigo} found image field "${fieldName}" with ${arr.length} items, sample:`, JSON.stringify(arr[0]).substring(0, 300));
-            for (const item of arr) {
-              if (typeof item === "string") {
-                if (item && !fotos.includes(item)) fotos.push(item);
-              } else if (item && typeof item === "object") {
-                // Try all possible URL field names
-                const url = item.link || item.link_thumb || item.url || item.arquivo || item.src || item.path || item.foto || item.imagem || "";
-                if (url && !fotos.includes(url)) fotos.push(url);
-              }
-            }
-          }
-        }
-        
+        const fotos = normalizeImages(imovel, codigo);
         imovel._fotos_normalized = fotos;
         console.log("Jetimob imovel normalized:", codigo, "fotos:", fotos.length);
       }
