@@ -300,7 +300,7 @@ export function useGerenteDashboard(period: Period) {
 
       return alerts;
     },
-    enabled: !!user && teamUserIds.length > 0,
+    enabled: !!user && !!profileId && teamUserIds.length > 0,
     staleTime: 60_000,
   });
 
