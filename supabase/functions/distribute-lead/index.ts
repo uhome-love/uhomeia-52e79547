@@ -274,9 +274,9 @@ Deno.serve(async (req) => {
           user_id: chosen.authUserId,
           tipo: "lead",
           categoria: "lead_novo",
-          titulo: "🚨 Novo Lead!",
-          mensagem: `Você recebeu o lead ${lead.nome || "Lead"}${lead.empreendimento ? ` (${lead.empreendimento})` : ""}. Aceite em 10 minutos!`,
-          dados: { pipeline_lead_id: lead.id, empreendimento: lead.empreendimento, telefone: lead.telefone },
+          titulo: `🚨 Novo Lead! ${lead.nome || ""}`.trim(),
+          mensagem: `Você recebeu o lead ${lead.nome || "Lead"}${lead.empreendimento ? ` — ${lead.empreendimento}` : ""}${lead.origem ? ` (${lead.origem})` : ""}. Aceite em 10 minutos!`,
+          dados: { pipeline_lead_id: lead.id, lead_nome: lead.nome, empreendimento: lead.empreendimento, telefone: lead.telefone, origem: lead.origem, campanha: lead.origem_detalhe },
           agrupamento_key: `lead_novo_${lead.id}`,
         }).then(r => { if (r.error) console.warn("notification insert:", r.error.message); });
 
@@ -464,9 +464,9 @@ async function distributeSingleLead(
     user_id: chosen.authUserId,
     tipo: "lead",
     categoria: "lead_novo",
-    titulo: "🚨 Novo Lead!",
-    mensagem: `Você recebeu o lead ${lead.nome || "Lead"}${lead.empreendimento ? ` (${lead.empreendimento})` : ""}. Aceite em 10 minutos!`,
-    dados: { pipeline_lead_id: leadId, empreendimento: lead.empreendimento },
+    titulo: `🚨 Novo Lead! ${lead.nome || ""}`.trim(),
+    mensagem: `Você recebeu o lead ${lead.nome || "Lead"}${lead.empreendimento ? ` — ${lead.empreendimento}` : ""}${lead.origem ? ` (${lead.origem})` : ""}. Aceite em 10 minutos!`,
+    dados: { pipeline_lead_id: leadId, lead_nome: lead.nome, empreendimento: lead.empreendimento, origem: lead.origem, campanha: lead.origem_detalhe },
     agrupamento_key: `lead_novo_${leadId}`,
   });
   if (notifRes.error) console.warn("notification insert:", notifRes.error.message);
@@ -516,9 +516,9 @@ async function handleAcceptReject(supabase: any, body: any, userId: string, supa
         user_id: userId,
         tipo: "lead",
         categoria: "lead_aceito",
-        titulo: "✅ Lead aceito!",
-        mensagem: `${leadData.nome || "Lead"} - ${leadData.empreendimento || ""}. Faça o primeiro contato agora!`,
-        dados: { pipeline_lead_id },
+        titulo: `✅ Lead aceito! ${leadData.nome || ""}`.trim(),
+        mensagem: `${leadData.nome || "Lead"}${leadData.empreendimento ? ` — ${leadData.empreendimento}` : ""}. Faça o primeiro contato agora!`,
+        dados: { pipeline_lead_id, lead_nome: leadData.nome, empreendimento: leadData.empreendimento },
         agrupamento_key: `lead_aceito_${pipeline_lead_id}`,
       });
       if (notifRes2.error) console.warn("notification insert:", notifRes2.error.message);
