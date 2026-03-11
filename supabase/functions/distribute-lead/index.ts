@@ -191,6 +191,19 @@ Deno.serve(async (req) => {
         .gte("distribuido_em", todayStart)
         .in("aceite_status", ["aceito", "pendente"]);
 
+      // Count TOTAL active pipeline leads per corretor (for fairer balancing)
+      const { data: activeLeadsData } = await supabase
+        .from("pipeline_leads")
+        .select("corretor_id")
+        .in("corretor_id", authUserIds)
+        .in("aceite_status", ["aceito", "pendente"]);
+
+      const totalAtivosCount = new Map<string, number>();
+      for (const uid of authUserIds) totalAtivosCount.set(uid, 0);
+      for (const l of activeLeadsData || []) {
+        totalAtivosCount.set(l.corretor_id, (totalAtivosCount.get(l.corretor_id) || 0) + 1);
+      }
+
       // Count per auth user
       const leadsCount = new Map<string, number>();
       const lastReceived = new Map<string, string>();
@@ -226,6 +239,7 @@ Deno.serve(async (req) => {
             corretorId: profileId,
             authUserId: authId,
             leadsHoje: leadsCount.get(authId) || 0,
+            totalAtivos: totalAtivosCount.get(authId) || 0,
             lastReceivedAt: lastReceived.get(authId) || null,
           });
         }
@@ -236,9 +250,10 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Sort: least leads first, then by last received (oldest first = longest without lead)
+        // Sort: 1) least leads today, 2) fewest total active leads, 3) longest without a lead
         eligible.sort((a, b) => {
           if (a.leadsHoje !== b.leadsHoje) return a.leadsHoje - b.leadsHoje;
+          if (a.totalAtivos !== b.totalAtivos) return a.totalAtivos - b.totalAtivos;
           // Tie-breaker: who hasn't received recently (null = never received = first)
           if (!a.lastReceivedAt && b.lastReceivedAt) return -1;
           if (a.lastReceivedAt && !b.lastReceivedAt) return 1;
