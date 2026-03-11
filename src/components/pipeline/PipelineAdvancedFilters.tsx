@@ -15,6 +15,7 @@ import { SlidersHorizontal, X, Save, Star, CalendarIcon, Trash2 } from "lucide-r
 import { format, differenceInHours, differenceInDays, startOfDay, startOfWeek, startOfMonth, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn, differenceInDaysSafe, differenceInHoursSafe, parseDateTimeSafe } from "@/lib/utils";
+import { calculateLeadScore, getSlaStatus } from "@/lib/leadScoring";
 import type { PipelineLead, PipelineStage, PipelineSegmento } from "@/hooks/usePipeline";
 
 export interface PipelineFilters {

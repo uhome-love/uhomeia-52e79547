@@ -71,8 +71,7 @@ function computeRadarScore(lead: PipelineLead, stage: PipelineStage): { score: n
   // Próxima ação defined
   if (lead.proxima_acao) { score += 5; reasons.push("Próxima ação definida (+5)"); }
 
-  // Recency bonus
-  const hoursIn = differenceInHours(new Date(), new Date(lead.stage_changed_at));
+  const hoursIn = differenceInHoursSafe(lead.stage_changed_at) ?? Number.POSITIVE_INFINITY;
   if (hoursIn < 2) { score += 10; reasons.push("Movimentação < 2h (+10)"); }
   else if (hoursIn < 24) { score += 5; reasons.push("Movimentação < 24h (+5)"); }
 
