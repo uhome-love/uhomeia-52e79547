@@ -69,24 +69,28 @@ export function usePipeline(pipelineTipo: string = "leads") {
   const [loading, setLoading] = useState(true);
 
   const loadStages = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("pipeline_stages")
-      .select("id, nome, tipo, cor, ordem, pipeline_tipo, ativo")
-      .eq("ativo", true)
-      .order("ordem");
-    if (error) {
-      console.error("Error loading stages:", error);
-      return;
+    try {
+      const { data, error } = await supabase
+        .from("pipeline_stages")
+        .select("id, nome, tipo, cor, ordem, pipeline_tipo, ativo")
+        .eq("ativo", true)
+        .order("ordem");
+      if (error) {
+        console.error("Error loading stages:", error);
+        return;
+      }
+      const filtered = (data || [] as any[]).filter((s: any) => s.pipeline_tipo === pipelineTipo);
+      setStages(filtered.map((s: any) => ({
+        id: s.id,
+        nome: s.nome,
+        tipo: s.tipo,
+        cor: s.cor,
+        ordem: s.ordem,
+        pipeline_tipo: s.pipeline_tipo || pipelineTipo,
+      })));
+    } catch (err) {
+      console.error("[usePipeline] loadStages crash:", err);
     }
-    const filtered = (data || [] as any[]).filter((s: any) => s.pipeline_tipo === pipelineTipo);
-    setStages(filtered.map((s: any) => ({
-      id: s.id,
-      nome: s.nome,
-      tipo: s.tipo,
-      cor: s.cor,
-      ordem: s.ordem,
-      pipeline_tipo: s.pipeline_tipo || pipelineTipo,
-    })));
   }, [pipelineTipo]);
 
   const loadSegmentos = useCallback(async () => {
@@ -109,6 +113,8 @@ export function usePipeline(pipelineTipo: string = "leads") {
 
   const loadLeads = useCallback(async () => {
     if (!user) return;
+
+    try {
 
     const selectFields = "id, nome, telefone, telefone2, email, segmento_id, produto_id, empreendimento, stage_id, stage_changed_at, ordem_no_stage, corretor_id, gerente_id, temperatura, modo_conducao, complexidade_score, oportunidade_score, escalation_level, last_escalation_at, distribuido_em, aceito_em, aceite_expira_em, aceite_status, origem, origem_detalhe, jetimob_lead_id, observacoes, proxima_acao, data_proxima_acao, motivo_descarte, valor_estimado, created_at, updated_at, created_by, negocio_id, ultima_acao_at";
     const pageSize = 1000;
@@ -233,6 +239,11 @@ export function usePipeline(pipelineTipo: string = "leads") {
         setCorretorNomes(map);
         setCorretorAvatars(avatarMap);
       }
+    }
+
+    } catch (err) {
+      console.error("[usePipeline] loadLeads crash:", err);
+      toast.error("Erro ao carregar leads. Tente recarregar a página.");
     }
   }, [user, isGestor, isAdmin]);
 
