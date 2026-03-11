@@ -102,6 +102,26 @@ function normalizeImages(imovel: any, logCodigo?: string): string[] {
   return fotos;
 }
 
+// ─── Static UH-code → empreendimento mapping (Jetimob internal codes) ───
+const UH_CODE_MAP: Record<string, string> = {
+  "4688-UH": "Casa Bastian",
+  "97325-UH": "Shift",
+  "91245-UH": "Melnick Day - Alto Padrão",
+  "41190-UH": "Las Casas",
+  "58935-UH": "Lake Eyre",
+  "32849-UH": "Open Bosque",
+  "76953-UH": "Melnick Day - Médio Padrão",
+  "52101-UH": "Casa Tua",
+  "39808-UH": "Melnick Day Compactos",
+  "57290-UH": "Orygem",
+};
+
+/** Resolve a UH code to the empreendimento name it represents */
+function resolveUhCode(codigo: string): string | null {
+  const upper = codigo.toUpperCase().trim();
+  return UH_CODE_MAP[upper] || null;
+}
+
 let jetimobCatalogCache: { fetchedAt: number; items: any[] } | null = null;
 const JETIMOB_CATALOG_TTL_MS = 3 * 60 * 1000;
 
