@@ -1852,6 +1852,24 @@ export type Database = {
         }
         Relationships: []
       }
+      jetimob_processed: {
+        Row: {
+          created_at: string
+          jetimob_lead_id: string
+          telefone: string | null
+        }
+        Insert: {
+          created_at?: string
+          jetimob_lead_id: string
+          telefone?: string | null
+        }
+        Update: {
+          created_at?: string
+          jetimob_lead_id?: string
+          telefone?: string | null
+        }
+        Relationships: []
+      }
       lead_messages: {
         Row: {
           canal: Database["public"]["Enums"]["message_channel"]
