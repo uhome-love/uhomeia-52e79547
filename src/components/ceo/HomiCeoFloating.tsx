@@ -51,7 +51,7 @@ export default function HomiCeoFloating({ dashboardData }: Props) {
         icon: "⏰",
         message: `${filaCeo} leads na Fila CEO aguardando distribuição`,
         action: "Ver pipeline",
-        link: "/pipeline",
+        link: "/pipeline-leads",
       });
     }
 
