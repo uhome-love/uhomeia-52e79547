@@ -172,7 +172,25 @@ export default function VendasRealizadas() {
         });
       }
 
-      return { vendas: rows, profiles: profileMap, annualVgvByCorretor, parceriaSet: [...parceriaSet] };
+      // Load pipeline origin data for sold leads
+      let origemMap: Record<string, { origem: string | null; origem_detalhe: string | null; empreendimento_lead: string | null; created_at_lead: string | null }> = {};
+      const pipelineLeadIds = rows.map(v => v.pipeline_lead_id).filter(Boolean) as string[];
+      if (pipelineLeadIds.length > 0) {
+        const { data: plData } = await supabase
+          .from("pipeline_leads")
+          .select("id, origem, origem_detalhe, empreendimento, created_at")
+          .in("id", pipelineLeadIds);
+        (plData || []).forEach((pl: any) => {
+          origemMap[pl.id] = {
+            origem: pl.origem,
+            origem_detalhe: pl.origem_detalhe,
+            empreendimento_lead: pl.empreendimento,
+            created_at_lead: pl.created_at,
+          };
+        });
+      }
+
+      return { vendas: rows, profiles: profileMap, annualVgvByCorretor, parceriaSet: [...parceriaSet], origemMap };
     },
   });
 
