@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { formatBRLCompact } from "@/lib/utils";
 import { useNegocios, NEGOCIOS_FASES, type Negocio, type CorretorInfo } from "@/hooks/useNegocios";
 import { useLeadProgression } from "@/hooks/useLeadProgression";
 import { useLeadsParados } from "@/hooks/useLeadsParados";
@@ -24,11 +25,7 @@ import VendaCelebration from "@/components/pipeline/VendaCelebration";
 import FaseTransitionModal, { type TransitionData } from "@/components/pipeline/FaseTransitionModal";
 import { supabase } from "@/integrations/supabase/client";
 
-function formatVGV(value: number) {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(2).replace(".", ",")}M`;
-  if (value >= 1_000) return `R$ ${value.toLocaleString("pt-BR")}`;
-  return `R$ ${value}`;
-}
+const formatVGV = formatBRLCompact;
 
 const TEAM_COLORS: Record<string, string> = {
   "gabrielle": "bg-pink-500/15 text-pink-600 border-pink-500/30",

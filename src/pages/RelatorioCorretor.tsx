@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Download, Save, RefreshCw, FileText, History, Trash2, CheckCircle2, Clock, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths } from "date-fns";
+import { formatBRLCompact } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import GerarManualTab from "@/components/relatorio/GerarManualTab";
@@ -402,7 +403,7 @@ export default function RelatorioCorretor() {
   };
 
   const pct = (real: number, meta: number) => meta > 0 ? Math.round((real / meta) * 100) : 0;
-  const fmtVgv = (v: number) => v >= 1_000_000 ? `R$ ${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `R$ ${(v / 1_000).toFixed(0)}k` : `R$ ${v}`;
+  const fmtVgv = formatBRLCompact;
 
   const metricRows = [
     { label: "Ligações", ...metricas.ligacoes, fmt: (v: number) => String(v) },

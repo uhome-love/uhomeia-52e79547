@@ -8,6 +8,7 @@ import { differenceInHours, differenceInMinutes } from "date-fns";
 import { PIPELINE_STAGE_EMOJIS, PIPELINE_STAGE_COLORS, PIPELINE_STAGE_BG } from "@/lib/celebrations";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { formatBRLCompact } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import PipelineStageTransitionPopup, { needsTransitionPopup, type TransitionResult } from "./PipelineStageTransitionPopup";
@@ -87,11 +88,7 @@ function spawnConfetti() {
   setTimeout(() => container.remove(), 4000);
 }
 
-const formatVGV = (value: number) => {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)}mil`;
-  return `R$ ${value.toLocaleString("pt-BR")}`;
-};
+const formatVGV = formatBRLCompact;
 
 // Virtualized card list — only renders visible cards + small buffer
 const INITIAL_RENDER = 15;

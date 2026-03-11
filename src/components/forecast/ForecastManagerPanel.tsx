@@ -2,6 +2,7 @@ import { useForecast } from "@/hooks/useForecast";
 import ForecastCards from "./ForecastCards";
 import IaCoreAction from "@/components/IaCoreAction";
 import { AlertTriangle, TrendingUp } from "lucide-react";
+import { formatBRLCompact } from "@/lib/utils";
 
 export default function ForecastManagerPanel() {
   const { gerentes, loading, reload } = useForecast();
@@ -58,7 +59,7 @@ export default function ForecastManagerPanel() {
         <div className="rounded-xl border border-border bg-card p-3 text-center">
           <p className="text-[10px] text-muted-foreground">Ticket Médio</p>
           <p className="text-lg font-bold text-foreground">
-            {g.ticket_medio >= 1_000_000 ? `R$ ${(g.ticket_medio / 1_000_000).toFixed(1).replace(".", ",")}M` : `R$ ${(g.ticket_medio / 1_000).toFixed(0)}K`}
+            {formatBRLCompact(g.ticket_medio)}
           </p>
         </div>
       </div>

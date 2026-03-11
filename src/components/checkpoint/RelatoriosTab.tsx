@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Phone, Award, MapPin, Target, AlertTriangle, TrendingDown, ArrowDown, Trophy } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { formatBRLCompact } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 
 const pct = (a: number, b: number) => b === 0 ? 0 : Math.round((a / b) * 100);
 const fmt = (n: number) => n.toLocaleString("pt-BR");
-const fmtR = (n: number) => `R$ ${n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + "M" : n >= 1_000 ? (n / 1_000).toFixed(0) + "k" : n}`;
+const fmtR = formatBRLCompact;
 
 interface Props {
   teamUserIds: string[];

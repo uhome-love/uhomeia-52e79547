@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, DollarSign, CheckCircle, AlertCircle, Building2, Trophy, Users, Calendar } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
+import { formatBRLCompact } from "@/lib/utils";
 
 interface VendaAssinada {
   id: string;
@@ -22,11 +23,7 @@ interface VendaAssinada {
   created_at: string;
 }
 
-function fmtCurrency(v: number) {
-  if (Math.abs(v) >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(2).replace(".", ",")}M`;
-  if (Math.abs(v) >= 1_000) return `R$ ${(v / 1_000).toFixed(1).replace(".", ",")}K`;
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-}
+const fmtCurrency = formatBRLCompact;
 
 export default function CeoVendasAssinadas() {
   const [vendas, setVendas] = useState<VendaAssinada[]>([]);

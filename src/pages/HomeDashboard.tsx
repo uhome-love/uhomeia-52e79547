@@ -7,7 +7,7 @@ import { useMarketing, getCanalLabel } from "@/hooks/useMarketing";
 import { useSmartAlerts } from "@/hooks/useSmartAlerts";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
-import { todayBRT } from "@/lib/utils";
+import { todayBRT, formatBRLCompact } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
   TrendingUp, Users, Trophy, Target, BarChart3, AlertTriangle,
@@ -374,8 +374,8 @@ export default function HomeDashboard() {
     { icon: "📅", label: "Visitas Marcadas", value: oaPeriodStats.visitas_marcadas, color: "text-amber-600", bg: "bg-amber-50" },
     { icon: "✅", label: "Visitas Realizadas", value: pdnStats.total_visitas + pdnStats.total_gerados + pdnStats.total_assinados, color: "text-green-600", bg: "bg-green-50" },
     { icon: "📋", label: "Propostas PDN", value: pdnStats.total_gerados + pdnStats.total_assinados, color: "text-purple-600", bg: "bg-purple-50" },
-    { icon: "💰", label: "VGV Gerado", value: `R$ ${(pdnStats.vgv_gerado / 1000).toFixed(0)}k`, color: "text-emerald-600", bg: "bg-emerald-50", isVgv: true },
-    { icon: "🏆", label: "VGV Assinado", value: `R$ ${(pdnStats.vgv_assinado / 1000).toFixed(0)}k`, color: "text-blue-700", bg: "bg-blue-50", isVgv: true, highlight: true },
+    { icon: "💰", label: "VGV Gerado", value: formatBRLCompact(pdnStats.vgv_gerado), color: "text-emerald-600", bg: "bg-emerald-50", isVgv: true },
+    { icon: "🏆", label: "VGV Assinado", value: formatBRLCompact(pdnStats.vgv_assinado), color: "text-blue-700", bg: "bg-blue-50", isVgv: true, highlight: true },
     { icon: "🎯", label: "Atingimento", value: `${atingimentoPct}%`, color: atingimentoColor, bg: atingimentoPct >= 50 ? "bg-green-50" : "bg-red-50", highlight: true },
   ];
 
@@ -614,9 +614,9 @@ export default function HomeDashboard() {
               <SectionHeader icon={Megaphone} title="Marketing" action={isAdmin ? { label: "Ver detalhes", onClick: () => navigate("/marketing") } : undefined} />
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-3 gap-2">
-                  <MiniStat label="Investimento" value={`R$ ${(mktTotals.investimento / 1000).toFixed(0)}k`} />
+                  <MiniStat label="Investimento" value={formatBRLCompact(mktTotals.investimento)} />
                   <MiniStat label="Leads" value={`${mktTotals.leads}`} />
-                  <MiniStat label="CPL" value={mktTotals.leads > 0 ? `R$ ${(mktTotals.investimento / mktTotals.leads).toFixed(0)}` : "—"} />
+                  <MiniStat label="CPL" value={mktTotals.leads > 0 ? formatBRLCompact(mktTotals.investimento / mktTotals.leads) : "—"} />
                 </div>
                 <div className="divide-y divide-border/50">
                   {channelStats.slice(0, 4).map(ch => (

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Phone, MapPin, BedDouble, Car, Maximize, ChevronLeft, ChevronRight, X, Bath, Ruler, Building2, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatBRL } from "@/lib/utils";
 
 interface VitrineImovel {
   id: number;
@@ -137,8 +138,7 @@ function MelnickDayCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImov
 }
 
 function ImovelCard({ imovel, index, onOpenLightbox }: { imovel: VitrineImovel; index: number; onOpenLightbox: (fotos: string[], idx: number) => void }) {
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+  const formatCurrency = (v: number) => formatBRL(v);
 
   const specs = [
     imovel.area && { icon: Ruler, label: `${imovel.area}m²` },

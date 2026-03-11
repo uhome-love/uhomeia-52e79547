@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { formatBRLCompact } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
 import { Target, TrendingUp, Pencil, Check, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -147,10 +148,7 @@ export default function MetasMensaisProgress() {
     load();
   };
 
-  const formatCurrency = (v: number) =>
-    v >= 1_000_000
-      ? `R$ ${(v / 1_000_000).toFixed(1)}M`
-      : `R$ ${(v / 1_000).toFixed(0)}k`;
+  const formatCurrency = formatBRLCompact;
 
   // No meta yet — show creation form
   if (!loading && !data) {

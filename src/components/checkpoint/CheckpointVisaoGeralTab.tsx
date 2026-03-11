@@ -7,7 +7,7 @@ import {
   ExternalLink, Zap
 } from "lucide-react";
 import { format, subDays, addDays, differenceInDays } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatBRLCompact } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -36,11 +36,7 @@ const NEGOCIO_FASES = [
   { key: "assinado", label: "Assinado", color: "bg-emerald-500" },
 ];
 
-const fmtCurrency = (v: number) => {
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  if (v >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}K`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
-};
+const fmtCurrency = formatBRLCompact;
 
 interface Alert {
   id: string;

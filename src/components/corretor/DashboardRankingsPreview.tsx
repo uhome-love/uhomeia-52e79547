@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Trophy, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { formatBRLCompact } from "@/lib/utils";
 
 import { useOARanking } from "@/hooks/useOfertaAtiva";
 
@@ -76,7 +77,7 @@ export default function DashboardRankingsPreview() {
     staleTime: 60_000,
   });
 
-  const fmtVGV = (v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `${(v / 1_000).toFixed(0)}k` : `${v}`;
+  const fmtVGV = (v: number) => formatBRLCompact(v).replace("R$ ", "");
   const vgvFormatted = vgvItems.map(i => ({ ...i, value: i.value }));
 
   return (
