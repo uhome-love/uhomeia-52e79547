@@ -401,7 +401,7 @@ export function useGerenteDashboard(period: Period) {
     queryFn: async () => {
       const { data } = await supabase.from("negocios")
         .select("id, nome_cliente, empreendimento, vgv_estimado, fase, corretor_id, updated_at, unidade, proposta_valor")
-        .eq("gerente_id", user!.id)
+        .eq("gerente_id", profileId!)
         .in("fase", ["proposta", "negociacao", "documentacao"])
         .order("updated_at", { ascending: false })
         .limit(30);
