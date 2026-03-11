@@ -394,7 +394,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, curren
               <Select value={statusImovel} onValueChange={setStatusImovel}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Qualquer" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Qualquer</SelectItem>
+                  <SelectItem value="qualquer">Qualquer</SelectItem>
                   <SelectItem value="pronto">Pronto p/ morar</SelectItem>
                   <SelectItem value="obras">Em obras / Lançamento</SelectItem>
                 </SelectContent>
