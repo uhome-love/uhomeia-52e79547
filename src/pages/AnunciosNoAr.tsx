@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Building2, MapPin, BedDouble, Maximize2, Tag, Loader2, Download,
   Upload, Trash2, Image as ImageIcon, Video, FileText, ChevronLeft, ChevronRight,
-  Radio, Megaphone, Eye, DollarSign, Sparkles
+  Radio, Megaphone, Eye, DollarSign, Sparkles, ChevronDown
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
