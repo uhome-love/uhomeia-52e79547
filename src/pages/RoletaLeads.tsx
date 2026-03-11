@@ -229,7 +229,10 @@ function CeoView() {
         </TabsContent>
 
         <TabsContent value="roletagens">
-          <RoletagensTab />
+          <RoletagensTab view="roletagens" />
+        </TabsContent>
+        <TabsContent value="perdidos">
+          <RoletagensTab view="perdidos" />
         </TabsContent>
       </Tabs>
 
