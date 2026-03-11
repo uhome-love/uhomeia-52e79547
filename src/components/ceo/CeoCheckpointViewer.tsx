@@ -171,12 +171,13 @@ export default function CeoCheckpointViewer() {
       const lines = team.map(t => {
         const l = linesMap.get(t.id);
         const oa = oaStatsByMemberId[t.id];
+        const cGoal = goalsMap[t.id];
         return {
           corretor_id: t.id,
           corretor_nome: t.nome,
-          meta_ligacoes: l?.meta_ligacoes ?? 0,
-          meta_leads: l?.meta_leads ?? 0,
-          meta_visitas_marcadas: l?.meta_visitas_marcadas ?? 0,
+          meta_ligacoes: cGoal ? cGoal.meta_ligacoes : (l?.meta_ligacoes ?? 0),
+          meta_leads: cGoal ? cGoal.meta_aproveitados : (l?.meta_leads ?? 0),
+          meta_visitas_marcadas: cGoal ? cGoal.meta_visitas_marcadas : (l?.meta_visitas_marcadas ?? 0),
           meta_presenca: l?.meta_presenca ?? "sim",
           obs_gerente: l?.obs_gerente ?? "",
           real_ligacoes: oa ? oa.ligacoes : (l?.real_ligacoes ?? null),
