@@ -16,6 +16,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import FilaCeoDispatchModal from "@/components/pipeline/FilaCeoDispatchModal";
 import LeadsDistribuidosPanel from "@/components/distribuicao/LeadsDistribuidosPanel";
+import { formatBRLCompact } from "@/lib/utils";
 
 // ─── Greeting ───
 function getGreeting() {

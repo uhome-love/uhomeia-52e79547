@@ -12,6 +12,7 @@ import { Loader2, TrendingUp, TrendingDown, Minus, Sparkles, Users } from "lucid
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
+import { formatBRLCompact } from "@/lib/utils";
 
 type PeriodoTipo = "semanal" | "mensal";
 

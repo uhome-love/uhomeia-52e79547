@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Download, Save, RefreshCw, FileText, History, Trash2, CheckCircle2, Clock, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths } from "date-fns";
+import { formatBRLCompact } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import GerarManualTab from "@/components/relatorio/GerarManualTab";

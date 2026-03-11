@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Trophy, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { formatBRLCompact } from "@/lib/utils";
 
 import { useOARanking } from "@/hooks/useOfertaAtiva";
 

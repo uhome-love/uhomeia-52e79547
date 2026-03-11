@@ -11,6 +11,7 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-f
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { formatBRLCompact } from "@/lib/utils";
 
 type ReportType = "funil" | "forecast" | "completo";
 

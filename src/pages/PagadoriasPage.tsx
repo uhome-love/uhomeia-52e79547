@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, Plus, Search, FileText, Link, Loader2, Trash2, Settings, FileDown } from "lucide-react";
+import { formatBRL } from "@/lib/utils";
 import { toast } from "sonner";
 import PagadoriaConfigModal from "@/components/pagadorias/PagadoriaConfigModal";
 import ContratoIntermediacao from "@/components/pagadorias/ContratoIntermediacao";
