@@ -1,17 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
+import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ChevronDown, ChevronUp, Phone, CalendarDays, FileText, MessageSquare, Send, Loader2, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ChevronDown, ChevronUp, ClipboardList, AlertTriangle, CalendarX } from "lucide-react";
 import type { PipelineLead } from "@/hooks/usePipeline";
-import { differenceInHours } from "date-fns";
+import { differenceInHours, isBefore, startOfDay } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface TeamMemberInfo {
   user_id: string;
