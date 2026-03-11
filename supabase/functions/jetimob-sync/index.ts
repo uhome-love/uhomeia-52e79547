@@ -335,9 +335,9 @@ serve(async (req) => {
                   user_id: existingLead.corretor_id,
                   tipo: "lead",
                   categoria: "lead_retorno",
-                  titulo: "🔄 Lead reativado em nova campanha!",
+                  titulo: `🔄 Lead reativado! ${existingLead.nome || nome}`,
                   mensagem: `${existingLead.nome || nome} demonstrou interesse em ${newEmp} (${canalOrigem}). Entre em contato!`,
-                  dados: { pipeline_lead_id: existingLead.id, novo_empreendimento: newEmp, canal: canalOrigem },
+                  dados: { pipeline_lead_id: existingLead.id, lead_nome: existingLead.nome || nome, novo_empreendimento: newEmp, empreendimento: newEmp, canal: canalOrigem },
                   agrupamento_key: `lead_retorno_${existingLead.id}_${todayStamp}`,
                 }).then(r => { if (r.error) console.warn("notification dedup insert:", r.error.message); });
 
