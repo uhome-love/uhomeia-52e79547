@@ -37,6 +37,30 @@ function getTipo(item: any): string {
   return String(item.subtipo || item.tipo_imovel || item.tipo || "").toLowerCase();
 }
 
+/** Extract and normalize all image URLs from a Jetimob imovel object */
+function normalizeImages(imovel: any, logCodigo?: string): string[] {
+  const fotos: string[] = [];
+  if (imovel.foto_principal) fotos.push(imovel.foto_principal);
+  if (imovel.foto_destaque && imovel.foto_destaque !== imovel.foto_principal) fotos.push(imovel.foto_destaque);
+  
+  const imgFieldNames = ["imagens", "fotos", "galeria", "photos", "images", "fotos_imovel", "galeria_fotos", "midia", "midias"];
+  for (const fieldName of imgFieldNames) {
+    const arr = imovel[fieldName];
+    if (Array.isArray(arr) && arr.length > 0) {
+      if (logCodigo) console.log(`Jetimob ${logCodigo} image field "${fieldName}": ${arr.length} items, sample:`, JSON.stringify(arr[0]).substring(0, 300));
+      for (const item of arr) {
+        if (typeof item === "string") {
+          if (item && !fotos.includes(item)) fotos.push(item);
+        } else if (item && typeof item === "object") {
+          const url = item.link || item.link_thumb || item.url || item.arquivo || item.src || item.path || item.foto || item.imagem || "";
+          if (url && !fotos.includes(url)) fotos.push(url);
+        }
+      }
+    }
+  }
+  return fotos;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
