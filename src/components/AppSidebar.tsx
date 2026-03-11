@@ -247,7 +247,7 @@ export function AppSidebar() {
             label: "Gestão de Leads",
             items: [
               { title: "Roleta de Leads", url: "/roleta", icon: Cog },
-              { title: "Pipeline de Leads", url: "/pipeline", icon: Kanban },
+              { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
               { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
               { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
               { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
