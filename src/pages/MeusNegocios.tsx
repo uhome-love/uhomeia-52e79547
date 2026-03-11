@@ -673,7 +673,7 @@ export default function MeusNegocios() {
     }
 
     setTransitionTarget(null);
-    await executeMoveFase(negocioId, data.fase);
+    await executeMoveFase(negocioId, data.fase, data.fields.data_assinatura || undefined);
   }, [transitionTarget, user, negocios, executeMoveFase]);
 
   const handleDrop = (e: React.DragEvent, fase: string) => {
