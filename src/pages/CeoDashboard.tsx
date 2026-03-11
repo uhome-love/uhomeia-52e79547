@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import FilaCeoDispatchModal from "@/components/pipeline/FilaCeoDispatchModal";
 import LeadsDistribuidosPanel from "@/components/distribuicao/LeadsDistribuidosPanel";
 import CeoDailyReport from "@/components/ceo/CeoDailyReport";
+import BulkEmpreendimentoAssign from "@/components/ceo/BulkEmpreendimentoAssign";
 import { formatBRLCompact } from "@/lib/utils";
 
 // ─── Greeting ───
