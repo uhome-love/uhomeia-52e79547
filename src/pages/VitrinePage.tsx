@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Phone, MapPin, BedDouble, Car, Maximize, ChevronLeft, ChevronRight, X, Bath, Ruler, Building2, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatBRL } from "@/lib/utils";
 
 interface VitrineImovel {
   id: number;
