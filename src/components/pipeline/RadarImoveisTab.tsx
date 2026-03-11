@@ -174,7 +174,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, curren
   const [valorMax, setValorMax] = useState<string>(currentProfile?.radar_valor_max ? String(currentProfile.radar_valor_max) : "");
   const [tipologia, setTipologia] = useState(currentProfile?.radar_tipologia || "apartamento");
   const [selectedBairros, setSelectedBairros] = useState<string[]>(safeBairros);
-  const [statusImovel, setStatusImovel] = useState(currentProfile?.radar_status_imovel || "");
+  const [statusImovel, setStatusImovel] = useState(currentProfile?.radar_status_imovel || "qualquer");
   const [bairroSearch, setBairroSearch] = useState("");
 
   // Results state
@@ -192,7 +192,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, curren
     valor_max: valorMax ? parseFloat(valorMax) : null,
     tipologia,
     bairros: selectedBairros,
-    status_imovel: statusImovel,
+    status_imovel: statusImovel === "qualquer" ? "" : statusImovel,
   };
 
   const toggleBairro = (b: string) => {
@@ -208,7 +208,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, curren
       radar_valor_max: valorMax ? parseFloat(valorMax) : null,
       radar_tipologia: tipologia,
       radar_bairros: selectedBairros,
-      radar_status_imovel: statusImovel || null,
+      radar_status_imovel: statusImovel === "qualquer" ? null : statusImovel,
       radar_atualizado_em: new Date().toISOString(),
     });
     toast.success("Perfil de interesse salvo!");
@@ -394,7 +394,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, curren
               <Select value={statusImovel} onValueChange={setStatusImovel}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Qualquer" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Qualquer</SelectItem>
+                  <SelectItem value="qualquer">Qualquer</SelectItem>
                   <SelectItem value="pronto">Pronto p/ morar</SelectItem>
                   <SelectItem value="obras">Em obras / Lançamento</SelectItem>
                 </SelectContent>
