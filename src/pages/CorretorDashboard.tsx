@@ -197,7 +197,7 @@ export default function CorretorDashboard() {
           {/* 3 Cards Contadores */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <div className="grid grid-cols-3 gap-3">
-              <Card className="cursor-pointer hover:border-orange-300 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/pipeline")}>
+              <Card className="cursor-pointer hover:border-orange-300 hover:shadow-card-hover transition-all duration-150" onClick={() => navigate("/pipeline-leads")}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-1.5 mb-2">
                     <AlertCircle className="h-4 w-4 text-danger-500" />
