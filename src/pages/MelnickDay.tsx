@@ -629,7 +629,7 @@ export default function MelnickDay() {
             <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/oferta-ativa")}>
               <Zap className="h-3.5 w-3.5" /> Iniciar Oferta Ativa
             </Button>
-            <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/pipeline")}>
+            <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/pipeline-leads")}>
               <Target className="h-3.5 w-3.5" /> Meu Pipeline
             </Button>
           </div>
