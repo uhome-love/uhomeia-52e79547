@@ -107,22 +107,35 @@ serve(async (req) => {
       }
 
       if (imovel) {
+        // Log ALL keys for debugging image issues
+        const allKeys = Object.keys(imovel);
+        console.log("Jetimob imovel keys:", codigo, JSON.stringify(allKeys));
+        
         // Normalize images into a flat array of URLs
         const fotos: string[] = [];
         if (imovel.foto_principal) fotos.push(imovel.foto_principal);
         if (imovel.foto_destaque) fotos.push(imovel.foto_destaque);
-        // Handle various image array formats
-        const imgArrays = [imovel.imagens, imovel.fotos, imovel.galeria, imovel.photos, imovel.images];
-        for (const arr of imgArrays) {
-          if (Array.isArray(arr)) {
+        
+        // Handle various image array formats from Jetimob API
+        const imgFieldNames = ["imagens", "fotos", "galeria", "photos", "images", "fotos_imovel", "galeria_fotos", "midia", "midias"];
+        for (const fieldName of imgFieldNames) {
+          const arr = imovel[fieldName];
+          if (Array.isArray(arr) && arr.length > 0) {
+            console.log(`Jetimob ${codigo} found image field "${fieldName}" with ${arr.length} items, sample:`, JSON.stringify(arr[0]).substring(0, 300));
             for (const item of arr) {
-              const url = typeof item === "string" ? item : (item?.url || item?.arquivo || item?.link || item?.src || "");
-              if (url && !fotos.includes(url)) fotos.push(url);
+              if (typeof item === "string") {
+                if (item && !fotos.includes(item)) fotos.push(item);
+              } else if (item && typeof item === "object") {
+                // Try all possible URL field names
+                const url = item.link || item.link_thumb || item.url || item.arquivo || item.src || item.path || item.foto || item.imagem || "";
+                if (url && !fotos.includes(url)) fotos.push(url);
+              }
             }
           }
         }
+        
         imovel._fotos_normalized = fotos;
-        console.log("Jetimob imovel normalized:", codigo, "fotos:", fotos.length, "keys:", JSON.stringify(Object.keys(imovel)).substring(0, 200));
+        console.log("Jetimob imovel normalized:", codigo, "fotos:", fotos.length);
       }
 
       return new Response(JSON.stringify({ imovel, not_found: !imovel }), {
