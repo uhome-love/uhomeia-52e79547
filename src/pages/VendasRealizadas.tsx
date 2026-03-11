@@ -400,7 +400,20 @@ export default function VendasRealizadas() {
         </div>
       </motion.div>
 
-      {/* ═══ COMMISSION BREAKDOWN ═══ */}
+      {/* ═══ TABS ═══ */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="h-9 mb-4">
+          <TabsTrigger value="vendas" className="text-xs gap-1.5 px-3">
+            <Trophy className="h-3.5 w-3.5" /> Vendas
+          </TabsTrigger>
+          {(isAdmin || isGestor) && (
+            <TabsTrigger value="origens" className="text-xs gap-1.5 px-3">
+              <Megaphone className="h-3.5 w-3.5" /> Origens & Campanhas
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="vendas" className="space-y-5 mt-0">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
         <Card className="border-border/60 overflow-hidden" style={{ borderLeft: "4px solid hsl(45, 90%, 50%)" }}>
           <CardContent className="p-4">
