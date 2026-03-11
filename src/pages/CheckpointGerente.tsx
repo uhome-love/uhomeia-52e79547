@@ -10,7 +10,7 @@ import { ptBR } from "date-fns/locale";
 import CheckpointTableTab from "@/components/checkpoint/CheckpointTableTab";
 import AproveitadosTab from "@/components/checkpoint/AproveitadosTab";
 import RelatoriosTab from "@/components/checkpoint/RelatoriosTab";
-import CoachIATab from "@/components/checkpoint/CoachIATab";
+
 import CheckpointNegociosTab from "@/components/checkpoint/CheckpointNegociosTab";
 import CheckpointVisaoGeralTab from "@/components/checkpoint/CheckpointVisaoGeralTab";
 import CeoCheckpointViewer from "@/components/ceo/CeoCheckpointViewer";
