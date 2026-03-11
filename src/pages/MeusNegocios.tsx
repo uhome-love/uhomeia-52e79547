@@ -220,7 +220,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             {negocio.empreendimento || <span className="italic text-amber-400/80 font-semibold">🏠 Sem imóvel</span>}
           </p>
 
-          {/* Row 3: Corretor responsável (only for admin/gestor) */}
+          {/* Row 3: Corretor responsável (only for admin/gestor) — show both names if partnership */}
           {showCorretor && (
             corretorInfo ? (
               <div className="flex items-center gap-1.5">
@@ -228,8 +228,12 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
                   <AvatarImage src={corretorInfo.avatar_gamificado_url || corretorInfo.avatar_url || undefined} className="object-cover" />
                   <AvatarFallback className="text-[8px]" style={{ background: `${faseInfo?.cor || "#6B7280"}30`, color: faseInfo?.cor }}>{(corretorInfo.nome || "?")[0]}</AvatarFallback>
                 </Avatar>
-                <span className="text-[12px] font-medium text-white/60 truncate">{corretorInfo.nome?.split(" ")[0]}</span>
-                {corretorInfo.equipe && (
+                {parceriaInfo?.isParceria ? (
+                  <span className="text-[12px] font-medium text-white/60 truncate">{parceriaInfo.label}</span>
+                ) : (
+                  <span className="text-[12px] font-medium text-white/60 truncate">{corretorInfo.nome?.split(" ")[0]}</span>
+                )}
+                {corretorInfo.equipe && !parceriaInfo?.isParceria && (
                   <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-border/40 text-muted-foreground">
                     {corretorInfo.equipe}
                   </Badge>
