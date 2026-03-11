@@ -763,8 +763,6 @@ export default function AgendaVisitas() {
           <VisitasPerformance visitas={visitas} showCorretor={isAdmin || isGestor} />
         </TabsContent>
       </Tabs>
-      </>
-      )}
 
       {/* ─── TYPE SELECTOR ─── */}
       <VisitaTypeSelector
