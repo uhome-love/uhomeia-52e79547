@@ -4,12 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Building2, MapPin, BedDouble, Maximize2, Tag, Loader2, Download,
   Upload, Trash2, Image as ImageIcon, Video, FileText, ChevronLeft, ChevronRight,
-  Radio, Megaphone, Eye, DollarSign, Sparkles, ChevronDown
+  Radio, Megaphone, Eye, DollarSign, Sparkles, ChevronDown, Pencil, Save, X
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,6 +115,22 @@ type JetimobImovel = {
   fotos?: { url: string }[];
   foto_principal?: string;
   descricao?: string;
+};
+
+type EmpreendimentoOverride = {
+  id: string;
+  codigo: string;
+  nome: string | null;
+  bairro: string | null;
+  area_privativa: number | null;
+  dormitorios: number | null;
+  suites: number | null;
+  vagas: number | null;
+  valor_venda: number | null;
+  status_obra: string | null;
+  previsao_entrega: string | null;
+  descricao: string | null;
+  fotos: string[];
 };
 
 type Material = {
@@ -421,6 +439,190 @@ function MaterialSection({
 }
 
 /* ═══════════════════════════════════════════════
+   EDIT OVERRIDE MODAL
+   ═══════════════════════════════════════════════ */
+
+function EditOverrideModal({
+  open,
+  onOpenChange,
+  config,
+  override,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  config: AnuncioConfig;
+  override: EmpreendimentoOverride | null;
+  onSaved: () => void;
+}) {
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [bairro, setBairro] = useState(override?.bairro || "");
+  const [area, setArea] = useState(override?.area_privativa?.toString() || "");
+  const [dorms, setDorms] = useState(override?.dormitorios?.toString() || "");
+  const [suitesVal, setSuitesVal] = useState(override?.suites?.toString() || "");
+  const [vagasVal, setVagasVal] = useState(override?.vagas?.toString() || "");
+  const [valor, setValor] = useState(override?.valor_venda?.toString() || "");
+  const [statusObra, setStatusObra] = useState(override?.status_obra || "");
+  const [previsaoEntrega, setPrevisaoEntrega] = useState(override?.previsao_entrega || "");
+  const [descricao, setDescricao] = useState(override?.descricao || "");
+  const [fotosText, setFotosText] = useState((override?.fotos || []).join("\n"));
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setBairro(override?.bairro || "");
+      setArea(override?.area_privativa?.toString() || "");
+      setDorms(override?.dormitorios?.toString() || "");
+      setSuitesVal(override?.suites?.toString() || "");
+      setVagasVal(override?.vagas?.toString() || "");
+      setValor(override?.valor_venda?.toString() || "");
+      setStatusObra(override?.status_obra || "");
+      setPrevisaoEntrega(override?.previsao_entrega || "");
+      setDescricao(override?.descricao || "");
+      setFotosText((override?.fotos || []).join("\n"));
+    }
+  }, [open, override]);
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `empreendimentos/${config.codigo}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("anuncio-materiais").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("anuncio-materiais").getPublicUrl(path);
+      setFotosText(prev => prev ? prev + "\n" + publicUrl : publicUrl);
+      toast.success("Imagem enviada!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar imagem: " + (err.message || ""));
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleSave() {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const fotos = fotosText.split("\n").map(s => s.trim()).filter(Boolean);
+      const payload = {
+        codigo: config.codigo,
+        nome: config.nome,
+        bairro: bairro || null,
+        area_privativa: area ? parseFloat(area) : null,
+        dormitorios: dorms ? parseInt(dorms) : null,
+        suites: suitesVal ? parseInt(suitesVal) : null,
+        vagas: vagasVal ? parseInt(vagasVal) : null,
+        valor_venda: valor ? parseFloat(valor) : null,
+        status_obra: statusObra || null,
+        previsao_entrega: previsaoEntrega || null,
+        descricao: descricao || null,
+        fotos,
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (override?.id) {
+        const { error } = await supabase.from("empreendimento_overrides").update(payload).eq("id", override.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("empreendimento_overrides").insert(payload);
+        if (error) throw error;
+      }
+
+      toast.success("Dados personalizados salvos!");
+      onSaved();
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error("Erro: " + (err.message || "Falha ao salvar"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="h-4 w-4 text-primary" />
+            Personalizar — {config.nome}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Bairro</Label>
+              <Input value={bairro} onChange={e => setBairro(e.target.value)} placeholder="Ex: Bela Vista" className="h-8 text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs">Valor (R$)</Label>
+              <Input type="number" value={valor} onChange={e => setValor(e.target.value)} placeholder="450000" className="h-8 text-xs" />
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <Label className="text-xs">Área m²</Label>
+              <Input type="number" value={area} onChange={e => setArea(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs">Dorms</Label>
+              <Input type="number" value={dorms} onChange={e => setDorms(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs">Suítes</Label>
+              <Input type="number" value={suitesVal} onChange={e => setSuitesVal(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs">Vagas</Label>
+              <Input type="number" value={vagasVal} onChange={e => setVagasVal(e.target.value)} className="h-8 text-xs" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Status da Obra</Label>
+              <Input value={statusObra} onChange={e => setStatusObra(e.target.value)} placeholder="Em construção" className="h-8 text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs">Previsão Entrega</Label>
+              <Input value={previsaoEntrega} onChange={e => setPrevisaoEntrega(e.target.value)} placeholder="Dez/2027" className="h-8 text-xs" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Descrição</Label>
+            <Textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2} placeholder="Breve descrição..." className="text-xs" />
+          </div>
+          <div>
+            <Label className="text-xs">Fotos (URLs, uma por linha)</Label>
+            <Textarea value={fotosText} onChange={e => setFotosText(e.target.value)} rows={3} placeholder="https://..." className="text-xs font-mono" />
+            <label className="cursor-pointer mt-1 inline-block">
+              <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+              <span className="inline-flex items-center gap-1 text-[10px] text-primary font-bold hover:underline">
+                {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                {uploading ? "Enviando..." : "Fazer upload de imagem"}
+              </span>
+            </label>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <X className="h-3.5 w-3.5 mr-1" /> Cancelar
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ═══════════════════════════════════════════════
    EMPREENDIMENTO CARD
    ═══════════════════════════════════════════════ */
 
@@ -432,6 +634,8 @@ function EmpreendimentoCard({
   materiais,
   canUpload,
   onRefreshMateriais,
+  override,
+  onEditOverride,
 }: {
   config: AnuncioConfig;
   segmento: SegmentoConfig;
@@ -440,14 +644,21 @@ function EmpreendimentoCard({
   materiais: Material[];
   canUpload: boolean;
   onRefreshMateriais: () => void;
+  override: EmpreendimentoOverride | null;
+  onEditOverride: () => void;
 }) {
-  const images = imovelData ? getImages(imovelData) : [];
-  const price = imovelData ? getPrice(imovelData) : 0;
-  const bairro = imovelData?.bairro || imovelData?.endereco_bairro || "";
-  const area = imovelData?.area_privativa || imovelData?.area_total || 0;
-  const dorms = imovelData?.dormitorios || 0;
-  const suites = imovelData?.suites || 0;
-  const vagas = imovelData?.vagas || 0;
+  // Merge: override takes priority over Jetimob data
+  const hasOverride = !!override;
+  const images = override?.fotos?.length ? override.fotos : (imovelData ? getImages(imovelData) : []);
+  const price = override?.valor_venda ?? (imovelData ? getPrice(imovelData) : 0);
+  const bairro = override?.bairro || imovelData?.bairro || imovelData?.endereco_bairro || "";
+  const area = override?.area_privativa ?? (imovelData?.area_privativa || imovelData?.area_total || 0);
+  const dorms = override?.dormitorios ?? (imovelData?.dormitorios || 0);
+  const suites = override?.suites ?? (imovelData?.suites || 0);
+  const vagas = override?.vagas ?? (imovelData?.vagas || 0);
+  const statusObra = override?.status_obra || imovelData?.status_obra || "";
+  const previsaoEntrega = override?.previsao_entrega || imovelData?.previsao_entrega || "";
+  const hasData = hasOverride || !!imovelData;
 
   return (
     <motion.div
@@ -456,12 +667,32 @@ function EmpreendimentoCard({
       transition={{ duration: 0.4 }}
     >
       <Card className={cn(
-        "overflow-hidden border-2 hover:shadow-xl hover:-translate-y-1 transition-all duration-300",
+        "overflow-hidden border-2 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group/card",
         segmento.borderColor,
         "bg-card"
       )}>
+        {/* Edit button for CEO */}
+        {canUpload && (
+          <button
+            onClick={onEditOverride}
+            className="absolute top-2 right-2 z-20 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-primary"
+            title="Personalizar card"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {/* Override indicator */}
+        {hasOverride && (
+          <div className="absolute top-2 left-2 z-20">
+            <Badge className="text-[8px] bg-primary/80 text-primary-foreground border-0 px-1.5 py-0.5">
+              ✏️ Personalizado
+            </Badge>
+          </div>
+        )}
+
         {/* Image */}
-        {loading ? (
+        {loading && !hasOverride ? (
           <div className="h-48 flex items-center justify-center bg-muted/20">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
@@ -488,7 +719,7 @@ function EmpreendimentoCard({
           </div>
 
           {/* Specs */}
-          {imovelData && (
+          {hasData && (
             <div className="flex flex-wrap gap-2">
               {area > 0 && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -515,19 +746,19 @@ function EmpreendimentoCard({
           <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl px-3 py-2">
             <p className="text-[10px] text-muted-foreground font-medium">A partir de</p>
             <p className="text-lg font-black text-primary tracking-tight">
-              {loading ? "Carregando..." : formatPrice(price)}
+              {loading && !hasOverride ? "Carregando..." : formatPrice(price)}
             </p>
           </div>
 
           {/* Status */}
-          {imovelData?.status_obra && (
+          {statusObra && (
             <div className="flex items-center gap-1.5">
               <Badge variant="outline" className="text-[10px] font-bold">
-                🏗️ {imovelData.status_obra}
+                🏗️ {statusObra}
               </Badge>
-              {imovelData.previsao_entrega && (
+              {previsaoEntrega && (
                 <Badge variant="outline" className="text-[10px]">
-                  📅 {imovelData.previsao_entrega}
+                  📅 {previsaoEntrega}
                 </Badge>
               )}
             </div>
@@ -556,7 +787,6 @@ function EmpreendimentoCard({
     </motion.div>
   );
 }
-
 /* ═══════════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════════ */
@@ -567,6 +797,22 @@ export default function AnunciosNoAr() {
   const [imoveis, setImoveis] = useState<Record<string, JetimobImovel>>({});
   const [loading, setLoading] = useState(true);
   const [materiais, setMateriais] = useState<Material[]>([]);
+  const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
+  const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
+
+  // Fetch overrides from DB
+  const fetchOverrides = useCallback(async () => {
+    const { data } = await supabase
+      .from("empreendimento_overrides")
+      .select("*");
+    if (data) {
+      const map: Record<string, EmpreendimentoOverride> = {};
+      for (const row of data) {
+        map[row.codigo] = row as any as EmpreendimentoOverride;
+      }
+      setOverrides(map);
+    }
+  }, []);
 
   // Fetch all imóveis from Jetimob
   useEffect(() => {
@@ -616,10 +862,8 @@ export default function AnunciosNoAr() {
         }
       } catch (batchError) {
         console.warn("Falha no batch, tentando fallback individual:", batchError);
-        // Immediately stop loading so cards render with basic info
         if (!cancelled) setLoading(false);
 
-        // Fallback: fetch individually in parallel with short timeout
         try {
           const settled = await Promise.allSettled(
             codigos.map((codigo) =>
@@ -647,10 +891,11 @@ export default function AnunciosNoAr() {
     }
 
     fetchAll();
+    fetchOverrides();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchOverrides]);
 
   // Fetch materials
   const fetchMateriais = useCallback(async () => {
@@ -664,12 +909,23 @@ export default function AnunciosNoAr() {
   useEffect(() => { fetchMateriais(); }, [fetchMateriais]);
 
   const totalAnuncios = SEGMENTOS.reduce((acc, s) => acc + s.empreendimentos.length, 0);
+  const editingConfig = editingCodigo ? SEGMENTOS.flatMap(s => s.empreendimentos).find(e => e.codigo === editingCodigo) : null;
 
   return (
     <div className="space-y-6 pb-8">
+      {/* Edit Override Modal */}
+      {editingConfig && (
+        <EditOverrideModal
+          open={!!editingCodigo}
+          onOpenChange={(v) => { if (!v) setEditingCodigo(null); }}
+          config={editingConfig}
+          override={overrides[editingConfig.codigo] || null}
+          onSaved={fetchOverrides}
+        />
+      )}
+
       {/* ─── HEADER ─── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[hsl(222,47%,11%)] via-[hsl(222,47%,15%)] to-[hsl(222,47%,20%)] p-6 border border-border/20">
-        {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
@@ -693,7 +949,6 @@ export default function AnunciosNoAr() {
             </div>
           </div>
 
-          {/* Segment summary pills */}
           <div className="flex flex-wrap gap-2 mt-4">
             {SEGMENTOS.map(seg => (
               <a
@@ -717,7 +972,6 @@ export default function AnunciosNoAr() {
       {SEGMENTOS.map(seg => (
         <Collapsible key={seg.key} defaultOpen asChild>
           <section id={`seg-${seg.key}`} className="space-y-4">
-            {/* Segment header */}
             <CollapsibleTrigger asChild>
               <div className={cn(
                 "rounded-xl p-4 bg-gradient-to-r text-white relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity",
@@ -744,7 +998,6 @@ export default function AnunciosNoAr() {
               </div>
             </CollapsibleTrigger>
 
-            {/* Cards grid */}
             <CollapsibleContent>
               <div className={cn(
                 "grid gap-4 pt-1",
@@ -764,6 +1017,8 @@ export default function AnunciosNoAr() {
                     materiais={materiais}
                     canUpload={canUpload}
                     onRefreshMateriais={fetchMateriais}
+                    override={overrides[emp.codigo] || null}
+                    onEditOverride={() => setEditingCodigo(emp.codigo)}
                   />
                 ))}
               </div>
@@ -774,4 +1029,3 @@ export default function AnunciosNoAr() {
     </div>
   );
 }
-

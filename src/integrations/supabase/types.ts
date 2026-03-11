@@ -1466,6 +1466,63 @@ export type Database = {
           },
         ]
       }
+      empreendimento_overrides: {
+        Row: {
+          area_privativa: number | null
+          bairro: string | null
+          codigo: string
+          created_at: string | null
+          descricao: string | null
+          dormitorios: number | null
+          fotos: string[] | null
+          id: string
+          nome: string | null
+          previsao_entrega: string | null
+          status_obra: string | null
+          suites: number | null
+          updated_at: string | null
+          updated_by: string | null
+          vagas: number | null
+          valor_venda: number | null
+        }
+        Insert: {
+          area_privativa?: number | null
+          bairro?: string | null
+          codigo: string
+          created_at?: string | null
+          descricao?: string | null
+          dormitorios?: number | null
+          fotos?: string[] | null
+          id?: string
+          nome?: string | null
+          previsao_entrega?: string | null
+          status_obra?: string | null
+          suites?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+          vagas?: number | null
+          valor_venda?: number | null
+        }
+        Update: {
+          area_privativa?: number | null
+          bairro?: string | null
+          codigo?: string
+          created_at?: string | null
+          descricao?: string | null
+          dormitorios?: number | null
+          fotos?: string[] | null
+          id?: string
+          nome?: string | null
+          previsao_entrega?: string | null
+          status_obra?: string | null
+          suites?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+          vagas?: number | null
+          valor_venda?: number | null
+        }
+        Relationships: []
+      }
       executive_reports: {
         Row: {
           campanhas: Json | null
