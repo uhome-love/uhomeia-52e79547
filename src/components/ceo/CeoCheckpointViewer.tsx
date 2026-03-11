@@ -75,12 +75,79 @@ export default function CeoCheckpointViewer() {
     const { data: cps } = await supabase.from("checkpoints").select("*").eq("data", date).in("gerente_id", gestorIds);
     const cpMap = new Map((cps || []).map(c => [c.gerente_id, c]));
 
-    const { data: allTeam } = await supabase.from("team_members").select("id, nome, gerente_id, status").in("gerente_id", gestorIds).eq("status", "ativo").order("nome");
+    const { data: allTeam } = await supabase.from("team_members").select("id, nome, gerente_id, status, user_id").in("gerente_id", gestorIds).eq("status", "ativo").order("nome");
     const teamByGerente = new Map<string, typeof allTeam>();
     for (const t of (allTeam || [])) {
       const arr = teamByGerente.get(t.gerente_id) || [];
       arr.push(t);
       teamByGerente.set(t.gerente_id, arr);
+    }
+
+    // Fetch OA stats for all linked team members
+    const linkedMembers = (allTeam || []).filter(m => m.user_id);
+    const userIds = linkedMembers.map(m => m.user_id!);
+    const oaStatsById: Record<string, { ligacoes: number; leads: number }> = {};
+    if (userIds.length > 0) {
+      const dayStart = `${date}T00:00:00-03:00`;
+      const dayEnd = `${date}T23:59:59.999-03:00`;
+      // Fetch in batches to avoid query limits
+      for (let i = 0; i < userIds.length; i += 50) {
+        const batch = userIds.slice(i, i + 50);
+        const { data: tentativas } = await supabase
+          .from("oferta_ativa_tentativas")
+          .select("corretor_id, resultado")
+          .in("corretor_id", batch)
+          .gte("created_at", dayStart)
+          .lte("created_at", dayEnd);
+        for (const t of (tentativas || [])) {
+          if (!oaStatsById[t.corretor_id]) oaStatsById[t.corretor_id] = { ligacoes: 0, leads: 0 };
+          oaStatsById[t.corretor_id].ligacoes++;
+          if (t.resultado === "com_interesse") oaStatsById[t.corretor_id].leads++;
+        }
+      }
+    }
+    // Map user_id -> team_member.id for OA stats
+    const oaStatsByMemberId: Record<string, { ligacoes: number; leads: number }> = {};
+    for (const m of linkedMembers) {
+      if (m.user_id && oaStatsById[m.user_id]) {
+        oaStatsByMemberId[m.id] = oaStatsById[m.user_id];
+      }
+    }
+
+    // Fetch corretor daily goals for metas
+    const goalsMap: Record<string, { meta_ligacoes: number; meta_aproveitados: number; meta_visitas_marcadas: number }> = {};
+    if (userIds.length > 0) {
+      const { data: goals } = await supabase
+        .from("corretor_daily_goals")
+        .select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas")
+        .in("corretor_id", userIds)
+        .eq("data", date);
+      for (const g of (goals || []) as any[]) {
+        const member = linkedMembers.find(m => m.user_id === g.corretor_id);
+        if (member) {
+          goalsMap[member.id] = { meta_ligacoes: g.meta_ligacoes, meta_aproveitados: g.meta_aproveitados, meta_visitas_marcadas: g.meta_visitas_marcadas ?? 0 };
+        }
+      }
+      // Fallback to most recent goals for corretores without today's goals
+      const foundIds = new Set((goals || []).map((g: any) => g.corretor_id));
+      const missingIds = userIds.filter(id => !foundIds.has(id));
+      if (missingIds.length > 0) {
+        const { data: recentGoals } = await supabase
+          .from("corretor_daily_goals")
+          .select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas, data")
+          .in("corretor_id", missingIds)
+          .lte("data", date)
+          .order("data", { ascending: false });
+        const seenRecent = new Set<string>();
+        for (const g of (recentGoals || []) as any[]) {
+          if (seenRecent.has(g.corretor_id)) continue;
+          seenRecent.add(g.corretor_id);
+          const member = linkedMembers.find(m => m.user_id === g.corretor_id);
+          if (member) {
+            goalsMap[member.id] = { meta_ligacoes: g.meta_ligacoes, meta_aproveitados: g.meta_aproveitados, meta_visitas_marcadas: g.meta_visitas_marcadas ?? 0 };
+          }
+        }
+      }
     }
 
     const cpIds = (cps || []).map(c => c.id);
@@ -103,16 +170,18 @@ export default function CeoCheckpointViewer() {
 
       const lines = team.map(t => {
         const l = linesMap.get(t.id);
+        const oa = oaStatsByMemberId[t.id];
+        const cGoal = goalsMap[t.id];
         return {
           corretor_id: t.id,
           corretor_nome: t.nome,
-          meta_ligacoes: l?.meta_ligacoes ?? 0,
-          meta_leads: l?.meta_leads ?? 0,
-          meta_visitas_marcadas: l?.meta_visitas_marcadas ?? 0,
+          meta_ligacoes: cGoal ? cGoal.meta_ligacoes : (l?.meta_ligacoes ?? 0),
+          meta_leads: cGoal ? cGoal.meta_aproveitados : (l?.meta_leads ?? 0),
+          meta_visitas_marcadas: cGoal ? cGoal.meta_visitas_marcadas : (l?.meta_visitas_marcadas ?? 0),
           meta_presenca: l?.meta_presenca ?? "sim",
           obs_gerente: l?.obs_gerente ?? "",
-          real_ligacoes: l?.real_ligacoes ?? null,
-          real_leads: l?.real_leads ?? null,
+          real_ligacoes: oa ? oa.ligacoes : (l?.real_ligacoes ?? null),
+          real_leads: oa ? oa.leads : (l?.real_leads ?? null),
           real_visitas_marcadas: l?.real_visitas_marcadas ?? null,
           real_visitas_realizadas: l?.real_visitas_realizadas ?? null,
           real_propostas: l?.real_propostas ?? null,
