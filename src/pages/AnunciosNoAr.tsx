@@ -385,6 +385,8 @@ function MaterialSection({
                   {items.map(mat => {
                     const isImage = mat.mime_type?.startsWith("image/");
                     const isVideo = mat.mime_type?.startsWith("video/");
+                    const isLink = mat.mime_type === "text/uri-list";
+                    const isInstagram = isLink && mat.url.includes("instagram.com");
                     return (
                       <div key={mat.id} className="group/mat relative">
                         {isImage ? (
@@ -402,8 +404,8 @@ function MaterialSection({
                             rel="noopener noreferrer"
                             className="h-16 w-24 rounded-lg border border-border/40 bg-muted/30 flex flex-col items-center justify-center gap-1 hover:bg-accent/30 transition-colors"
                           >
-                            {isVideo ? <Video className="h-5 w-5 text-primary" /> : <FileText className="h-5 w-5 text-primary" />}
-                            <span className="text-[8px] text-muted-foreground truncate max-w-[80px] px-1">{mat.nome_arquivo}</span>
+                            {isInstagram ? <span className="text-lg">📸</span> : isVideo ? <Video className="h-5 w-5 text-primary" /> : isLink ? <ExternalLink className="h-5 w-5 text-primary" /> : <FileText className="h-5 w-5 text-primary" />}
+                            <span className="text-[8px] text-muted-foreground truncate max-w-[80px] px-1">{isInstagram ? "Instagram" : mat.nome_arquivo}</span>
                           </a>
                         )}
                         <div className="absolute -top-1 -right-1 flex gap-0.5">
