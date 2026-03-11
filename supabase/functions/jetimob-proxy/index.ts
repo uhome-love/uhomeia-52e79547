@@ -37,6 +37,32 @@ function getTipo(item: any): string {
   return String(item.subtipo || item.tipo_imovel || item.tipo || "").toLowerCase();
 }
 
+function normalizeCodigoValue(value: unknown): string {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .trim();
+}
+
+function extractCodigoNumber(value: unknown): string {
+  return (String(value || "").match(/\d+/g) || []).join("");
+}
+
+function isCodigoMatch(item: any, requestedCodigo: string): boolean {
+  const requestedNorm = normalizeCodigoValue(requestedCodigo);
+  const requestedNum = extractCodigoNumber(requestedCodigo);
+  const candidates = [item?.codigo, item?.codigo_imovel, item?.referencia, item?.id_imovel];
+
+  return candidates.some((candidate) => {
+    const candidateNorm = normalizeCodigoValue(candidate);
+    if (!candidateNorm) return false;
+    if (candidateNorm === requestedNorm) return true;
+
+    const candidateNum = extractCodigoNumber(candidate);
+    return !!requestedNum && !!candidateNum && candidateNum === requestedNum;
+  });
+}
+
 /** Extract and normalize all image URLs from a Jetimob imovel object */
 function normalizeImages(imovel: any, logCodigo?: string): string[] {
   const fotos: string[] = [];
