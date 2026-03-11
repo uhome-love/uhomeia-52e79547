@@ -75,12 +75,43 @@ export default function CeoCheckpointViewer() {
     const { data: cps } = await supabase.from("checkpoints").select("*").eq("data", date).in("gerente_id", gestorIds);
     const cpMap = new Map((cps || []).map(c => [c.gerente_id, c]));
 
-    const { data: allTeam } = await supabase.from("team_members").select("id, nome, gerente_id, status").in("gerente_id", gestorIds).eq("status", "ativo").order("nome");
+    const { data: allTeam } = await supabase.from("team_members").select("id, nome, gerente_id, status, user_id").in("gerente_id", gestorIds).eq("status", "ativo").order("nome");
     const teamByGerente = new Map<string, typeof allTeam>();
     for (const t of (allTeam || [])) {
       const arr = teamByGerente.get(t.gerente_id) || [];
       arr.push(t);
       teamByGerente.set(t.gerente_id, arr);
+    }
+
+    // Fetch OA stats for all linked team members
+    const linkedMembers = (allTeam || []).filter(m => m.user_id);
+    const userIds = linkedMembers.map(m => m.user_id!);
+    const oaStatsById: Record<string, { ligacoes: number; leads: number }> = {};
+    if (userIds.length > 0) {
+      const dayStart = `${date}T00:00:00-03:00`;
+      const dayEnd = `${date}T23:59:59.999-03:00`;
+      // Fetch in batches to avoid query limits
+      for (let i = 0; i < userIds.length; i += 50) {
+        const batch = userIds.slice(i, i + 50);
+        const { data: tentativas } = await supabase
+          .from("oferta_ativa_tentativas")
+          .select("corretor_id, resultado")
+          .in("corretor_id", batch)
+          .gte("created_at", dayStart)
+          .lte("created_at", dayEnd);
+        for (const t of (tentativas || [])) {
+          if (!oaStatsById[t.corretor_id]) oaStatsById[t.corretor_id] = { ligacoes: 0, leads: 0 };
+          oaStatsById[t.corretor_id].ligacoes++;
+          if (t.resultado === "com_interesse") oaStatsById[t.corretor_id].leads++;
+        }
+      }
+    }
+    // Map user_id -> team_member.id for OA stats
+    const oaStatsByMemberId: Record<string, { ligacoes: number; leads: number }> = {};
+    for (const m of linkedMembers) {
+      if (m.user_id && oaStatsById[m.user_id]) {
+        oaStatsByMemberId[m.id] = oaStatsById[m.user_id];
+      }
     }
 
     const cpIds = (cps || []).map(c => c.id);
