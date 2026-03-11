@@ -792,10 +792,19 @@ export default function CeoDashboard() {
 
           {/* Campanhas (30%) */}
           <Card className="lg:col-span-3">
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Leads por Campanha</CardTitle></CardHeader>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">Leads por Campanha</CardTitle>
+                {campanhas.some(c => c.empreendimento === "Sem empreendimento") && (
+                  <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1" onClick={() => setBulkEmpOpen(true)}>
+                    <Building2 className="h-3 w-3" /> Corrigir
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
             <CardContent>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {campanhas.slice(0, 8).map(c => (
+                {campanhas.filter(c => c.empreendimento !== "Sem empreendimento").slice(0, 8).map(c => (
                   <div key={c.empreendimento} className="flex items-center justify-between text-xs p-1.5 rounded hover:bg-muted/30">
                     <div className="truncate flex-1 mr-2">
                       <p className="font-medium truncate">{c.empreendimento}</p>
@@ -808,10 +817,12 @@ export default function CeoDashboard() {
                     </div>
                   </div>
                 ))}
-                {campanhas.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>}
+                {campanhas.filter(c => c.empreendimento !== "Sem empreendimento").length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>}
               </div>
             </CardContent>
           </Card>
+
+          <BulkEmpreendimentoAssign open={bulkEmpOpen} onOpenChange={setBulkEmpOpen} onComplete={reload} />
 
           {/* Alertas (30%) */}
           <Card className="lg:col-span-3">
