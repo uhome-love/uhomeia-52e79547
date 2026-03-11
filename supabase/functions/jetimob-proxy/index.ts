@@ -102,6 +102,44 @@ function normalizeImages(imovel: any, logCodigo?: string): string[] {
   return fotos;
 }
 
+let jetimobCatalogCache: { fetchedAt: number; items: any[] } | null = null;
+const JETIMOB_CATALOG_TTL_MS = 3 * 60 * 1000;
+
+async function fetchJetimobCatalog(apiKey: string): Promise<any[]> {
+  if (jetimobCatalogCache && Date.now() - jetimobCatalogCache.fetchedAt < JETIMOB_CATALOG_TTL_MS) {
+    return jetimobCatalogCache.items;
+  }
+
+  const batchSize = 500;
+  const maxPages = 8;
+  let allItems: any[] = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const url = `https://api.jetimob.com/webservice/${apiKey}/imoveis/todos?v=6&page=${page}&pageSize=${batchSize}`;
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (!response.ok) break;
+
+    const raw = await response.json();
+    const items = Array.isArray(raw?.data)
+      ? raw.data
+      : Array.isArray(raw?.result)
+        ? raw.result
+        : Array.isArray(raw)
+          ? raw
+          : [];
+
+    if (!items.length) break;
+    allItems = allItems.concat(items);
+
+    const rawTotal = raw?.total || raw?.totalResults || raw?.total_results || 0;
+    if (items.length < batchSize || (rawTotal > 0 && allItems.length >= rawTotal)) break;
+  }
+
+  jetimobCatalogCache = { fetchedAt: Date.now(), items: allItems };
+  console.log("Jetimob catalog cache refreshed:", allItems.length, "items");
+  return allItems;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
