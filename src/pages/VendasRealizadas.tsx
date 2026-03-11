@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, TrendingUp, PartyPopper, DollarSign, Users, Building2,
   CalendarDays, Filter, Download, Search, CheckCircle, Crown, Loader2,
-  ChevronDown, Star, Sparkles,
+  ChevronDown, Star, Sparkles, Target, BarChart3, Megaphone,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 function formatCurrency(value: number) {
@@ -171,7 +172,25 @@ export default function VendasRealizadas() {
         });
       }
 
-      return { vendas: rows, profiles: profileMap, annualVgvByCorretor, parceriaSet: [...parceriaSet] };
+      // Load pipeline origin data for sold leads
+      let origemMap: Record<string, { origem: string | null; origem_detalhe: string | null; empreendimento_lead: string | null; created_at_lead: string | null }> = {};
+      const pipelineLeadIds = rows.map(v => v.pipeline_lead_id).filter(Boolean) as string[];
+      if (pipelineLeadIds.length > 0) {
+        const { data: plData } = await supabase
+          .from("pipeline_leads")
+          .select("id, origem, origem_detalhe, empreendimento, created_at")
+          .in("id", pipelineLeadIds);
+        (plData || []).forEach((pl: any) => {
+          origemMap[pl.id] = {
+            origem: pl.origem,
+            origem_detalhe: pl.origem_detalhe,
+            empreendimento_lead: pl.empreendimento,
+            created_at_lead: pl.created_at,
+          };
+        });
+      }
+
+      return { vendas: rows, profiles: profileMap, annualVgvByCorretor, parceriaSet: [...parceriaSet], origemMap };
     },
   });
 
@@ -179,6 +198,9 @@ export default function VendasRealizadas() {
   const profiles = data?.profiles || {};
   const annualVgvByCorretor = data?.annualVgvByCorretor || {};
   const parceriaLeadIds = new Set(data?.parceriaSet || []);
+  const origemMap = data?.origemMap || {};
+
+  const [activeTab, setActiveTab] = useState("vendas");
 
   const filtered = useMemo(() => {
     if (!search.trim()) return vendas;
@@ -238,6 +260,44 @@ export default function VendasRealizadas() {
   }, [filtered, profiles]);
 
   const medalEmojis = ["🥇", "🥈", "🥉"];
+
+  // ═══ ORIGIN ANALYTICS ═══
+  const origemAnalytics = useMemo(() => {
+    const byOrigem: Record<string, { count: number; vgv: number; empreendimentos: Set<string>; detalhe: Set<string> }> = {};
+    const detailRows: { cliente: string; empreendimento: string | null; vgv: number; origem: string; detalhe: string | null; dataAssinatura: string | null; dataEntrada: string | null; corretor: string }[] = [];
+    
+    filtered.forEach(v => {
+      const plId = v.pipeline_lead_id;
+      const info = plId ? origemMap[plId] : null;
+      const origem = info?.origem || "Não identificado";
+      const detalhe = info?.origem_detalhe || null;
+      const vgv = v.vgv_final || v.vgv_estimado || 0;
+      const corr = v.corretor_id ? profiles[v.corretor_id] : null;
+
+      if (!byOrigem[origem]) byOrigem[origem] = { count: 0, vgv: 0, empreendimentos: new Set(), detalhe: new Set() };
+      byOrigem[origem].count++;
+      byOrigem[origem].vgv += vgv;
+      if (v.empreendimento) byOrigem[origem].empreendimentos.add(v.empreendimento);
+      if (detalhe) byOrigem[origem].detalhe.add(detalhe);
+
+      detailRows.push({
+        cliente: v.nome_cliente,
+        empreendimento: v.empreendimento,
+        vgv,
+        origem,
+        detalhe,
+        dataAssinatura: v.data_assinatura,
+        dataEntrada: info?.created_at_lead || null,
+        corretor: corr?.nome || "—",
+      });
+    });
+
+    const sorted = Object.entries(byOrigem)
+      .map(([origem, d]) => ({ origem, ...d, empreendimentos: [...d.empreendimentos], detalhe: [...d.detalhe] }))
+      .sort((a, b) => b.vgv - a.vgv);
+
+    return { breakdown: sorted, details: detailRows, totalVGV };
+  }, [filtered, origemMap, profiles, totalVGV]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -340,7 +400,20 @@ export default function VendasRealizadas() {
         </div>
       </motion.div>
 
-      {/* ═══ COMMISSION BREAKDOWN ═══ */}
+      {/* ═══ TABS ═══ */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="h-9 mb-4">
+          <TabsTrigger value="vendas" className="text-xs gap-1.5 px-3">
+            <Trophy className="h-3.5 w-3.5" /> Vendas
+          </TabsTrigger>
+          {(isAdmin || isGestor) && (
+            <TabsTrigger value="origens" className="text-xs gap-1.5 px-3">
+              <Megaphone className="h-3.5 w-3.5" /> Origens & Campanhas
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="vendas" className="space-y-5 mt-0">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
         <Card className="border-border/60 overflow-hidden" style={{ borderLeft: "4px solid hsl(45, 90%, 50%)" }}>
           <CardContent className="p-4">
@@ -557,6 +630,139 @@ export default function VendasRealizadas() {
           </div>
         </motion.div>
       )}
+        </TabsContent>
+
+        {/* ═══ ORIGENS & CAMPANHAS TAB ═══ */}
+        {(isAdmin || isGestor) && (
+          <TabsContent value="origens" className="space-y-5 mt-0">
+            {/* Breakdown por Origem */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+              <Card className="border-border/60">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Megaphone className="h-4 w-4 text-primary" />
+                    <h2 className="text-sm font-bold text-foreground">Performance por Origem</h2>
+                    <Badge variant="outline" className="text-[10px] ml-auto">{origemAnalytics.breakdown.length} origens</Badge>
+                  </div>
+
+                  {origemAnalytics.breakdown.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground text-sm">Nenhuma venda com origem rastreada no período</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {origemAnalytics.breakdown.map((item, i) => {
+                        const pct = origemAnalytics.totalVGV > 0 ? (item.vgv / origemAnalytics.totalVGV) * 100 : 0;
+                        const barColors = [
+                          "bg-primary", "bg-emerald-500", "bg-blue-500", "bg-amber-500", "bg-violet-500", "bg-rose-500",
+                        ];
+                        const barColor = barColors[i % barColors.length];
+
+                        return (
+                          <motion.div key={item.origem}
+                            initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.03 * i }}
+                            className="rounded-xl border border-border/40 p-3.5 bg-accent/20 hover:bg-accent/40 transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={cn("h-3 w-3 rounded-full shrink-0", barColor)} />
+                                <span className="text-sm font-bold text-foreground">{item.origem}</span>
+                                <Badge variant="secondary" className="text-[9px] h-4">{item.count} venda{item.count > 1 ? "s" : ""}</Badge>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-sm font-black text-emerald-500">{formatCurrency(item.vgv)}</span>
+                                <span className="text-[10px] text-muted-foreground ml-1.5">({pct.toFixed(1)}%)</span>
+                              </div>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div className="h-2 rounded-full bg-muted/50 overflow-hidden mb-2">
+                              <motion.div
+                                initial={{ width: 0 }} animate={{ width: `${pct}%` }}
+                                transition={{ delay: 0.1 + 0.05 * i, duration: 0.6 }}
+                                className={cn("h-full rounded-full", barColor)}
+                              />
+                            </div>
+
+                            {/* Detail chips */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {item.detalhe.length > 0 && item.detalhe.map(d => (
+                                <span key={d} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                                  📋 {d}
+                                </span>
+                              ))}
+                              {item.empreendimentos.slice(0, 5).map(emp => (
+                                <span key={emp} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  🏢 {emp}
+                                </span>
+                              ))}
+                              {item.empreendimentos.length > 5 && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  +{item.empreendimentos.length - 5}
+                                </span>
+                              )}
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Tabela detalhada — rastreio completo */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+              <Card className="border-border/60">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Target className="h-4 w-4 text-primary" />
+                    <h2 className="text-sm font-bold text-foreground">Rastreio Completo — Lead → Venda</h2>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border/40">
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Cliente</th>
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Empreendimento</th>
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Origem / Campanha</th>
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Formulário / Detalhe</th>
+                          <th className="text-left py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Corretor</th>
+                          <th className="text-center py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Entrada</th>
+                          <th className="text-center py-2.5 px-3 text-[10px] text-muted-foreground font-medium">Assinatura</th>
+                          <th className="text-right py-2.5 px-3 text-[10px] text-muted-foreground font-medium">VGV</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {origemAnalytics.details.map((row, i) => (
+                          <tr key={i} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
+                            <td className="py-2.5 px-3 text-xs font-semibold text-foreground">{row.cliente}</td>
+                            <td className="py-2.5 px-3 text-xs text-foreground">{row.empreendimento || "—"}</td>
+                            <td className="py-2.5 px-3">
+                              <Badge variant="secondary" className="text-[10px]">{row.origem}</Badge>
+                            </td>
+                            <td className="py-2.5 px-3 text-xs text-muted-foreground">{row.detalhe || "—"}</td>
+                            <td className="py-2.5 px-3 text-xs text-foreground">{row.corretor}</td>
+                            <td className="py-2.5 px-3 text-center text-[10px] text-muted-foreground">
+                              {row.dataEntrada ? format(new Date(row.dataEntrada), "dd/MM/yy") : "—"}
+                            </td>
+                            <td className="py-2.5 px-3 text-center text-[10px] text-muted-foreground">
+                              {row.dataAssinatura ? format(new Date(row.dataAssinatura + "T12:00:00"), "dd/MM/yy") : "—"}
+                            </td>
+                            <td className="py-2.5 px-3 text-right text-xs font-black text-emerald-500">{formatCurrency(row.vgv)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }
