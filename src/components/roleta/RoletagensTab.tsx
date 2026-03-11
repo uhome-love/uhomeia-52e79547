@@ -243,7 +243,7 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
       </div>
 
       {/* Leads aguardando aceite (highlight) */}
-      {pendentes.length > 0 && (
+      {showRoletagens && pendentes.length > 0 && (
         <Card className="border-amber-400/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
