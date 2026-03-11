@@ -254,6 +254,15 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
               </button>
             )}
           </div>
+
+          {/* Partnership badge */}
+          {parceriaLabel && (
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-bold text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                <Handshake className="h-3 w-3" /> {parceriaLabel}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Row 5: Próximo passo — editable */}
