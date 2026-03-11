@@ -512,8 +512,6 @@ export default function AgendaVisitas() {
         </div>
       )}
 
-      {/* ─── DAY SUMMARY ─── */}
-      <DaySummary visitas={visitas} showTeamBreakdown={isAdmin} />
 
       {/* ─── TEAM TABS (CEO/Admin) ─── */}
       {isAdmin && (
