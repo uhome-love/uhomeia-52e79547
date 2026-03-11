@@ -507,7 +507,7 @@ export default function VendasRealizadas() {
                       <td className="py-3 px-3 text-right text-sm font-black text-emerald-500">{formatCurrency(totalVGV)}</td>
                       <td></td>
                       <td></td>
-                      <td className="py-3 px-3 text-right text-xs font-bold text-yellow-500">{formatCurrencyFull(totalVGV * 0.0034)}</td>
+                      <td className="py-3 px-3 text-right text-xs font-bold text-yellow-500">{formatCurrencyFull(totalCorretagem * 0.34)}</td>
                     </tr>
                   </tfoot>
                 </table>
