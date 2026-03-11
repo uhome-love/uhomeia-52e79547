@@ -69,6 +69,7 @@ interface VendaRow {
   gerente_id: string | null;
   fase: string | null;
   created_at: string | null;
+  pipeline_lead_id: string | null;
 }
 
 interface ProfileInfo {
