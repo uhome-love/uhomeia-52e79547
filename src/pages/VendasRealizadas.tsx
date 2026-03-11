@@ -134,7 +134,22 @@ export default function VendasRealizadas() {
         (profiles || []).forEach(p => { profileMap[p.id] = p as ProfileInfo; });
       }
 
-      return { vendas: rows, profiles: profileMap };
+      // Fetch annual VGV for corretor tier (year-to-date)
+      const yearStart = `${new Date().getFullYear()}-01-01`;
+      let annualVgvByCorretor: Record<string, number> = {};
+      if (ids.length > 0) {
+        const { data: annualData } = await supabase.from("negocios")
+          .select("corretor_id, vgv_final, vgv_estimado")
+          .in("fase", ["assinado", "vendido"])
+          .gte("data_assinatura", yearStart)
+          .in("corretor_id", ids);
+        (annualData || []).forEach(n => {
+          const cid = n.corretor_id as string;
+          annualVgvByCorretor[cid] = (annualVgvByCorretor[cid] || 0) + (n.vgv_final || n.vgv_estimado || 0);
+        });
+      }
+
+      return { vendas: rows, profiles: profileMap, annualVgvByCorretor };
     },
   });
 
