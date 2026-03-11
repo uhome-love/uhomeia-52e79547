@@ -473,9 +473,6 @@ export default function CheckpointGerente() {
           <RelatoriosTab teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
         )}
 
-        {activeTab === "coach" && (
-          <CoachIATab rows={rows} metasMes={metasMes} dateFmt={dateFmt} teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
-        )}
       </div>
     </div>
   );
