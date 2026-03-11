@@ -83,10 +83,12 @@ export default function CheckpointGerente() {
     visitas_realizadas_meta: 100, visitas_realizadas_realizado: 0,
     ligacoes_meta: 680, ligacoes_realizado: 0,
   });
-  const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [teamUserIds, setTeamUserIds] = useState<string[]>([]);
-  const [teamNameMap, setTeamNameMap] = useState<Record<string, string>>({});
+   const [saving, setSaving] = useState(false);
+   const [syncing, setSyncing] = useState(false);
+   const [teamUserIds, setTeamUserIds] = useState<string[]>([]);
+   const [teamNameMap, setTeamNameMap] = useState<Record<string, string>>({});
+   const [editingMetas, setEditingMetas] = useState(false);
+   const [savingMetas, setSavingMetas] = useState(false);
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const dateFmt = format(selectedDate, "dd/MM/yyyy");
