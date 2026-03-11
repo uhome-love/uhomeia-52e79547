@@ -3,14 +3,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Timer } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Timer, CalendarPlus, Phone, MessageCircle, Mail, ClipboardList, MapPin } from "lucide-react";
 import { toast } from "sonner";
+
+export interface ProximaAcao {
+  tipo: string;
+  titulo: string;
+  venceEm: string;
+  horaVencimento?: string;
+  descricao?: string;
+}
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (resultado: string, feedback: string, visitaMarcada?: boolean, interesseTipo?: string) => Promise<void> | void;
+  onSubmit: (resultado: string, feedback: string, visitaMarcada?: boolean, interesseTipo?: string, proximaAcao?: ProximaAcao) => Promise<void> | void;
   leadName: string;
   callDuration?: number;
 }
@@ -62,11 +72,36 @@ const QUICK_FEEDBACKS: Record<string, string[]> = {
   ],
 };
 
+const ACAO_TIPOS = [
+  { key: "ligar", label: "Ligar", emoji: "📞", icon: Phone },
+  { key: "whatsapp", label: "WhatsApp", emoji: "💬", icon: MessageCircle },
+  { key: "email", label: "E-mail", emoji: "✉️", icon: Mail },
+  { key: "visita", label: "Visita", emoji: "🏠", icon: MapPin },
+  { key: "outro", label: "Outro", emoji: "📋", icon: ClipboardList },
+];
+
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
   const s = (seconds % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
 }
+
+function todayISO(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+}
+
+function tomorrowISO(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+}
+
+const QUICK_DATES = [
+  { label: "Hoje", fn: todayISO },
+  { label: "Amanhã", fn: tomorrowISO },
+  { label: "+3 dias", fn: () => { const d = new Date(); d.setDate(d.getDate() + 3); return d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }); } },
+  { label: "+7 dias", fn: () => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }); } },
+];
 
 export default function CustomListAttemptModal({ open, onClose, onSubmit, leadName, callDuration }: Props) {
   const [resultado, setResultado] = useState("");
@@ -75,17 +110,38 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
   const [submitting, setSubmitting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
+  // Próxima ação state
+  const [criarAcao, setCriarAcao] = useState(false);
+  const [acaoTipo, setAcaoTipo] = useState("ligar");
+  const [acaoData, setAcaoData] = useState(tomorrowISO());
+  const [acaoHora, setAcaoHora] = useState("10:00");
+  const [acaoDesc, setAcaoDesc] = useState("");
+
   useEffect(() => {
     if (open) {
       setResultado("");
       setSubOption("");
       setFeedback("");
       setSubmitting(false);
+      setCriarAcao(false);
+      setAcaoTipo("ligar");
+      setAcaoData(tomorrowISO());
+      setAcaoHora("10:00");
+      setAcaoDesc("");
     }
   }, [open]);
 
+  // Auto-enable "criar ação" for nao_atendeu
+  useEffect(() => {
+    if (resultado === "nao_atendeu") {
+      setCriarAcao(true);
+      setAcaoTipo("ligar");
+      setAcaoDesc("Retornar ligação — não atendeu");
+    }
+  }, [resultado]);
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target instanceof HTMLTextAreaElement) {
+    if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) {
       if (e.key === "Enter" && e.ctrlKey) {
         e.preventDefault();
         document.getElementById("custom-attempt-submit-btn")?.click();
@@ -109,10 +165,21 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
     try {
       const isVisita = subOption === "marcou_visita";
       const interesseTipo = resultado === "atendeu" ? subOption : resultado === "sem_interesse" ? subOption : undefined;
-      await onSubmit(resultado, feedback.trim(), isVisita, interesseTipo);
+
+      const tipoLabels: Record<string, string> = { ligar: "Ligar", whatsapp: "WhatsApp", email: "E-mail", visita: "Visita", outro: "Ação" };
+      const proximaAcao: ProximaAcao | undefined = criarAcao ? {
+        tipo: acaoTipo,
+        titulo: `${tipoLabels[acaoTipo] || "Ação"} — ${leadName}`,
+        venceEm: acaoData,
+        horaVencimento: acaoHora,
+        descricao: acaoDesc || undefined,
+      } : undefined;
+
+      await onSubmit(resultado, feedback.trim(), isVisita, interesseTipo, proximaAcao);
       setResultado("");
       setSubOption("");
       setFeedback("");
+      setCriarAcao(false);
     } catch {
       toast.error("Erro ao registrar. Tente novamente.");
     } finally {
@@ -190,6 +257,29 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
               </div>
             )}
 
+            {/* Sub-options for "Sem interesse" */}
+            {resultado === "sem_interesse" && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Motivo (obrigatório)</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {SEM_INTERESSE_SUB.map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setSubOption(opt.key)}
+                      className={`flex flex-col items-start gap-0.5 p-2.5 rounded-lg border-2 transition-all text-left ${
+                        subOption === opt.key
+                          ? "border-rose-500/60 bg-rose-500/15 ring-1 ring-rose-500/30"
+                          : "border-[rgba(255,255,255,0.2)] bg-[#1C2128] hover:border-rose-500/30 hover:bg-[#232a34]"
+                      }`}
+                    >
+                      <span className="text-sm font-medium text-[#E2E8F0]">{opt.emoji} {opt.label}</span>
+                      <span className="text-[10px] text-[#94A3B8]">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quick Feedback Chips */}
             {quickFeedbacks.length > 0 && (
               <div className="space-y-1.5">
@@ -229,6 +319,109 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                 </p>
               </div>
             </div>
+
+            {/* ═══ CRIAR PRÓXIMA AÇÃO ═══ */}
+            {resultado && resultado !== "descarte_oa" && (
+              <div className="rounded-xl border border-[rgba(255,255,255,0.12)] overflow-hidden" style={{ background: "#161B22" }}>
+                <button
+                  type="button"
+                  onClick={() => setCriarAcao(!criarAcao)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[rgba(255,255,255,0.04)] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <CalendarPlus className="h-4 w-4 text-amber-400" />
+                    <span className="text-sm font-semibold text-[#E2E8F0]">Criar próxima ação</span>
+                    {criarAcao && (
+                      <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 py-0">
+                        Ativada
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    checked={criarAcao}
+                    onCheckedChange={setCriarAcao}
+                    onClick={(e) => e.stopPropagation()}
+                    className="data-[state=checked]:bg-amber-500"
+                  />
+                </button>
+
+                {criarAcao && (
+                  <div className="px-3 pb-3 space-y-2.5 border-t border-[rgba(255,255,255,0.06)]">
+                    {/* Tipo de ação */}
+                    <div className="pt-2.5">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Tipo da ação</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ACAO_TIPOS.map(t => (
+                          <button
+                            key={t.key}
+                            onClick={() => setAcaoTipo(t.key)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                              acaoTipo === t.key
+                                ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
+                                : "border-[rgba(255,255,255,0.15)] text-[#94A3B8] hover:border-amber-500/30 hover:bg-[rgba(255,255,255,0.03)]"
+                            }`}
+                          >
+                            <span>{t.emoji}</span>
+                            <span>{t.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Data rápida */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Quando</p>
+                      <div className="flex gap-1.5 mb-1.5">
+                        {QUICK_DATES.map(qd => (
+                          <button
+                            key={qd.label}
+                            onClick={() => setAcaoData(qd.fn())}
+                            className={`px-2.5 py-1 rounded-md border text-[11px] font-medium transition-all ${
+                              acaoData === qd.fn()
+                                ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
+                                : "border-[rgba(255,255,255,0.12)] text-[#94A3B8] hover:border-amber-500/30"
+                            }`}
+                          >
+                            {qd.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          type="date"
+                          value={acaoData}
+                          onChange={e => setAcaoData(e.target.value)}
+                          className="flex-1 h-8 text-xs"
+                          style={{ background: "#0A0F1E", border: "1px solid rgba(255,255,255,0.12)", color: "white" }}
+                        />
+                        <Input
+                          type="time"
+                          value={acaoHora}
+                          onChange={e => setAcaoHora(e.target.value)}
+                          className="w-24 h-8 text-xs"
+                          style={{ background: "#0A0F1E", border: "1px solid rgba(255,255,255,0.12)", color: "white" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Descrição opcional */}
+                    <div>
+                      <Input
+                        placeholder="Observação da tarefa (opcional)"
+                        value={acaoDesc}
+                        onChange={e => setAcaoDesc(e.target.value)}
+                        className="h-8 text-xs"
+                        style={{ background: "#0A0F1E", border: "1px solid rgba(255,255,255,0.12)", color: "white" }}
+                      />
+                    </div>
+
+                    <p className="text-[10px] text-amber-500/70">
+                      📌 Tarefa será criada automaticamente no Pipeline de Leads deste lead.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Contextual info */}
             {resultado === "atendeu" && subOption && (
@@ -273,7 +466,7 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
               }}
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {submitting ? "Registrando..." : "Registrar e avançar ➜"}
+              {submitting ? "Registrando..." : criarAcao ? "Registrar + criar ação ➜" : "Registrar e avançar ➜"}
             </button>
           </div>
         </DialogContent>
