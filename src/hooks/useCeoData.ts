@@ -154,18 +154,49 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
       agg.real_propostas += l.real_propostas ?? 0;
     }
 
-    // VGV from negocios (source of truth) - by gerente
+    // VGV from negocios (source of truth) — use data_assinatura for assinado, created_at for others
     const mesKey = dateRange.start.slice(0, 7);
-    let negQuery = supabase.from("negocios").select("gerente_id, corretor_id, vgv_estimado, vgv_final, fase, nome_cliente").gte("created_at", `${mesKey}-01`).lt("created_at", `${mesKey}-32`);
-    if (filterGerenteId) negQuery = negQuery.eq("gerente_id", filterGerenteId);
-    const { data: pdns } = await negQuery;
+    
+    // Fetch assinado deals by data_assinatura (source of truth for VGV)
+    let negAssinadoQuery = supabase.from("negocios").select("gerente_id, corretor_id, vgv_estimado, vgv_final, fase, nome_cliente")
+      .eq("fase", "assinado")
+      .gte("data_assinatura", dateRange.start)
+      .lte("data_assinatura", dateRange.end);
+    if (filterGerenteId) negAssinadoQuery = negAssinadoQuery.eq("gerente_id", filterGerenteId);
+    
+    // Fetch proposal/negotiation deals by created_at
+    let negPropostaQuery = supabase.from("negocios").select("gerente_id, corretor_id, vgv_estimado, vgv_final, fase, nome_cliente")
+      .in("fase", ["proposta", "negociacao", "documentacao"])
+      .gte("created_at", `${mesKey}-01`)
+      .lt("created_at", `${mesKey}-32`);
+    if (filterGerenteId) negPropostaQuery = negPropostaQuery.eq("gerente_id", filterGerenteId);
+    
+    const [{ data: pdnsAssinado }, { data: pdnsProposta }] = await Promise.all([negAssinadoQuery, negPropostaQuery]);
+    const pdns = [...(pdnsAssinado || []), ...(pdnsProposta || [])];
 
-    // Resolve corretor names for VGV assignment
-    const negCorretorIds = [...new Set((pdns || []).map(p => p.corretor_id).filter(Boolean))];
-    const corretorNameMap = new Map<string, string>();
+    // Build mapping: profiles.id → team_members.id via user_id
+    const negCorretorIds = [...new Set((pdns || []).map(p => p.corretor_id).filter(Boolean))] as string[];
+    const profileIdToTeamId = new Map<string, string>();
+    
     if (negCorretorIds.length > 0) {
-      const { data: cProfiles } = await supabase.from("profiles").select("id, nome").in("id", negCorretorIds);
-      (cProfiles || []).forEach(p => corretorNameMap.set(p.id, p.nome || ""));
+      // Get profiles for these corretor_ids to find their user_ids
+      const { data: cProfiles } = await supabase.from("profiles").select("id, user_id").in("id", negCorretorIds);
+      
+      // Map profile.user_id → team_members entries
+      const profileUserIds = (cProfiles || []).map(p => p.user_id).filter(Boolean);
+      const profileIdToUserId = new Map((cProfiles || []).map(p => [p.id, p.user_id]));
+      
+      // Find team_members by user_id
+      if (profileUserIds.length > 0) {
+        const { data: tmByUser } = await supabase.from("team_members").select("id, user_id").in("user_id", profileUserIds);
+        const userIdToTeamId = new Map((tmByUser || []).map(t => [t.user_id, t.id]));
+        
+        // Build final mapping: profiles.id → team_members.id
+        for (const [profileId, userId] of profileIdToUserId) {
+          const teamId = userIdToTeamId.get(userId);
+          if (teamId) profileIdToTeamId.set(profileId, teamId);
+        }
+      }
     }
 
     // Build VGV + Propostas per gerente from negocios (single source of truth)
@@ -179,18 +210,14 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
       if (fase === "assinado") curr.assinado += Number(p.vgv_final || p.vgv_estimado || 0);
       pdnByGerente.set(gId, curr);
 
-      // Also try to assign VGV to corretor by profile ID match
+      // Assign VGV to corretor using proper ID mapping
       if (p.corretor_id) {
-        const corretorName = corretorNameMap.get(p.corretor_id) || "";
-        for (const [, agg] of corretorAggMap) {
-          if (agg.gerente_id !== gId) continue;
-          const tmName = agg.corretor_nome.toLowerCase().trim();
-          const cName = corretorName.toLowerCase().trim();
-          const firstName = tmName.split(" ")[0];
-          if (tmName === cName || firstName === cName || tmName.includes(cName) || cName.includes(firstName)) {
+        const teamMemberId = profileIdToTeamId.get(p.corretor_id);
+        if (teamMemberId) {
+          const agg = corretorAggMap.get(teamMemberId);
+          if (agg) {
             if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") agg.real_vgv_gerado += Number(p.vgv_estimado || 0);
             if (fase === "assinado") agg.real_vgv_assinado += Number(p.vgv_final || p.vgv_estimado || 0);
-            break;
           }
         }
       }
