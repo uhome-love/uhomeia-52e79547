@@ -11,7 +11,7 @@ import IaCoreAction from "@/components/IaCoreAction";
 import { getLevel } from "@/lib/gamification";
 
 type RankMetric = "score" | "vgv_assinado" | "vgv_gerado" | "visitas_realizadas" | "propostas";
-type PeriodOption = "dia" | "semana" | "mes";
+type PeriodOption = "dia" | "semana" | "mes" | "trimestre";
 
 const metricLabels: Record<RankMetric, string> = {
   score: "Score Geral",
