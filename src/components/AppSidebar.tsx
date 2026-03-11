@@ -257,6 +257,7 @@ export function AppSidebar() {
             label: "Gestão de Vendas",
             items: [
               { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Kanban },
+              { title: "Vendas Realizadas", url: "/vendas-realizadas", icon: Trophy },
               { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
             ],
           },
@@ -321,6 +322,7 @@ export function AppSidebar() {
             label: "Gestão de Negócios",
             items: [
               { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Kanban },
+              { title: "Vendas Realizadas", url: "/vendas-realizadas", icon: Trophy },
               { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
             ],
           },
@@ -389,6 +391,7 @@ export function AppSidebar() {
             { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
             { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
             { title: "Pipeline Negócios", url: "/pipeline-negocios", icon: Briefcase },
+            { title: "Vendas Realizadas", url: "/vendas-realizadas", icon: Trophy },
             { title: "Pós-Vendas", url: "/pos-vendas", icon: PackageCheck },
           ],
         },
