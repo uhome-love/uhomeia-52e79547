@@ -225,7 +225,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
                   <AvatarImage src={corretorInfo.avatar_gamificado_url || corretorInfo.avatar_url || undefined} className="object-cover" />
                   <AvatarFallback className="text-[8px]" style={{ background: `${faseInfo?.cor || "#6B7280"}30`, color: faseInfo?.cor }}>{(corretorInfo.nome || "?")[0]}</AvatarFallback>
                 </Avatar>
-                <span className="text-[11px] text-muted-foreground truncate">{corretorInfo.nome?.split(" ")[0]}</span>
+                <span className="text-[12px] font-medium text-white/60 truncate">{corretorInfo.nome?.split(" ")[0]}</span>
                 {corretorInfo.equipe && (
                   <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-border/40 text-muted-foreground">
                     {corretorInfo.equipe}
