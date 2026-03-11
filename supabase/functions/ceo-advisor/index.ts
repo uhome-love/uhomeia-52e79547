@@ -10,8 +10,8 @@ serve(async (req) => {
 
   try {
     const { data } = await req.json();
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const systemPrompt = `Você é o "UHOME IA – CEO Advisor", um assistente estratégico de alto nível para o CEO de uma imobiliária.
 Analise os dados consolidados de performance comercial e gere um relatório executivo COMPLETO e PRÁTICO.
