@@ -77,6 +77,7 @@ const VitrinePage = lazy(() => import("./pages/VitrinePage"));
 const PosVendas = lazy(() => import("./pages/PosVendas"));
 const MelnickDay = lazy(() => import("./pages/MelnickDay"));
 const VendasRealizadas = lazy(() => import("./pages/VendasRealizadas"));
+const AnunciosNoAr = lazy(() => import("./pages/AnunciosNoAr"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -175,6 +176,7 @@ const App = () => (
             <Route path="/pos-vendas" element={<ProtectedPage><PosVendas /></ProtectedPage>} />
             <Route path="/imoveis" element={<ProtectedPage><ImoveisPage /></ProtectedPage>} />
             <Route path="/melnick-day" element={<ProtectedPage><MelnickDay /></ProtectedPage>} />
+            <Route path="/anuncios" element={<ProtectedPage><AnunciosNoAr /></ProtectedPage>} />
 
             {/* Busca de Leads / Higienização — gestor + admin */}
             <Route path="/busca-leads" element={<ProtectedPage roles={["gestor", "admin"]}><BuscaLeads /></ProtectedPage>} />

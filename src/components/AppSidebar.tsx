@@ -38,6 +38,7 @@ import {
   PhoneCall,
   PackageCheck,
   Zap,
+  Radio,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -248,6 +249,7 @@ export function AppSidebar() {
             items: [
               { title: "Roleta de Leads", url: "/roleta", icon: Cog },
               { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
+              { title: "Anúncios no Ar", url: "/anuncios", icon: Radio },
               { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
               { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
               { title: "Busca de Leads", url: "/busca-leads", icon: SearchCheck },
@@ -311,6 +313,7 @@ export function AppSidebar() {
           {
             label: "Gestão de Leads",
             items: [
+              { title: "Anúncios no Ar", url: "/anuncios", icon: Radio },
               { title: "Oferta Ativa", url: "/oferta-ativa", icon: Phone },
               { title: "Pipeline de Leads", url: "/pipeline-leads", icon: Kanban },
               { title: "Agenda de Visitas", url: "/agenda-visitas", icon: CalendarDays },
