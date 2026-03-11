@@ -94,6 +94,7 @@ export default function CeoDashboard() {
   const [dispatchOpen, setDispatchOpen] = useState(false);
   const [filaCeoCount, setFilaCeoCount] = useState(0);
   const [lastDispatch, setLastDispatch] = useState<{ at: string; count: number } | null>(null);
+  const [bulkEmpOpen, setBulkEmpOpen] = useState(false);
 
   const {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
