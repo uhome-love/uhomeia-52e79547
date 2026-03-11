@@ -207,6 +207,9 @@ function EditableRow({ mapping, onSave, onDelete, categoria }: { mapping: FieldM
   const uhomeOpts = getUhomeFields(categoria, draft.uhome_field);
   const tableOpts = getTableOptions(draft.uhome_table);
 
+  const handleSave = () => { onSave(draft); setEditing(false); };
+  const handleCancel = () => { setDraft(mapping); setEditing(false); };
+
   if (editing) {
     return (
       <tr className="border-b bg-primary/5">
