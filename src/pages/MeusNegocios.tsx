@@ -213,7 +213,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           </div>
 
           {/* Row 2: Imóvel */}
-          <p className="text-[13px] font-medium text-white/70 truncate">
+          <p className="text-[11px] font-medium text-white/70 truncate">
             {negocio.empreendimento || <span className="italic text-amber-400/80 font-semibold">🏠 Sem imóvel</span>}
           </p>
 
