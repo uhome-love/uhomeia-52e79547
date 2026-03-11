@@ -67,10 +67,9 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
         contatos: acc.contatos + Number(r.contatos),
         qualificados: acc.qualificados + Number(r.qualificados),
         visitas: acc.visitas + Number(r.visitas_marcadas) + Number(r.visitas_realizadas),
-        propostas: acc.propostas + Number(r.propostas),
         pontos: acc.pontos + Number(r.pontos_total),
       }),
-      { contatos: 0, qualificados: 0, visitas: 0, propostas: 0, pontos: 0 }
+      { contatos: 0, qualificados: 0, visitas: 0, pontos: 0 }
     );
   }, [ranking]);
 
