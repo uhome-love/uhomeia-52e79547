@@ -784,7 +784,7 @@ export default function IntegracaoJetimob() {
         <TabsList>
           <TabsTrigger value="leads" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Leads ({leadOk}/{leadTotal})</TabsTrigger>
           <TabsTrigger value="imoveis" className="gap-1.5"><Building2 className="h-3.5 w-3.5" /> Imóveis ({imovelOk}/{imovelTotal})</TabsTrigger>
-          <TabsTrigger value="empreendimentos" className="gap-1.5"><Zap className="h-3.5 w-3.5" /> Empreendimentos ({EMPREENDIMENTO_MAPPINGS.length})</TabsTrigger>
+          <TabsTrigger value="empreendimentos" className="gap-1.5"><Building2 className="h-3.5 w-3.5" /> Campanhas → Empreend.</TabsTrigger>
           <TabsTrigger value="dedup" className="gap-1.5"><Database className="h-3.5 w-3.5" /> Deduplicação</TabsTrigger>
         </TabsList>
 
