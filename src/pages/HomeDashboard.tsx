@@ -486,25 +486,8 @@ export default function HomeDashboard() {
             </div>
           </motion.div>
 
-          {/* Smart Alerts — Checkpoint urgency */}
-          {smartAlerts.filter(a => a.title?.toLowerCase().includes("checkpoint")).length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-              {smartAlerts.filter(a => a.title?.toLowerCase().includes("checkpoint")).map(a => (
-                <div key={a.id} className="flex items-center gap-3 p-4 rounded-xl" style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderLeft: "4px solid #EF4444" }}>
-                  <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-red-700">⚠️ {a.title}</p>
-                    <p className="text-xs text-red-600/70 mt-0.5">{a.description}</p>
-                  </div>
-                  {a.action && (
-                    <button onClick={() => navigate(a.action!.url)} className="text-xs font-bold text-red-700 hover:text-red-800 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
-                      Preencher agora →
-                    </button>
-                  )}
-                </div>
-              ))}
-            </motion.div>
-          )}
+
+
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 2. Performance de Equipe */}
