@@ -66,19 +66,11 @@ export default function DashboardRankingsPreview() {
   const { data: gestaoItems = [] } = useQuery({
     queryKey: ["mini-ranking-gestao"],
     queryFn: async () => {
-      const today = todayBRT();
-      const { data } = await supabase
-        .from("oferta_ativa_tentativas")
-        .select("corretor_id, pontos")
-        .gte("created_at", today + "T00:00:00");
-      if (!data) return [];
-      const map: Record<string, number> = {};
-      data.forEach(t => { map[t.corretor_id] = (map[t.corretor_id] || 0) + (t.pontos || 0); });
-      const ids = Object.keys(map);
-      if (ids.length === 0) return [];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, nome").in("user_id", ids);
-      const nameMap = new Map((profiles || []).map(p => [p.user_id, p.nome || "—"]));
-      return ids.map(id => ({ id, nome: nameMap.get(id) || "—", value: map[id] }))
+      const { data, error } = await supabase.rpc("get_ranking_gestao_leads", {
+        p_periodo: "dia",
+      });
+      if (error || !data) return [];
+      return (data as any[]).map(r => ({ id: r.corretor_id, nome: r.corretor_nome, value: Number(r.pontos_total) }))
         .sort((a, b) => b.value - a.value);
     },
     staleTime: 60_000,
