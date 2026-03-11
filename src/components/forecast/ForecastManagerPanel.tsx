@@ -2,6 +2,7 @@ import { useForecast } from "@/hooks/useForecast";
 import ForecastCards from "./ForecastCards";
 import IaCoreAction from "@/components/IaCoreAction";
 import { AlertTriangle, TrendingUp } from "lucide-react";
+import { formatBRLCompact } from "@/lib/utils";
 
 export default function ForecastManagerPanel() {
   const { gerentes, loading, reload } = useForecast();
