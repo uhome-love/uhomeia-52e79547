@@ -51,16 +51,25 @@ const CARD_QUICK_ACTIONS = [
   { id: "contrato", emoji: "📝", label: "Enviei contrato", tipo: "contrato", titulo: "Contrato enviado", openPopup: "contrato" },
 ];
 
-function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, onDragStart, onClick, onMoveFase, onUpdateNegocio }: {
+interface NegocioTask {
+  id: string;
+  titulo: string;
+  vence_em: string | null;
+  status: string;
+}
+
+function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, paradoInfo, nextTask, onDragStart, onClick, onMoveFase, onUpdateNegocio, onTaskSaved }: {
   negocio: Negocio;
   corretorNome?: string;
   corretorInfo?: CorretorInfo;
   showCorretor?: boolean;
   paradoInfo?: { diasParado: number; severity: "warning" | "danger" };
+  nextTask?: NegocioTask | null;
   onDragStart: () => void;
   onClick: () => void;
   onMoveFase: (id: string, fase: string) => void;
   onUpdateNegocio: (id: string, updates: Partial<Negocio>) => Promise<void>;
+  onTaskSaved?: () => void;
 }) {
   const { user } = useAuth();
   const faseInfo = NEGOCIOS_FASES.find(f => f.key === negocio.fase);
