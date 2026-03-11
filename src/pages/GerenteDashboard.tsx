@@ -56,7 +56,7 @@ export default function GerenteDashboard() {
   const { isGestor, isAdmin, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>("dia");
-  const [negTab, setNegTab] = useState<"quentes" | "acao">("quentes");
+  const [negFaseTab, setNegFaseTab] = useState<"proposta" | "negociacao" | "documentacao">("proposta");
   const [drawerCorretor, setDrawerCorretor] = useState<CorretorDrawerData | null>(null);
   const [lastUpdate] = useState(() => format(new Date(), "HH:mm"));
 
