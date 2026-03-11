@@ -279,8 +279,35 @@ function MaterialSection({
   const [uploading, setUploading] = useState(false);
   const [uploadTipo, setUploadTipo] = useState("criativo");
   const [uploadNome, setUploadNome] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
 
   const myMateriais = materiais.filter(m => m.empreendimento_codigo === empreendimentoCodigo);
+
+  const handleSaveLink = async () => {
+    if (!linkUrl.trim() || !user) return;
+    setUploading(true);
+    try {
+      const { error: dbError } = await supabase.from("anuncio_materiais").insert({
+        empreendimento_codigo: empreendimentoCodigo,
+        empreendimento_nome: empreendimentoNome,
+        segmento,
+        tipo: uploadTipo,
+        nome_arquivo: uploadNome.trim() || "Vídeo Instagram",
+        url: linkUrl.trim(),
+        mime_type: "text/uri-list",
+        uploaded_by: user.id,
+      });
+      if (dbError) throw dbError;
+      toast.success("✅ Link salvo com sucesso!");
+      onRefresh();
+    } catch (err: any) {
+      toast.error("Erro ao salvar: " + (err.message || "tente novamente"));
+    } finally {
+      setUploading(false);
+      setUploadNome("");
+      setLinkUrl("");
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
