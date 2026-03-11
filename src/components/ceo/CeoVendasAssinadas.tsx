@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, DollarSign, CheckCircle, AlertCircle, Building2, Trophy, Users, Calendar } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
+import { formatBRLCompact } from "@/lib/utils";
 
 interface VendaAssinada {
   id: string;
