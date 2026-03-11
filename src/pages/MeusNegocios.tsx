@@ -880,7 +880,11 @@ export default function MeusNegocios() {
           {NEGOCIOS_FASES.filter(f => !("hidden" in f && f.hidden) || ((isAdmin || isGestor) && f.key === "vendido")).map((fase) => {
             const faseNegocios = negociosByFase.get(fase.key) || [];
             const isDragOver = dragOverFase === fase.key;
-            const totalFaseVGV = faseNegocios.reduce((sum, n) => sum + (n.vgv_estimado || 0), 0);
+            const totalFaseVGV = faseNegocios.reduce((sum, n) => {
+              const vgv = n.vgv_estimado || 0;
+              const isParceria = n.pipeline_lead_id ? parceriaMap[n.pipeline_lead_id]?.isParceria : false;
+              return sum + (isParceria ? vgv / 2 : vgv);
+            }, 0);
 
             return (
               <div
