@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { ProximaAcao } from "./CustomListAttemptModal";
 import { useOAServerQueue, useOARegistrarTentativa, useOATemplates, type OALista, type OALead } from "@/hooks/useOfertaAtiva";
 import { useOAPendingQueue } from "@/hooks/useOAPendingQueue";
 import { useOASessionGuard } from "@/hooks/useOASessionGuard";
@@ -402,7 +403,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   };
 
   // Custom list result handler — records in pipeline history, handles descarte_oa
-  const handleCustomListResult = async (resultado: string, feedback: string, visitaMarcada?: boolean, interesseTipo?: string) => {
+  const handleCustomListResult = async (resultado: string, feedback: string, visitaMarcada?: boolean, interesseTipo?: string, proximaAcao?: ProximaAcao) => {
     if (!lead || submitting) return;
     // Ensure actionTaken is set even if user didn't click "Ligar" first
     const effectiveAction = actionTaken || "ligacao";
@@ -478,6 +479,28 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           toast("📤 Lead enviado para Oferta Ativa — registrado no Pipeline", { duration: 2500 });
         }
         checkMilestone(progress.tentativas + 1);
+
+        // Create pipeline task if próxima ação was requested
+        if (proximaAcao && user) {
+          try {
+            await supabase.from("pipeline_tarefas").insert({
+              pipeline_lead_id: lead.id,
+              tipo: proximaAcao.tipo,
+              titulo: proximaAcao.titulo,
+              descricao: proximaAcao.descricao || null,
+              vence_em: proximaAcao.venceEm,
+              hora_vencimento: proximaAcao.horaVencimento || null,
+              responsavel_id: user.id,
+              created_by: user.id,
+              status: "pendente",
+              prioridade: "normal",
+            });
+            toast.success("📌 Próxima ação criada no Pipeline!", { duration: 2500 });
+          } catch (e) {
+            console.warn("[OA] Erro ao criar tarefa:", e);
+            toast.error("Não foi possível criar a tarefa. Crie manualmente no Pipeline.");
+          }
+        }
       }
 
       stopTimer();
