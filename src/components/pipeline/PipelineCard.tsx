@@ -332,10 +332,12 @@ const PipelineCard = memo(function PipelineCard({
 
         {/* Line 2: Corretor (for managers) + Empreendimento · Phone · Origin badge */}
         {corretorNome && (
-          <div className="text-[11px] text-muted-foreground truncate leading-tight flex items-center gap-1">
-            <span className="inline-flex items-center gap-1 px-1.5 py-0 rounded bg-primary/10 text-primary font-medium text-[10px]">
-              👤 {corretorNome.split(" ").slice(0, 2).join(" ")}
-            </span>
+          <div className="text-[11px] text-muted-foreground truncate leading-tight flex items-center gap-1.5">
+            <Avatar className="h-4 w-4 shrink-0">
+              <AvatarImage src={corretorAvatar} className="object-cover" />
+              <AvatarFallback className="text-[7px] bg-primary/10 text-primary font-semibold">{corretorNome[0]}</AvatarFallback>
+            </Avatar>
+            <span className="text-[10px] font-medium text-primary truncate">{corretorNome.split(" ").slice(0, 2).join(" ")}</span>
           </div>
         )}
         <div className="text-xs text-muted-foreground truncate leading-tight flex items-center gap-1">
