@@ -158,8 +158,8 @@ export function applyFilters(
   if (filters.diasSemAcao) {
     const minDays = parseInt(filters.diasSemAcao);
     result = result.filter(l => {
-      const days = differenceInDays(new Date(), new Date(l.stage_changed_at));
-      return days >= minDays;
+      const days = differenceInDaysSafe(l.stage_changed_at);
+      return days !== null && days >= minDays;
     });
   }
 

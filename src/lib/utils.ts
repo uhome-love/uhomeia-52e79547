@@ -1,4 +1,5 @@
 import { differenceInDays, differenceInHours, format, formatDistanceToNow } from "date-fns";
+import { differenceInMinutes } from "date-fns";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -83,4 +84,9 @@ export function differenceInHoursSafe(value: string | Date | null | undefined, d
 export function differenceInDaysSafe(value: string | Date | null | undefined, dateOnly = false): number | null {
   const parsed = parseDateValue(value, dateOnly);
   return parsed ? differenceInDays(new Date(), parsed) : null;
+}
+
+export function differenceInMinutesSafe(value: string | Date | null | undefined, dateOnly = false): number | null {
+  const parsed = parseDateValue(value, dateOnly);
+  return parsed ? differenceInMinutes(new Date(), parsed) : null;
 }

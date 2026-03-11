@@ -79,8 +79,7 @@ export function calculateLeadScore(lead: {
     score += 10; factors.push("+Indicação");
   }
 
-  // Penalizar leads velhos sem movimento
-  const hoursInStage = differenceInHours(new Date(), new Date(lead.stage_changed_at));
+  const hoursInStage = differenceInHoursSafe(lead.stage_changed_at) ?? 0;
   if (hoursInStage > 48) { score -= 15; factors.push("-Parado 48h+"); }
   else if (hoursInStage > 24) { score -= 10; factors.push("-Parado 24h+"); }
   else if (hoursInStage > 4) { score -= 5; factors.push("-Parado 4h+"); }
