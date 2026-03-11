@@ -56,6 +56,7 @@ interface CorretorCandidate {
   corretorId: string;  // profiles.id (FK for credenciamentos)
   authUserId: string;  // auth.users.id (for pipeline_leads.corretor_id)
   leadsHoje: number;
+  totalAtivos: number; // total active pipeline leads (not in descarte/venda)
   lastReceivedAt: string | null;
 }
 
@@ -190,6 +191,19 @@ Deno.serve(async (req) => {
         .gte("distribuido_em", todayStart)
         .in("aceite_status", ["aceito", "pendente"]);
 
+      // Count TOTAL active pipeline leads per corretor (for fairer balancing)
+      const { data: activeLeadsData } = await supabase
+        .from("pipeline_leads")
+        .select("corretor_id")
+        .in("corretor_id", authUserIds)
+        .in("aceite_status", ["aceito", "pendente"]);
+
+      const totalAtivosCount = new Map<string, number>();
+      for (const uid of authUserIds) totalAtivosCount.set(uid, 0);
+      for (const l of activeLeadsData || []) {
+        totalAtivosCount.set(l.corretor_id, (totalAtivosCount.get(l.corretor_id) || 0) + 1);
+      }
+
       // Count per auth user
       const leadsCount = new Map<string, number>();
       const lastReceived = new Map<string, string>();
@@ -207,7 +221,7 @@ Deno.serve(async (req) => {
       // Distribute leads one by one with global balancing
       let dispatched = 0;
       let failed = 0;
-      const distributionLog: Array<{ leadId: string; corretorId: string; segmento: string }> = [];
+      const distributionLog: Array<{ leadId: string; corretorId: string; segmento: string; leadsHoje?: number; totalAtivos?: number }> = [];
 
       for (const lead of leads) {
         const segmentoId = await resolveSegmento(supabase, lead.empreendimento);
@@ -225,6 +239,7 @@ Deno.serve(async (req) => {
             corretorId: profileId,
             authUserId: authId,
             leadsHoje: leadsCount.get(authId) || 0,
+            totalAtivos: totalAtivosCount.get(authId) || 0,
             lastReceivedAt: lastReceived.get(authId) || null,
           });
         }
@@ -235,9 +250,10 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Sort: least leads first, then by last received (oldest first = longest without lead)
+        // Sort: 1) least leads today, 2) fewest total active leads, 3) longest without a lead
         eligible.sort((a, b) => {
           if (a.leadsHoje !== b.leadsHoje) return a.leadsHoje - b.leadsHoje;
+          if (a.totalAtivos !== b.totalAtivos) return a.totalAtivos - b.totalAtivos;
           // Tie-breaker: who hasn't received recently (null = never received = first)
           if (!a.lastReceivedAt && b.lastReceivedAt) return -1;
           if (a.lastReceivedAt && !b.lastReceivedAt) return 1;
@@ -247,6 +263,7 @@ Deno.serve(async (req) => {
           return 0;
         });
 
+        console.log(`Lead ${lead.nome}: ${eligible.length} eligible. Top 3: ${eligible.slice(0, 3).map(e => `${e.authUserId.slice(0,8)}(hoje=${e.leadsHoje},total=${e.totalAtivos})`).join(", ")}`);
         const chosen = eligible[0];
         const now = new Date();
         const expireAt = new Date(now.getTime() + 10 * 60 * 1000); // 10 min
@@ -271,6 +288,7 @@ Deno.serve(async (req) => {
 
         // Update counters for next iteration
         leadsCount.set(chosen.authUserId, (leadsCount.get(chosen.authUserId) || 0) + 1);
+        totalAtivosCount.set(chosen.authUserId, (totalAtivosCount.get(chosen.authUserId) || 0) + 1);
         lastReceived.set(chosen.authUserId, now.toISOString());
 
         // Log distribution
@@ -304,7 +322,7 @@ Deno.serve(async (req) => {
           console.warn("Push notify error:", e)
         );
 
-        distributionLog.push({ leadId: lead.id, corretorId: chosen.authUserId, segmento: segmentoId || "unknown" });
+          distributionLog.push({ leadId: lead.id, corretorId: chosen.authUserId, segmento: segmentoId || "unknown", leadsHoje: chosen.leadsHoje, totalAtivos: chosen.totalAtivos });
         dispatched++;
       }
 
@@ -414,6 +432,19 @@ async function distributeSingleLead(
     .gte("distribuido_em", todayStart)
     .in("aceite_status", ["aceito", "pendente"]);
 
+  // Count TOTAL active pipeline leads per corretor (fairer balancing)
+  const { data: activeLeadsData } = await supabase
+    .from("pipeline_leads")
+    .select("corretor_id")
+    .in("corretor_id", authIds)
+    .in("aceite_status", ["aceito", "pendente"]);
+
+  const totalAtivosCount = new Map<string, number>();
+  for (const uid of authIds) totalAtivosCount.set(uid, 0);
+  for (const l of activeLeadsData || []) {
+    totalAtivosCount.set(l.corretor_id, (totalAtivosCount.get(l.corretor_id) || 0) + 1);
+  }
+
   const leadsCount = new Map<string, number>();
   const lastReceived = new Map<string, string>();
   for (const uid of authIds) leadsCount.set(uid, 0);
@@ -431,12 +462,15 @@ async function distributeSingleLead(
       corretorId: profileId,
       authUserId: authId,
       leadsHoje: leadsCount.get(authId) || 0,
+      totalAtivos: totalAtivosCount.get(authId) || 0,
       lastReceivedAt: lastReceived.get(authId) || null,
     });
   }
 
+  // Sort: 1) least leads today, 2) fewest total active leads, 3) longest without a lead
   candidates.sort((a, b) => {
     if (a.leadsHoje !== b.leadsHoje) return a.leadsHoje - b.leadsHoje;
+    if (a.totalAtivos !== b.totalAtivos) return a.totalAtivos - b.totalAtivos;
     if (!a.lastReceivedAt && b.lastReceivedAt) return -1;
     if (a.lastReceivedAt && !b.lastReceivedAt) return 1;
     if (a.lastReceivedAt && b.lastReceivedAt) return a.lastReceivedAt < b.lastReceivedAt ? -1 : 1;
