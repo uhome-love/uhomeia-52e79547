@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { format, isToday, isTomorrow, isBefore, startOfDay, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addDays, isWithinInterval } from "date-fns";
+import { format, isToday, isTomorrow, isBefore, startOfDay, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addDays, isWithinInterval, subMonths, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -194,6 +194,9 @@ export default function AgendaVisitas() {
   const [agendaTipo, setAgendaTipo] = useState<"lead" | "negocio">("lead");
   const [leadSubTab, setLeadSubTab] = useState<"minhas" | "time">("minhas");
   const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [anterioresPeriodo, setAnterioresPeriodo] = useState<string>("mes-atual");
+  const [anterioresCustomFrom, setAnterioresCustomFrom] = useState<Date | undefined>();
+  const [anterioresCustomTo, setAnterioresCustomTo] = useState<Date | undefined>();
 
   const { visitas: allVisitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas();
 
@@ -389,6 +392,45 @@ export default function AgendaVisitas() {
     return list;
   }, [allVisitas, searchTerm, dateFrom, dateTo, statusFilter, corretorFilter, empreendimentoFilter]);
 
+  // Filtered past visitas based on anteriores period selector
+  const anterioresFiltered = useMemo(() => {
+    const today = startOfDay(new Date());
+    let pastList = filtered.filter(v => {
+      const d = new Date(v.data_visita + "T12:00:00");
+      return isBefore(d, today);
+    });
+
+    if (anterioresPeriodo === "personalizado") {
+      if (anterioresCustomFrom) {
+        const fromStr = format(anterioresCustomFrom, "yyyy-MM-dd");
+        pastList = pastList.filter(v => v.data_visita >= fromStr);
+      }
+      if (anterioresCustomTo) {
+        const toStr = format(anterioresCustomTo, "yyyy-MM-dd");
+        pastList = pastList.filter(v => v.data_visita <= toStr);
+      }
+    } else {
+      let periodStart: Date;
+      if (anterioresPeriodo === "mes-atual") {
+        periodStart = startOfMonth(today);
+      } else if (anterioresPeriodo === "mes-1") {
+        periodStart = startOfMonth(subMonths(today, 1));
+      } else if (anterioresPeriodo === "mes-2") {
+        periodStart = startOfMonth(subMonths(today, 2));
+      } else if (anterioresPeriodo === "mes-3") {
+        periodStart = startOfMonth(subMonths(today, 3));
+      } else {
+        periodStart = startOfMonth(today);
+      }
+      const periodEnd = anterioresPeriodo === "mes-atual" ? today : endOfMonth(periodStart);
+      const fromStr = format(periodStart, "yyyy-MM-dd");
+      const toStr = format(periodEnd, "yyyy-MM-dd");
+      pastList = pastList.filter(v => v.data_visita >= fromStr && v.data_visita <= toStr);
+    }
+
+    return pastList;
+  }, [filtered, anterioresPeriodo, anterioresCustomFrom, anterioresCustomTo]);
+
   const hasFilters = statusFilter !== "all" || corretorFilter !== "all" || empreendimentoFilter !== "all" || !!dateFrom || !!dateTo || searchTerm.trim() || pendingOnly || teamFilter !== "all";
 
   const clearAll = () => {
@@ -576,29 +618,6 @@ export default function AgendaVisitas() {
           </Select>
         )}
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-9 text-xs gap-1", dateFrom && "border-primary text-primary")}>
-              <CalendarIcon className="h-3.5 w-3.5" />
-              {dateFrom ? format(dateFrom, "dd/MM") : "De"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
-          </PopoverContent>
-        </Popover>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-9 text-xs gap-1", dateTo && "border-primary text-primary")}>
-              <CalendarIcon className="h-3.5 w-3.5" />
-              {dateTo ? format(dateTo, "dd/MM") : "Até"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
-          </PopoverContent>
-        </Popover>
 
         <Button variant="outline" size="sm" className="h-9 text-xs gap-1" onClick={() => setSortOrder(s => s === "asc" ? "desc" : "asc")}>
           <ArrowUpDown className="h-3.5 w-3.5" />
@@ -698,12 +717,83 @@ export default function AgendaVisitas() {
           )}
         </TabsContent>
 
-        <TabsContent value="anteriores" className="mt-3">
+        <TabsContent value="anteriores" className="mt-3 space-y-3">
+          {/* Period selector */}
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { key: "mes-atual", label: "Mês atual" },
+              { key: "mes-1", label: format(subMonths(new Date(), 1), "MMMM", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) },
+              { key: "mes-2", label: format(subMonths(new Date(), 2), "MMMM", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) },
+              { key: "mes-3", label: format(subMonths(new Date(), 3), "MMMM", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) },
+              { key: "personalizado", label: "Personalizado" },
+            ].map(p => (
+              <button
+                key={p.key}
+                onClick={() => setAnterioresPeriodo(p.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border",
+                  anterioresPeriodo === p.key
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-muted/60 text-muted-foreground border-transparent hover:bg-muted"
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {anterioresPeriodo === "personalizado" && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-9 text-xs gap-1", anterioresCustomFrom && "border-primary text-primary")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {anterioresCustomFrom ? format(anterioresCustomFrom, "dd/MM/yyyy") : "Data início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={anterioresCustomFrom}
+                    onSelect={setAnterioresCustomFrom}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <span className="text-xs text-muted-foreground">até</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-9 text-xs gap-1", anterioresCustomTo && "border-primary text-primary")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {anterioresCustomTo ? format(anterioresCustomTo, "dd/MM/yyyy") : "Data fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={anterioresCustomTo}
+                    onSelect={setAnterioresCustomTo}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {(anterioresCustomFrom || anterioresCustomTo) && (
+                <Button variant="ghost" size="sm" className="h-9 text-xs text-destructive" onClick={() => { setAnterioresCustomFrom(undefined); setAnterioresCustomTo(undefined); }}>
+                  <X className="h-3.5 w-3.5 mr-1" /> Limpar
+                </Button>
+              )}
+            </div>
+          )}
+
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
           ) : (
             <VisitasList
-              visitas={filtered}
+              visitas={anterioresFiltered}
               onUpdateStatus={handleUpdateStatus}
               onEdit={handleEdit}
               onDelete={deleteVisita}
