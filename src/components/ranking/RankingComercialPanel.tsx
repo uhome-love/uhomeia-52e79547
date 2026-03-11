@@ -23,8 +23,9 @@ const metricLabels: Record<RankMetric, string> = {
 
 const periodLabels: Record<PeriodOption, string> = {
   dia: "Hoje",
-  semana: "Esta Semana",
-  mes: "Este Mês",
+  semana: "Semana",
+  mes: "Mês",
+  trimestre: "Trimestre",
 };
 
 const medals = ["🥇", "🥈", "🥉"];
