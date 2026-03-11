@@ -342,12 +342,21 @@ export default function VitrinePage() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {imoveis.map((imovel, i) => (
-              <ImovelCard
-                key={imovel.id}
-                imovel={imovel}
-                index={i}
-                onOpenLightbox={(fotos, idx) => setLightbox({ fotos, idx })}
-              />
+              isMelnickDay ? (
+                <MelnickDayCard
+                  key={imovel.id}
+                  imovel={imovel}
+                  index={i}
+                  onOpenLightbox={(fotos, idx) => setLightbox({ fotos, idx })}
+                />
+              ) : (
+                <ImovelCard
+                  key={imovel.id}
+                  imovel={imovel}
+                  index={i}
+                  onOpenLightbox={(fotos, idx) => setLightbox({ fotos, idx })}
+                />
+              )
             ))}
           </div>
         )}
