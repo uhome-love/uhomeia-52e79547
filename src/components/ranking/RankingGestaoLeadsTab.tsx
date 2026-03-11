@@ -65,12 +65,13 @@ export default function RankingGestaoLeadsTab({ period }: { period: "hoje" | "se
   const totals = useMemo(() => {
     return ranking.reduce(
       (acc, r) => ({
-        leads: acc.leads + Number(r.tentativas),
-        visitas: acc.visitas + Number(r.visitas_marcadas),
+        contatos: acc.contatos + Number(r.contatos),
+        qualificados: acc.qualificados + Number(r.qualificados),
+        visitas: acc.visitas + Number(r.visitas_marcadas) + Number(r.visitas_realizadas),
         propostas: acc.propostas + Number(r.propostas),
         pontos: acc.pontos + Number(r.pontos_total),
       }),
-      { leads: 0, visitas: 0, propostas: 0, pontos: 0 }
+      { contatos: 0, qualificados: 0, visitas: 0, propostas: 0, pontos: 0 }
     );
   }, [ranking]);
 
