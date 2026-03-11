@@ -394,6 +394,7 @@ const PipelineCard = memo(function PipelineCard({
             );
           })()}
         </div>
+      </div>
 
       {/* Create Negócio button — only on Visita Realizada without linked deal */}
       {stage?.nome?.toLowerCase().includes("visita realizada") && !lead.negocio_id && !negocioCriado && (
