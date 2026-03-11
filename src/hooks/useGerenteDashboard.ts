@@ -238,7 +238,8 @@ export function useGerenteDashboard(period: Period) {
         const hasVisit = todayVisitSet.has(uid);
 
         let activityStatus: CorretorRow["activityStatus"] = "offline";
-        if (disp === "disponivel" || disp === "pausa") {
+        const isOnline = disp === "na_empresa" || disp === "em_pausa" || disp === "em_visita" || disp === "disponivel";
+        if (isOnline) {
           if (todayCalls >= 10 || hasVisit) activityStatus = "produzindo";
           else if (todayCalls >= 1) activityStatus = "baixa";
           else activityStatus = "sem_atividade";
@@ -251,7 +252,7 @@ export function useGerenteDashboard(period: Period) {
           avatar_gamificado_url: (p as any)?.avatar_gamificado_url || null,
           ligacoes: s.lig, aproveitados: s.apr, taxa: s.lig > 0 ? Math.round((s.apr / s.lig) * 100) : 0,
           visitas: s.vis, negocios: s.neg, pontos: s.pts,
-          status: disp === "disponivel" ? "online" : disp === "pausa" ? "paused" : "offline",
+          status: (disp === "na_empresa" || disp === "disponivel") ? "online" : (disp === "em_pausa" || disp === "pausa" || disp === "em_visita") ? "paused" : "offline",
           activityStatus,
         };
       });
