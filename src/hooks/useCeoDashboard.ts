@@ -203,7 +203,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const st = stageData.find(s => s.id === l.stage_id);
       return st?.tipo === "novo_lead";
     }).length;
-    if (filaCeo > 5) als.push({ tipo: "yellow", mensagem: `${filaCeo} leads na Fila CEO aguardando distribuição`, link: "/pipeline" });
+    if (filaCeo > 5) als.push({ tipo: "yellow", mensagem: `${filaCeo} leads na Fila CEO aguardando distribuição`, link: "/pipeline-leads" });
 
     // Find best campaign
     const bestCamp = Array.from(empMap.entries()).sort((a, b) => {
