@@ -250,7 +250,12 @@ export function usePipeline(pipelineTipo: string = "leads") {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
+    setError(null);
     Promise.all([loadStages(), loadSegmentos(), loadLeads()])
+      .catch((err) => {
+        console.error("[usePipeline] Init error:", err);
+        setError(err?.message || "Erro ao carregar pipeline");
+      })
       .finally(() => setLoading(false));
   }, [user, loadStages, loadSegmentos, loadLeads]);
 
