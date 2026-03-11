@@ -12,7 +12,6 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { differenceInHoursSafe, formatDistanceToNowSafe } from "@/lib/utils";
-import { formatDistanceToNowSafe } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
 import { getSlaStatus } from "@/lib/leadScoring";
 
