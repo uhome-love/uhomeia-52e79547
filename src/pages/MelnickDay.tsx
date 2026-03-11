@@ -30,7 +30,7 @@ type Empreendimento = {
   status: string;
   precoDe?: string;
   precoPor?: string;
-  imagem?: string;
+  imagens?: string[];
   condicoes?: string;
   descontoMax?: string;
   unRef?: string;
