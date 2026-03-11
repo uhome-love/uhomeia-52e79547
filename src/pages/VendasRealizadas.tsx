@@ -436,7 +436,9 @@ export default function VendasRealizadas() {
                       {filtered.map((v, i) => {
                         const vgv = v.vgv_final || v.vgv_estimado || 0;
                         const corr = v.corretor_id ? profiles[v.corretor_id] : null;
-                        const comissao = vgv * 0.0034; // média 34%
+                        const annualVgv = v.corretor_id ? (annualVgvByCorretor[v.corretor_id] || 0) : 0;
+                        const comissao = calcComissaoCorretor(vgv, annualVgv);
+                        const tier = getCorretorTier(annualVgv);
 
                         return (
                           <motion.tr key={v.id}
