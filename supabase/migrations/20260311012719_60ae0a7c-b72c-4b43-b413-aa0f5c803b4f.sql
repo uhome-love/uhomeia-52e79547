@@ -1,0 +1,1 @@
+UPDATE roleta_campanhas SET segmento_id = '9948f523-29f4-46a7-bc1b-81ff8bb8dd50' WHERE id = 'ddc0c0f0-d720-4bae-971a-a172c38a7031';
