@@ -544,6 +544,7 @@ export default function PipelineKanban() {
               />
             ) : null}
           </Suspense>
+          </ErrorBoundary>
         </div>
       </div>
 
