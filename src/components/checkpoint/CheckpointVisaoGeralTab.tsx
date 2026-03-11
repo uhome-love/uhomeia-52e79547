@@ -45,9 +45,10 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
   const [pipelineData, setPipelineData] = useState<Record<string, Record<string, number>>>({});
   const [negociosData, setNegociosData] = useState<Record<string, { count: number; vgv: number }[]>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  const mesInicio = format(new Date(), "yyyy-MM") + "-01";
+  const dateStr = format(selectedDate, "yyyy-MM-dd");
+  const dateFmt = format(selectedDate, "dd/MM/yyyy");
 
   const loadData = useCallback(async () => {
     if (teamUserIds.length === 0) return;
