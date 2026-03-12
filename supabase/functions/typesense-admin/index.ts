@@ -44,7 +44,7 @@ const SCHEMA = {
     { name: "previsao_entrega", type: "string" as const, optional: true as const },
     { name: "valor_condominio", type: "float" as const, optional: true as const },
     { name: "is_uhome", type: "bool" as const, optional: true as const, facet: true as const },
-    { name: "data_atualizacao", type: "int64" as const, optional: true as const },
+    { name: "data_atualizacao", type: "int64" as const },
   ],
   default_sorting_field: "data_atualizacao",
   token_separators: ["-", "/"],
@@ -130,17 +130,16 @@ serve(async (req) => {
   }
 
   try {
-    // Auth check
+    // Auth: require authenticated user (from frontend)
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Não autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const sb = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
-    const { data: { user }, error: authErr } = await sb.auth.getUser();
-    if (authErr || !user) {
-      return new Response(JSON.stringify({ error: "Token inválido" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (authHeader?.startsWith("Bearer ")) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const sb = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user }, error: authErr } = await sb.auth.getUser();
+      if (authErr || !user) {
+        return new Response(JSON.stringify({ error: "Token inválido" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     const TYPESENSE_HOST = Deno.env.get("TYPESENSE_HOST");
@@ -172,8 +171,8 @@ serve(async (req) => {
 
       // Fetch all items from Jetimob
       console.time("jetimob-fetch-for-reindex");
-      const batchSize = 500;
-      const maxPages = 60;
+      const batchSize = body.batchSize || 500;
+      const maxPages = body.maxPages || 60;
       let allItems: any[] = [];
       for (let page = 1; page <= maxPages; page++) {
         const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${page}&pageSize=${batchSize}`;
@@ -227,6 +226,44 @@ serve(async (req) => {
         indexed,
         errors,
       }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ═══ INDEX BATCH (upsert without dropping) ═══
+    if (action === "index_batch") {
+      const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
+      if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY not configured");
+
+      const pageNum = body.page || 1;
+      const pageSize = body.pageSize || 200;
+      const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${pageNum}&pageSize=${pageSize}`;
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error(`Jetimob fetch failed: ${response.status}`);
+      const raw = await response.json();
+      const items = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.result) ? raw.result : Array.isArray(raw) ? raw : [];
+      const total = raw?.total || raw?.totalResults || 0;
+
+      if (items.length === 0) {
+        return new Response(JSON.stringify({ success: true, indexed: 0, page: pageNum, total, done: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const docs = items.map(mapImovelToDocument);
+      const jsonl = docs.map(d => JSON.stringify(d)).join("\n");
+      const resp = await fetch(`https://${TYPESENSE_HOST}/collections/${COLLECTION_NAME}/documents/import?action=upsert`, {
+        method: "POST",
+        headers: { "X-TYPESENSE-API-KEY": TYPESENSE_ADMIN_API_KEY, "Content-Type": "text/plain" },
+        body: jsonl,
+      });
+      const resultText = await resp.text();
+      const results = resultText.split("\n").filter(Boolean).map(l => JSON.parse(l));
+      const indexed = results.filter(r => r.success).length;
+      const errors = results.filter(r => !r.success).length;
+      const hasMore = items.length >= pageSize;
+
+      return new Response(JSON.stringify({ success: true, indexed, errors, page: pageNum, total, hasMore }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
