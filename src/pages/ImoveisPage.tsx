@@ -1076,7 +1076,14 @@ export default function ImoveisPage() {
             {loading ? (
               <Skeleton className="h-4 w-24" />
             ) : (
-              <span className="text-sm font-medium text-foreground">{total.toLocaleString()} imóveis</span>
+              <>
+                <span className="text-sm font-medium text-foreground">{total.toLocaleString()} imóveis</span>
+                {searchTimeMs != null && (
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                    <Zap className="h-2.5 w-2.5" /> {searchTimeMs}ms
+                  </span>
+                )}
+              </>
             )}
           </div>
           <div className="flex items-center gap-2">
