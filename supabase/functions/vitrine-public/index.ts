@@ -112,7 +112,6 @@ Deno.serve(async (req) => {
           fotos: item.imagens && item.imagens.length > 0 ? item.imagens : (item.imagem ? [item.imagem] : []),
           empreendimento: item.nome,
           descricao: `${item.metragens} · ${item.dorms} · ${item.status}`,
-          // Melnick Day extras
           precoDe: item.precoDe || null,
           precoPor: item.precoPor || null,
           descontoMax: item.descontoMax || null,
@@ -157,8 +156,48 @@ Deno.serve(async (req) => {
           }
         }
         console.log(`Fetched ${imoveis.length} imoveis successfully`);
-      } else {
-        console.warn("JETIMOB_API_KEY not configured or no imovel_ids");
+      }
+
+      // Fetch landing page overrides for each empreendimento
+      const empreendimentoNames = imoveis.map((i: any) => i.empreendimento).filter(Boolean);
+      let landingData: any = null;
+
+      if (empreendimentoNames.length > 0 || ids.length > 0) {
+        // Try to find override by imovel codigo
+        const codigosToSearch = ids.length > 0 ? ids : [];
+        if (codigosToSearch.length > 0) {
+          const { data: overrideRows } = await supabase
+            .from("empreendimento_overrides")
+            .select("diferenciais, plantas, video_url, mapa_url, cor_primaria, landing_titulo, landing_subtitulo, descricao, fotos, bairro, valor_min, valor_max, tipologias, status_obra, previsao_entrega, vagas")
+            .in("codigo", codigosToSearch);
+
+          if (overrideRows && overrideRows.length > 0) {
+            const ov = overrideRows[0];
+            landingData = {
+              diferenciais: ov.diferenciais || [],
+              plantas: ov.plantas || [],
+              video_url: ov.video_url || null,
+              mapa_url: ov.mapa_url || null,
+              cor_primaria: ov.cor_primaria || "#1e3a5f",
+              landing_titulo: ov.landing_titulo || null,
+              landing_subtitulo: ov.landing_subtitulo || null,
+              descricao: ov.descricao || null,
+              fotos: ov.fotos || [],
+              bairro: ov.bairro || null,
+              valor_min: ov.valor_min || null,
+              valor_max: ov.valor_max || null,
+              tipologias: ov.tipologias || [],
+              status_obra: ov.status_obra || null,
+              previsao_entrega: ov.previsao_entrega || null,
+              vagas: ov.vagas || null,
+            };
+
+            // Merge override photos with imovel photos
+            if (landingData.fotos.length > 0 && imoveis.length > 0) {
+              imoveis[0].fotos = [...landingData.fotos, ...imoveis[0].fotos.filter((f: string) => !landingData.fotos.includes(f))];
+            }
+          }
+        }
       }
 
       return jsonResponse({
@@ -174,6 +213,7 @@ Deno.serve(async (req) => {
           avatar_url: corretor.avatar_url,
         } : null,
         imoveis,
+        landing: landingData,
       });
     }
 

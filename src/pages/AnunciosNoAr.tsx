@@ -19,6 +19,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { cn, formatBRL, formatBRLCompact } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import LandingPageEditor from "@/components/landing/LandingPageEditor";
 
 /* ═══════════════════════════════════════════════
    SEGMENTOS + CÓDIGOS DE ANÚNCIOS
@@ -960,6 +961,7 @@ function EmpreendimentoCard({
   onRefreshMateriais,
   override,
   onEditOverride,
+  onEditLanding,
 }: {
   config: AnuncioConfig;
   segmento: SegmentoConfig;
@@ -970,6 +972,7 @@ function EmpreendimentoCard({
   onRefreshMateriais: () => void;
   override: EmpreendimentoOverride | null;
   onEditOverride: () => void;
+  onEditLanding: () => void;
 }) {
   const [vitrineOpen, setVitrineOpen] = useState(false);
 
@@ -1128,16 +1131,29 @@ function EmpreendimentoCard({
             </div>
           )}
 
-          {/* Vitrine Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setVitrineOpen(true)}
-            className="w-full gap-2 text-xs font-bold border-primary/30 text-primary hover:bg-primary/10"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Criar Vitrine & Enviar WhatsApp
-          </Button>
+          {/* Landing Page + Vitrine Buttons */}
+          <div className="flex gap-2">
+            {canUpload && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onEditLanding}
+                className="flex-1 gap-2 text-xs font-bold border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                Landing Page
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setVitrineOpen(true)}
+              className={cn("gap-2 text-xs font-bold border-primary/30 text-primary hover:bg-primary/10", canUpload ? "flex-1" : "w-full")}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Criar Vitrine
+            </Button>
+          </div>
 
           {/* Separator */}
           <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
@@ -1183,6 +1199,7 @@ export default function AnunciosNoAr() {
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
   const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
+  const [landingCodigo, setLandingCodigo] = useState<string | null>(null);
 
   // Fetch overrides from DB
   const fetchOverrides = useCallback(async () => {
@@ -1308,6 +1325,32 @@ export default function AnunciosNoAr() {
         />
       )}
 
+      {/* Landing Page Editor */}
+      {landingCodigo && (() => {
+        const landingConfig = SEGMENTOS.flatMap(s => s.empreendimentos).find(e => e.codigo === landingCodigo);
+        const landingOverride = overrides[landingCodigo] || null;
+        return landingConfig ? (
+          <LandingPageEditor
+            open={!!landingCodigo}
+            onOpenChange={(v) => { if (!v) setLandingCodigo(null); }}
+            codigo={landingConfig.codigo}
+            nome={landingConfig.nome}
+            existing={landingOverride ? {
+              id: landingOverride.id,
+              codigo: landingOverride.codigo,
+              diferenciais: (landingOverride as any).diferenciais || [],
+              plantas: (landingOverride as any).plantas || [],
+              video_url: (landingOverride as any).video_url || "",
+              mapa_url: (landingOverride as any).mapa_url || "",
+              cor_primaria: (landingOverride as any).cor_primaria || "#1e3a5f",
+              landing_titulo: (landingOverride as any).landing_titulo || "",
+              landing_subtitulo: (landingOverride as any).landing_subtitulo || "",
+            } : null}
+            onSaved={fetchOverrides}
+          />
+        ) : null;
+      })()}
+
       {/* ─── HEADER ─── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[hsl(222,47%,11%)] via-[hsl(222,47%,15%)] to-[hsl(222,47%,20%)] p-6 border border-border/20">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -1403,6 +1446,7 @@ export default function AnunciosNoAr() {
                     onRefreshMateriais={fetchMateriais}
                     override={overrides[emp.codigo] || null}
                     onEditOverride={() => setEditingCodigo(emp.codigo)}
+                    onEditLanding={() => setLandingCodigo(emp.codigo)}
                   />
                 ))}
               </div>
