@@ -305,9 +305,9 @@ export default function LeadsDistribuidosPanel({ teamUserIds, teamNameMap, perio
               <div className="flex items-center gap-2 mb-3">
                 <Users className="h-4 w-4 text-blue-500" />
                 <p className="text-xs font-semibold text-foreground">Leads Distribuídos</p>
-                <Badge variant="outline" className="text-[10px]">{historico.length}</Badge>
+                <Badge variant="outline" className="text-[10px]">{distributedLeads.length}</Badge>
               </div>
-              {historico.length === 0 ? (
+              {distributedLeads.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">Nenhum lead distribuído no período</p>
               ) : (
                 <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
@@ -323,36 +323,34 @@ export default function LeadsDistribuidosPanel({ teamUserIds, teamNameMap, perio
                       </tr>
                     </thead>
                     <tbody>
-                      {historico.slice(0, 50).map(h => {
-                        const lead = leadMap[h.pipeline_lead_id];
-                        const profile = profileMap[h.corretor_id];
-                        const nome = lead?.nome || "—";
-                        const emp = lead?.empreendimento || "—";
-                        const corretorNome = profile?.nome || teamNameMap?.[h.corretor_id] || "—";
-                        const isAceito = h.acao === "aceito" || h.acao === "aceite";
-                        const isRejeitado = h.acao === "rejeitado" || h.acao === "recusado" || h.acao === "devolvido";
+                      {distributedLeads.slice(0, 50).map(l => {
+                        const profile = profileMap[l.corretor_id || ""];
+                        const corretorNome = profile?.nome || teamNameMap?.[l.corretor_id || ""] || "—";
+                        const isAceito = l.aceite_status === "aceito";
+                        const isRejeitado = l.aceite_status === "rejeitado" || l.aceite_status === "devolvido";
+                        const tempo = tempoMap[l.id] || null;
 
                         return (
-                          <tr key={h.id} className="border-b border-border/30 hover:bg-accent/20">
-                            <td className="py-1.5 px-2 font-medium text-foreground">{nome}</td>
-                            <td className="py-1.5 px-2 text-muted-foreground">{emp}</td>
+                          <tr key={l.id} className="border-b border-border/30 hover:bg-accent/20">
+                            <td className="py-1.5 px-2 font-medium text-foreground">{l.nome || "—"}</td>
+                            <td className="py-1.5 px-2 text-muted-foreground">{l.empreendimento || "—"}</td>
                             <td className="py-1.5 px-2 text-foreground">{corretorNome.split(" ")[0]}</td>
                             <td className="py-1.5 px-2">
                               <Badge variant="outline" className={`text-[9px] ${isAceito ? "border-emerald-300 text-emerald-600" : isRejeitado ? "border-destructive/30 text-destructive" : "border-amber-300 text-amber-600"}`}>
                                 {isAceito ? "✓ Aceito" : isRejeitado ? "✗ Rejeitado" : "⏳ Pendente"}
                               </Badge>
                             </td>
-                            <td className="py-1.5 px-2 text-muted-foreground">{formatTempo(h.tempo_resposta_seg)}</td>
+                            <td className="py-1.5 px-2 text-muted-foreground">{formatTempo(tempo)}</td>
                             <td className="py-1.5 px-2 text-muted-foreground">
-                              {h.created_at ? format(new Date(h.created_at), "dd/MM HH:mm") : "—"}
+                              {l.distribuido_em ? format(new Date(l.distribuido_em), "dd/MM HH:mm") : "—"}
                             </td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
-                  {historico.length > 50 && (
-                    <p className="text-[10px] text-muted-foreground text-center py-2">Mostrando 50 de {historico.length} registros</p>
+                  {distributedLeads.length > 50 && (
+                    <p className="text-[10px] text-muted-foreground text-center py-2">Mostrando 50 de {distributedLeads.length} registros</p>
                   )}
                 </div>
               )}
