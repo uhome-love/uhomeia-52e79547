@@ -72,15 +72,15 @@ function fmtDateShort(dateStr: string) {
   return d.toLocaleDateString("pt-BR");
 }
 
-// Inline styles matching the real document (Calibri 11px, justified)
+// Inline styles — Calibri 14px, justified
 const S = {
-  p: { textAlign: "justify" as const, marginBottom: "12px", textIndent: "0", lineHeight: "1.7", fontSize: "13px" },
-  pIndent: { textAlign: "justify" as const, marginBottom: "8px", marginLeft: "24px", lineHeight: "1.7", fontSize: "13px" },
-  th: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontWeight: "bold" as const, fontSize: "11px", background: "#f0f0f0", letterSpacing: "0.02em" },
-  thLeft: { border: "1px solid #222", padding: "6px 10px", textAlign: "left" as const, fontWeight: "bold" as const, fontSize: "11px", background: "#f0f0f0", letterSpacing: "0.02em" },
-  td: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontSize: "11px" },
-  tdLeft: { border: "1px solid #222", padding: "6px 10px", textAlign: "left" as const, fontSize: "11px" },
-  tdBold: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontSize: "11px", fontWeight: "bold" as const },
+  p: { textAlign: "justify" as const, marginBottom: "12px", textIndent: "0", lineHeight: "1.8", fontSize: "14px" },
+  pIndent: { textAlign: "justify" as const, marginBottom: "8px", marginLeft: "24px", lineHeight: "1.8", fontSize: "14px" },
+  th: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontWeight: "bold" as const, fontSize: "12px", background: "#f0f0f0", letterSpacing: "0.02em" },
+  thLeft: { border: "1px solid #222", padding: "6px 10px", textAlign: "left" as const, fontWeight: "bold" as const, fontSize: "12px", background: "#f0f0f0", letterSpacing: "0.02em" },
+  td: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontSize: "12px" },
+  tdLeft: { border: "1px solid #222", padding: "6px 10px", textAlign: "left" as const, fontSize: "12px" },
+  tdBold: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontSize: "12px", fontWeight: "bold" as const },
 };
 
 export default function ContratoIntermediacao({ open, onOpenChange, data, onDataChange, onGenerated }: Props) {
