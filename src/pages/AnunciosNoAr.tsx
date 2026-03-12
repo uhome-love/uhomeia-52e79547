@@ -19,6 +19,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { cn, formatBRL, formatBRLCompact } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import LandingPageEditor from "@/components/landing/LandingPageEditor";
 
 /* ═══════════════════════════════════════════════
    SEGMENTOS + CÓDIGOS DE ANÚNCIOS
