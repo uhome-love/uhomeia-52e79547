@@ -4,13 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Phone, MapPin, BedDouble, Car, Maximize, ChevronLeft, ChevronRight,
   X, Bath, Ruler, Building2, ArrowRight, Home, Send, CheckCircle, User, Mail,
-  Play, Star, Shield, TreePine, Sparkles,
+  Play, Star, Shield, TreePine, Sparkles, MessageCircle,
 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatBRL } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 /* ═══════════ Types ═══════════ */
 interface VitrineImovel {
