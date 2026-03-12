@@ -257,12 +257,12 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
           }}
         >
           {/* LOGO */}
-          <div style={{ textAlign: "center", marginBottom: "28px" }}>
-            <img src="/images/uhome-logo-horizontal-azul.png" alt="UHome" style={{ height: "64px" }} crossOrigin="anonymous" />
+          <div style={{ textAlign: "center", marginBottom: "28px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <img src="/images/uhome-logo-horizontal-azul.png" alt="UHome" style={{ height: "64px", display: "block", margin: "0 auto" }} crossOrigin="anonymous" />
           </div>
 
           {/* TITLE */}
-          <p style={{ textAlign: "center", fontSize: "15px", fontWeight: "bold", marginBottom: "28px", textDecoration: "underline", letterSpacing: "0.04em" }}>
+          <p style={{ textAlign: "center", fontSize: "16px", fontWeight: "bold", marginBottom: "28px", textDecoration: "underline", letterSpacing: "0.04em" }}>
             INSTRUMENTO PARTICULAR DE INTERMEDIAÇÃO IMOBILIÁRIA
           </p>
 
