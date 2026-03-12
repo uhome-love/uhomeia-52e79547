@@ -3,11 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Upload, Trash2, Plus, X, Palette, MapPin, FileText, Video, Image as ImageIcon, Save, Eye } from "lucide-react";
+import { Loader2, Upload, Trash2, Plus, X, Palette, MapPin, FileText, Video, Image as ImageIcon, Save, Eye, ExternalLink } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LandingOverride {
   id?: string;
@@ -31,6 +31,7 @@ interface Props {
 }
 
 export default function LandingPageEditor({ open, onOpenChange, codigo, nome, existing, onSaved }: Props) {
+  const { user } = useAuth();
   const [titulo, setTitulo] = useState(existing?.landing_titulo || "");
   const [subtitulo, setSubtitulo] = useState(existing?.landing_subtitulo || "");
   const [cor, setCor] = useState(existing?.cor_primaria || "#1e3a5f");
@@ -40,7 +41,9 @@ export default function LandingPageEditor({ open, onOpenChange, codigo, nome, ex
   const [mapaUrl, setMapaUrl] = useState(existing?.mapa_url || "");
   const [newDif, setNewDif] = useState("");
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState<"planta" | "mapa" | null>(null);
+  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
 
   const handleUpload = useCallback(async (file: File, type: "planta" | "mapa") => {
     setUploading(type);
@@ -73,29 +76,32 @@ export default function LandingPageEditor({ open, onOpenChange, codigo, nome, ex
   };
   const removeDiferencial = (idx: number) => setDiferenciais(prev => prev.filter((_, i) => i !== idx));
 
+  const saveOverrides = useCallback(async () => {
+    const payload = {
+      codigo,
+      diferenciais,
+      plantas,
+      video_url: videoUrl.trim() || null,
+      mapa_url: mapaUrl || null,
+      cor_primaria: cor,
+      landing_titulo: titulo.trim() || null,
+      landing_subtitulo: subtitulo.trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existing?.id) {
+      const { error } = await supabase.from("empreendimento_overrides").update(payload as any).eq("id", existing.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from("empreendimento_overrides").upsert(payload as any, { onConflict: "codigo" });
+      if (error) throw error;
+    }
+  }, [codigo, titulo, subtitulo, cor, videoUrl, diferenciais, plantas, mapaUrl, existing]);
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const payload = {
-        codigo,
-        diferenciais,
-        plantas,
-        video_url: videoUrl.trim() || null,
-        mapa_url: mapaUrl || null,
-        cor_primaria: cor,
-        landing_titulo: titulo.trim() || null,
-        landing_subtitulo: subtitulo.trim() || null,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (existing?.id) {
-        const { error } = await supabase.from("empreendimento_overrides").update(payload as any).eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("empreendimento_overrides").upsert(payload as any, { onConflict: "codigo" });
-        if (error) throw error;
-      }
-
+      await saveOverrides();
       toast.success("Landing page salva com sucesso!");
       onSaved();
       onOpenChange(false);
@@ -104,7 +110,62 @@ export default function LandingPageEditor({ open, onOpenChange, codigo, nome, ex
     } finally {
       setSaving(false);
     }
-  }, [codigo, titulo, subtitulo, cor, videoUrl, diferenciais, plantas, mapaUrl, existing, onSaved, onOpenChange]);
+  }, [saveOverrides, onSaved, onOpenChange]);
+
+  const handleSaveAndGenerate = useCallback(async () => {
+    if (!user) {
+      toast.error("Você precisa estar logado.");
+      return;
+    }
+    setGenerating(true);
+    try {
+      // 1. Save overrides first
+      await saveOverrides();
+      onSaved();
+
+      // 2. Check if a vitrine already exists for this codigo
+      const { data: existingVitrine } = await supabase
+        .from("vitrines")
+        .select("id")
+        .eq("created_by", user.id)
+        .eq("tipo", "anuncio")
+        .contains("imovel_ids", [codigo])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let vitrineId: string;
+
+      if (existingVitrine) {
+        // Update existing vitrine
+        vitrineId = existingVitrine.id;
+        await supabase.from("vitrines").update({
+          titulo: titulo.trim() || nome,
+          updated_at: new Date().toISOString(),
+        }).eq("id", vitrineId);
+      } else {
+        // Create new vitrine
+        const { data, error } = await supabase.from("vitrines").insert({
+          titulo: titulo.trim() || `${nome} — Landing Page`,
+          created_by: user.id,
+          tipo: "anuncio",
+          imovel_ids: [codigo],
+          mensagem_corretor: null,
+        }).select("id").single();
+
+        if (error) throw error;
+        vitrineId = data.id;
+      }
+
+      const url = `${window.location.origin}/vitrine/${vitrineId}`;
+      setGeneratedUrl(url);
+      toast.success("Landing page gerada com sucesso!");
+    } catch (err: any) {
+      toast.error("Erro ao gerar: " + (err.message || ""));
+    } finally {
+      setGenerating(false);
+    }
+  }, [user, saveOverrides, onSaved, codigo, titulo, nome]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -117,6 +178,36 @@ export default function LandingPageEditor({ open, onOpenChange, codigo, nome, ex
         </SheetHeader>
         <ScrollArea className="flex-1 px-6 py-4">
           <div className="space-y-6 pb-6">
+
+            {/* Generated URL Banner */}
+            {generatedUrl && (
+              <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+                <p className="text-sm font-bold text-emerald-600 flex items-center gap-2">
+                  ✅ Landing page gerada!
+                </p>
+                <p className="text-xs text-muted-foreground break-all font-mono bg-muted/30 rounded-lg p-2">{generatedUrl}</p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => window.open(generatedUrl, "_blank")}
+                    className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Abrir Landing
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedUrl);
+                      toast.success("Link copiado!");
+                    }}
+                    className="gap-2"
+                  >
+                    Copiar Link
+                  </Button>
+                </div>
+              </section>
+            )}
 
             {/* Hero */}
             <section className="space-y-3">
@@ -270,14 +361,24 @@ export default function LandingPageEditor({ open, onOpenChange, codigo, nome, ex
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border flex gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-            Cancelar
+        <div className="px-6 py-4 border-t border-border space-y-2">
+          <Button
+            onClick={handleSaveAndGenerate}
+            disabled={generating || saving}
+            className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700"
+          >
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+            {generating ? "Gerando..." : "Salvar e Gerar Landing Page"}
           </Button>
-          <Button onClick={handleSave} disabled={saving} className="flex-1 gap-2">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Salvar Landing
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={saving} variant="ghost" className="flex-1 gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Salvar Rascunho
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
