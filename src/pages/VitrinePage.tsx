@@ -251,6 +251,12 @@ export default function VitrinePage() {
   }
 
   const { vitrine, corretor, imoveis, landing } = data;
+
+  /* ═══════════ MELNICK DAY SHOWCASE (old pattern) ═══════════ */
+  if (vitrine.tipo === "melnick_day") {
+    return <MelnickDayShowcase vitrine={vitrine} corretor={corretor} imoveis={imoveis} />;
+  }
+
   const imovel = imoveis[0] || null;
   const cor = landing?.cor_primaria || "#1e3a5f";
   const rgb = hexToRgb(cor);
@@ -276,7 +282,6 @@ export default function VitrinePage() {
       )}`
     : null;
 
-  // Build area label from tipologias or fallback to imovel
   const areaLabel = (() => {
     if (tipologias.length > 0) {
       const areas = tipologias
