@@ -359,6 +359,18 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
 
       <div className="space-y-3">
         <div>
+          <Label className="text-xs">Empreendimento *</Label>
+          <Select value={empreendimento} onValueChange={setEmpreendimento}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione o empreendimento" /></SelectTrigger>
+            <SelectContent>
+              {empreendimentos.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              {empreendimento && !empreendimentos.includes(empreendimento) && (
+                <SelectItem value={empreendimento}>{empreendimento}</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
           <Label className="text-xs">Local da visita *</Label>
           <Select value={local} onValueChange={setLocal}>
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
