@@ -49,6 +49,13 @@ export interface PipelineLead {
   updated_at: string;
   created_by: string | null;
   negocio_id: string | null;
+  // Marketing attribution
+  campanha: string | null;
+  campanha_id: string | null;
+  formulario: string | null;
+  conjunto_anuncio: string | null;
+  anuncio: string | null;
+  plataforma: string | null;
 }
 
 export interface PipelineSegmento {
