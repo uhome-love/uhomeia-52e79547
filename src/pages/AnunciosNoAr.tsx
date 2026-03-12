@@ -963,6 +963,7 @@ function EmpreendimentoCard({
   override,
   onEditOverride,
   onEditLanding,
+  landingRefreshKey,
 }: {
   config: AnuncioConfig;
   segmento: SegmentoConfig;
