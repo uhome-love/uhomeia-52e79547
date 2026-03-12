@@ -248,81 +248,105 @@ Deno.serve(async (req) => {
     if (!empreendimento && formName) empreendimento = formName;
     if (!empreendimento) empreendimento = "Avulso - Meta Ads";
 
-    // ── Dedup: check phone (ALL leads, including pending distribution) ──
-    if (telefone) {
-      // Check jetimob_processed too (permanent dedup registry)
-      const { data: alreadyProcessed } = await supabase
+    // ── Dedup: check external lead id + phone (ALL leads, including pending distribution) ──
+    const dedupRegistryId = externalLeadId ? `meta:${externalLeadId}` : `meta-phone:${telefone}`;
+
+    if (externalLeadId) {
+      const { data: existingExternal, error: existingExternalError } = await supabase
         .from("jetimob_processed")
-        .select("id")
-        .eq("telefone", telefone)
-        .limit(1)
+        .select("jetimob_lead_id")
+        .eq("jetimob_lead_id", `meta:${externalLeadId}`)
         .maybeSingle();
 
-      const { data: existing } = await supabase
-        .from("pipeline_leads")
-        .select("id, corretor_id, nome, empreendimento, aceite_status")
-        .eq("telefone", telefone)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (existingExternalError) {
+        console.warn("META-LEAD DEDUP warn (external id):", existingExternalError.message);
+      }
 
-      if (existing) {
-        // If lead exists but is still pending distribution (no corretor), just skip silently
-        if (!existing.corretor_id) {
-          console.log(`META-LEAD DEDUP: ${telefone} already pending distribution (lead ${existing.id}), skipping`);
-          return new Response(
-            JSON.stringify({ success: true, action: "skipped_duplicate_pending", lead_id: existing.id }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
+      if (existingExternal) {
+        console.log(`META-LEAD DEDUP: external lead id ${externalLeadId} already processed, skipping`);
+        return new Response(
+          JSON.stringify({ success: true, action: "skipped_external_id_dedup" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
-        // Lead has a corretor — reactivate with notification
-        const todayStamp = new Date().toISOString().slice(0, 10);
-        const interestLabel = empreendimento || existing.empreendimento || "mesmo imóvel";
+    // Check jetimob_processed too (permanent dedup registry by phone)
+    const { data: alreadyProcessed, error: alreadyProcessedError } = await supabase
+      .from("jetimob_processed")
+      .select("jetimob_lead_id, telefone")
+      .eq("telefone", telefone)
+      .limit(1)
+      .maybeSingle();
 
-        await supabase.from("pipeline_leads").update({
-          updated_at: new Date().toISOString(),
-          observacoes: `[NOVO INTERESSE ${todayStamp}] ${interestLabel} (Meta Ads direto)${message ? ` — "${message}"` : ""}`,
-        }).eq("id", existing.id);
+    if (alreadyProcessedError) {
+      console.warn("META-LEAD DEDUP warn (phone registry):", alreadyProcessedError.message);
+    }
 
-        await supabase.from("notifications").insert({
-          user_id: existing.corretor_id,
-          tipo: "lead",
-          categoria: "lead_retorno",
-          titulo: `🔄 Lead reativado! ${existing.nome || name}`,
-          mensagem: `${existing.nome || name} demonstrou novo interesse em ${interestLabel} (Meta Ads direto).`,
-          dados: { pipeline_lead_id: existing.id, lead_nome: existing.nome || name, novo_empreendimento: interestLabel },
-          agrupamento_key: `lead_retorno_${existing.id}_${todayStamp}`,
+    const { data: existing } = await supabase
+      .from("pipeline_leads")
+      .select("id, corretor_id, nome, empreendimento, aceite_status")
+      .eq("telefone", telefone)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      // If lead exists but is still pending distribution (no corretor), just skip silently
+      if (!existing.corretor_id) {
+        console.log(`META-LEAD DEDUP: ${telefone} already pending distribution (lead ${existing.id}), skipping`);
+        return new Response(
+          JSON.stringify({ success: true, action: "skipped_duplicate_pending", lead_id: existing.id }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Lead has a corretor — reactivate with notification
+      const todayStamp = new Date().toISOString().slice(0, 10);
+      const interestLabel = empreendimento || existing.empreendimento || "mesmo imóvel";
+
+      await supabase.from("pipeline_leads").update({
+        updated_at: new Date().toISOString(),
+        observacoes: `[NOVO INTERESSE ${todayStamp}] ${interestLabel} (Meta Ads direto)${message ? ` — "${message}"` : ""}`,
+      }).eq("id", existing.id);
+
+      await supabase.from("notifications").insert({
+        user_id: existing.corretor_id,
+        tipo: "lead",
+        categoria: "lead_retorno",
+        titulo: `🔄 Lead reativado! ${existing.nome || name}`,
+        mensagem: `${existing.nome || name} demonstrou novo interesse em ${interestLabel} (Meta Ads direto).`,
+        dados: { pipeline_lead_id: existing.id, lead_nome: existing.nome || name, novo_empreendimento: interestLabel },
+        agrupamento_key: `lead_retorno_${existing.id}_${todayStamp}`,
+      });
+
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: existing.corretor_id,
+            title: "🔄 Lead reativado!",
+            body: `${existing.nome || name} — ${interestLabel}`,
+            url: `/pipeline-leads?lead=${existing.id}`,
+          }),
         });
+      } catch (e) { console.warn("Push error:", e); }
 
-        try {
-          await fetch(`${supabaseUrl}/functions/v1/send-push`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              user_id: existing.corretor_id,
-              title: "🔄 Lead reativado!",
-              body: `${existing.nome || name} — ${interestLabel}`,
-              url: `/pipeline-leads?lead=${existing.id}`,
-            }),
-          });
-        } catch (e) { console.warn("Push error:", e); }
+      console.log(`META-LEAD DEDUP: ${telefone} already exists (lead ${existing.id}), notified corretor`);
+      return new Response(
+        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-        console.log(`META-LEAD DEDUP: ${telefone} already exists (lead ${existing.id}), notified corretor`);
-        return new Response(
-          JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Also skip if phone was ever processed before (permanent dedup)
-      if (alreadyProcessed) {
-        console.log(`META-LEAD DEDUP: ${telefone} found in permanent dedup registry, skipping`);
-        return new Response(
-          JSON.stringify({ success: true, action: "skipped_permanent_dedup" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    // Also skip if phone was ever processed before (permanent dedup)
+    if (alreadyProcessed) {
+      console.log(`META-LEAD DEDUP: ${telefone} found in permanent dedup registry, skipping`);
+      return new Response(
+        JSON.stringify({ success: true, action: "skipped_permanent_dedup" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // ── Resolve segmento ──
