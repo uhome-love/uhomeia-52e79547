@@ -78,7 +78,7 @@ serve(async (req) => {
         throw new Error("Dados incompletos: email, nome e senha são obrigatórios");
       }
 
-      const validRoles = ["corretor", "gestor", "backoffice"];
+      const validRoles = ["corretor", "gestor", "backoffice", "rh"];
       // Gestores can only create corretores
       const assignedRole = isGestor && !isAdmin ? "corretor" : (validRoles.includes(role) ? role : "corretor");
       // If gestor is creating, auto-assign themselves as gerente
@@ -149,7 +149,7 @@ serve(async (req) => {
         }
       }
 
-      const roleLabel = assignedRole === "gestor" ? "Gerente" : assignedRole === "backoffice" ? "Backoffice" : "Corretor";
+      const roleLabel = assignedRole === "gestor" ? "Gerente" : assignedRole === "backoffice" ? "Backoffice" : assignedRole === "rh" ? "RH" : "Corretor";
       return new Response(JSON.stringify({ 
         success: true, 
         user_id: newUser.user.id,
