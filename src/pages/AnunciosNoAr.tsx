@@ -954,7 +954,6 @@ function CriarVitrineDialog({
 function EmpreendimentoCard({
   config,
   segmento,
-  imovelData,
   loading,
   materiais,
   canUpload,
@@ -967,7 +966,6 @@ function EmpreendimentoCard({
 }: {
   config: AnuncioConfig;
   segmento: SegmentoConfig;
-  imovelData: JetimobImovel | null;
   loading: boolean;
   materiais: Material[];
   canUpload: boolean;
