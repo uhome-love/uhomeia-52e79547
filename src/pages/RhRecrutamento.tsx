@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, UserPlus, Phone, Mail, GripVertical } from "lucide-react";
+import { UserPlus, Phone, Mail } from "lucide-react";
 import { toast } from "sonner";
+import AgendaEntrevistas from "@/components/rh/AgendaEntrevistas";
 
 const ETAPAS = [
   { key: "novo_lead", label: "Novo Lead", color: "#3B82F6" },
@@ -40,7 +41,6 @@ export default function RhRecrutamento() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailCandidate, setDetailCandidate] = useState<Candidato | null>(null);
 
-  // Form
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
@@ -85,8 +85,7 @@ export default function RhRecrutamento() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">👥 Recrutamento</h1>
-          <p className="text-sm text-muted-foreground">Kanban de candidatos a corretor</p>
+          <h1 className="text-xl font-bold text-foreground">👥 Candidatos</h1>
         </div>
         <Button onClick={() => setDialogOpen(true)} size="sm" className="gap-1">
           <UserPlus className="h-4 w-4" /> Novo Candidato
@@ -94,7 +93,7 @@ export default function RhRecrutamento() {
       </div>
 
       {/* Kanban */}
-      <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: "60vh" }}>
+      <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: "40vh" }}>
         {ETAPAS.map(etapa => {
           const items = getCandidatosByEtapa(etapa.key);
           return (
@@ -106,11 +105,7 @@ export default function RhRecrutamento() {
               </div>
               <div className="space-y-2">
                 {items.map(c => (
-                  <Card
-                    key={c.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow bg-card"
-                    onClick={() => setDetailCandidate(c)}
-                  >
+                  <Card key={c.id} className="cursor-pointer hover:shadow-md transition-shadow bg-card" onClick={() => setDetailCandidate(c)}>
                     <CardContent className="p-3 space-y-1.5">
                       <p className="text-sm font-semibold text-foreground truncate">{c.nome}</p>
                       {c.telefone && (
@@ -123,9 +118,7 @@ export default function RhRecrutamento() {
                           <Mail className="h-3 w-3" /> {c.email}
                         </p>
                       )}
-                      {c.origem && (
-                        <Badge variant="outline" className="text-[10px]">{c.origem}</Badge>
-                      )}
+                      {c.origem && <Badge variant="outline" className="text-[10px]">{c.origem}</Badge>}
                     </CardContent>
                   </Card>
                 ))}
@@ -140,12 +133,13 @@ export default function RhRecrutamento() {
         })}
       </div>
 
+      {/* Agenda de Entrevistas */}
+      <AgendaEntrevistas candidatos={candidatos} onKanbanUpdate={fetchCandidatos} />
+
       {/* Add Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Novo Candidato</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Novo Candidato</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label className="text-xs">Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} className="h-9" /></div>
             <div className="grid grid-cols-2 gap-3">
@@ -177,9 +171,7 @@ export default function RhRecrutamento() {
       {/* Detail Dialog */}
       <Dialog open={!!detailCandidate} onOpenChange={() => setDetailCandidate(null)}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{detailCandidate?.nome}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{detailCandidate?.nome}</DialogTitle></DialogHeader>
           {detailCandidate && (
             <div className="space-y-3">
               {detailCandidate.telefone && <p className="text-sm text-muted-foreground flex items-center gap-2"><Phone className="h-4 w-4" /> {detailCandidate.telefone}</p>}
@@ -191,10 +183,7 @@ export default function RhRecrutamento() {
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {ETAPAS.filter(e => e.key !== detailCandidate.etapa).map(e => (
                     <Button
-                      key={e.key}
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-7"
+                      key={e.key} size="sm" variant="outline" className="text-xs h-7"
                       style={{ borderColor: e.color, color: e.color }}
                       onClick={() => { moveToEtapa(detailCandidate.id, e.key); setDetailCandidate(null); }}
                     >
