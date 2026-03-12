@@ -60,7 +60,6 @@ export default function RankingOfertaAtiva() {
       const map: Record<string, string> = {};
       for (const t of data || []) {
         if (t.user_id && t.equipe) map[t.user_id] = t.equipe;
-        else if (t.user_id && t.gerente_id) map[t.user_id] = `Equipe ${t.gerente_id.slice(0,6)}`;
       }
       return map;
     },
