@@ -35,6 +35,8 @@ export default function Configuracoes() {
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cargo, setCargo] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [creci, setCreci] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
 
