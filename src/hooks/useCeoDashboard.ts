@@ -139,11 +139,14 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
     const lig = ligacoes || 0;
     const aprov = aproveitados || 0;
 
-    // Visitas
-    const { data: visitas } = await supabase.from("visitas").select("id, status").gte("data_visita", r.start).lte("data_visita", r.end);
-    const visitasMarcadas = visitas?.length || 0;
-    const visitasRealizadas = visitas?.filter(v => v.status === "realizada").length || 0;
-    const noShows = visitas?.filter(v => v.status === "no_show").length || 0;
+    // Visitas — marcadas = created in period, realizadas = data_visita in period + status realizada
+    const [{ count: visitasMarcadasCount }, { data: visitasRealizadasData }] = await Promise.all([
+      supabase.from("visitas").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs),
+      supabase.from("visitas").select("id, status").gte("data_visita", r.start).lte("data_visita", r.end),
+    ]);
+    const visitasMarcadas = visitasMarcadasCount || 0;
+    const visitasRealizadas = visitasRealizadasData?.filter(v => v.status === "realizada").length || 0;
+    const noShows = visitasRealizadasData?.filter(v => v.status === "no_show").length || 0;
 
     // Negocios — all created in period
     const { data: negocios } = await supabase.from("negocios").select("id, fase, status, vgv_estimado, vgv_final").gte("created_at", startTs).lte("created_at", endTs);
@@ -279,9 +282,10 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
     const allMemberUserIds = (members || []).map(m => m.user_id).filter(Boolean) as string[];
     if (allMemberUserIds.length === 0) { setTeams([]); setCorretoresRank([]); return; }
 
-    // Parallel: corretor profiles + tentativas (count per corretor) + visitas + negocios
-    const [{ data: corrProfs }, { data: allVis }, { data: allNeg }] = await Promise.all([
+    // Parallel: corretor profiles + visitas (marcadas by created_at, realizadas by data_visita) + negocios
+    const [{ data: corrProfs }, { data: allVisMarcadas }, { data: allVisRealizadas }, { data: allNeg }] = await Promise.all([
       supabase.from("profiles").select("id, nome, user_id").in("user_id", allMemberUserIds),
+      supabase.from("visitas").select("id, corretor_id").in("corretor_id", allMemberUserIds).gte("created_at", startTs).lte("created_at", endTs),
       supabase.from("visitas").select("id, status, corretor_id").in("corretor_id", allMemberUserIds).gte("data_visita", range.start).lte("data_visita", range.end),
       supabase.from("negocios").select("id, fase, vgv_estimado, vgv_final, corretor_id, data_assinatura").in("corretor_id", allMemberUserIds).in("fase", ["assinado", "vendido"]).gte("data_assinatura", range.start).lte("data_assinatura", range.end),
     ]);
@@ -319,9 +323,10 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
         const tent = (allTent || []).filter(t => t.corretor_id === uid);
         const lig = tent.length;
         const aprov = tent.filter(t => t.resultado === "com_interesse").length;
-        const vis = (allVis || []).filter(v => v.corretor_id === uid);
-        const vm = vis.length;
-        const vr = vis.filter(v => v.status === "realizada").length;
+        const visMarcadas = (allVisMarcadas || []).filter(v => v.corretor_id === uid);
+        const visRealizadas = (allVisRealizadas || []).filter(v => v.corretor_id === uid);
+        const vm = visMarcadas.length;
+        const vr = visRealizadas.filter(v => v.status === "realizada").length;
         const neg = (allNeg || []).filter(n => n.corretor_id === uid);
         const prop = neg.filter(n => n.fase === "proposta" || n.fase === "negociacao").length;
         const vgv = neg.reduce((s, n) => s + (n.vgv_estimado || 0), 0);
