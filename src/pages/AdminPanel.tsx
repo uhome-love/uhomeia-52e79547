@@ -197,8 +197,18 @@ export default function AdminPanel() {
           role: newRole,
         },
       });
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+
+      if (error) {
+        let functionMessage = error.message || "Erro ao criar usuário.";
+        const errorContext = (error as any)?.context;
+        if (errorContext && typeof errorContext.json === "function") {
+          const payload = await errorContext.json().catch(() => null);
+          if (payload?.error) functionMessage = payload.error;
+        }
+        throw new Error(functionMessage);
+      }
+
+      if (data?.error) throw new Error(data.error);
       toast.success(data.message || "Usuário criado!");
       setCreateOpen(false);
       resetForm();

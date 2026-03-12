@@ -92,7 +92,18 @@ serve(async (req) => {
         user_metadata: { nome },
       });
 
-      if (createError) throw new Error(`Erro ao criar usuário: ${createError.message}`);
+      if (createError) {
+        const createErrorMessage = createError.message || "Erro desconhecido ao criar usuário";
+        if (createErrorMessage.toLowerCase().includes("already been registered")) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: "Este e-mail já está cadastrado. Edite o usuário existente."
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error(`Erro ao criar usuário: ${createErrorMessage}`);
+      }
 
       // Update profile with jetimob_user_id (trigger auto-creates profile)
       await new Promise((r) => setTimeout(r, 500));
