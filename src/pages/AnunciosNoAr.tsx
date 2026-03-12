@@ -963,6 +963,7 @@ function EmpreendimentoCard({
   override,
   onEditOverride,
   onEditLanding,
+  landingRefreshKey,
 }: {
   config: AnuncioConfig;
   segmento: SegmentoConfig;
@@ -975,6 +976,7 @@ function EmpreendimentoCard({
   override: EmpreendimentoOverride | null;
   onEditOverride: () => void;
   onEditLanding: () => void;
+  landingRefreshKey: number;
 }) {
   const { user } = useAuth();
   const [vitrineOpen, setVitrineOpen] = useState(false);
@@ -996,7 +998,7 @@ function EmpreendimentoCard({
           setLandingUrl(`${window.location.origin}/vitrine/${data.id}`);
         }
       });
-  }, [config.codigo, user]);
+  }, [config.codigo, user, landingRefreshKey]);
 
   // Merge: override takes priority over Jetimob data
   const hasOverride = !!override;
@@ -1238,6 +1240,7 @@ export default function AnunciosNoAr() {
   const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
   const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
   const [landingCodigo, setLandingCodigo] = useState<string | null>(null);
+  const [landingRefreshKey, setLandingRefreshKey] = useState(0);
 
   // Fetch overrides from DB
   const fetchOverrides = useCallback(async () => {
@@ -1384,7 +1387,7 @@ export default function AnunciosNoAr() {
               landing_titulo: (landingOverride as any).landing_titulo || "",
               landing_subtitulo: (landingOverride as any).landing_subtitulo || "",
             } : null}
-            onSaved={fetchOverrides}
+            onSaved={() => { fetchOverrides(); setLandingRefreshKey(k => k + 1); }}
           />
         ) : null;
       })()}
@@ -1486,6 +1489,7 @@ export default function AnunciosNoAr() {
                     override={overrides[emp.codigo] || null}
                     onEditOverride={() => setEditingCodigo(emp.codigo)}
                     onEditLanding={() => setLandingCodigo(emp.codigo)}
+                    landingRefreshKey={landingRefreshKey}
                   />
                 ))}
               </div>
