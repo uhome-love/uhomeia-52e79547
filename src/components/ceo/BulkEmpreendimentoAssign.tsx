@@ -119,6 +119,25 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
     }
   };
 
+  const handleAutoResolve = async () => {
+    setAutoResolving(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("jetimob-sync", {
+        body: { backfill_campaign: true },
+        headers: { Authorization: `Bearer ${session.session?.access_token}` },
+      });
+      if (error) throw error;
+      toast.success(data?.message || `${data?.fixed || 0} leads corrigidos automaticamente!`);
+      refetch();
+      onComplete?.();
+    } catch (e: any) {
+      toast.error("Erro no auto-resolve: " + (e.message || "erro desconhecido"));
+    } finally {
+      setAutoResolving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
@@ -131,6 +150,18 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
             {leads.length} leads sem empreendimento definido. Selecione e atribua.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Auto-resolve button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleAutoResolve}
+          disabled={autoResolving}
+          className="gap-1.5 self-start"
+        >
+          {autoResolving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+          Auto-resolver via Campanha (Jetimob)
+        </Button>
 
         {/* Empreendimento selector */}
         <div className="space-y-3">
