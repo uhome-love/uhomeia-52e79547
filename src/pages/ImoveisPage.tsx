@@ -450,6 +450,9 @@ export default function ImoveisPage() {
   const [bairroOpen, setBairroOpen] = useState(false);
   const [bairroSearch, setBairroSearch] = useState("");
   const [dormitorios, setDormitorios] = useState("");
+  const [suites, setSuites] = useState("");
+  const [vagas, setVagas] = useState("");
+  const [areaRange, setAreaRange] = useState<[number, number]>([0, 500]);
   const [valorRange, setValorRange] = useState<[number, number]>([0, 5_000_000]);
   const [somenteObras, setSomenteObras] = useState(false);
 
