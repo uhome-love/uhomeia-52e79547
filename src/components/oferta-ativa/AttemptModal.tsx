@@ -304,6 +304,30 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Retirar do sistema confirmation */}
+      <AlertDialog open={showRetirarConfirm} onOpenChange={setShowRetirarConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>🚫 Excluir lead permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O lead <strong>{leadName}</strong> será excluído do sistema e não poderá mais ser contatado por nenhum corretor. Essa ação é <strong>irreversível</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowRetirarConfirm(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowRetirarConfirm(false);
+                handleSubmit();
+              }}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Sim, excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
