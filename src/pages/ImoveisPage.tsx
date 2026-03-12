@@ -1085,200 +1085,256 @@ export default function ImoveisPage() {
       </div>
 
       {/* ── Main content ── */}
-      <div className={cn("flex-1 w-full", viewMode === "map" ? "flex overflow-hidden" : "max-w-[1400px] mx-auto px-4 md:px-6 py-4")}>
-        {viewMode === "map" ? (
-          <>
-            {/* Map split view */}
-            <div className="w-1/2 h-[calc(100vh-120px)] overflow-y-auto px-4 py-4 space-y-3">
-              {/* Vitrine bar in map mode */}
-        {selectMode && selectedIds.size > 0 && (
-          <Card className="p-3 mb-4 flex items-center justify-between bg-primary/5 border-primary/20 flex-wrap gap-2">
-            <span className="text-sm font-medium">{selectedIds.size} imóvel(is) selecionado(s)</span>
-            <div className="flex items-center gap-2">
-              {vitrineLink ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Input value={vitrineLink} readOnly className="text-xs h-8 w-64" />
-                  <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(vitrineLink); toast.success("Link copiado!"); }}><Copy className="h-3.5 w-3.5" /></Button>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`Confira esta seleção de imóveis: ${vitrineLink}`)}`} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white gap-1"><Phone className="h-3.5 w-3.5" /> WhatsApp</Button>
-                  </a>
-                </div>
-              ) : (
-                <Button size="sm" disabled={creatingVitrine} onClick={async () => {
-                  if (!user) return;
-                  setCreatingVitrine(true);
-                  try {
-                    const { data, error } = await supabase.from("vitrines").insert({ created_by: user.id, titulo: "Seleção de Imóveis", tipo: "property_selection", imovel_ids: [...selectedIds] as any }).select("id").single();
-                    if (error) throw error;
-                    const link = getVitrinePublicUrl(data.id);
-                    setVitrineLink(link); navigator.clipboard.writeText(link); toast.success("Vitrine criada! Link copiado.");
-                  } catch { toast.error("Erro ao criar vitrine"); } finally { setCreatingVitrine(false); }
-                }} className="gap-1.5">
-                  {creatingVitrine ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />} Gerar Link
-                </Button>
-              )}
+      {viewMode === "map" ? (
+        /* ═══ MAP SPLIT VIEW ═══ */
+        <div className="flex-1 flex overflow-hidden w-full">
+          {/* Left: property list */}
+          <div className="w-[420px] xl:w-[480px] shrink-0 h-[calc(100vh-120px)] overflow-y-auto px-4 py-3 space-y-3 border-r border-border/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {loading ? <Skeleton className="h-4 w-24" /> : (
+                  <span className="text-sm font-medium text-foreground">{total.toLocaleString()} imóveis</span>
+                )}
+              </div>
+              <div className="flex border border-border/60 rounded-lg overflow-hidden">
+                <button onClick={() => setViewMode("grid")} className={cn("p-1.5 transition-colors", "bg-background text-muted-foreground hover:bg-muted")}><LayoutGrid className="h-4 w-4" /></button>
+                <button onClick={() => setViewMode("list")} className={cn("p-1.5 transition-colors", "bg-background text-muted-foreground hover:bg-muted")}><List className="h-4 w-4" /></button>
+                <button onClick={() => setViewMode("map")} className="p-1.5 bg-primary text-primary-foreground"><Map className="h-4 w-4" /></button>
+              </div>
             </div>
-          </Card>
-        )}
-
-        {/* ═══ AI SEARCH RESULTS ═══ */}
-        {searchMode === "ai" ? (
-          <div className="space-y-4">
-            {aiLoading && (
-              <Card className="p-6 border-violet-200/50 dark:border-violet-800/30">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center">
-                    <Brain className="h-4 w-4 text-white animate-pulse" />
-                  </div>
-                  <div className="space-y-1.5 flex-1"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-1/2" /></div>
-                </div>
-              </Card>
-            )}
-            {aiError && <Card className="p-4 border-destructive/30 bg-destructive/5"><p className="text-sm text-destructive">{aiError}</p></Card>}
-            {aiResult && !aiLoading && (
-              <>
-                <Card className="p-4 border-violet-200/50 dark:border-violet-800/30">
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center shrink-0 mt-0.5">
-                      <Sparkles className="h-3.5 w-3.5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground font-medium">{aiResult.explicacao}</p>
-                      {aiResult.sugestao_alternativa && <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1"><ArrowRight className="h-3 w-3 shrink-0" /> {aiResult.sugestao_alternativa}</p>}
-                      {aiSearchTime != null && <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-0.5"><Zap className="h-2.5 w-2.5" /> {aiSearchTime}ms</p>}
-                    </div>
-                  </div>
-                </Card>
-                {aiResult.tags.length > 0 && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mr-1">Filtros IA:</span>
-                    {aiResult.tags.map(tag => (
-                      <span key={tag.key} className={cn("inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border", tag.category === "perfil" ? "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20" : "bg-primary/8 text-primary border-primary/20")}>
-                        {tag.label}
-                        <button onClick={() => removeTag(tag.key)} className="hover:bg-primary/20 rounded-full p-0.5 -mr-0.5"><X className="h-2.5 w-2.5" /></button>
-                      </span>
-                    ))}
-                    <button onClick={() => { clearAISearch(); setAiQuery(""); }} className="text-xs text-muted-foreground hover:text-foreground ml-1 underline underline-offset-2">Limpar</button>
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Card key={i} className="overflow-hidden border-border/40">
+                    <div className="flex"><Skeleton className="w-32 h-28 rounded-none shrink-0" /><div className="flex-1 p-2.5 space-y-1.5"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-3 w-2/3" /><Skeleton className="h-3 w-1/2" /></div></div>
+                  </Card>
+                ))}
+              </div>
+            ) : sortedImoveis.length === 0 ? (
+              <div className="text-center py-8">
+                <Search className="h-8 w-8 mx-auto text-muted-foreground/20 mb-2" />
+                <p className="text-sm font-medium text-foreground">Nenhum imóvel</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {sortedImoveis.map((item, idx) => {
+                  const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === item.codigo);
+                  const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
+                  return <PropertyCardList key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />;
+                })}
+                {totalPages > 1 && !campanhaAtiva && (
+                  <div className="flex items-center justify-center gap-2 py-3">
+                    <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchImoveis(page - 1)} className="gap-1 rounded-full text-xs"><ChevronLeft className="h-3 w-3" /></Button>
+                    <span className="text-xs text-muted-foreground tabular-nums">{page}/{totalPages}</span>
+                    <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchImoveis(page + 1)} className="gap-1 rounded-full text-xs"><ChevronRight className="h-3 w-3" /></Button>
                   </div>
                 )}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{aiTotal > 0 ? `${aiProperties.length} imóveis` : "Nenhum resultado"}{aiTotal > 0 && <span className="text-muted-foreground font-normal"> • por aderência</span>}</span>
+              </div>
+            )}
+          </div>
+          {/* Right: map */}
+          <div className="flex-1 h-[calc(100vh-120px)]">
+            <PropertyMap
+              properties={sortedImoveis}
+              loading={loading}
+              onFavorite={toggleFavorite}
+              favorites={favorites}
+              getPreco={getPreco}
+              className="h-full w-full rounded-none border-0"
+            />
+          </div>
+        </div>
+      ) : (
+        /* ═══ GRID / LIST VIEW ═══ */
+        <div className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-6 py-4">
+          {/* Vitrine bar */}
+          {selectMode && selectedIds.size > 0 && (
+            <Card className="p-3 mb-4 flex items-center justify-between bg-primary/5 border-primary/20 flex-wrap gap-2">
+              <span className="text-sm font-medium">{selectedIds.size} imóvel(is) selecionado(s)</span>
+              <div className="flex items-center gap-2">
+                {vitrineLink ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Input value={vitrineLink} readOnly className="text-xs h-8 w-64" />
+                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(vitrineLink); toast.success("Link copiado!"); }}><Copy className="h-3.5 w-3.5" /></Button>
+                    <a href={`https://wa.me/?text=${encodeURIComponent(`Confira esta seleção de imóveis: ${vitrineLink}`)}`} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white gap-1"><Phone className="h-3.5 w-3.5" /> WhatsApp</Button>
+                    </a>
+                  </div>
+                ) : (
+                  <Button size="sm" disabled={creatingVitrine} onClick={async () => {
+                    if (!user) return;
+                    setCreatingVitrine(true);
+                    try {
+                      const { data, error } = await supabase.from("vitrines").insert({ created_by: user.id, titulo: "Seleção de Imóveis", tipo: "property_selection", imovel_ids: [...selectedIds] as any }).select("id").single();
+                      if (error) throw error;
+                      const link = getVitrinePublicUrl(data.id);
+                      setVitrineLink(link); navigator.clipboard.writeText(link); toast.success("Vitrine criada! Link copiado.");
+                    } catch { toast.error("Erro ao criar vitrine"); } finally { setCreatingVitrine(false); }
+                  }} className="gap-1.5">
+                    {creatingVitrine ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />} Gerar Link
+                  </Button>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* ═══ AI SEARCH RESULTS ═══ */}
+          {searchMode === "ai" ? (
+            <div className="space-y-4">
+              {aiLoading && (
+                <Card className="p-6 border-violet-200/50 dark:border-violet-800/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center">
+                      <Brain className="h-4 w-4 text-white animate-pulse" />
+                    </div>
+                    <div className="space-y-1.5 flex-1"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-1/2" /></div>
+                  </div>
+                </Card>
+              )}
+              {aiError && <Card className="p-4 border-destructive/30 bg-destructive/5"><p className="text-sm text-destructive">{aiError}</p></Card>}
+              {aiResult && !aiLoading && (
+                <>
+                  <Card className="p-4 border-violet-200/50 dark:border-violet-800/30">
+                    <div className="flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center shrink-0 mt-0.5">
+                        <Sparkles className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground font-medium">{aiResult.explicacao}</p>
+                        {aiResult.sugestao_alternativa && <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1"><ArrowRight className="h-3 w-3 shrink-0" /> {aiResult.sugestao_alternativa}</p>}
+                        {aiSearchTime != null && <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-0.5"><Zap className="h-2.5 w-2.5" /> {aiSearchTime}ms</p>}
+                      </div>
+                    </div>
+                  </Card>
+                  {aiResult.tags.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mr-1">Filtros IA:</span>
+                      {aiResult.tags.map(tag => (
+                        <span key={tag.key} className={cn("inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border", tag.category === "perfil" ? "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20" : "bg-primary/8 text-primary border-primary/20")}>
+                          {tag.label}
+                          <button onClick={() => removeTag(tag.key)} className="hover:bg-primary/20 rounded-full p-0.5 -mr-0.5"><X className="h-2.5 w-2.5" /></button>
+                        </span>
+                      ))}
+                      <button onClick={() => { clearAISearch(); setAiQuery(""); }} className="text-xs text-muted-foreground hover:text-foreground ml-1 underline underline-offset-2">Limpar</button>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">{aiTotal > 0 ? `${aiProperties.length} imóveis` : "Nenhum resultado"}{aiTotal > 0 && <span className="text-muted-foreground font-normal"> • por aderência</span>}</span>
+                    <div className="flex border border-border/60 rounded-lg overflow-hidden">
+                      <button onClick={() => setViewMode("grid")} className={cn("p-1.5 transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><LayoutGrid className="h-4 w-4" /></button>
+                      <button onClick={() => setViewMode("list")} className={cn("p-1.5 transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><List className="h-4 w-4" /></button>
+                      <button onClick={() => setViewMode("map")} className={cn("p-1.5 transition-colors", viewMode === "map" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><Map className="h-4 w-4" /></button>
+                    </div>
+                  </div>
+                  {aiProperties.length === 0 ? (
+                    <Card className="p-16 text-center border-border/40"><Sparkles className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" /><p className="text-lg font-semibold text-foreground">Nenhum imóvel encontrado</p><p className="text-sm text-muted-foreground mt-1">Tente descrever de outra forma</p></Card>
+                  ) : (
+                    <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
+                      {aiProperties.map(({ item, score }, idx) => {
+                        const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
+                        const CardComponent = PropertyCardGrid;
+                        return (
+                          <div key={item.id_imovel || item.codigo || idx} className="relative">
+                            <div className={cn("absolute top-3 left-3 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm backdrop-blur-sm", score >= 90 ? "bg-emerald-500/90 text-white" : score >= 75 ? "bg-primary/90 text-primary-foreground" : score >= 60 ? "bg-amber-500/90 text-white" : "bg-muted/90 text-foreground")}>
+                              <Sparkles className="h-2.5 w-2.5" />{score}%
+                            </div>
+                            <CardComponent item={item} idx={idx} isCampanha={false} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+              {!aiResult && !aiLoading && !aiError && (
+                <Card className="p-12 text-center border-violet-200/30 dark:border-violet-800/20">
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center mx-auto mb-4"><Brain className="h-7 w-7 text-white" /></div>
+                  <h3 className="text-lg font-bold text-foreground mb-2">Busca Inteligente por IA</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">Descreva o imóvel que você procura em linguagem natural.</p>
+                  <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
+                    {["apartamento 3 dorm perto do Iguatemi até 1M", "studio para investir em Porto Alegre", "casa em condomínio com 3 suítes", "imóvel alto padrão com vista", "lançamento com entrada facilitada", "compacto para Airbnb"].map(s => (
+                      <button key={s} onClick={() => { setAiQuery(s); searchWithAI(s); }} className="text-xs px-3 py-1.5 rounded-full border border-violet-200 dark:border-violet-800/40 text-muted-foreground hover:text-violet-700 dark:hover:text-violet-300 hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all">{s}</button>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </div>
+          ) : (
+            <>
+              {activeFilters.length > 0 && (
+                <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                  {activeFilters.map(f => (
+                    <span key={f.key} className="inline-flex items-center gap-1 bg-primary/8 text-primary text-xs font-medium px-2.5 py-1 rounded-full border border-primary/20">
+                      {f.label}
+                      <button onClick={f.onRemove} className="hover:bg-primary/20 rounded-full p-0.5 -mr-0.5"><X className="h-3 w-3" /></button>
+                    </span>
+                  ))}
+                  <button onClick={clearAllFilters} className="text-xs text-muted-foreground hover:text-foreground ml-1 underline underline-offset-2">Limpar tudo</button>
+                </div>
+              )}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {loading ? <Skeleton className="h-4 w-24" /> : (
+                    <>
+                      <span className="text-sm font-medium text-foreground">{total.toLocaleString()} imóveis</span>
+                      {searchTimeMs != null && <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><Zap className="h-2.5 w-2.5" /> {searchTimeMs}ms</span>}
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-[140px] h-8 text-xs border-border/60"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="relevancia">Relevância</SelectItem>
+                      <SelectItem value="menor_preco">Menor preço</SelectItem>
+                      <SelectItem value="maior_preco">Maior preço</SelectItem>
+                      <SelectItem value="maior_area">Maior área</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <div className="flex border border-border/60 rounded-lg overflow-hidden">
                     <button onClick={() => setViewMode("grid")} className={cn("p-1.5 transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><LayoutGrid className="h-4 w-4" /></button>
                     <button onClick={() => setViewMode("list")} className={cn("p-1.5 transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><List className="h-4 w-4" /></button>
                     <button onClick={() => setViewMode("map")} className={cn("p-1.5 transition-colors", viewMode === "map" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><Map className="h-4 w-4" /></button>
                   </div>
                 </div>
-                {aiProperties.length === 0 ? (
-                  <Card className="p-16 text-center border-border/40"><Sparkles className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" /><p className="text-lg font-semibold text-foreground">Nenhum imóvel encontrado</p><p className="text-sm text-muted-foreground mt-1">Tente descrever de outra forma</p></Card>
-                ) : (
-                  <div className={cn("grid gap-4", viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1")}>
-                    {aiProperties.map(({ item, score }, idx) => {
-                      const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
-                      const CardComponent = viewMode === "grid" ? PropertyCardGrid : PropertyCardList;
-                      return (
-                        <div key={item.id_imovel || item.codigo || idx} className="relative">
-                          <div className={cn("absolute top-3 left-3 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm backdrop-blur-sm", score >= 90 ? "bg-emerald-500/90 text-white" : score >= 75 ? "bg-primary/90 text-primary-foreground" : score >= 60 ? "bg-amber-500/90 text-white" : "bg-muted/90 text-foreground")}>
-                            <Sparkles className="h-2.5 w-2.5" />{score}%
-                          </div>
-                          <CardComponent item={item} idx={idx} isCampanha={false} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-            {!aiResult && !aiLoading && !aiError && (
-              <Card className="p-12 text-center border-violet-200/30 dark:border-violet-800/20">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center mx-auto mb-4"><Brain className="h-7 w-7 text-white" /></div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Busca Inteligente por IA</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">Descreva o imóvel que você procura em linguagem natural.</p>
-                <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
-                  {["apartamento 3 dorm perto do Iguatemi até 1M", "studio para investir em Porto Alegre", "casa em condomínio com 3 suítes", "imóvel alto padrão com vista", "lançamento com entrada facilitada", "compacto para Airbnb"].map(s => (
-                    <button key={s} onClick={() => { setAiQuery(s); searchWithAI(s); }} className="text-xs px-3 py-1.5 rounded-full border border-violet-200 dark:border-violet-800/40 text-muted-foreground hover:text-violet-700 dark:hover:text-violet-300 hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all">{s}</button>
+              </div>
+              {loading ? (
+                <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <Card key={i} className="overflow-hidden border-border/40">
+                      <div><Skeleton className="aspect-[16/10] rounded-none" /><div className="p-3.5 space-y-2"><Skeleton className="h-5 w-2/3" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/2" /></div></div>
+                    </Card>
                   ))}
                 </div>
-              </Card>
-            )}
-          </div>
-        ) : (
-          <>
-            {activeFilters.length > 0 && (
-              <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                {activeFilters.map(f => (
-                  <span key={f.key} className="inline-flex items-center gap-1 bg-primary/8 text-primary text-xs font-medium px-2.5 py-1 rounded-full border border-primary/20">
-                    {f.label}
-                    <button onClick={f.onRemove} className="hover:bg-primary/20 rounded-full p-0.5 -mr-0.5"><X className="h-3 w-3" /></button>
-                  </span>
-                ))}
-                <button onClick={clearAllFilters} className="text-xs text-muted-foreground hover:text-foreground ml-1 underline underline-offset-2">Limpar tudo</button>
-              </div>
-            )}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                {loading ? <Skeleton className="h-4 w-24" /> : (
-                  <>
-                    <span className="text-sm font-medium text-foreground">{total.toLocaleString()} imóveis</span>
-                    {searchTimeMs != null && <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><Zap className="h-2.5 w-2.5" /> {searchTimeMs}ms</span>}
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[140px] h-8 text-xs border-border/60"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="relevancia">Relevância</SelectItem>
-                    <SelectItem value="menor_preco">Menor preço</SelectItem>
-                    <SelectItem value="maior_preco">Maior preço</SelectItem>
-                    <SelectItem value="maior_area">Maior área</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex border border-border/60 rounded-lg overflow-hidden">
-                  <button onClick={() => setViewMode("grid")} className={cn("p-1.5 transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><LayoutGrid className="h-4 w-4" /></button>
-                  <button onClick={() => setViewMode("list")} className={cn("p-1.5 transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><List className="h-4 w-4" /></button>
-                  <button onClick={() => setViewMode("map")} className={cn("p-1.5 transition-colors", viewMode === "map" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}><Map className="h-4 w-4" /></button>
-                </div>
-              </div>
-            </div>
-            {loading ? (
-              <div className={cn("grid gap-4", viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1")}>
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Card key={i} className="overflow-hidden border-border/40">
-                    {viewMode === "grid" ? <div><Skeleton className="aspect-[16/10] rounded-none" /><div className="p-3.5 space-y-2"><Skeleton className="h-5 w-2/3" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/2" /></div></div>
-                    : <div className="flex"><Skeleton className="w-56 h-40 rounded-none" /><div className="flex-1 p-3.5 space-y-2"><Skeleton className="h-5 w-1/3" /><Skeleton className="h-3 w-2/3" /><Skeleton className="h-3 w-1/2" /></div></div>}
-                  </Card>
-                ))}
-              </div>
-            ) : sortedImoveis.length === 0 ? (
-              <Card className="p-16 text-center border-border/40">
-                <Search className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" />
-                <p className="text-lg font-semibold text-foreground">Nenhum imóvel encontrado</p>
-                <p className="text-sm text-muted-foreground mt-1">Tente ajustar seus filtros ou termo de busca</p>
-                {activeFilters.length > 0 && <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}><X className="h-3.5 w-3.5 mr-1.5" /> Limpar filtros</Button>}
-              </Card>
-            ) : (
-              <>
-                <div className={cn("grid gap-4", viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1")}>
-                  {sortedImoveis.map((item, idx) => {
-                    const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === item.codigo);
-                    const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
-                    const CardComponent = viewMode === "grid" ? PropertyCardGrid : PropertyCardList;
-                    return <CardComponent key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />;
-                  })}
-                </div>
-                {totalPages > 1 && !campanhaAtiva && (
-                  <div className="flex items-center justify-center gap-3 pt-6 pb-2">
-                    <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchImoveis(page - 1)} className="gap-1 rounded-full"><ChevronLeft className="h-4 w-4" /> Anterior</Button>
-                    <span className="text-sm text-muted-foreground font-medium tabular-nums">{page} de {totalPages}</span>
-                    <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchImoveis(page + 1)} className="gap-1 rounded-full">Próxima <ChevronRight className="h-4 w-4" /></Button>
+              ) : sortedImoveis.length === 0 ? (
+                <Card className="p-16 text-center border-border/40">
+                  <Search className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" />
+                  <p className="text-lg font-semibold text-foreground">Nenhum imóvel encontrado</p>
+                  <p className="text-sm text-muted-foreground mt-1">Tente ajustar seus filtros ou termo de busca</p>
+                  {activeFilters.length > 0 && <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}><X className="h-3.5 w-3.5 mr-1.5" /> Limpar filtros</Button>}
+                </Card>
+              ) : (
+                <>
+                  <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
+                    {sortedImoveis.map((item, idx) => {
+                      const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === item.codigo);
+                      const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
+                      return <PropertyCardGrid key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />;
+                    })}
                   </div>
-                )}
-              </>
-            )}
-          </>
-        )}
-      </div>
+                  {totalPages > 1 && !campanhaAtiva && (
+                    <div className="flex items-center justify-center gap-3 pt-6 pb-2">
+                      <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchImoveis(page - 1)} className="gap-1 rounded-full"><ChevronLeft className="h-4 w-4" /> Anterior</Button>
+                      <span className="text-sm text-muted-foreground font-medium tabular-nums">{page} de {totalPages}</span>
+                      <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchImoveis(page + 1)} className="gap-1 rounded-full">Próxima <ChevronRight className="h-4 w-4" /></Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
