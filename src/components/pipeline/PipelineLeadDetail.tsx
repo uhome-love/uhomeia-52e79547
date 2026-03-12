@@ -347,7 +347,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               </div>
             )}
 
-            {/* Row 5: Empreendimento + Canal + Campanha + Jetimob */}
+            {/* Row 5: Empreendimento + Canal + Jetimob code + Attempts */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1.5">
                 <Building2 className="h-3.5 w-3.5" />
@@ -357,11 +357,6 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium">
                   {(lead as any).origem}
                 </Badge>
-              )}
-              {(lead as any).origem_detalhe && (
-                <span className="flex items-center gap-1 text-xs">
-                  📢 {(lead as any).origem_detalhe}
-                </span>
               )}
               {jetimobCode && (
                 <span className="flex items-center gap-1 text-xs">
@@ -375,7 +370,64 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               )}
             </div>
 
-            {/* Row 5: Full message from Jetimob (if present) */}
+            {/* Row 6: Marketing Attribution — campanha, formulário, anúncio */}
+            {(() => {
+              const campanha = (lead as any).campanha;
+              const campanhaId = (lead as any).campanha_id;
+              const formulario = (lead as any).formulario;
+              const conjuntoAnuncio = (lead as any).conjunto_anuncio;
+              const anuncio = (lead as any).anuncio;
+              const plataforma = (lead as any).plataforma;
+              const origemDetalhe = (lead as any).origem_detalhe;
+              const hasAttribution = campanha || campanhaId || formulario || conjuntoAnuncio || anuncio || plataforma || origemDetalhe;
+              if (!hasAttribution) return null;
+              return (
+                <div className="rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 px-3 py-2 space-y-1">
+                  <p className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide flex items-center gap-1">
+                    📡 Origem do Lead
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+                    {plataforma && (
+                      <span className="text-muted-foreground">
+                        <span className="font-semibold text-foreground/80">Plataforma:</span> {plataforma}
+                      </span>
+                    )}
+                    {campanha && (
+                      <span className="text-muted-foreground">
+                        <span className="font-semibold text-foreground/80">Campanha:</span> {campanha}
+                      </span>
+                    )}
+                    {campanhaId && (
+                      <span className="text-muted-foreground">
+                        <span className="font-semibold text-foreground/80">ID:</span> {campanhaId}
+                      </span>
+                    )}
+                    {formulario && (
+                      <span className="text-muted-foreground">
+                        <span className="font-semibold text-foreground/80">Formulário:</span> {formulario}
+                      </span>
+                    )}
+                    {conjuntoAnuncio && (
+                      <span className="text-muted-foreground">
+                        <span className="font-semibold text-foreground/80">Conjunto:</span> {conjuntoAnuncio}
+                      </span>
+                    )}
+                    {anuncio && (
+                      <span className="text-muted-foreground">
+                        <span className="font-semibold text-foreground/80">Anúncio:</span> {anuncio}
+                      </span>
+                    )}
+                    {origemDetalhe && !campanha && (
+                      <span className="text-muted-foreground">
+                        <span className="font-semibold text-foreground/80">Detalhe:</span> {origemDetalhe}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Row 7: Full message / observações */}
             {(lead as any).observacoes && (
               <div className="rounded-md bg-muted/40 border border-border/30 px-3 py-2">
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
