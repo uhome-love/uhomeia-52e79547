@@ -182,27 +182,14 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
 
     // Build mapping: profiles.id → team_members.id via user_id
     const negCorretorIds = [...new Set((pdns || []).map(p => p.corretor_id).filter(Boolean))] as string[];
-    const profileIdToTeamId = new Map<string, string>();
+    // Build mapping: profiles.id → auth.user_id for VGV assignment to canonical corretor ID
+    const profileIdToAuthId = new Map<string, string>();
     
     if (negCorretorIds.length > 0) {
-      // Get profiles for these corretor_ids to find their user_ids
       const { data: cProfiles } = await supabase.from("profiles").select("id, user_id").in("id", negCorretorIds);
-      
-      // Map profile.user_id → team_members entries
-      const profileUserIds = (cProfiles || []).map(p => p.user_id).filter(Boolean);
-      const profileIdToUserId = new Map((cProfiles || []).map(p => [p.id, p.user_id]));
-      
-      // Find team_members by user_id
-      if (profileUserIds.length > 0) {
-        const { data: tmByUser } = await supabase.from("team_members").select("id, user_id").in("user_id", profileUserIds);
-        const userIdToTeamId = new Map((tmByUser || []).map(t => [t.user_id, t.id]));
-        
-        // Build final mapping: profiles.id → team_members.id
-        for (const [profileId, userId] of profileIdToUserId) {
-          const teamId = userIdToTeamId.get(userId);
-          if (teamId) profileIdToTeamId.set(profileId, teamId);
-        }
-      }
+      (cProfiles || []).forEach(p => {
+        if (p.user_id) profileIdToAuthId.set(p.id, p.user_id);
+      });
     }
 
     // Build VGV + Propostas per gerente from negocios (single source of truth)
@@ -216,11 +203,11 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
       if (fase === "assinado") curr.assinado += Number(p.vgv_final || p.vgv_estimado || 0);
       pdnByGerente.set(gId, curr);
 
-      // Assign VGV to corretor using proper ID mapping
+      // Assign VGV to corretor using profiles.id → auth.user_id mapping
       if (p.corretor_id) {
-        const teamMemberId = profileIdToTeamId.get(p.corretor_id);
-        if (teamMemberId) {
-          const agg = corretorAggMap.get(teamMemberId);
+        const authUserId = profileIdToAuthId.get(p.corretor_id);
+        if (authUserId) {
+          const agg = corretorAggMap.get(authUserId);
           if (agg) {
             if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") agg.real_vgv_gerado += Number(p.vgv_estimado || 0);
             if (fase === "assinado") agg.real_vgv_assinado += Number(p.vgv_final || p.vgv_estimado || 0);
