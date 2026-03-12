@@ -399,6 +399,34 @@ export function AppSidebar() {
       };
     }
 
+    // ── RH ──
+    if (isRh) {
+      return {
+        topItem: { title: "Dashboard RH", url: "/rh", icon: Home },
+        groups: [
+          {
+            label: "Recrutamento",
+            items: [
+              { title: "Kanban Candidatos", url: "/rh/recrutamento", icon: Users },
+            ],
+          },
+          {
+            label: "RH",
+            items: [
+              { title: "Conversas 1:1", url: "/rh/conversas", icon: MessageSquare },
+            ],
+          },
+          {
+            label: "Recepção",
+            items: [
+              { title: "Sala de Reunião", url: "/rh/sala-reuniao", icon: CalendarDays },
+            ],
+          },
+        ],
+        roleLabel: "RH · 💙 Carol",
+      };
+    }
+
     // ── Corretor (default) ──
 
     return {
