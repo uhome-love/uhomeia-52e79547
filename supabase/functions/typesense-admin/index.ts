@@ -130,18 +130,19 @@ serve(async (req) => {
   }
 
   try {
-    // Auth check: allow service_role OR authenticated user
+    // Auth check: allow service_role, apikey header, or authenticated user
     const authHeader = req.headers.get("Authorization");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const isServiceRole = authHeader === `Bearer ${serviceRoleKey}`;
+    const apikeyHeader = req.headers.get("apikey");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const isInternalCall = (authHeader === `Bearer ${serviceRoleKey}`) || (apikeyHeader === anonKey && authHeader === `Bearer ${anonKey}`);
     
-    if (!isServiceRole) {
+    if (!isInternalCall) {
       if (!authHeader?.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Não autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-      const sb = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
+      const sb = createClient(supabaseUrl, anonKey!, { global: { headers: { Authorization: authHeader } } });
       const { data: { user }, error: authErr } = await sb.auth.getUser();
       if (authErr || !user) {
         return new Response(JSON.stringify({ error: "Token inválido" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
