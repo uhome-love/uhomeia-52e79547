@@ -121,11 +121,17 @@ export default function CeoCheckpointViewer() {
         }
       }
 
-      const { data: visitas } = await visitasPromise;
-      for (const v of (visitas || [])) {
+      const [{ data: visitasCriadas }, { data: visitasRealizadas }] = await Promise.all([
+        visitasCriadasPromise,
+        visitasRealizadasPromise,
+      ]);
+      for (const v of (visitasCriadas || [])) {
         if (!visitasStatsById[v.corretor_id]) visitasStatsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
         if (v.status !== "cancelada") visitasStatsById[v.corretor_id].marcadas++;
-        if (v.status === "realizada") visitasStatsById[v.corretor_id].realizadas++;
+      }
+      for (const v of (visitasRealizadas || [])) {
+        if (!visitasStatsById[v.corretor_id]) visitasStatsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
+        visitasStatsById[v.corretor_id].realizadas++;
       }
     }
     // Map user_id -> team_member.id for OA stats and visitas stats
