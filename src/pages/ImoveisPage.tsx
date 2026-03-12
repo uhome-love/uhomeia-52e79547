@@ -445,6 +445,7 @@ function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onTog
 export default function ImoveisPage() {
   const { user } = useAuth();
   const { search: typesenseSearch, autocomplete: typesenseAutocomplete, loading: tsLoading } = useTypesenseSearch();
+  const { searchWithAI, clearAISearch, removeTag, aiLoading, aiResult, aiError, aiProperties, aiTotal, aiSearchTime } = useAISearch();
   const [imoveis, setImoveis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -461,6 +462,8 @@ export default function ImoveisPage() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortBy, setSortBy] = useState("relevancia");
   const [searchTimeMs, setSearchTimeMs] = useState<number | null>(null);
+  const [searchMode, setSearchMode] = useState<"normal" | "ai">("normal");
+  const [aiQuery, setAiQuery] = useState("");
 
   // Autocomplete
   const [suggestions, setSuggestions] = useState<{ type: string; value: string }[]>([]);
