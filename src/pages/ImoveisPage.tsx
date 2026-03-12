@@ -474,10 +474,10 @@ export default function ImoveisPage() {
 
   // Filters — reactive (auto-apply on change)
   const [contrato, setContrato] = useState("venda");
-  const [tipo, setTipo] = useState("");
-  const [bairro, setBairro] = useState("");
+  const [tipo, setTipo] = useState<string[]>([]);
+  const [bairro, setBairro] = useState<string[]>([]);
   const [bairroSearch, setBairroSearch] = useState("");
-  const [dormitorios, setDormitorios] = useState("");
+  const [dormitorios, setDormitorios] = useState<string[]>([]);
   const [suitesFilter, setSuitesFilter] = useState("");
   const [vagas, setVagas] = useState("");
   const [areaRange, setAreaRange] = useState<[number, number]>([0, 500]);
@@ -588,11 +588,11 @@ export default function ImoveisPage() {
             action: "list_imoveis", page: pageNum, pageSize: 24,
             search: search || undefined,
             contrato: contrato || undefined,
-            tipo: tipo && tipo !== "all" ? tipo : undefined,
+            tipo: tipo.length ? tipo.join(",") : undefined,
             cidade: "Porto Alegre",
-            bairro: bairro || undefined,
+            bairro: bairro.length ? bairro.join(",") : undefined,
             search_uhome: uhome ? true : undefined,
-            dormitorios: dormitorios && dormitorios !== "all" ? dormitorios : undefined,
+            dormitorios: dormitorios.length ? dormitorios[0] : undefined,
             suites: suitesFilter && suitesFilter !== "all" ? suitesFilter : undefined,
             vagas: vagas && vagas !== "all" ? vagas : undefined,
             area_min: areaRange[0] > 0 ? String(areaRange[0]) : undefined,
@@ -728,9 +728,9 @@ export default function ImoveisPage() {
   // Active filter tags
   const activeFilters: { key: string; label: string; onRemove: () => void }[] = [];
   if (search) activeFilters.push({ key: "search", label: `"${search}"`, onRemove: () => { setSearch(""); setTimeout(() => fetchImoveis(1, campanhaAtiva, uhomeOnly), 50); } });
-  if (tipo && tipo !== "all") activeFilters.push({ key: "tipo", label: tipo.charAt(0).toUpperCase() + tipo.slice(1), onRemove: () => setTipo("") });
-  if (bairro) activeFilters.push({ key: "bairro", label: bairro, onRemove: () => setBairro("") });
-  if (dormitorios && dormitorios !== "all") activeFilters.push({ key: "dorms", label: `${dormitorios}+ dorm`, onRemove: () => setDormitorios("") });
+  if (tipo.length > 0) activeFilters.push({ key: "tipo", label: tipo.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(", "), onRemove: () => setTipo([]) });
+  if (bairro.length > 0) activeFilters.push({ key: "bairro", label: bairro.join(", "), onRemove: () => setBairro([]) });
+  if (dormitorios.length > 0) activeFilters.push({ key: "dorms", label: dormitorios.map(d => `${d} dorm`).join(", "), onRemove: () => setDormitorios([]) });
   if (suitesFilter && suitesFilter !== "all") activeFilters.push({ key: "suites", label: `${suitesFilter}+ suíte`, onRemove: () => setSuitesFilter("") });
   if (vagas && vagas !== "all") activeFilters.push({ key: "vagas", label: `${vagas}+ vaga`, onRemove: () => setVagas("") });
   if (valorRange[0] > 0 || valorRange[1] < 5_000_000) activeFilters.push({ key: "valor", label: `${fmtCompact(valorRange[0])} — ${valorRange[1] >= 5_000_000 ? "5M+" : fmtCompact(valorRange[1])}`, onRemove: () => setValorRange([0, 5_000_000]) });
@@ -740,7 +740,7 @@ export default function ImoveisPage() {
   if (campanhaAtiva) activeFilters.push({ key: "campanha", label: "Campanha", onRemove: () => { setCampanhaAtiva(false); fetchImoveis(1, false, uhomeOnly); } });
 
   const clearAllFilters = () => {
-    setTipo(""); setBairro(""); setDormitorios(""); setSuitesFilter(""); setVagas(""); setAreaRange([0, 500]); setValorRange([0, 5_000_000]); setSomenteObras(false); setSearch(""); setUhomeOnly(false); setCampanhaAtiva(false);
+    setTipo([]); setBairro([]); setDormitorios([]); setSuitesFilter(""); setVagas(""); setAreaRange([0, 500]); setValorRange([0, 5_000_000]); setSomenteObras(false); setSearch(""); setUhomeOnly(false); setCampanhaAtiva(false);
   };
 
   // ── Render ──
@@ -870,72 +870,84 @@ export default function ImoveisPage() {
 
             {/* Dormitórios */}
             <FilterChip
-              label={dormitorios && dormitorios !== "all" ? `${dormitorios}+ dorm` : "Dormitórios"}
-              active={!!dormitorios && dormitorios !== "all"}
-              onClear={() => setDormitorios("")}
+              label={dormitorios.length > 0 ? dormitorios.map(d => `${d} dorm`).join(", ") : "Dormitórios"}
+              active={dormitorios.length > 0}
+              onClear={() => setDormitorios([])}
             >
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-foreground">Dormitórios</p>
+                <p className="text-xs font-semibold text-foreground">Dormitórios <span className="text-muted-foreground font-normal">(múltipla seleção)</span></p>
                 <div className="flex gap-1.5">
-                  {["all", "1", "2", "3", "4"].map(v => (
-                    <button key={v} onClick={() => setDormitorios(v === "all" ? "" : v)} className={cn(
-                      "px-3 py-1.5 rounded-md text-xs font-medium border transition-all",
-                      (dormitorios === v || (!dormitorios && v === "all"))
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background text-muted-foreground border-border hover:border-primary/40"
-                    )}>
-                      {v === "all" ? "Todos" : `${v}+`}
-                    </button>
-                  ))}
+                  {["1", "2", "3", "4"].map(v => {
+                    const selected = dormitorios.includes(v);
+                    return (
+                      <button key={v} onClick={() => setDormitorios(prev => selected ? prev.filter(d => d !== v) : [...prev, v])} className={cn(
+                        "px-3 py-1.5 rounded-md text-xs font-medium border transition-all",
+                        selected
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-muted-foreground border-border hover:border-primary/40"
+                      )}>
+                        {v}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </FilterChip>
 
             {/* Tipo */}
             <FilterChip
-              label={tipo && tipo !== "all" ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : "Tipo"}
-              active={!!tipo && tipo !== "all"}
-              onClear={() => setTipo("")}
+              label={tipo.length > 0 ? tipo.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(", ") : "Tipo"}
+              active={tipo.length > 0}
+              onClear={() => setTipo([])}
             >
-              <div className="space-y-2 w-44">
-                <p className="text-xs font-semibold text-foreground">Tipo de imóvel</p>
+              <div className="space-y-1 w-44">
+                <p className="text-xs font-semibold text-foreground mb-2">Tipo de imóvel <span className="text-muted-foreground font-normal">(múltipla)</span></p>
                 {[
-                  { v: "", l: "Todos" }, { v: "apartamento", l: "Apartamento" }, { v: "casa", l: "Casa" },
+                  { v: "apartamento", l: "Apartamento" }, { v: "casa", l: "Casa" },
                   { v: "cobertura", l: "Cobertura" }, { v: "terreno", l: "Terreno" }, { v: "comercial", l: "Comercial" },
                   { v: "loft", l: "Loft / Studio" }, { v: "kitnet", l: "Kitnet" }
-                ].map(({ v, l }) => (
-                  <button key={v} onClick={() => setTipo(v)} className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-all",
-                    (tipo === v || (!tipo && !v)) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted/50"
-                  )}>
-                    {l}
-                  </button>
-                ))}
+                ].map(({ v, l }) => {
+                  const selected = tipo.includes(v);
+                  return (
+                    <button key={v} onClick={() => setTipo(prev => selected ? prev.filter(t => t !== v) : [...prev, v])} className={cn(
+                      "w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-all flex items-center gap-2",
+                      selected ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted/50"
+                    )}>
+                      <Check className={cn("h-3 w-3 shrink-0", selected ? "opacity-100" : "opacity-0")} />
+                      {l}
+                    </button>
+                  );
+                })}
               </div>
             </FilterChip>
 
             {/* Bairro */}
-            <FilterChip label={bairro || "Bairro"} active={!!bairro} onClear={() => setBairro("")}>
+            <FilterChip label={bairro.length > 0 ? (bairro.length <= 2 ? bairro.join(", ") : `${bairro.length} bairros`) : "Bairro"} active={bairro.length > 0} onClear={() => setBairro([])}>
               <div className="w-56">
                 <Command>
                   <CommandInput placeholder="Buscar bairro..." value={bairroSearch} onValueChange={setBairroSearch} className="h-8" />
                   <CommandList className="max-h-48">
                     <CommandEmpty>
                       {bairroSearch ? (
-                        <button className="w-full px-3 py-2 text-sm text-left hover:bg-accent rounded" onClick={() => { setBairro(bairroSearch); setBairroSearch(""); }}>
+                        <button className="w-full px-3 py-2 text-sm text-left hover:bg-accent rounded" onClick={() => { setBairro(prev => [...prev, bairroSearch]); setBairroSearch(""); }}>
                           Usar "<strong>{bairroSearch}</strong>"
                         </button>
                       ) : "Nenhum encontrado"}
                     </CommandEmpty>
                     <CommandGroup>
-                      <CommandItem value="__todos__" onSelect={() => { setBairro(""); setBairroSearch(""); }}>
-                        <Check className={cn("mr-2 h-3 w-3", !bairro ? "opacity-100" : "opacity-0")} /> Todos
-                      </CommandItem>
-                      {filteredBairros.map((b) => (
-                        <CommandItem key={b} value={b} onSelect={() => { setBairro(b); setBairroSearch(""); }}>
-                          <Check className={cn("mr-2 h-3 w-3", bairro === b ? "opacity-100" : "opacity-0")} /> {b}
+                      {bairro.length > 0 && (
+                        <CommandItem value="__limpar__" onSelect={() => { setBairro([]); setBairroSearch(""); }}>
+                          <X className="mr-2 h-3 w-3 text-muted-foreground" /> Limpar seleção
                         </CommandItem>
-                      ))}
+                      )}
+                      {filteredBairros.map((b) => {
+                        const selected = bairro.includes(b);
+                        return (
+                          <CommandItem key={b} value={b} onSelect={() => { setBairro(prev => selected ? prev.filter(x => x !== b) : [...prev, b]); setBairroSearch(""); }}>
+                            <Check className={cn("mr-2 h-3 w-3", selected ? "opacity-100" : "opacity-0")} /> {b}
+                          </CommandItem>
+                        );
+                      })}
                     </CommandGroup>
                   </CommandList>
                 </Command>
