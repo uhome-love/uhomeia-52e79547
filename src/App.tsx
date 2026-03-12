@@ -79,6 +79,7 @@ const MelnickDay = lazy(() => import("./pages/MelnickDay"));
 const VendasRealizadas = lazy(() => import("./pages/VendasRealizadas"));
 const AnunciosNoAr = lazy(() => import("./pages/AnunciosNoAr"));
 const IntegracaoJetimob = lazy(() => import("./pages/IntegracaoJetimob"));
+const CadastrosPage = lazy(() => import("./pages/CadastrosPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
