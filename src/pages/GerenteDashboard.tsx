@@ -124,16 +124,7 @@ export default function GerenteDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-white/5 rounded-full p-0.5 gap-0.5">
-            {(["dia", "semana", "mes"] as Period[]).map(p => (
-              <button key={p} className="text-xs px-4 py-1.5 rounded-full font-semibold transition-all duration-200"
-                style={{
-                  background: period === p ? "hsl(var(--primary))" : "transparent",
-                  color: period === p ? "#FFFFFF" : "#94A3B8",
-                }}
-                onClick={() => setPeriod(p)}>{periodLabels[p]}</button>
-            ))}
-          </div>
+          <GlobalDateFilterBar variant="header" />
           <span className="text-[10px] text-slate-500 flex items-center gap-1 shrink-0">
             <RefreshCw className="h-3 w-3" /> {lastUpdate}
           </span>
