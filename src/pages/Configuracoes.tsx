@@ -59,7 +59,7 @@ export default function Configuracoes() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("nome, email, telefone, cargo, avatar_url, avatar_preview_url")
+      .select("nome, email, telefone, cargo, cpf, creci, avatar_url, avatar_preview_url")
       .eq("user_id", user.id)
       .maybeSingle();
 
