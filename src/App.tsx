@@ -81,6 +81,12 @@ const AnunciosNoAr = lazy(() => import("./pages/AnunciosNoAr"));
 const IntegracaoJetimob = lazy(() => import("./pages/IntegracaoJetimob"));
 const CadastrosPage = lazy(() => import("./pages/CadastrosPage"));
 
+// RH pages
+const RhDashboard = lazy(() => import("./pages/RhDashboard"));
+const RhRecrutamento = lazy(() => import("./pages/RhRecrutamento"));
+const RhConversas = lazy(() => import("./pages/RhConversas"));
+const RhSalaReuniao = lazy(() => import("./pages/RhSalaReuniao"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -101,7 +107,7 @@ function PageLoader() {
 }
 
 // Helper to wrap a page with layout + auth + role protection
-function ProtectedPage({ children, roles }: { children: React.ReactNode; roles?: ("admin" | "gestor" | "corretor" | "backoffice")[] }) {
+function ProtectedPage({ children, roles }: { children: React.ReactNode; roles?: ("admin" | "gestor" | "corretor" | "backoffice" | "rh")[] }) {
   if (roles) {
     return (
       <RoleProtectedRoute allowedRoles={roles}>
@@ -201,7 +207,13 @@ const App = () => (
             <Route path="/backoffice/homi-ana" element={<ProtectedPage roles={["backoffice", "admin"]}><HomiAna /></ProtectedPage>} />
             <Route path="/backoffice/tarefas" element={<ProtectedPage roles={["backoffice", "admin"]}><BackofficeCentral /></ProtectedPage>} />
             <Route path="/backoffice/cadastros" element={<ProtectedPage roles={["backoffice", "admin"]}><CadastrosPage /></ProtectedPage>} />
-            
+
+            {/* RH — Carol */}
+            <Route path="/rh" element={<ProtectedPage roles={["rh", "admin"]}><RhDashboard /></ProtectedPage>} />
+            <Route path="/rh/recrutamento" element={<ProtectedPage roles={["rh", "admin"]}><RhRecrutamento /></ProtectedPage>} />
+            <Route path="/rh/conversas" element={<ProtectedPage roles={["rh", "admin"]}><RhConversas /></ProtectedPage>} />
+            <Route path="/rh/sala-reuniao" element={<ProtectedPage roles={["rh", "admin"]}><RhSalaReuniao /></ProtectedPage>} />
+
 
             <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
           </Routes>

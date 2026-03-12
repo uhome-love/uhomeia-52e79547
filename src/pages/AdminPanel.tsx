@@ -101,7 +101,7 @@ export default function AdminPanel() {
 
   const addRole = useCallback(async (userId: string, role: AppRole) => {
     setAddingRole(userId);
-    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
+    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role } as any);
     if (error) {
       if (error.code === "23505") toast.info("Usuário já possui esse papel.");
       else toast.error("Erro ao adicionar papel.");
@@ -110,7 +110,7 @@ export default function AdminPanel() {
   }, [fetchUsers]);
 
   const removeRole = useCallback(async (userId: string, role: AppRole) => {
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role as any);
     if (error) toast.error("Erro ao remover papel.");
     else { toast.success("Papel removido!"); fetchUsers(); }
   }, [fetchUsers]);
@@ -265,6 +265,7 @@ export default function AdminPanel() {
     gestor: "bg-primary/10 text-primary border-primary/20",
     corretor: "bg-accent/10 text-accent border-accent/20",
     backoffice: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+    rh: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   };
 
   return (

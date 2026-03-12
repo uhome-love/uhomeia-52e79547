@@ -10,7 +10,7 @@ interface RoleProtectedRouteProps {
 
 export default function RoleProtectedRoute({ children, allowedRoles }: RoleProtectedRouteProps) {
   const { user, loading: authLoading } = useAuth();
-  const { roles, loading: roleLoading, isAdmin, isGestor, isCorretor, isBackoffice } = useUserRole();
+  const { roles, loading: roleLoading, isAdmin, isGestor, isCorretor, isBackoffice, isRh } = useUserRole();
 
   if (authLoading || roleLoading) {
     return (
@@ -29,6 +29,7 @@ export default function RoleProtectedRoute({ children, allowedRoles }: RoleProte
   if (!hasAccess) {
     if (isAdmin) return <Navigate to="/" replace />;
     if (isBackoffice) return <Navigate to="/backoffice" replace />;
+    if (isRh) return <Navigate to="/rh" replace />;
     if (isGestor) return <Navigate to="/central-do-gerente" replace />;
     if (isCorretor) return <Navigate to="/corretor" replace />;
     return <Navigate to="/" replace />;

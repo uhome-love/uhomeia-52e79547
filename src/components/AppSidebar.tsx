@@ -127,7 +127,7 @@ export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, signOut } = useAuth();
-  const { isGestor, isAdmin, isBackoffice } = useUserRole();
+  const { isGestor, isAdmin, isBackoffice, isRh } = useUserRole();
   const { alerts, badges } = useSmartAlerts();
   const toastShown = useRef(false);
   const navigate = useNavigate();
@@ -293,6 +293,14 @@ export function AppSidebar() {
             ],
           },
           {
+            label: "RH & Recepção",
+            items: [
+              { title: "Recrutamento", url: "/rh/recrutamento", icon: Users },
+              { title: "Conversas 1:1", url: "/rh/conversas", icon: MessageSquare },
+              { title: "Sala de Reunião", url: "/rh/sala-reuniao", icon: CalendarDays },
+            ],
+          },
+          {
             label: "Ferramentas",
             items: [
               { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
@@ -388,6 +396,34 @@ export function AppSidebar() {
           },
         ],
         roleLabel: "Backoffice · 💜 Admin",
+      };
+    }
+
+    // ── RH ──
+    if (isRh) {
+      return {
+        topItem: { title: "Dashboard RH", url: "/rh", icon: Home },
+        groups: [
+          {
+            label: "Recrutamento",
+            items: [
+              { title: "Kanban Candidatos", url: "/rh/recrutamento", icon: Users },
+            ],
+          },
+          {
+            label: "RH",
+            items: [
+              { title: "Conversas 1:1", url: "/rh/conversas", icon: MessageSquare },
+            ],
+          },
+          {
+            label: "Recepção",
+            items: [
+              { title: "Sala de Reunião", url: "/rh/sala-reuniao", icon: CalendarDays },
+            ],
+          },
+        ],
+        roleLabel: "RH · 💙 Carol",
       };
     }
 
