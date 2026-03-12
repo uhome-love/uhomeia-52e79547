@@ -1238,6 +1238,7 @@ export default function AnunciosNoAr() {
   const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
   const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
   const [landingCodigo, setLandingCodigo] = useState<string | null>(null);
+  const [landingRefreshKey, setLandingRefreshKey] = useState(0);
 
   // Fetch overrides from DB
   const fetchOverrides = useCallback(async () => {
