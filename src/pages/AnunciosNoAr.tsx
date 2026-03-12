@@ -998,20 +998,20 @@ function EmpreendimentoCard({
       });
   }, [config.codigo, user, landingRefreshKey]);
 
-  // Merge: override takes priority over Jetimob data
+  // Data comes only from overrides
   const hasOverride = !!override;
-  const images = override?.fotos?.length ? override.fotos : (imovelData ? getImages(imovelData) : []);
-  const priceMin = override?.valor_min ?? override?.valor_venda ?? (imovelData ? getPrice(imovelData) : 0);
+  const images = override?.fotos?.length ? override.fotos : [];
+  const priceMin = override?.valor_min ?? override?.valor_venda ?? 0;
   const priceMax = override?.valor_max ?? 0;
-  const bairro = override?.bairro || imovelData?.bairro || imovelData?.endereco_bairro || "";
+  const bairro = override?.bairro || "";
   const tipologias = override?.tipologias?.length ? override.tipologias : [];
-  const area = override?.area_privativa ?? (imovelData?.area_privativa || imovelData?.area_total || 0);
-  const dorms = override?.dormitorios ?? (imovelData?.dormitorios || 0);
-  const suites = override?.suites ?? (imovelData?.suites || 0);
-  const vagas = override?.vagas ?? (imovelData?.vagas || 0);
-  const statusObra = override?.status_obra || imovelData?.status_obra || "";
-  const previsaoEntrega = override?.previsao_entrega || imovelData?.previsao_entrega || "";
-  const hasData = hasOverride || !!imovelData;
+  const area = override?.area_privativa ?? 0;
+  const dorms = override?.dormitorios ?? 0;
+  const suites = override?.suites ?? 0;
+  const vagas = override?.vagas ?? 0;
+  const statusObra = override?.status_obra || "";
+  const previsaoEntrega = override?.previsao_entrega || "";
+  const hasData = hasOverride;
 
   return (
     <motion.div
