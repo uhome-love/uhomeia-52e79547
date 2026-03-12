@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { cn, formatBRL, formatBRLCompact } from "@/lib/utils";
-import { getVitrineShareUrl, getVitrineDirectUrl } from "@/lib/vitrineUrl";
+import { getVitrinePublicUrl } from "@/lib/vitrineUrl";
 import { motion, AnimatePresence } from "framer-motion";
 import LandingPageEditor from "@/components/landing/LandingPageEditor";
 
