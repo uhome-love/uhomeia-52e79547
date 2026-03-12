@@ -55,15 +55,8 @@ interface LandingData {
   status_obra?: string | null;
   previsao_entrega?: string | null;
   vagas?: number | null;
-}
-  bairro?: string | null;
-  valor_min?: number | null;
-  valor_max?: number | null;
-  tipologias?: { dorms: number; area_min?: number; area_max?: number; suites?: number }[];
-  status_obra?: string | null;
-  previsao_entrega?: string | null;
-  vagas?: number | null;
-}
+
+
 
 interface VitrineData {
   vitrine: { id: string; titulo: string; mensagem: string | null; created_at: string; tipo?: string };
