@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { UserPlus, Phone, Mail } from "lucide-react";
 import { toast } from "sonner";
-import AgendaEntrevistas from "@/components/rh/AgendaEntrevistas";
+
 
 const ETAPAS = [
   { key: "novo_lead", label: "Novo Lead", color: "#3B82F6" },
@@ -133,8 +133,6 @@ export default function RhRecrutamento() {
         })}
       </div>
 
-      {/* Agenda de Entrevistas */}
-      <AgendaEntrevistas candidatos={candidatos} onKanbanUpdate={fetchCandidatos} />
 
       {/* Add Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

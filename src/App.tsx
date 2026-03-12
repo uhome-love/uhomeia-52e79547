@@ -86,6 +86,7 @@ const RhDashboard = lazy(() => import("./pages/RhDashboard"));
 const RhRecrutamento = lazy(() => import("./pages/RhRecrutamento"));
 const RhConversas = lazy(() => import("./pages/RhConversas"));
 const RhSalaReuniao = lazy(() => import("./pages/RhSalaReuniao"));
+const RhEntrevistas = lazy(() => import("./pages/RhEntrevistas"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -211,6 +212,7 @@ const App = () => (
             {/* RH — Carol */}
             <Route path="/rh" element={<ProtectedPage roles={["rh", "admin"]}><RhDashboard /></ProtectedPage>} />
             <Route path="/rh/recrutamento" element={<ProtectedPage roles={["rh", "admin"]}><RhRecrutamento /></ProtectedPage>} />
+            <Route path="/rh/entrevistas" element={<ProtectedPage roles={["rh", "admin"]}><RhEntrevistas /></ProtectedPage>} />
             <Route path="/rh/conversas" element={<ProtectedPage roles={["rh", "admin"]}><RhConversas /></ProtectedPage>} />
             <Route path="/rh/sala-reuniao" element={<ProtectedPage roles={["rh", "admin"]}><RhSalaReuniao /></ProtectedPage>} />
 
