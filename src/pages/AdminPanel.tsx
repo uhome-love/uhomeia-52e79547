@@ -265,6 +265,7 @@ export default function AdminPanel() {
     gestor: "bg-primary/10 text-primary border-primary/20",
     corretor: "bg-accent/10 text-accent border-accent/20",
     backoffice: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+    rh: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   };
 
   return (
