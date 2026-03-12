@@ -185,32 +185,59 @@ serve(async (req) => {
         }
       }
 
-      // Also try to resolve leads that have jetimob_lead_id (campaign_id is embedded)
-      const { data: leadsWithJetimob } = await adminClient
-        .from("pipeline_leads")
-        .select("id, jetimob_lead_id")
-        .not("jetimob_lead_id", "is", null)
-        .or("empreendimento.is.null,empreendimento.eq.")
-        .limit(2000);
+      // Also try: fetch ALL leads from Jetimob API and match by phone to resolve campaign_id
+      const JETIMOB_LEADS_URL_KEY = Deno.env.get("JETIMOB_LEADS_URL_KEY");
+      const JETIMOB_LEADS_PRIVATE_KEY = Deno.env.get("JETIMOB_LEADS_PRIVATE_KEY");
+      if (JETIMOB_LEADS_URL_KEY && JETIMOB_LEADS_PRIVATE_KEY) {
+        try {
+          const apiResp = await fetch(`https://api.jetimob.com/leads/${JETIMOB_LEADS_URL_KEY}`, {
+            method: "GET",
+            headers: { "Authorization-Key": JETIMOB_LEADS_PRIVATE_KEY },
+          });
+          if (apiResp.ok) {
+            const apiData = await apiResp.json();
+            const apiLeads = Array.isArray(apiData?.result) ? apiData.result : Array.isArray(apiData) ? apiData : [];
 
-      for (const lead of leadsWithJetimob || []) {
-        // jetimob_lead_id format: phone_campaignId_createdAt
-        const parts = (lead.jetimob_lead_id || "").split("_");
-        if (parts.length >= 2) {
-          const extractedCampaignId = parts[1];
-          const mapped = cMap.get(extractedCampaignId);
-          if (mapped) {
-            const update: Record<string, any> = { 
-              empreendimento: mapped.empreendimento,
-              campanha_id: extractedCampaignId,
-            };
-            if (mapped.segmento) {
-              const segId = segNameToId.get(mapped.segmento.toLowerCase().trim());
-              if (segId) update.segmento_id = segId;
+            // Build phone → campaign_id map from API
+            const phoneToApi = new Map<string, { campaign_id: string; msg: string }>();
+            for (const al of apiLeads) {
+              const p = al.phones?.[0] || al.phone;
+              const cid = al.campaign_id ? String(al.campaign_id) : null;
+              if (p && cid) {
+                phoneToApi.set(p, { campaign_id: cid, msg: al.message || "" });
+              }
             }
-            await adminClient.from("pipeline_leads").update(update).eq("id", lead.id);
-            fixed++;
+
+            // Fetch leads without empreendimento that have a phone
+            const { data: phonelessLeads } = await adminClient
+              .from("pipeline_leads")
+              .select("id, telefone")
+              .not("telefone", "is", null)
+              .or("empreendimento.is.null,empreendimento.eq.,empreendimento.eq.Avulso")
+              .limit(2000);
+
+            for (const lead of phonelessLeads || []) {
+              if (!lead.telefone) continue;
+              const apiMatch = phoneToApi.get(lead.telefone);
+              if (apiMatch) {
+                const mapped = cMap.get(apiMatch.campaign_id);
+                if (mapped) {
+                  const update: Record<string, any> = { 
+                    empreendimento: mapped.empreendimento,
+                    campanha_id: apiMatch.campaign_id,
+                  };
+                  if (mapped.segmento) {
+                    const segId = segNameToId.get(mapped.segmento.toLowerCase().trim());
+                    if (segId) update.segmento_id = segId;
+                  }
+                  await adminClient.from("pipeline_leads").update(update).eq("id", lead.id);
+                  fixed++;
+                }
+              }
+            }
           }
+        } catch (apiErr) {
+          console.warn("Backfill API fetch failed:", apiErr);
         }
       }
 
