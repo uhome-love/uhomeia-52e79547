@@ -976,6 +976,7 @@ function EmpreendimentoCard({
   override: EmpreendimentoOverride | null;
   onEditOverride: () => void;
   onEditLanding: () => void;
+  landingRefreshKey: number;
 }) {
   const { user } = useAuth();
   const [vitrineOpen, setVitrineOpen] = useState(false);
