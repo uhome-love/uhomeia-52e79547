@@ -418,12 +418,12 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
         <Button
           size="sm"
           className="text-xs gap-1"
-          disabled={!data || !horario}
+          disabled={!data || !horario || !empreendimento}
           onClick={() => onConfirm({
             leadId: lead.id,
             targetStageId,
-            observacao: `Visita Marcada | ${data} ${horario} | Local: ${LOCAL_OPTIONS.find(o => o.value === local)?.label || local} | Responsável: ${RESPONSAVEL_OPTIONS.find(o => o.value === responsavel)?.label || responsavel}${obs ? ` | ${obs}` : ""}`,
-            extraData: { local, data, horario, responsavel, parceiro: parceiro === "none" ? null : parceiro, observacao: obs, criarVisita: true },
+            observacao: `Visita Marcada | ${data} ${horario} | Empreendimento: ${empreendimento} | Local: ${LOCAL_OPTIONS.find(o => o.value === local)?.label || local} | Responsável: ${RESPONSAVEL_OPTIONS.find(o => o.value === responsavel)?.label || responsavel}${obs ? ` | ${obs}` : ""}`,
+            extraData: { local, data, horario, responsavel, parceiro: parceiro === "none" ? null : parceiro, observacao: obs, empreendimento, criarVisita: true },
           })}
         >
           📅 Confirmar e agendar visita
