@@ -295,7 +295,8 @@ export function AppSidebar() {
           {
             label: "RH & Recepção",
             items: [
-              { title: "Recrutamento", url: "/rh/recrutamento", icon: Users },
+              { title: "Candidatos", url: "/rh/recrutamento", icon: Users },
+              { title: "Entrevistas", url: "/rh/entrevistas", icon: CalendarDays },
               { title: "Conversas 1:1", url: "/rh/conversas", icon: MessageSquare },
               { title: "Sala de Reunião", url: "/rh/sala-reuniao", icon: CalendarDays },
             ],
