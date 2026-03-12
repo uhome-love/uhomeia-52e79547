@@ -15,8 +15,9 @@ import {
   Maximize, MapPin, Car, Megaphone, ChevronsUpDown, Check, UserCircle, Phone,
   Mail, X, Share2, CheckSquare, Square, Link2, Copy, CalendarClock,
   LayoutGrid, List, Star, SlidersHorizontal, ChevronDown, Heart, DollarSign, Zap,
-  Sparkles, Brain, ArrowRight
+  Sparkles, Brain, ArrowRight, Map
 } from "lucide-react";
+import PropertyMap, { type MapBounds } from "@/components/imoveis/PropertyMap";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
