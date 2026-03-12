@@ -87,10 +87,17 @@ export default function CeoCheckpointViewer() {
     const linkedMembers = (allTeam || []).filter(m => m.user_id);
     const userIds = linkedMembers.map(m => m.user_id!);
     const oaStatsById: Record<string, { ligacoes: number; leads: number }> = {};
+    const visitasStatsById: Record<string, { marcadas: number; realizadas: number }> = {};
     if (userIds.length > 0) {
       const dayStart = `${date}T00:00:00-03:00`;
       const dayEnd = `${date}T23:59:59.999-03:00`;
-      // Fetch in batches to avoid query limits
+      // Fetch OA tentativas and visitas in parallel batches
+      const visitasPromise = supabase
+        .from("visitas")
+        .select("corretor_id, status")
+        .in("corretor_id", userIds)
+        .eq("data_visita", date);
+
       for (let i = 0; i < userIds.length; i += 50) {
         const batch = userIds.slice(i, i + 50);
         const { data: tentativas } = await supabase
@@ -105,12 +112,23 @@ export default function CeoCheckpointViewer() {
           if (t.resultado === "com_interesse") oaStatsById[t.corretor_id].leads++;
         }
       }
+
+      const { data: visitas } = await visitasPromise;
+      for (const v of (visitas || [])) {
+        if (!visitasStatsById[v.corretor_id]) visitasStatsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
+        if (v.status !== "cancelada") visitasStatsById[v.corretor_id].marcadas++;
+        if (v.status === "realizada") visitasStatsById[v.corretor_id].realizadas++;
+      }
     }
-    // Map user_id -> team_member.id for OA stats
+    // Map user_id -> team_member.id for OA stats and visitas stats
     const oaStatsByMemberId: Record<string, { ligacoes: number; leads: number }> = {};
+    const visitasStatsByMemberId: Record<string, { marcadas: number; realizadas: number }> = {};
     for (const m of linkedMembers) {
       if (m.user_id && oaStatsById[m.user_id]) {
         oaStatsByMemberId[m.id] = oaStatsById[m.user_id];
+      }
+      if (m.user_id && visitasStatsById[m.user_id]) {
+        visitasStatsByMemberId[m.id] = visitasStatsById[m.user_id];
       }
     }
 
