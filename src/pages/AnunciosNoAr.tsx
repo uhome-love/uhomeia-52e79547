@@ -998,7 +998,7 @@ function EmpreendimentoCard({
           setLandingUrl(`${window.location.origin}/vitrine/${data.id}`);
         }
       });
-  }, [config.codigo, user]);
+  }, [config.codigo, user, landingRefreshKey]);
 
   // Merge: override takes priority over Jetimob data
   const hasOverride = !!override;
