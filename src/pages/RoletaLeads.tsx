@@ -14,6 +14,7 @@ import { Loader2, Clock, UserCheck, UserX, Users, Target, RotateCw, LogOut, Rock
 import { formatDistanceToNow, differenceInMinutes, format, startOfDay, subHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RoletagensTab from "@/components/roleta/RoletagensTab";
+import LeadsGeradosTab from "@/components/roleta/LeadsGeradosTab";
 // ─── Countdown Timer ───
 function CountdownTimer({ target }: { target: Date }) {
   const [now, setNow] = useState(new Date());
@@ -93,8 +94,11 @@ function CeoView() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="gestao" className="space-y-4">
+      <Tabs defaultValue="leads" className="space-y-4">
         <TabsList className="bg-muted/50">
+          <TabsTrigger value="leads" className="gap-1.5">
+            📊 Leads Gerados
+          </TabsTrigger>
           <TabsTrigger value="gestao">Gestão da Roleta</TabsTrigger>
           <TabsTrigger value="roletagens" className="gap-1.5">
             Histórico Roletagens
@@ -103,6 +107,10 @@ function CeoView() {
             <AlertTriangle className="h-3.5 w-3.5" /> Leads Perdidos
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="leads">
+          <LeadsGeradosTab />
+        </TabsContent>
 
         <TabsContent value="gestao" className="space-y-6">
           {/* Credenciamentos Pendentes */}
