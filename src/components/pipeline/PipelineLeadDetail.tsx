@@ -12,6 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import type { PipelineLead, PipelineStage, PipelineSegmento } from "@/hooks/usePipeline";
 import { usePipelineLeadData } from "@/hooks/usePipelineLeadData";
 import { useAuth } from "@/hooks/useAuth";
@@ -113,6 +115,10 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [whatsappTemplatesOpen, setWhatsappTemplatesOpen] = useState(false);
   const [showNovaTarefa, setShowNovaTarefa] = useState(false);
+  const [inativarOpen, setInativarOpen] = useState(false);
+  const [inativarMotivo, setInativarMotivo] = useState("");
+  const [inativarObs, setInativarObs] = useState("");
+  const [inativando, setInativando] = useState(false);
 
   const currentStage = stages.find(s => s.id === lead.stage_id);
   const segmento = segmentos.find(s => s.id === lead.segmento_id);
@@ -167,6 +173,29 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
     await onMove(lead.id, stageId, moveObs || undefined);
     setMoveObs("");
   };
+
+  const handleInativar = useCallback(async () => {
+    if (!inativarMotivo) { toast.error("Selecione um motivo"); return; }
+    setInativando(true);
+    try {
+      const descarteStage = stages.find(s => s.tipo === "descarte");
+      const motivoTexto = inativarMotivo === "outro" 
+        ? `Inativado: ${inativarObs.trim() || "Outro motivo"}`
+        : `Inativado: ${inativarMotivo}`;
+      
+      await onUpdate(lead.id, { motivo_descarte: motivoTexto } as any);
+      if (descarteStage) {
+        await onMove(lead.id, descarteStage.id, motivoTexto);
+      }
+      toast.success("Lead inativado com sucesso");
+      setInativarOpen(false);
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error("Erro ao inativar: " + (err.message || ""));
+    } finally {
+      setInativando(false);
+    }
+  }, [inativarMotivo, inativarObs, stages, lead.id, onUpdate, onMove, onOpenChange]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -312,20 +341,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                     <Handshake className="h-3.5 w-3.5 mr-2" /> Parceria
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  {(() => {
-                    const descarteStage = stages.find(s => s.tipo === "descarte");
-                    if (!descarteStage || lead.stage_id === descarteStage.id) return null;
-                    return (
-                      <DropdownMenuItem className="text-amber-600" onClick={() => { onMove(lead.id, descarteStage.id, "Descartado pelo usuário"); onOpenChange(false); }}>
-                        <Ban className="h-3.5 w-3.5 mr-2" /> Descartar
-                      </DropdownMenuItem>
-                    );
-                  })()}
-                  {isAdmin && onDelete && (
-                    <DropdownMenuItem className="text-destructive" onClick={async () => { setDeleting(true); await onDelete(lead.id); setDeleting(false); onOpenChange(false); }}>
-                      <PhoneOff className="h-3.5 w-3.5 mr-2" /> Contato errado (CEO)
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem className="text-destructive" onClick={() => { setInativarMotivo(""); setInativarObs(""); setInativarOpen(true); }}>
+                    <Ban className="h-3.5 w-3.5 mr-2" /> Inativar Lead
+                  </DropdownMenuItem>
                   {isAdmin && onDelete && (
                     <DropdownMenuItem className="text-destructive" onClick={async () => { setDeleting(true); await onDelete(lead.id); setDeleting(false); onOpenChange(false); }}>
                       <Trash2 className="h-3.5 w-3.5 mr-2" /> Apagar (CEO)
@@ -852,6 +870,62 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
 
       <PartnershipDialog open={partnerOpen} onOpenChange={setPartnerOpen} leadId={lead.id} leadNome={lead.nome} corretorPrincipalId={lead.corretor_id} />
       <CentralComunicacao open={comunicacaoOpen} onOpenChange={setComunicacaoOpen} leadId={lead.id} leadNome={lead.nome} leadTelefone={lead.telefone} leadEmpreendimento={lead.empreendimento} />
+
+      {/* Dialog Inativar Lead */}
+      <Dialog open={inativarOpen} onOpenChange={setInativarOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-destructive" /> Inativar Lead
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Selecione o motivo para inativar <strong>{lead.nome}</strong>. O lead será movido para descarte.
+            </p>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Motivo *</Label>
+              <Select value={inativarMotivo} onValueChange={setInativarMotivo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o motivo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Contato errado">📵 Contato errado</SelectItem>
+                  <SelectItem value="Não quer mais contato">🚫 Não quer mais contato</SelectItem>
+                  <SelectItem value="Solicitou retirada do nome">🗑️ Solicitou retirada do nome</SelectItem>
+                  <SelectItem value="outro">✏️ Outro motivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {inativarMotivo === "outro" && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Descreva o motivo</Label>
+                <Textarea
+                  value={inativarObs}
+                  onChange={e => setInativarObs(e.target.value)}
+                  placeholder="Descreva o motivo da inativação..."
+                  className="resize-none"
+                  rows={3}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setInativarOpen(false)} disabled={inativando}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleInativar}
+              disabled={inativando || !inativarMotivo || (inativarMotivo === "outro" && !inativarObs.trim())}
+              className="gap-2"
+            >
+              {inativando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+              Confirmar Inativação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 }
