@@ -774,6 +774,7 @@ function CriarVitrineDialog({
       setMensagem("");
       setVitrineUrl(null);
       setVitrineDirectUrl(null);
+    }
   }, [open, config.nome]);
 
   async function handleCreate() {
