@@ -110,7 +110,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         setCargoLabel(labelMap[c] || c || "Corretor");
       }
     });
-  }, [user, isAdmin, isGestor, isBackoffice]);
+  }, [user, isAdmin, isGestor, isBackoffice, isRh]);
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
