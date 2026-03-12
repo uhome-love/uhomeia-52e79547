@@ -140,35 +140,9 @@ type Material = {
    HELPERS
    ═══════════════════════════════════════════════ */
 
-function getPrice(item: JetimobImovel): number {
-  return Number(item.valor_venda || item.preco_venda || item.valor || 0);
-}
-
 function formatPrice(v: number): string {
   if (!v) return "Sob consulta";
   return formatBRL(v);
-}
-
-function getImages(item: JetimobImovel): string[] {
-  // Use normalized photos from edge function if available
-  if ((item as any)._fotos_normalized?.length) {
-    return (item as any)._fotos_normalized.slice(0, 8);
-  }
-  const imgs: string[] = [];
-  if (item.foto_principal) imgs.push(item.foto_principal);
-  if (item.imagens) {
-    for (const i of item.imagens) {
-      const url = typeof i === "string" ? i : (i.url || "");
-      if (url && !imgs.includes(url)) imgs.push(url);
-    }
-  }
-  if (item.fotos) {
-    for (const f of item.fotos) {
-      const url = typeof f === "string" ? f : (f.url || "");
-      if (url && !imgs.includes(url)) imgs.push(url);
-    }
-  }
-  return imgs.slice(0, 8);
 }
 
 const TIPO_ICONS: Record<string, any> = {
