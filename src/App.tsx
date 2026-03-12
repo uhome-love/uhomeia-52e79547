@@ -107,7 +107,7 @@ function PageLoader() {
 }
 
 // Helper to wrap a page with layout + auth + role protection
-function ProtectedPage({ children, roles }: { children: React.ReactNode; roles?: ("admin" | "gestor" | "corretor" | "backoffice")[] }) {
+function ProtectedPage({ children, roles }: { children: React.ReactNode; roles?: ("admin" | "gestor" | "corretor" | "backoffice" | "rh")[] }) {
   if (roles) {
     return (
       <RoleProtectedRoute allowedRoles={roles}>
