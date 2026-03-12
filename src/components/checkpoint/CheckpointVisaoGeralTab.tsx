@@ -114,7 +114,7 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
     });
     setNegociosData(neg);
 
-    setVisitasHoje((r4.data || []).map((v: any) => ({ corretor_id: v.corretor_id, status: v.status || "agendada", empreendimento: v.empreendimento, hora: v.horario })));
+    setVisitasHoje((r4.data || []).map((v: any) => ({ corretor_id: v.corretor_id, status: v.status || "agendada", empreendimento: v.empreendimento, hora: v.hora_visita })));
 
     // Negócios parados
     const now = new Date();
