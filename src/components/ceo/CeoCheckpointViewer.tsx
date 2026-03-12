@@ -92,11 +92,19 @@ export default function CeoCheckpointViewer() {
       const dayStart = `${date}T00:00:00-03:00`;
       const dayEnd = `${date}T23:59:59.999-03:00`;
       // Fetch OA tentativas and visitas in parallel batches
-      const visitasPromise = supabase
+      // V.Marc = visitas created on this date; V.Real = visitas realized on this date
+      const visitasCriadasPromise = supabase
         .from("visitas")
         .select("corretor_id, status")
         .in("corretor_id", userIds)
-        .eq("data_visita", date);
+        .gte("created_at", dayStart)
+        .lte("created_at", dayEnd);
+      const visitasRealizadasPromise = supabase
+        .from("visitas")
+        .select("corretor_id, status")
+        .in("corretor_id", userIds)
+        .eq("data_visita", date)
+        .eq("status", "realizada");
 
       for (let i = 0; i < userIds.length; i += 50) {
         const batch = userIds.slice(i, i + 50);

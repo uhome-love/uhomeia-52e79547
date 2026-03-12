@@ -146,12 +146,15 @@ export default function CheckpointDaily() {
         .eq("status", "realizada"),
     ]);
 
-    // Count per corretor: marcadas = all non-cancelled, realizadas = status realizada
+    // V.Marc = visitas created today (non-cancelled), V.Real = visitas realized on this date
     const statsById: Record<string, { marcadas: number; realizadas: number }> = {};
-    for (const v of (visitas || [])) {
+    for (const v of (visitasCriadas || [])) {
       if (!statsById[v.corretor_id]) statsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
       if (v.status !== "cancelada") statsById[v.corretor_id].marcadas++;
-      if (v.status === "realizada") statsById[v.corretor_id].realizadas++;
+    }
+    for (const v of (visitasNoDia || [])) {
+      if (!statsById[v.corretor_id]) statsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
+      statsById[v.corretor_id].realizadas++;
     }
 
     // Map back to team_member.id
