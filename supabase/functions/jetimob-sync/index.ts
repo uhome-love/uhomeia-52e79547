@@ -163,7 +163,7 @@ serve(async (req) => {
       const segNameToId = new Map<string, string>();
       for (const s of pSegs || []) segNameToId.set(s.nome.toLowerCase().trim(), s.id);
 
-      // Fetch leads with campanha_id set but no empreendimento
+      // Phase 1: fix leads that already have campanha_id set
       const { data: leadsToFix } = await adminClient
         .from("pipeline_leads")
         .select("id, campanha_id")
@@ -185,54 +185,82 @@ serve(async (req) => {
         }
       }
 
-      // Also try: fetch ALL leads from Jetimob API and match by phone to resolve campaign_id
+      // Phase 2: fetch leads from Jetimob API, match by phone (normalized), and resolve campaign_id
       const JETIMOB_LEADS_URL_KEY = Deno.env.get("JETIMOB_LEADS_URL_KEY");
       const JETIMOB_LEADS_PRIVATE_KEY = Deno.env.get("JETIMOB_LEADS_PRIVATE_KEY");
       if (JETIMOB_LEADS_URL_KEY && JETIMOB_LEADS_PRIVATE_KEY) {
         try {
-          const apiResp = await fetch(`https://api.jetimob.com/leads/${JETIMOB_LEADS_URL_KEY}`, {
-            method: "GET",
-            headers: { "Authorization-Key": JETIMOB_LEADS_PRIVATE_KEY },
-          });
-          if (apiResp.ok) {
+          // Helper: strip all non-digits from phone
+          const normalizePhone = (p: string | null | undefined): string => {
+            if (!p) return "";
+            return p.replace(/\D/g, "");
+          };
+
+          // Paginate Jetimob API
+          let allApiLeads: any[] = [];
+          let page = 1;
+          const perPage = 200;
+          while (true) {
+            const apiResp = await fetch(
+              `https://api.jetimob.com/leads/${JETIMOB_LEADS_URL_KEY}?page=${page}&per_page=${perPage}`,
+              { method: "GET", headers: { "Authorization-Key": JETIMOB_LEADS_PRIVATE_KEY } }
+            );
+            if (!apiResp.ok) break;
             const apiData = await apiResp.json();
-            const apiLeads = Array.isArray(apiData?.result) ? apiData.result : Array.isArray(apiData) ? apiData : [];
+            const batch = Array.isArray(apiData?.result) ? apiData.result : Array.isArray(apiData) ? apiData : [];
+            allApiLeads.push(...batch);
+            console.log(`Backfill: page ${page} fetched ${batch.length} leads (total so far: ${allApiLeads.length})`);
+            if (batch.length < perPage) break;
+            page++;
+            if (page > 50) break; // safety limit
+          }
 
-            // Build phone → campaign_id map from API
-            const phoneToApi = new Map<string, { campaign_id: string; msg: string }>();
-            for (const al of apiLeads) {
-              const p = al.phones?.[0] || al.phone;
-              const cid = al.campaign_id ? String(al.campaign_id) : null;
-              if (p && cid) {
-                phoneToApi.set(p, { campaign_id: cid, msg: al.message || "" });
-              }
+          // Build normalized phone → campaign_id map from API
+          const phoneToApi = new Map<string, { campaign_id: string; msg: string }>();
+          for (const al of allApiLeads) {
+            const rawPhone = al.phones?.[0] || al.phone;
+            const cid = al.campaign_id ? String(al.campaign_id) : null;
+            if (rawPhone && cid) {
+              phoneToApi.set(normalizePhone(rawPhone), { campaign_id: cid, msg: al.message || "" });
             }
+          }
+          console.log(`Backfill: ${phoneToApi.size} API leads with campaign_id mapped by phone`);
 
-            // Fetch leads without empreendimento that have a phone
-            const { data: phonelessLeads } = await adminClient
+          // Fetch ALL leads without empreendimento in batches
+          let allOrphanLeads: any[] = [];
+          let from = 0;
+          const batchSize = 1000;
+          while (true) {
+            const { data: batch } = await adminClient
               .from("pipeline_leads")
               .select("id, telefone")
               .not("telefone", "is", null)
               .or("empreendimento.is.null,empreendimento.eq.,empreendimento.eq.Avulso")
-              .limit(2000);
+              .range(from, from + batchSize - 1);
+            allOrphanLeads.push(...(batch || []));
+            if (!batch || batch.length < batchSize) break;
+            from += batchSize;
+          }
+          console.log(`Backfill: ${allOrphanLeads.length} orphan leads to process`);
 
-            for (const lead of phonelessLeads || []) {
-              if (!lead.telefone) continue;
-              const apiMatch = phoneToApi.get(lead.telefone);
-              if (apiMatch) {
-                const mapped = cMap.get(apiMatch.campaign_id);
-                if (mapped) {
-                  const update: Record<string, any> = { 
-                    empreendimento: mapped.empreendimento,
-                    campanha_id: apiMatch.campaign_id,
-                  };
-                  if (mapped.segmento) {
-                    const segId = segNameToId.get(mapped.segmento.toLowerCase().trim());
-                    if (segId) update.segmento_id = segId;
-                  }
-                  await adminClient.from("pipeline_leads").update(update).eq("id", lead.id);
-                  fixed++;
+          for (const lead of allOrphanLeads) {
+            if (!lead.telefone) continue;
+            const normalized = normalizePhone(lead.telefone);
+            if (!normalized) continue;
+            const apiMatch = phoneToApi.get(normalized);
+            if (apiMatch) {
+              const mapped = cMap.get(apiMatch.campaign_id);
+              if (mapped) {
+                const update: Record<string, any> = { 
+                  empreendimento: mapped.empreendimento,
+                  campanha_id: apiMatch.campaign_id,
+                };
+                if (mapped.segmento) {
+                  const segId = segNameToId.get(mapped.segmento.toLowerCase().trim());
+                  if (segId) update.segmento_id = segId;
                 }
+                await adminClient.from("pipeline_leads").update(update).eq("id", lead.id);
+                fixed++;
               }
             }
           }
