@@ -54,12 +54,13 @@ export default function RankingOfertaAtiva() {
       if (corretorIds.length === 0) return {};
       const { data } = await supabase
         .from("team_members")
-        .select("user_id, gerente_id, gerente_nome")
+        .select("user_id, gerente_id, equipe")
         .in("user_id", corretorIds)
         .eq("status", "ativo");
       const map: Record<string, string> = {};
       for (const t of data || []) {
-        if (t.user_id && t.gerente_nome) map[t.user_id] = `Equipe ${t.gerente_nome.split(" ")[0]}`;
+        if (t.user_id && t.equipe) map[t.user_id] = t.equipe;
+        else if (t.user_id && t.gerente_id) map[t.user_id] = `Equipe ${t.gerente_id.slice(0,6)}`;
       }
       return map;
     },
