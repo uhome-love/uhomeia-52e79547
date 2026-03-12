@@ -74,13 +74,13 @@ function fmtDateShort(dateStr: string) {
 
 // Inline styles matching the real document (Calibri 11px, justified)
 const S = {
-  p: { textAlign: "justify" as const, marginBottom: "10px", textIndent: "0", lineHeight: "1.6" },
-  pIndent: { textAlign: "justify" as const, marginBottom: "6px", marginLeft: "20px", lineHeight: "1.6" },
-  th: { border: "1px solid #000", padding: "4px 8px", textAlign: "center" as const, fontWeight: "bold" as const, fontSize: "9px", background: "#f5f5f5" },
-  thLeft: { border: "1px solid #000", padding: "4px 8px", textAlign: "left" as const, fontWeight: "bold" as const, fontSize: "9px", background: "#f5f5f5" },
-  td: { border: "1px solid #000", padding: "4px 8px", textAlign: "center" as const, fontSize: "9px" },
-  tdLeft: { border: "1px solid #000", padding: "4px 8px", textAlign: "left" as const, fontSize: "9px" },
-  tdBold: { border: "1px solid #000", padding: "4px 8px", textAlign: "center" as const, fontSize: "9px", fontWeight: "bold" as const },
+  p: { textAlign: "justify" as const, marginBottom: "12px", textIndent: "0", lineHeight: "1.7", fontSize: "13px" },
+  pIndent: { textAlign: "justify" as const, marginBottom: "8px", marginLeft: "24px", lineHeight: "1.7", fontSize: "13px" },
+  th: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontWeight: "bold" as const, fontSize: "11px", background: "#f0f0f0", letterSpacing: "0.02em" },
+  thLeft: { border: "1px solid #222", padding: "6px 10px", textAlign: "left" as const, fontWeight: "bold" as const, fontSize: "11px", background: "#f0f0f0", letterSpacing: "0.02em" },
+  td: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontSize: "11px" },
+  tdLeft: { border: "1px solid #222", padding: "6px 10px", textAlign: "left" as const, fontSize: "11px" },
+  tdBold: { border: "1px solid #222", padding: "6px 10px", textAlign: "center" as const, fontSize: "11px", fontWeight: "bold" as const },
 };
 
 export default function ContratoIntermediacao({ open, onOpenChange, data, onDataChange, onGenerated }: Props) {
@@ -239,21 +239,22 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
         <div
           ref={contractRef}
           style={{
-            fontFamily: "Calibri, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-            fontSize: "11px",
-            lineHeight: "1.6",
-            color: "#000",
+            fontFamily: "'Georgia', 'Times New Roman', 'Calibri', serif",
+            fontSize: "13px",
+            lineHeight: "1.7",
+            color: "#1a1a1a",
             background: "#fff",
-            padding: "10px",
+            padding: "16px 20px",
+            letterSpacing: "0.01em",
           }}
         >
           {/* LOGO */}
-          <div style={{ textAlign: "center", marginBottom: "24px" }}>
-            <img src="/logo-uhome.svg" alt="UHome" style={{ height: "55px" }} crossOrigin="anonymous" />
+          <div style={{ textAlign: "center", marginBottom: "28px" }}>
+            <img src="/images/uhome-logo-horizontal-azul.png" alt="UHome" style={{ height: "64px" }} crossOrigin="anonymous" />
           </div>
 
           {/* TITLE */}
-          <p style={{ textAlign: "center", fontSize: "13px", fontWeight: "bold", marginBottom: "24px", textDecoration: "underline" }}>
+          <p style={{ textAlign: "center", fontSize: "15px", fontWeight: "bold", marginBottom: "28px", textDecoration: "underline", letterSpacing: "0.04em" }}>
             INSTRUMENTO PARTICULAR DE INTERMEDIAÇÃO IMOBILIÁRIA
           </p>
 
@@ -482,10 +483,10 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
             ]).map((c, i) => (
               <div key={`contratante-${i}`}>
                 <div style={{ borderTop: "1px solid #000", width: "70%", margin: "40px auto 5px auto" }} />
-                <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "0px" }}>
+                <p style={{ textAlign: "center", fontSize: "12px", marginBottom: "0px" }}>
                   <b>CONTRATANTE:</b>
                 </p>
-                <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "3px" }}>
+                <p style={{ textAlign: "center", fontSize: "12px", marginBottom: "3px" }}>
                   {(c as any).nome || "_______________"}
                 </p>
               </div>
@@ -495,7 +496,7 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
             {contratadosList.map((c, i) => (
               <div key={`contratado-${i}`}>
                 <div style={{ borderTop: "1px solid #000", width: "70%", margin: "40px auto 5px auto" }} />
-                <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "3px" }}>
+                <p style={{ textAlign: "center", fontSize: "12px", marginBottom: "3px" }}>
                   <b>CONTRATADO — {c.assinaturaTipo}:</b> {c.nome}
                 </p>
               </div>
@@ -503,34 +504,34 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
 
             {/* UHOME / IMOBILIÁRIA */}
             <div style={{ borderTop: "1px solid #000", width: "70%", margin: "40px auto 5px auto" }} />
-            <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "0px" }}>
+            <p style={{ textAlign: "center", fontSize: "12px", marginBottom: "0px" }}>
               <b>CONTRATADO:</b>
             </p>
-            <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "0px" }}>
+            <p style={{ textAlign: "center", fontSize: "12px", marginBottom: "0px" }}>
               <b>IMOBILIÁRIA:</b>
             </p>
-            <p style={{ textAlign: "center", fontSize: "10px", marginBottom: "3px" }}>
+            <p style={{ textAlign: "center", fontSize: "12px", marginBottom: "3px" }}>
               UHOME NEGÓCIOS IMOBILIÁRIOS
             </p>
           </div>
 
           {/* ── TESTEMUNHAS ── */}
           <div style={{ marginTop: "50px" }}>
-            <p style={{ marginBottom: "8px", fontWeight: "bold" }}>Testemunhas:</p>
+            <p style={{ marginBottom: "8px", fontWeight: "bold", fontSize: "13px" }}>Testemunhas:</p>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <tbody>
                 <tr>
                   <td style={{ width: "50%", verticalAlign: "top", paddingRight: "20px" }}>
                     <div style={{ borderTop: "1px solid #000", marginTop: "30px", marginBottom: "5px" }} />
-                    <p style={{ fontSize: "10px" }}>01. ___________________________</p>
-                    <p style={{ fontSize: "10px" }}>Nome: Ana Paula Silveira</p>
-                    <p style={{ fontSize: "10px" }}>E-mail: anapsilveiram@gmail.com</p>
+                    <p style={{ fontSize: "11px" }}>01. ___________________________</p>
+                    <p style={{ fontSize: "11px" }}>Nome: Ana Paula Silveira</p>
+                    <p style={{ fontSize: "11px" }}>E-mail: anapsilveiram@gmail.com</p>
                   </td>
                   <td style={{ width: "50%", verticalAlign: "top", paddingLeft: "20px" }}>
                     <div style={{ borderTop: "1px solid #000", marginTop: "30px", marginBottom: "5px" }} />
-                    <p style={{ fontSize: "10px" }}>02. ___________________________</p>
-                    <p style={{ fontSize: "10px" }}>Nome: Bruno Schuler</p>
-                    <p style={{ fontSize: "10px" }}>E-mail: bruno@uhome.imb.br</p>
+                    <p style={{ fontSize: "11px" }}>02. ___________________________</p>
+                    <p style={{ fontSize: "11px" }}>Nome: Bruno Schuler</p>
+                    <p style={{ fontSize: "11px" }}>E-mail: bruno@uhome.imb.br</p>
                   </td>
                 </tr>
               </tbody>
