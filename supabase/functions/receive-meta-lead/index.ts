@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
     let adsetName = v("adset_name", "adsetName", "adgroupId");
     let propertyCode = v("property_code", "propertyCode", "codigo_imovel");
     const metaFormId = v("formId");
+    let externalLeadId = v("lead_id", "leadId", "meta_lead_id", "leadgen_id", "id");
 
     // ── Make.com format: data object with mixed string/array values ──
     if (body.data && typeof body.data === "object" && !Array.isArray(body.data)) {
