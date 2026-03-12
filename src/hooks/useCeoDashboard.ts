@@ -282,9 +282,10 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
     const allMemberUserIds = (members || []).map(m => m.user_id).filter(Boolean) as string[];
     if (allMemberUserIds.length === 0) { setTeams([]); setCorretoresRank([]); return; }
 
-    // Parallel: corretor profiles + tentativas (count per corretor) + visitas + negocios
-    const [{ data: corrProfs }, { data: allVis }, { data: allNeg }] = await Promise.all([
+    // Parallel: corretor profiles + visitas (marcadas by created_at, realizadas by data_visita) + negocios
+    const [{ data: corrProfs }, { data: allVisMarcadas }, { data: allVisRealizadas }, { data: allNeg }] = await Promise.all([
       supabase.from("profiles").select("id, nome, user_id").in("user_id", allMemberUserIds),
+      supabase.from("visitas").select("id, corretor_id").in("corretor_id", allMemberUserIds).gte("created_at", startTs).lte("created_at", endTs),
       supabase.from("visitas").select("id, status, corretor_id").in("corretor_id", allMemberUserIds).gte("data_visita", range.start).lte("data_visita", range.end),
       supabase.from("negocios").select("id, fase, vgv_estimado, vgv_final, corretor_id, data_assinatura").in("corretor_id", allMemberUserIds).in("fase", ["assinado", "vendido"]).gte("data_assinatura", range.start).lte("data_assinatura", range.end),
     ]);
