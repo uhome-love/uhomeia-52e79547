@@ -252,8 +252,13 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
             {resultado === "numero_errado" && (
               <p className="text-[10px] text-red-600 bg-red-500/10 rounded px-2 py-1">Lead removido permanentemente. 0 pts.</p>
             )}
-            {resultado === "sem_interesse" && (
+            {resultado === "sem_interesse" && !isRetirar && (
               <p className="text-[10px] text-amber-600 bg-amber-500/10 rounded px-2 py-1">Lead removido da fila. +1 pt.</p>
+            )}
+            {isRetirar && (
+              <p className="text-[10px] text-red-600 bg-red-500/10 rounded px-2 py-1 font-semibold">
+                ⚠️ O lead será EXCLUÍDO permanentemente do sistema e não poderá mais ser contatado.
+              </p>
             )}
           </div>
 
