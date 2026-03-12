@@ -1234,7 +1234,6 @@ function EmpreendimentoCard({
 export default function AnunciosNoAr() {
   const { isAdmin, isGestor } = useUserRole();
   const canUpload = isAdmin || isGestor;
-  const [imoveis, setImoveis] = useState<Record<string, JetimobImovel>>({});
   const [loading, setLoading] = useState(true);
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
@@ -1242,7 +1241,7 @@ export default function AnunciosNoAr() {
   const [landingCodigo, setLandingCodigo] = useState<string | null>(null);
   const [landingRefreshKey, setLandingRefreshKey] = useState(0);
 
-  // Fetch overrides from DB
+  // Fetch overrides from DB (única fonte de dados)
   const fetchOverrides = useCallback(async () => {
     const { data } = await supabase
       .from("empreendimento_overrides")
@@ -1254,89 +1253,11 @@ export default function AnunciosNoAr() {
       }
       setOverrides(map);
     }
+    setLoading(false);
   }, []);
 
-  // Fetch all imóveis from Jetimob
   useEffect(() => {
-    let cancelled = false;
-
-    async function fetchImovelByCodigo(codigo: string): Promise<JetimobImovel | null> {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 8000);
-        const { data, error } = await supabase.functions.invoke("jetimob-proxy", {
-          body: { action: "get_imovel", codigo },
-        });
-        clearTimeout(timer);
-
-        if (error) return null;
-        const imovel = (data as { imovel?: JetimobImovel | null } | null)?.imovel;
-        return imovel && typeof imovel === "object" ? imovel : null;
-      } catch {
-        return null;
-      }
-    }
-
-    async function fetchAll() {
-      setLoading(true);
-      const codigos = SEGMENTOS.flatMap((s) => s.empreendimentos.map((e) => e.codigo));
-
-      try {
-        const batchPromise = supabase.functions.invoke("jetimob-proxy", {
-          body: { action: "get_imoveis_by_codigos", codigos },
-        });
-
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error("timeout_imoveis_batch")), 12000);
-        });
-
-        const { data, error } = (await Promise.race([batchPromise, timeoutPromise])) as Awaited<typeof batchPromise>;
-        if (error) throw error;
-
-        const mapped = (data as { imoveis?: Record<string, JetimobImovel | null> } | null)?.imoveis || {};
-        const filtered = Object.fromEntries(
-          Object.entries(mapped).filter(([, value]) => value && typeof value === "object")
-        ) as Record<string, JetimobImovel>;
-
-        if (!cancelled) {
-          setImoveis(filtered);
-          setLoading(false);
-        }
-      } catch (batchError) {
-        console.warn("Falha no batch, tentando fallback individual:", batchError);
-        if (!cancelled) setLoading(false);
-
-        try {
-          const settled = await Promise.allSettled(
-            codigos.map((codigo) =>
-              Promise.race([
-                fetchImovelByCodigo(codigo),
-                new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
-              ])
-            )
-          );
-          const fallbackMap: Record<string, JetimobImovel> = {};
-
-          settled.forEach((result, index) => {
-            if (result.status === "fulfilled" && result.value) {
-              fallbackMap[codigos[index]] = result.value;
-            }
-          });
-
-          if (!cancelled && Object.keys(fallbackMap).length > 0) {
-            setImoveis(fallbackMap);
-          }
-        } catch (fallbackError) {
-          console.warn("Fallback por código também falhou:", fallbackError);
-        }
-      }
-    }
-
-    fetchAll();
     fetchOverrides();
-    return () => {
-      cancelled = true;
-    };
   }, [fetchOverrides]);
 
   // Fetch materials
