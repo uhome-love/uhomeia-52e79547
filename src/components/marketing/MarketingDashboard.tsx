@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import PeriodBadge from "@/components/PeriodBadge";
+import GlobalDateFilterBar from "@/components/GlobalDateFilterBar";
 import { useMarketing, getCanalLabel } from "@/hooks/useMarketing";
 import { useMetaAdsSync } from "@/hooks/useMetaAdsSync";
 import IaCoreAction from "@/components/IaCoreAction";
