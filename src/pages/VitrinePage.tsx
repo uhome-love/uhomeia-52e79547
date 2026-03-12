@@ -447,20 +447,18 @@ export default function VitrinePage() {
             )}
           </div>
 
-          {/* Right: Lead Capture */}
+          {/* Right: Corretor Card */}
           <div className="lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="sticky top-8 rounded-2xl border border-slate-200 p-6 sm:p-8 bg-gradient-to-b from-white to-slate-50/50 shadow-xl shadow-slate-200/50"
-            >
-              <div className="text-center space-y-1 mb-6">
-                <h3 className="text-xl font-bold text-slate-900">Tenho interesse!</h3>
-                <p className="text-sm text-slate-500">Preencha seus dados</p>
-              </div>
-              <LeadCaptureForm empreendimento={nome} source="vitrine_landing" cor={cor} />
-            </motion.div>
+            {corretor && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="sticky top-8 rounded-2xl border border-slate-200 p-6 sm:p-8 bg-gradient-to-b from-white to-slate-50/50 shadow-xl shadow-slate-200/50"
+              >
+                <CorretorCard corretor={corretor} nome={nome} cor={cor} whatsappLink={whatsappLink} />
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
