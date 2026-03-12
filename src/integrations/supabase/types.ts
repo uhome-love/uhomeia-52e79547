@@ -5008,6 +5008,50 @@ export type Database = {
         }
         Relationships: []
       }
+      rh_entrevistas: {
+        Row: {
+          candidato_id: string
+          created_at: string
+          created_by: string | null
+          data_entrevista: string
+          id: string
+          local: string | null
+          observacoes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          candidato_id: string
+          created_at?: string
+          created_by?: string | null
+          data_entrevista: string
+          id?: string
+          local?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          candidato_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_entrevista?: string
+          id?: string
+          local?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_entrevistas_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "rh_candidatos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roleta_campanhas: {
         Row: {
           ativo: boolean | null
