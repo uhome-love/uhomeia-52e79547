@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Loader2, Building2, Search, AlertTriangle, Wand2 } from "lucide-react";
+import { Loader2, Building2, Search, AlertTriangle, Wand2, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -29,6 +29,11 @@ interface LeadRow {
   nome: string;
   telefone: string | null;
   origem: string | null;
+  plataforma: string | null;
+  campanha: string | null;
+  conjunto_anuncio: string | null;
+  anuncio: string | null;
+  formulario: string | null;
   created_at: string;
 }
 
@@ -38,7 +43,11 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [filterOrigem, setFilterOrigem] = useState("__all__");
+  const [filterCampanha, setFilterCampanha] = useState("__all__");
+  const [filterFormulario, setFilterFormulario] = useState("__all__");
+  const [filterPlataforma, setFilterPlataforma] = useState("__all__");
   const [autoResolving, setAutoResolving] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grouped">("list");
 
   const { data: leads = [], isLoading, refetch } = useQuery({
     queryKey: ["leads-sem-empreendimento"],
@@ -49,7 +58,7 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
       while (true) {
         const { data, error } = await supabase
           .from("pipeline_leads")
-          .select("id, nome, telefone, origem, created_at")
+          .select("id, nome, telefone, origem, plataforma, campanha, conjunto_anuncio, anuncio, formulario, created_at")
           .is("empreendimento", null)
           .order("created_at", { ascending: false })
           .range(from, from + pageSize - 1);
@@ -70,15 +79,50 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
     return Array.from(set).sort();
   }, [leads]);
 
+  const campanhas = useMemo(() => {
+    const set = new Set<string>();
+    leads.forEach(l => { if (l.campanha) set.add(l.campanha); });
+    return Array.from(set).sort();
+  }, [leads]);
+
+  const formularios = useMemo(() => {
+    const set = new Set<string>();
+    leads.forEach(l => { if (l.formulario) set.add(l.formulario); });
+    return Array.from(set).sort();
+  }, [leads]);
+
+  const plataformas = useMemo(() => {
+    const set = new Set<string>();
+    leads.forEach(l => { if (l.plataforma) set.add(l.plataforma); });
+    return Array.from(set).sort();
+  }, [leads]);
+
   const filtered = useMemo(() => {
     let list = leads;
     if (filterOrigem !== "__all__") list = list.filter(l => l.origem === filterOrigem);
+    if (filterCampanha !== "__all__") list = list.filter(l => l.campanha === filterCampanha);
+    if (filterFormulario !== "__all__") list = list.filter(l => l.formulario === filterFormulario);
+    if (filterPlataforma !== "__all__") list = list.filter(l => l.plataforma === filterPlataforma);
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(l => l.nome?.toLowerCase().includes(q) || l.telefone?.includes(q));
+      list = list.filter(l => l.nome?.toLowerCase().includes(q) || l.telefone?.includes(q) || l.campanha?.toLowerCase().includes(q));
     }
     return list;
-  }, [leads, filterOrigem, search]);
+  }, [leads, filterOrigem, filterCampanha, filterFormulario, filterPlataforma, search]);
+
+  // Grouped view: group by campanha+formulario
+  const grouped = useMemo(() => {
+    if (viewMode !== "grouped") return [];
+    const map = new Map<string, { campanha: string; formulario: string; plataforma: string; leads: LeadRow[] }>();
+    for (const l of filtered) {
+      const key = `${l.campanha || "—"}|||${l.formulario || "—"}`;
+      if (!map.has(key)) {
+        map.set(key, { campanha: l.campanha || "—", formulario: l.formulario || "—", plataforma: l.plataforma || "—", leads: [] });
+      }
+      map.get(key)!.leads.push(l);
+    }
+    return Array.from(map.values()).sort((a, b) => b.leads.length - a.leads.length);
+  }, [filtered, viewMode]);
 
   const toggleAll = () => {
     if (selectedIds.size === filtered.length) {
@@ -86,6 +130,17 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
     } else {
       setSelectedIds(new Set(filtered.map(l => l.id)));
     }
+  };
+
+  const toggleGroup = (groupLeads: LeadRow[]) => {
+    const next = new Set(selectedIds);
+    const allSelected = groupLeads.every(l => next.has(l.id));
+    if (allSelected) {
+      groupLeads.forEach(l => next.delete(l.id));
+    } else {
+      groupLeads.forEach(l => next.add(l.id));
+    }
+    setSelectedIds(next);
   };
 
   const toggle = (id: string) => {
@@ -140,34 +195,53 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
             Atribuir Empreendimento
           </DialogTitle>
           <DialogDescription>
-            {leads.length} leads sem empreendimento definido. Selecione e atribua.
+            {leads.length} leads sem empreendimento. Filtre por campanha/formulário para atribuir em lote.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Auto-resolve button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleAutoResolve}
-          disabled={autoResolving}
-          className="gap-1.5 self-start"
-        >
-          {autoResolving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
-          Auto-resolver via Campanha (Jetimob)
-        </Button>
+        {/* Actions row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAutoResolve}
+            disabled={autoResolving}
+            className="gap-1.5"
+          >
+            {autoResolving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+            Auto-resolver via Campanha
+          </Button>
+          <div className="flex-1" />
+          <Button
+            variant={viewMode === "list" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+            className="text-xs h-7 px-2.5"
+          >
+            Lista
+          </Button>
+          <Button
+            variant={viewMode === "grouped" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("grouped")}
+            className="text-xs h-7 px-2.5"
+          >
+            Agrupado
+          </Button>
+        </div>
 
         {/* Empreendimento selector */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <Select value={selectedEmp} onValueChange={setSelectedEmp}>
             <SelectTrigger>
-              <SelectValue placeholder="Escolha o empreendimento..." />
+              <SelectValue placeholder="Escolha o empreendimento para atribuir..." />
             </SelectTrigger>
             <SelectContent>
               {EMPREENDIMENTOS_PADRAO.map(e => (
@@ -177,18 +251,18 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
           </Select>
 
           {/* Filters */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome..."
+                placeholder="Buscar por nome, tel ou campanha..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="pl-8 h-9 text-xs"
               />
             </div>
             <Select value={filterOrigem} onValueChange={setFilterOrigem}>
-              <SelectTrigger className="w-40 h-9 text-xs">
+              <SelectTrigger className="w-36 h-9 text-xs">
                 <SelectValue placeholder="Origem" />
               </SelectTrigger>
               <SelectContent>
@@ -200,7 +274,45 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
             </Select>
           </div>
 
-          {/* Select all */}
+          {/* Extra filters row */}
+          <div className="flex gap-2 items-center">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <Select value={filterPlataforma} onValueChange={setFilterPlataforma}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue placeholder="Plataforma" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas plataformas</SelectItem>
+                {plataformas.map(p => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterCampanha} onValueChange={setFilterCampanha}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue placeholder="Campanha" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas campanhas</SelectItem>
+                {campanhas.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterFormulario} onValueChange={setFilterFormulario}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue placeholder="Formulário" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos formulários</SelectItem>
+                {formularios.map(f => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Select all / count */}
           <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
             <button onClick={toggleAll} className="hover:text-foreground transition-colors">
               {selectedIds.size === filtered.length && filtered.length > 0 ? "Desmarcar todos" : `Selecionar todos (${filtered.length})`}
@@ -216,10 +328,41 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
-        ) : (
-          <ScrollArea className="flex-1 min-h-0 max-h-[340px] border rounded-lg">
+        ) : viewMode === "grouped" ? (
+          <ScrollArea className="flex-1 min-h-0 max-h-[360px] border rounded-lg">
             <div className="divide-y divide-border">
-              {filtered.slice(0, 200).map(l => (
+              {grouped.map((g, i) => {
+                const allSelected = g.leads.every(l => selectedIds.has(l.id));
+                return (
+                  <div key={i} className="border-b last:border-0">
+                    <label
+                      className="flex items-center gap-3 px-3 py-2.5 bg-muted/40 hover:bg-muted/60 cursor-pointer transition-colors"
+                      onClick={(e) => { e.preventDefault(); toggleGroup(g.leads); }}
+                    >
+                      <Checkbox checked={allSelected} onCheckedChange={() => toggleGroup(g.leads)} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-semibold">{g.campanha}</span>
+                          <Badge variant="outline" className="text-[9px] h-4">{g.plataforma}</Badge>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Form: {g.formulario}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] shrink-0">{g.leads.length} leads</Badge>
+                    </label>
+                  </div>
+                );
+              })}
+              {grouped.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-6">Nenhum lead encontrado</p>
+              )}
+            </div>
+          </ScrollArea>
+        ) : (
+          <ScrollArea className="flex-1 min-h-0 max-h-[360px] border rounded-lg">
+            <div className="divide-y divide-border">
+              {filtered.slice(0, 300).map(l => (
                 <label
                   key={l.id}
                   className="flex items-center gap-3 px-3 py-2 hover:bg-muted/30 cursor-pointer transition-colors"
@@ -229,17 +372,29 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
                     onCheckedChange={() => toggle(l.id)}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{l.nome}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium truncate">{l.nome}</p>
+                      {l.plataforma && (
+                        <Badge variant="outline" className="text-[9px] h-4 shrink-0">{l.plataforma}</Badge>
+                      )}
+                    </div>
                     <p className="text-[10px] text-muted-foreground truncate">
                       {l.origem || "—"} · {l.telefone || "sem tel"}
                     </p>
+                    {(l.campanha || l.formulario || l.anuncio) && (
+                      <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
+                        {l.campanha && <span>📢 {l.campanha}</span>}
+                        {l.formulario && <span> · 📝 {l.formulario}</span>}
+                        {l.anuncio && <span> · 🎯 {l.anuncio}</span>}
+                      </p>
+                    )}
                   </div>
                 </label>
               ))}
-              {filtered.length > 200 && (
+              {filtered.length > 300 && (
                 <div className="px-3 py-2 text-[10px] text-muted-foreground text-center flex items-center gap-1 justify-center">
                   <AlertTriangle className="h-3 w-3" />
-                  Mostrando 200 de {filtered.length}. Use os filtros para refinar.
+                  Mostrando 300 de {filtered.length}. Use os filtros para refinar.
                 </div>
               )}
               {filtered.length === 0 && (
