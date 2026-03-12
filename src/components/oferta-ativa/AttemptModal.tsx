@@ -321,6 +321,7 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
             <AlertDialogAction
               onClick={() => {
                 setShowRetirarConfirm(false);
+                confirmedRetirar.current = true;
                 handleSubmit();
               }}
               className="bg-destructive hover:bg-destructive/90"
