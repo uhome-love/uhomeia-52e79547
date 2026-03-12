@@ -171,8 +171,8 @@ serve(async (req) => {
 
       // Fetch all items from Jetimob
       console.time("jetimob-fetch-for-reindex");
-      const batchSize = 500;
-      const maxPages = 60;
+      const batchSize = body.batchSize || 500;
+      const maxPages = body.maxPages || 60;
       let allItems: any[] = [];
       for (let page = 1; page <= maxPages; page++) {
         const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${page}&pageSize=${batchSize}`;
