@@ -110,7 +110,7 @@ export default function AdminPanel() {
   }, [fetchUsers]);
 
   const removeRole = useCallback(async (userId: string, role: AppRole) => {
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role as any);
     if (error) toast.error("Erro ao remover papel.");
     else { toast.success("Papel removido!"); fetchUsers(); }
   }, [fetchUsers]);
