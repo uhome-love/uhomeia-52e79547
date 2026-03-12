@@ -72,6 +72,10 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
   const [interesseTipo, setInteresseTipo] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showRetirarConfirm, setShowRetirarConfirm] = useState(false);
+
+  const RETIRAR_FEEDBACK = "🚫 Retirar do sistema — não quer ser mais contatado";
+  const isRetirar = feedback === RETIRAR_FEEDBACK;
 
   // Keyboard shortcuts: 1-4 for results, Enter to submit
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
