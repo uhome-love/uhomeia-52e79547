@@ -106,6 +106,7 @@ Deno.serve(async (req) => {
       if (!campaignId) campaignId = extractStr(d.campaign_id);
       if (!message) message = extractStr(d.message) || extractStr(d.mensagem);
       if (!propertyCode) propertyCode = extractStr(d.property_code) || extractStr(d.codigo_imovel);
+      if (!externalLeadId) externalLeadId = extractStr(d.lead_id) || extractStr(d.leadgen_id) || extractStr(d.id);
     }
 
     // ── Make.com mappable_field_data: [{name, value}] ──
@@ -120,6 +121,7 @@ Deno.serve(async (req) => {
         else if (!campaignId && fn === "campaign_id") campaignId = val;
         else if (!message && fn === "message") message = val;
         else if (!propertyCode && (fn === "property_code" || fn === "codigo_imovel")) propertyCode = val;
+        else if (!externalLeadId && (fn === "lead_id" || fn === "leadgen_id" || fn === "meta_lead_id")) externalLeadId = val;
       }
     }
 
