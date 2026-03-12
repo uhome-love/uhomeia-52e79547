@@ -101,7 +101,7 @@ export default function AdminPanel() {
 
   const addRole = useCallback(async (userId: string, role: AppRole) => {
     setAddingRole(userId);
-    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
+    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role } as any);
     if (error) {
       if (error.code === "23505") toast.info("Usuário já possui esse papel.");
       else toast.error("Erro ao adicionar papel.");
