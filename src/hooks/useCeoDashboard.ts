@@ -351,13 +351,24 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
   }, [range]);
 
   const loadVisitasPorEmp = useCallback(async () => {
-    const { data: vis } = await supabase.from("visitas").select("empreendimento, status").gte("data_visita", range.start).lte("data_visita", range.end);
+    // Marcadas = created in period; Realizadas = data_visita in period + status realizada
+    const startTs = `${range.start}T00:00:00`;
+    const endTs = `${range.end}T23:59:59`;
+    const [{ data: visMarcadas }, { data: visRealizadas }] = await Promise.all([
+      supabase.from("visitas").select("empreendimento").gte("created_at", startTs).lte("created_at", endTs).not("status", "eq", "cancelada"),
+      supabase.from("visitas").select("empreendimento").gte("data_visita", range.start).lte("data_visita", range.end).eq("status", "realizada"),
+    ]);
     const empMap = new Map<string, { marcadas: number; realizadas: number }>();
-    for (const v of (vis || [])) {
+    for (const v of (visMarcadas || [])) {
       const emp = v.empreendimento || "Sem empreendimento";
       const curr = empMap.get(emp) || { marcadas: 0, realizadas: 0 };
       curr.marcadas++;
-      if (v.status === "realizada") curr.realizadas++;
+      empMap.set(emp, curr);
+    }
+    for (const v of (visRealizadas || [])) {
+      const emp = v.empreendimento || "Sem empreendimento";
+      const curr = empMap.get(emp) || { marcadas: 0, realizadas: 0 };
+      curr.realizadas++;
       empMap.set(emp, curr);
     }
     setVisitasPorEmp(Array.from(empMap.entries()).map(([emp, d]) => ({ emp, ...d })).sort((a, b) => b.marcadas - a.marcadas));
