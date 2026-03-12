@@ -32,6 +32,23 @@ function extractStr(val: any): string {
   return "";
 }
 
+function normalizeLower(value: string | null | undefined): string {
+  return (value || "").toLowerCase().trim();
+}
+
+function isLikelyTestLead(name: string, email: string, message: string): boolean {
+  const combined = `${normalizeLower(name)} ${normalizeLower(email)} ${normalizeLower(message)}`;
+
+  // Meta/Make test payload markers
+  if (combined.includes("<test lead:")) return true;
+  if (combined.includes("dummy data")) return true;
+  if (combined.includes("test@meta")) return true;
+
+  // Common test-only names/emails
+  const testTokens = [" lead teste ", " teste make ", " qa ", " sandbox "];
+  return testTokens.some((token) => combined.includes(token));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
