@@ -756,81 +756,127 @@ export default function ImoveisPage() {
       {/* ── Sticky top bar ── */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/50">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6">
-          {/* Row 1: Search */}
+          {/* Row 1: Search mode toggle + Search */}
           <div className="py-3 flex items-center gap-3">
-            <div className="relative flex-1 max-w-2xl">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                ref={searchInputRef}
-                placeholder="Busque por bairro, empreendimento, código..."
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="pl-10 pr-20 h-10 text-sm bg-muted/50 border-border/60 rounded-full focus-visible:ring-primary/30 focus-visible:bg-background"
-              />
-              <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                {search && (
-                  <button onClick={() => { setSearch(""); setSuggestions([]); setShowSuggestions(false); setTimeout(() => fetchImoveis(1, campanhaAtiva, uhomeOnly), 50); }} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/50">
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+            {/* Mode toggle */}
+            <div className="flex items-center rounded-full border border-border overflow-hidden shrink-0">
+              <button
+                onClick={() => { setSearchMode("normal"); clearAISearch(); }}
+                className={cn("px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1",
+                  searchMode === "normal" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground"
                 )}
-                <Button
-                  onClick={handleSearch}
-                  size="sm"
-                  className="h-7 px-3 rounded-full text-xs gap-1"
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
-                  Buscar
-                </Button>
-              </div>
-              {/* Autocomplete dropdown */}
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-background border border-border rounded-xl shadow-xl z-50 max-h-72 overflow-y-auto">
-                  {(() => {
-                    const bairros = suggestions.filter(s => s.type === "bairro");
-                    const empreendimentos = suggestions.filter(s => s.type === "empreendimento");
-                    const codigos = suggestions.filter(s => s.type === "codigo");
-                    return (
-                      <>
-                        {bairros.length > 0 && (
-                          <div className="px-3 pt-2.5 pb-1">
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bairros</p>
-                            {bairros.map((s, i) => (
-                              <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2">
-                                <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {empreendimentos.length > 0 && (
-                          <div className="px-3 pt-2 pb-1 border-t border-border/50">
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Empreendimentos</p>
-                            {empreendimentos.map((s, i) => (
-                              <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2">
-                                <Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {codigos.length > 0 && (
-                          <div className="px-3 pt-2 pb-2.5 border-t border-border/50">
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Códigos</p>
-                            {codigos.map((s, i) => (
-                              <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 font-mono">
-                                <Search className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
+              >
+                <Search className="h-3 w-3" /> Filtros
+              </button>
+              <button
+                onClick={() => setSearchMode("ai")}
+                className={cn("px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1",
+                  searchMode === "ai" ? "bg-gradient-to-r from-violet-600 to-primary text-white" : "bg-background text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Sparkles className="h-3 w-3" /> Busca IA
+              </button>
             </div>
+
+            {searchMode === "normal" ? (
+              /* Normal search input */
+              <div className="relative flex-1 max-w-2xl">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  ref={searchInputRef}
+                  placeholder="Busque por bairro, empreendimento, código..."
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="pl-10 pr-20 h-10 text-sm bg-muted/50 border-border/60 rounded-full focus-visible:ring-primary/30 focus-visible:bg-background"
+                />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {search && (
+                    <button onClick={() => { setSearch(""); setSuggestions([]); setShowSuggestions(false); setTimeout(() => fetchImoveis(1, campanhaAtiva, uhomeOnly), 50); }} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/50">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <Button onClick={handleSearch} size="sm" className="h-7 px-3 rounded-full text-xs gap-1" disabled={loading}>
+                    {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
+                    Buscar
+                  </Button>
+                </div>
+                {/* Autocomplete dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-background border border-border rounded-xl shadow-xl z-50 max-h-72 overflow-y-auto">
+                    {(() => {
+                      const bairros = suggestions.filter(s => s.type === "bairro");
+                      const empreendimentos = suggestions.filter(s => s.type === "empreendimento");
+                      const codigos = suggestions.filter(s => s.type === "codigo");
+                      return (
+                        <>
+                          {bairros.length > 0 && (
+                            <div className="px-3 pt-2.5 pb-1">
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bairros</p>
+                              {bairros.map((s, i) => (
+                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2">
+                                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {empreendimentos.length > 0 && (
+                            <div className="px-3 pt-2 pb-1 border-t border-border/50">
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Empreendimentos</p>
+                              {empreendimentos.map((s, i) => (
+                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2">
+                                  <Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {codigos.length > 0 && (
+                            <div className="px-3 pt-2 pb-2.5 border-t border-border/50">
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Códigos</p>
+                              {codigos.map((s, i) => (
+                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 font-mono">
+                                  <Search className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* AI search input */
+              <div className="relative flex-1 max-w-2xl">
+                <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500" />
+                <Input
+                  placeholder="Descreva o imóvel que você procura... ex: apartamento 3 dorm perto do Iguatemi até 1M"
+                  value={aiQuery}
+                  onChange={(e) => setAiQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && aiQuery.trim().length >= 3) searchWithAI(aiQuery); }}
+                  className="pl-10 pr-28 h-10 text-sm bg-violet-50/50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800/40 rounded-full focus-visible:ring-violet-400/30 focus-visible:bg-background"
+                />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {aiQuery && (
+                    <button onClick={() => { setAiQuery(""); clearAISearch(); }} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/50">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <Button
+                    onClick={() => searchWithAI(aiQuery)}
+                    size="sm"
+                    className="h-7 px-3 rounded-full text-xs gap-1 bg-gradient-to-r from-violet-600 to-primary hover:from-violet-700 hover:to-primary/90 text-white border-0"
+                    disabled={aiLoading || aiQuery.trim().length < 3}
+                  >
+                    {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
+                    Buscar com IA
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Right actions */}
             <div className="flex items-center gap-1.5 shrink-0">
