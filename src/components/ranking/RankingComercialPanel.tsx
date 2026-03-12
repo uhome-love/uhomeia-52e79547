@@ -126,8 +126,8 @@ export default function RankingComercialPanel() {
     const teams = sortedTimes.map((t, i) =>
       `${i + 1}. Equipe ${t.gerente_nome} — Score: ${t.totals.score}, VGV Assinado: R$ ${t.totals.real_vgv_assinado.toLocaleString("pt-BR")}, Visitas: ${t.totals.real_visitas_realizadas}, Propostas: ${t.totals.real_propostas}`
     ).join("\n");
-    return `Período: ${periodLabels[period]}\n\nRanking de Times:\n${teams}\n\nTop 5 Corretores:\n${top5}`;
-  }, [sortedCorretores, sortedTimes, period]);
+    return `Período: ${globalPeriod}\n\nRanking de Times:\n${teams}\n\nTop 5 Corretores:\n${top5}`;
+  }, [sortedCorretores, sortedTimes, globalPeriod]);
 
   return (
     <div className="space-y-6">
