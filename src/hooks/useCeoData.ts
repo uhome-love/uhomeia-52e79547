@@ -113,10 +113,13 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
 
     // Get all team members for relevant gerentes
     const gerenteIdsAll = [...new Set([...gerenteIds])];
-    const { data: allTeam } = await supabase.from("team_members").select("id, nome, gerente_id").in("gerente_id", gerenteIdsAll);
+    const { data: allTeam } = await supabase.from("team_members").select("id, user_id, nome, gerente_id").in("gerente_id", gerenteIdsAll);
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p.nome]));
     const teamMap = new Map((allTeam || []).map(t => [t.id, t]));
+    // Map team_members.id → user_id for ID resolution
+    const teamIdToUserId = new Map((allTeam || []).filter(t => t.user_id).map(t => [t.id, t.user_id!]));
+    const userIdToTeamId = new Map((allTeam || []).filter(t => t.user_id).map(t => [t.user_id!, t.id]));
 
     // Aggregate per corretor per gerente
     const gerenteMap = new Map<string, GerenteAgg>();
@@ -129,12 +132,13 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
       });
     }
 
-    // Agg per corretor (checkpoint data: ligações, visitas, propostas — NO VGV)
+    // Agg per corretor — USE user_id as canonical corretor_id (not team_members.id)
     const corretorAggMap = new Map<string, CorretorAgg>();
 
     for (const t of (allTeam || [])) {
-      corretorAggMap.set(t.id, {
-        corretor_id: t.id, corretor_nome: t.nome, gerente_id: t.gerente_id, gerente_nome: profileMap.get(t.gerente_id) || "Gerente",
+      const canonicalId = t.user_id || t.id; // Prefer auth.user_id
+      corretorAggMap.set(canonicalId, {
+        corretor_id: canonicalId, corretor_nome: t.nome, gerente_id: t.gerente_id, gerente_nome: profileMap.get(t.gerente_id) || "Gerente",
         meta_ligacoes: 0, real_ligacoes: 0, meta_visitas_marcadas: 0, real_visitas_marcadas: 0,
         meta_visitas_realizadas: 0, real_visitas_realizadas: 0, meta_propostas: 0, real_propostas: 0,
         meta_vgv_gerado: 0, real_vgv_gerado: 0, meta_vgv_assinado: 0, real_vgv_assinado: 0, score: 0,
@@ -142,7 +146,9 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
     }
 
     for (const l of (lines || [])) {
-      const agg = corretorAggMap.get(l.corretor_id);
+      // checkpoint_lines.corretor_id = team_members.id, resolve to user_id
+      const userId = teamIdToUserId.get(l.corretor_id) || l.corretor_id;
+      const agg = corretorAggMap.get(userId);
       if (!agg) continue;
       agg.meta_ligacoes += l.meta_ligacoes ?? 0;
       agg.real_ligacoes += l.real_ligacoes ?? 0;
