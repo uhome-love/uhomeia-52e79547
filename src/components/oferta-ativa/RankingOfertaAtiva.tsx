@@ -37,14 +37,12 @@ export default function RankingOfertaAtiva() {
       if (corretorIds.length === 0) return {};
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, nome, avatar_url, avatar_gamificado_url, pontos_gamificacao")
+        .select("user_id, nome, avatar_url, avatar_gamificado_url")
         .in("user_id", corretorIds);
-      const map: Record<string, { avatar_url: string | null; avatar_gamificado_url: string | null; pontos: number }> = {};
+      const map: Record<string, { avatar_url: string | null }> = {};
       for (const p of profiles || []) {
         map[p.user_id] = {
           avatar_url: p.avatar_gamificado_url || p.avatar_url || null,
-          avatar_gamificado_url: p.avatar_gamificado_url || null,
-          pontos: p.pontos_gamificacao || 0,
         };
       }
       return map;
