@@ -97,27 +97,6 @@ const SEGMENTOS: SegmentoConfig[] = [
    TYPES
    ═══════════════════════════════════════════════ */
 
-type JetimobImovel = {
-  codigo: string;
-  nome?: string;
-  bairro?: string;
-  endereco_bairro?: string;
-  area_total?: number;
-  area_privativa?: number;
-  dormitorios?: number;
-  suites?: number;
-  vagas?: number;
-  valor_venda?: number;
-  preco_venda?: number;
-  valor?: number;
-  status_obra?: string;
-  previsao_entrega?: string;
-  imagens?: { url: string; descricao?: string }[];
-  fotos?: { url: string }[];
-  foto_principal?: string;
-  descricao?: string;
-};
-
 type Tipologia = {
   dorms: number;
   area_min?: number;
@@ -161,35 +140,9 @@ type Material = {
    HELPERS
    ═══════════════════════════════════════════════ */
 
-function getPrice(item: JetimobImovel): number {
-  return Number(item.valor_venda || item.preco_venda || item.valor || 0);
-}
-
 function formatPrice(v: number): string {
   if (!v) return "Sob consulta";
   return formatBRL(v);
-}
-
-function getImages(item: JetimobImovel): string[] {
-  // Use normalized photos from edge function if available
-  if ((item as any)._fotos_normalized?.length) {
-    return (item as any)._fotos_normalized.slice(0, 8);
-  }
-  const imgs: string[] = [];
-  if (item.foto_principal) imgs.push(item.foto_principal);
-  if (item.imagens) {
-    for (const i of item.imagens) {
-      const url = typeof i === "string" ? i : (i.url || "");
-      if (url && !imgs.includes(url)) imgs.push(url);
-    }
-  }
-  if (item.fotos) {
-    for (const f of item.fotos) {
-      const url = typeof f === "string" ? f : (f.url || "");
-      if (url && !imgs.includes(url)) imgs.push(url);
-    }
-  }
-  return imgs.slice(0, 8);
 }
 
 const TIPO_ICONS: Record<string, any> = {
@@ -797,13 +750,11 @@ function CriarVitrineDialog({
   onOpenChange,
   config,
   override,
-  imovelData,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   config: AnuncioConfig;
   override: EmpreendimentoOverride | null;
-  imovelData: JetimobImovel | null;
 }) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -827,9 +778,9 @@ function CriarVitrineDialog({
     if (!user) return;
     setSaving(true);
     try {
-      const images = override?.fotos?.length ? override.fotos : (imovelData ? getImages(imovelData) : []);
-      const price = override?.valor_min ?? override?.valor_venda ?? (imovelData ? getPrice(imovelData) : 0);
-      const bairro = override?.bairro || imovelData?.bairro || imovelData?.endereco_bairro || "";
+      const images = override?.fotos || [];
+      const price = override?.valor_min ?? override?.valor_venda ?? 0;
+      const bairro = override?.bairro || "";
 
       const dadosCustom = [{
         nome: config.nome,
@@ -839,13 +790,13 @@ function CriarVitrineDialog({
         valor_min: override?.valor_min || price,
         valor_max: override?.valor_max || null,
         tipologias: override?.tipologias || [],
-        area_privativa: override?.area_privativa || imovelData?.area_privativa || 0,
-        dormitorios: override?.dormitorios || imovelData?.dormitorios || 0,
-        suites: override?.suites || imovelData?.suites || 0,
-        vagas: override?.vagas || imovelData?.vagas || 0,
-        status_obra: override?.status_obra || imovelData?.status_obra || "",
-        previsao_entrega: override?.previsao_entrega || imovelData?.previsao_entrega || "",
-        descricao: override?.descricao || imovelData?.descricao || "",
+        area_privativa: override?.area_privativa || 0,
+        dormitorios: override?.dormitorios || 0,
+        suites: override?.suites || 0,
+        vagas: override?.vagas || 0,
+        status_obra: override?.status_obra || "",
+        previsao_entrega: override?.previsao_entrega || "",
+        descricao: override?.descricao || "",
         fotos: images,
       }];
 
@@ -954,7 +905,6 @@ function CriarVitrineDialog({
 function EmpreendimentoCard({
   config,
   segmento,
-  imovelData,
   loading,
   materiais,
   canUpload,
@@ -967,7 +917,6 @@ function EmpreendimentoCard({
 }: {
   config: AnuncioConfig;
   segmento: SegmentoConfig;
-  imovelData: JetimobImovel | null;
   loading: boolean;
   materiais: Material[];
   canUpload: boolean;
@@ -1000,20 +949,20 @@ function EmpreendimentoCard({
       });
   }, [config.codigo, user, landingRefreshKey]);
 
-  // Merge: override takes priority over Jetimob data
+  // Data comes only from overrides
   const hasOverride = !!override;
-  const images = override?.fotos?.length ? override.fotos : (imovelData ? getImages(imovelData) : []);
-  const priceMin = override?.valor_min ?? override?.valor_venda ?? (imovelData ? getPrice(imovelData) : 0);
+  const images = override?.fotos?.length ? override.fotos : [];
+  const priceMin = override?.valor_min ?? override?.valor_venda ?? 0;
   const priceMax = override?.valor_max ?? 0;
-  const bairro = override?.bairro || imovelData?.bairro || imovelData?.endereco_bairro || "";
+  const bairro = override?.bairro || "";
   const tipologias = override?.tipologias?.length ? override.tipologias : [];
-  const area = override?.area_privativa ?? (imovelData?.area_privativa || imovelData?.area_total || 0);
-  const dorms = override?.dormitorios ?? (imovelData?.dormitorios || 0);
-  const suites = override?.suites ?? (imovelData?.suites || 0);
-  const vagas = override?.vagas ?? (imovelData?.vagas || 0);
-  const statusObra = override?.status_obra || imovelData?.status_obra || "";
-  const previsaoEntrega = override?.previsao_entrega || imovelData?.previsao_entrega || "";
-  const hasData = hasOverride || !!imovelData;
+  const area = override?.area_privativa ?? 0;
+  const dorms = override?.dormitorios ?? 0;
+  const suites = override?.suites ?? 0;
+  const vagas = override?.vagas ?? 0;
+  const statusObra = override?.status_obra || "";
+  const previsaoEntrega = override?.previsao_entrega || "";
+  const hasData = hasOverride;
 
   return (
     <motion.div
@@ -1222,7 +1171,6 @@ function EmpreendimentoCard({
         onOpenChange={setVitrineOpen}
         config={config}
         override={override}
-        imovelData={imovelData}
       />
     </motion.div>
   );
@@ -1234,7 +1182,6 @@ function EmpreendimentoCard({
 export default function AnunciosNoAr() {
   const { isAdmin, isGestor } = useUserRole();
   const canUpload = isAdmin || isGestor;
-  const [imoveis, setImoveis] = useState<Record<string, JetimobImovel>>({});
   const [loading, setLoading] = useState(true);
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
@@ -1242,7 +1189,7 @@ export default function AnunciosNoAr() {
   const [landingCodigo, setLandingCodigo] = useState<string | null>(null);
   const [landingRefreshKey, setLandingRefreshKey] = useState(0);
 
-  // Fetch overrides from DB
+  // Fetch overrides from DB (única fonte de dados)
   const fetchOverrides = useCallback(async () => {
     const { data } = await supabase
       .from("empreendimento_overrides")
@@ -1254,89 +1201,11 @@ export default function AnunciosNoAr() {
       }
       setOverrides(map);
     }
+    setLoading(false);
   }, []);
 
-  // Fetch all imóveis from Jetimob
   useEffect(() => {
-    let cancelled = false;
-
-    async function fetchImovelByCodigo(codigo: string): Promise<JetimobImovel | null> {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 8000);
-        const { data, error } = await supabase.functions.invoke("jetimob-proxy", {
-          body: { action: "get_imovel", codigo },
-        });
-        clearTimeout(timer);
-
-        if (error) return null;
-        const imovel = (data as { imovel?: JetimobImovel | null } | null)?.imovel;
-        return imovel && typeof imovel === "object" ? imovel : null;
-      } catch {
-        return null;
-      }
-    }
-
-    async function fetchAll() {
-      setLoading(true);
-      const codigos = SEGMENTOS.flatMap((s) => s.empreendimentos.map((e) => e.codigo));
-
-      try {
-        const batchPromise = supabase.functions.invoke("jetimob-proxy", {
-          body: { action: "get_imoveis_by_codigos", codigos },
-        });
-
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error("timeout_imoveis_batch")), 12000);
-        });
-
-        const { data, error } = (await Promise.race([batchPromise, timeoutPromise])) as Awaited<typeof batchPromise>;
-        if (error) throw error;
-
-        const mapped = (data as { imoveis?: Record<string, JetimobImovel | null> } | null)?.imoveis || {};
-        const filtered = Object.fromEntries(
-          Object.entries(mapped).filter(([, value]) => value && typeof value === "object")
-        ) as Record<string, JetimobImovel>;
-
-        if (!cancelled) {
-          setImoveis(filtered);
-          setLoading(false);
-        }
-      } catch (batchError) {
-        console.warn("Falha no batch, tentando fallback individual:", batchError);
-        if (!cancelled) setLoading(false);
-
-        try {
-          const settled = await Promise.allSettled(
-            codigos.map((codigo) =>
-              Promise.race([
-                fetchImovelByCodigo(codigo),
-                new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
-              ])
-            )
-          );
-          const fallbackMap: Record<string, JetimobImovel> = {};
-
-          settled.forEach((result, index) => {
-            if (result.status === "fulfilled" && result.value) {
-              fallbackMap[codigos[index]] = result.value;
-            }
-          });
-
-          if (!cancelled && Object.keys(fallbackMap).length > 0) {
-            setImoveis(fallbackMap);
-          }
-        } catch (fallbackError) {
-          console.warn("Fallback por código também falhou:", fallbackError);
-        }
-      }
-    }
-
-    fetchAll();
     fetchOverrides();
-    return () => {
-      cancelled = true;
-    };
   }, [fetchOverrides]);
 
   // Fetch materials
@@ -1480,7 +1349,6 @@ export default function AnunciosNoAr() {
                     key={emp.codigo}
                     config={emp}
                     segmento={seg}
-                    imovelData={imoveis[emp.codigo] || null}
                     loading={loading}
                     materiais={materiais}
                     canUpload={canUpload}
