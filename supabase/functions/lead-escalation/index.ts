@@ -121,13 +121,45 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Notify gerente(s) via push + in-app
-          const { data: gerentes } = await supabase
-            .from("profiles")
-            .select("user_id, telefone, nome")
-            .in("cargo", ["gerente", "ceo"]);
+          // Notify ONLY the corretor's gerente + CEOs (not all gerentes)
+          const gestoresToNotify: { user_id: string; telefone: string | null; nome: string | null }[] = [];
 
-          for (const gerente of gerentes || []) {
+          // Find the corretor's gerente via team_members
+          if (profile) {
+            const { data: teamMember } = await supabase
+              .from("team_members")
+              .select("gerente_id")
+              .eq("user_id", lead.corretor_id)
+              .maybeSingle();
+
+            if (teamMember?.gerente_id) {
+              // Get gerente's profile (gerente_id in team_members = profiles.id)
+              const { data: gerenteProfile } = await supabase
+                .from("profiles")
+                .select("user_id, telefone, nome")
+                .eq("id", teamMember.gerente_id)
+                .maybeSingle();
+              if (gerenteProfile?.user_id) gestoresToNotify.push(gerenteProfile);
+            }
+          }
+
+          // Also notify CEOs/admins
+          const { data: ceos } = await supabase
+            .from("user_roles")
+            .select("user_id")
+            .eq("role", "admin");
+          for (const ceo of ceos || []) {
+            // Avoid duplicates if gerente is also admin
+            if (gestoresToNotify.some(g => g.user_id === ceo.user_id)) continue;
+            const { data: ceoProfile } = await supabase
+              .from("profiles")
+              .select("user_id, telefone, nome")
+              .eq("user_id", ceo.user_id)
+              .maybeSingle();
+            if (ceoProfile?.user_id) gestoresToNotify.push(ceoProfile);
+          }
+
+          for (const gerente of gestoresToNotify) {
             if (!gerente.user_id) continue;
             // In-app notification
             await supabase.from("notifications").insert({
