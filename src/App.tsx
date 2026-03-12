@@ -207,7 +207,13 @@ const App = () => (
             <Route path="/backoffice/homi-ana" element={<ProtectedPage roles={["backoffice", "admin"]}><HomiAna /></ProtectedPage>} />
             <Route path="/backoffice/tarefas" element={<ProtectedPage roles={["backoffice", "admin"]}><BackofficeCentral /></ProtectedPage>} />
             <Route path="/backoffice/cadastros" element={<ProtectedPage roles={["backoffice", "admin"]}><CadastrosPage /></ProtectedPage>} />
-            
+
+            {/* RH — Carol */}
+            <Route path="/rh" element={<ProtectedPage roles={["rh", "admin"]}><RhDashboard /></ProtectedPage>} />
+            <Route path="/rh/recrutamento" element={<ProtectedPage roles={["rh", "admin"]}><RhRecrutamento /></ProtectedPage>} />
+            <Route path="/rh/conversas" element={<ProtectedPage roles={["rh", "admin"]}><RhConversas /></ProtectedPage>} />
+            <Route path="/rh/sala-reuniao" element={<ProtectedPage roles={["rh", "admin"]}><RhSalaReuniao /></ProtectedPage>} />
+
 
             <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
           </Routes>
