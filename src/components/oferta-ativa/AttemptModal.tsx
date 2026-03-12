@@ -101,7 +101,7 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
     }
   }, [open, handleKeyDown]);
 
-  const confirmedRetirar = React.useRef(false);
+  const confirmedRetirar = useRef(false);
 
   const handleSubmit = async () => {
     if (!resultado || submitting) return;
