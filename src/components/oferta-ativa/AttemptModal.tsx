@@ -101,12 +101,14 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
     }
   }, [open, handleKeyDown]);
 
+  const confirmedRetirar = React.useRef(false);
+
   const handleSubmit = async () => {
     if (!resultado || submitting) return;
     if (feedback.trim().length < 10) { toast.error("Feedback mínimo de 10 caracteres"); return; }
     if (resultado === "com_interesse" && !interesseTipo) { toast.error("Selecione o tipo de interesse"); return; }
     // If "retirar do sistema" selected, show confirmation first
-    if (isRetirar && !showRetirarConfirm) {
+    if (isRetirar && !confirmedRetirar.current) {
       setShowRetirarConfirm(true);
       return;
     }
