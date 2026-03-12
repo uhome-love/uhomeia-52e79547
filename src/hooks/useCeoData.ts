@@ -113,10 +113,13 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
 
     // Get all team members for relevant gerentes
     const gerenteIdsAll = [...new Set([...gerenteIds])];
-    const { data: allTeam } = await supabase.from("team_members").select("id, nome, gerente_id").in("gerente_id", gerenteIdsAll);
+    const { data: allTeam } = await supabase.from("team_members").select("id, user_id, nome, gerente_id").in("gerente_id", gerenteIdsAll);
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p.nome]));
     const teamMap = new Map((allTeam || []).map(t => [t.id, t]));
+    // Map team_members.id → user_id for ID resolution
+    const teamIdToUserId = new Map((allTeam || []).filter(t => t.user_id).map(t => [t.id, t.user_id!]));
+    const userIdToTeamId = new Map((allTeam || []).filter(t => t.user_id).map(t => [t.user_id!, t.id]));
 
     // Aggregate per corretor per gerente
     const gerenteMap = new Map<string, GerenteAgg>();
@@ -129,12 +132,13 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
       });
     }
 
-    // Agg per corretor (checkpoint data: ligações, visitas, propostas — NO VGV)
+    // Agg per corretor — USE user_id as canonical corretor_id (not team_members.id)
     const corretorAggMap = new Map<string, CorretorAgg>();
 
     for (const t of (allTeam || [])) {
-      corretorAggMap.set(t.id, {
-        corretor_id: t.id, corretor_nome: t.nome, gerente_id: t.gerente_id, gerente_nome: profileMap.get(t.gerente_id) || "Gerente",
+      const canonicalId = t.user_id || t.id; // Prefer auth.user_id
+      corretorAggMap.set(canonicalId, {
+        corretor_id: canonicalId, corretor_nome: t.nome, gerente_id: t.gerente_id, gerente_nome: profileMap.get(t.gerente_id) || "Gerente",
         meta_ligacoes: 0, real_ligacoes: 0, meta_visitas_marcadas: 0, real_visitas_marcadas: 0,
         meta_visitas_realizadas: 0, real_visitas_realizadas: 0, meta_propostas: 0, real_propostas: 0,
         meta_vgv_gerado: 0, real_vgv_gerado: 0, meta_vgv_assinado: 0, real_vgv_assinado: 0, score: 0,
@@ -142,7 +146,9 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
     }
 
     for (const l of (lines || [])) {
-      const agg = corretorAggMap.get(l.corretor_id);
+      // checkpoint_lines.corretor_id = team_members.id, resolve to user_id
+      const userId = teamIdToUserId.get(l.corretor_id) || l.corretor_id;
+      const agg = corretorAggMap.get(userId);
       if (!agg) continue;
       agg.meta_ligacoes += l.meta_ligacoes ?? 0;
       agg.real_ligacoes += l.real_ligacoes ?? 0;
@@ -176,27 +182,14 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
 
     // Build mapping: profiles.id → team_members.id via user_id
     const negCorretorIds = [...new Set((pdns || []).map(p => p.corretor_id).filter(Boolean))] as string[];
-    const profileIdToTeamId = new Map<string, string>();
+    // Build mapping: profiles.id → auth.user_id for VGV assignment to canonical corretor ID
+    const profileIdToAuthId = new Map<string, string>();
     
     if (negCorretorIds.length > 0) {
-      // Get profiles for these corretor_ids to find their user_ids
       const { data: cProfiles } = await supabase.from("profiles").select("id, user_id").in("id", negCorretorIds);
-      
-      // Map profile.user_id → team_members entries
-      const profileUserIds = (cProfiles || []).map(p => p.user_id).filter(Boolean);
-      const profileIdToUserId = new Map((cProfiles || []).map(p => [p.id, p.user_id]));
-      
-      // Find team_members by user_id
-      if (profileUserIds.length > 0) {
-        const { data: tmByUser } = await supabase.from("team_members").select("id, user_id").in("user_id", profileUserIds);
-        const userIdToTeamId = new Map((tmByUser || []).map(t => [t.user_id, t.id]));
-        
-        // Build final mapping: profiles.id → team_members.id
-        for (const [profileId, userId] of profileIdToUserId) {
-          const teamId = userIdToTeamId.get(userId);
-          if (teamId) profileIdToTeamId.set(profileId, teamId);
-        }
-      }
+      (cProfiles || []).forEach(p => {
+        if (p.user_id) profileIdToAuthId.set(p.id, p.user_id);
+      });
     }
 
     // Build VGV + Propostas per gerente from negocios (single source of truth)
@@ -210,11 +203,11 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
       if (fase === "assinado") curr.assinado += Number(p.vgv_final || p.vgv_estimado || 0);
       pdnByGerente.set(gId, curr);
 
-      // Assign VGV to corretor using proper ID mapping
+      // Assign VGV to corretor using profiles.id → auth.user_id mapping
       if (p.corretor_id) {
-        const teamMemberId = profileIdToTeamId.get(p.corretor_id);
-        if (teamMemberId) {
-          const agg = corretorAggMap.get(teamMemberId);
+        const authUserId = profileIdToAuthId.get(p.corretor_id);
+        if (authUserId) {
+          const agg = corretorAggMap.get(authUserId);
           if (agg) {
             if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") agg.real_vgv_gerado += Number(p.vgv_estimado || 0);
             if (fase === "assinado") agg.real_vgv_assinado += Number(p.vgv_final || p.vgv_estimado || 0);

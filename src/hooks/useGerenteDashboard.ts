@@ -168,7 +168,9 @@ export function useGerenteDashboard(period: Period) {
         supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds).eq("resultado", "com_interesse").gte("created_at", startTs).lte("created_at", endTs),
         supabase.from("visitas").select("id", { count: "exact", head: true }).eq("gerente_id", user!.id).eq("data_visita", today),
         supabase.from("visitas").select("id", { count: "exact", head: true }).eq("gerente_id", user!.id).gte("data_visita", format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd")).lte("data_visita", format(endOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd")),
-        supabase.from("visitas").select("id", { count: "exact", head: true }).eq("gerente_id", user!.id).gte("data_visita", start).lte("data_visita", end),
+        // Visitas Marcadas = created in period (when booked), not by scheduled date
+        supabase.from("visitas").select("id", { count: "exact", head: true }).eq("gerente_id", user!.id).gte("created_at", startTs).lte("created_at", endTs),
+        // Visitas Realizadas = data_visita in period + status realizada
         supabase.from("visitas").select("id", { count: "exact", head: true }).eq("gerente_id", user!.id).eq("status", "realizada").gte("data_visita", start).lte("data_visita", end),
         supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).in("corretor_id", teamUserIds),
       ]);

@@ -351,13 +351,24 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
   }, [range]);
 
   const loadVisitasPorEmp = useCallback(async () => {
-    const { data: vis } = await supabase.from("visitas").select("empreendimento, status").gte("data_visita", range.start).lte("data_visita", range.end);
+    // Marcadas = created in period; Realizadas = data_visita in period + status realizada
+    const startTs = `${range.start}T00:00:00`;
+    const endTs = `${range.end}T23:59:59`;
+    const [{ data: visMarcadas }, { data: visRealizadas }] = await Promise.all([
+      supabase.from("visitas").select("empreendimento").gte("created_at", startTs).lte("created_at", endTs).not("status", "eq", "cancelada"),
+      supabase.from("visitas").select("empreendimento").gte("data_visita", range.start).lte("data_visita", range.end).eq("status", "realizada"),
+    ]);
     const empMap = new Map<string, { marcadas: number; realizadas: number }>();
-    for (const v of (vis || [])) {
+    for (const v of (visMarcadas || [])) {
       const emp = v.empreendimento || "Sem empreendimento";
       const curr = empMap.get(emp) || { marcadas: 0, realizadas: 0 };
       curr.marcadas++;
-      if (v.status === "realizada") curr.realizadas++;
+      empMap.set(emp, curr);
+    }
+    for (const v of (visRealizadas || [])) {
+      const emp = v.empreendimento || "Sem empreendimento";
+      const curr = empMap.get(emp) || { marcadas: 0, realizadas: 0 };
+      curr.realizadas++;
       empMap.set(emp, curr);
     }
     setVisitasPorEmp(Array.from(empMap.entries()).map(([emp, d]) => ({ emp, ...d })).sort((a, b) => b.marcadas - a.marcadas));
@@ -375,7 +386,8 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       .lte("created_at", endTs);
     setTotalLeadsPeriodo(leadsCount || 0);
 
-    // Presentes hoje: status ativo atual OU checkpoint presença hoje
+    // Presentes hoje: corretor_disponibilidade uses auth.user_id, checkpoint_diario uses profiles.id
+    // We need to resolve both to auth.user_id to avoid double-counting
     const [{ data: dispRows }, { data: checkPresentes }] = await Promise.all([
       supabase
         .from("corretor_disponibilidade")
@@ -389,7 +401,13 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
     ]);
     const dispIds = new Set<string>();
     (dispRows || []).forEach(r => dispIds.add(r.user_id));
-    (checkPresentes || []).forEach(c => dispIds.add(c.corretor_id));
+    
+    // Resolve checkpoint_diario.corretor_id (profiles.id) to auth.user_id
+    const checkProfileIds = (checkPresentes || []).map(c => c.corretor_id).filter(Boolean);
+    if (checkProfileIds.length > 0) {
+      const { data: checkProfs } = await supabase.from("profiles").select("id, user_id").in("id", checkProfileIds);
+      (checkProfs || []).forEach(p => { if (p.user_id) dispIds.add(p.user_id); });
+    }
     setPresentesHoje(dispIds.size);
 
     // Metas do dia (sum of all corretor daily goals for today)
