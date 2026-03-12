@@ -945,7 +945,7 @@ function EmpreendimentoCard({
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
-          setLandingUrl(`${window.location.origin}/vitrine/${data.id}`);
+          setLandingUrl(getVitrineShareUrl(data.id));
         }
       });
   }, [config.codigo, user, landingRefreshKey]);
