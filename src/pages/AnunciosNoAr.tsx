@@ -764,6 +764,7 @@ function CriarVitrineDialog({
   const [leadTel, setLeadTel] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [vitrineUrl, setVitrineUrl] = useState<string | null>(null);
+  const [vitrineDirectUrl, setVitrineDirectUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
