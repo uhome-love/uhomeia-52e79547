@@ -137,22 +137,14 @@ export default function RankingComercialPanel() {
           <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
             <Trophy className="h-6 w-6 text-warning" />
             Ranking Comercial (VGV)
+            <PeriodBadge className="ml-2" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isAdmin ? "Visão completa da empresa" : "Ranking da sua equipe"}
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodOption)}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(periodLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <GlobalDateFilterBar />
           <Select value={metric} onValueChange={(v) => setMetric(v as RankMetric)}>
             <SelectTrigger className="w-48">
               <SelectValue />
