@@ -94,6 +94,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         setCargoLabel("Backoffice · 💜 Admin");
       } else if (isAdmin) {
         setCargoLabel("Admin · 👑 CEO");
+      } else if (isRh) {
+        setCargoLabel("RH · 💚 Carol");
       } else if (isGestor) {
         setCargoLabel("Gerente");
       } else {
