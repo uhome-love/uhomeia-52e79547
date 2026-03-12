@@ -627,7 +627,7 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {naoIniciaram.map(c => (
-                <span key={c.id} className="inline-flex items-center text-[11px] font-medium px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300/80 border border-amber-500/15">
+                <span key={c.id} className="inline-flex items-center text-[11px] font-medium px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-300/80 border border-amber-500/15">
                   💤 {c.nome}
                 </span>
               ))}
