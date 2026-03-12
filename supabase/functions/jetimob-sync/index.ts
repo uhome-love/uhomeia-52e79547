@@ -145,6 +145,108 @@ serve(async (req) => {
       );
     }
 
+    // --- Backfill: resolve empreendimento for leads with campanha_id via jetimob_campaign_map ---
+    if (body.backfill_campaign) {
+      const { data: campaignMap } = await adminClient
+        .from("jetimob_campaign_map")
+        .select("campaign_id, empreendimento, segmento");
+      
+      const cMap = new Map<string, { empreendimento: string; segmento: string | null }>();
+      for (const row of campaignMap || []) {
+        if (row.campaign_id && row.empreendimento) {
+          cMap.set(String(row.campaign_id), { empreendimento: row.empreendimento, segmento: row.segmento });
+        }
+      }
+
+      // Load pipeline_segmentos for segment resolution
+      const { data: pSegs } = await adminClient.from("pipeline_segmentos").select("id, nome");
+      const segNameToId = new Map<string, string>();
+      for (const s of pSegs || []) segNameToId.set(s.nome.toLowerCase().trim(), s.id);
+
+      // Fetch leads with campanha_id set but no empreendimento
+      const { data: leadsToFix } = await adminClient
+        .from("pipeline_leads")
+        .select("id, campanha_id")
+        .not("campanha_id", "is", null)
+        .or("empreendimento.is.null,empreendimento.eq.")
+        .limit(2000);
+
+      let fixed = 0;
+      for (const lead of leadsToFix || []) {
+        const mapped = cMap.get(String(lead.campanha_id));
+        if (mapped) {
+          const update: Record<string, any> = { empreendimento: mapped.empreendimento };
+          if (mapped.segmento) {
+            const segId = segNameToId.get(mapped.segmento.toLowerCase().trim());
+            if (segId) update.segmento_id = segId;
+          }
+          await adminClient.from("pipeline_leads").update(update).eq("id", lead.id);
+          fixed++;
+        }
+      }
+
+      // Also try: fetch ALL leads from Jetimob API and match by phone to resolve campaign_id
+      const JETIMOB_LEADS_URL_KEY = Deno.env.get("JETIMOB_LEADS_URL_KEY");
+      const JETIMOB_LEADS_PRIVATE_KEY = Deno.env.get("JETIMOB_LEADS_PRIVATE_KEY");
+      if (JETIMOB_LEADS_URL_KEY && JETIMOB_LEADS_PRIVATE_KEY) {
+        try {
+          const apiResp = await fetch(`https://api.jetimob.com/leads/${JETIMOB_LEADS_URL_KEY}`, {
+            method: "GET",
+            headers: { "Authorization-Key": JETIMOB_LEADS_PRIVATE_KEY },
+          });
+          if (apiResp.ok) {
+            const apiData = await apiResp.json();
+            const apiLeads = Array.isArray(apiData?.result) ? apiData.result : Array.isArray(apiData) ? apiData : [];
+
+            // Build phone → campaign_id map from API
+            const phoneToApi = new Map<string, { campaign_id: string; msg: string }>();
+            for (const al of apiLeads) {
+              const p = al.phones?.[0] || al.phone;
+              const cid = al.campaign_id ? String(al.campaign_id) : null;
+              if (p && cid) {
+                phoneToApi.set(p, { campaign_id: cid, msg: al.message || "" });
+              }
+            }
+
+            // Fetch leads without empreendimento that have a phone
+            const { data: phonelessLeads } = await adminClient
+              .from("pipeline_leads")
+              .select("id, telefone")
+              .not("telefone", "is", null)
+              .or("empreendimento.is.null,empreendimento.eq.,empreendimento.eq.Avulso")
+              .limit(2000);
+
+            for (const lead of phonelessLeads || []) {
+              if (!lead.telefone) continue;
+              const apiMatch = phoneToApi.get(lead.telefone);
+              if (apiMatch) {
+                const mapped = cMap.get(apiMatch.campaign_id);
+                if (mapped) {
+                  const update: Record<string, any> = { 
+                    empreendimento: mapped.empreendimento,
+                    campanha_id: apiMatch.campaign_id,
+                  };
+                  if (mapped.segmento) {
+                    const segId = segNameToId.get(mapped.segmento.toLowerCase().trim());
+                    if (segId) update.segmento_id = segId;
+                  }
+                  await adminClient.from("pipeline_leads").update(update).eq("id", lead.id);
+                  fixed++;
+                }
+              }
+            }
+          }
+        } catch (apiErr) {
+          console.warn("Backfill API fetch failed:", apiErr);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ fixed, message: `${fixed} leads corrigidos via campaign mapping` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // --- Main sync flow ---
     const JETIMOB_LEADS_URL_KEY = Deno.env.get("JETIMOB_LEADS_URL_KEY");
     const JETIMOB_LEADS_PRIVATE_KEY = Deno.env.get("JETIMOB_LEADS_PRIVATE_KEY");
@@ -206,11 +308,23 @@ serve(async (req) => {
     // Load empreendimento → pipeline_segmento mapping
     // roleta_campanhas uses roleta_segmentos IDs, but pipeline_leads FK references pipeline_segmentos
     // We resolve by matching segment names between the two tables
-    const [campanhasRes, roletaSegsRes, pipelineSegsRes] = await Promise.all([
+    const [campanhasRes, roletaSegsRes, pipelineSegsRes, campaignMapRes] = await Promise.all([
       adminClient.from("roleta_campanhas").select("empreendimento, segmento_id").eq("ativo", true),
       adminClient.from("roleta_segmentos").select("id, nome"),
       adminClient.from("pipeline_segmentos").select("id, nome"),
+      adminClient.from("jetimob_campaign_map").select("campaign_id, empreendimento, segmento"),
     ]);
+
+    // Build campaign_id → { empreendimento, segmento } map from jetimob_campaign_map
+    const campaignIdMap = new Map<string, { empreendimento: string; segmento: string | null }>();
+    for (const row of campaignMapRes.data || []) {
+      if (row.campaign_id && row.empreendimento) {
+        campaignIdMap.set(String(row.campaign_id), {
+          empreendimento: row.empreendimento,
+          segmento: row.segmento || null,
+        });
+      }
+    }
 
     // Build roleta_segmento_id → pipeline_segmento_id mapping
     const roletaToPipeline = new Map<string, string>();
@@ -230,6 +344,12 @@ serve(async (req) => {
           empToSegmento.set(c.empreendimento.toLowerCase().trim(), pipelineSegId);
         }
       }
+    }
+
+    // Build segmento name → pipeline_segmento_id mapping (for jetimob_campaign_map.segmento)
+    const segmentoNameToId = new Map<string, string>();
+    for (const ps of pipelineSegsRes.data || []) {
+      segmentoNameToId.set(ps.nome.toLowerCase().trim(), ps.id);
     }
 
     // Helper: resolve segmento from empreendimento name
@@ -407,12 +527,25 @@ serve(async (req) => {
         const email = lead.emails?.[0] || lead.email || null;
         const msg = lead.message || "";
         const campanhaNome = extractCampanha(msg);
+        const leadCampaignId = lead.campaign_id ? String(lead.campaign_id) : null;
 
-        // Resolve empreendimento: campanha name → normalize from origem/message/source
-        const origemText = campanhaNome || msg || lead.source || lead.origin || "";
-        let empreendimento = campanhaNome ? normalizeEmpreendimento(campanhaNome) || campanhaNome : null;
+        // Resolve empreendimento: 1) campaign_id via jetimob_campaign_map → 2) keyword matching
+        let empreendimento: string | null = null;
+        let segmentoFromCampaignMap: string | null = null;
+
+        if (leadCampaignId && campaignIdMap.has(leadCampaignId)) {
+          const mapped = campaignIdMap.get(leadCampaignId)!;
+          empreendimento = mapped.empreendimento;
+          segmentoFromCampaignMap = mapped.segmento;
+          console.log(`CAMPAIGN MAP: campaign_id ${leadCampaignId} → ${empreendimento} (${segmentoFromCampaignMap})`);
+        }
+
         if (!empreendimento) {
-          empreendimento = normalizeEmpreendimento(origemText) || normalizeEmpreendimento(lead.source) || normalizeEmpreendimento(lead.origin) || null;
+          const origemText = campanhaNome || msg || lead.source || lead.origin || "";
+          empreendimento = campanhaNome ? normalizeEmpreendimento(campanhaNome) || campanhaNome : null;
+          if (!empreendimento) {
+            empreendimento = normalizeEmpreendimento(origemText) || normalizeEmpreendimento(lead.source) || normalizeEmpreendimento(lead.origin) || null;
+          }
         }
         // Fallback: leads without empreendimento go to "Avulso" so distribution doesn't fail
         if (!empreendimento) {
@@ -425,17 +558,21 @@ serve(async (req) => {
           prioridadeLead = "alta";
         }
 
-        // Resolve segmento from empreendimento
-        // For campaign-specific segments (e.g. "Melnick Day Compactos" → Investimento),
-        // try the full campanha name first before falling back to empreendimento
-        let segmentoId = campanhaNome ? resolveSegmentoId(campanhaNome) : null;
+        // Resolve segmento: 1) from campaign map segmento name → 2) from roleta_campanhas
+        let segmentoId: string | null = null;
+        if (segmentoFromCampaignMap) {
+          segmentoId = segmentoNameToId.get(segmentoFromCampaignMap.toLowerCase().trim()) || null;
+        }
+        if (!segmentoId && campanhaNome) {
+          segmentoId = resolveSegmentoId(campanhaNome);
+        }
         if (!segmentoId) {
           segmentoId = resolveSegmentoId(empreendimento);
         }
 
         // origem = channel (TikTok, Meta Ads, etc.) — detected from message/source
         const canalOrigem = detectCanal(msg, lead.source, lead.origin);
-        // origem_detalhe = full campaign name from the form (e.g. "Melnick Day Compactos (Video Gabriel)")
+        // origem_detalhe = full campaign name from the form
         const campanhaDetalhe = campanhaNome || null;
 
         const { data: insertedLead, error: insertError } = await adminClient
@@ -450,6 +587,9 @@ serve(async (req) => {
             stage_id: novoLeadStageId,
             origem: canalOrigem,
             origem_detalhe: campanhaDetalhe,
+            campanha: campanhaNome || null,
+            campanha_id: leadCampaignId || null,
+            plataforma: canalOrigem || null,
             jetimob_lead_id: jetimobId,
             observacoes: msg || null,
             corretor_id: null,
