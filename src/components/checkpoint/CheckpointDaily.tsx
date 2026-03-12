@@ -121,6 +121,36 @@ export default function CheckpointDaily() {
     return result;
   }, []);
 
+  // Fetch visitas stats for linked team members on a given date
+  const fetchVisitasStats = useCallback(async (members: TeamMember[], targetDate: string) => {
+    const linkedMembers = members.filter(m => m.user_id);
+    if (linkedMembers.length === 0) return {};
+
+    const userIds = linkedMembers.map(m => m.user_id!);
+    const { data: visitas } = await supabase
+      .from("visitas")
+      .select("corretor_id, status")
+      .in("corretor_id", userIds)
+      .eq("data_visita", targetDate);
+
+    // Count per corretor: marcadas = all non-cancelled, realizadas = status realizada
+    const statsById: Record<string, { marcadas: number; realizadas: number }> = {};
+    for (const v of (visitas || [])) {
+      if (!statsById[v.corretor_id]) statsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
+      if (v.status !== "cancelada") statsById[v.corretor_id].marcadas++;
+      if (v.status === "realizada") statsById[v.corretor_id].realizadas++;
+    }
+
+    // Map back to team_member.id
+    const result: Record<string, { marcadas: number; realizadas: number }> = {};
+    for (const m of linkedMembers) {
+      if (m.user_id && statsById[m.user_id]) {
+        result[m.id] = statsById[m.user_id];
+      }
+    }
+    return result;
+  }, []);
+
   const loadCheckpoint = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -129,8 +159,11 @@ export default function CheckpointDaily() {
     const { data: team } = await supabase.from("team_members").select("*").eq("gerente_id", user.id).eq("status", "ativo").order("nome");
     const members = (team || []) as TeamMember[];
 
-    // Fetch OA stats for linked members
-    const oaStats = await fetchOAStats(members, date);
+    // Fetch OA stats and visitas stats for linked members
+    const [oaStats, visitasStats] = await Promise.all([
+      fetchOAStats(members, date),
+      fetchVisitasStats(members, date),
+    ]);
 
     // Fetch corretor daily goals for linked members (today first, fallback to most recent)
     const linkedMembers = members.filter(m => m.user_id);
@@ -197,6 +230,7 @@ export default function CheckpointDaily() {
     for (const m of members) {
       const existing = linesMap.get(m.id);
       const oa = oaStats[m.id];
+      const vis = visitasStats[m.id];
       const cGoal = goalsMap[m.id];
       if (existing) {
         // Always sync metas from corretor goals when available
@@ -225,7 +259,8 @@ export default function CheckpointDaily() {
           obs_gerente: existing.obs_gerente ?? "",
           real_ligacoes: oa ? oa.ligacoes : existing.real_ligacoes,
           real_presenca: existing.real_presenca,
-          real_visitas_marcadas: existing.real_visitas_marcadas, real_visitas_realizadas: existing.real_visitas_realizadas,
+          real_visitas_marcadas: vis ? vis.marcadas : existing.real_visitas_marcadas,
+          real_visitas_realizadas: vis ? vis.realizadas : existing.real_visitas_realizadas,
           real_propostas: existing.real_propostas,
           real_leads: oa ? oa.leads : existing.real_leads,
           obs_dia: existing.obs_dia, status_dia: existing.status_dia,
@@ -247,7 +282,8 @@ export default function CheckpointDaily() {
           obs_gerente: "", 
           real_ligacoes: oa ? oa.ligacoes : null, 
           real_presenca: null,
-          real_visitas_marcadas: null, real_visitas_realizadas: null,
+          real_visitas_marcadas: vis ? vis.marcadas : null,
+          real_visitas_realizadas: vis ? vis.realizadas : null,
           real_propostas: null,
           real_leads: oa ? oa.leads : null, 
           obs_dia: null, status_dia: null,
@@ -257,25 +293,32 @@ export default function CheckpointDaily() {
     }
     setLines(allLines);
     setLoading(false);
-  }, [user, date, fetchOAStats]);
+  }, [user, date, fetchOAStats, fetchVisitasStats]);
 
   const syncOAData = async () => {
     if (!user) return;
     const { data: team } = await supabase.from("team_members").select("*").eq("gerente_id", user.id).eq("status", "ativo");
     const members = (team || []) as TeamMember[];
-    const oaStats = await fetchOAStats(members, date);
-    if (Object.keys(oaStats).length === 0) {
-      toast.info("Nenhum corretor vinculado tem dados da Oferta Ativa hoje.");
+    const [oaStats, visitasStatsSync] = await Promise.all([
+      fetchOAStats(members, date),
+      fetchVisitasStats(members, date),
+    ]);
+    if (Object.keys(oaStats).length === 0 && Object.keys(visitasStatsSync).length === 0) {
+      toast.info("Nenhum corretor vinculado tem dados hoje.");
       return;
     }
     setLines(prev => prev.map(line => {
       const oa = oaStats[line.corretor_id];
-      if (!oa) return line;
-      const updated = { ...line, real_ligacoes: oa.ligacoes, real_leads: oa.leads, has_oa_data: true };
+      const vis = visitasStatsSync[line.corretor_id];
+      const updated = {
+        ...line,
+        ...(oa ? { real_ligacoes: oa.ligacoes, real_leads: oa.leads, has_oa_data: true } : {}),
+        ...(vis ? { real_visitas_marcadas: vis.marcadas, real_visitas_realizadas: vis.realizadas } : {}),
+      };
       updated.status_dia = calcStatusDia(updated);
       return updated;
     }));
-    toast.success("Dados da Oferta Ativa sincronizados!");
+    toast.success("Dados sincronizados!");
   };
 
   // Load pending corretor goals for this date
@@ -394,7 +437,7 @@ export default function CheckpointDaily() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, date, fetchOAStats]);
+  }, [user, date, fetchOAStats, fetchVisitasStats]);
 
   const updateLine = (idx: number, field: keyof CheckpointLine, value: any) => {
     setLines((prev) => {

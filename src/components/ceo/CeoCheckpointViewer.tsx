@@ -87,10 +87,17 @@ export default function CeoCheckpointViewer() {
     const linkedMembers = (allTeam || []).filter(m => m.user_id);
     const userIds = linkedMembers.map(m => m.user_id!);
     const oaStatsById: Record<string, { ligacoes: number; leads: number }> = {};
+    const visitasStatsById: Record<string, { marcadas: number; realizadas: number }> = {};
     if (userIds.length > 0) {
       const dayStart = `${date}T00:00:00-03:00`;
       const dayEnd = `${date}T23:59:59.999-03:00`;
-      // Fetch in batches to avoid query limits
+      // Fetch OA tentativas and visitas in parallel batches
+      const visitasPromise = supabase
+        .from("visitas")
+        .select("corretor_id, status")
+        .in("corretor_id", userIds)
+        .eq("data_visita", date);
+
       for (let i = 0; i < userIds.length; i += 50) {
         const batch = userIds.slice(i, i + 50);
         const { data: tentativas } = await supabase
@@ -105,12 +112,23 @@ export default function CeoCheckpointViewer() {
           if (t.resultado === "com_interesse") oaStatsById[t.corretor_id].leads++;
         }
       }
+
+      const { data: visitas } = await visitasPromise;
+      for (const v of (visitas || [])) {
+        if (!visitasStatsById[v.corretor_id]) visitasStatsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
+        if (v.status !== "cancelada") visitasStatsById[v.corretor_id].marcadas++;
+        if (v.status === "realizada") visitasStatsById[v.corretor_id].realizadas++;
+      }
     }
-    // Map user_id -> team_member.id for OA stats
+    // Map user_id -> team_member.id for OA stats and visitas stats
     const oaStatsByMemberId: Record<string, { ligacoes: number; leads: number }> = {};
+    const visitasStatsByMemberId: Record<string, { marcadas: number; realizadas: number }> = {};
     for (const m of linkedMembers) {
       if (m.user_id && oaStatsById[m.user_id]) {
         oaStatsByMemberId[m.id] = oaStatsById[m.user_id];
+      }
+      if (m.user_id && visitasStatsById[m.user_id]) {
+        visitasStatsByMemberId[m.id] = visitasStatsById[m.user_id];
       }
     }
 
@@ -171,6 +189,7 @@ export default function CeoCheckpointViewer() {
       const lines = team.map(t => {
         const l = linesMap.get(t.id);
         const oa = oaStatsByMemberId[t.id];
+        const vis = visitasStatsByMemberId[t.id];
         const cGoal = goalsMap[t.id];
         return {
           corretor_id: t.id,
@@ -182,8 +201,8 @@ export default function CeoCheckpointViewer() {
           obs_gerente: l?.obs_gerente ?? "",
           real_ligacoes: l?.real_ligacoes != null ? l.real_ligacoes : (oa?.ligacoes ?? null),
           real_leads: l?.real_leads != null ? l.real_leads : (oa?.leads ?? null),
-          real_visitas_marcadas: l?.real_visitas_marcadas ?? null,
-          real_visitas_realizadas: l?.real_visitas_realizadas ?? null,
+          real_visitas_marcadas: vis ? vis.marcadas : (l?.real_visitas_marcadas ?? null),
+          real_visitas_realizadas: vis ? vis.realizadas : (l?.real_visitas_realizadas ?? null),
           real_propostas: l?.real_propostas ?? null,
           obs_dia: l?.obs_dia ?? null,
           status_dia: l?.status_dia ?? null,
