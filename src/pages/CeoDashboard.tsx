@@ -237,6 +237,7 @@ export default function CeoDashboard() {
     reloadRoleta();
   }, [user, localPendentes, getProfileId, insertFilaForCred, reloadRoleta]);
 
+  const [rankingView, setRankingView] = useState<"equipe" | "corretores">("equipe");
 
 
   if (loading && !profile) {
