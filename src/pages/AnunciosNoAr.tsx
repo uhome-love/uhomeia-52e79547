@@ -1130,16 +1130,29 @@ function EmpreendimentoCard({
             </div>
           )}
 
-          {/* Vitrine Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setVitrineOpen(true)}
-            className="w-full gap-2 text-xs font-bold border-primary/30 text-primary hover:bg-primary/10"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Criar Vitrine & Enviar WhatsApp
-          </Button>
+          {/* Landing Page + Vitrine Buttons */}
+          <div className="flex gap-2">
+            {canUpload && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onEditLanding}
+                className="flex-1 gap-2 text-xs font-bold border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                Landing Page
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setVitrineOpen(true)}
+              className={cn("gap-2 text-xs font-bold border-primary/30 text-primary hover:bg-primary/10", canUpload ? "flex-1" : "w-full")}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Criar Vitrine
+            </Button>
+          </div>
 
           {/* Separator */}
           <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
