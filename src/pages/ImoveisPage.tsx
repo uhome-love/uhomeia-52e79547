@@ -689,7 +689,7 @@ export default function ImoveisPage() {
         {/* Filters panel */}
         {!campanhaAtiva && !uhomeOnly && filtersOpen && (
           <Card className="p-4 mb-4 space-y-4 border-border/50">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               <div className="space-y-1">
                 <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Tipo</label>
                 <Select value={tipo} onValueChange={setTipo}>
@@ -757,7 +757,47 @@ export default function ImoveisPage() {
                 </Select>
               </div>
 
-              <div className="space-y-1 col-span-2">
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Suítes</label>
+                <Select value={suites} onValueChange={setSuites}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Todos" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="1">1+</SelectItem>
+                    <SelectItem value="2">2+</SelectItem>
+                    <SelectItem value="3">3+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vagas</label>
+                <Select value={vagas} onValueChange={setVagas}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Todos" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="1">1+</SelectItem>
+                    <SelectItem value="2">2+</SelectItem>
+                    <SelectItem value="3">3+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                  Área: {areaRange[0]}m² — {areaRange[1] >= 500 ? "500+" : areaRange[1]}m²
+                </label>
+                <Slider
+                  min={0} max={500} step={10}
+                  value={areaRange}
+                  onValueChange={(v) => setAreaRange(v as [number, number])}
+                  className="mt-3"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div className="space-y-1">
                 <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                   Valor: {fmtCompact(valorRange[0])} — {valorRange[1] >= 5_000_000 ? "5M+" : fmtCompact(valorRange[1])}
                 </label>
@@ -782,7 +822,7 @@ export default function ImoveisPage() {
               </Button>
               {activeFilterCount > 0 && (
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => {
-                  setTipo(""); setBairro(""); setDormitorios(""); setValorRange([0, 5_000_000]); setSomenteObras(false);
+                  setTipo(""); setBairro(""); setDormitorios(""); setSuites(""); setVagas(""); setAreaRange([0, 500]); setValorRange([0, 5_000_000]); setSomenteObras(false);
                 }}>
                   <X className="h-3 w-3 mr-1" /> Limpar filtros
                 </Button>
