@@ -143,6 +143,17 @@ export function useEscalaDiaria(data: string) {
           .delete()
           .eq("id", existing.id);
         if (error) throw error;
+
+        // If no more approved entries for this corretor, deactivate roleta
+        const remaining = escala.filter(
+          e => e.corretor_id === corretorUserId && e.id !== existing.id && e.aprovacao_status === "aprovado"
+        );
+        if (remaining.length === 0) {
+          await supabase
+            .from("corretor_disponibilidade")
+            .update({ na_roleta: false, updated_at: new Date().toISOString() })
+            .eq("user_id", corretorUserId);
+        }
       } else {
         const { error } = await supabase
           .from("distribuicao_escala")
@@ -158,9 +169,30 @@ export function useEscalaDiaria(data: string) {
             toast.info("Corretor já está na escala para este segmento.");
           } else throw error;
         }
+
+        // Activate corretor na roleta + ensure disponibilidade row exists
+        const { data: dispRow } = await supabase
+          .from("corretor_disponibilidade")
+          .select("id")
+          .eq("user_id", corretorUserId)
+          .maybeSingle();
+
+        if (dispRow) {
+          await supabase
+            .from("corretor_disponibilidade")
+            .update({ na_roleta: true, updated_at: new Date().toISOString() })
+            .eq("user_id", corretorUserId);
+        } else {
+          await supabase
+            .from("corretor_disponibilidade")
+            .insert({ user_id: corretorUserId, na_roleta: true, status: "na_empresa", segmentos: [] });
+        }
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: qKey }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qKey });
+      qc.invalidateQueries({ queryKey: ["escala-disponibilidades"] });
+    },
     onError: () => toast.error("Erro ao atualizar escala"),
   });
 
@@ -178,8 +210,30 @@ export function useEscalaDiaria(data: string) {
         .eq("id", entryId);
       if (error) throw error;
     },
-    onSuccess: (_, vars) => {
+    onSuccess: async (_, vars) => {
+      // When approving, also activate corretor na roleta
+      if (vars.status === "aprovado") {
+        const entry = escala.find(e => e.id === vars.entryId);
+        if (entry) {
+          const { data: dispRow } = await supabase
+            .from("corretor_disponibilidade")
+            .select("id")
+            .eq("user_id", entry.corretor_id)
+            .maybeSingle();
+          if (dispRow) {
+            await supabase
+              .from("corretor_disponibilidade")
+              .update({ na_roleta: true, updated_at: new Date().toISOString() })
+              .eq("user_id", entry.corretor_id);
+          } else {
+            await supabase
+              .from("corretor_disponibilidade")
+              .insert({ user_id: entry.corretor_id, na_roleta: true, status: "na_empresa", segmentos: [] });
+          }
+        }
+      }
       qc.invalidateQueries({ queryKey: qKey });
+      qc.invalidateQueries({ queryKey: ["escala-disponibilidades"] });
       toast.success(vars.status === "aprovado" ? "Escala aprovada!" : "Escala rejeitada.");
     },
     onError: () => toast.error("Erro ao processar aprovação"),
