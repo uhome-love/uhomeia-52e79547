@@ -96,6 +96,9 @@ function CeoView() {
       {/* Tabs */}
       <Tabs defaultValue="gestao" className="space-y-4">
         <TabsList className="bg-muted/50">
+          <TabsTrigger value="leads" className="gap-1.5">
+            📊 Leads Gerados
+          </TabsTrigger>
           <TabsTrigger value="gestao">Gestão da Roleta</TabsTrigger>
           <TabsTrigger value="roletagens" className="gap-1.5">
             Histórico Roletagens
