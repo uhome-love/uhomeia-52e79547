@@ -58,7 +58,9 @@ interface CorretorDrawerData { user_id: string; nome: string; avatar_url: string
 export default function GerenteDashboard() {
   const { isGestor, isAdmin, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
-  const [period, setPeriod] = useState<Period>("dia");
+  const { period: globalPeriod, range } = useDateFilter();
+  // Map global period to gerente period
+  const period: Period = globalPeriod === "semana" ? "semana" : globalPeriod === "mes" || globalPeriod === "ultimos_30d" ? "mes" : "dia";
   const [negFaseTab, setNegFaseTab] = useState<"proposta" | "negociacao" | "documentacao">("proposta");
   const [drawerCorretor, setDrawerCorretor] = useState<CorretorDrawerData | null>(null);
   const [lastUpdate] = useState(() => format(new Date(), "HH:mm"));
