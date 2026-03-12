@@ -105,10 +105,15 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
     if (!resultado || submitting) return;
     if (feedback.trim().length < 10) { toast.error("Feedback mínimo de 10 caracteres"); return; }
     if (resultado === "com_interesse" && !interesseTipo) { toast.error("Selecione o tipo de interesse"); return; }
+    // If "retirar do sistema" selected, show confirmation first
+    if (isRetirar && !showRetirarConfirm) {
+      setShowRetirarConfirm(true);
+      return;
+    }
     setSubmitting(true);
     try {
       const isVisita = interesseTipo === "visita_marcada" || visitaMarcada;
-      await onSubmit(resultado, feedback.trim(), isVisita, resultado === "com_interesse" ? interesseTipo : undefined);
+      await onSubmit(resultado, feedback.trim(), isVisita, resultado === "com_interesse" ? interesseTipo : undefined, isRetirar);
       setResultado("");
       setFeedback("");
       setVisitaMarcada(false);
