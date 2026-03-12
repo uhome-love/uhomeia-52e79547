@@ -88,6 +88,14 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
   const [generating, setGenerating] = useState(false);
   const contractRef = useRef<HTMLDivElement>(null);
 
+  // Testemunhas editáveis
+  const [testemunha1Nome, setTestemunha1Nome] = useState("");
+  const [testemunha1Email, setTestemunha1Email] = useState("");
+  const [testemunha1Cpf, setTestemunha1Cpf] = useState("");
+  const [testemunha2Nome, setTestemunha2Nome] = useState("");
+  const [testemunha2Email, setTestemunha2Email] = useState("");
+  const [testemunha2Cpf, setTestemunha2Cpf] = useState("");
+
   const parcelas = data.parcelas.length > 0 ? data.parcelas : [{ numero: 1, data: data.data_venda, valor: data.comissao_total }];
 
   // Separate credores
