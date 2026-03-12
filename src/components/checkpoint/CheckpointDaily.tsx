@@ -299,19 +299,26 @@ export default function CheckpointDaily() {
     if (!user) return;
     const { data: team } = await supabase.from("team_members").select("*").eq("gerente_id", user.id).eq("status", "ativo");
     const members = (team || []) as TeamMember[];
-    const oaStats = await fetchOAStats(members, date);
-    if (Object.keys(oaStats).length === 0) {
-      toast.info("Nenhum corretor vinculado tem dados da Oferta Ativa hoje.");
+    const [oaStats, visitasStatsSync] = await Promise.all([
+      fetchOAStats(members, date),
+      fetchVisitasStats(members, date),
+    ]);
+    if (Object.keys(oaStats).length === 0 && Object.keys(visitasStatsSync).length === 0) {
+      toast.info("Nenhum corretor vinculado tem dados hoje.");
       return;
     }
     setLines(prev => prev.map(line => {
       const oa = oaStats[line.corretor_id];
-      if (!oa) return line;
-      const updated = { ...line, real_ligacoes: oa.ligacoes, real_leads: oa.leads, has_oa_data: true };
+      const vis = visitasStatsSync[line.corretor_id];
+      const updated = {
+        ...line,
+        ...(oa ? { real_ligacoes: oa.ligacoes, real_leads: oa.leads, has_oa_data: true } : {}),
+        ...(vis ? { real_visitas_marcadas: vis.marcadas, real_visitas_realizadas: vis.realizadas } : {}),
+      };
       updated.status_dia = calcStatusDia(updated);
       return updated;
     }));
-    toast.success("Dados da Oferta Ativa sincronizados!");
+    toast.success("Dados sincronizados!");
   };
 
   // Load pending corretor goals for this date
