@@ -32,7 +32,7 @@ export default function AdminPanel() {
   const [newEmail, setNewEmail] = useState("");
   const [newNome, setNewNome] = useState("");
   const [newSenha, setNewSenha] = useState("");
-  const [newRole, setNewRole] = useState<"corretor" | "gestor" | "backoffice">("corretor");
+  const [newRole, setNewRole] = useState<"corretor" | "gestor" | "backoffice" | "rh">("corretor");
   const [selectedGerente, setSelectedGerente] = useState("");
   const [gestores, setGestores] = useState<{ user_id: string; nome: string }[]>([]);
   const [creating, setCreating] = useState(false);
