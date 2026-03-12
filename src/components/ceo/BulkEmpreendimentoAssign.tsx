@@ -35,8 +35,10 @@ interface LeadRow {
 export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplete }: Props) {
   const [selectedEmp, setSelectedEmp] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = false);
   const [search, setSearch] = useState("");
+  const [filterOrigem, setFilterOrigem] = useState("__all__");
+  const [autoResolving, setAutoResolving] = useState(false);
   const [filterOrigem, setFilterOrigem] = useState("__all__");
 
   const { data: leads = [], isLoading, refetch } = useQuery({
