@@ -49,6 +49,13 @@ export interface PipelineLead {
   updated_at: string;
   created_by: string | null;
   negocio_id: string | null;
+  // Marketing attribution
+  campanha: string | null;
+  campanha_id: string | null;
+  formulario: string | null;
+  conjunto_anuncio: string | null;
+  anuncio: string | null;
+  plataforma: string | null;
 }
 
 export interface PipelineSegmento {
@@ -117,7 +124,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
 
     try {
 
-    const selectFields = "id, nome, telefone, telefone2, email, segmento_id, produto_id, empreendimento, stage_id, stage_changed_at, ordem_no_stage, corretor_id, gerente_id, temperatura, modo_conducao, complexidade_score, oportunidade_score, escalation_level, last_escalation_at, distribuido_em, aceito_em, aceite_expira_em, aceite_status, origem, origem_detalhe, jetimob_lead_id, observacoes, proxima_acao, data_proxima_acao, motivo_descarte, valor_estimado, created_at, updated_at, created_by, negocio_id, ultima_acao_at";
+    const selectFields = "id, nome, telefone, telefone2, email, segmento_id, produto_id, empreendimento, stage_id, stage_changed_at, ordem_no_stage, corretor_id, gerente_id, temperatura, modo_conducao, complexidade_score, oportunidade_score, escalation_level, last_escalation_at, distribuido_em, aceito_em, aceite_expira_em, aceite_status, origem, origem_detalhe, jetimob_lead_id, observacoes, proxima_acao, data_proxima_acao, motivo_descarte, valor_estimado, created_at, updated_at, created_by, negocio_id, ultima_acao_at, campanha, campanha_id, formulario, conjunto_anuncio, anuncio, plataforma";
     const pageSize = 1000;
 
     let teamUserIds: string[] = [];
