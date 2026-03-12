@@ -316,12 +316,21 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
   const [responsavel, setResponsavel] = useState("corretor");
   const [parceiro, setParceiro] = useState("");
   const [obs, setObs] = useState("");
+  const [empreendimento, setEmpreendimento] = useState(lead.empreendimento || "");
   const [corretores, setCorretores] = useState<{ user_id: string; nome: string }[]>([]);
+  const [empreendimentos, setEmpreendimentos] = useState<string[]>([]);
 
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase.from("team_members").select("user_id, nome").eq("status", "ativo");
       if (data) setCorretores(data.filter((c: any) => c.user_id));
+      
+      const { data: empData } = await supabase.from("empreendimento_overrides").select("nome, codigo");
+      if (empData) {
+        const nomes = empData.map((e: any) => e.nome || e.codigo).filter(Boolean);
+        const unique = [...new Set(nomes)] as string[];
+        setEmpreendimentos(unique.sort());
+      }
     };
     load();
   }, []);
@@ -349,6 +358,18 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
       <p className="text-xs text-muted-foreground">Cliente: <strong>{lead.nome}</strong> {lead.empreendimento && <Badge variant="outline" className="ml-1 text-[10px]">{lead.empreendimento}</Badge>}</p>
 
       <div className="space-y-3">
+        <div>
+          <Label className="text-xs">Empreendimento *</Label>
+          <Select value={empreendimento} onValueChange={setEmpreendimento}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione o empreendimento" /></SelectTrigger>
+            <SelectContent>
+              {empreendimentos.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              {empreendimento && !empreendimentos.includes(empreendimento) && (
+                <SelectItem value={empreendimento}>{empreendimento}</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
         <div>
           <Label className="text-xs">Local da visita *</Label>
           <Select value={local} onValueChange={setLocal}>
@@ -397,12 +418,12 @@ function VisitaMarcadaForm({ lead, onConfirm, targetStageId }: { lead: PipelineL
         <Button
           size="sm"
           className="text-xs gap-1"
-          disabled={!data || !horario}
+          disabled={!data || !horario || !empreendimento}
           onClick={() => onConfirm({
             leadId: lead.id,
             targetStageId,
-            observacao: `Visita Marcada | ${data} ${horario} | Local: ${LOCAL_OPTIONS.find(o => o.value === local)?.label || local} | Responsável: ${RESPONSAVEL_OPTIONS.find(o => o.value === responsavel)?.label || responsavel}${obs ? ` | ${obs}` : ""}`,
-            extraData: { local, data, horario, responsavel, parceiro: parceiro === "none" ? null : parceiro, observacao: obs, criarVisita: true },
+            observacao: `Visita Marcada | ${data} ${horario} | Empreendimento: ${empreendimento} | Local: ${LOCAL_OPTIONS.find(o => o.value === local)?.label || local} | Responsável: ${RESPONSAVEL_OPTIONS.find(o => o.value === responsavel)?.label || responsavel}${obs ? ` | ${obs}` : ""}`,
+            extraData: { local, data, horario, responsavel, parceiro: parceiro === "none" ? null : parceiro, observacao: obs, empreendimento, criarVisita: true },
           })}
         >
           📅 Confirmar e agendar visita
