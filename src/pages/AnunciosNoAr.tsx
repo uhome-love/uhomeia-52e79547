@@ -816,7 +816,9 @@ function CriarVitrineDialog({
       if (error) throw error;
 
       const url = getVitrineShareUrl(data.id);
+      const directUrl = getVitrineDirectUrl(data.id);
       setVitrineUrl(url);
+      setVitrineDirectUrl(directUrl);
       toast.success("Vitrine criada!");
     } catch (err: any) {
       toast.error("Erro: " + (err.message || "Falha ao criar vitrine"));
