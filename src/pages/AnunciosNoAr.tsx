@@ -1325,6 +1325,32 @@ export default function AnunciosNoAr() {
         />
       )}
 
+      {/* Landing Page Editor */}
+      {landingCodigo && (() => {
+        const landingConfig = SEGMENTOS.flatMap(s => s.empreendimentos).find(e => e.codigo === landingCodigo);
+        const landingOverride = overrides[landingCodigo] || null;
+        return landingConfig ? (
+          <LandingPageEditor
+            open={!!landingCodigo}
+            onOpenChange={(v) => { if (!v) setLandingCodigo(null); }}
+            codigo={landingConfig.codigo}
+            nome={landingConfig.nome}
+            existing={landingOverride ? {
+              id: landingOverride.id,
+              codigo: landingOverride.codigo,
+              diferenciais: (landingOverride as any).diferenciais || [],
+              plantas: (landingOverride as any).plantas || [],
+              video_url: (landingOverride as any).video_url || "",
+              mapa_url: (landingOverride as any).mapa_url || "",
+              cor_primaria: (landingOverride as any).cor_primaria || "#1e3a5f",
+              landing_titulo: (landingOverride as any).landing_titulo || "",
+              landing_subtitulo: (landingOverride as any).landing_subtitulo || "",
+            } : null}
+            onSaved={fetchOverrides}
+          />
+        ) : null;
+      })()}
+
       {/* ─── HEADER ─── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[hsl(222,47%,11%)] via-[hsl(222,47%,15%)] to-[hsl(222,47%,20%)] p-6 border border-border/20">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
