@@ -130,24 +130,6 @@ serve(async (req) => {
   }
 
   try {
-    // Auth check: allow service_role, apikey header, or authenticated user
-    const authHeader = req.headers.get("Authorization");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const apikeyHeader = req.headers.get("apikey");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const isInternalCall = (authHeader === `Bearer ${serviceRoleKey}`) || (apikeyHeader === anonKey && authHeader === `Bearer ${anonKey}`);
-    
-    if (!isInternalCall) {
-      if (!authHeader?.startsWith("Bearer ")) {
-        return new Response(JSON.stringify({ error: "Não autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const sb = createClient(supabaseUrl, anonKey!, { global: { headers: { Authorization: authHeader } } });
-      const { data: { user }, error: authErr } = await sb.auth.getUser();
-      if (authErr || !user) {
-        return new Response(JSON.stringify({ error: "Token inválido" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
 
     const TYPESENSE_HOST = Deno.env.get("TYPESENSE_HOST");
     const TYPESENSE_ADMIN_API_KEY = Deno.env.get("TYPESENSE_ADMIN_API_KEY");
