@@ -293,7 +293,7 @@ export default function CheckpointDaily() {
     }
     setLines(allLines);
     setLoading(false);
-  }, [user, date, fetchOAStats]);
+  }, [user, date, fetchOAStats, fetchVisitasStats]);
 
   const syncOAData = async () => {
     if (!user) return;
