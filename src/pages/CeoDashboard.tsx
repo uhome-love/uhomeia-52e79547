@@ -88,8 +88,7 @@ function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor
 // ─── Main Page ───
 export default function CeoDashboard() {
   const { user } = useAuth();
-  const [period, setPeriod] = useState<DashPeriod>("hoje");
-  const [customRange, setCustomRange] = useState<{ start: string; end: string } | undefined>();
+  const { period, range, setPeriod, setCustomRange, label: periodLabel } = useDateFilter();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [datePickerFrom, setDatePickerFrom] = useState<Date | undefined>();
   const [datePickerTo, setDatePickerTo] = useState<Date | undefined>();
@@ -105,25 +104,7 @@ export default function CeoDashboard() {
     teams, corretoresRank, origens, leadsPorEmpreendimento, visitasPorEmp,
     totalLeadsPeriodo, presentesHoje, metasDiaTotal,
     reload, reloadRoleta,
-  } = useCeoDashboard(period, customRange);
-
-  const [rankingView, setRankingView] = useState<"equipe" | "corretores">("equipe");
-
-  const handleSelectPeriod = (p: DashPeriod) => {
-    if (p !== "custom") setCustomRange(undefined);
-    setPeriod(p);
-  };
-
-  const handleApplyCustomRange = () => {
-    if (datePickerFrom && datePickerTo) {
-      setCustomRange({
-        start: format(datePickerFrom, "yyyy-MM-dd"),
-        end: format(datePickerTo, "yyyy-MM-dd"),
-      });
-      setPeriod("custom");
-      setDatePickerOpen(false);
-    }
-  };
+  } = useCeoDashboard(period as DashPeriod, { start: range.start, end: range.end });
 
   // Build dashboard data for HOMI
   const dashboardData = useMemo(() => ({
