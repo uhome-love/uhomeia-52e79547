@@ -663,6 +663,14 @@ export default function VitrinePage() {
             )}
           </main>
 
+          {/* Lead Capture Form */}
+          <div className="max-w-lg mx-auto px-4 sm:px-6 pb-8">
+            <LeadCaptureForm
+              empreendimento={isMelnickDay ? vitrine.titulo : imoveis[0]?.empreendimento || vitrine.titulo}
+              source={isMelnickDay ? "vitrine_melnick_day" : "vitrine_uhome"}
+            />
+          </div>
+
           {/* CTA Footer */}
           {whatsappLink && (
             <section className="bg-gradient-to-r from-slate-900 to-blue-900 py-12">
