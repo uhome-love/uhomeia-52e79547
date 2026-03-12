@@ -408,6 +408,7 @@ export function AppSidebar() {
             label: "Recrutamento",
             items: [
               { title: "Candidatos", url: "/rh/recrutamento", icon: Users },
+              { title: "Entrevistas", url: "/rh/entrevistas", icon: CalendarDays },
             ],
           },
           {

@@ -212,6 +212,7 @@ const App = () => (
             {/* RH — Carol */}
             <Route path="/rh" element={<ProtectedPage roles={["rh", "admin"]}><RhDashboard /></ProtectedPage>} />
             <Route path="/rh/recrutamento" element={<ProtectedPage roles={["rh", "admin"]}><RhRecrutamento /></ProtectedPage>} />
+            <Route path="/rh/entrevistas" element={<ProtectedPage roles={["rh", "admin"]}><RhEntrevistas /></ProtectedPage>} />
             <Route path="/rh/conversas" element={<ProtectedPage roles={["rh", "admin"]}><RhConversas /></ProtectedPage>} />
             <Route path="/rh/sala-reuniao" element={<ProtectedPage roles={["rh", "admin"]}><RhSalaReuniao /></ProtectedPage>} />
 
