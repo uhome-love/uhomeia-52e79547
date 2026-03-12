@@ -958,6 +958,7 @@ function EmpreendimentoCard({
   loading,
   materiais,
   canUpload,
+  isAdmin,
   onRefreshMateriais,
   override,
   onEditOverride,
@@ -969,12 +970,33 @@ function EmpreendimentoCard({
   loading: boolean;
   materiais: Material[];
   canUpload: boolean;
+  isAdmin: boolean;
   onRefreshMateriais: () => void;
   override: EmpreendimentoOverride | null;
   onEditOverride: () => void;
   onEditLanding: () => void;
 }) {
+  const { user } = useAuth();
   const [vitrineOpen, setVitrineOpen] = useState(false);
+  const [landingUrl, setLandingUrl] = useState<string | null>(null);
+
+  // Check for existing landing page vitrine
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("vitrines")
+      .select("id")
+      .eq("tipo", "anuncio")
+      .contains("imovel_ids", [config.codigo])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setLandingUrl(`${window.location.origin}/vitrine/${data.id}`);
+        }
+      });
+  }, [config.codigo, user]);
 
   // Merge: override takes priority over Jetimob data
   const hasOverride = !!override;
