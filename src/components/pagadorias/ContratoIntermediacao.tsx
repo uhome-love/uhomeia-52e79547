@@ -247,9 +247,9 @@ export default function ContratoIntermediacao({ open, onOpenChange, data, onData
         <div
           ref={contractRef}
           style={{
-            fontFamily: "'Georgia', 'Times New Roman', 'Calibri', serif",
-            fontSize: "13px",
-            lineHeight: "1.7",
+            fontFamily: "'Calibri', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+            fontSize: "14px",
+            lineHeight: "1.8",
             color: "#1a1a1a",
             background: "#fff",
             padding: "16px 20px",
