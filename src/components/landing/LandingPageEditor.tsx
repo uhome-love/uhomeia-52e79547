@@ -8,6 +8,7 @@ import { Loader2, Upload, Trash2, Plus, X, Palette, MapPin, FileText, Video, Ima
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
+import { getVitrineShareUrl } from "@/lib/vitrineUrl";
 
 interface LandingOverride {
   id?: string;

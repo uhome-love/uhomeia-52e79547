@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getVitrineShareUrl } from "@/lib/vitrineUrl";
 
 /* ═══════════════════════════════════════════
    DATA — Empreendimentos

@@ -13,6 +13,7 @@ import { Search, Building2, Loader2, ChevronLeft, ChevronRight, Home, BedDouble,
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { getVitrineShareUrl } from "@/lib/vitrineUrl";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
