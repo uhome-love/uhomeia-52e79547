@@ -20,6 +20,7 @@ interface Props {
 export default function CeoDailyReport({ teams, corretoresRank, kpis, totalLeads, presentesHoje }: Props) {
   const reportRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const hoje = format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
   const hojeShort = format(new Date(), "dd-MM-yyyy");
 
