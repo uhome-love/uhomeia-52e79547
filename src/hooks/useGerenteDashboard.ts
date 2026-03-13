@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { todayBRT, formatBRLCompact } from "@/lib/utils";
 
@@ -198,7 +198,9 @@ export function useGerenteDashboard(period: Period) {
       };
     },
     enabled: !!user && !!profileId && teamUserIds.length > 0,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Ranking ──
@@ -261,8 +263,9 @@ export function useGerenteDashboard(period: Period) {
       return rows.sort((a, b) => b.pontos - a.pontos);
     },
     enabled: !!user && teamUserIds.length > 0,
-    staleTime: 30_000,
+    staleTime: 60_000,
     refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Radar Alerts ──
@@ -301,6 +304,7 @@ export function useGerenteDashboard(period: Period) {
     },
     enabled: !!user && !!profileId && teamUserIds.length > 0,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Funil Comercial ──
@@ -335,6 +339,7 @@ export function useGerenteDashboard(period: Period) {
     },
     enabled: !!user && !!profileId && teamUserIds.length > 0,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Negócios que pedem ação ──
@@ -360,6 +365,7 @@ export function useGerenteDashboard(period: Period) {
     },
     enabled: !!user && !!profileId,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Negócios Quentes (mais avançados) ──
@@ -392,6 +398,7 @@ export function useGerenteDashboard(period: Period) {
     },
     enabled: !!user && !!profileId,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Negócios por fase (proposta, negociacao, documentacao) ──
@@ -417,6 +424,7 @@ export function useGerenteDashboard(period: Period) {
     },
     enabled: !!user && !!profileId,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
   // ── Agenda de Hoje ──
   const { data: agendaHoje } = useQuery({
@@ -426,7 +434,9 @@ export function useGerenteDashboard(period: Period) {
       return (data || []).map(v => ({ ...v, corretor_nome: teamNameMap[v.corretor_id || ""]?.split(" ")[0] })) as VisitaHoje[];
     },
     enabled: !!user,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Resumo Oferta Ativa ──
@@ -483,7 +493,9 @@ export function useGerenteDashboard(period: Period) {
       return { leadsDisponiveis: totalLeads || 0, tentativasHoje: t, aproveitados: aprHoje, taxa: t > 0 ? Math.round((aprHoje / t) * 100) : 0, corretoresAtivos: ativos, corretoresParados: parados, tempoMedioMinutos, taxaPorCorretor } as OAResumo;
     },
     enabled: !!user && teamUserIds.length > 0,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Alertas operacionais ──
