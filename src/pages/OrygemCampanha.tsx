@@ -8,7 +8,8 @@ import {
   ChevronDown, ChevronUp, Home, DollarSign, Users, Calendar,
   TreePine, Dumbbell, PartyPopper, Baby, Dog, Flame, Palmtree,
   Waves, Send, FileText, ArrowRight, Gift, Sparkles, Car, Eye,
-  BadgeCheck, ShieldCheck, ExternalLink
+  BadgeCheck, ShieldCheck, ExternalLink, Play, Clock, Navigation,
+  Leaf, ShoppingBag, Gamepad2, Armchair, Sun, X
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -20,49 +21,151 @@ import { useNavigate } from "react-router-dom";
 const CAMPAIGN_TARGET = 10;
 const CAMPAIGN_VGV = 10_000_000;
 
+const GALLERY_IMAGES = [
+  { label: "Fachada", url: "/images/orygem/fachada.jpg", category: "fachada" },
+  { label: "Jardim & Lazer", url: "/images/orygem/lazer-jardim.jpg", category: "lazer" },
+  { label: "Spa & Hidro", url: "/images/orygem/interior-spa.jpg", category: "interior" },
+  { label: "Piscina", url: "/images/orygem/piscina.jpg", category: "lazer" },
+  { label: "Market", url: "/images/orygem/market.jpg", category: "lazer" },
+  { label: "Living Integrado", url: "/images/orygem/living.jpg", category: "interior" },
+  { label: "Terraço", url: "/images/orygem/terraco.jpg", category: "interior" },
+  { label: "Fachada Lateral", url: "/images/orygem/fachada2.jpg", category: "fachada" },
+  { label: "Churrasqueira", url: "/images/orygem/churrasqueira.jpg", category: "interior" },
+  { label: "Área Verde", url: "/images/orygem/area-verde.jpg", category: "lazer" },
+  { label: "Quiosque Gourmet", url: "/images/orygem/quiosque.jpg", category: "lazer" },
+  { label: "Playground", url: "/images/orygem/playground.jpg", category: "lazer" },
+  { label: "Pátio Privativo", url: "/images/orygem/patio.jpg", category: "interior" },
+  { label: "Cozinha", url: "/images/orygem/cozinha.jpg", category: "interior" },
+  { label: "Suíte", url: "/images/orygem/suite.jpg", category: "interior" },
+  { label: "Academia", url: "/images/orygem/academia.jpg", category: "lazer" },
+  { label: "Salão de Festas", url: "/images/orygem/salao-festas.jpg", category: "lazer" },
+  { label: "Beach Tennis", url: "/images/orygem/beach-tennis.jpg", category: "lazer" },
+  { label: "Espaço Pet", url: "/images/orygem/pet-space.jpg", category: "lazer" },
+  { label: "Redário", url: "/images/orygem/redario.jpg", category: "lazer" },
+];
+
 const INFRASTRUCTURE = [
-  { icon: Waves, label: "Piscina", color: "text-blue-500" },
-  { icon: Dumbbell, label: "Academia", color: "text-orange-500" },
-  { icon: PartyPopper, label: "Salão de festas", color: "text-pink-500" },
-  { icon: Baby, label: "Playground", color: "text-purple-500" },
-  { icon: Target, label: "Beach tennis", color: "text-amber-500" },
-  { icon: Dog, label: "Pet space", color: "text-emerald-500" },
-  { icon: Flame, label: "Fogo de chão", color: "text-red-500" },
-  { icon: Palmtree, label: "Quiosques com churrasqueira", color: "text-lime-600" },
-  { icon: TreePine, label: "Área verde preservada", color: "text-green-600" },
+  { icon: Building2, label: "Club House", img: "/images/orygem/salao-festas.jpg" },
+  { icon: Waves, label: "Piscina com Deck Solarium", img: "/images/orygem/piscina.jpg" },
+  { icon: Waves, label: "Piscina em Níveis e Spa", img: "/images/orygem/interior-spa.jpg" },
+  { icon: Dumbbell, label: "Academia", img: "/images/orygem/academia.jpg" },
+  { icon: PartyPopper, label: "Salão de Festas", img: "/images/orygem/salao-festas.jpg" },
+  { icon: Gamepad2, label: "Sala de Jogos", img: "/images/orygem/market.jpg" },
+  { icon: Baby, label: "Brinquedoteca", img: "/images/orygem/playground.jpg" },
+  { icon: Target, label: "Quadra Beach Tennis", img: "/images/orygem/beach-tennis.jpg" },
+  { icon: Target, label: "Mini-Quadra", img: "/images/orygem/beach-tennis.jpg" },
+  { icon: Palmtree, label: "Quiosque Gourmet", img: "/images/orygem/quiosque.jpg" },
+  { icon: Baby, label: "Playground", img: "/images/orygem/playground.jpg" },
+  { icon: Flame, label: "Fogo de Chão", img: "/images/orygem/churrasqueira.jpg" },
+  { icon: Armchair, label: "Redário", img: "/images/orygem/redario.jpg" },
+  { icon: Dog, label: "Espaço Pet", img: "/images/orygem/pet-space.jpg" },
+  { icon: ShoppingBag, label: "Market", img: "/images/orygem/market.jpg" },
+  { icon: TreePine, label: "Área Verde 13.000m²", img: "/images/orygem/area-verde.jpg" },
+];
+
+const PROXIMIDADES = [
+  { local: "Colégio Pastor Dohms Zona Sul", tempo: "2 min" },
+  { local: "Bourbon Teresópolis", tempo: "5 min" },
+  { local: "Colégio João XXIII", tempo: "5 min" },
+  { local: "Uniritter Campus Zona Sul", tempo: "6 min" },
+  { local: "PUCRS", tempo: "10 min" },
+  { local: "Jardim Botânico", tempo: "13 min" },
+  { local: "Av. Carlos Gomes", tempo: "15 min" },
+  { local: "Av. Nilo Peçanha", tempo: "16 min" },
+  { local: "Parque Moinhos de Vento", tempo: "20 min" },
+  { local: "Shopping Iguatemi", tempo: "24 min" },
+];
+
+const FASE1_UNITS = [
+  { bloco: "2D", unidade: "20", area: "150 m²", valor: "R$ 871.500" },
+  { bloco: "3D", unidade: "92", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "93", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "96", area: "173,71 m²", valor: "R$ 1.318.000" },
+  { bloco: "3D", unidade: "97", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "99", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "100", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "101", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "102", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "103", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "104", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "106", area: "173,71 m²", valor: "R$ 1.009.000" },
+];
+
+const FASE2_UNITS = [
+  { bloco: "3D", unidade: "65", area: "173,71 m²", valor: "R$ 909.200" },
+  { bloco: "3D", unidade: "66", area: "173,71 m²", valor: "R$ 909.200" },
+  { bloco: "3D", unidade: "67", area: "173,71 m²", valor: "R$ 909.200" },
+  { bloco: "3D", unidade: "68", area: "173,71 m²", valor: "R$ 909.200" },
+  { bloco: "3D", unidade: "69", area: "173,71 m²", valor: "R$ 909.200" },
+  { bloco: "3D", unidade: "72", area: "173,71 m²", valor: "R$ 1.201.800" },
+  { bloco: "3D", unidade: "73", area: "173,71 m²", valor: "R$ 1.043.900" },
+  { bloco: "3D", unidade: "75", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "76", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "77", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "78", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "79", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "80", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "81", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "82", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "85", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "86", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "87", area: "173,71 m²", valor: "R$ 1.009.000" },
+  { bloco: "3D", unidade: "88", area: "173,71 m²", valor: "R$ 1.006.900" },
+  { bloco: "3D", unidade: "89", area: "173,71 m²", valor: "R$ 1.006.900" },
 ];
 
 const BROKER_ARGUMENTS = [
   "Casa com valor próximo de apartamento",
-  "Condomínio clube completo",
-  "Casa com pátio e terraço",
-  "Produto raro em Porto Alegre",
-  "Empreendimento quase pronto",
-  "Possibilidade de visitar obra e decorado",
+  "Condomínio clube completo com 16 espaços de lazer",
+  "Casa com pátio privativo e terraço no 3º pavimento",
+  "Produto raro em Porto Alegre — condomínio fechado de casas",
+  "Empreendimento quase pronto — possibilidade de visitar obra e decorado",
+  "Espera para lareira, piscina e spa no 1º e 3º pavimentos",
+  "13.000m² de área verde preservada dentro do condomínio",
+  "Localização estratégica: entre a Zona Sul e Zona Norte",
+  "Incorporadora ENCORP — referência no mercado",
+  "Market e conveniência exclusiva dentro do condomínio",
 ];
 
 const SCRIPTS = [
   {
     title: "Primeiro contato",
-    text: `Oi {{nome}}! Tudo bem?\n\nEstou com casas em condomínio com pátio e terraço no Orygem Residence Club.\n\n🏠 150m² a 173m²\n🏊 Condomínio clube\n👁️ Visita no decorado\n\nValores a partir de R$ 871 mil.\n\nQuer que eu te mande as plantas?`,
+    text: `Oi {{nome}}! Tudo bem?\n\nEstou com uma oportunidade incrível de casa em condomínio fechado no Orygem Residence Club, no Teresópolis.\n\n🏠 Casas de 150 a 173m² com 3 pavimentos\n🌿 Pátio privativo com churrasqueira\n🏊 Condomínio com infraestrutura de clube — piscina, academia, beach tennis\n👁️ Decorado disponível para visita\n\nValores a partir de R$ 871 mil.\n\nQuer que eu te mande as plantas e fotos?`,
   },
   {
-    title: "Campanha especial",
-    text: `{{nome}}, estamos com uma campanha especial no Orygem.\n\nCasas com:\n🌿 Pátio\n🏠 Terraço\n🏊 Condomínio clube\n\nE já dá para visitar o decorado.\n\nQuer agendar uma visita?`,
+    title: "Campanha 60 dias",
+    text: `{{nome}}, estamos com uma campanha especial no Orygem Residence Club!\n\nCasas em condomínio fechado com:\n🌿 Pátio privativo com churrasqueira\n🏠 Terraço no 3º pavimento\n🏊 16 espaços de lazer — piscina, spa, beach tennis, academy\n🏪 Market exclusivo dentro do condomínio\n\n📍 Teresópolis — entre Zona Sul e Norte\n\nE o melhor: já dá para visitar o decorado e a obra!\n\nQuer agendar uma visita?`,
   },
   {
     title: "Urgência / Escassez",
-    text: `Oi {{nome}}!\n\nAlgumas casas do Orygem estão com condições especiais e o empreendimento já está quase pronto.\n\n📐 150 a 173m²\n🛏️ 2 ou 3 dormitórios\n🏊 Condomínio completo\n\nPosso te mostrar as melhores unidades?`,
+    text: `Oi {{nome}}!\n\nO Orygem Residence Club está com poucas unidades disponíveis e condições especiais.\n\n📐 150 a 173m² | 2 ou 3 dormitórios\n🏠 3 pavimentos com pátio e terraço\n🏊 Condomínio clube completo\n🌳 13.000m² de área verde preservada\n\nÉ um dos únicos condomínios de casas em Porto Alegre com essa infraestrutura.\n\nPosso te mostrar as melhores unidades?`,
+  },
+  {
+    title: "Investimento / Valor",
+    text: `{{nome}}, você já conhece o Orygem?\n\nÉ um condomínio fechado de casas no Teresópolis com valor de casa próximo de apartamento.\n\n💰 A partir de R$ 871.500 (150m²)\n🏠 Casas de 3 pavimentos com pátio e terraço\n🏊 Infraestrutura de clube completa\n📍 2 min do Colégio Dohms, 5 min do Bourbon\n\nExcelente para moradia e valorização.\n\nTe mando mais detalhes?`,
   },
 ];
 
 const PAYMENT_CONDITIONS = [
-  "30% no fluxo",
-  "Saldo financiado após entrega",
-  "Crédito associativo",
+  "30% no fluxo durante a obra",
+  "Saldo financiado após a entrega",
+  "Crédito associativo disponível",
   "Financiamento bancário",
-  "FGTS",
+  "Aceita FGTS",
 ];
+
+const PLANT_IMAGES = {
+  "2d": [
+    { label: "Térreo", url: "/images/orygem/planta-2d-terreo.jpg" },
+    { label: "2º Pavimento", url: "/images/orygem/planta-2d-2pav.jpg" },
+    { label: "Terraço", url: "/images/orygem/planta-2d-terraco.jpg" },
+  ],
+  "3d": [
+    { label: "Térreo", url: "/images/orygem/planta-3d-terreo.jpg" },
+    { label: "2º Pavimento", url: "/images/orygem/planta-3d-2pav.jpg" },
+    { label: "Terraço", url: "/images/orygem/planta-3d-terraco.jpg" },
+  ],
+};
 
 /* ═══════════════════════════════════════════
    HELPERS
@@ -81,112 +184,186 @@ export default function OrygemCampanha() {
   const navigate = useNavigate();
   const [showScripts, setShowScripts] = useState(false);
   const [showArguments, setShowArguments] = useState(false);
-  const [salesCount] = useState(0); // connect to real data later
+  const [showUnits, setShowUnits] = useState<"fase1" | "fase2" | null>(null);
+  const [showPlants, setShowPlants] = useState<"2d" | "3d" | null>(null);
+  const [galleryFilter, setGalleryFilter] = useState<string>("todos");
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [salesCount] = useState(0);
 
   const progress = Math.round((salesCount / CAMPAIGN_TARGET) * 100);
 
+  const filteredGallery = galleryFilter === "todos"
+    ? GALLERY_IMAGES
+    : GALLERY_IMAGES.filter((img) => img.category === galleryFilter);
+
   return (
     <div className="space-y-5 pb-24">
-      {/* ═══ HERO ═══ */}
-      <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-[#0a1628] via-[#0d2137] to-[#1a3a5c] p-5 md:p-8">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-emerald-500/10 to-transparent" />
-        <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-tr from-emerald-400/5 to-transparent" />
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge className="bg-emerald-500 text-white border-0 text-xs font-bold px-3">🏠 60 DIAS</Badge>
-            <Badge variant="outline" className="border-white/20 text-white/70 text-[10px]">Casas em condomínio</Badge>
-            <Badge variant="outline" className="border-white/20 text-white/70 text-[10px]">Decorado disponível</Badge>
-            <Badge variant="outline" className="border-white/20 text-white/70 text-[10px]">Visita na obra</Badge>
-          </div>
-          <h1 className="text-2xl md:text-4xl font-black text-white leading-tight">
-            ORYGEM <span className="text-emerald-400">Residence Club</span>
-          </h1>
-          <p className="text-white/60 text-sm leading-relaxed max-w-lg">
-            Campanha especial — vender <strong className="text-emerald-400">10 casas em 60 dias</strong>. Casas de 150 a 173m² em condomínio clube no Teresópolis.
-          </p>
 
-          {/* Bateu Levou highlight */}
-          <div className="bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl p-4 max-w-md backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-1">
-              <Gift className="h-5 w-5 text-amber-400" />
-              <span className="text-amber-300 font-black text-sm">BATEU LEVOU</span>
+      {/* ═══ LIGHTBOX ═══ */}
+      {lightboxImg && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setLightboxImg(null)}>
+          <button className="absolute top-4 right-4 text-white/70 hover:text-white" onClick={() => setLightboxImg(null)}>
+            <X className="h-8 w-8" />
+          </button>
+          <img src={lightboxImg} alt="" className="max-w-full max-h-[90vh] rounded-lg object-contain" />
+        </div>
+      )}
+
+      {/* ═══ HERO with Real Image ═══ */}
+      <div className="relative rounded-xl overflow-hidden min-h-[420px] md:min-h-[480px]">
+        <img
+          src="/images/orygem/fachada.jpg"
+          alt="Orygem Residence Club - Fachada"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1a1a1a]/95 via-[#1a1a1a]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/80 via-transparent to-[#1a1a1a]/30" />
+
+        <div className="relative z-10 p-6 md:p-10 flex flex-col justify-end h-full min-h-[420px] md:min-h-[480px]">
+          <div className="space-y-4 max-w-xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge className="bg-amber-500/90 text-white border-0 text-xs font-bold px-3 py-1">🏠 CAMPANHA 60 DIAS</Badge>
+              <Badge className="bg-white/15 text-white border border-white/20 text-[10px] backdrop-blur-sm">Decorado disponível</Badge>
+              <Badge className="bg-white/15 text-white border border-white/20 text-[10px] backdrop-blur-sm">Visita na obra</Badge>
             </div>
-            <p className="text-white/80 text-xs">
-              <strong className="text-amber-400">R$ 5.000</strong> por venda para o corretor
-            </p>
-          </div>
 
-          <div className="flex gap-2 pt-1 flex-wrap">
-            <Button size="sm" className="gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white border-0">
-              <Calendar className="h-3.5 w-3.5" /> Agendar Visita
-            </Button>
-            <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/oferta-ativa")}>
-              <Sparkles className="h-3.5 w-3.5" /> Iniciar Oferta
-            </Button>
-            <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/imoveis")}>
-              <Eye className="h-3.5 w-3.5" /> Ver Tipologias
-            </Button>
-            <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/pipeline-leads")}>
-              <Target className="h-3.5 w-3.5" /> Abrir Pipeline
-            </Button>
+            <div>
+              <p className="text-white/50 text-xs tracking-[0.3em] uppercase font-medium mb-1">ENCORP Empreendimentos</p>
+              <h1 className="text-3xl md:text-5xl font-black text-white leading-none tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+                ORYGEM
+              </h1>
+              <p className="text-lg md:text-xl text-white/60 font-light tracking-[0.15em] mt-0.5">RESIDENCE CLUB</p>
+            </div>
+
+            <p className="text-white/50 text-sm leading-relaxed max-w-md">
+              Sofisticação, conforto e segurança para viver a sua essência.
+              <br />
+              <span className="text-amber-400 font-semibold">Meta: vender {CAMPAIGN_TARGET} casas em 60 dias</span>
+            </p>
+
+            {/* Bateu Levou */}
+            <div className="bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl p-4 max-w-sm backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <Gift className="h-5 w-5 text-amber-400" />
+                <span className="text-amber-300 font-black text-sm tracking-wide">BATEU LEVOU</span>
+              </div>
+              <p className="text-white/80 text-xs">
+                <strong className="text-amber-400 text-base">R$ 5.000</strong> por venda para o corretor
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-1 flex-wrap">
+              <Button size="sm" className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white border-0 font-bold">
+                <Calendar className="h-3.5 w-3.5" /> Agendar Visita
+              </Button>
+              <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/oferta-ativa")}>
+                <Sparkles className="h-3.5 w-3.5" /> Iniciar Oferta
+              </Button>
+              <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/imoveis")}>
+                <Eye className="h-3.5 w-3.5" /> Ver Tipologias
+              </Button>
+              <Button size="sm" className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm" onClick={() => navigate("/pipeline-leads")}>
+                <Target className="h-3.5 w-3.5" /> Abrir Pipeline
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ═══ SALES GOAL TRACKER ═══ */}
-      <Card className="border-emerald-200 overflow-hidden">
-        <CardHeader className="pb-2 bg-gradient-to-r from-emerald-50 to-green-50">
+      <Card className="border-amber-200/60 overflow-hidden">
+        <CardHeader className="pb-2 bg-gradient-to-r from-amber-50 to-yellow-50">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Target className="h-4 w-4 text-emerald-600" /> Meta da Campanha
+            <Target className="h-4 w-4 text-amber-600" /> Meta da Campanha — 60 Dias
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4 space-y-3">
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-3xl font-black text-emerald-600">{salesCount}/{CAMPAIGN_TARGET}</p>
+              <p className="text-3xl font-black text-amber-600">{salesCount}/{CAMPAIGN_TARGET}</p>
               <p className="text-xs text-muted-foreground">casas vendidas</p>
             </div>
             <div className="text-right">
               <p className="text-lg font-bold text-foreground">VGV Estimado</p>
-              <p className="text-sm font-semibold text-emerald-600">R$ {(CAMPAIGN_VGV / 1_000_000).toFixed(0)} milhões</p>
+              <p className="text-sm font-semibold text-amber-600">R$ {(CAMPAIGN_VGV / 1_000_000).toFixed(0)} milhões</p>
             </div>
           </div>
-          <Progress value={progress} className="h-3 [&>div]:bg-emerald-500" />
-          <p className="text-[10px] text-muted-foreground text-center">{progress}% da meta</p>
+          <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:to-amber-600" />
+          <div className="flex justify-between text-[10px] text-muted-foreground">
+            <span>{progress}% da meta</span>
+            <span>{CAMPAIGN_TARGET - salesCount} unidades restantes</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ═══ VIDEO SECTION ═══ */}
+      <Card className="border-border/50 overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Play className="h-4 w-4 text-amber-500" /> Vídeo do Empreendimento
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="rounded-xl overflow-hidden aspect-video bg-black">
+              <iframe
+                src="https://www.youtube.com/embed/a1XjjW8MvVc"
+                title="Orygem Residence Club - Lançamento"
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+            <div className="rounded-xl overflow-hidden aspect-video bg-black">
+              <iframe
+                src="https://www.youtube.com/embed/N44k1sgTZtE"
+                title="Orygem Residence Club - Localização"
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* ═══ EMPREENDIMENTO INFO ═══ */}
-      <Card className="border-border/50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-primary" /> Orygem Residence Club
-          </CardTitle>
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <MapPin className="h-3 w-3" /> Teresópolis — Porto Alegre
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-xs text-foreground/80 leading-relaxed">
-            Condomínio fechado de casas com infraestrutura de clube. Produto raro em Porto Alegre com pátio privativo, terraço e possibilidade de spa ou piscina.
-          </p>
+      <Card className="border-border/50 overflow-hidden">
+        <div className="relative h-48 overflow-hidden">
+          <img src="/images/orygem/area-verde.jpg" alt="Orygem - Área verde" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+          <div className="absolute bottom-4 left-6">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <MapPin className="h-3 w-3" /> Av. Eng. Ludolfo Boehl, 931 — Teresópolis, Porto Alegre/RS
+            </p>
+          </div>
+        </div>
+        <CardContent className="space-y-4 pt-4">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Condomínio Fechado de Casas</h2>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Sofisticação, conforto e segurança para viver a sua essência. Lazer completo com infraestrutura de Clube,
+              espaço ao ar livre e Club House. Entre a Zona Sul e a Zona Norte, no centro de inúmeras possibilidades.
+              Área de preservação permanente com mais de 13.000m².
+            </p>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
               { icon: Home, label: "150 a 173m²", sub: "Área privativa" },
-              { icon: Building2, label: "2 ou 3 dorms", sub: "Dormitórios" },
+              { icon: Building2, label: "2 ou 3 dorms", sub: "Com suíte" },
               { icon: Car, label: "2 vagas", sub: "Garagem" },
-              { icon: Building2, label: "3 pavimentos", sub: "Andares" },
+              { icon: Building2, label: "3 pavimentos", sub: "Com pátio e terraço" },
             ].map((f) => (
               <div key={f.label} className="bg-muted/50 rounded-lg p-3 text-center">
-                <f.icon className="h-4 w-4 mx-auto mb-1 text-emerald-600" />
+                <f.icon className="h-4 w-4 mx-auto mb-1 text-amber-600" />
                 <p className="text-xs font-bold text-foreground">{f.label}</p>
                 <p className="text-[10px] text-muted-foreground">{f.sub}</p>
               </div>
             ))}
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {["Pátio privativo", "Terraço", "Churrasqueira", "Spa / Piscina possível"].map((d) => (
-              <Badge key={d} variant="outline" className="text-[10px] border-emerald-200 text-emerald-700 bg-emerald-50">
+            {["Pátio privativo", "Terraço", "Churrasqueira", "Espera para lareira", "Espera para piscina/spa", "3 pavimentos", "Condomínio clube"].map((d) => (
+              <Badge key={d} variant="outline" className="text-[10px] border-amber-200 text-amber-700 bg-amber-50">
                 {d}
               </Badge>
             ))}
@@ -194,19 +371,27 @@ export default function OrygemCampanha() {
         </CardContent>
       </Card>
 
-      {/* ═══ INFRAESTRUTURA ═══ */}
+      {/* ═══ INFRAESTRUTURA com imagens ═══ */}
       <Card className="border-border/50">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Star className="h-4 w-4 text-emerald-500" /> Infraestrutura do Clube
+            <Star className="h-4 w-4 text-amber-500" /> Infraestrutura do Clube — 16 Espaços de Lazer
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {INFRASTRUCTURE.map((item) => (
-              <div key={item.label} className="bg-muted/50 rounded-xl p-3 text-center hover:bg-muted/80 transition-colors">
-                <item.icon className={`h-5 w-5 mx-auto mb-1.5 ${item.color}`} />
-                <p className="text-[10px] font-medium text-foreground leading-tight">{item.label}</p>
+              <div
+                key={item.label}
+                className="relative group rounded-xl overflow-hidden aspect-[4/3] cursor-pointer"
+                onClick={() => setLightboxImg(item.img)}
+              >
+                <img src={item.img} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-2 left-2 right-2 flex items-center gap-1.5">
+                  <item.icon className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                  <p className="text-[10px] font-semibold text-white leading-tight">{item.label}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -216,52 +401,144 @@ export default function OrygemCampanha() {
       {/* ═══ TIPOLOGIAS ═══ */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* 2 Dorms */}
-        <Card className="border-emerald-200/60 overflow-hidden">
-          <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 text-white">
-            <Badge className="bg-white/20 text-white border-0 text-[10px] mb-2">2 Dormitórios</Badge>
-            <p className="text-2xl font-black">150m²</p>
+        <Card className="border-border/50 overflow-hidden">
+          <div className="relative h-48 overflow-hidden">
+            <img src="/images/orygem/living.jpg" alt="Casa 2 dormitórios" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] to-transparent" />
+            <div className="absolute bottom-4 left-4">
+              <Badge className="bg-amber-500/90 text-white border-0 text-[10px] mb-1">2 Dormitórios</Badge>
+              <p className="text-2xl font-black text-white">150m²</p>
+              <p className="text-white/60 text-[10px]">Opções com suíte ou estar e office</p>
+            </div>
           </div>
           <CardContent className="pt-4 space-y-3">
             <div className="space-y-1.5">
-              {["Suíte", "Pátio com churrasqueira", "Terraço", "Living integrado", "2 vagas"].map((f) => (
+              {["Suíte", "Pátio com churrasqueira", "Terraço com estar e office", "Living integrado", "2 vagas", "Espera para lareira e piscina"].map((f) => (
                 <div key={f} className="flex items-center gap-2 text-xs text-foreground/80">
-                  <BadgeCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <BadgeCheck className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                   {f}
                 </div>
               ))}
             </div>
             <div className="pt-2 border-t border-border/50">
               <p className="text-[10px] text-muted-foreground">A partir de</p>
-              <p className="text-xl font-black text-emerald-600">R$ 871.500</p>
+              <p className="text-xl font-black text-amber-600">R$ 871.500</p>
             </div>
+            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5" onClick={() => setShowPlants(showPlants === "2d" ? null : "2d")}>
+              <FileText className="h-3.5 w-3.5" /> {showPlants === "2d" ? "Ocultar" : "Ver"} Plantas
+            </Button>
+            {showPlants === "2d" && (
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                {PLANT_IMAGES["2d"].map((p) => (
+                  <div key={p.label} className="cursor-pointer" onClick={() => setLightboxImg(p.url)}>
+                    <img src={p.url} alt={p.label} className="rounded-lg w-full aspect-square object-cover border border-border/50" loading="lazy" />
+                    <p className="text-[9px] text-center text-muted-foreground mt-1">{p.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* 3 Dorms */}
-        <Card className="border-emerald-200/60 overflow-hidden">
-          <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-4 text-white">
-            <Badge className="bg-white/20 text-white border-0 text-[10px] mb-2">3 Dormitórios</Badge>
-            <p className="text-2xl font-black">173,71m²</p>
+        <Card className="border-border/50 overflow-hidden">
+          <div className="relative h-48 overflow-hidden">
+            <img src="/images/orygem/terraco.jpg" alt="Casa 3 dormitórios" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] to-transparent" />
+            <div className="absolute bottom-4 left-4">
+              <Badge className="bg-amber-500/90 text-white border-0 text-[10px] mb-1">3 Dormitórios</Badge>
+              <p className="text-2xl font-black text-white">173,71m²</p>
+              <p className="text-white/60 text-[10px]">Opções com suíte ou estar e office</p>
+            </div>
           </div>
           <CardContent className="pt-4 space-y-3">
             <div className="space-y-1.5">
-              {["Suíte", "Terraço", "Pátio", "Espaço para spa ou piscina", "2 vagas"].map((f) => (
+              {["Suíte", "Terraço com estar e office", "Pátio privativo", "Espaço para spa ou piscina", "2 vagas", "Espera para lareira"].map((f) => (
                 <div key={f} className="flex items-center gap-2 text-xs text-foreground/80">
-                  <BadgeCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <BadgeCheck className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                   {f}
                 </div>
               ))}
             </div>
             <div className="pt-2 border-t border-border/50">
               <p className="text-[10px] text-muted-foreground">A partir de</p>
-              <p className="text-xl font-black text-emerald-600">R$ 909.200</p>
+              <p className="text-xl font-black text-amber-600">R$ 909.200</p>
             </div>
+            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5" onClick={() => setShowPlants(showPlants === "3d" ? null : "3d")}>
+              <FileText className="h-3.5 w-3.5" /> {showPlants === "3d" ? "Ocultar" : "Ver"} Plantas
+            </Button>
+            {showPlants === "3d" && (
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                {PLANT_IMAGES["3d"].map((p) => (
+                  <div key={p.label} className="cursor-pointer" onClick={() => setLightboxImg(p.url)}>
+                    <img src={p.url} alt={p.label} className="rounded-lg w-full aspect-square object-cover border border-border/50" loading="lazy" />
+                    <p className="text-[9px] text-center text-muted-foreground mt-1">{p.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
+      {/* ═══ TABELA UNIDADES ═══ */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-amber-500" /> Unidades Disponíveis — Tabela Fevereiro 2026
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={showUnits === "fase1" ? "default" : "outline"}
+              className="text-xs"
+              onClick={() => setShowUnits(showUnits === "fase1" ? null : "fase1")}
+            >
+              Fase 1 ({FASE1_UNITS.length} un.)
+            </Button>
+            <Button
+              size="sm"
+              variant={showUnits === "fase2" ? "default" : "outline"}
+              className="text-xs"
+              onClick={() => setShowUnits(showUnits === "fase2" ? null : "fase2")}
+            >
+              Fase 2 ({FASE2_UNITS.length} un.)
+            </Button>
+          </div>
+
+          {showUnits && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="text-left py-2 px-2 text-muted-foreground font-medium">Tipo</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground font-medium">Unidade</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground font-medium">Área</th>
+                    <th className="text-right py-2 px-2 text-muted-foreground font-medium">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(showUnits === "fase1" ? FASE1_UNITS : FASE2_UNITS).map((u) => (
+                    <tr key={u.unidade} className="border-b border-border/20 hover:bg-muted/30">
+                      <td className="py-2 px-2">
+                        <Badge variant="outline" className="text-[9px]">{u.bloco}</Badge>
+                      </td>
+                      <td className="py-2 px-2 font-semibold">{u.unidade}</td>
+                      <td className="py-2 px-2 text-muted-foreground">{u.area}</td>
+                      <td className="py-2 px-2 text-right font-bold text-amber-600">{u.valor}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* ═══ CONDIÇÕES DE PAGAMENTO ═══ */}
-      <Card className="border-amber-200 overflow-hidden">
+      <Card className="border-amber-200/60 overflow-hidden">
         <CardHeader className="pb-2 bg-gradient-to-r from-amber-50 to-yellow-50">
           <CardTitle className="text-sm flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-amber-500" /> Condições de Pagamento
@@ -277,11 +554,31 @@ export default function OrygemCampanha() {
         </CardContent>
       </Card>
 
+      {/* ═══ LOCALIZAÇÃO ═══ */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Navigation className="h-4 w-4 text-amber-500" /> Localização — Entre a Zona Sul e Zona Norte
+          </CardTitle>
+          <p className="text-[10px] text-muted-foreground">Av. Engenheiro Ludolfo Boehl, 931 | Teresópolis | Porto Alegre, RS</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            {PROXIMIDADES.map((p) => (
+              <div key={p.local} className="bg-muted/50 rounded-lg p-2.5 text-center">
+                <p className="text-xs font-bold text-amber-600">{p.tempo}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">{p.local}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* ═══ COMO VENDER ═══ */}
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader className="pb-2 cursor-pointer select-none" onClick={() => setShowArguments(!showArguments)}>
           <CardTitle className="text-sm flex items-center gap-2">
-            <Target className="h-4 w-4 text-primary" /> Como Vender o Orygem
+            <Target className="h-4 w-4 text-primary" /> Como Vender o Orygem — {BROKER_ARGUMENTS.length} Argumentos
             {showArguments ? <ChevronUp className="h-4 w-4 ml-auto text-muted-foreground" /> : <ChevronDown className="h-4 w-4 ml-auto text-muted-foreground" />}
           </CardTitle>
         </CardHeader>
@@ -289,8 +586,8 @@ export default function OrygemCampanha() {
           <CardContent className="space-y-2 pt-0">
             {BROKER_ARGUMENTS.map((arg, i) => (
               <div key={i} className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Star className="h-3 w-3 text-emerald-600" />
+                <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Star className="h-3 w-3 text-amber-600" />
                 </div>
                 <p className="text-xs text-foreground/80">{arg}</p>
               </div>
@@ -300,19 +597,19 @@ export default function OrygemCampanha() {
       </Card>
 
       {/* ═══ SCRIPTS WHATSAPP ═══ */}
-      <Card className="border-emerald-200/50">
+      <Card className="border-green-200/50">
         <CardHeader className="pb-2 cursor-pointer select-none" onClick={() => setShowScripts(!showScripts)}>
           <CardTitle className="text-sm flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-emerald-500" /> Scripts WhatsApp ({SCRIPTS.length})
+            <MessageSquare className="h-4 w-4 text-green-600" /> Scripts WhatsApp ({SCRIPTS.length})
             {showScripts ? <ChevronUp className="h-4 w-4 ml-auto text-muted-foreground" /> : <ChevronDown className="h-4 w-4 ml-auto text-muted-foreground" />}
           </CardTitle>
         </CardHeader>
         {showScripts && (
           <CardContent className="space-y-3 pt-0">
             {SCRIPTS.map((script, i) => (
-              <div key={i} className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 space-y-2">
+              <div key={i} className="bg-green-50/50 border border-green-100 rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-[10px] border-emerald-200 text-emerald-700">{script.title}</Badge>
+                  <Badge variant="outline" className="text-[10px] border-green-200 text-green-700">{script.title}</Badge>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyToClipboard(script.text)}>
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
@@ -328,17 +625,17 @@ export default function OrygemCampanha() {
       <Card className="border-border/50">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-emerald-500" /> Ações Rápidas
+            <Sparkles className="h-4 w-4 text-amber-500" /> Ações Rápidas
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             {[
-              { icon: Calendar, label: "Agendar visita", color: "bg-emerald-500 hover:bg-emerald-600", action: () => toast.info("Funcionalidade em breve") },
+              { icon: Calendar, label: "Agendar visita", color: "bg-amber-500 hover:bg-amber-600", action: () => toast.info("Funcionalidade em breve") },
               { icon: Target, label: "Abrir pipeline", color: "bg-primary hover:bg-primary/90", action: () => navigate("/pipeline-leads") },
               { icon: Send, label: "Enviar WhatsApp", color: "bg-green-600 hover:bg-green-700", action: () => { setShowScripts(true); toast.info("Copie um script acima"); } },
               { icon: FileText, label: "Enviar plantas", color: "bg-blue-600 hover:bg-blue-700", action: () => toast.info("Funcionalidade em breve") },
-              { icon: DollarSign, label: "Gerar proposta", color: "bg-amber-500 hover:bg-amber-600", action: () => toast.info("Funcionalidade em breve") },
+              { icon: DollarSign, label: "Gerar proposta", color: "bg-amber-600 hover:bg-amber-700", action: () => toast.info("Funcionalidade em breve") },
             ].map((btn) => (
               <Button
                 key={btn.label}
@@ -358,18 +655,35 @@ export default function OrygemCampanha() {
       <Card className="border-border/50">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Eye className="h-4 w-4 text-emerald-500" /> Galeria
+            <Eye className="h-4 w-4 text-amber-500" /> Galeria do Empreendimento ({GALLERY_IMAGES.length} imagens)
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <CardContent className="space-y-3">
+          <div className="flex gap-1.5 flex-wrap">
             {[
-              { label: "Fachada", url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" },
-              { label: "Lazer", url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" },
-              { label: "Interior", url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80" },
-              { label: "Decorado", url: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600&q=80" },
-            ].map((img) => (
-              <div key={img.label} className="relative group rounded-xl overflow-hidden aspect-[4/3] cursor-pointer">
+              { key: "todos", label: "Todos" },
+              { key: "fachada", label: "Fachada" },
+              { key: "lazer", label: "Lazer" },
+              { key: "interior", label: "Interior" },
+            ].map((f) => (
+              <Button
+                key={f.key}
+                size="sm"
+                variant={galleryFilter === f.key ? "default" : "outline"}
+                className="text-[10px] h-7 px-2.5"
+                onClick={() => setGalleryFilter(f.key)}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {filteredGallery.map((img) => (
+              <div
+                key={img.label}
+                className="relative group rounded-xl overflow-hidden aspect-[4/3] cursor-pointer"
+                onClick={() => setLightboxImg(img.url)}
+              >
                 <img
                   src={img.url}
                   alt={img.label}
@@ -382,6 +696,20 @@ export default function OrygemCampanha() {
                 </span>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ═══ IMPLANTAÇÃO ═══ */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-amber-500" /> Implantação do Condomínio
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-xl overflow-hidden cursor-pointer" onClick={() => setLightboxImg("/images/orygem/implantacao.jpg")}>
+            <img src="/images/orygem/implantacao.jpg" alt="Implantação Orygem" className="w-full rounded-xl" loading="lazy" />
           </div>
         </CardContent>
       </Card>
