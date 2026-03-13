@@ -569,17 +569,45 @@ export default function VendasRealizadas() {
                             </td>
                             {(isAdmin || isGestor) && (
                               <td className="py-3 px-3">
-                                {corr ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <Avatar className="h-5 w-5">
-                                      {(corr.avatar_gamificado_url || corr.avatar_url) && <img src={corr.avatar_gamificado_url || corr.avatar_url!} className="h-5 w-5 rounded-full object-cover" />}
-                                      <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{getInitials(corr.nome)}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-xs text-foreground">{corr.nome.split(" ")[0]}</span>
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground italic">—</span>
-                                )}
+                                {(() => {
+                                  const parceria = v.pipeline_lead_id ? parceriaMap[v.pipeline_lead_id] : null;
+                                  if (parceria) {
+                                    const p1 = profiles[parceria.principal_id];
+                                    const p2 = profiles[parceria.parceiro_id];
+                                    const name1 = p1?.nome?.split(" ")[0] || "Corretor";
+                                    const name2 = p2?.nome?.split(" ")[0] || "Corretor";
+                                    return (
+                                      <div className="flex items-center gap-1">
+                                        <div className="flex -space-x-1.5">
+                                          {p1 && (
+                                            <Avatar className="h-5 w-5 border border-background">
+                                              {(p1.avatar_gamificado_url || p1.avatar_url) && <img src={p1.avatar_gamificado_url || p1.avatar_url!} className="h-5 w-5 rounded-full object-cover" />}
+                                              <AvatarFallback className="text-[7px] bg-primary/10 text-primary">{getInitials(p1.nome)}</AvatarFallback>
+                                            </Avatar>
+                                          )}
+                                          {p2 && (
+                                            <Avatar className="h-5 w-5 border border-background">
+                                              {(p2.avatar_gamificado_url || p2.avatar_url) && <img src={p2.avatar_gamificado_url || p2.avatar_url!} className="h-5 w-5 rounded-full object-cover" />}
+                                              <AvatarFallback className="text-[7px] bg-primary/10 text-primary">{getInitials(p2.nome)}</AvatarFallback>
+                                            </Avatar>
+                                          )}
+                                        </div>
+                                        <span className="text-xs text-foreground">{name1} ↔ {name2}</span>
+                                      </div>
+                                    );
+                                  }
+                                  return corr ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <Avatar className="h-5 w-5">
+                                        {(corr.avatar_gamificado_url || corr.avatar_url) && <img src={corr.avatar_gamificado_url || corr.avatar_url!} className="h-5 w-5 rounded-full object-cover" />}
+                                        <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{getInitials(corr.nome)}</AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs text-foreground">{corr.nome.split(" ")[0]}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground italic">—</span>
+                                  );
+                                })()}
                               </td>
                             )}
                             <td className="py-3 px-3 text-right">
