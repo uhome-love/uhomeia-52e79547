@@ -106,15 +106,18 @@ const fmtCompact = (v: number) => {
   return fmtBRL(v);
 };
 
-const CAMPANHA_CODES = [
+// Fallback hardcoded list (used if overrides fail to load)
+const CAMPANHA_CODES_FALLBACK = [
   { codigo: "97325-UH", nome: "Shift" },
   { codigo: "32849-UH", nome: "Open Bosque" },
-  { codigo: "57920-UH", nome: "Orygem" },
+  { codigo: "57290-UH", nome: "Orygem" },
   { codigo: "39808-UH", nome: "Melnick Day - Compactos" },
   { codigo: "58935-UH", nome: "Lake Eyre" },
   { codigo: "4688-UH", nome: "Casa Bastian" },
   { codigo: "52101-UH", nome: "Casa Tua" },
   { codigo: "41190-UH", nome: "Las Casas" },
+  { codigo: "76953-UH", nome: "Melnick Day - Médio Padrão" },
+  { codigo: "91245-UH", nome: "Melnick Day - Alto Padrão" },
 ];
 
 const BAIRROS_POA = [
@@ -453,7 +456,30 @@ export default function ImoveisPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [campanhaAtiva, setCampanhaAtiva] = useState(false);
+  const [campanhaOverrides, setCampanhaOverrides] = useState<{ codigo: string; nome: string; fotos: string[]; valor_min: number | null; valor_max: number | null; bairro: string | null; dormitorios: number | null; descricao: string | null; status_obra: string | null; previsao_entrega: string | null }[]>([]);
   const [uhomeOnly, setUhomeOnly] = useState(false);
+
+  // Load campaign codes from empreendimento_overrides (source of truth for "Anúncios no Ar")
+  useEffect(() => {
+    supabase.from("empreendimento_overrides").select("codigo, nome, fotos, valor_min, valor_max, bairro, dormitorios, descricao, status_obra, previsao_entrega").then(({ data }) => {
+      if (data && data.length > 0) {
+        setCampanhaOverrides(data.map(d => ({
+          codigo: d.codigo,
+          nome: d.nome || d.codigo,
+          fotos: d.fotos || [],
+          valor_min: d.valor_min,
+          valor_max: d.valor_max,
+          bairro: d.bairro,
+          dormitorios: d.dormitorios,
+          descricao: d.descricao,
+          status_obra: d.status_obra,
+          previsao_entrega: d.previsao_entrega,
+        })));
+      } else {
+        setCampanhaOverrides(CAMPANHA_CODES_FALLBACK.map(c => ({ codigo: c.codigo, nome: c.nome, fotos: [], valor_min: null, valor_max: null, bairro: null, dormitorios: null, descricao: null, status_obra: null, previsao_entrega: null })));
+      }
+    });
+  }, []);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -575,13 +601,24 @@ export default function ImoveisPage() {
 
     try {
       if (campanha) {
-        const { data, error } = await supabase.functions.invoke("jetimob-proxy", {
-          body: { action: "get_imoveis_by_codigos", codigos: CAMPANHA_CODES.map(c => c.codigo) }
-        });
-        if (controller.signal.aborted) return;
-        if (error) { toast.error("Erro ao buscar imóveis da campanha"); return; }
-        const imoveisMap = data?.imoveis || {};
-        const items = Object.values(imoveisMap).filter((d: any) => d && !d.not_found);
+        // Use overrides data directly — no need to call jetimob-proxy
+        const items = campanhaOverrides.map(ov => ({
+          codigo: ov.codigo,
+          titulo_anuncio: ov.nome || ov.codigo,
+          empreendimento_nome: ov.nome || ov.codigo,
+          endereco_bairro: ov.bairro || "",
+          valor_venda: ov.valor_min || 0,
+          valor_max: ov.valor_max || 0,
+          dormitorios: ov.dormitorios || 0,
+          descricao: ov.descricao || "",
+          status: ov.status_obra || "Lançamento",
+          previsao_entrega: ov.previsao_entrega || "",
+          foto_principal: ov.fotos?.[0] || "",
+          fotos: ov.fotos || [],
+          imagens: (ov.fotos || []).map(url => ({ link: url, link_thumb: url })),
+          _fotos_normalized: ov.fotos || [],
+          _is_campanha_override: true,
+        }));
         setImoveis(items as any[]);
         setTotal(items.length);
         setTotalPages(1);
@@ -619,7 +656,7 @@ export default function ImoveisPage() {
       if (e?.name === "AbortError" || controller.signal.aborted) return;
       toast.error("Erro de conexão");
     }
-  }, [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, campanhaAtiva, uhomeOnly]);
+  }, [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, campanhaAtiva, uhomeOnly, campanhaOverrides]);
 
   // ── Main fetch: try Typesense first, fallback to Jetimob ──
   const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva, uhome = uhomeOnly) => {
@@ -1150,7 +1187,7 @@ export default function ImoveisPage() {
             ) : (
               <div className="space-y-2">
                 {sortedImoveis.map((item, idx) => {
-                  const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === item.codigo);
+                  const isCampanha = campanhaOverrides.some((c) => c.codigo === item.codigo);
                   const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
                   return <PropertyCardList key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />;
                 })}
@@ -1349,7 +1386,7 @@ export default function ImoveisPage() {
                 <>
                   <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
                     {sortedImoveis.map((item, idx) => {
-                      const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === item.codigo);
+                      const isCampanha = campanhaOverrides.some((c) => c.codigo === item.codigo);
                       const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
                       return <PropertyCardGrid key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />;
                     })}
