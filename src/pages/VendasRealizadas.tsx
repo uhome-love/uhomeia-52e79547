@@ -425,6 +425,7 @@ export default function VendasRealizadas() {
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-5 mt-0">
+      {(isAdmin || isGestor) && (
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
         <Card className="border-border/60 overflow-hidden" style={{ borderLeft: "4px solid hsl(45, 90%, 50%)" }}>
           <CardContent className="p-4">
@@ -461,6 +462,7 @@ export default function VendasRealizadas() {
           </CardContent>
         </Card>
       </motion.div>
+      )}
 
       {/* ═══ RANKING CORRETORES (gerente/admin) ═══ */}
       {(isAdmin || isGestor) && corretorRanking.length > 1 && (
