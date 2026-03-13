@@ -713,7 +713,7 @@ const PipelineCard = memo(function PipelineCard({
                   <Calendar
                     mode="single"
                     selected={quickTaskCustomDate}
-                    onSelect={setQuickTaskCustomDate}
+                    onSelect={(d) => setQuickTaskCustomDate(d as Date | undefined)}
                     disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                     className={cn("p-1 pointer-events-auto text-[10px] [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-head_cell]:text-[9px]")}
                   />
