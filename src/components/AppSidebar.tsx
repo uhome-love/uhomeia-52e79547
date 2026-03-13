@@ -309,6 +309,7 @@ export function AppSidebar() {
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
               { title: "Integração", url: "/integracao", icon: Zap },
               { title: "Academia", url: "/academia/gerenciar", icon: GraduationCap },
+              { title: "Dev AI", url: "/dev-ai", icon: Terminal },
               { title: "Usuários", url: "/admin", icon: Shield },
             ],
           },
