@@ -422,6 +422,7 @@ export function useGerenteDashboard(period: Period) {
     },
     enabled: !!user && !!profileId,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
   // ── Agenda de Hoje ──
   const { data: agendaHoje } = useQuery({
