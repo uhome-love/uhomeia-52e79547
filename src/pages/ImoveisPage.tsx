@@ -1075,7 +1075,7 @@ export default function ImoveisPage() {
             {/* Quick toggles */}
             <div className="border-l border-border/50 pl-2 ml-1 flex items-center gap-1.5 shrink-0">
               <button
-                onClick={() => { const next = !campanhaAtiva; setCampanhaAtiva(next); setUhomeOnly(false); fetchImoveis(1, next, false); }}
+                onClick={() => { setCampanhaAtiva(prev => !prev); setUhomeOnly(false); }}
                 className={cn(
                   "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap",
                   campanhaAtiva ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-primary/40"
