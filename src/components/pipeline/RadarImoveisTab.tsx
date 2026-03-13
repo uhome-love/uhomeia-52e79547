@@ -684,7 +684,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
             <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <Home className="h-3.5 w-3.5" /> Perfil de Interesse
             </h5>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label className="text-[11px] text-muted-foreground">Quartos</Label>
                 <Select value={quartos} onValueChange={setQuartos}>
