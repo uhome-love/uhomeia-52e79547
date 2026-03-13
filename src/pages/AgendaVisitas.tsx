@@ -64,8 +64,8 @@ export default function AgendaVisitas() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
   const [corretorFilter, setCorretorFilter] = useState<string>(searchParams.get("corretor") || "all");
   const [empreendimentoFilter, setEmpreendimentoFilter] = useState<string>(searchParams.get("empreendimento") || "all");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(() => startOfWeek(startOfDay(new Date()), { weekStartsOn: 1 }));
+  const [dateTo, setDateTo] = useState<Date | undefined>(() => endOfWeek(startOfDay(new Date()), { weekStartsOn: 1 }));
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [resultadoVisita, setResultadoVisita] = useState<Visita | null>(null);
   const [pendingOnly, setPendingOnly] = useState(searchParams.get("pending") === "1");
