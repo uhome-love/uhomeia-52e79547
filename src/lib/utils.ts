@@ -29,7 +29,8 @@ export function formatBRL(v: number | null | undefined, decimals = 0): string {
  *      240000  → "R$ 240k"
  *      800     → "R$ 800"
  */
-export function formatBRLCompact(v: number): string {
+export function formatBRLCompact(v: number | null | undefined): string {
+  if (v == null || isNaN(v)) return "—";
   if (Math.abs(v) >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
   if (Math.abs(v) >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}k`;
   return formatBRL(v);
