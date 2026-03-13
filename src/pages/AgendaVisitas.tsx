@@ -499,6 +499,7 @@ export default function AgendaVisitas() {
     setDateTo(undefined);
     setSearchTerm("");
     setPendingOnly(false);
+    setQuickFilter("");
   };
 
   return (
