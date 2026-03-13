@@ -13,7 +13,8 @@ export function cn(...inputs: ClassValue[]) {
  *      240000  → "R$ 240.000,00"
  * @param decimals number of decimal places (default 0 for imobiliário)
  */
-export function formatBRL(v: number, decimals = 0): string {
+export function formatBRL(v: number | null | undefined, decimals = 0): string {
+  if (v == null || isNaN(v)) return "—";
   return v.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
