@@ -1,4 +1,6 @@
 import UhomeLogo from "@/components/UhomeLogo";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   LayoutDashboard,
