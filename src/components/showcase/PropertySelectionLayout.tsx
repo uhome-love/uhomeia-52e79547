@@ -26,6 +26,9 @@ export default function PropertySelectionLayout({ data }: Props) {
 
   const hasGeoData = imoveis.some(i => i.lat && i.lng);
 
+  // Auto-track page behavior (open, scroll, time)
+  useVitrineTracking(vitrine.id);
+
   const whatsappBase = corretor?.telefone
     ? `https://wa.me/55${corretor.telefone.replace(/\D/g, "")}`
     : null;
