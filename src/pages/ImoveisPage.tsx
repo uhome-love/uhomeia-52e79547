@@ -619,57 +619,62 @@ export default function ImoveisPage() {
 
   // ── Typesense search ──
   const fetchViaTypesense = useCallback(async (pageNum: number) => {
-    const filterBy = buildFilterBy({
-      contrato, tipo, bairro, dormitorios, suites: suitesFilter, vagas,
-      valorRange, areaRange, somenteObras, uhomeOnly,
-    });
-    const sortByStr = search ? "" : buildSortBy(sortBy, contrato);
+    try {
+      const filterBy = buildFilterBy({
+        contrato, tipo, bairro, dormitorios, suites: suitesFilter, vagas,
+        valorRange, areaRange, somenteObras, uhomeOnly,
+      });
+      const sortByStr = search ? "" : buildSortBy(sortBy, contrato);
 
-    const result = await typesenseSearch({
-      q: search || "*",
-      page: pageNum,
-      per_page: 24,
-      filter_by: filterBy || undefined,
-      sort_by: sortByStr || undefined,
-    });
+      const result = await typesenseSearch({
+        q: search || "*",
+        page: pageNum,
+        per_page: 24,
+        filter_by: filterBy || undefined,
+        sort_by: sortByStr || undefined,
+      });
 
-    if (!result) return false;
+      if (!result) return false;
 
-    // Map Typesense docs back to the format cards expect
-    const items = result.data.map((doc: any) => ({
-      ...doc,
-      codigo: doc.codigo || doc.id,
-      titulo_anuncio: doc.titulo,
-      empreendimento_nome: doc.empreendimento,
-      endereco_bairro: doc.bairro,
-      endereco_cidade: doc.cidade,
-      endereco_logradouro: doc.endereco,
-      valor_venda: doc.valor_venda,
-      valor_locacao: doc.valor_locacao,
-      area_privativa: doc.area_privativa,
-      garagens: doc.vagas,
-      suites: doc.suites,
-      banheiros: doc.banheiros,
-      dormitorios: doc.dormitorios,
-      valor_condominio: doc.valor_condominio,
-      situacao: doc.situacao,
-      latitude: doc.latitude,
-      longitude: doc.longitude,
-      _fotos_normalized: doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-      _fotos_full: doc.fotos_full?.length ? doc.fotos_full : doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-      imagens: (doc.fotos || []).map((url: string, i: number) => ({
-        link_thumb: url,
-        link: doc.fotos_full?.[i] || url,
-        link_large: doc.fotos_full?.[i] || url,
-      })),
-    }));
+      // Map Typesense docs back to the format cards expect
+      const items = (result.data || []).map((doc: any) => ({
+        ...doc,
+        codigo: doc.codigo || doc.id,
+        titulo_anuncio: doc.titulo,
+        empreendimento_nome: doc.empreendimento,
+        endereco_bairro: doc.bairro,
+        endereco_cidade: doc.cidade,
+        endereco_logradouro: doc.endereco,
+        valor_venda: doc.valor_venda,
+        valor_locacao: doc.valor_locacao,
+        area_privativa: doc.area_privativa,
+        garagens: doc.vagas,
+        suites: doc.suites,
+        banheiros: doc.banheiros,
+        dormitorios: doc.dormitorios,
+        valor_condominio: doc.valor_condominio,
+        situacao: doc.situacao,
+        latitude: doc.latitude,
+        longitude: doc.longitude,
+        _fotos_normalized: doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
+        _fotos_full: doc.fotos_full?.length ? doc.fotos_full : doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
+        imagens: (doc.fotos || []).map((url: string, i: number) => ({
+          link_thumb: url,
+          link: doc.fotos_full?.[i] || url,
+          link_large: doc.fotos_full?.[i] || url,
+        })),
+      }));
 
-    setImoveis(items);
-    setTotal(result.total);
-    setTotalPages(result.totalPages);
-    setPage(pageNum);
-    setSearchTimeMs(result.search_time_ms || null);
-    return true;
+      setImoveis(items);
+      setTotal(result.total || 0);
+      setTotalPages(result.totalPages || 1);
+      setPage(pageNum);
+      setSearchTimeMs(result.search_time_ms || null);
+      return true;
+    } catch (err) {
+      console.error("Typesense fetch error:", err);
+      return false;
+    }
   }, [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, uhomeOnly, sortBy, typesenseSearch]);
 
   // ── Fallback to jetimob-proxy ──
