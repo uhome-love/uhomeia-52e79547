@@ -338,6 +338,7 @@ export function useGerenteDashboard(period: Period) {
     },
     enabled: !!user && !!profileId && teamUserIds.length > 0,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Negócios que pedem ação ──
