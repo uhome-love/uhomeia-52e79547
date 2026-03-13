@@ -39,6 +39,16 @@ import imgGardenHaus from "@/assets/cyrela/garden-haus.jpeg";
 import imgVistaNovaCarlosGomes2d from "@/assets/cyrela/vista-nova-carlos-gomes-2d.jpeg";
 import imgTheArch2d from "@/assets/cyrela/the-arch-2d.jpeg";
 import imgPrimeWish from "@/assets/cyrela/prime-wish.jpeg";
+import imgAtmosferaAirDuplex from "@/assets/cyrela/atmosfera-air-duplex.jpeg";
+import imgConnectPartenon from "@/assets/cyrela/connect-partenon.jpeg";
+import imgPrimeWallig2d from "@/assets/cyrela/prime-wallig-2d.jpeg";
+import imgBoaVistaCountryClub2d from "@/assets/cyrela/boa-vista-country-club-2d.jpeg";
+import imgArbo2d from "@/assets/cyrela/arbo-2d.jpeg";
+import imgVintage from "@/assets/cyrela/vintage.jpeg";
+import imgTheArch1d from "@/assets/cyrela/the-arch-1d.jpeg";
+import imgFloat from "@/assets/cyrela/float.jpeg";
+import imgConnectJoaoWallig1d from "@/assets/cyrela/connect-joao-wallig-1d.jpeg";
+import imgAtmosferaAir1d from "@/assets/cyrela/atmosfera-air-1d.jpeg";
 
 /* ═══════════════════════════════════════════
    DATA
@@ -72,16 +82,31 @@ const CATEGORIAS: Record<string, {
       { nome: "Vista Menino Deus", tipologia: "Studio", bairro: "Menino Deus", fase: "Em construção", unidade: "208", valor: "R$ 404.611", imagem: imgVistaMeninoDeus },
       { nome: "The Arch", tipologia: "Studio", bairro: "Bela Vista", fase: "Pronto para morar", unidade: "316", valor: "R$ 365.705", imagem: imgTheArch },
       { nome: "Skyline Parque Moinhos", tipologia: "Studio", bairro: "Moinhos de Vento", fase: "Pronto para morar", unidade: "217", valor: "R$ 373.742", imagem: imgSkylineParqueMoinhos },
+      { nome: "Connect Partenon", tipologia: "Studio", bairro: "Partenon", fase: "Pronto para morar", unidade: "1813", valor: "R$ 315.080", imagem: imgConnectPartenon },
+    ],
+  },
+  "1dorm": {
+    label: "1 Dormitório",
+    emoji: "🛏️",
+    empreendimentos: [
+      { nome: "Connect João Wallig", tipologia: "1 dormitório", bairro: "Passo D'Areia", fase: "Pronto para morar", unidade: "419", metragem: "43 m²", valor: "R$ 431.820", imagem: imgConnectJoaoWallig1d },
+      { nome: "Atmosfera Air", tipologia: "1 dormitório", bairro: "Menino Deus", fase: "Pronto para morar", unidade: "608", metragem: "56 m²", valor: "R$ 627.186", imagem: imgAtmosferaAir1d },
+      { nome: "Float Residences", tipologia: "1 dormitório", bairro: "Petrópolis", fase: "Pronto para morar", unidade: "1605", metragem: "43 m²", valor: "R$ 569.320", imagem: imgFloat },
+      { nome: "Vintage Senior Residence", tipologia: "1 dormitório", bairro: "Petrópolis", fase: "Pronto para morar", unidade: "806", metragem: "37 m²", valor: "R$ 484.386", imagem: imgVintage },
+      { nome: "The Arch", tipologia: "1 dormitório", bairro: "Bela Vista", fase: "Pronto para morar", unidade: "203", metragem: "45 m²", valor: "R$ 679.127", imagem: imgTheArch1d },
     ],
   },
   "2dorms": {
     label: "2 Dormitórios",
     emoji: "🏠",
     empreendimentos: [
-      { nome: "Vista Nova Carlos Gomes", tipologia: "2 dormitórios", bairro: "Petrópolis", fase: "Em construção", unidade: "402", metragem: "68 m²", valor: "R$ 847.254", imagem: imgVistaNovaCarlosGomes2d },
-      { nome: "The Arch", tipologia: "2 dormitórios", bairro: "Bela Vista", fase: "Pronto para morar", unidade: "501", metragem: "70 m²", valor: "R$ 1.075.358", imagem: imgTheArch2d },
       { nome: "Prime Wish", tipologia: "2 dormitórios", bairro: "São Geraldo", fase: "Pronto para morar", unidade: "203", metragem: "56 m²", valor: "R$ 429.460", imagem: imgPrimeWish },
+      { nome: "Prime Wallig", tipologia: "2 dormitórios", bairro: "Passo D'Areia", fase: "Pronto para morar", unidade: "1504", metragem: "56 m²", valor: "R$ 513.428", imagem: imgPrimeWallig2d },
+      { nome: "Boa Vista Country Club", tipologia: "2 dormitórios", bairro: "Boa Vista", fase: "Pronto para morar", unidade: "207", metragem: "70 m²", valor: "R$ 725.103", imagem: imgBoaVistaCountryClub2d },
+      { nome: "Vista Nova Carlos Gomes", tipologia: "2 dormitórios", bairro: "Petrópolis", fase: "Em construção", unidade: "402", metragem: "68 m²", valor: "R$ 847.254", imagem: imgVistaNovaCarlosGomes2d },
+      { nome: "Arbo", tipologia: "2 dormitórios", bairro: "Higienópolis", fase: "Em construção", unidade: "303", metragem: "68 m²", valor: "R$ 811.918", imagem: imgArbo2d },
       { nome: "Boa Vista Country Club", tipologia: "2 dormitórios", bairro: "Boa Vista", fase: "Pronto", unidade: "1008", metragem: "69 m²", valor: "R$ 812.752", imagem: imgBoaVistaCountryClub },
+      { nome: "The Arch", tipologia: "2 dormitórios", bairro: "Bela Vista", fase: "Pronto para morar", unidade: "501", metragem: "70 m²", valor: "R$ 1.075.358", imagem: imgTheArch2d },
     ],
   },
   "3dorms": {
@@ -102,13 +127,22 @@ const CATEGORIAS: Record<string, {
       { nome: "Garden Haus", tipologia: "3 suítes", bairro: "Jardim Europa", fase: "Pronto para morar", unidade: "403", metragem: "159 m²", valor: "R$ 2.854.137", imagem: imgGardenHaus },
     ],
   },
+  duplex: {
+    label: "Duplex",
+    emoji: "🏰",
+    empreendimentos: [
+      { nome: "Atmosfera Air", tipologia: "Duplex", bairro: "Menino Deus", fase: "Pronto para morar", unidade: "1707", metragem: "98 m²", valor: "R$ 1.358.368", imagem: imgAtmosferaAirDuplex },
+    ],
+  },
 };
 
 const SCRIPTS = {
   studios: `Oi {{nome}}! Tudo bem?\n\nEstou com oportunidades da Mega da Cyrela até 30/04, com studios em localizações muito fortes de Porto Alegre e condições especiais de campanha. Tenho opções a partir de R$ 299 mil. Quer que eu te mande as melhores?`,
+  "1dorm": `Oi {{nome}}! Tudo bem?\n\nEstou com oportunidades incríveis da Seleção Cyrela até 30/04, com apartamentos de 1 dormitório em localizações premium de Porto Alegre — Menino Deus, Petrópolis, Bela Vista. Tenho opções a partir de R$ 431 mil prontas para morar. Quer que eu te mostre?`,
   "2dorms": `Oi {{nome}}! Passando porque a Mega da Cyrela está com ótimas oportunidades até 30/04 para 2 dormitórios em regiões muito procuradas. Tem opções prontas e em construção, com condições especiais e possibilidade de parcelamento direto. Quer que eu te mostre as melhores unidades?`,
   "3dorms": `{{nome}}, estou com uma seleção muito boa da Mega da Cyrela para 3 dormitórios, inclusive oportunidades prontas e outras em construção em bairros fortes de Porto Alegre. Posso te mandar as unidades mais alinhadas ao teu perfil?`,
   "3suites": `Oi {{nome}}! Estou com uma seleção premium da Mega da Cyrela até 30/04, com unidades de 3 suítes em Rio Branco, Jardim Europa e outras regiões nobres. São oportunidades especiais de campanha. Quer que eu te envie as melhores opções?`,
+  duplex: `Oi {{nome}}! Tenho uma oportunidade especial da Seleção Cyrela — um duplex de 98 m² no Menino Deus, pronto para morar, com condições exclusivas da campanha até 30/04. Quer que eu te envie os detalhes?`,
 };
 
 const OBJECOES = [
