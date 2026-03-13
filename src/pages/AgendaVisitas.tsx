@@ -287,7 +287,7 @@ export default function AgendaVisitas() {
     updateStatus(id, newStatus);
   }, [visitas, updateStatus]);
 
-  const handleResultadoSubmit = useCallback(async (resultado: ResultadoVisita, observacoes?: string) => {
+  const handleResultadoSubmit = useCallback(async (resultado: ResultadoVisita, observacoes?: string, feedback?: { objecao?: string; temperatura?: string; proxima_acao?: string }) => {
     if (!resultadoVisita) return;
     // First update resultado_visita and observacoes
     const updates: any = { resultado_visita: resultado };
@@ -297,6 +297,23 @@ export default function AgendaVisitas() {
     await updateVisita(resultadoVisita.id, updates, true);
     // Then call updateStatus which triggers negócio creation + pipeline move
     await updateStatus(resultadoVisita.id, "realizada");
+
+    // Update pipeline lead with feedback if available
+    if (resultadoVisita.pipeline_lead_id && feedback) {
+      const leadUpdates: any = {};
+      if (feedback.temperatura) leadUpdates.temperatura = feedback.temperatura;
+      if (feedback.proxima_acao) leadUpdates.proxima_acao = feedback.proxima_acao;
+      if (feedback.objecao) {
+        leadUpdates.observacoes = [resultadoVisita.observacoes, `Objeção: ${feedback.objecao}`].filter(Boolean).join(" | ");
+      }
+      if (Object.keys(leadUpdates).length > 0) {
+        await supabase.from("pipeline_leads").update({
+          ...leadUpdates,
+          ultima_acao_at: new Date().toISOString(),
+        } as any).eq("id", resultadoVisita.pipeline_lead_id);
+      }
+    }
+
     setResultadoVisita(null);
   }, [resultadoVisita, updateVisita, updateStatus]);
 
