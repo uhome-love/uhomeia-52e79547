@@ -98,8 +98,8 @@ const CATEGORIAS: Record<string, {
     label: "3 Suítes",
     emoji: "👑",
     empreendimentos: [
-      { nome: "The Park", tipologia: "3 suítes", bairro: "Rio Branco", fase: "Pronto para morar", unidade: "704 ART", metragem: "144 m²", valor: "R$ 1.991.456" },
-      { nome: "Garden Haus", tipologia: "3 suítes", bairro: "Jardim Europa", fase: "Pronto para morar", unidade: "403", metragem: "159 m²", valor: "R$ 2.854.137" },
+      { nome: "The Park", tipologia: "3 suítes", bairro: "Rio Branco", fase: "Pronto para morar", unidade: "704 ART", metragem: "144 m²", valor: "R$ 1.991.456", imagem: imgThePark },
+      { nome: "Garden Haus", tipologia: "3 suítes", bairro: "Jardim Europa", fase: "Pronto para morar", unidade: "403", metragem: "159 m²", valor: "R$ 2.854.137", imagem: imgGardenHaus },
     ],
   },
 };
