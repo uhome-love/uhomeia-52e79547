@@ -97,8 +97,8 @@ const OBJECOES = [
   { key: "investir", label: "Quer investir", icon: "📈" },
 ];
 
-// Empreendimento → segment hints (preço referência + margem ~10% no valor_max inferido)
-const EMPREENDIMENTO_HINTS: Record<string, { faixa_min?: number; faixa_max?: number; bairros?: string[]; tipo?: string; dorms?: number }> = {
+// Fallback hints — used when empreendimento_overrides has no data for a product
+const EMPREENDIMENTO_HINTS_FALLBACK: Record<string, { faixa_min?: number; faixa_max?: number; bairros?: string[]; tipo?: string; dorms?: number }> = {
   // MCMV
   "open bosque": { faixa_min: 200000, faixa_max: 280000, bairros: ["Passo d'Areia"], tipo: "apartamento", dorms: 2 },
   "open major": { faixa_min: 200000, faixa_max: 270000, bairros: ["Marechal Rondon"], tipo: "apartamento", dorms: 2 },
@@ -116,13 +116,32 @@ const EMPREENDIMENTO_HINTS: Record<string, { faixa_min?: number; faixa_max?: num
   "duetto": { faixa_min: 500000, faixa_max: 800000, tipo: "apartamento", dorms: 2 },
   "salzburg": { faixa_min: 600000, faixa_max: 1000000, bairros: ["Auxiliadora", "Petrópolis"], tipo: "apartamento", dorms: 3 },
   // Altíssimo
-  "lake eyre": { faixa_min: 1500000, faixa_max: 3500000, bairros: ["Três Figueiras", "Boa Vista"], tipo: "apartamento", dorms: 3 },
+  "lake eyre": { faixa_min: 2000000, faixa_max: 4000000, bairros: ["Cristal"], tipo: "apartamento", dorms: 3 },
   "seen": { faixa_min: 1200000, faixa_max: 2500000, bairros: ["Três Figueiras", "Menino Deus"], tipo: "apartamento", dorms: 3 },
   "boa vista country": { faixa_min: 2000000, faixa_max: 5000000, bairros: ["Boa Vista", "Três Figueiras"], tipo: "apartamento", dorms: 4 },
   // Investimento
   "shift": { faixa_min: 250000, faixa_max: 500000, bairros: ["Centro Histórico", "Cidade Baixa"], tipo: "apartamento", dorms: 1 },
   "casa bastian": { faixa_min: 300000, faixa_max: 550000, bairros: ["Cidade Baixa", "Menino Deus"], tipo: "apartamento", dorms: 1 },
 };
+
+/** Build hints from empreendimento_overrides data */
+function buildHintsFromOverrides(
+  overrides: Array<{ nome: string | null; codigo: string; bairro: string | null; valor_min: number | null; valor_max: number | null; dormitorios: number | null }>,
+): Record<string, { faixa_min?: number; faixa_max?: number; bairros?: string[]; tipo?: string; dorms?: number }> {
+  const hints: Record<string, { faixa_min?: number; faixa_max?: number; bairros?: string[]; tipo?: string; dorms?: number }> = {};
+  for (const o of overrides) {
+    const key = normalize(o.nome || o.codigo);
+    if (!key) continue;
+    const h: any = {};
+    if (o.valor_min) h.faixa_min = o.valor_min;
+    if (o.valor_max) h.faixa_max = o.valor_max * 1.1; // 10% margin
+    if (o.bairro) h.bairros = [o.bairro];
+    if (o.dormitorios) h.dorms = o.dormitorios;
+    h.tipo = "apartamento";
+    hints[key] = h;
+  }
+  return hints;
+}
 
 const MEDAY_CATALOG: ImovelResult[] = [
   { nome: "Open Major", bairro: "Marechal Rondon", dorms: 2, preco: 235505, metragens: "43 m²", status: "Em obras", source: "meday", score: 0, imagem: "https://wordpress-melnick.s3.sa-east-1.amazonaws.com/wp-content/uploads/2026/03/03122722/open-major.png", tipo: "apartamento", justificativas: [] },
