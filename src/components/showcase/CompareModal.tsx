@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function CompareModal({ items, open, onClose, onRemove }: Props) {
-  if (!open || items.length < 2) return null;
+  if (!open || !items || items.length < 2) return null;
 
   const specs: { key: string; label: string; icon: any; render: (i: ShowcaseImovel) => string }[] = [
     { key: "valor", label: "Valor", icon: null, render: i => i.valor ? formatBRL(i.valor) : "—" },

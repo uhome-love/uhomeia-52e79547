@@ -26,12 +26,12 @@ export default function PropertyCard({
   onViewDetails, onTrack, onFavorite, isFavorited, onCompare, isComparing,
 }: PropertyCardProps) {
   const [currentImg, setCurrentImg] = useState(0);
-  const fotos = item.fotos || [];
-  const seg = item.segmento ? getSegmentoStyle(item.segmento) : null;
+  const fotos = Array.isArray(item?.fotos) ? item.fotos.filter(Boolean) : [];
+  const seg = item?.segmento ? getSegmentoStyle(item.segmento) : null;
 
   const whatsappMsg = variant === "campaign"
-    ? `Tenho interesse no ${item.empreendimento || item.titulo} - Melnick Day 2026`
-    : `Vi o imóvel ${item.titulo} e gostaria de mais informações.`;
+    ? `Tenho interesse no ${item?.empreendimento || item?.titulo || "imóvel"} - Melnick Day 2026`
+    : `Vi o imóvel ${item?.titulo || "selecionado"} e gostaria de mais informações.`;
 
   return (
     <motion.div
@@ -62,10 +62,10 @@ export default function PropertyCard({
     >
       {/* Image */}
       <div className="relative aspect-[4/3] bg-slate-50 overflow-hidden cursor-pointer"
-        onClick={() => { onViewDetails?.(item); onTrack?.("card_click", item.id); }}>
+        onClick={() => { onViewDetails?.(item); onTrack?.("card_click", item?.id ?? 0); }}>
         {fotos.length > 0 ? (
           <>
-            <img src={fotos[currentImg]} alt={item.empreendimento || ""} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+            <img src={fotos[currentImg]} alt={item?.empreendimento || ""} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
             {fotos.length > 1 && (
               <>
@@ -134,9 +134,9 @@ export default function PropertyCard({
       <div className="p-5 sm:p-6 flex-1 flex flex-col gap-3">
         <div>
           <h3 className="text-lg sm:text-xl font-extrabold text-slate-800 leading-tight tracking-tight">
-            {item.empreendimento || item.titulo}
+            {item?.empreendimento || item?.titulo || "Imóvel"}
           </h3>
-          {item.bairro && (
+          {item?.bairro && (
             <p className="text-slate-500 text-xs flex items-center gap-1.5 mt-1.5 font-medium">
               <MapPin className="h-3.5 w-3.5 text-blue-500" /> {item.bairro}
             </p>
@@ -144,7 +144,7 @@ export default function PropertyCard({
         </div>
 
         {/* Description preview */}
-        {variant === "selection" && item.descricao && (
+        {variant === "selection" && item?.descricao && (
           <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">{item.descricao}</p>
         )}
 
@@ -201,7 +201,7 @@ export default function PropertyCard({
         <div className="flex gap-2 mt-1">
           {onViewDetails && (
             <button
-              onClick={() => { onViewDetails(item); onTrack?.("detail_click", item.id); }}
+              onClick={() => { onViewDetails(item); onTrack?.("detail_click", item?.id ?? 0); }}
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all hover:shadow-lg"
               style={{ background: "linear-gradient(135deg, #1e3a5f, #2563eb)", color: "white", boxShadow: "0 4px 15px rgba(37,99,235,0.3)" }}
             >
@@ -224,7 +224,7 @@ export default function PropertyCard({
               href={`${whatsappBase}?text=${encodeURIComponent(`Olá${corretorNome ? ` ${corretorNome}` : ""}! ${whatsappMsg}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => onTrack?.("whatsapp_click", item.id)}
+              onClick={() => onTrack?.("whatsapp_click", item?.id ?? 0)}
               className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl font-bold text-sm transition-all hover:shadow-lg"
               style={{ background: "linear-gradient(135deg, #16a34a, #22c55e)", color: "white", boxShadow: "0 4px 15px rgba(34,197,94,0.3)" }}
             >

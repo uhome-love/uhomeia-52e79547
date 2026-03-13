@@ -2,7 +2,7 @@ import { useState, useCallback, Suspense, lazy, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Heart, GitCompareArrows } from "lucide-react";
 import { toast } from "sonner";
-import PropertyCard from "./PropertyCard";
+import SafePropertyCard from "./SafePropertyCard";
 import PropertyDetailModal from "./PropertyDetailModal";
 import CompareModal from "./CompareModal";
 import ContactCTA from "./ContactCTA";
@@ -10,6 +10,7 @@ import FooterBranding from "./FooterBranding";
 import type { ShowcaseData, ShowcaseImovel } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { useVitrineTracking } from "@/hooks/useVitrineTracking";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const ShowcaseMap = lazy(() => import("./ShowcaseMap"));
 
@@ -196,8 +197,8 @@ export default function PropertySelectionLayout({ data }: Props) {
             </div>
           ) : (
             imoveis.map((item, idx) => (
-              <PropertyCard
-                key={idx}
+              <SafePropertyCard
+                key={item?.id ?? idx}
                 item={item}
                 index={idx}
                 variant="selection"
@@ -206,9 +207,9 @@ export default function PropertySelectionLayout({ data }: Props) {
                 onViewDetails={setSelectedItem}
                 onTrack={trackEvent}
                 onFavorite={handleFavorite}
-                isFavorited={favorites.has(item.id)}
+                isFavorited={favorites.has(item?.id)}
                 onCompare={imoveis.length > 1 ? handleCompare : undefined}
-                isComparing={compareItems.some(c => c.id === item.id)}
+                isComparing={compareItems.some(c => c.id === item?.id)}
               />
             ))
           )}
@@ -235,9 +236,11 @@ export default function PropertySelectionLayout({ data }: Props) {
 
       {/* ═══ MAP SECTION ═══ */}
       {hasGeoData && (
-        <Suspense fallback={null}>
-          <ShowcaseMap imoveis={imoveis} onViewDetails={setSelectedItem} />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <ShowcaseMap imoveis={imoveis} onViewDetails={setSelectedItem} />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {/* ═══ FAVORITES SUMMARY ═══ */}

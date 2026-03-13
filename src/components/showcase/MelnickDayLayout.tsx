@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import CampaignHeader from "./CampaignHeader";
-import PropertyCard from "./PropertyCard";
+import SafePropertyCard from "./SafePropertyCard";
 import ContactCTA from "./ContactCTA";
 import FooterBranding from "./FooterBranding";
 import type { ShowcaseData } from "./types";
@@ -48,8 +48,8 @@ export default function MelnickDayLayout({ data }: Props) {
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {imoveis.map((item, idx) => (
-            <PropertyCard
-              key={idx}
+            <SafePropertyCard
+              key={item?.id ?? idx}
               item={item}
               index={idx}
               variant="campaign"

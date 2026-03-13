@@ -10,6 +10,7 @@ import FooterBranding from "./FooterBranding";
 import ShowcaseLightbox from "./ShowcaseLightbox";
 import { buildWhatsappLink, extractYoutubeId } from "./types";
 import type { ShowcaseData, ShowcaseLanding } from "./types";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 interface Props {
   data: ShowcaseData;
@@ -23,26 +24,26 @@ export default function ProductPageLayout({ data }: Props) {
   const { vitrine, corretor, imoveis, landing } = data;
   const [lightbox, setLightbox] = useState<{ fotos: string[]; idx: number } | null>(null);
 
-  const imovel = imoveis[0] || null;
+  const imovel = imoveis?.[0] || null;
   const l = landing || {} as ShowcaseLanding;
   const cor = l.cor_primaria || "#1e3a5f";
-  const nome = l.landing_titulo || imovel?.empreendimento || imovel?.titulo || vitrine.titulo;
-  const subtitulo = l.landing_subtitulo || vitrine.subtitulo || "";
+  const nome = l.landing_titulo || imovel?.empreendimento || imovel?.titulo || vitrine?.titulo || "Empreendimento";
+  const subtitulo = l.landing_subtitulo || vitrine?.subtitulo || "";
   const descricao = l.descricao || imovel?.descricao || "";
   const bairro = l.bairro || imovel?.bairro || "";
-  const fotos = imovel?.fotos || l.fotos || [];
-  const diferenciais = l.diferenciais || [];
-  const plantas = l.plantas || [];
+  const fotos = (Array.isArray(imovel?.fotos) ? imovel.fotos : Array.isArray(l.fotos) ? l.fotos : []).filter(Boolean);
+  const diferenciais = Array.isArray(l.diferenciais) ? l.diferenciais : [];
+  const plantas = Array.isArray(l.plantas) ? l.plantas : [];
   const videoUrl = l.video_url || "";
   const mapaUrl = l.mapa_url || "";
-  const tipologias = l.tipologias || [];
+  const tipologias = Array.isArray(l.tipologias) ? l.tipologias : [];
   const valorMin = l.valor_min || imovel?.valor || 0;
   const valorMax = l.valor_max || 0;
   const vagas = l.vagas || imovel?.vagas || 0;
   const statusObra = l.status_obra || "";
   const previsaoEntrega = l.previsao_entrega || "";
 
-  const whatsappLink = buildWhatsappLink(corretor?.telefone, corretor?.nome || "", `Vi a página do ${nome} e gostaria de mais informações.`);
+  const whatsappLink = buildWhatsappLink(corretor?.telefone, corretor?.nome || "", `Vi a página do ${nome || "empreendimento"} e gostaria de mais informações.`);
 
   const areaLabel = (() => {
     if (tipologias.length > 0) {
@@ -56,7 +57,7 @@ export default function ProductPageLayout({ data }: Props) {
   })();
 
   const specs = [
-    tipologias.length > 0 && { icon: BedDouble, label: tipologias.map(t => `${t.dorms} dorm${t.dorms > 1 ? "s" : ""}`).join(", ") },
+    tipologias.length > 0 && { icon: BedDouble, label: tipologias.map(t => `${t?.dorms || "?"} dorm${(t?.dorms || 0) > 1 ? "s" : ""}`).join(", ") },
     areaLabel && { icon: Ruler, label: areaLabel },
     imovel?.suites && { icon: Home, label: `${imovel.suites} suíte${imovel.suites > 1 ? "s" : ""}` },
     vagas > 0 && { icon: Car, label: `${vagas} vaga${vagas > 1 ? "s" : ""}` },
@@ -162,10 +163,10 @@ export default function ProductPageLayout({ data }: Props) {
                         <BedDouble className="h-5 w-5" style={{ color: cor }} />
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">{t.dorms} Dormitório{t.dorms > 1 ? "s" : ""}</p>
+                        <p className="font-semibold text-slate-900">{t?.dorms || "?"} Dormitório{(t?.dorms || 0) > 1 ? "s" : ""}</p>
                         <p className="text-xs text-slate-500">
-                          {t.area_min && t.area_max ? `${t.area_min}–${t.area_max}m²` : t.area_min ? `${t.area_min}m²` : ""}
-                          {t.suites ? ` · ${t.suites} suíte${t.suites > 1 ? "s" : ""}` : ""}
+                          {t?.area_min && t?.area_max ? `${t.area_min}–${t.area_max}m²` : t?.area_min ? `${t.area_min}m²` : ""}
+                          {t?.suites ? ` · ${t.suites} suíte${t.suites > 1 ? "s" : ""}` : ""}
                         </p>
                       </div>
                     </div>
