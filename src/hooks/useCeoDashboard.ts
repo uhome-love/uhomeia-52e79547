@@ -99,7 +99,7 @@ const EMPTY_KPIS: KPIs = { ligacoes: 0, aproveitados: 0, taxaConversao: 0, visit
 
 export function useCeoDashboard(period: DashPeriod, customRange?: { start: string; end: string }) {
   const { user } = useAuth();
-
+  const queryClient = useQueryClient();
   const range = useMemo(() => getRange(period, customRange), [period, customRange]);
   const prevRange = useMemo(() => getPrevRange(period), [period]);
   const hoje = todayBRT();
