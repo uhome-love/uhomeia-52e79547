@@ -1386,7 +1386,7 @@ export default function ImoveisPage() {
                 <>
                   <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
                     {sortedImoveis.map((item, idx) => {
-                      const isCampanha = CAMPANHA_CODES.some((c) => c.codigo === item.codigo);
+                      const isCampanha = campanhaOverrides.some((c) => c.codigo === item.codigo);
                       const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
                       return <PropertyCardGrid key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />;
                     })}
