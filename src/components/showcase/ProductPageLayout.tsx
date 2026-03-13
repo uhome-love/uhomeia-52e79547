@@ -166,7 +166,7 @@ export default function ProductPageLayout({ data }: Props) {
                         <p className="font-semibold text-slate-900">{t?.dorms || "?"} Dormitório{(t?.dorms || 0) > 1 ? "s" : ""}</p>
                         <p className="text-xs text-slate-500">
                           {t?.area_min && t?.area_max ? `${t.area_min}–${t.area_max}m²` : t?.area_min ? `${t.area_min}m²` : ""}
-                          {t.suites ? ` · ${t.suites} suíte${t.suites > 1 ? "s" : ""}` : ""}
+                          {t?.suites ? ` · ${t.suites} suíte${t.suites > 1 ? "s" : ""}` : ""}
                         </p>
                       </div>
                     </div>
