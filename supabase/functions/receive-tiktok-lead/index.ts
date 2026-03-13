@@ -142,6 +142,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Fallback: detect stringified field/value pairs ──
+    // Make.com sometimes dumps the entire Answers[] array into each field
+    const allRawValues = [name, email, phone, message].join(" ");
+    if (allRawValues.includes('"field"') && allRawValues.includes('"value"')) {
+      // Find the longest raw value (likely contains the full answers array)
+      const candidates = [name, email, phone, message].filter(v => v.includes('"field"'));
+      const longestRaw = candidates.sort((a, b) => b.length - a.length)[0] || "";
+      if (longestRaw) {
+        const parsed = extractFieldValuePairs(longestRaw);
+        console.log("TIKTOK-LEAD FALLBACK PARSE:", JSON.stringify(parsed));
+        if (parsed.name || parsed.full_name || parsed.nome) {
+          name = parsed.name || parsed.full_name || parsed.nome || name;
+        }
+        if (parsed.email) email = parsed.email;
+        if (parsed.phone_number || parsed.phone || parsed.telefone || parsed.celular || parsed.whatsapp) {
+          phone = parsed.phone_number || parsed.phone || parsed.telefone || parsed.celular || parsed.whatsapp || phone;
+        }
+        if (parsed.message || parsed.mensagem) message = parsed.message || parsed.mensagem || message;
+      }
+    }
+
     const telefone = normalizePhone(phone);
     const isTestLead = isLikelyTestLead(name, email, message);
     const platform = "tiktok_ads";
