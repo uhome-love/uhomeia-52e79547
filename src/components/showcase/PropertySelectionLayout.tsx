@@ -2,7 +2,7 @@ import { useState, useCallback, Suspense, lazy, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Heart, GitCompareArrows } from "lucide-react";
 import { toast } from "sonner";
-import PropertyCard from "./PropertyCard";
+import SafePropertyCard from "./SafePropertyCard";
 import PropertyDetailModal from "./PropertyDetailModal";
 import CompareModal from "./CompareModal";
 import ContactCTA from "./ContactCTA";
@@ -10,6 +10,7 @@ import FooterBranding from "./FooterBranding";
 import type { ShowcaseData, ShowcaseImovel } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { useVitrineTracking } from "@/hooks/useVitrineTracking";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const ShowcaseMap = lazy(() => import("./ShowcaseMap"));
 
