@@ -649,27 +649,40 @@ export default function ImoveisPage() {
     }
   }, [campanhaAtiva, uhomeOnly, useTypesense, fetchViaTypesense, fetchViaJetimob]);
 
+  // Keep a ref to the latest fetchImoveis to avoid stale closures in effects
+  const fetchRef = useRef(fetchImoveis);
+  fetchRef.current = fetchImoveis;
+
   // Initial load
   const mounted = useRef(false);
   useEffect(() => {
     if (mounted.current) return;
     mounted.current = true;
-    fetchImoveis(1, false);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    fetchRef.current(1, false);
+  }, []);
 
-  // Auto-apply filters with debounce (reactive like Zillow)
-  const filterVersion = useRef(0);
+  // Auto-apply ALL filter changes with debounce (reactive like Zillow)
+  // Using a serialized key ensures we catch every filter change including uhomeOnly/campanhaAtiva
+  const filterKey = useMemo(() =>
+    JSON.stringify({ search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva }),
+    [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva]
+  );
+  const prevFilterKey = useRef(filterKey);
+
   useEffect(() => {
     if (!mounted.current) return;
-    filterVersion.current += 1;
+    // Skip if filterKey hasn't actually changed (prevents double-fire)
+    if (prevFilterKey.current === filterKey) return;
+    prevFilterKey.current = filterKey;
+
     if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
     filterDebounceRef.current = setTimeout(() => {
-      fetchImoveis(1, campanhaAtiva, uhomeOnly);
+      fetchRef.current(1);
     }, 400);
     return () => { if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current); };
-  }, [contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterKey]);
 
-  const handleSearch = () => { setCampanhaAtiva(false); setUhomeOnly(false); setShowSuggestions(false); fetchImoveis(1, false, false); };
+  const handleSearch = () => { setCampanhaAtiva(false); setUhomeOnly(false); setShowSuggestions(false); };
 
   // Autocomplete with debounce — Typesense powered
   const handleSearchChange = useCallback((value: string) => {
@@ -703,7 +716,7 @@ export default function ImoveisPage() {
     setShowSuggestions(false);
     setCampanhaAtiva(false);
     setUhomeOnly(false);
-    setTimeout(() => fetchImoveis(1, false, false), 50);
+    // search state change triggers the reactive useEffect via filterKey
   };
 
   const getPreco = (item: any): string => {
@@ -733,7 +746,7 @@ export default function ImoveisPage() {
 
   // Active filter tags
   const activeFilters: { key: string; label: string; onRemove: () => void }[] = [];
-  if (search) activeFilters.push({ key: "search", label: `"${search}"`, onRemove: () => { setSearch(""); setTimeout(() => fetchImoveis(1, campanhaAtiva, uhomeOnly), 50); } });
+  if (search) activeFilters.push({ key: "search", label: `"${search}"`, onRemove: () => { setSearch(""); } });
   if (tipo.length > 0) activeFilters.push({ key: "tipo", label: tipo.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(", "), onRemove: () => setTipo([]) });
   if (bairro.length > 0) activeFilters.push({ key: "bairro", label: bairro.join(", "), onRemove: () => setBairro([]) });
   if (dormitorios.length > 0) activeFilters.push({ key: "dorms", label: dormitorios.map(d => `${d} dorm`).join(", "), onRemove: () => setDormitorios([]) });
@@ -742,8 +755,8 @@ export default function ImoveisPage() {
   if (valorRange[0] > 0 || valorRange[1] < 5_000_000) activeFilters.push({ key: "valor", label: `${fmtCompact(valorRange[0])} — ${valorRange[1] >= 5_000_000 ? "5M+" : fmtCompact(valorRange[1])}`, onRemove: () => setValorRange([0, 5_000_000]) });
   if (areaRange[0] > 0 || areaRange[1] < 500) activeFilters.push({ key: "area", label: `${areaRange[0]}m² — ${areaRange[1] >= 500 ? "500+" : areaRange[1]}m²`, onRemove: () => setAreaRange([0, 500]) });
   if (somenteObras) activeFilters.push({ key: "obras", label: "Em obras", onRemove: () => setSomenteObras(false) });
-  if (uhomeOnly) activeFilters.push({ key: "uhome", label: "uHome", onRemove: () => { setUhomeOnly(false); fetchImoveis(1, false, false); } });
-  if (campanhaAtiva) activeFilters.push({ key: "campanha", label: "Campanha", onRemove: () => { setCampanhaAtiva(false); fetchImoveis(1, false, uhomeOnly); } });
+  if (uhomeOnly) activeFilters.push({ key: "uhome", label: "uHome", onRemove: () => { setUhomeOnly(false); } });
+  if (campanhaAtiva) activeFilters.push({ key: "campanha", label: "Campanha", onRemove: () => { setCampanhaAtiva(false); } });
 
   const clearAllFilters = () => {
     setTipo([]); setBairro([]); setDormitorios([]); setSuitesFilter(""); setVagas(""); setAreaRange([0, 500]); setValorRange([0, 5_000_000]); setSomenteObras(false); setSearch(""); setUhomeOnly(false); setCampanhaAtiva(false);
@@ -795,7 +808,7 @@ export default function ImoveisPage() {
                 />
                 <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   {search && (
-                    <button onClick={() => { setSearch(""); setSuggestions([]); setShowSuggestions(false); setTimeout(() => fetchImoveis(1, campanhaAtiva, uhomeOnly), 50); }} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/50">
+                    <button onClick={() => { setSearch(""); setSuggestions([]); setShowSuggestions(false); }} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/50">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -1062,7 +1075,7 @@ export default function ImoveisPage() {
             {/* Quick toggles */}
             <div className="border-l border-border/50 pl-2 ml-1 flex items-center gap-1.5 shrink-0">
               <button
-                onClick={() => { const next = !campanhaAtiva; setCampanhaAtiva(next); setUhomeOnly(false); fetchImoveis(1, next, false); }}
+                onClick={() => { setCampanhaAtiva(prev => !prev); setUhomeOnly(false); }}
                 className={cn(
                   "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap",
                   campanhaAtiva ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-primary/40"
@@ -1071,7 +1084,7 @@ export default function ImoveisPage() {
                 <Megaphone className="h-3 w-3" /> Campanha
               </button>
               <button
-                onClick={() => { const next = !uhomeOnly; setUhomeOnly(next); setCampanhaAtiva(false); fetchImoveis(1, false, next); }}
+                onClick={() => { setUhomeOnly(prev => !prev); setCampanhaAtiva(false); }}
                 className={cn(
                   "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap",
                   uhomeOnly ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-primary/40"
@@ -1124,9 +1137,9 @@ export default function ImoveisPage() {
                 })}
                 {totalPages > 1 && !campanhaAtiva && (
                   <div className="flex items-center justify-center gap-2 py-3">
-                    <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchImoveis(page - 1)} className="gap-1 rounded-full text-xs"><ChevronLeft className="h-3 w-3" /></Button>
+                    <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchRef.current(page - 1)} className="gap-1 rounded-full text-xs"><ChevronLeft className="h-3 w-3" /></Button>
                     <span className="text-xs text-muted-foreground tabular-nums">{page}/{totalPages}</span>
-                    <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchImoveis(page + 1)} className="gap-1 rounded-full text-xs"><ChevronRight className="h-3 w-3" /></Button>
+                    <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchRef.current(page + 1)} className="gap-1 rounded-full text-xs"><ChevronRight className="h-3 w-3" /></Button>
                   </div>
                 )}
               </div>
@@ -1324,9 +1337,9 @@ export default function ImoveisPage() {
                   </div>
                   {totalPages > 1 && !campanhaAtiva && (
                     <div className="flex items-center justify-center gap-3 pt-6 pb-2">
-                      <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchImoveis(page - 1)} className="gap-1 rounded-full"><ChevronLeft className="h-4 w-4" /> Anterior</Button>
+                      <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchRef.current(page - 1)} className="gap-1 rounded-full"><ChevronLeft className="h-4 w-4" /> Anterior</Button>
                       <span className="text-sm text-muted-foreground font-medium tabular-nums">{page} de {totalPages}</span>
-                      <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchImoveis(page + 1)} className="gap-1 rounded-full">Próxima <ChevronRight className="h-4 w-4" /></Button>
+                      <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchRef.current(page + 1)} className="gap-1 rounded-full">Próxima <ChevronRight className="h-4 w-4" /></Button>
                     </div>
                   )}
                 </>
