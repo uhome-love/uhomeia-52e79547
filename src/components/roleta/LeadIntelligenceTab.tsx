@@ -222,8 +222,7 @@ export default function LeadIntelligenceTab() {
       {/* AI Insights */}
       <LeadInsightsAI
         kpis={kpis}
-        campanhas={campanhas}
-        formularios={formularios}
+        empreendimentoPerf={empreendimentoPerf}
         segmentoPerf={segmentoPerf}
         corretorPerf={corretorPerf}
         periodo={periodo}

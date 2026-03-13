@@ -29,8 +29,7 @@ export default function LeadInsightsAI({ kpis, empreendimentoPerf, segmentoPerf,
       const summary = {
         periodo,
         kpis,
-        top5Campanhas: campanhas.slice(0, 5),
-        top5Formularios: formularios.slice(0, 5),
+        top10Empreendimentos: empreendimentoPerf.slice(0, 10),
         segmentos: segmentoPerf,
         top5Corretores: corretorPerf.slice(0, 5),
       };
