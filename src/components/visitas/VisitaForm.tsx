@@ -378,6 +378,13 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
         </DialogHeader>
 
         <div className="space-y-4">
+          {Object.values(formErrors).filter(Boolean).length > 0 && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-2">
+              <p className="text-xs font-medium text-destructive">
+                Revise os campos obrigatórios para agendar a visita.
+              </p>
+            </div>
+          )}
           {/* === CLIENT SEARCH === */}
           <div>
             <div className="flex items-center justify-between mb-1">
