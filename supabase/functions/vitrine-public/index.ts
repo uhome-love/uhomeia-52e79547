@@ -133,9 +133,10 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Build landing data from overrides
+      // Build landing data from overrides (only for product_page/anuncio types)
       let landingData: any = null;
       let overrideFotos: string[] = [];
+      const isPropertySelection = vitrine.tipo === "property_selection";
 
       if (overrideRows && overrideRows.length > 0) {
         const ov = overrideRows[0];
@@ -160,8 +161,8 @@ Deno.serve(async (req) => {
         };
       }
 
-      // For "anuncio" type vitrines with complete override data, skip Jetimob entirely
-      const hasCompleteOverride = landingData && overrideFotos.length >= 3 && landingData.descricao;
+      // For product_page/anuncio with complete override data and single ID → skip Jetimob
+      const hasCompleteOverride = !isPropertySelection && landingData && overrideFotos.length >= 3 && landingData.descricao && ids.length === 1;
       
       let imoveis: any[] = [];
 
@@ -186,7 +187,7 @@ Deno.serve(async (req) => {
           descricao: ov.descricao || null,
         }];
       } else if (JETIMOB_API_KEY && ids.length > 0) {
-        // Only call Jetimob if we don't have complete override data
+        // Fetch ALL imóveis from Jetimob in parallel
         const results = await Promise.allSettled(
           ids.map(id => fetchImovelFromJetimob(JETIMOB_API_KEY, String(id)))
         );
@@ -196,8 +197,8 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Merge override photos with imovel photos
-        if (overrideFotos.length > 0 && imoveis.length > 0) {
+        // For single-property vitrines, merge override photos
+        if (!isPropertySelection && overrideFotos.length > 0 && imoveis.length > 0) {
           imoveis[0].fotos = [...overrideFotos, ...imoveis[0].fotos.filter((f: string) => !overrideFotos.includes(f))];
         }
       }
