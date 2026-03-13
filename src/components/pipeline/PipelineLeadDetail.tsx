@@ -327,40 +327,52 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               )}
             </div>
 
-            {/* Row 3: Action buttons */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Row 3: Barra de Ações Rápidas — fixa no topo */}
+            <div className="flex items-center gap-1.5 flex-wrap rounded-xl bg-muted/60 border border-border/40 px-3 py-2">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mr-1">⚡ Ações</span>
               {lead.telefone && (
                 <a href={`tel:${lead.telefone}`}>
-                  <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-border/60 hover:border-primary hover:text-primary">
+                  <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg border-border/60 hover:border-primary hover:text-primary">
                     <Phone className="h-3.5 w-3.5" /> Ligar
+                    <kbd className="ml-1 text-[9px] text-muted-foreground/60 font-mono bg-muted px-1 rounded hidden sm:inline">L</kbd>
                   </Button>
                 </a>
               )}
               {lead.telefone && (
-                <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-green-300 text-green-600 hover:bg-green-50" onClick={() => setWhatsappTemplatesOpen(true)}>
+                <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg border-green-300 text-green-600 hover:bg-green-50" onClick={() => setWhatsappTemplatesOpen(true)}>
                   <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
+                  <kbd className="ml-1 text-[9px] text-muted-foreground/60 font-mono bg-muted px-1 rounded hidden sm:inline">W</kbd>
                 </Button>
               )}
               {lead.email && (
                 <a href={`mailto:${lead.email}`}>
-                  <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-border/60 hover:border-primary hover:text-primary">
+                  <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg border-border/60 hover:border-primary hover:text-primary">
                     <Mail className="h-3.5 w-3.5" /> Email
                   </Button>
                 </a>
               )}
-              <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full border-blue-300 text-blue-500 hover:bg-blue-50" onClick={() => setComunicacaoOpen(true)}>
-                <MessageSquare className="h-3.5 w-3.5" /> 📚 Scripts
+              <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg border-blue-300 text-blue-500 hover:bg-blue-50" onClick={() => setComunicacaoOpen(true)}>
+                <FileText className="h-3.5 w-3.5" /> Scripts
+                <kbd className="ml-1 text-[9px] text-muted-foreground/60 font-mono bg-muted px-1 rounded hidden sm:inline">S</kbd>
               </Button>
-              <QuickActionMenu leadId={lead.id} leadNome={lead.nome} onOpenDetail={() => setActiveTab("historico")}>
-                <Button variant="outline" size="sm" className="py-2 px-4 text-xs gap-1.5 rounded-full">
-                  <Plus className="h-3.5 w-3.5" /> Ação
+              <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg border-purple-300 text-purple-600 hover:bg-purple-50" onClick={() => setActiveTab("radar")}>
+                <Building2 className="h-3.5 w-3.5" /> Imóveis
+                <kbd className="ml-1 text-[9px] text-muted-foreground/60 font-mono bg-muted px-1 rounded hidden sm:inline">I</kbd>
+              </Button>
+              <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg border-amber-300 text-amber-600 hover:bg-amber-50" onClick={() => { setActiveTab("tarefas"); setShowNovaTarefa(true); }}>
+                <Plus className="h-3.5 w-3.5" /> Próxima Ação
+                <kbd className="ml-1 text-[9px] text-muted-foreground/60 font-mono bg-muted px-1 rounded hidden sm:inline">T</kbd>
+              </Button>
+              <QuickActionMenu leadId={lead.id} leadNome={lead.nome} onOpenDetail={() => setActiveTab("historico")} onRefresh={leadData.reload}>
+                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1 rounded-lg">
+                  <Zap className="h-3.5 w-3.5" /> Registrar
                 </Button>
               </QuickActionMenu>
 
               {/* ⋯ More menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0 rounded-full">
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg ml-auto">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
