@@ -1,6 +1,6 @@
 import { memo, useState, useMemo } from "react";
 import type { PipelineLead, PipelineSegmento, PipelineStage } from "@/hooks/usePipeline";
-import { Phone, MessageCircle, Zap, Calendar, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft, Eye, MapPin, PhoneCall, Send, FileText, Mail, MoreVertical, ArrowRight, Trash2, Flame, Snowflake, ThermometerSun } from "lucide-react";
+import { Phone, MessageCircle, Zap, Calendar, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft, Eye, MapPin, PhoneCall, Send, FileText, Mail, MoreVertical, ArrowRight, Trash2, Flame, Snowflake, ThermometerSun, ClipboardList, Loader2 } from "lucide-react";
 import { calculateLeadScore } from "@/lib/leadScoring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -8,10 +8,12 @@ import { differenceInHours, differenceInDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { todayBRT, dateToBRT } from "@/lib/utils";
 import { toast } from "sonner";
 import PartnershipDialog from "./PartnershipDialog";
 import PipelineTransferDialog from "./PipelineTransferDialog";
@@ -66,6 +68,14 @@ const TIPO_LABELS: Record<string, string> = {
   marcar_visita: "Visita", confirmar_visita: "Confirmar visita",
   retornar_cliente: "Retornar", outro: "Tarefa",
 };
+
+const CARD_QUICK_TASK_TYPES = [
+  { value: "ligar", label: "Ligar", emoji: "📞" },
+  { value: "whatsapp", label: "WhatsApp", emoji: "💬" },
+  { value: "follow_up", label: "Follow-up", emoji: "📋" },
+  { value: "marcar_visita", label: "Visita", emoji: "🏠" },
+  { value: "enviar_proposta", label: "Proposta", emoji: "📄" },
+];
 
 function toValidDate(value: string | null | undefined): Date | null {
   if (!value) return null;
@@ -237,6 +247,10 @@ const PipelineCard = memo(function PipelineCard({
   const [scheduleObs, setScheduleObs] = useState("");
   const [criandoNegocio, setCriandoNegocio] = useState(false);
   const [negocioCriado, setNegocioCriado] = useState(false);
+  const [quickTaskOpen, setQuickTaskOpen] = useState(false);
+  const [quickTaskType, setQuickTaskType] = useState("follow_up");
+  const [quickTaskObs, setQuickTaskObs] = useState("");
+  const [quickTaskSaving, setQuickTaskSaving] = useState(false);
 
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || (lead as any).origem_detalhe || "");
   const status = useMemo(() => getCardStatus(lead, proximaTarefa || null), [(lead as any).ultima_acao_at, lead.stage_changed_at, proximaTarefa?.tipo, proximaTarefa?.vence_em, proximaTarefa?.hora_vencimento]);
@@ -291,6 +305,48 @@ const PipelineCard = memo(function PipelineCard({
     if (!lead.telefone) return;
     setWhatsappTemplatesOpen(true);
   };
+
+  const handleQuickTaskCreate = async (quando: "hoje" | "amanha") => {
+    if (!user) { toast.error("Faça login primeiro"); return; }
+    setQuickTaskSaving(true);
+    try {
+      const now = new Date();
+      let venceEm: string;
+      if (quando === "hoje") {
+        venceEm = todayBRT();
+      } else {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        venceEm = dateToBRT(tomorrow);
+      }
+      const titulo = `${TIPO_LABELS[quickTaskType] || quickTaskType}: ${lead.nome || "Lead"}`;
+      await supabase.from("pipeline_tarefas").insert({
+        pipeline_lead_id: lead.id,
+        titulo,
+        descricao: quickTaskObs || null,
+        tipo: quickTaskType,
+        vence_em: venceEm,
+        prioridade: "media",
+        status: "pendente",
+        created_by: user.id,
+        responsavel_id: user.id,
+      } as any);
+      await supabase.from("pipeline_leads").update({
+        proxima_acao: TIPO_LABELS[quickTaskType] || titulo,
+        data_proxima_acao: venceEm,
+        updated_at: new Date().toISOString(),
+      } as any).eq("id", lead.id);
+      toast.success(`Tarefa "${TIPO_LABELS[quickTaskType]}" criada para ${quando === "hoje" ? "hoje" : "amanhã"} ✅`);
+      setQuickTaskOpen(false);
+      setQuickTaskObs("");
+      setQuickTaskType("follow_up");
+    } catch (err: any) {
+      toast.error("Erro ao criar tarefa: " + (err.message || ""));
+    } finally {
+      setQuickTaskSaving(false);
+    }
+  };
+
 
   const handleScheduleVisit = async () => {
     if (!scheduleDate || !user) return;
@@ -571,16 +627,52 @@ const PipelineCard = memo(function PipelineCard({
       {/* Line 4: Action buttons + 3-dot menu */}
       <div data-actions-area className="px-2.5 py-1.5 flex items-center justify-between">
         <div className="flex items-center gap-0.5">
-          {lead.telefone && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold text-foreground/80 hover:bg-accent hover:text-foreground rounded-lg"
-              onClick={handleCall}
-            >
-              <Phone className="h-3.5 w-3.5" /> Ligar
-            </Button>
-          )}
+          <Popover open={quickTaskOpen} onOpenChange={setQuickTaskOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold text-foreground/80 hover:bg-accent hover:text-foreground rounded-lg"
+                onClick={(e) => { e.stopPropagation(); setQuickTaskOpen(true); }}
+              >
+                <ClipboardList className="h-3.5 w-3.5" /> Tarefa
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="start" className="w-64 p-2.5 space-y-2" onClick={(e) => e.stopPropagation()}>
+              <p className="text-[10px] font-bold text-foreground">➕ Tarefa rápida para {lead.nome?.split(" ")[0]}</p>
+              <div className="flex flex-wrap gap-1">
+                {CARD_QUICK_TASK_TYPES.map(t => (
+                  <button
+                    key={t.value}
+                    onClick={() => setQuickTaskType(t.value)}
+                    className={cn(
+                      "text-[10px] px-2 py-1 rounded-md border transition-colors",
+                      quickTaskType === t.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background border-border hover:border-primary/50"
+                    )}
+                  >
+                    {t.emoji} {t.label}
+                  </button>
+                ))}
+              </div>
+              <Input
+                className="h-7 text-[11px]"
+                placeholder="Obs: ex. Retornar sobre financiamento"
+                value={quickTaskObs}
+                onChange={e => setQuickTaskObs(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleQuickTaskCreate("hoje"); }}
+              />
+              <div className="flex gap-1">
+                <Button size="sm" className="h-6 text-[10px] flex-1 gap-1" disabled={quickTaskSaving} onClick={() => handleQuickTaskCreate("hoje")}>
+                  {quickTaskSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Hoje"}
+                </Button>
+                <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" disabled={quickTaskSaving} onClick={() => handleQuickTaskCreate("amanha")}>
+                  Amanhã
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
 
           <Button
             size="sm"
