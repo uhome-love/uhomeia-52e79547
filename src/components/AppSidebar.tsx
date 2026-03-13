@@ -627,6 +627,13 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Mega da Cyrela">
+                  <NavLink to="/mega-cyrela" end className="justify-center text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg py-1.5" activeClassName="!bg-[#d4af37]/15">
+                    <Trophy className="h-4 w-4 text-[#d4af37]" />
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </div>
         )}
