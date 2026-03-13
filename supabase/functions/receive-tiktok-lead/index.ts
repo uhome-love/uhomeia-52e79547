@@ -26,6 +26,35 @@ function extractStr(val: any): string {
   return "";
 }
 
+/**
+ * Attempt to extract structured field/value pairs from a stringified
+ * TikTok Answers array that Make.com sometimes dumps into a single field.
+ * e.g. '{"field":"email","value":"a@b.com"}, {"field":"name","value":"João"}'
+ */
+function extractFieldValuePairs(raw: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  try {
+    // Try wrapping in array brackets and parsing
+    const wrapped = `[${raw.replace(/}\s*,\s*{/g, "},{")}]`;
+    const arr = JSON.parse(wrapped);
+    if (Array.isArray(arr)) {
+      for (const item of arr) {
+        if (item.field && item.value) {
+          result[String(item.field).toLowerCase().trim()] = String(item.value).trim();
+        }
+      }
+    }
+  } catch {
+    // Fallback: regex extraction
+    const regex = /"field"\s*:\s*"([^"]+)"\s*,\s*"value"\s*:\s*"([^"]*)"/g;
+    let match;
+    while ((match = regex.exec(raw)) !== null) {
+      result[match[1].toLowerCase().trim()] = match[2].trim();
+    }
+  }
+  return result;
+}
+
 function normalizeLower(value: string | null | undefined): string {
   return (value || "").toLowerCase().trim();
 }
