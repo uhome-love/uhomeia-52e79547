@@ -41,6 +41,11 @@ const JourneyMissionCard = memo(function JourneyMissionCard({
   const totalStages = stages.length;
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || "");
 
+  // Stale lead detection: no action for 5+ days
+  const lastAction = lead.ultima_acao_at ? new Date(lead.ultima_acao_at) : new Date(lead.updated_at);
+  const daysSinceAction = differenceInDays(new Date(), lastAction);
+  const isStale = daysSinceAction >= 5;
+
   const daysLabel = useMemo(() => {
     if (daysInStage <= 2) return { text: `✅ ${daysInStage}d`, color: "#34D399" };
     if (daysInStage <= 5) return { text: `⚠️ ${daysInStage}d`, color: "#FBBF24" };
@@ -62,7 +67,7 @@ const JourneyMissionCard = memo(function JourneyMissionCard({
         className="group rounded-xl cursor-pointer active:cursor-grabbing transition-all duration-150 select-none hover:scale-[1.02]"
         style={{
           background: "#1C2128",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: isStale ? "1px solid rgba(248,113,113,0.4)" : "1px solid rgba(255,255,255,0.08)",
           padding: "12px",
           animation: arrived ? "cardArrived 0.4s cubic-bezier(0.34,1.56,0.64,1)" : undefined,
         }}
@@ -83,6 +88,13 @@ const JourneyMissionCard = memo(function JourneyMissionCard({
             </TooltipContent>
           </Tooltip>
         </div>
+
+        {/* Stale lead alert */}
+        {isStale && (
+          <div className="text-[9px] font-bold px-2 py-0.5 rounded-full text-center mb-1" style={{ background: "rgba(248,113,113,0.15)", color: "#F87171" }}>
+            ⚠️ {daysSinceAction}d sem ação
+          </div>
+        )}
 
         {/* Line 2: Name */}
         <p className="text-sm font-semibold text-white truncate mb-0.5">{lead.nome}</p>
