@@ -239,14 +239,13 @@ export function useVisitas(filters?: {
         .select("user_id, gerente_id")
         .eq("user_id", corretorId)
         .eq("status", "ativo")
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
       if (!isAdmin) {
         teamMemberQuery = teamMemberQuery.eq("gerente_id", user.id);
       }
 
-      const { data: teamMember, error: teamMemberError } = await teamMemberQuery;
+      const { data: teamMember, error: teamMemberError } = await teamMemberQuery.maybeSingle();
 
       if (teamMemberError || !teamMember) {
         console.error("[createVisita] corretor_id não autorizado para o gestor", {
