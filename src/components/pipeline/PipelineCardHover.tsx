@@ -280,39 +280,142 @@ const PipelineCardHover = memo(function PipelineCardHover({ lead, children, onOp
             </div>
 
             {/* Footer */}
-            <div className="flex items-center gap-1.5 p-2.5 border-t border-border/50 bg-muted/30">
-              {lead.telefone && (
+            <div className="flex flex-col border-t border-border/50 bg-muted/30">
+              {/* Quick Task Form */}
+              {showQuickTask && (
+                <div className="p-2.5 space-y-2 border-b border-border/50 bg-primary/5" onClick={e => e.stopPropagation()}>
+                  <p className="text-[10px] font-bold text-foreground">➕ Tarefa rápida para {lead.nome?.split(" ")[0]}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {QUICK_TASK_TYPES.map(t => (
+                      <button
+                        key={t.value}
+                        onClick={(e) => { e.stopPropagation(); setQuickTaskType(t.value); }}
+                        className={`text-[10px] px-2 py-1 rounded-md border transition-colors ${
+                          quickTaskType === t.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-border hover:border-primary/50"
+                        }`}
+                      >
+                        {t.emoji} {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    className="h-7 text-[11px]"
+                    placeholder="Obs: ex. Retornar sobre financiamento"
+                    value={quickTaskObs}
+                    onChange={e => setQuickTaskObs(e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    onKeyDown={e => { if (e.key === "Enter") handleQuickTaskCreate("hoje"); }}
+                  />
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      className="h-6 text-[10px] flex-1 gap-1"
+                      disabled={quickTaskSaving}
+                      onClick={(e) => { e.stopPropagation(); handleQuickTaskCreate("hoje"); }}
+                    >
+                      {quickTaskSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Hoje"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-[10px] flex-1"
+                      disabled={quickTaskSaving}
+                      onClick={(e) => { e.stopPropagation(); handleQuickTaskCreate("amanha"); }}
+                    >
+                      Amanhã
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] px-2"
+                      onClick={(e) => { e.stopPropagation(); setShowQuickTask(false); }}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5 p-2.5">
                 <Button
                   variant="outline"
                   size="sm"
                   className="h-7 text-[11px] gap-1 flex-1"
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(`tel:${lead.telefone}`, "_self");
+                    setShowQuickTask(!showQuickTask);
                   }}
                 >
-                  <Phone className="h-3 w-3" />
-                  Ligar
+                  <ClipboardList className="h-3 w-3" />
+                  Tarefa
                 </Button>
-              )}
-              <Button
-                variant="default"
-                size="sm"
-                className="h-7 text-[11px] gap-1 flex-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenLead();
-                }}
-              >
-                <Eye className="h-3 w-3" />
-                Abrir lead
-              </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-7 text-[11px] gap-1 flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenLead();
+                  }}
+                >
+                  <Eye className="h-3 w-3" />
+                  Abrir lead
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       )}
     </div>
   );
+
+  async function handleQuickTaskCreate(quando: "hoje" | "amanha") {
+    if (!user) { toast.error("Faça login primeiro"); return; }
+    setQuickTaskSaving(true);
+    try {
+      const now = new Date();
+      let venceEm: string;
+      if (quando === "hoje") {
+        venceEm = todayBRT();
+      } else {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        venceEm = dateToBRT(tomorrow);
+      }
+
+      const titulo = `${QUICK_TASK_LABELS[quickTaskType] || quickTaskType}: ${lead.nome || "Lead"}`;
+
+      await supabase.from("pipeline_tarefas").insert({
+        pipeline_lead_id: lead.id,
+        titulo,
+        descricao: quickTaskObs || null,
+        tipo: quickTaskType,
+        vence_em: venceEm,
+        prioridade: "media",
+        status: "pendente",
+        created_by: user.id,
+        responsavel_id: user.id,
+      } as any);
+
+      // Update proxima_acao on the lead
+      await supabase.from("pipeline_leads").update({
+        proxima_acao: QUICK_TASK_LABELS[quickTaskType] || titulo,
+        data_proxima_acao: venceEm,
+        updated_at: new Date().toISOString(),
+      } as any).eq("id", lead.id);
+
+      toast.success(`Tarefa "${QUICK_TASK_LABELS[quickTaskType]}" criada para ${quando === "hoje" ? "hoje" : "amanhã"} ✅`);
+      setShowQuickTask(false);
+      setQuickTaskObs("");
+      setQuickTaskType("follow_up");
+    } catch (err: any) {
+      toast.error("Erro ao criar tarefa: " + (err.message || ""));
+    } finally {
+      setQuickTaskSaving(false);
+    }
+  }
 });
 
 export default PipelineCardHover;
