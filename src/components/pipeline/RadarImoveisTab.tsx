@@ -306,8 +306,20 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
   const navigate = useNavigate();
   const { search: typesenseSearch } = useTypesenseSearch();
 
+  // Load dynamic hints from empreendimento_overrides
+  const [dynamicHints, setDynamicHints] = useState<HintMap>({});
+  useEffect(() => {
+    supabase.from("empreendimento_overrides")
+      .select("nome, codigo, bairro, valor_min, valor_max, dormitorios")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setDynamicHints(buildHintsFromOverrides(data));
+        }
+      });
+  }, []);
+
   // Inferred profile
-  const inferred = useMemo(() => inferProfileFromLead(leadData, currentProfile), [leadData, currentProfile]);
+  const inferred = useMemo(() => inferProfileFromLead(leadData, currentProfile, dynamicHints), [leadData, currentProfile, dynamicHints]);
 
   // Profile state
   const [quartos, setQuartos] = useState<string>(inferred.quartos ? String(inferred.quartos) : "");
