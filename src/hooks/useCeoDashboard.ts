@@ -253,10 +253,12 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       }
       const negocioFases = Array.from(faseMap.entries()).map(([fase, d]) => ({ fase, ...d }));
 
+      // Top corretores by VGV de vendas realizadas (assinado/vendido)
       const corrMap = new Map<string, number>();
       for (const n of (negocios || [])) {
         if (!n.corretor_id) continue;
-        corrMap.set(n.corretor_id, (corrMap.get(n.corretor_id) || 0) + (n.vgv_estimado || 0));
+        if (n.fase !== "assinado" && n.fase !== "vendido") continue;
+        corrMap.set(n.corretor_id, (corrMap.get(n.corretor_id) || 0) + (n.vgv_final || n.vgv_estimado || 0));
       }
       const corrIds = [...corrMap.keys()];
       const { data: profs } = corrIds.length > 0 ? await supabase.from("profiles").select("id, nome").in("id", corrIds) : { data: [] as { id: string; nome: string }[] };
@@ -325,7 +327,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
           const vr = (allVisRealizadas || []).filter(v => v.corretor_id === uid && v.status === "realizada").length;
           const neg = (allNeg || []).filter(n => n.corretor_id === uid);
           const prop = neg.filter(n => n.fase === "proposta" || n.fase === "negociacao").length;
-          const vgv = neg.reduce((s, n) => s + (n.vgv_estimado || 0), 0);
+          const vgv = neg.reduce((s, n) => s + (n.vgv_final || n.vgv_estimado || 0), 0);
           tLig += lig; tAprov += aprov; tVM += vm; tVR += vr; tProp += prop; tVgv += vgv;
           corretoresAll.push({
             corretor_id: uid, nome: corrNameMap.get(uid) || "Corretor", gerente_nome: gerenteNome,
