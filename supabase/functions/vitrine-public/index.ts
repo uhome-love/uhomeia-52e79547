@@ -38,6 +38,8 @@ async function fetchImovelFromJetimob(apiKey: string, codigo: string) {
       fotos,
       empreendimento: item.empreendimento?.nome || item.empreendimento || null,
       descricao: item.descricao_curta || item.titulo || null,
+      lat: item.endereco?.latitude || item.latitude || null,
+      lng: item.endereco?.longitude || item.longitude || null,
     };
   } catch {
     return null;
@@ -258,6 +260,17 @@ Deno.serve(async (req) => {
               }
             });
         }
+        // Persist interaction
+        supabase.from("vitrine_interacoes")
+          .insert({
+            vitrine_id,
+            imovel_id: imovel_id || "general",
+            tipo: event_type,
+            lead_nome: body.lead_nome || null,
+            lead_telefone: body.lead_telefone || null,
+            metadata: body.metadata || {},
+          })
+          .then(() => {});
       }
       return jsonResponse({ ok: true });
     }

@@ -1,11 +1,16 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense, lazy } from "react";
 import { motion } from "framer-motion";
+import { Heart, GitCompareArrows } from "lucide-react";
+import { toast } from "sonner";
 import PropertyCard from "./PropertyCard";
 import PropertyDetailModal from "./PropertyDetailModal";
+import CompareModal from "./CompareModal";
 import ContactCTA from "./ContactCTA";
 import FooterBranding from "./FooterBranding";
 import type { ShowcaseData, ShowcaseImovel } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+
+const ShowcaseMap = lazy(() => import("./ShowcaseMap"));
 
 interface Props {
   data: ShowcaseData;
@@ -14,6 +19,11 @@ interface Props {
 export default function PropertySelectionLayout({ data }: Props) {
   const { vitrine, corretor, imoveis } = data;
   const [selectedItem, setSelectedItem] = useState<ShowcaseImovel | null>(null);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [compareItems, setCompareItems] = useState<ShowcaseImovel[]>([]);
+  const [showCompare, setShowCompare] = useState(false);
+
+  const hasGeoData = imoveis.some(i => i.lat && i.lng);
 
   const whatsappBase = corretor?.telefone
     ? `https://wa.me/55${corretor.telefone.replace(/\D/g, "")}`
@@ -32,20 +42,51 @@ export default function PropertySelectionLayout({ data }: Props) {
     } catch {}
   }, [vitrine.id]);
 
+  const handleFavorite = useCallback((item: ShowcaseImovel) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(item.id)) {
+        next.delete(item.id);
+      } else {
+        next.add(item.id);
+        trackEvent("favorite", item.id);
+        toast.success("❤️ Gostei!", {
+          description: `Seu corretor vai saber que você gostou de ${item.empreendimento || item.titulo}.`,
+          duration: 3000,
+        });
+      }
+      return next;
+    });
+  }, [trackEvent]);
+
+  const handleCompare = useCallback((item: ShowcaseImovel) => {
+    setCompareItems(prev => {
+      const exists = prev.find(i => i.id === item.id);
+      if (exists) return prev.filter(i => i.id !== item.id);
+      if (prev.length >= 4) {
+        toast.error("Máximo 4 imóveis para comparar");
+        return prev;
+      }
+      trackEvent("compare_add", item.id);
+      return [...prev, item];
+    });
+  }, [trackEvent]);
+
+  const removeFromCompare = useCallback((id: number) => {
+    setCompareItems(prev => prev.filter(i => i.id !== id));
+  }, []);
+
   return (
     <div className="min-h-screen" style={{ background: "#ffffff" }}>
       {/* ═══ PREMIUM HERO COVER ═══ */}
       <header className="relative overflow-hidden">
-        {/* Dark gradient background */}
         <div className="absolute inset-0" style={{
           background: "linear-gradient(160deg, #0a0f1e 0%, #111827 40%, #1e293b 100%)",
         }} />
-        {/* Subtle pattern */}
         <div className="absolute inset-0 opacity-[0.03]" style={{
           backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
           backgroundSize: "40px 40px",
         }} />
-        {/* Gradient accent */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-20" style={{
           background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)",
           filter: "blur(80px)",
@@ -81,7 +122,7 @@ export default function PropertySelectionLayout({ data }: Props) {
               </motion.div>
             )}
 
-            {/* Corretor badge — consultive */}
+            {/* Corretor badge */}
             {corretor && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
                 className="flex items-center gap-4 mt-2">
@@ -124,8 +165,25 @@ export default function PropertySelectionLayout({ data }: Props) {
         </div>
       </header>
 
+      {/* ═══ INTERACTIVE TOOLBAR ═══ */}
+      {imoveis.length > 1 && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-6 pb-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <p className="text-xs text-slate-400 font-medium">Interaja com os imóveis:</p>
+            <div className="flex gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-600 border border-red-100">
+                <Heart className="h-3 w-3" /> Toque ❤️ para favoritar
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                <GitCompareArrows className="h-3 w-3" /> Compare até 4
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ PROPERTY GRID ═══ */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
+      <section className="max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
         <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {imoveis.map((item, idx) => (
             <PropertyCard
@@ -137,10 +195,59 @@ export default function PropertySelectionLayout({ data }: Props) {
               corretorNome={corretor?.nome}
               onViewDetails={setSelectedItem}
               onTrack={trackEvent}
+              onFavorite={handleFavorite}
+              isFavorited={favorites.has(item.id)}
+              onCompare={imoveis.length > 1 ? handleCompare : undefined}
+              isComparing={compareItems.some(c => c.id === item.id)}
             />
           ))}
         </div>
       </section>
+
+      {/* ═══ COMPARE FLOATING BAR ═══ */}
+      {compareItems.length >= 2 && (
+        <motion.div
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9990]"
+        >
+          <button
+            onClick={() => { setShowCompare(true); trackEvent("compare_open", "all"); }}
+            className="flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-bold text-sm shadow-2xl transition-all hover:scale-105"
+            style={{ background: "linear-gradient(135deg, #1e3a5f, #3b82f6)", boxShadow: "0 15px 40px rgba(37,99,235,0.4)" }}
+          >
+            <GitCompareArrows className="h-5 w-5" />
+            Comparar {compareItems.length} imóveis
+          </button>
+        </motion.div>
+      )}
+
+      {/* ═══ MAP SECTION ═══ */}
+      {hasGeoData && (
+        <Suspense fallback={null}>
+          <ShowcaseMap imoveis={imoveis} onViewDetails={setSelectedItem} />
+        </Suspense>
+      )}
+
+      {/* ═══ FAVORITES SUMMARY ═══ */}
+      {favorites.size > 0 && (
+        <section className="max-w-6xl mx-auto px-4 sm:px-8 pb-8">
+          <div className="rounded-2xl p-5 sm:p-6" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Heart className="h-4 w-4 text-red-500 fill-red-500" />
+              <h3 className="text-sm font-bold text-red-700">Seus favoritos ({favorites.size})</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {imoveis.filter(i => favorites.has(i.id)).map(i => (
+                <span key={i.id} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-red-700 border border-red-200">
+                  ❤️ {i.empreendimento || i.titulo}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-red-500/70 mt-2">Seu corretor será notificado sobre seus favoritos.</p>
+          </div>
+        </section>
+      )}
 
       {/* ═══ CTA SECTION ═══ */}
       {corretor && whatsappLink && (
@@ -149,13 +256,20 @@ export default function PropertySelectionLayout({ data }: Props) {
 
       <FooterBranding corretorNome={corretor?.nome} />
 
-      {/* ═══ DETAIL MODAL ═══ */}
+      {/* ═══ MODALS ═══ */}
       <PropertyDetailModal
         item={selectedItem || imoveis[0]}
         corretor={corretor}
         open={!!selectedItem}
         onClose={() => setSelectedItem(null)}
         onTrack={trackEvent}
+      />
+
+      <CompareModal
+        items={compareItems}
+        open={showCompare}
+        onClose={() => setShowCompare(false)}
+        onRemove={removeFromCompare}
       />
     </div>
   );
