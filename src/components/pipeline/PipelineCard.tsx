@@ -348,6 +348,7 @@ const PipelineCard = memo(function PipelineCard({
   };
 
 
+  const handleScheduleVisit = async () => {
     if (!scheduleDate || !user) return;
     const dateStr = format(scheduleDate, "yyyy-MM-dd");
     await supabase.from("visitas").insert({
