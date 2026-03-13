@@ -664,8 +664,8 @@ export default function ImoveisPage() {
   // Auto-apply ALL filter changes with debounce (reactive like Zillow)
   // Using a serialized key ensures we catch every filter change including uhomeOnly/campanhaAtiva
   const filterKey = useMemo(() =>
-    JSON.stringify({ contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva }),
-    [contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva]
+    JSON.stringify({ search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva }),
+    [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva]
   );
   const prevFilterKey = useRef(filterKey);
 
