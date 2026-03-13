@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, CalendarDays, Clock, Trash2 } from "lucide-react";
+import { Plus, CalendarDays, Clock, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -35,6 +35,7 @@ export default function RhSalaReuniao() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }));
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingReserva, setEditingReserva] = useState<Reserva | null>(null);
 
   // Form
   const [data, setData] = useState(selectedDate);
@@ -54,25 +55,62 @@ export default function RhSalaReuniao() {
 
   useEffect(() => { fetchReservas(); }, [selectedDate]);
 
-  const handleAdd = async () => {
+  const openAdd = () => {
+    setEditingReserva(null);
+    setData(selectedDate);
+    setHoraInicio("09:00");
+    setHoraFim("10:00");
+    setResponsavel("");
+    setAssunto("");
+    setDialogOpen(true);
+  };
+
+  const openEdit = (r: Reserva) => {
+    setEditingReserva(r);
+    setData(r.data);
+    setHoraInicio(r.hora_inicio);
+    setHoraFim(r.hora_fim);
+    setResponsavel(r.responsavel);
+    setAssunto(r.assunto || "");
+    setDialogOpen(true);
+  };
+
+  const handleSave = async () => {
     if (!responsavel.trim()) { toast.error("Responsável é obrigatório"); return; }
     if (horaInicio >= horaFim) { toast.error("Horário de fim deve ser após o início"); return; }
 
-    // Check overlap
-    const overlap = reservas.some(r => r.hora_inicio < horaFim && r.hora_fim > horaInicio);
+    // Check overlap (exclude current reservation if editing)
+    const overlap = reservas.some(r =>
+      r.hora_inicio < horaFim && r.hora_fim > horaInicio &&
+      (!editingReserva || r.id !== editingReserva.id)
+    );
     if (overlap && data === selectedDate) { toast.error("Conflito de horário! Já existe reserva neste período."); return; }
 
-    const { error } = await supabase.from("sala_reuniao_reservas" as any).insert({
-      data,
-      hora_inicio: horaInicio,
-      hora_fim: horaFim,
-      responsavel: responsavel.trim(),
-      assunto: assunto.trim() || null,
-      created_by: user?.id,
-    });
-    if (error) { toast.error("Erro: " + error.message); return; }
-    toast.success("Reserva criada!");
+    if (editingReserva) {
+      const { error } = await supabase.from("sala_reuniao_reservas" as any).update({
+        data,
+        hora_inicio: horaInicio,
+        hora_fim: horaFim,
+        responsavel: responsavel.trim(),
+        assunto: assunto.trim() || null,
+      }).eq("id", editingReserva.id);
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success("Reserva atualizada!");
+    } else {
+      const { error } = await supabase.from("sala_reuniao_reservas" as any).insert({
+        data,
+        hora_inicio: horaInicio,
+        hora_fim: horaFim,
+        responsavel: responsavel.trim(),
+        assunto: assunto.trim() || null,
+        created_by: user?.id,
+      });
+      if (error) { toast.error("Erro: " + error.message); return; }
+      toast.success("Reserva criada!");
+    }
+
     setDialogOpen(false);
+    setEditingReserva(null);
     setResponsavel(""); setAssunto("");
     if (data === selectedDate) fetchReservas();
   };
@@ -106,7 +144,7 @@ export default function RhSalaReuniao() {
           <h1 className="text-xl font-bold text-foreground">🏢 Sala de Reunião</h1>
           <p className="text-sm text-muted-foreground">Reservas e horários — Horário comercial (8h–18h)</p>
         </div>
-        <Button onClick={() => { setData(selectedDate); setDialogOpen(true); }} size="sm" className="gap-1">
+        <Button onClick={openAdd} size="sm" className="gap-1">
           <Plus className="h-4 w-4" /> Nova Reserva
         </Button>
       </div>
@@ -156,9 +194,14 @@ export default function RhSalaReuniao() {
                           {reserva.assunto && <> · {reserva.assunto}</>}
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleDelete(reserva.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" onClick={() => openEdit(reserva)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleDelete(reserva.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ) : reserva ? (
                     <div className="flex-1 border-l-2 border-primary/20 pl-3">
@@ -180,7 +223,7 @@ export default function RhSalaReuniao() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Nova Reserva</DialogTitle>
+            <DialogTitle>{editingReserva ? "Editar Reserva" : "Nova Reserva"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div><Label className="text-xs">Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} className="h-9" /></div>
@@ -205,7 +248,7 @@ export default function RhSalaReuniao() {
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button size="sm" onClick={handleAdd}>Reservar</Button>
+            <Button size="sm" onClick={handleSave}>{editingReserva ? "Salvar" : "Reservar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
