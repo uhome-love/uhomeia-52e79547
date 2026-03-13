@@ -74,26 +74,27 @@ interface ProfileInfo {
   avatar_gamificado_url: string | null;
 }
 
-type DatePreset = "mes_atual" | "mes_anterior" | "trimestre" | "custom";
+const MESES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
 
 export default function VendasRealizadas() {
   const { user } = useAuth();
   const { isAdmin, isGestor } = useUserRole();
   const [search, setSearch] = useState("");
-  const [preset, setPreset] = useState<DatePreset>("mes_atual");
-  const [customFrom, setCustomFrom] = useState<Date | undefined>();
-  const [customTo, setCustomTo] = useState<Date | undefined>();
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear] = useState(new Date().getFullYear());
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   const dateRange = useMemo(() => {
-    const now = new Date();
-    switch (preset) {
-      case "mes_atual": return { start: format(startOfMonth(now), "yyyy-MM-dd"), end: format(endOfMonth(now), "yyyy-MM-dd"), label: format(now, "MMMM yyyy", { locale: ptBR }) };
-      case "mes_anterior": { const prev = subMonths(now, 1); return { start: format(startOfMonth(prev), "yyyy-MM-dd"), end: format(endOfMonth(prev), "yyyy-MM-dd"), label: format(prev, "MMMM yyyy", { locale: ptBR }) }; }
-      case "trimestre": { const m2 = subMonths(now, 2); return { start: format(startOfMonth(m2), "yyyy-MM-dd"), end: format(endOfMonth(now), "yyyy-MM-dd"), label: `${format(m2, "MMM", { locale: ptBR })} - ${format(now, "MMM yyyy", { locale: ptBR })}` }; }
-      case "custom": return { start: customFrom ? format(customFrom, "yyyy-MM-dd") : format(startOfMonth(now), "yyyy-MM-dd"), end: customTo ? format(customTo, "yyyy-MM-dd") : format(endOfMonth(now), "yyyy-MM-dd"), label: "Personalizado" };
-    }
-  }, [preset, customFrom, customTo]);
+    const target = setMonth(new Date(selectedYear, 0, 1), selectedMonth);
+    return {
+      start: format(startOfMonth(target), "yyyy-MM-dd"),
+      end: format(endOfMonth(target), "yyyy-MM-dd"),
+      label: `${MESES[selectedMonth]} ${selectedYear}`,
+    };
+  }, [selectedMonth, selectedYear]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["vendas-realizadas", user?.id, isAdmin, isGestor, dateRange.start, dateRange.end],
