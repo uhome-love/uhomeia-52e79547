@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -75,6 +75,8 @@ export function usePipeline(pipelineTipo: string = "leads") {
   const [corretorAvatars, setCorretorAvatars] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Guard: suppress realtime events during local mutations to prevent flicker
+  const localMutationRef = useRef(false);
 
   const loadStages = useCallback(async () => {
     try {
@@ -266,31 +268,68 @@ export function usePipeline(pipelineTipo: string = "leads") {
       .finally(() => setLoading(false));
   }, [user, loadStages, loadSegmentos, loadLeads]);
 
-  // Realtime subscription — smart debounce to avoid rapid reloads
-  // Ignores changes we made ourselves (optimistic updates already handled)
+  // ─── Granular realtime: update only the changed lead in local state ───
   useEffect(() => {
     if (!user) return;
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    let lastLocalUpdate = 0;
+    let batchTimer: ReturnType<typeof setTimeout> | null = null;
+    const pendingEvents: Array<{ eventType: string; new_record: any; old_record: any }> = [];
+
+    const flushBatch = () => {
+      batchTimer = null;
+      if (pendingEvents.length === 0) return;
+      const events = [...pendingEvents];
+      pendingEvents.length = 0;
+
+      setLeads(prev => {
+        let next = [...prev];
+        for (const evt of events) {
+          if (evt.eventType === "DELETE") {
+            const oldId = evt.old_record?.id;
+            if (oldId) next = next.filter(l => l.id !== oldId);
+          } else if (evt.eventType === "INSERT") {
+            const row = evt.new_record as PipelineLead;
+            if (row?.id && !next.some(l => l.id === row.id)) {
+              next = [row, ...next];
+            }
+          } else if (evt.eventType === "UPDATE") {
+            const row = evt.new_record as PipelineLead;
+            if (!row?.id) continue;
+            const idx = next.findIndex(l => l.id === row.id);
+            if (idx >= 0) {
+              // Merge: keep local fields not in payload, update the rest
+              next[idx] = { ...next[idx], ...row };
+            } else {
+              // Lead appeared (e.g. reassigned to this user's team)
+              next = [row, ...next];
+            }
+          }
+        }
+        return next;
+      });
+    };
+
     const channel = supabase
       .channel("pipeline-leads-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "pipeline_leads" }, (payload) => {
-        // Skip reload if we just made a local change (within 2s)
-        const now = Date.now();
-        if (now - lastLocalUpdate < 2000) return;
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => loadLeads(), 1500);
+        // Skip if we are in the middle of a local mutation (drag, modal edit, etc.)
+        if (localMutationRef.current) return;
+
+        pendingEvents.push({
+          eventType: payload.eventType,
+          new_record: payload.new,
+          old_record: payload.old,
+        });
+        // Batch events arriving within 500ms window
+        if (batchTimer) clearTimeout(batchTimer);
+        batchTimer = setTimeout(flushBatch, 500);
       })
       .subscribe();
 
-    // Track local updates
-    const origSetLeads = setLeads;
-
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
+      if (batchTimer) clearTimeout(batchTimer);
       supabase.removeChannel(channel);
     };
-  }, [user, loadLeads]);
+  }, [user]);
 
   // Auto-refresh when tab becomes visible (replaces manual cache clear)
   useEffect(() => {
@@ -311,6 +350,8 @@ export function usePipeline(pipelineTipo: string = "leads") {
     const oldStageId = lead.stage_id;
     const oldStageChangedAt = lead.stage_changed_at;
     if (oldStageId === newStageId) return;
+
+    localMutationRef.current = true;
 
     // ─── Optimistic update (immediate UI response) ───
     const now = new Date().toISOString();
@@ -342,6 +383,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
       setLeads(prev => prev.map(l =>
         l.id === leadId ? { ...l, stage_id: oldStageId, stage_changed_at: oldStageChangedAt } : l
       ));
+      setTimeout(() => { localMutationRef.current = false; }, 500);
       return;
     }
 
@@ -455,6 +497,8 @@ export function usePipeline(pipelineTipo: string = "leads") {
     if (newStage?.tipo === "venda") {
       toast.success("🎉 Venda registrada! Parabéns!");
     }
+
+    setTimeout(() => { localMutationRef.current = false; }, 2000);
   }, [user, leads, stages]);
 
   const addLead = useCallback(async (lead: Partial<PipelineLead>) => {
@@ -514,6 +558,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
 
   const updateLead = useCallback(async (leadId: string, updates: Partial<PipelineLead>) => {
     if (!user) return;
+    localMutationRef.current = true;
     // Always update ultima_acao_at when any action is taken
     const payload = {
       ...updates,
@@ -529,10 +574,12 @@ export function usePipeline(pipelineTipo: string = "leads") {
       return;
     }
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...updates } : l));
+    setTimeout(() => { localMutationRef.current = false; }, 2000);
   }, [user]);
 
   const deleteLead = useCallback(async (leadId: string) => {
     if (!user) return;
+    localMutationRef.current = true;
     if (!isAdmin) {
       toast.error("Apenas o CEO pode excluir leads.");
       return;
@@ -548,6 +595,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
     }
     setLeads(prev => prev.filter(l => l.id !== leadId));
     toast.success("Lead removido do pipeline");
+    setTimeout(() => { localMutationRef.current = false; }, 2000);
   }, [user, isAdmin]);
 
   const getLeadsByStage = useCallback((stageId: string) => {
