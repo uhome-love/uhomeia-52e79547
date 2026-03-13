@@ -127,91 +127,92 @@ export default function VisitaRow({ visita: v, onUpdateStatus, onEdit, onDelete,
   return (
     <div
       className={cn(
-        "group flex items-stretch gap-0 transition-all hover:bg-accent/20 rounded-lg mx-1 my-0.5",
-        isPastPending && "bg-red-50/60 dark:bg-red-950/20"
+        "group flex items-stretch transition-colors hover:bg-accent/30",
+        isPastPending && "bg-red-50/50 dark:bg-red-950/15"
       )}
     >
-      {/* Status color bar */}
-      <div className={cn("w-[3px] rounded-l-lg shrink-0 self-stretch", STATUS_LINE_COLORS[v.status] || "bg-gray-300")} />
+      {/* Status color bar — wider + rounded */}
+      <div className={cn("w-1 shrink-0 rounded-r-sm", STATUS_LINE_COLORS[v.status] || "bg-gray-300")} />
 
       {/* Main content */}
-      <div className="flex-1 flex items-center gap-3 px-3 py-2 min-w-0">
-        {/* Time */}
-        <span className="text-xs font-black font-mono text-foreground shrink-0 w-11 text-center tabular-nums">
+      <div className="flex-1 flex items-center gap-4 px-4 py-2.5 min-w-0 border-b border-border/20">
+
+        {/* 1️⃣ Time — prominent */}
+        <span className="text-sm font-semibold font-mono text-foreground shrink-0 w-12 text-center tabular-nums tracking-tight">
           {v.hora_visita ? v.hora_visita.slice(0, 5) : "—"}
         </span>
 
-        {/* Client + details stacked */}
-        <div className="flex-1 min-w-0 space-y-0">
-          {/* Line 1: Name */}
+        {/* 2️⃣ Client info stacked */}
+        <div className="min-w-0 flex-1 space-y-0.5">
+          {/* Name */}
           <p className="text-[13px] font-bold text-foreground truncate leading-tight">{v.nome_cliente}</p>
 
-          {/* Line 2: Phone */}
+          {/* Phone */}
           {v.telefone && (
-            <p className="text-[11px] text-muted-foreground truncate leading-tight">
+            <p className="text-[11px] text-muted-foreground truncate leading-snug">
               📞 {v.telefone}
             </p>
           )}
 
-          {/* Line 3: Product + local */}
+          {/* 4️⃣ Product + local */}
           {produto && (
-            <p className="text-[11px] text-muted-foreground/80 truncate leading-tight">
+            <p className="text-[11px] text-muted-foreground/70 truncate leading-snug">
               🏢 {produto}
             </p>
           )}
 
           {/* Negocio objetivo */}
           {isNegocio && negocioMeta.objetivo && (
-            <p className="text-[10px] text-amber-600 font-semibold truncate leading-tight">🎯 {negocioMeta.objetivo}</p>
+            <p className="text-[10px] text-amber-600 font-semibold truncate leading-snug">🎯 {negocioMeta.objetivo}</p>
           )}
 
-          {/* Observações */}
+          {/* 9️⃣ Observações — smaller, gray, italic */}
           {v.observacoes && !isNegocio && (
-            <p className="text-[10px] text-muted-foreground/60 truncate leading-tight italic" title={v.observacoes}>
+            <p className="text-[10px] text-muted-foreground/50 truncate leading-snug italic max-w-[300px]" title={v.observacoes}>
               💬 {v.observacoes}
             </p>
           )}
         </div>
 
-        {/* Corretor + Team column */}
+        {/* 5️⃣ Corretor + 6️⃣ Team column */}
         {(showCorretor || showTeam) && (
-          <div className="hidden md:flex flex-col items-end gap-0.5 shrink-0 min-w-0 max-w-[140px]">
+          <div className="hidden md:flex flex-col items-start gap-0.5 shrink-0 min-w-0 w-[130px]">
             {showCorretor && v.corretor_nome && (
-              <span className="text-[11px] font-semibold text-foreground/80 truncate w-full text-right">
+              <span className="text-[11px] font-semibold text-foreground/80 truncate w-full leading-snug">
                 👤 {v.corretor_nome.split(" ").slice(0, 2).join(" ")}
               </span>
             )}
             {teamStyle && (
-              <span className={cn("text-[10px] px-1.5 py-0 rounded-full border whitespace-nowrap font-bold", teamStyle.className)}>
+              <span className={cn("text-[10px] px-1.5 py-px rounded-full border whitespace-nowrap font-bold leading-snug", teamStyle.className)}>
                 {teamStyle.emoji} {teamStyle.label}
               </span>
             )}
             {responsavelInfo && (
-              <span className="text-[10px] text-muted-foreground font-medium">
+              <span className="text-[10px] text-muted-foreground/60 font-medium leading-snug">
                 {responsavelInfo.emoji} {responsavelInfo.label}
               </span>
             )}
           </div>
         )}
 
-        {/* Status + actions */}
-        <div className="shrink-0 flex items-center gap-1 justify-end">
+        {/* 7️⃣ Status badge */}
+        <div className="shrink-0 flex items-center gap-1.5">
           <Badge className={cn("text-[10px] px-2 py-0.5 border font-bold whitespace-nowrap", STATUS_BADGE_COLORS[v.status])}>
             {STATUS_EMOJIS[v.status]} {STATUS_LABELS[v.status]}
           </Badge>
 
-          {/* Quick action buttons — visible on hover */}
+          {/* Quick action buttons — on hover */}
           {(v.status === "marcada" || v.status === "confirmada") && (
             <div className="hidden group-hover:flex items-center gap-0.5">
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-green-600 hover:bg-green-50 rounded" onClick={() => onUpdateStatus(v.id, "realizada")} title="Realizada">✅</Button>
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-purple-600 hover:bg-purple-50 rounded" onClick={() => onUpdateStatus(v.id, "reagendada")} title="Reagendada">🔄</Button>
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-600 hover:bg-red-50 rounded" onClick={() => onUpdateStatus(v.id, "no_show")} title="No Show">❌</Button>
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-gray-500 hover:bg-gray-50 rounded" onClick={() => onUpdateStatus(v.id, "cancelada")} title="Cancelada">⚫</Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 rounded hover:bg-green-500/10" onClick={() => onUpdateStatus(v.id, "realizada")} title="Realizada">✅</Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 rounded hover:bg-purple-500/10" onClick={() => onUpdateStatus(v.id, "reagendada")} title="Reagendada">🔄</Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 rounded hover:bg-red-500/10" onClick={() => onUpdateStatus(v.id, "no_show")} title="No Show">❌</Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 rounded hover:bg-muted" onClick={() => onUpdateStatus(v.id, "cancelada")} title="Cancelada">⚫</Button>
             </div>
           )}
         </div>
 
-        {/* Menu */}
+        {/* Menu — on hover */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
