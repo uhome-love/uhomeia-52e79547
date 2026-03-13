@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
         }));
 
         return jsonResponse({
-          vitrine: { id: vitrine.id, titulo: vitrine.titulo, subtitulo: vitrine.subtitulo || null, mensagem: vitrine.mensagem_corretor, created_at: vitrine.created_at, tipo: "melnick_day" },
+          vitrine: { id: vitrine.id, titulo: vitrine.titulo, subtitulo: vitrine.subtitulo || null, mensagem: vitrine.mensagem_corretor, created_at: vitrine.created_at, tipo: vitrine.tipo },
           corretor: corretor ? { nome: corretor.nome, telefone: corretor.telefone, avatar_url: corretor.avatar_url } : null,
           imoveis,
         });
