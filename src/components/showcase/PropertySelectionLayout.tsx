@@ -236,9 +236,11 @@ export default function PropertySelectionLayout({ data }: Props) {
 
       {/* ═══ MAP SECTION ═══ */}
       {hasGeoData && (
-        <Suspense fallback={null}>
-          <ShowcaseMap imoveis={imoveis} onViewDetails={setSelectedItem} />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <ShowcaseMap imoveis={imoveis} onViewDetails={setSelectedItem} />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {/* ═══ FAVORITES SUMMARY ═══ */}
