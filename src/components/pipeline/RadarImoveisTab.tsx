@@ -105,7 +105,7 @@ const EMPREENDIMENTO_HINTS: Record<string, { faixa_min?: number; faixa_max?: num
   "open alto ipiranga": { faixa_min: 200000, faixa_max: 300000, bairros: ["Jardim Carvalho", "Vila Ipiranga"], tipo: "apartamento", dorms: 2 },
   "melnick day": { faixa_min: 200000, faixa_max: 350000, tipo: "apartamento", dorms: 2 },
   // Médio-Alto
-  "casa tua": { faixa_min: 500000, faixa_max: 650000, bairros: ["Petrópolis", "Higienópolis", "Bom Fim"], tipo: "casa", dorms: 3 },
+  "casa tua": { faixa_min: 500000, faixa_max: 650000, bairros: ["Petrópolis", "Mário Quintana", "Jardim Carvalho", "Jardim do Salso"], tipo: "casa", dorms: 3 },
   "las casas": { faixa_min: 600000, faixa_max: 900000, bairros: ["Petrópolis", "Higienópolis"], tipo: "casa", dorms: 3 },
   "orygem": { faixa_min: 700000, faixa_max: 1200000, bairros: ["Petrópolis"], tipo: "apartamento", dorms: 3 },
   "me day": { faixa_min: 400000, faixa_max: 700000, tipo: "apartamento", dorms: 2 },
