@@ -209,13 +209,17 @@ function PhotoLightbox({ images, initialIndex, open, onClose }: { images: string
   // Keyboard navigation
   useEffect(() => {
     if (!open) return;
+    document.body.style.overflow = "hidden";
     const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") goTo((current - 1 + images.length) % images.length);
       else if (e.key === "ArrowRight") goTo((current + 1) % images.length);
       else if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
   }, [open, current, images.length]);
 
   const goTo = (idx: number) => {
