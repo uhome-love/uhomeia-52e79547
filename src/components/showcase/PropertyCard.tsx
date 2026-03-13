@@ -144,7 +144,7 @@ export default function PropertyCard({
         </div>
 
         {/* Description preview */}
-        {variant === "selection" && item.descricao && (
+        {variant === "selection" && item?.descricao && (
           <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">{item.descricao}</p>
         )}
 
