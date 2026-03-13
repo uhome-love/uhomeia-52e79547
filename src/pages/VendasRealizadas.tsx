@@ -197,7 +197,7 @@ export default function VendasRealizadas() {
         });
       }
 
-      return { vendas: rows, profiles: profileMap, annualVgvByCorretor, parceriaSet: [...parceriaSet], origemMap };
+      return { vendas: rows, profiles: profileMap, annualVgvByCorretor, parceriaSet: [...parceriaSet], parceriaMap, origemMap };
     },
   });
 
