@@ -382,8 +382,16 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
             )}
             <span className="text-muted-foreground/40">|</span>
             {noContactAlert ? (
-              <span className={`font-semibold ${noContactAlert === "critical" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>
-                {noContactAlert === "critical" ? "🔴" : "🟡"} Sem contato
+              <span className="inline-flex items-center gap-1.5">
+                <span className={`font-semibold ${noContactAlert === "critical" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>
+                  {noContactAlert === "critical" ? "🔴" : "🟡"} Sem contato
+                </span>
+                <button
+                  onClick={() => setActiveTab("historico")}
+                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  Resolver →
+                </button>
               </span>
             ) : overdueTasks > 0 ? (
               <span className="font-semibold text-red-600 dark:text-red-400">
