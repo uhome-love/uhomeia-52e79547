@@ -89,9 +89,9 @@ const CATEGORIAS: Record<string, {
     emoji: "🏡",
     empreendimentos: [
       { nome: "Prime Wallig", tipologia: "3 dormitórios", bairro: "Passo D'Areia", fase: "Pronto para morar", unidade: "1210", metragem: "67 m²", valor: "R$ 610.448", imagem: imgPrimeWallig },
-      { nome: "Prime Altos do Germânia", tipologia: "3 dormitórios", bairro: "Passo D'Areia", fase: "Pronto para morar", unidade: "1509", metragem: "67 m²", valor: "R$ 583.064" },
-      { nome: "Boa Vista Country Club", tipologia: "3 dormitórios", bairro: "Boa Vista", fase: "Pronto para morar", unidade: "201", metragem: "93 m²", valor: "R$ 1.022.390" },
-      { nome: "Arbo", tipologia: "3 dormitórios", bairro: "Higienópolis", fase: "Em construção", unidade: "201", metragem: "106 m²", valor: "R$ 1.308.645" },
+      { nome: "Prime Altos do Germânia", tipologia: "3 dormitórios", bairro: "Passo D'Areia", fase: "Pronto para morar", unidade: "1509", metragem: "67 m²", valor: "R$ 583.064", imagem: imgPrimeAltosGermania },
+      { nome: "Boa Vista Country Club", tipologia: "3 dormitórios", bairro: "Boa Vista", fase: "Pronto para morar", unidade: "201", metragem: "93 m²", valor: "R$ 1.022.390", imagem: imgBoaVistaCountryClub },
+      { nome: "Arbo", tipologia: "3 dormitórios", bairro: "Higienópolis", fase: "Em construção", unidade: "201", metragem: "106 m²", valor: "R$ 1.308.645", imagem: imgArbo },
     ],
   },
   "3suites": {
