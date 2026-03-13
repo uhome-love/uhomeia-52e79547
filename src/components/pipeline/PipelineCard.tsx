@@ -251,6 +251,10 @@ const PipelineCard = memo(function PipelineCard({
   const [quickTaskType, setQuickTaskType] = useState("follow_up");
   const [quickTaskObs, setQuickTaskObs] = useState("");
   const [quickTaskSaving, setQuickTaskSaving] = useState(false);
+  const [quickTaskCustomDate, setQuickTaskCustomDate] = useState<Date>();
+  const [quickTaskTime, setQuickTaskTime] = useState("10:00");
+  const [quickTaskDateMode, setQuickTaskDateMode] = useState<"hoje" | "amanha" | "custom">("hoje");
+  const [quickTaskObsError, setQuickTaskObsError] = useState(false);
 
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || (lead as any).origem_detalhe || "");
   const status = useMemo(() => getCardStatus(lead, proximaTarefa || null), [(lead as any).ultima_acao_at, lead.stage_changed_at, proximaTarefa?.tipo, proximaTarefa?.vence_em, proximaTarefa?.hora_vencimento]);
