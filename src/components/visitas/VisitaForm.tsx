@@ -35,6 +35,15 @@ interface StageOption {
   nome: string;
 }
 
+type FormErrors = Partial<{
+  nome_cliente: string;
+  pipeline_lead_id: string;
+  data_visita: string;
+  hora_visita: string;
+  responsavel_visita: string;
+  corretor_id: string;
+}>;
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -42,6 +51,8 @@ interface Props {
   initialData?: Partial<Visita> & { pipeline_lead_id?: string };
   mode?: "create" | "edit";
 }
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const QUICK_TIMES = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
 
@@ -73,7 +84,7 @@ function getDefaultForm(initialData?: Props["initialData"]) {
     local_visita: initialData?.local_visita || "",
     observacoes: initialData?.observacoes || "",
     pipeline_lead_id: (initialData as any)?.pipeline_lead_id || "",
-    responsavel_visita: (initialData as any)?.responsavel_visita || "",
+    responsavel_visita: (initialData as any)?.responsavel_visita || "proprio_corretor",
   };
 }
 
