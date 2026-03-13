@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,8 @@ function extractFullImages(item: any): string[] {
   if (item._fotos_normalized?.length) return item._fotos_normalized;
   const arr = item.imagens;
   if (!Array.isArray(arr) || arr.length === 0) return [];
-  return arr.map((img: any) => img.link || img.link_thumb || img.url || img.src || "").filter(Boolean);
+  // Prefer full-size: link > link_large > link_medio > link_thumb
+  return arr.map((img: any) => img.link || img.link_large || img.link_medio || img.link_thumb || img.url || img.src || "").filter(Boolean);
 }
 
 function extractOrigemExterna(item: any) {
@@ -181,7 +183,7 @@ function ImageSlider({ images, alt, onClickImage }: { images: string[]; alt: str
   if (images.length === 0) return <div className="w-full h-full flex items-center justify-center cursor-pointer bg-muted" onClick={onClickImage}><Home className="h-10 w-10 text-muted-foreground/30" /></div>;
   return (
     <div className="w-full h-full relative group">
-      <img src={images[current]} alt={alt} className="w-full h-full object-cover cursor-pointer transition-transform" loading="lazy" onClick={(e) => { e.stopPropagation(); onClickImage?.(); }} />
+      <img src={images[current]} alt={alt} className="w-full h-full object-cover cursor-pointer" loading="lazy" onClick={(e) => { e.stopPropagation(); onClickImage?.(); }} />
       {images.length > 1 && (
         <>
           <button onClick={(e) => { e.stopPropagation(); setCurrent((p) => (p - 1 + images.length) % images.length); }} className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/95 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all shadow-sm" aria-label="Anterior"><ChevronLeft className="h-4 w-4" /></button>
@@ -201,32 +203,100 @@ function ImageSlider({ images, alt, onClickImage }: { images: string[]; alt: str
 
 function PhotoLightbox({ images, initialIndex, open, onClose }: { images: string[]; initialIndex: number; open: boolean; onClose: () => void }) {
   const [current, setCurrent] = useState(initialIndex);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   useEffect(() => { setCurrent(initialIndex); }, [initialIndex]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") goTo((current - 1 + images.length) % images.length);
+      else if (e.key === "ArrowRight") goTo((current + 1) % images.length);
+      else if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
+  }, [open, current, images.length]);
+
+  const goTo = (idx: number) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrent(idx);
+    setTimeout(() => setIsTransitioning(false), 300);
+  };
+
+  // Upgrade thumbnail URLs to full resolution
+  const getFullRes = (url: string) => url.replace(/\/thumb\//, "/large/").replace(/_thumb\./i, ".");
+
   if (!open || images.length === 0) return null;
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-none flex flex-col [&>button]:hidden" aria-describedby={undefined}>
-        <DialogTitle className="sr-only">Fotos do imóvel</DialogTitle>
-        <button onClick={onClose} className="absolute top-3 right-3 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white"><X className="h-5 w-5" /></button>
-        <div className="flex-1 flex items-center justify-center relative min-h-0">
-          <img src={images[current]} alt={`Foto ${current + 1}`} className="max-w-full max-h-full object-contain" />
-          {images.length > 1 && (
-            <>
-              <button onClick={() => setCurrent((p) => (p - 1 + images.length) % images.length)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white"><ChevronLeft className="h-6 w-6" /></button>
-              <button onClick={() => setCurrent((p) => (p + 1) % images.length)} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-2 text-white"><ChevronRight className="h-6 w-6" /></button>
-            </>
-          )}
+  return createPortal(
+    <div className="fixed inset-0 z-[100] bg-black/97" onClick={onClose}>
+      {/* Close button */}
+      <button onClick={onClose} className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2.5 text-white backdrop-blur-sm transition-all">
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* Counter */}
+      <div className="absolute top-4 left-4 z-50 text-white/70 text-sm font-medium">
+        {current + 1} / {images.length}
+      </div>
+
+      {/* Main image area */}
+      <div className="flex items-center justify-center h-full px-16 py-20" onClick={(e) => e.stopPropagation()}>
+        <div className="relative w-full h-full flex items-center justify-center">
+          <img
+            src={getFullRes(images[current])}
+            alt={`Foto ${current + 1}`}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-opacity duration-300"
+            style={{ opacity: isTransitioning ? 0.6 : 1 }}
+            draggable={false}
+          />
         </div>
-        <div className="flex items-center justify-center gap-1.5 py-3 overflow-x-auto px-4">
+      </div>
+
+      {/* Navigation arrows */}
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); goTo((current - 1 + images.length) % images.length); }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-50 bg-white/10 hover:bg-white/25 backdrop-blur-md rounded-full p-3 text-white transition-all hover:scale-110"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); goTo((current + 1) % images.length); }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-50 bg-white/10 hover:bg-white/25 backdrop-blur-md rounded-full p-3 text-white transition-all hover:scale-110"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </>
+      )}
+
+      {/* Thumbnail strip */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-10 pb-4 px-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-center gap-2 overflow-x-auto max-w-3xl mx-auto scrollbar-hide">
           {images.map((img, i) => (
-            <button key={i} onClick={() => setCurrent(i)} className={cn("w-14 h-10 rounded overflow-hidden border-2 flex-shrink-0 transition-all", i === current ? "border-primary opacity-100" : "border-transparent opacity-50 hover:opacity-80")}>
-              <img src={img} alt="" className="w-full h-full object-cover" />
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              className={cn(
+                "flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200",
+                i === current
+                  ? "border-white w-16 h-12 opacity-100 scale-105"
+                  : "border-transparent w-14 h-10 opacity-40 hover:opacity-70 hover:border-white/30"
+              )}
+            >
+              <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
             </button>
           ))}
         </div>
-        <p className="text-center text-white/60 text-xs pb-2">{current + 1} / {images.length}</p>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -729,19 +799,19 @@ export default function ImoveisPage() {
 
   const handleSearch = () => {
     setShowSuggestions(false);
-    // Cancel any pending debounce
     if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    // Mark to skip the next debounced effect (state changes below will trigger it)
     skipNextDebounce.current = true;
-    // Force immediate fetch with current state
-    // Use setTimeout(0) to let any pending state updates flush first
-    setTimeout(() => {
-      prevFilterKey.current = JSON.stringify({ search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly: false, campanhaAtiva: false });
-      fetchRef.current(1);
-    }, 0);
+    // Immediately fetch — fetchRef always points to latest closure which captures current search state
     setCampanhaAtiva(false);
     setUhomeOnly(false);
+    // Use rAF + setTimeout to ensure state updates (campanha/uhome) have flushed
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        prevFilterKey.current = JSON.stringify({ search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly: false, campanhaAtiva: false });
+        fetchRef.current(1);
+      }, 0);
+    });
   };
 
   // Autocomplete with debounce — Typesense powered
