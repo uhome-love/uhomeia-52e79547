@@ -62,6 +62,7 @@ export default function VitrinePage() {
   const renderLayout = () => {
     switch (tipo) {
       case "melnick_day":
+      case "mega_cyrela":
         return <MelnickDayLayout data={data} />;
       case "product_page":
       case "anuncio":

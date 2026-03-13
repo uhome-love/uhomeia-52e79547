@@ -16,17 +16,20 @@ interface Props {
 export default function MelnickDayLayout({ data }: Props) {
   const { vitrine, corretor, imoveis } = data;
 
+  const isMegaCyrela = vitrine.tipo === "mega_cyrela";
+  const campaignName = isMegaCyrela ? "Mega da Cyrela 2026" : "Melnick Day 2026";
+
   const whatsappBase = corretor?.telefone
     ? `https://wa.me/55${corretor.telefone.replace(/\D/g, "")}`
     : null;
 
   const whatsappLink = whatsappBase
-    ? `${whatsappBase}?text=${encodeURIComponent(`Olá ${corretor!.nome}! Vi as ofertas do Melnick Day 2026 e quero mais informações!`)}`
+    ? `${whatsappBase}?text=${encodeURIComponent(`Olá ${corretor!.nome}! Vi as ofertas da ${campaignName} e quero mais informações!`)}`
     : null;
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, #f1f5f9 100%)" }}>
-      <CampaignHeader vitrine={vitrine} corretor={corretor} badgeText="Seleção Melnick Day 2026" />
+      <CampaignHeader vitrine={vitrine} corretor={corretor} badgeText={isMegaCyrela ? "⚽ Seleção Cyrela 2026" : "Seleção Melnick Day 2026"} />
 
       {/* Property Grid */}
       <section className="max-w-6xl mx-auto px-4 sm:px-8 py-10 sm:py-16">
