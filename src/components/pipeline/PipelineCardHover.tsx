@@ -413,18 +413,28 @@ const PipelineCardHover = memo(function PipelineCardHover({ lead, children, onOp
     </div>
   );
 
-  async function handleQuickTaskCreate(quando: "hoje" | "amanha") {
+  async function handleQuickTaskCreate() {
     if (!user) { toast.error("Faça login primeiro"); return; }
+    if (!quickTaskObs.trim()) {
+      setQuickTaskObsError(true);
+      toast.error("Preencha a observação da tarefa");
+      return;
+    }
     setQuickTaskSaving(true);
     try {
-      const now = new Date();
       let venceEm: string;
-      if (quando === "hoje") {
+      if (quickTaskDateMode === "hoje") {
         venceEm = todayBRT();
-      } else {
-        const tomorrow = new Date(now);
+      } else if (quickTaskDateMode === "amanha") {
+        const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         venceEm = dateToBRT(tomorrow);
+      } else if (quickTaskCustomDate) {
+        venceEm = dateToBRT(quickTaskCustomDate);
+      } else {
+        toast.error("Selecione uma data");
+        setQuickTaskSaving(false);
+        return;
       }
 
       const titulo = `${QUICK_TASK_LABELS[quickTaskType] || quickTaskType}: ${lead.nome || "Lead"}`;
@@ -432,26 +442,31 @@ const PipelineCardHover = memo(function PipelineCardHover({ lead, children, onOp
       await supabase.from("pipeline_tarefas").insert({
         pipeline_lead_id: lead.id,
         titulo,
-        descricao: quickTaskObs || null,
+        descricao: quickTaskObs,
         tipo: quickTaskType,
         vence_em: venceEm,
+        hora_vencimento: quickTaskTime || null,
         prioridade: "media",
         status: "pendente",
         created_by: user.id,
         responsavel_id: user.id,
       } as any);
 
-      // Update proxima_acao on the lead
       await supabase.from("pipeline_leads").update({
         proxima_acao: QUICK_TASK_LABELS[quickTaskType] || titulo,
         data_proxima_acao: venceEm,
         updated_at: new Date().toISOString(),
       } as any).eq("id", lead.id);
 
-      toast.success(`Tarefa "${QUICK_TASK_LABELS[quickTaskType]}" criada para ${quando === "hoje" ? "hoje" : "amanhã"} ✅`);
+      const dateLabel = quickTaskDateMode === "hoje" ? "hoje" : quickTaskDateMode === "amanha" ? "amanhã" : format(quickTaskCustomDate!, "dd/MM");
+      toast.success(`Tarefa "${QUICK_TASK_LABELS[quickTaskType]}" criada para ${dateLabel} às ${quickTaskTime} ✅`);
       setShowQuickTask(false);
       setQuickTaskObs("");
+      setQuickTaskObsError(false);
       setQuickTaskType("follow_up");
+      setQuickTaskDateMode("hoje");
+      setQuickTaskCustomDate(undefined);
+      setQuickTaskTime("10:00");
     } catch (err: any) {
       toast.error("Erro ao criar tarefa: " + (err.message || ""));
     } finally {
