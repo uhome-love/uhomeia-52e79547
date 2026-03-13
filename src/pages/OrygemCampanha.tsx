@@ -767,11 +767,16 @@ export default function OrygemCampanha() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             {[
-              { icon: Calendar, label: "Agendar visita", color: "bg-amber-500 hover:bg-amber-600", action: () => toast.info("Funcionalidade em breve") },
+              { icon: Calendar, label: "Agendar visita", color: "bg-amber-500 hover:bg-amber-600", action: () => navigate("/agenda-visitas?nova=1") },
               { icon: Target, label: "Abrir pipeline", color: "bg-primary hover:bg-primary/90", action: () => navigate("/pipeline-leads") },
-              { icon: Send, label: "Enviar WhatsApp", color: "bg-green-600 hover:bg-green-700", action: () => { setShowScripts(true); toast.info("Copie um script acima"); } },
-              { icon: FileText, label: "Enviar plantas", color: "bg-blue-600 hover:bg-blue-700", action: () => toast.info("Funcionalidade em breve") },
-              { icon: DollarSign, label: "Gerar proposta", color: "bg-amber-600 hover:bg-amber-700", action: () => toast.info("Funcionalidade em breve") },
+              { icon: Send, label: "Enviar WhatsApp", color: "bg-green-600 hover:bg-green-700", action: () => {
+                const msg = `🏠 *ORYGEM Residence Club*\n\n✨ Casas em condomínio fechado com infraestrutura de clube!\n\n📐 150m² a 173m² · 2 ou 3 dormitórios\n🌿 Pátio privativo com churrasqueira\n🏊 Piscina, academia, beach tennis e mais 16 espaços de lazer\n🔥 Espera para lareira e piscina/spa\n📍 Teresópolis — Porto Alegre\n\n💰 A partir de R$ 871.500\n\n👁️ Decorado disponível para visita!\n\nQuer agendar uma visita? 😊`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+              }},
+              { icon: FileText, label: "Enviar plantas", color: "bg-blue-600 hover:bg-blue-700", action: () => {
+                const msg = `📐 *Plantas — ORYGEM Residence Club*\n\n🏠 *Casa 2 Dormitórios (150m²)*\n• Suíte + 1 dormitório\n• Living integrado + terraço com estar e office\n• Pátio com churrasqueira\n• 2 vagas\n\n🏠 *Casa 3 Dormitórios (173m²)*\n• Suíte + 2 dormitórios\n• Terraço com estar e office\n• Pátio privativo + espera piscina/spa\n• 2 vagas\n\nQuer que eu envie as imagens das plantas? 📩`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+              }},
             ].map((btn) => (
               <Button
                 key={btn.label}
