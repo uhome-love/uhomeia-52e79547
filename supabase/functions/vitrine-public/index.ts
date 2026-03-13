@@ -260,6 +260,7 @@ Deno.serve(async (req) => {
               }
             });
         }
+
         // Persist interaction
         supabase.from("vitrine_interacoes")
           .insert({
@@ -271,6 +272,53 @@ Deno.serve(async (req) => {
             metadata: body.metadata || {},
           })
           .then(() => {});
+
+        // Send WhatsApp alert for high-intent events
+        const HIGH_INTENT = ["favorite", "whatsapp_click", "schedule_click", "compare_open"];
+        if (HIGH_INTENT.includes(event_type)) {
+          // Get vitrine + corretor info for alert
+          supabase.from("vitrines")
+            .select("titulo, created_by, lead_nome")
+            .eq("id", vitrine_id)
+            .maybeSingle()
+            .then(async ({ data: vit }) => {
+              if (!vit) return;
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("telefone, nome")
+                .eq("user_id", vit.created_by)
+                .maybeSingle();
+              if (!profile?.telefone) return;
+
+              const eventLabels: Record<string, string> = {
+                favorite: "❤️ favoritou um imóvel",
+                whatsapp_click: "💬 clicou no WhatsApp",
+                schedule_click: "📅 quer agendar visita",
+                compare_open: "📊 está comparando imóveis",
+              };
+              const eventLabel = eventLabels[event_type] || event_type;
+              const leadName = vit.lead_nome || "Um cliente";
+              const imovelInfo = imovel_id !== "general" ? ` (imóvel #${imovel_id})` : "";
+
+              try {
+                await fetch(`${supabaseUrl}/functions/v1/whatsapp-notificacao`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    tipo: "vitrine_interesse",
+                    telefone: profile.telefone,
+                    dados: {
+                      corretor_nome: profile.nome,
+                      lead_nome: leadName,
+                      evento: eventLabel,
+                      vitrine_titulo: vit.titulo,
+                      imovel_info: imovelInfo,
+                    },
+                  }),
+                });
+              } catch {}
+            });
+        }
       }
       return jsonResponse({ ok: true });
     }
