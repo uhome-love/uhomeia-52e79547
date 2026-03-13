@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, setMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -74,26 +74,27 @@ interface ProfileInfo {
   avatar_gamificado_url: string | null;
 }
 
-type DatePreset = "mes_atual" | "mes_anterior" | "trimestre" | "custom";
+const MESES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
 
 export default function VendasRealizadas() {
   const { user } = useAuth();
   const { isAdmin, isGestor } = useUserRole();
   const [search, setSearch] = useState("");
-  const [preset, setPreset] = useState<DatePreset>("mes_atual");
-  const [customFrom, setCustomFrom] = useState<Date | undefined>();
-  const [customTo, setCustomTo] = useState<Date | undefined>();
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear] = useState(new Date().getFullYear());
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   const dateRange = useMemo(() => {
-    const now = new Date();
-    switch (preset) {
-      case "mes_atual": return { start: format(startOfMonth(now), "yyyy-MM-dd"), end: format(endOfMonth(now), "yyyy-MM-dd"), label: format(now, "MMMM yyyy", { locale: ptBR }) };
-      case "mes_anterior": { const prev = subMonths(now, 1); return { start: format(startOfMonth(prev), "yyyy-MM-dd"), end: format(endOfMonth(prev), "yyyy-MM-dd"), label: format(prev, "MMMM yyyy", { locale: ptBR }) }; }
-      case "trimestre": { const m2 = subMonths(now, 2); return { start: format(startOfMonth(m2), "yyyy-MM-dd"), end: format(endOfMonth(now), "yyyy-MM-dd"), label: `${format(m2, "MMM", { locale: ptBR })} - ${format(now, "MMM yyyy", { locale: ptBR })}` }; }
-      case "custom": return { start: customFrom ? format(customFrom, "yyyy-MM-dd") : format(startOfMonth(now), "yyyy-MM-dd"), end: customTo ? format(customTo, "yyyy-MM-dd") : format(endOfMonth(now), "yyyy-MM-dd"), label: "Personalizado" };
-    }
-  }, [preset, customFrom, customTo]);
+    const target = setMonth(new Date(selectedYear, 0, 1), selectedMonth);
+    return {
+      start: format(startOfMonth(target), "yyyy-MM-dd"),
+      end: format(endOfMonth(target), "yyyy-MM-dd"),
+      label: `${MESES[selectedMonth]} ${selectedYear}`,
+    };
+  }, [selectedMonth, selectedYear]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["vendas-realizadas", user?.id, isAdmin, isGestor, dateRange.start, dateRange.end],
@@ -351,31 +352,33 @@ export default function VendasRealizadas() {
 
           {/* Date filter pills */}
           <div className="flex items-center gap-2 flex-wrap">
-            {([
-              { key: "mes_atual", label: "Este mês" },
-              { key: "mes_anterior", label: "Mês anterior" },
-              { key: "trimestre", label: "Trimestre" },
-            ] as { key: DatePreset; label: string }[]).map(p => (
-              <button key={p.key}
-                className={`text-xs px-3.5 py-1.5 rounded-full font-semibold transition-all ${preset === p.key ? "bg-white text-emerald-800 shadow-lg" : "bg-white/10 text-white/80 hover:bg-white/20"}`}
-                onClick={() => setPreset(p.key)}>{p.label}</button>
-            ))}
-            <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
+            <Popover open={showMonthPicker} onOpenChange={setShowMonthPicker}>
               <PopoverTrigger asChild>
-                <button className={`text-xs px-3.5 py-1.5 rounded-full font-semibold transition-all flex items-center gap-1 ${preset === "custom" ? "bg-white text-emerald-800 shadow-lg" : "bg-white/10 text-white/80 hover:bg-white/20"}`}>
-                  <CalendarDays className="h-3 w-3" /> Custom
+                <button className="text-xs px-4 py-2 rounded-full font-semibold bg-white text-emerald-800 shadow-lg flex items-center gap-1.5">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {MESES[selectedMonth]}
+                  <ChevronDown className="h-3 w-3" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-3" align="end">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">De</p>
-                    <Calendar mode="single" selected={customFrom} onSelect={(d) => { setCustomFrom(d); setPreset("custom"); }} className={cn("p-2 pointer-events-auto")} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Até</p>
-                    <Calendar mode="single" selected={customTo} onSelect={(d) => { setCustomTo(d); setPreset("custom"); }} className={cn("p-2 pointer-events-auto")} />
-                  </div>
+              <PopoverContent className="w-56 p-2" align="end">
+                <div className="grid grid-cols-3 gap-1">
+                  {MESES.map((mes, i) => (
+                    <button
+                      key={mes}
+                      onClick={() => { setSelectedMonth(i); setShowMonthPicker(false); }}
+                      className={cn(
+                        "text-xs py-2 px-1 rounded-lg font-medium transition-all",
+                        selectedMonth === i
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted text-foreground",
+                        i > new Date().getMonth() && selectedYear >= new Date().getFullYear()
+                          ? "opacity-40 pointer-events-none"
+                          : ""
+                      )}
+                    >
+                      {mes.slice(0, 3)}
+                    </button>
+                  ))}
                 </div>
               </PopoverContent>
             </Popover>
@@ -422,6 +425,7 @@ export default function VendasRealizadas() {
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-5 mt-0">
+      {(isAdmin || isGestor) && (
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
         <Card className="border-border/60 overflow-hidden" style={{ borderLeft: "4px solid hsl(45, 90%, 50%)" }}>
           <CardContent className="p-4">
@@ -458,6 +462,7 @@ export default function VendasRealizadas() {
           </CardContent>
         </Card>
       </motion.div>
+      )}
 
       {/* ═══ RANKING CORRETORES (gerente/admin) ═══ */}
       {(isAdmin || isGestor) && corretorRanking.length > 1 && (
