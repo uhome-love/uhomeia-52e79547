@@ -80,9 +80,9 @@ interface Props {
 const BAIRROS_POA = [
   "Auxiliadora", "Bela Vista", "Boa Vista", "Bom Fim", "Centro Histórico",
   "Cidade Baixa", "Cristo Redentor", "Glória", "Higienópolis", "Jardim Carvalho",
-  "Jardim do Salso", "Lindóia", "Marechal Rondon", "Menino Deus", "Moinhos de Vento",
-  "Mont'Serrat", "Passo d'Areia", "Petrópolis", "Rio Branco", "Santa Cecília",
-  "São Sebastião", "Teresópolis", "Três Figueiras", "Vila Ipiranga", "Canoas",
+  "Jardim do Salso", "Lindóia", "Marechal Rondon", "Mário Quintana", "Menino Deus",
+  "Moinhos de Vento", "Mont'Serrat", "Passo d'Areia", "Petrópolis", "Rio Branco",
+  "Santa Cecília", "São Sebastião", "Teresópolis", "Três Figueiras", "Vila Ipiranga", "Canoas",
 ];
 
 const OBJECOES = [
