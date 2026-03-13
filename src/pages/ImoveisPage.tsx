@@ -656,7 +656,7 @@ export default function ImoveisPage() {
       if (e?.name === "AbortError" || controller.signal.aborted) return;
       toast.error("Erro de conexão");
     }
-  }, [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, campanhaAtiva, uhomeOnly]);
+  }, [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, campanhaAtiva, uhomeOnly, campanhaOverrides]);
 
   // ── Main fetch: try Typesense first, fallback to Jetimob ──
   const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva, uhome = uhomeOnly) => {
