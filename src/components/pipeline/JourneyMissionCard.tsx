@@ -67,7 +67,7 @@ const JourneyMissionCard = memo(function JourneyMissionCard({
         className="group rounded-xl cursor-pointer active:cursor-grabbing transition-all duration-150 select-none hover:scale-[1.02]"
         style={{
           background: "#1C2128",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: isStale ? "1px solid rgba(248,113,113,0.4)" : "1px solid rgba(255,255,255,0.08)",
           padding: "12px",
           animation: arrived ? "cardArrived 0.4s cubic-bezier(0.34,1.56,0.64,1)" : undefined,
         }}
