@@ -300,7 +300,8 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
     setFormErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      toast.error("Revise os campos obrigatórios para continuar.");
+      const firstError = Object.values(errors).find(Boolean);
+      toast.error(firstError || "Revise os campos obrigatórios para continuar.");
       return;
     }
 
