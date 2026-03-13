@@ -525,6 +525,7 @@ export default function ImoveisPage() {
   const { searchWithAI, clearAISearch, removeTag, aiLoading, aiResult, aiError, aiProperties, aiTotal, aiSearchTime } = useAISearch();
   const [imoveis, setImoveis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -747,6 +748,7 @@ export default function ImoveisPage() {
   const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva, uhome = uhomeOnly) => {
     setLoading(true);
     setSearchTimeMs(null);
+    setFetchError(null);
 
     try {
       // Campanha mode always uses jetimob-proxy (specific codes)
@@ -766,6 +768,12 @@ export default function ImoveisPage() {
 
       // Fallback
       await fetchViaJetimob(pageNum, campanha, uhome);
+    } catch (err: any) {
+      console.error("fetchImoveis critical error:", err);
+      setFetchError(err?.message || "Erro ao buscar imóveis");
+      setImoveis([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -1261,7 +1269,14 @@ export default function ImoveisPage() {
                 <button onClick={() => setViewMode("map")} className="p-1.5 bg-primary text-primary-foreground"><Map className="h-4 w-4" /></button>
               </div>
             </div>
-            {loading ? (
+            {fetchError ? (
+              <div className="text-center py-8">
+                <Search className="h-8 w-8 mx-auto text-destructive/30 mb-2" />
+                <p className="text-sm font-medium text-foreground">Erro ao carregar</p>
+                <p className="text-xs text-muted-foreground mt-1">{fetchError}</p>
+                <Button variant="outline" size="sm" className="mt-2 text-xs" onClick={() => fetchRef.current(1)}>Tentar novamente</Button>
+              </div>
+            ) : loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <Card key={i} className="overflow-hidden border-border/40">
@@ -1459,7 +1474,14 @@ export default function ImoveisPage() {
                   </div>
                 </div>
               </div>
-              {loading ? (
+              {fetchError ? (
+                <Card className="p-16 text-center border-destructive/30 bg-destructive/5">
+                  <Search className="h-12 w-12 mx-auto text-destructive/30 mb-4" />
+                  <p className="text-lg font-semibold text-foreground">Erro ao carregar imóveis</p>
+                  <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
+                  <Button variant="outline" size="sm" className="mt-4" onClick={() => fetchRef.current(1)}>Tentar novamente</Button>
+                </Card>
+              ) : loading ? (
                 <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
                   {Array.from({ length: 8 }).map((_, i) => (
                     <Card key={i} className="overflow-hidden border-border/40">
