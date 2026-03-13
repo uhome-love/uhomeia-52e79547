@@ -16,12 +16,15 @@ interface Props {
 export default function MelnickDayLayout({ data }: Props) {
   const { vitrine, corretor, imoveis } = data;
 
+  const isMegaCyrela = vitrine.tipo === "mega_cyrela";
+  const campaignName = isMegaCyrela ? "Mega da Cyrela 2026" : "Melnick Day 2026";
+
   const whatsappBase = corretor?.telefone
     ? `https://wa.me/55${corretor.telefone.replace(/\D/g, "")}`
     : null;
 
   const whatsappLink = whatsappBase
-    ? `${whatsappBase}?text=${encodeURIComponent(`Olá ${corretor!.nome}! Vi as ofertas do Melnick Day 2026 e quero mais informações!`)}`
+    ? `${whatsappBase}?text=${encodeURIComponent(`Olá ${corretor!.nome}! Vi as ofertas da ${campaignName} e quero mais informações!`)}`
     : null;
 
   return (
