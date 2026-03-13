@@ -580,6 +580,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
 
   const deleteLead = useCallback(async (leadId: string) => {
     if (!user) return;
+    localMutationRef.current = true;
     if (!isAdmin) {
       toast.error("Apenas o CEO pode excluir leads.");
       return;
