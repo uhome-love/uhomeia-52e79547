@@ -381,7 +381,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
       radar_status_imovel: statusImovel === "qualquer" ? null : statusImovel,
       radar_atualizado_em: new Date().toISOString(),
     });
-  }, [leadId, quartos, valorMax, tipologia, selectedBairros, statusImovel, onUpdate]);
+  }, [leadId, quartos, valorMax, selectedTipologias, selectedBairros, statusImovel, onUpdate]);
 
   // Search Typesense
   const searchTypesense = useCallback(async (): Promise<ImovelResult[]> => {
