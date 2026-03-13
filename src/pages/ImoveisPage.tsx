@@ -746,7 +746,7 @@ export default function ImoveisPage() {
 
   // Active filter tags
   const activeFilters: { key: string; label: string; onRemove: () => void }[] = [];
-  if (search) activeFilters.push({ key: "search", label: `"${search}"`, onRemove: () => { setSearch(""); setTimeout(() => fetchImoveis(1, campanhaAtiva, uhomeOnly), 50); } });
+  if (search) activeFilters.push({ key: "search", label: `"${search}"`, onRemove: () => { setSearch(""); } });
   if (tipo.length > 0) activeFilters.push({ key: "tipo", label: tipo.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(", "), onRemove: () => setTipo([]) });
   if (bairro.length > 0) activeFilters.push({ key: "bairro", label: bairro.join(", "), onRemove: () => setBairro([]) });
   if (dormitorios.length > 0) activeFilters.push({ key: "dorms", label: dormitorios.map(d => `${d} dorm`).join(", "), onRemove: () => setDormitorios([]) });
