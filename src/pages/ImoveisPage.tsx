@@ -1337,9 +1337,9 @@ export default function ImoveisPage() {
                   </div>
                   {totalPages > 1 && !campanhaAtiva && (
                     <div className="flex items-center justify-center gap-3 pt-6 pb-2">
-                      <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchImoveis(page - 1)} className="gap-1 rounded-full"><ChevronLeft className="h-4 w-4" /> Anterior</Button>
+                      <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => fetchRef.current(page - 1)} className="gap-1 rounded-full"><ChevronLeft className="h-4 w-4" /> Anterior</Button>
                       <span className="text-sm text-muted-foreground font-medium tabular-nums">{page} de {totalPages}</span>
-                      <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchImoveis(page + 1)} className="gap-1 rounded-full">Próxima <ChevronRight className="h-4 w-4" /></Button>
+                      <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => fetchRef.current(page + 1)} className="gap-1 rounded-full">Próxima <ChevronRight className="h-4 w-4" /></Button>
                     </div>
                   )}
                 </>
