@@ -79,6 +79,7 @@ const ImoveisPage = lazy(() => import("./pages/ImoveisPage"));
 const VitrinePage = lazy(() => import("./pages/VitrinePage"));
 const PosVendas = lazy(() => import("./pages/PosVendas"));
 const MelnickDay = lazy(() => import("./pages/MelnickDay"));
+const OrygemCampanha = lazy(() => import("./pages/OrygemCampanha"));
 const VendasRealizadas = lazy(() => import("./pages/VendasRealizadas"));
 const AnunciosNoAr = lazy(() => import("./pages/AnunciosNoAr"));
 const IntegracaoJetimob = lazy(() => import("./pages/IntegracaoJetimob"));
@@ -191,6 +192,7 @@ const App = () => (
             <Route path="/pos-vendas" element={<ProtectedPage><PosVendas /></ProtectedPage>} />
             <Route path="/imoveis" element={<ProtectedPage><ErrorBoundary><ImoveisPage /></ErrorBoundary></ProtectedPage>} />
             <Route path="/melnick-day" element={<ProtectedPage><MelnickDay /></ProtectedPage>} />
+            <Route path="/orygem-60" element={<ProtectedPage><OrygemCampanha /></ProtectedPage>} />
             <Route path="/anuncios" element={<ProtectedPage><AnunciosNoAr /></ProtectedPage>} />
 
             {/* Busca de Leads / Higienização — gestor + admin */}
