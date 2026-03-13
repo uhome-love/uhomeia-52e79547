@@ -432,7 +432,9 @@ export function useGerenteDashboard(period: Period) {
       return (data || []).map(v => ({ ...v, corretor_nome: teamNameMap[v.corretor_id || ""]?.split(" ")[0] })) as VisitaHoje[];
     },
     enabled: !!user,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Resumo Oferta Ativa ──
