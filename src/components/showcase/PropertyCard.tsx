@@ -136,7 +136,7 @@ export default function PropertyCard({
           <h3 className="text-lg sm:text-xl font-extrabold text-slate-800 leading-tight tracking-tight">
             {item?.empreendimento || item?.titulo || "Imóvel"}
           </h3>
-          {item.bairro && (
+          {item?.bairro && (
             <p className="text-slate-500 text-xs flex items-center gap-1.5 mt-1.5 font-medium">
               <MapPin className="h-3.5 w-3.5 text-blue-500" /> {item.bairro}
             </p>
