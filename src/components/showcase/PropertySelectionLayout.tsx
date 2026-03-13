@@ -197,8 +197,8 @@ export default function PropertySelectionLayout({ data }: Props) {
             </div>
           ) : (
             imoveis.map((item, idx) => (
-              <PropertyCard
-                key={idx}
+              <SafePropertyCard
+                key={item?.id ?? idx}
                 item={item}
                 index={idx}
                 variant="selection"
@@ -207,9 +207,9 @@ export default function PropertySelectionLayout({ data }: Props) {
                 onViewDetails={setSelectedItem}
                 onTrack={trackEvent}
                 onFavorite={handleFavorite}
-                isFavorited={favorites.has(item.id)}
+                isFavorited={favorites.has(item?.id)}
                 onCompare={imoveis.length > 1 ? handleCompare : undefined}
-                isComparing={compareItems.some(c => c.id === item.id)}
+                isComparing={compareItems.some(c => c.id === item?.id)}
               />
             ))
           )}
