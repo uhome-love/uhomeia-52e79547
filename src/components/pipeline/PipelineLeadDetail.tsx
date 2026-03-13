@@ -197,6 +197,40 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
     }
   }, [inativarMotivo, inativarObs, stages, lead.id, onUpdate, onMove, onOpenChange]);
 
+  // ═══ Keyboard shortcuts ═══
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement)?.isContentEditable) return;
+
+      switch (e.key.toLowerCase()) {
+        case "l":
+          if (lead.telefone) window.open(`tel:${lead.telefone}`, "_self");
+          break;
+        case "w":
+          if (lead.telefone) setWhatsappTemplatesOpen(true);
+          break;
+        case "t":
+          setActiveTab("tarefas");
+          setShowNovaTarefa(true);
+          break;
+        case "s":
+          setComunicacaoOpen(true);
+          break;
+        case "i":
+          setActiveTab("radar");
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, lead.telefone]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-2xl p-0 flex flex-col overflow-hidden border-l border-border/50 max-h-[100dvh]">
