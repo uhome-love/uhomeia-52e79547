@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format, isToday, isTomorrow, isBefore, startOfDay, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addDays, isWithinInterval, subMonths, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -175,28 +176,84 @@ const STATUS_EMOJIS: Record<string, string> = {
 
 export default function AgendaVisitas() {
   const { isAdmin, isGestor } = useUserRole();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // URL-synced filters
   const [showForm, setShowForm] = useState(false);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showReuniaoForm, setShowReuniaoForm] = useState(false);
   const [editingVisita, setEditingVisita] = useState<Visita | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [corretorFilter, setCorretorFilter] = useState<string>("all");
-  const [empreendimentoFilter, setEmpreendimentoFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "all");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
+  const [corretorFilter, setCorretorFilter] = useState<string>(searchParams.get("corretor") || "all");
+  const [empreendimentoFilter, setEmpreendimentoFilter] = useState<string>(searchParams.get("empreendimento") || "all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [resultadoVisita, setResultadoVisita] = useState<Visita | null>(null);
-  const [pendingOnly, setPendingOnly] = useState(false);
+  const [pendingOnly, setPendingOnly] = useState(searchParams.get("pending") === "1");
   const [showCobranca, setShowCobranca] = useState(false);
   const [cobrancaMsg, setCobrancaMsg] = useState("");
   const [sendingCobranca, setSendingCobranca] = useState(false);
-  const [agendaTipo, setAgendaTipo] = useState<"lead" | "negocio">("lead");
+  const [agendaTipo, setAgendaTipo] = useState<"lead" | "negocio">((searchParams.get("tipo") as any) || "lead");
   const [leadSubTab, setLeadSubTab] = useState<"minhas" | "time">("minhas");
-  const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [teamFilter, setTeamFilter] = useState<string>(searchParams.get("team") || "all");
   const [anterioresPeriodo, setAnterioresPeriodo] = useState<string>("mes-atual");
   const [anterioresCustomFrom, setAnterioresCustomFrom] = useState<Date | undefined>();
   const [anterioresCustomTo, setAnterioresCustomTo] = useState<Date | undefined>();
+  const [quickFilter, setQuickFilter] = useState<string>(searchParams.get("quick") || "");
+
+  // Sync filter state to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (searchTerm) params.set("q", searchTerm);
+    if (corretorFilter !== "all") params.set("corretor", corretorFilter);
+    if (empreendimentoFilter !== "all") params.set("empreendimento", empreendimentoFilter);
+    if (pendingOnly) params.set("pending", "1");
+    if (agendaTipo !== "lead") params.set("tipo", agendaTipo);
+    if (teamFilter !== "all") params.set("team", teamFilter);
+    if (quickFilter) params.set("quick", quickFilter);
+    setSearchParams(params, { replace: true });
+  }, [statusFilter, searchTerm, corretorFilter, empreendimentoFilter, pendingOnly, agendaTipo, teamFilter, quickFilter]);
+
+  // Quick filter logic
+  const applyQuickFilter = useCallback((key: string) => {
+    const today = startOfDay(new Date());
+    if (quickFilter === key) {
+      // Toggle off
+      setQuickFilter("");
+      setDateFrom(undefined);
+      setDateTo(undefined);
+      setPendingOnly(false);
+      setStatusFilter("all");
+      return;
+    }
+    setQuickFilter(key);
+    setPendingOnly(false);
+    setStatusFilter("all");
+
+    if (key === "hoje") {
+      const d = format(today, "yyyy-MM-dd");
+      setDateFrom(today);
+      setDateTo(today);
+    } else if (key === "amanha") {
+      const tom = addDays(today, 1);
+      setDateFrom(tom);
+      setDateTo(tom);
+    } else if (key === "semana") {
+      setDateFrom(startOfWeek(today, { weekStartsOn: 1 }));
+      setDateTo(endOfWeek(today, { weekStartsOn: 1 }));
+    } else if (key === "nao_confirmadas") {
+      setDateFrom(undefined);
+      setDateTo(undefined);
+      setStatusFilter("marcada");
+    } else if (key === "sem_feedback") {
+      setDateFrom(undefined);
+      setDateTo(undefined);
+      setPendingOnly(true);
+    }
+  }, [quickFilter]);
 
   const { visitas: allVisitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas();
 
@@ -230,7 +287,7 @@ export default function AgendaVisitas() {
     updateStatus(id, newStatus);
   }, [visitas, updateStatus]);
 
-  const handleResultadoSubmit = useCallback(async (resultado: ResultadoVisita, observacoes?: string) => {
+  const handleResultadoSubmit = useCallback(async (resultado: ResultadoVisita, observacoes?: string, feedback?: { objecao?: string; temperatura?: string; proxima_acao?: string }) => {
     if (!resultadoVisita) return;
     // First update resultado_visita and observacoes
     const updates: any = { resultado_visita: resultado };
@@ -240,6 +297,23 @@ export default function AgendaVisitas() {
     await updateVisita(resultadoVisita.id, updates, true);
     // Then call updateStatus which triggers negócio creation + pipeline move
     await updateStatus(resultadoVisita.id, "realizada");
+
+    // Update pipeline lead with feedback if available
+    if (resultadoVisita.pipeline_lead_id && feedback) {
+      const leadUpdates: any = {};
+      if (feedback.temperatura) leadUpdates.temperatura = feedback.temperatura;
+      if (feedback.proxima_acao) leadUpdates.proxima_acao = feedback.proxima_acao;
+      if (feedback.objecao) {
+        leadUpdates.observacoes = [resultadoVisita.observacoes, `Objeção: ${feedback.objecao}`].filter(Boolean).join(" | ");
+      }
+      if (Object.keys(leadUpdates).length > 0) {
+        await supabase.from("pipeline_leads").update({
+          ...leadUpdates,
+          ultima_acao_at: new Date().toISOString(),
+        } as any).eq("id", resultadoVisita.pipeline_lead_id);
+      }
+    }
+
     setResultadoVisita(null);
   }, [resultadoVisita, updateVisita, updateStatus]);
 
@@ -431,7 +505,7 @@ export default function AgendaVisitas() {
     return pastList;
   }, [filtered, anterioresPeriodo, anterioresCustomFrom, anterioresCustomTo]);
 
-  const hasFilters = statusFilter !== "all" || corretorFilter !== "all" || empreendimentoFilter !== "all" || !!dateFrom || !!dateTo || searchTerm.trim() || pendingOnly || teamFilter !== "all";
+  const hasFilters = statusFilter !== "all" || corretorFilter !== "all" || empreendimentoFilter !== "all" || !!dateFrom || !!dateTo || searchTerm.trim() || pendingOnly || teamFilter !== "all" || !!quickFilter;
 
   const clearAll = () => {
     setStatusFilter("all");
@@ -442,6 +516,7 @@ export default function AgendaVisitas() {
     setDateTo(undefined);
     setSearchTerm("");
     setPendingOnly(false);
+    setQuickFilter("");
   };
 
   return (
@@ -600,7 +675,31 @@ export default function AgendaVisitas() {
         })}
       </div>
 
-      {/* ─── VIEWS ─── */}
+      {/* ─── QUICK FILTERS ─── */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mr-1">Rápido:</span>
+        {[
+          { key: "hoje", label: "📅 Hoje", color: "bg-blue-100 text-blue-700 border-blue-300" },
+          { key: "amanha", label: "📆 Amanhã", color: "bg-indigo-100 text-indigo-700 border-indigo-300" },
+          { key: "semana", label: "🗓️ Esta semana", color: "bg-cyan-100 text-cyan-700 border-cyan-300" },
+          { key: "nao_confirmadas", label: "⚠️ Não confirmadas", color: "bg-amber-100 text-amber-700 border-amber-300" },
+          { key: "sem_feedback", label: "🔴 Sem feedback", color: "bg-red-100 text-red-700 border-red-300" },
+        ].map(qf => (
+          <button
+            key={qf.key}
+            onClick={() => applyQuickFilter(qf.key)}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-semibold transition-all border",
+              quickFilter === qf.key
+                ? qf.color + " shadow-sm"
+                : "bg-muted/60 text-muted-foreground border-transparent hover:bg-muted"
+            )}
+          >
+            {qf.label}
+          </button>
+        ))}
+      </div>
+
       <Tabs defaultValue="lista">
         <TabsList className="h-9 flex-wrap">
           <TabsTrigger value="lista" className="gap-1.5 text-xs h-8 px-3">
