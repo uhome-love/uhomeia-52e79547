@@ -234,7 +234,6 @@ export default function AgendaVisitas() {
     setStatusFilter("all");
 
     if (key === "hoje") {
-      const d = format(today, "yyyy-MM-dd");
       setDateFrom(today);
       setDateTo(today);
     } else if (key === "amanha") {
@@ -244,6 +243,17 @@ export default function AgendaVisitas() {
     } else if (key === "semana") {
       setDateFrom(startOfWeek(today, { weekStartsOn: 1 }));
       setDateTo(endOfWeek(today, { weekStartsOn: 1 }));
+    } else if (key === "semana_anterior") {
+      const prevWeek = subWeeks(today, 1);
+      setDateFrom(startOfWeek(prevWeek, { weekStartsOn: 1 }));
+      setDateTo(endOfWeek(prevWeek, { weekStartsOn: 1 }));
+    } else if (key === "mes") {
+      setDateFrom(startOfMonth(today));
+      setDateTo(endOfMonth(today));
+    } else if (key === "mes_anterior") {
+      const prevMonth = subMonths(today, 1);
+      setDateFrom(startOfMonth(prevMonth));
+      setDateTo(endOfMonth(prevMonth));
     } else if (key === "nao_confirmadas") {
       setDateFrom(undefined);
       setDateTo(undefined);
@@ -252,6 +262,8 @@ export default function AgendaVisitas() {
       setDateFrom(undefined);
       setDateTo(undefined);
       setPendingOnly(true);
+    } else if (key === "personalizado") {
+      // keep current dateFrom/dateTo, user picks via calendar
     }
   }, [quickFilter]);
 
