@@ -745,7 +745,7 @@ export default function MegaCyrela() {
                       const { data: { user } } = await supabase.auth.getUser();
                       if (!user) { toast.error("Faça login"); return; }
                       // Convert relative image paths to absolute URLs so they work on the public vitrine domain
-                      const origin = window.location.origin;
+                      const origin = "https://uhomeia.lovable.app";
                       const toAbsoluteUrl = (path: string) => {
                         if (!path) return "";
                         if (path.startsWith("http://") || path.startsWith("https://")) return path;

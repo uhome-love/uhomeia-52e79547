@@ -1024,7 +1024,7 @@ export default function MelnickDay() {
                     }
 
                     // Convert relative image paths to absolute URLs for public vitrine
-                    const origin = window.location.origin;
+                    const origin = "https://uhomeia.lovable.app";
                     const toAbsoluteUrl = (path: string) => {
                       if (!path) return "";
                       if (path.startsWith("http://") || path.startsWith("https://")) return path;
