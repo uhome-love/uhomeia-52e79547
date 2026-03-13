@@ -23,8 +23,9 @@ import { useTypesenseSearch } from "@/hooks/useTypesenseSearch";
 
 interface RadarProfile {
   quartos: number | null;
+  valor_min: number | null;
   valor_max: number | null;
-  tipologia: string;
+  tipologias: string[];
   bairros: string[];
   status_imovel: string;
 }
