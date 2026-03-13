@@ -52,7 +52,7 @@ interface Props {
   mode?: "create" | "edit";
 }
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const QUICK_TIMES = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
 
