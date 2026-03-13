@@ -30,8 +30,8 @@ export default function PropertyCard({
   const seg = item?.segmento ? getSegmentoStyle(item.segmento) : null;
 
   const whatsappMsg = variant === "campaign"
-    ? `Tenho interesse no ${item.empreendimento || item.titulo} - Melnick Day 2026`
-    : `Vi o imóvel ${item.titulo} e gostaria de mais informações.`;
+    ? `Tenho interesse no ${item?.empreendimento || item?.titulo || "imóvel"} - Melnick Day 2026`
+    : `Vi o imóvel ${item?.titulo || "selecionado"} e gostaria de mais informações.`;
 
   return (
     <motion.div
