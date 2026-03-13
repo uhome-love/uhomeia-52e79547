@@ -697,6 +697,10 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
                 </Select>
               </div>
               <div>
+                <Label className="text-[11px] text-muted-foreground">Valor Mínimo (R$)</Label>
+                <Input type="number" className="h-9 text-sm" placeholder="Ex: 200000" value={valorMin} onChange={(e) => setValorMin(e.target.value)} />
+              </div>
+              <div>
                 <Label className="text-[11px] text-muted-foreground">Valor Máximo (R$)</Label>
                 <Input type="number" className="h-9 text-sm" placeholder="Ex: 500000" value={valorMax} onChange={(e) => setValorMax(e.target.value)} />
               </div>
@@ -704,15 +708,26 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-[11px] text-muted-foreground">Tipologia</Label>
-                <Select value={tipologia} onValueChange={setTipologia}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="apartamento">Apartamento</SelectItem>
-                    <SelectItem value="casa">Casa</SelectItem>
-                    <SelectItem value="terreno">Terreno</SelectItem>
-                    <SelectItem value="comercial">Comercial</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {[
+                    { value: "apartamento", label: "🏢 Apartamento" },
+                    { value: "casa", label: "🏡 Casa" },
+                    { value: "terreno", label: "🏞️ Terreno" },
+                    { value: "comercial", label: "🏪 Comercial" },
+                  ].map(t => (
+                    <button
+                      key={t.value}
+                      onClick={() => toggleTipologia(t.value)}
+                      className={`text-[10px] px-2 py-1 rounded-md border transition-colors ${
+                        selectedTipologias.includes(t.value)
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted/50 text-muted-foreground border-border hover:border-primary/30"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <Label className="text-[11px] text-muted-foreground">Status</Label>
