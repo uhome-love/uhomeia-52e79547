@@ -1269,7 +1269,14 @@ export default function ImoveisPage() {
                 <button onClick={() => setViewMode("map")} className="p-1.5 bg-primary text-primary-foreground"><Map className="h-4 w-4" /></button>
               </div>
             </div>
-            {loading ? (
+            {fetchError ? (
+              <div className="text-center py-8">
+                <Search className="h-8 w-8 mx-auto text-destructive/30 mb-2" />
+                <p className="text-sm font-medium text-foreground">Erro ao carregar</p>
+                <p className="text-xs text-muted-foreground mt-1">{fetchError}</p>
+                <Button variant="outline" size="xs" className="mt-2 text-xs" onClick={() => fetchRef.current(1)}>Tentar novamente</Button>
+              </div>
+            ) : loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <Card key={i} className="overflow-hidden border-border/40">
