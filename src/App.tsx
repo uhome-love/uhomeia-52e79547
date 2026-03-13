@@ -88,6 +88,7 @@ const RhRecrutamento = lazy(() => import("./pages/RhRecrutamento"));
 const RhConversas = lazy(() => import("./pages/RhConversas"));
 const RhSalaReuniao = lazy(() => import("./pages/RhSalaReuniao"));
 const RhEntrevistas = lazy(() => import("./pages/RhEntrevistas"));
+const DevAIPage = lazy(() => import("./pages/DevAIPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -200,6 +201,7 @@ const App = () => (
             <Route path="/auditoria" element={<ProtectedPage roles={["admin"]}><AuditDashboard /></ProtectedPage>} />
             <Route path="/admin" element={<ProtectedPage roles={["admin"]}><AdminPanel /></ProtectedPage>} />
             <Route path="/integracao" element={<ProtectedPage roles={["admin"]}><IntegracaoJetimob /></ProtectedPage>} />
+            <Route path="/dev-ai" element={<ProtectedPage roles={["admin"]}><DevAIPage /></ProtectedPage>} />
 
             {/* Backoffice — Ana Paula */}
             <Route path="/backoffice" element={<ProtectedPage roles={["backoffice", "admin"]}><BackofficeDashboard /></ProtectedPage>} />

@@ -40,6 +40,7 @@ import {
   Zap,
   Radio,
   Megaphone,
+  Terminal,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -308,6 +309,7 @@ export function AppSidebar() {
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
               { title: "Integração", url: "/integracao", icon: Zap },
               { title: "Academia", url: "/academia/gerenciar", icon: GraduationCap },
+              { title: "Dev AI", url: "/dev-ai", icon: Terminal },
               { title: "Usuários", url: "/admin", icon: Shield },
             ],
           },
