@@ -20,6 +20,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getVitrinePublicUrl } from "@/lib/vitrineUrl";
+import plantaTerreo2d from "@/assets/orygem/planta-2d-terreo.png";
+import planta2pav2d from "@/assets/orygem/planta-2d-2pav.png";
+import planta3pavEstar2d from "@/assets/orygem/planta-2d-3pav-estar.png";
 
 /* ═══════════════════════════════════════════
    CONSTANTS
