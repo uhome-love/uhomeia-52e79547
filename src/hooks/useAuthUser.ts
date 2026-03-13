@@ -81,7 +81,10 @@ export async function resolveAuthUserIds(profileIds: string[]): Promise<Map<stri
     .from("profiles")
     .select("id, user_id")
     .in("id", profileIds);
-  return new Map((data || []).map(p => [p.id, p.user_id!]).filter(([, uid]) => uid));
+  const entries: [string, string][] = (data || [])
+    .filter(p => p.user_id)
+    .map(p => [p.id, p.user_id!]);
+  return new Map(entries);
 }
 
 /** Get team member user_ids managed by a gerente (using auth user ID) */
