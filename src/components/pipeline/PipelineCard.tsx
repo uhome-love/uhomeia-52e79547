@@ -251,6 +251,10 @@ const PipelineCard = memo(function PipelineCard({
   const [quickTaskType, setQuickTaskType] = useState("follow_up");
   const [quickTaskObs, setQuickTaskObs] = useState("");
   const [quickTaskSaving, setQuickTaskSaving] = useState(false);
+  const [quickTaskCustomDate, setQuickTaskCustomDate] = useState<Date>();
+  const [quickTaskTime, setQuickTaskTime] = useState("10:00");
+  const [quickTaskDateMode, setQuickTaskDateMode] = useState<"hoje" | "amanha" | "custom">("hoje");
+  const [quickTaskObsError, setQuickTaskObsError] = useState(false);
 
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || (lead as any).origem_detalhe || "");
   const status = useMemo(() => getCardStatus(lead, proximaTarefa || null), [(lead as any).ultima_acao_at, lead.stage_changed_at, proximaTarefa?.tipo, proximaTarefa?.vence_em, proximaTarefa?.hora_vencimento]);
@@ -306,26 +310,37 @@ const PipelineCard = memo(function PipelineCard({
     setWhatsappTemplatesOpen(true);
   };
 
-  const handleQuickTaskCreate = async (quando: "hoje" | "amanha") => {
+  const handleQuickTaskCreate = async () => {
     if (!user) { toast.error("Faça login primeiro"); return; }
+    if (!quickTaskObs.trim()) {
+      setQuickTaskObsError(true);
+      toast.error("Preencha a observação da tarefa");
+      return;
+    }
     setQuickTaskSaving(true);
     try {
-      const now = new Date();
       let venceEm: string;
-      if (quando === "hoje") {
+      if (quickTaskDateMode === "hoje") {
         venceEm = todayBRT();
-      } else {
-        const tomorrow = new Date(now);
+      } else if (quickTaskDateMode === "amanha") {
+        const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         venceEm = dateToBRT(tomorrow);
+      } else if (quickTaskCustomDate) {
+        venceEm = dateToBRT(quickTaskCustomDate);
+      } else {
+        toast.error("Selecione uma data");
+        setQuickTaskSaving(false);
+        return;
       }
       const titulo = `${TIPO_LABELS[quickTaskType] || quickTaskType}: ${lead.nome || "Lead"}`;
       await supabase.from("pipeline_tarefas").insert({
         pipeline_lead_id: lead.id,
         titulo,
-        descricao: quickTaskObs || null,
+        descricao: quickTaskObs,
         tipo: quickTaskType,
         vence_em: venceEm,
+        hora_vencimento: quickTaskTime || null,
         prioridade: "media",
         status: "pendente",
         created_by: user.id,
@@ -336,10 +351,15 @@ const PipelineCard = memo(function PipelineCard({
         data_proxima_acao: venceEm,
         updated_at: new Date().toISOString(),
       } as any).eq("id", lead.id);
-      toast.success(`Tarefa "${TIPO_LABELS[quickTaskType]}" criada para ${quando === "hoje" ? "hoje" : "amanhã"} ✅`);
+      const dateLabel = quickTaskDateMode === "hoje" ? "hoje" : quickTaskDateMode === "amanha" ? "amanhã" : format(quickTaskCustomDate!, "dd/MM");
+      toast.success(`Tarefa "${TIPO_LABELS[quickTaskType]}" criada para ${dateLabel} às ${quickTaskTime} ✅`);
       setQuickTaskOpen(false);
       setQuickTaskObs("");
+      setQuickTaskObsError(false);
       setQuickTaskType("follow_up");
+      setQuickTaskDateMode("hoje");
+      setQuickTaskCustomDate(undefined);
+      setQuickTaskTime("10:00");
     } catch (err: any) {
       toast.error("Erro ao criar tarefa: " + (err.message || ""));
     } finally {
@@ -638,7 +658,7 @@ const PipelineCard = memo(function PipelineCard({
                 <ClipboardList className="h-3.5 w-3.5" /> Tarefa
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="top" align="start" className="w-64 p-2.5 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <PopoverContent side="top" align="start" className="w-72 p-2.5 space-y-2" onClick={(e) => e.stopPropagation()}>
               <p className="text-[10px] font-bold text-foreground">➕ Tarefa rápida para {lead.nome?.split(" ")[0]}</p>
               <div className="flex flex-wrap gap-1">
                 {CARD_QUICK_TASK_TYPES.map(t => (
@@ -657,20 +677,67 @@ const PipelineCard = memo(function PipelineCard({
                 ))}
               </div>
               <Input
-                className="h-7 text-[11px]"
-                placeholder="Obs: ex. Retornar sobre financiamento"
+                className={cn("h-7 text-[11px]", quickTaskObsError && !quickTaskObs.trim() && "border-destructive")}
+                placeholder="Obs (obrigatório): ex. Retornar sobre financiamento"
                 value={quickTaskObs}
-                onChange={e => setQuickTaskObs(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") handleQuickTaskCreate("hoje"); }}
+                onChange={e => { setQuickTaskObs(e.target.value); setQuickTaskObsError(false); }}
+                onKeyDown={e => { if (e.key === "Enter" && quickTaskObs.trim()) handleQuickTaskCreate(); }}
               />
+              {quickTaskObsError && !quickTaskObs.trim() && (
+                <p className="text-[9px] text-destructive">⚠️ Observação obrigatória</p>
+              )}
+              {/* Date mode selector */}
               <div className="flex gap-1">
-                <Button size="sm" className="h-6 text-[10px] flex-1 gap-1" disabled={quickTaskSaving} onClick={() => handleQuickTaskCreate("hoje")}>
-                  {quickTaskSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Hoje"}
-                </Button>
-                <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" disabled={quickTaskSaving} onClick={() => handleQuickTaskCreate("amanha")}>
-                  Amanhã
-                </Button>
+                {([
+                  { value: "hoje" as const, label: "Hoje" },
+                  { value: "amanha" as const, label: "Amanhã" },
+                  { value: "custom" as const, label: "📅 Data" },
+                ]).map(d => (
+                  <button
+                    key={d.value}
+                    onClick={() => setQuickTaskDateMode(d.value)}
+                    className={cn(
+                      "text-[10px] px-2.5 py-1 rounded-md border transition-colors flex-1",
+                      quickTaskDateMode === d.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background border-border hover:border-primary/50"
+                    )}
+                  >
+                    {d.label}
+                  </button>
+                ))}
               </div>
+              {/* Custom date picker */}
+              {quickTaskDateMode === "custom" && (
+                <div className="border border-border rounded-md overflow-hidden">
+                  <CalendarPicker
+                    mode="single"
+                    selected={quickTaskCustomDate}
+                    onSelect={(d) => setQuickTaskCustomDate(d as Date | undefined)}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    className={cn("p-1 pointer-events-auto text-[10px] [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-head_cell]:text-[9px]")}
+                  />
+                </div>
+              )}
+              {/* Time input */}
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] text-muted-foreground font-medium shrink-0">⏰ Horário:</label>
+                <Input
+                  type="time"
+                  className="h-7 text-[11px] flex-1"
+                  value={quickTaskTime}
+                  onChange={e => setQuickTaskTime(e.target.value)}
+                />
+              </div>
+              {/* Submit */}
+              <Button
+                size="sm"
+                className="h-7 text-[11px] w-full gap-1"
+                disabled={quickTaskSaving || (quickTaskDateMode === "custom" && !quickTaskCustomDate)}
+                onClick={() => handleQuickTaskCreate()}
+              >
+                {quickTaskSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "✅ Criar Tarefa"}
+              </Button>
             </PopoverContent>
           </Popover>
 

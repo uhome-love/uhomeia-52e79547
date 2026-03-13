@@ -5,7 +5,8 @@ import { Phone, Copy, MapPin, Globe, Clock, Eye, FileText, MessageCircle, Check,
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { formatDistanceToNow } from "date-fns";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { differenceInHoursSafe, todayBRT, dateToBRT } from "@/lib/utils";
 import { toast } from "sonner";
@@ -89,6 +90,10 @@ const PipelineCardHover = memo(function PipelineCardHover({ lead, children, onOp
   const [quickTaskType, setQuickTaskType] = useState("follow_up");
   const [quickTaskObs, setQuickTaskObs] = useState("");
   const [quickTaskSaving, setQuickTaskSaving] = useState(false);
+  const [quickTaskDateMode, setQuickTaskDateMode] = useState<"hoje" | "amanha" | "custom">("hoje");
+  const [quickTaskCustomDate, setQuickTaskCustomDate] = useState<Date>();
+  const [quickTaskTime, setQuickTaskTime] = useState("10:00");
+  const [quickTaskObsError, setQuickTaskObsError] = useState(false);
   const enterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -301,30 +306,67 @@ const PipelineCardHover = memo(function PipelineCardHover({ lead, children, onOp
                     ))}
                   </div>
                   <Input
-                    className="h-7 text-[11px]"
-                    placeholder="Obs: ex. Retornar sobre financiamento"
+                    className={`h-7 text-[11px] ${quickTaskObsError && !quickTaskObs.trim() ? "border-destructive" : ""}`}
+                    placeholder="Obs (obrigatório): ex. Retornar sobre financiamento"
                     value={quickTaskObs}
-                    onChange={e => setQuickTaskObs(e.target.value)}
+                    onChange={e => { setQuickTaskObs(e.target.value); setQuickTaskObsError(false); }}
                     onClick={e => e.stopPropagation()}
-                    onKeyDown={e => { if (e.key === "Enter") handleQuickTaskCreate("hoje"); }}
+                    onKeyDown={e => { if (e.key === "Enter" && quickTaskObs.trim()) handleQuickTaskCreate(); }}
                   />
+                  {quickTaskObsError && !quickTaskObs.trim() && (
+                    <p className="text-[9px] text-destructive">⚠️ Observação obrigatória</p>
+                  )}
+                  {/* Date mode */}
+                  <div className="flex gap-1">
+                    {([
+                      { value: "hoje" as const, label: "Hoje" },
+                      { value: "amanha" as const, label: "Amanhã" },
+                      { value: "custom" as const, label: "📅 Data" },
+                    ]).map(d => (
+                      <button
+                        key={d.value}
+                        onClick={(e) => { e.stopPropagation(); setQuickTaskDateMode(d.value); }}
+                        className={`text-[10px] px-2.5 py-1 rounded-md border transition-colors flex-1 ${
+                          quickTaskDateMode === d.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-border hover:border-primary/50"
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                  {quickTaskDateMode === "custom" && (
+                    <div className="border border-border rounded-md overflow-hidden">
+                      <CalendarPicker
+                        mode="single"
+                        selected={quickTaskCustomDate}
+                        onSelect={(d) => setQuickTaskCustomDate(d as Date | undefined)}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        className="p-1 pointer-events-auto text-[10px] [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-head_cell]:text-[9px]"
+                      />
+                    </div>
+                  )}
+                  {/* Time */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-[10px] text-muted-foreground font-medium shrink-0">⏰ Horário:</label>
+                    <Input
+                      type="time"
+                      className="h-7 text-[11px] flex-1"
+                      value={quickTaskTime}
+                      onChange={e => setQuickTaskTime(e.target.value)}
+                      onClick={e => e.stopPropagation()}
+                    />
+                  </div>
+                  {/* Submit */}
                   <div className="flex gap-1">
                     <Button
                       size="sm"
                       className="h-6 text-[10px] flex-1 gap-1"
-                      disabled={quickTaskSaving}
-                      onClick={(e) => { e.stopPropagation(); handleQuickTaskCreate("hoje"); }}
+                      disabled={quickTaskSaving || (quickTaskDateMode === "custom" && !quickTaskCustomDate)}
+                      onClick={(e) => { e.stopPropagation(); handleQuickTaskCreate(); }}
                     >
-                      {quickTaskSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Hoje"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-6 text-[10px] flex-1"
-                      disabled={quickTaskSaving}
-                      onClick={(e) => { e.stopPropagation(); handleQuickTaskCreate("amanha"); }}
-                    >
-                      Amanhã
+                      {quickTaskSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "✅ Criar Tarefa"}
                     </Button>
                     <Button
                       size="sm"
@@ -371,18 +413,28 @@ const PipelineCardHover = memo(function PipelineCardHover({ lead, children, onOp
     </div>
   );
 
-  async function handleQuickTaskCreate(quando: "hoje" | "amanha") {
+  async function handleQuickTaskCreate() {
     if (!user) { toast.error("Faça login primeiro"); return; }
+    if (!quickTaskObs.trim()) {
+      setQuickTaskObsError(true);
+      toast.error("Preencha a observação da tarefa");
+      return;
+    }
     setQuickTaskSaving(true);
     try {
-      const now = new Date();
       let venceEm: string;
-      if (quando === "hoje") {
+      if (quickTaskDateMode === "hoje") {
         venceEm = todayBRT();
-      } else {
-        const tomorrow = new Date(now);
+      } else if (quickTaskDateMode === "amanha") {
+        const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         venceEm = dateToBRT(tomorrow);
+      } else if (quickTaskCustomDate) {
+        venceEm = dateToBRT(quickTaskCustomDate);
+      } else {
+        toast.error("Selecione uma data");
+        setQuickTaskSaving(false);
+        return;
       }
 
       const titulo = `${QUICK_TASK_LABELS[quickTaskType] || quickTaskType}: ${lead.nome || "Lead"}`;
@@ -390,26 +442,31 @@ const PipelineCardHover = memo(function PipelineCardHover({ lead, children, onOp
       await supabase.from("pipeline_tarefas").insert({
         pipeline_lead_id: lead.id,
         titulo,
-        descricao: quickTaskObs || null,
+        descricao: quickTaskObs,
         tipo: quickTaskType,
         vence_em: venceEm,
+        hora_vencimento: quickTaskTime || null,
         prioridade: "media",
         status: "pendente",
         created_by: user.id,
         responsavel_id: user.id,
       } as any);
 
-      // Update proxima_acao on the lead
       await supabase.from("pipeline_leads").update({
         proxima_acao: QUICK_TASK_LABELS[quickTaskType] || titulo,
         data_proxima_acao: venceEm,
         updated_at: new Date().toISOString(),
       } as any).eq("id", lead.id);
 
-      toast.success(`Tarefa "${QUICK_TASK_LABELS[quickTaskType]}" criada para ${quando === "hoje" ? "hoje" : "amanhã"} ✅`);
+      const dateLabel = quickTaskDateMode === "hoje" ? "hoje" : quickTaskDateMode === "amanha" ? "amanhã" : format(quickTaskCustomDate!, "dd/MM");
+      toast.success(`Tarefa "${QUICK_TASK_LABELS[quickTaskType]}" criada para ${dateLabel} às ${quickTaskTime} ✅`);
       setShowQuickTask(false);
       setQuickTaskObs("");
+      setQuickTaskObsError(false);
       setQuickTaskType("follow_up");
+      setQuickTaskDateMode("hoje");
+      setQuickTaskCustomDate(undefined);
+      setQuickTaskTime("10:00");
     } catch (err: any) {
       toast.error("Erro ao criar tarefa: " + (err.message || ""));
     } finally {
