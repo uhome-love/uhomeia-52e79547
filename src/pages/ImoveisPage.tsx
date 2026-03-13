@@ -38,11 +38,13 @@ function extractImages(item: any): string[] {
 }
 
 function extractFullImages(item: any): string[] {
+  // Prefer fotos_full (full-res URLs from Typesense)
+  if (item._fotos_full?.length) return item._fotos_full;
   if (item._fotos_normalized?.length) return item._fotos_normalized;
   const arr = item.imagens;
   if (!Array.isArray(arr) || arr.length === 0) return [];
-  // Prefer full-size: link > link_large > link_medio > link_thumb
-  return arr.map((img: any) => img.link || img.link_large || img.link_medio || img.link_thumb || img.url || img.src || "").filter(Boolean);
+  // Prefer full-size: link_large > link > link_medio > link_thumb
+  return arr.map((img: any) => img.link_large || img.link || img.link_medio || img.link_thumb || img.url || img.src || "").filter(Boolean);
 }
 
 function extractOrigemExterna(item: any) {
@@ -245,13 +247,13 @@ function PhotoLightbox({ images, initialIndex, open, onClose }: { images: string
         {current + 1} / {images.length}
       </div>
 
-      {/* Main image area */}
-      <div className="flex items-center justify-center h-full px-16 py-20" onClick={(e) => e.stopPropagation()}>
+      {/* Main image area — maximized for premium feel */}
+      <div className="flex items-center justify-center h-full px-4 sm:px-8 pt-14 pb-24" onClick={(e) => e.stopPropagation()}>
         <div className="relative w-full h-full flex items-center justify-center">
           <img
             src={getFullRes(images[current])}
             alt={`Foto ${current + 1}`}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-opacity duration-300"
+            className="max-w-[95vw] max-h-[85vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-opacity duration-300"
             style={{ opacity: isTransitioning ? 0.6 : 1 }}
             draggable={false}
           />
@@ -651,8 +653,15 @@ export default function ImoveisPage() {
       dormitorios: doc.dormitorios,
       valor_condominio: doc.valor_condominio,
       situacao: doc.situacao,
+      latitude: doc.latitude,
+      longitude: doc.longitude,
       _fotos_normalized: doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-      imagens: (doc.fotos || []).map((url: string) => ({ link_thumb: url, link: url })),
+      _fotos_full: doc.fotos_full?.length ? doc.fotos_full : doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
+      imagens: (doc.fotos || []).map((url: string, i: number) => ({
+        link_thumb: url,
+        link: doc.fotos_full?.[i] || url,
+        link_large: doc.fotos_full?.[i] || url,
+      })),
     }));
 
     setImoveis(items);

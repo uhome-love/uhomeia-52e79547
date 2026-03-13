@@ -4,30 +4,46 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const COLLECTION_NAME = "imoveis";
 
 function mapImovelToDocument(item: any): Record<string, any> {
   const codigo = String(item.codigo || item.referencia || item.id_imovel || item.id || "");
-  const fotos: string[] = [];
-  if (item.foto_principal) fotos.push(item.foto_principal);
-  if (item.foto_destaque && item.foto_destaque !== item.foto_principal) fotos.push(item.foto_destaque);
+
+  // Extract images - store both thumbs and full-res
+  const thumbs: string[] = [];
+  const full: string[] = [];
+  if (item.foto_principal) { thumbs.push(item.foto_principal); full.push(item.foto_principal); }
+  if (item.foto_destaque && item.foto_destaque !== item.foto_principal) { thumbs.push(item.foto_destaque); full.push(item.foto_destaque); }
   const imgFieldNames = ["imagens", "fotos", "galeria", "photos", "images"];
   for (const fieldName of imgFieldNames) {
     const arr = item[fieldName];
     if (Array.isArray(arr)) {
       for (const it of arr) {
-        const url = typeof it === "string" ? it : (it?.link_thumb || it?.link || it?.url || it?.arquivo || "");
-        if (url && !fotos.includes(url)) fotos.push(url);
+        if (typeof it === "string") {
+          if (!thumbs.includes(it)) thumbs.push(it);
+          if (!full.includes(it)) full.push(it);
+        } else if (it && typeof it === "object") {
+          const thumb = it.link_thumb || it.link || it.url || it.arquivo || "";
+          const fullUrl = it.link_large || it.link || it.link_medio || it.link_thumb || it.url || it.arquivo || "";
+          if (thumb && !thumbs.includes(thumb)) thumbs.push(thumb);
+          if (fullUrl && !full.includes(fullUrl)) full.push(fullUrl);
+        }
       }
     }
   }
+
   const situacao = String(item.situacao || item.status || item.fase || "").toLowerCase();
   const emObras = situacao.includes("obra") || situacao.includes("constru") || situacao.includes("planta") || situacao.includes("lancamento");
 
-  return {
+  // Extract coordinates
+  const lat = Number(item.latitude || item.lat || item.endereco_latitude || item.endereco?.latitude || 0);
+  const lng = Number(item.longitude || item.lng || item.lon || item.endereco_longitude || item.endereco?.longitude || 0);
+  const hasCoords = lat !== 0 && lng !== 0 && !isNaN(lat) && !isNaN(lng) && lat >= -35 && lat <= 5 && lng >= -75 && lng <= -30;
+
+  const doc: Record<string, any> = {
     id: codigo || `auto_${Math.random().toString(36).slice(2)}`,
     codigo,
     titulo: item.titulo_anuncio || item.empreendimento_nome || item.titulo || "",
@@ -50,8 +66,9 @@ function mapImovelToDocument(item: any): Record<string, any> {
     vagas: Number(item.garagens || item.vagas || 0) || 0,
     status: item.status || "",
     situacao: situacao,
-    foto_principal: fotos[0] || "",
-    fotos: fotos.slice(0, 10),
+    foto_principal: thumbs[0] || "",
+    fotos: thumbs.slice(0, 15),
+    fotos_full: full.slice(0, 15),
     destaque: !!item.destaque,
     em_obras: emObras,
     previsao_entrega: item.previsao_entrega || item.data_entrega || "",
@@ -59,6 +76,13 @@ function mapImovelToDocument(item: any): Record<string, any> {
     is_uhome: String(item.codigo || "").toLowerCase().includes("-uh"),
     data_atualizacao: Date.now(),
   };
+
+  if (hasCoords) {
+    doc.latitude = lat;
+    doc.longitude = lng;
+  }
+
+  return doc;
 }
 
 serve(async (req) => {

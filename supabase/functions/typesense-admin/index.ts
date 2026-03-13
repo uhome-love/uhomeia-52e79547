@@ -39,12 +39,16 @@ const SCHEMA = {
     { name: "situacao", type: "string" as const, facet: true, optional: true as const },
     { name: "foto_principal", type: "string" as const, optional: true as const },
     { name: "fotos", type: "string[]" as const, optional: true as const },
+    { name: "fotos_full", type: "string[]" as const, optional: true as const },
     { name: "destaque", type: "bool" as const, optional: true as const },
     { name: "em_obras", type: "bool" as const, optional: true as const },
     { name: "previsao_entrega", type: "string" as const, optional: true as const },
     { name: "valor_condominio", type: "float" as const, optional: true as const },
     { name: "is_uhome", type: "bool" as const, optional: true as const, facet: true as const },
     { name: "data_atualizacao", type: "int64" as const },
+    // Geo fields for map
+    { name: "latitude", type: "float" as const, optional: true as const },
+    { name: "longitude", type: "float" as const, optional: true as const },
   ],
   default_sorting_field: "data_atualizacao",
   token_separators: ["-", "/"],
@@ -67,30 +71,53 @@ async function typesenseFetch(host: string, apiKey: string, path: string, option
   return { status: resp.status, data: text ? JSON.parse(text) : null };
 }
 
-function normalizeImages(imovel: any): string[] {
-  const fotos: string[] = [];
-  if (imovel.foto_principal) fotos.push(imovel.foto_principal);
-  if (imovel.foto_destaque && imovel.foto_destaque !== imovel.foto_principal) fotos.push(imovel.foto_destaque);
+function normalizeImages(imovel: any): { thumbs: string[]; full: string[] } {
+  const thumbs: string[] = [];
+  const full: string[] = [];
+
+  if (imovel.foto_principal) {
+    thumbs.push(imovel.foto_principal);
+    full.push(imovel.foto_principal);
+  }
+  if (imovel.foto_destaque && imovel.foto_destaque !== imovel.foto_principal) {
+    thumbs.push(imovel.foto_destaque);
+    full.push(imovel.foto_destaque);
+  }
+
   const imgFieldNames = ["imagens", "fotos", "galeria", "photos", "images"];
   for (const fieldName of imgFieldNames) {
     const arr = imovel[fieldName];
     if (Array.isArray(arr)) {
       for (const item of arr) {
-        const url = typeof item === "string" ? item : (item?.link_thumb || item?.link || item?.url || item?.arquivo || "");
-        if (url && !fotos.includes(url)) fotos.push(url);
+        if (typeof item === "string") {
+          if (!thumbs.includes(item)) thumbs.push(item);
+          if (!full.includes(item)) full.push(item);
+        } else if (item && typeof item === "object") {
+          // Thumb: prefer link_thumb > link
+          const thumb = item.link_thumb || item.link || item.url || item.arquivo || "";
+          // Full: prefer link_large > link > link_medio > link_thumb
+          const fullUrl = item.link_large || item.link || item.link_medio || item.link_thumb || item.url || item.arquivo || "";
+          if (thumb && !thumbs.includes(thumb)) thumbs.push(thumb);
+          if (fullUrl && !full.includes(fullUrl)) full.push(fullUrl);
+        }
       }
     }
   }
-  return fotos;
+  return { thumbs, full };
 }
 
 function mapImovelToDocument(item: any): Record<string, any> {
   const codigo = String(item.codigo || item.referencia || item.id_imovel || item.id || "");
-  const fotos = normalizeImages(item);
+  const { thumbs, full } = normalizeImages(item);
   const situacao = String(item.situacao || item.status || item.fase || "").toLowerCase();
   const emObras = situacao.includes("obra") || situacao.includes("constru") || situacao.includes("planta") || situacao.includes("lancamento");
 
-  return {
+  // Extract coordinates
+  const lat = Number(item.latitude || item.lat || item.endereco_latitude || item.endereco?.latitude || 0);
+  const lng = Number(item.longitude || item.lng || item.lon || item.endereco_longitude || item.endereco?.longitude || 0);
+  const hasCoords = lat !== 0 && lng !== 0 && !isNaN(lat) && !isNaN(lng) && lat >= -35 && lat <= 5 && lng >= -75 && lng <= -30;
+
+  const doc: Record<string, any> = {
     id: codigo || `auto_${Math.random().toString(36).slice(2)}`,
     codigo,
     titulo: item.titulo_anuncio || item.empreendimento_nome || item.titulo || "",
@@ -113,8 +140,9 @@ function mapImovelToDocument(item: any): Record<string, any> {
     vagas: Number(item.garagens || item.vagas || 0) || 0,
     status: item.status || "",
     situacao: situacao,
-    foto_principal: fotos[0] || "",
-    fotos: fotos.slice(0, 10),
+    foto_principal: thumbs[0] || "",
+    fotos: thumbs.slice(0, 15),
+    fotos_full: full.slice(0, 15),
     destaque: !!item.destaque,
     em_obras: emObras,
     previsao_entrega: item.previsao_entrega || item.data_entrega || "",
@@ -122,6 +150,13 @@ function mapImovelToDocument(item: any): Record<string, any> {
     is_uhome: String(item.codigo || "").toLowerCase().includes("-uh"),
     data_atualizacao: Date.now(),
   };
+
+  if (hasCoords) {
+    doc.latitude = lat;
+    doc.longitude = lng;
+  }
+
+  return doc;
 }
 
 serve(async (req) => {
