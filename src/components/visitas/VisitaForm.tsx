@@ -95,6 +95,7 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
 
   const [form, setForm] = useState(() => getDefaultForm(initialData));
   const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [pipelineLeads, setPipelineLeads] = useState<PipelineLeadOption[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMemberOption[]>([]);
   const [stages, setStages] = useState<StageOption[]>([]);
@@ -115,10 +116,12 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
   const [imovelResults, setImovelResults] = useState<any[]>([]);
   const [imovelLoading, setImovelLoading] = useState(false);
   const [selectedImovel, setSelectedImovel] = useState<any>(null);
+
   // Reset form state when dialog opens
   useEffect(() => {
     if (open) {
       setForm(getDefaultForm(initialData));
+      setFormErrors({});
       setSearchPipeline("");
       setSubmitting(false);
       setIsParceria(false);
@@ -135,16 +138,27 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
   // Load pipeline leads + team members + empreendimentos + stages
   useEffect(() => {
     if (!user || !open) return;
+
     const load = async () => {
+      let teamQuery = supabase
+        .from("team_members")
+        .select("user_id, nome, equipe")
+        .eq("status", "ativo");
+
+      if (isManager && !isAdmin) {
+        teamQuery = teamQuery.eq("gerente_id", user.id);
+      }
+
       const [leadsRes, teamRes, campanhasRes, stagesRes] = await Promise.all([
         supabase.from("pipeline_leads").select("id, nome, empreendimento, telefone, stage_id").order("updated_at", { ascending: false }).limit(500),
-        supabase.from("team_members").select("user_id, nome, equipe").eq("status", "ativo"),
+        teamQuery,
         supabase.from("roleta_campanhas").select("empreendimento").eq("ativo", true),
         supabase.from("pipeline_stages").select("id, nome").order("ordem", { ascending: true }),
       ]);
+
       const leads = (leadsRes.data || []) as PipelineLeadOption[];
       setPipelineLeads(leads);
-      setTeamMembers((teamRes.data || []).filter(m => m.user_id) as TeamMemberOption[]);
+      setTeamMembers((teamRes.data || []).filter((m) => m.user_id) as TeamMemberOption[]);
       setStages((stagesRes.data || []) as StageOption[]);
 
       const empSet = new Set<string>();
