@@ -144,7 +144,7 @@ export default function RhSalaReuniao() {
           <h1 className="text-xl font-bold text-foreground">🏢 Sala de Reunião</h1>
           <p className="text-sm text-muted-foreground">Reservas e horários — Horário comercial (8h–18h)</p>
         </div>
-        <Button onClick={() => { setData(selectedDate); setDialogOpen(true); }} size="sm" className="gap-1">
+        <Button onClick={openAdd} size="sm" className="gap-1">
           <Plus className="h-4 w-4" /> Nova Reserva
         </Button>
       </div>
