@@ -189,6 +189,7 @@ function copyToClipboard(text: string) {
 
 export default function OrygemCampanha() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showScripts, setShowScripts] = useState(false);
   const [showArguments, setShowArguments] = useState(false);
   const [showUnits, setShowUnits] = useState<"fase1" | "fase2" | null>(null);
@@ -197,14 +198,104 @@ export default function OrygemCampanha() {
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [salesCount] = useState(0);
 
+  // Enviar Página state
+  const [showEnviar, setShowEnviar] = useState(false);
+  const [enviarSaving, setEnviarSaving] = useState(false);
+  const [enviarLeadNome, setEnviarLeadNome] = useState("");
+  const [enviarLeadTel, setEnviarLeadTel] = useState("");
+  const [enviarMensagem, setEnviarMensagem] = useState("");
+  const [enviarVitrineUrl, setEnviarVitrineUrl] = useState<string | null>(null);
+  const [orygemOverride, setOrygemOverride] = useState<any>(null);
+
+  // Load Orygem override from empreendimento_overrides
+  useEffect(() => {
+    supabase
+      .from("empreendimento_overrides")
+      .select("*")
+      .or("codigo.ilike.%orygem%,nome.ilike.%orygem%")
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setOrygemOverride(data);
+      });
+  }, []);
+
+  // Reset enviar dialog on open
+  useEffect(() => {
+    if (showEnviar) {
+      setEnviarLeadNome("");
+      setEnviarLeadTel("");
+      setEnviarMensagem("");
+      setEnviarVitrineUrl(null);
+    }
+  }, [showEnviar]);
+
+  const handleCreateVitrine = useCallback(async () => {
+    if (!user) { toast.error("Você precisa estar logado."); return; }
+    setEnviarSaving(true);
+    try {
+      const images = orygemOverride?.fotos || GALLERY_IMAGES.map(g => g.url);
+      const dadosCustom = [{
+        nome: "Orygem Residence Club",
+        codigo: orygemOverride?.codigo || "ORYGEM",
+        bairro: orygemOverride?.bairro || "Teresópolis",
+        valor_venda: 871500,
+        valor_min: 871500,
+        valor_max: 1318000,
+        tipologias: orygemOverride?.tipologias || [],
+        area_privativa: 150,
+        dormitorios: 2,
+        suites: 1,
+        vagas: 2,
+        status_obra: orygemOverride?.status_obra || "Em obras",
+        previsao_entrega: orygemOverride?.previsao_entrega || "",
+        descricao: "Condomínio fechado de casas com infraestrutura de clube. 150 a 173m², 2 ou 3 dormitórios, pátio privativo, terraço e 16 espaços de lazer.",
+        fotos: images,
+      }];
+
+      const { data, error } = await supabase.from("vitrines").insert({
+        titulo: `Orygem Residence Club — Vitrine Exclusiva`,
+        created_by: user.id,
+        tipo: "product_page",
+        imovel_ids: [orygemOverride?.codigo || "ORYGEM"],
+        dados_custom: dadosCustom,
+        lead_nome: enviarLeadNome || null,
+        lead_telefone: enviarLeadTel || null,
+        mensagem_corretor: enviarMensagem || null,
+      }).select("id").single();
+
+      if (error) throw error;
+      const url = getVitrinePublicUrl(data.id);
+      setEnviarVitrineUrl(url);
+      toast.success("Vitrine criada!");
+    } catch (err: any) {
+      toast.error("Erro: " + (err.message || "Falha ao criar vitrine"));
+    } finally {
+      setEnviarSaving(false);
+    }
+  }, [user, orygemOverride, enviarLeadNome, enviarLeadTel, enviarMensagem]);
+
+  function enviarWhatsApp() {
+    if (!enviarVitrineUrl) return;
+    const text = `Olá${enviarLeadNome ? ` ${enviarLeadNome}` : ""}! 🏡\n\nPreparei uma vitrine exclusiva do *Orygem Residence Club* para você:\n\n${enviarVitrineUrl}\n\n${enviarMensagem || "Qualquer dúvida, estou à disposição!"}`;
+    const encoded = encodeURIComponent(text);
+    const whatsUrl = enviarLeadTel
+      ? `https://wa.me/55${enviarLeadTel.replace(/\D/g, "")}?text=${encoded}`
+      : `https://wa.me/?text=${encoded}`;
+    window.open(whatsUrl, "_blank");
+  }
+
+  function enviarCopyLink() {
+    if (!enviarVitrineUrl) return;
+    navigator.clipboard.writeText(enviarVitrineUrl);
+    toast.success("Link copiado!");
+  }
+
   const progress = Math.round((salesCount / CAMPAIGN_TARGET) * 100);
 
   const filteredGallery = galleryFilter === "todos"
     ? GALLERY_IMAGES
     : GALLERY_IMAGES.filter((img) => img.category === galleryFilter);
-
-  return (
-    <div className="space-y-5 pb-24">
 
       {/* ═══ LIGHTBOX ═══ */}
       {lightboxImg && (
