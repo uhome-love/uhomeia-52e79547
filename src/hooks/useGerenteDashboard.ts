@@ -396,6 +396,7 @@ export function useGerenteDashboard(period: Period) {
     },
     enabled: !!user && !!profileId,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Negócios por fase (proposta, negociacao, documentacao) ──
