@@ -224,7 +224,7 @@ export default function PropertyCard({
               href={`${whatsappBase}?text=${encodeURIComponent(`Olá${corretorNome ? ` ${corretorNome}` : ""}! ${whatsappMsg}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => onTrack?.("whatsapp_click", item.id)}
+              onClick={() => onTrack?.("whatsapp_click", item?.id ?? 0)}
               className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl font-bold text-sm transition-all hover:shadow-lg"
               style={{ background: "linear-gradient(135deg, #16a34a, #22c55e)", color: "white", boxShadow: "0 4px 15px rgba(34,197,94,0.3)" }}
             >
