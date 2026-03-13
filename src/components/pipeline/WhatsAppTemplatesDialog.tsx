@@ -113,6 +113,7 @@ export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, 
   };
 
   const handleFreeMessage = () => {
+    // Open WhatsApp FIRST (synchronous) to avoid popup blockers
     if (leadTelefone) {
       window.open(getWhatsAppUrl(leadTelefone), "_blank");
     }
