@@ -78,10 +78,10 @@ const CATEGORIAS: Record<string, {
     label: "2 Dormitórios",
     emoji: "🏠",
     empreendimentos: [
-      { nome: "Vista Nova Carlos Gomes", tipologia: "2 dormitórios", bairro: "Petrópolis", fase: "Em construção", unidade: "402", metragem: "68 m²", valor: "R$ 847.254" },
-      { nome: "The Arch", tipologia: "2 dormitórios", bairro: "Bela Vista", fase: "Pronto para morar", unidade: "501", metragem: "70 m²", valor: "R$ 1.075.358" },
-      { nome: "Prime Wish", tipologia: "2 dormitórios", bairro: "São Geraldo", fase: "Pronto para morar", unidade: "203", metragem: "56 m²", valor: "R$ 429.460" },
-      { nome: "Boa Vista Country Club", tipologia: "2 dormitórios", bairro: "Boa Vista", fase: "Pronto", unidade: "1008", metragem: "69 m²", valor: "R$ 812.752" },
+      { nome: "Vista Nova Carlos Gomes", tipologia: "2 dormitórios", bairro: "Petrópolis", fase: "Em construção", unidade: "402", metragem: "68 m²", valor: "R$ 847.254", imagem: imgVistaNovaCarlosGomes2d },
+      { nome: "The Arch", tipologia: "2 dormitórios", bairro: "Bela Vista", fase: "Pronto para morar", unidade: "501", metragem: "70 m²", valor: "R$ 1.075.358", imagem: imgTheArch2d },
+      { nome: "Prime Wish", tipologia: "2 dormitórios", bairro: "São Geraldo", fase: "Pronto para morar", unidade: "203", metragem: "56 m²", valor: "R$ 429.460", imagem: imgPrimeWish },
+      { nome: "Boa Vista Country Club", tipologia: "2 dormitórios", bairro: "Boa Vista", fase: "Pronto", unidade: "1008", metragem: "69 m²", valor: "R$ 812.752", imagem: imgBoaVistaCountryClub },
     ],
   },
   "3dorms": {
