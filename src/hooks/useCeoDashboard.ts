@@ -327,7 +327,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
           const vr = (allVisRealizadas || []).filter(v => v.corretor_id === uid && v.status === "realizada").length;
           const neg = (allNeg || []).filter(n => n.corretor_id === uid);
           const prop = neg.filter(n => n.fase === "proposta" || n.fase === "negociacao").length;
-          const vgv = neg.reduce((s, n) => s + (n.vgv_estimado || 0), 0);
+          const vgv = neg.reduce((s, n) => s + (n.vgv_final || n.vgv_estimado || 0), 0);
           tLig += lig; tAprov += aprov; tVM += vm; tVR += vr; tProp += prop; tVgv += vgv;
           corretoresAll.push({
             corretor_id: uid, nome: corrNameMap.get(uid) || "Corretor", gerente_nome: gerenteNome,
