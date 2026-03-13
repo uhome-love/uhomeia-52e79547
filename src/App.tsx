@@ -194,6 +194,7 @@ const App = () => (
             <Route path="/imoveis" element={<ProtectedPage><ErrorBoundary><ImoveisPage /></ErrorBoundary></ProtectedPage>} />
             <Route path="/melnick-day" element={<ProtectedPage><MelnickDay /></ProtectedPage>} />
             <Route path="/orygem-60" element={<ProtectedPage><OrygemCampanha /></ProtectedPage>} />
+            <Route path="/mega-cyrela" element={<ProtectedPage><MegaCyrela /></ProtectedPage>} />
             <Route path="/anuncios" element={<ProtectedPage><AnunciosNoAr /></ProtectedPage>} />
 
             {/* Busca de Leads / Higienização — gestor + admin */}
