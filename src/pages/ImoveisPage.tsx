@@ -682,7 +682,7 @@ export default function ImoveisPage() {
     return () => { if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current); };
   }, [filterKey]);
 
-  const handleSearch = () => { setCampanhaAtiva(false); setUhomeOnly(false); setShowSuggestions(false); fetchImoveis(1, false, false); };
+  const handleSearch = () => { setCampanhaAtiva(false); setUhomeOnly(false); setShowSuggestions(false); };
 
   // Autocomplete with debounce — Typesense powered
   const handleSearchChange = useCallback((value: string) => {
