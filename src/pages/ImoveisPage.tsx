@@ -649,25 +649,38 @@ export default function ImoveisPage() {
     }
   }, [campanhaAtiva, uhomeOnly, useTypesense, fetchViaTypesense, fetchViaJetimob]);
 
+  // Keep a ref to the latest fetchImoveis to avoid stale closures in effects
+  const fetchRef = useRef(fetchImoveis);
+  fetchRef.current = fetchImoveis;
+
   // Initial load
   const mounted = useRef(false);
   useEffect(() => {
     if (mounted.current) return;
     mounted.current = true;
-    fetchImoveis(1, false);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    fetchRef.current(1, false);
+  }, []);
 
-  // Auto-apply filters with debounce (reactive like Zillow)
-  const filterVersion = useRef(0);
+  // Auto-apply ALL filter changes with debounce (reactive like Zillow)
+  // Using a serialized key ensures we catch every filter change including uhomeOnly/campanhaAtiva
+  const filterKey = useMemo(() =>
+    JSON.stringify({ contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva }),
+    [contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva]
+  );
+  const prevFilterKey = useRef(filterKey);
+
   useEffect(() => {
     if (!mounted.current) return;
-    filterVersion.current += 1;
+    // Skip if filterKey hasn't actually changed (prevents double-fire)
+    if (prevFilterKey.current === filterKey) return;
+    prevFilterKey.current = filterKey;
+
     if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
     filterDebounceRef.current = setTimeout(() => {
-      fetchImoveis(1, campanhaAtiva, uhomeOnly);
+      fetchRef.current(1);
     }, 400);
     return () => { if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current); };
-  }, [contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterKey]);
 
   const handleSearch = () => { setCampanhaAtiva(false); setUhomeOnly(false); setShowSuggestions(false); fetchImoveis(1, false, false); };
 
