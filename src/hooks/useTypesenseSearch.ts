@@ -63,10 +63,10 @@ export function buildFilterBy(filters: {
     parts.push(`tipo:[${tipos.join(",")}]`);
   }
 
-  // Multi-select dormitorios — use the minimum value as >=
+  // Multi-select dormitorios — exact match for selected values
   const dorms = Array.isArray(filters.dormitorios) ? filters.dormitorios.filter(d => d && d !== "all") : (filters.dormitorios && filters.dormitorios !== "all" ? [filters.dormitorios] : []);
   if (dorms.length === 1) {
-    parts.push(`dormitorios:>=${dorms[0]}`);
+    parts.push(`dormitorios:=${dorms[0]}`);
   } else if (dorms.length > 1) {
     parts.push(`dormitorios:[${dorms.join(",")}]`);
   }

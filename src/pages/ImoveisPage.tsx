@@ -590,8 +590,7 @@ export default function ImoveisPage() {
   const [valorRange, setValorRange] = useState<[number, number]>([0, 5_000_000]);
   const [somenteObras, setSomenteObras] = useState(false);
 
-  // Track if Typesense is available
-  const [useTypesense, setUseTypesense] = useState(true);
+  // Typesense is always attempted (no permanent disable)
 
   const filterDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -618,9 +617,40 @@ export default function ImoveisPage() {
 
   // Abort controller for cancelling in-flight requests
   const abortRef = useRef<AbortController | null>(null);
+  // Sequence number to prevent stale responses from updating state
+  const fetchSeqRef = useRef(0);
+
+  // Helper to map Typesense docs to card format
+  const mapTypesenseDocs = (docs: any[]) => docs.map((doc: any) => ({
+    ...doc,
+    codigo: doc.codigo || doc.id,
+    titulo_anuncio: doc.titulo,
+    empreendimento_nome: doc.empreendimento,
+    endereco_bairro: doc.bairro,
+    endereco_cidade: doc.cidade,
+    endereco_logradouro: doc.endereco,
+    valor_venda: doc.valor_venda,
+    valor_locacao: doc.valor_locacao,
+    area_privativa: doc.area_privativa,
+    garagens: doc.vagas,
+    suites: doc.suites,
+    banheiros: doc.banheiros,
+    dormitorios: doc.dormitorios,
+    valor_condominio: doc.valor_condominio,
+    situacao: doc.situacao,
+    latitude: doc.latitude,
+    longitude: doc.longitude,
+    _fotos_normalized: doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
+    _fotos_full: doc.fotos_full?.length ? doc.fotos_full : doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
+    imagens: (doc.fotos || []).map((url: string, i: number) => ({
+      link_thumb: url,
+      link: doc.fotos_full?.[i] || url,
+      link_large: doc.fotos_full?.[i] || url,
+    })),
+  }));
 
   // ── Typesense search ──
-  const fetchViaTypesense = useCallback(async (pageNum: number) => {
+  const fetchViaTypesense = useCallback(async (pageNum: number, seq: number): Promise<"ok" | "aborted" | "error"> => {
     try {
       const filterBy = buildFilterBy({
         contrato, tipo, bairro, dormitorios, suites: suitesFilter, vagas,
@@ -636,46 +666,23 @@ export default function ImoveisPage() {
         sort_by: sortByStr || undefined,
       });
 
-      if (!result) return false;
+      // If this request was superseded, don't update state
+      if (seq !== fetchSeqRef.current) return "aborted";
 
-      // Map Typesense docs back to the format cards expect
-      const items = (result.data || []).map((doc: any) => ({
-        ...doc,
-        codigo: doc.codigo || doc.id,
-        titulo_anuncio: doc.titulo,
-        empreendimento_nome: doc.empreendimento,
-        endereco_bairro: doc.bairro,
-        endereco_cidade: doc.cidade,
-        endereco_logradouro: doc.endereco,
-        valor_venda: doc.valor_venda,
-        valor_locacao: doc.valor_locacao,
-        area_privativa: doc.area_privativa,
-        garagens: doc.vagas,
-        suites: doc.suites,
-        banheiros: doc.banheiros,
-        dormitorios: doc.dormitorios,
-        valor_condominio: doc.valor_condominio,
-        situacao: doc.situacao,
-        latitude: doc.latitude,
-        longitude: doc.longitude,
-        _fotos_normalized: doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-        _fotos_full: doc.fotos_full?.length ? doc.fotos_full : doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-        imagens: (doc.fotos || []).map((url: string, i: number) => ({
-          link_thumb: url,
-          link: doc.fotos_full?.[i] || url,
-          link_large: doc.fotos_full?.[i] || url,
-        })),
-      }));
+      if (!result) return "aborted"; // null = aborted by hook
+
+      const items = mapTypesenseDocs(result.data || []);
 
       setImoveis(items);
       setTotal(result.total || 0);
       setTotalPages(result.totalPages || 1);
       setPage(pageNum);
       setSearchTimeMs(result.search_time_ms || null);
-      return true;
+      return "ok";
     } catch (err) {
+      if (seq !== fetchSeqRef.current) return "aborted";
       console.error("Typesense fetch error:", err);
-      return false;
+      return "error";
     }
   }, [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, uhomeOnly, sortBy, typesenseSearch]);
 
@@ -746,38 +753,46 @@ export default function ImoveisPage() {
 
   // ── Main fetch: try Typesense first, fallback to Jetimob ──
   const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva, uhome = uhomeOnly) => {
+    // Increment sequence to invalidate any in-flight requests
+    const seq = ++fetchSeqRef.current;
+
     setLoading(true);
     setSearchTimeMs(null);
     setFetchError(null);
 
     try {
-      // Campanha mode always uses jetimob-proxy (specific codes)
+      // Campanha mode always uses local overrides
       if (campanha) {
         await fetchViaJetimob(pageNum, campanha, uhome);
+        if (seq !== fetchSeqRef.current) return; // superseded
         return;
       }
 
-      // Try Typesense
-      if (useTypesense) {
-        const success = await fetchViaTypesense(pageNum);
-        if (success) return;
-        // If Typesense fails, fall back
-        console.warn("Typesense unavailable, falling back to jetimob-proxy");
-        setUseTypesense(false);
+      // Try Typesense (always retry, don't permanently disable)
+      const tsResult = await fetchViaTypesense(pageNum, seq);
+
+      if (tsResult === "aborted") {
+        // Request was superseded — don't fallback, don't update loading
+        return;
       }
 
-      // Fallback
+      if (tsResult === "ok") return;
+
+      // Typesense had a real error — fallback to Jetimob
+      console.warn("Typesense error, falling back to jetimob-proxy");
       await fetchViaJetimob(pageNum, campanha, uhome);
     } catch (err: any) {
+      if (seq !== fetchSeqRef.current) return; // superseded
       console.error("fetchImoveis critical error:", err);
       setFetchError(err?.message || "Erro ao buscar imóveis");
       setImoveis([]);
       setTotal(0);
       setTotalPages(1);
     } finally {
-      setLoading(false);
+      // Only clear loading if this is still the latest request
+      if (seq === fetchSeqRef.current) setLoading(false);
     }
-  }, [campanhaAtiva, uhomeOnly, useTypesense, fetchViaTypesense, fetchViaJetimob]);
+  }, [campanhaAtiva, uhomeOnly, fetchViaTypesense, fetchViaJetimob]);
 
   // Keep a ref to the latest fetchImoveis to avoid stale closures in effects
   const fetchRef = useRef(fetchImoveis);
