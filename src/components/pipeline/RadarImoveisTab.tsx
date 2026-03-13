@@ -753,7 +753,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
 
       {/* ── SEARCH BUTTON ── */}
       <div className="flex gap-2">
-        <Button className="flex-1 gap-2" onClick={() => handleSearch(false)} disabled={loading}>
+        <Button className="flex-1 gap-2" onClick={() => { handleSearch(false); setShowFilters(false); }} disabled={loading}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           {searched ? "Atualizar Radar" : "Buscar Imóveis"}
         </Button>
