@@ -57,7 +57,7 @@ export default function ProductPageLayout({ data }: Props) {
   })();
 
   const specs = [
-    tipologias.length > 0 && { icon: BedDouble, label: tipologias.map(t => `${t.dorms} dorm${t.dorms > 1 ? "s" : ""}`).join(", ") },
+    tipologias.length > 0 && { icon: BedDouble, label: tipologias.map(t => `${t?.dorms || "?"} dorm${(t?.dorms || 0) > 1 ? "s" : ""}`).join(", ") },
     areaLabel && { icon: Ruler, label: areaLabel },
     imovel?.suites && { icon: Home, label: `${imovel.suites} suíte${imovel.suites > 1 ? "s" : ""}` },
     vagas > 0 && { icon: Car, label: `${vagas} vaga${vagas > 1 ? "s" : ""}` },
