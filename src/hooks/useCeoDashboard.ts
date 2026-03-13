@@ -253,10 +253,12 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       }
       const negocioFases = Array.from(faseMap.entries()).map(([fase, d]) => ({ fase, ...d }));
 
+      // Top corretores by VGV de vendas realizadas (assinado/vendido)
       const corrMap = new Map<string, number>();
       for (const n of (negocios || [])) {
         if (!n.corretor_id) continue;
-        corrMap.set(n.corretor_id, (corrMap.get(n.corretor_id) || 0) + (n.vgv_estimado || 0));
+        if (n.fase !== "assinado" && n.fase !== "vendido") continue;
+        corrMap.set(n.corretor_id, (corrMap.get(n.corretor_id) || 0) + (n.vgv_final || n.vgv_estimado || 0));
       }
       const corrIds = [...corrMap.keys()];
       const { data: profs } = corrIds.length > 0 ? await supabase.from("profiles").select("id, nome").in("id", corrIds) : { data: [] as { id: string; nome: string }[] };
