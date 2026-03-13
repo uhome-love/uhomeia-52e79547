@@ -297,6 +297,48 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
             )}
           </div>
 
+          {/* Row 2.5: Empreendimento edit */}
+          <div className="flex items-center gap-2">
+            {empreendimentoOpen ? (
+              <div className="flex items-center gap-2 flex-1">
+                <EmpreendimentoCombobox
+                  value={empreendimentoSearch || lead.empreendimento || ""}
+                  onChange={setEmpreendimentoSearch}
+                  className="h-8 text-xs flex-1"
+                />
+                <Button
+                  size="sm"
+                  className="h-8 text-xs px-3"
+                  disabled={savingEmpreendimento || !empreendimentoSearch.trim()}
+                  onClick={async () => {
+                    setSavingEmpreendimento(true);
+                    try {
+                      await onUpdate(lead.id, { empreendimento: empreendimentoSearch.trim() } as any);
+                      toast.success("Empreendimento atualizado");
+                      setEmpreendimentoOpen(false);
+                    } catch { toast.error("Erro ao salvar"); }
+                    finally { setSavingEmpreendimento(false); }
+                  }}
+                >
+                  {savingEmpreendimento ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar"}
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 text-xs px-2" onClick={() => { setEmpreendimentoOpen(false); setEmpreendimentoSearch(""); }}>
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5 rounded-lg"
+                onClick={() => { setEmpreendimentoSearch(lead.empreendimento || ""); setEmpreendimentoOpen(true); }}
+              >
+                <Building2 className="h-3 w-3" />
+                {lead.empreendimento ? `📍 ${lead.empreendimento}` : "+ Empreendimento"}
+              </Button>
+            )}
+          </div>
+
           {/* Row 3: Actions bar — all same size */}
           <div className="flex items-center gap-1 flex-wrap">
             {lead.telefone && (
