@@ -69,6 +69,14 @@ const TIPO_LABELS: Record<string, string> = {
   retornar_cliente: "Retornar", outro: "Tarefa",
 };
 
+const CARD_QUICK_TASK_TYPES = [
+  { value: "ligar", label: "Ligar", emoji: "📞" },
+  { value: "whatsapp", label: "WhatsApp", emoji: "💬" },
+  { value: "follow_up", label: "Follow-up", emoji: "📋" },
+  { value: "marcar_visita", label: "Visita", emoji: "🏠" },
+  { value: "enviar_proposta", label: "Proposta", emoji: "📄" },
+];
+
 function toValidDate(value: string | null | undefined): Date | null {
   if (!value) return null;
   const date = new Date(value);
