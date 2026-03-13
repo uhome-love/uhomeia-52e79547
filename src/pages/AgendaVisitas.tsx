@@ -176,28 +176,84 @@ const STATUS_EMOJIS: Record<string, string> = {
 
 export default function AgendaVisitas() {
   const { isAdmin, isGestor } = useUserRole();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // URL-synced filters
   const [showForm, setShowForm] = useState(false);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showReuniaoForm, setShowReuniaoForm] = useState(false);
   const [editingVisita, setEditingVisita] = useState<Visita | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [corretorFilter, setCorretorFilter] = useState<string>("all");
-  const [empreendimentoFilter, setEmpreendimentoFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "all");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
+  const [corretorFilter, setCorretorFilter] = useState<string>(searchParams.get("corretor") || "all");
+  const [empreendimentoFilter, setEmpreendimentoFilter] = useState<string>(searchParams.get("empreendimento") || "all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [resultadoVisita, setResultadoVisita] = useState<Visita | null>(null);
-  const [pendingOnly, setPendingOnly] = useState(false);
+  const [pendingOnly, setPendingOnly] = useState(searchParams.get("pending") === "1");
   const [showCobranca, setShowCobranca] = useState(false);
   const [cobrancaMsg, setCobrancaMsg] = useState("");
   const [sendingCobranca, setSendingCobranca] = useState(false);
-  const [agendaTipo, setAgendaTipo] = useState<"lead" | "negocio">("lead");
+  const [agendaTipo, setAgendaTipo] = useState<"lead" | "negocio">((searchParams.get("tipo") as any) || "lead");
   const [leadSubTab, setLeadSubTab] = useState<"minhas" | "time">("minhas");
-  const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [teamFilter, setTeamFilter] = useState<string>(searchParams.get("team") || "all");
   const [anterioresPeriodo, setAnterioresPeriodo] = useState<string>("mes-atual");
   const [anterioresCustomFrom, setAnterioresCustomFrom] = useState<Date | undefined>();
   const [anterioresCustomTo, setAnterioresCustomTo] = useState<Date | undefined>();
+  const [quickFilter, setQuickFilter] = useState<string>(searchParams.get("quick") || "");
+
+  // Sync filter state to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (searchTerm) params.set("q", searchTerm);
+    if (corretorFilter !== "all") params.set("corretor", corretorFilter);
+    if (empreendimentoFilter !== "all") params.set("empreendimento", empreendimentoFilter);
+    if (pendingOnly) params.set("pending", "1");
+    if (agendaTipo !== "lead") params.set("tipo", agendaTipo);
+    if (teamFilter !== "all") params.set("team", teamFilter);
+    if (quickFilter) params.set("quick", quickFilter);
+    setSearchParams(params, { replace: true });
+  }, [statusFilter, searchTerm, corretorFilter, empreendimentoFilter, pendingOnly, agendaTipo, teamFilter, quickFilter]);
+
+  // Quick filter logic
+  const applyQuickFilter = useCallback((key: string) => {
+    const today = startOfDay(new Date());
+    if (quickFilter === key) {
+      // Toggle off
+      setQuickFilter("");
+      setDateFrom(undefined);
+      setDateTo(undefined);
+      setPendingOnly(false);
+      setStatusFilter("all");
+      return;
+    }
+    setQuickFilter(key);
+    setPendingOnly(false);
+    setStatusFilter("all");
+
+    if (key === "hoje") {
+      const d = format(today, "yyyy-MM-dd");
+      setDateFrom(today);
+      setDateTo(today);
+    } else if (key === "amanha") {
+      const tom = addDays(today, 1);
+      setDateFrom(tom);
+      setDateTo(tom);
+    } else if (key === "semana") {
+      setDateFrom(startOfWeek(today, { weekStartsOn: 1 }));
+      setDateTo(endOfWeek(today, { weekStartsOn: 1 }));
+    } else if (key === "nao_confirmadas") {
+      setDateFrom(undefined);
+      setDateTo(undefined);
+      setStatusFilter("marcada");
+    } else if (key === "sem_feedback") {
+      setDateFrom(undefined);
+      setDateTo(undefined);
+      setPendingOnly(true);
+    }
+  }, [quickFilter]);
 
   const { visitas: allVisitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas();
 
