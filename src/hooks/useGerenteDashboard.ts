@@ -263,8 +263,9 @@ export function useGerenteDashboard(period: Period) {
       return rows.sort((a, b) => b.pontos - a.pontos);
     },
     enabled: !!user && teamUserIds.length > 0,
-    staleTime: 30_000,
+    staleTime: 60_000,
     refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Radar Alerts ──
