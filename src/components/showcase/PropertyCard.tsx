@@ -65,7 +65,7 @@ export default function PropertyCard({
         onClick={() => { onViewDetails?.(item); onTrack?.("card_click", item?.id ?? 0); }}>
         {fotos.length > 0 ? (
           <>
-            <img src={fotos[currentImg]} alt={item.empreendimento || ""} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+            <img src={fotos[currentImg]} alt={item?.empreendimento || ""} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
             {fotos.length > 1 && (
               <>
