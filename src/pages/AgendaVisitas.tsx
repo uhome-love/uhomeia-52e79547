@@ -657,7 +657,31 @@ export default function AgendaVisitas() {
         })}
       </div>
 
-      {/* ─── VIEWS ─── */}
+      {/* ─── QUICK FILTERS ─── */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mr-1">Rápido:</span>
+        {[
+          { key: "hoje", label: "📅 Hoje", color: "bg-blue-100 text-blue-700 border-blue-300" },
+          { key: "amanha", label: "📆 Amanhã", color: "bg-indigo-100 text-indigo-700 border-indigo-300" },
+          { key: "semana", label: "🗓️ Esta semana", color: "bg-cyan-100 text-cyan-700 border-cyan-300" },
+          { key: "nao_confirmadas", label: "⚠️ Não confirmadas", color: "bg-amber-100 text-amber-700 border-amber-300" },
+          { key: "sem_feedback", label: "🔴 Sem feedback", color: "bg-red-100 text-red-700 border-red-300" },
+        ].map(qf => (
+          <button
+            key={qf.key}
+            onClick={() => applyQuickFilter(qf.key)}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-semibold transition-all border",
+              quickFilter === qf.key
+                ? qf.color + " shadow-sm"
+                : "bg-muted/60 text-muted-foreground border-transparent hover:bg-muted"
+            )}
+          >
+            {qf.label}
+          </button>
+        ))}
+      </div>
+
       <Tabs defaultValue="lista">
         <TabsList className="h-9 flex-wrap">
           <TabsTrigger value="lista" className="gap-1.5 text-xs h-8 px-3">
