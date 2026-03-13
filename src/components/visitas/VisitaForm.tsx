@@ -35,6 +35,15 @@ interface StageOption {
   nome: string;
 }
 
+type FormErrors = Partial<{
+  nome_cliente: string;
+  pipeline_lead_id: string;
+  data_visita: string;
+  hora_visita: string;
+  responsavel_visita: string;
+  corretor_id: string;
+}>;
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -42,6 +51,8 @@ interface Props {
   initialData?: Partial<Visita> & { pipeline_lead_id?: string };
   mode?: "create" | "edit";
 }
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const QUICK_TIMES = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
 
@@ -73,7 +84,7 @@ function getDefaultForm(initialData?: Props["initialData"]) {
     local_visita: initialData?.local_visita || "",
     observacoes: initialData?.observacoes || "",
     pipeline_lead_id: (initialData as any)?.pipeline_lead_id || "",
-    responsavel_visita: (initialData as any)?.responsavel_visita || "",
+    responsavel_visita: (initialData as any)?.responsavel_visita || "proprio_corretor",
   };
 }
 
@@ -84,6 +95,7 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
 
   const [form, setForm] = useState(() => getDefaultForm(initialData));
   const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [pipelineLeads, setPipelineLeads] = useState<PipelineLeadOption[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMemberOption[]>([]);
   const [stages, setStages] = useState<StageOption[]>([]);
@@ -104,10 +116,12 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
   const [imovelResults, setImovelResults] = useState<any[]>([]);
   const [imovelLoading, setImovelLoading] = useState(false);
   const [selectedImovel, setSelectedImovel] = useState<any>(null);
+
   // Reset form state when dialog opens
   useEffect(() => {
     if (open) {
       setForm(getDefaultForm(initialData));
+      setFormErrors({});
       setSearchPipeline("");
       setSubmitting(false);
       setIsParceria(false);
@@ -124,16 +138,27 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
   // Load pipeline leads + team members + empreendimentos + stages
   useEffect(() => {
     if (!user || !open) return;
+
     const load = async () => {
+      let teamQuery = supabase
+        .from("team_members")
+        .select("user_id, nome, equipe")
+        .eq("status", "ativo");
+
+      if (isManager && !isAdmin) {
+        teamQuery = teamQuery.eq("gerente_id", user.id);
+      }
+
       const [leadsRes, teamRes, campanhasRes, stagesRes] = await Promise.all([
         supabase.from("pipeline_leads").select("id, nome, empreendimento, telefone, stage_id").order("updated_at", { ascending: false }).limit(500),
-        supabase.from("team_members").select("user_id, nome, equipe").eq("status", "ativo"),
+        teamQuery,
         supabase.from("roleta_campanhas").select("empreendimento").eq("ativo", true),
         supabase.from("pipeline_stages").select("id, nome").order("ordem", { ascending: true }),
       ]);
+
       const leads = (leadsRes.data || []) as PipelineLeadOption[];
       setPipelineLeads(leads);
-      setTeamMembers((teamRes.data || []).filter(m => m.user_id) as TeamMemberOption[]);
+      setTeamMembers((teamRes.data || []).filter((m) => m.user_id) as TeamMemberOption[]);
       setStages((stagesRes.data || []) as StageOption[]);
 
       const empSet = new Set<string>();
@@ -142,7 +167,7 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
       setEmpreendimentos(Array.from(empSet).sort());
     };
     load();
-  }, [user, open]);
+  }, [user, open, isManager, isAdmin]);
 
   // Filtered leads with search + stage + empreendimento filters
   const filteredLeads = useMemo(() => {
@@ -232,23 +257,63 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
         telefone: lead.telefone || f.telefone || "",
         empreendimento: lead.empreendimento || f.empreendimento || "",
       }));
+      setFormErrors((prev) => ({ ...prev, pipeline_lead_id: undefined, nome_cliente: undefined }));
       setSearchPipeline("");
       setShowFilters(false);
     }
   };
 
+  const validateForm = (): FormErrors => {
+    const errors: FormErrors = {};
+
+    if (!form.nome_cliente.trim()) {
+      errors.nome_cliente = "Informe o nome do cliente.";
+    }
+
+    if (mode === "create" && !UUID_REGEX.test((form.pipeline_lead_id || "").trim())) {
+      errors.pipeline_lead_id = "Selecione um lead válido da lista.";
+    }
+
+    if (!form.data_visita) {
+      errors.data_visita = "Selecione a data da visita.";
+    } else if (Number.isNaN(new Date(`${form.data_visita}T00:00:00`).getTime())) {
+      errors.data_visita = "Data inválida.";
+    }
+
+    if (form.hora_visita && !/^\d{2}:\d{2}$/.test(form.hora_visita)) {
+      errors.hora_visita = "Horário inválido.";
+    }
+
+    if (!form.responsavel_visita) {
+      errors.responsavel_visita = "Selecione o responsável pela visita.";
+    }
+
+    if (isManager && form.corretor_id && !UUID_REGEX.test(form.corretor_id)) {
+      errors.corretor_id = "Selecione um corretor válido.";
+    }
+
+    return errors;
+  };
+
   const handleSubmit = async () => {
-    if (!form.nome_cliente.trim()) return;
+    const errors = validateForm();
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      toast.error("Revise os campos obrigatórios para continuar.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const result = await onSubmit({
         ...form,
         corretor_id: form.corretor_id || undefined,
-        telefone: form.telefone || null,
-        empreendimento: form.empreendimento || null,
+        telefone: form.telefone?.trim() || null,
+        empreendimento: form.empreendimento?.trim() || null,
         hora_visita: form.hora_visita || null,
         local_visita: form.local_visita || null,
-        observacoes: form.observacoes || null,
+        observacoes: form.observacoes?.trim() || null,
         pipeline_lead_id: form.pipeline_lead_id || null,
         lead_id: null,
         responsavel_visita: form.responsavel_visita || null,
@@ -294,7 +359,10 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
     }
   };
 
-  const set = (field: string, value: string) => setForm(f => ({ ...f, [field]: value }));
+  const set = (field: string, value: string) => {
+    setForm(f => ({ ...f, [field]: value }));
+    setFormErrors(prev => ({ ...prev, [field]: undefined }));
+  };
 
   // Stage name lookup
   const stageName = (stageId: string) => stages.find(s => s.id === stageId)?.nome || "";
@@ -310,6 +378,13 @@ export default function VisitaForm({ open, onClose, onSubmit, initialData, mode 
         </DialogHeader>
 
         <div className="space-y-4">
+          {Object.values(formErrors).filter(Boolean).length > 0 && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-2">
+              <p className="text-xs font-medium text-destructive">
+                Revise os campos obrigatórios para agendar a visita.
+              </p>
+            </div>
+          )}
           {/* === CLIENT SEARCH === */}
           <div>
             <div className="flex items-center justify-between mb-1">
