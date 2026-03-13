@@ -748,6 +748,7 @@ export default function ImoveisPage() {
   const fetchImoveis = useCallback(async (pageNum: number, campanha = campanhaAtiva, uhome = uhomeOnly) => {
     setLoading(true);
     setSearchTimeMs(null);
+    setFetchError(null);
 
     try {
       // Campanha mode always uses jetimob-proxy (specific codes)
@@ -767,6 +768,12 @@ export default function ImoveisPage() {
 
       // Fallback
       await fetchViaJetimob(pageNum, campanha, uhome);
+    } catch (err: any) {
+      console.error("fetchImoveis critical error:", err);
+      setFetchError(err?.message || "Erro ao buscar imóveis");
+      setImoveis([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
