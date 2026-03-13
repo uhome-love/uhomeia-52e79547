@@ -5,18 +5,17 @@ import { Brain, Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
-import type { CampaignPerf, SegmentoPerf, CorretorPerf } from "@/hooks/useLeadIntelligence";
+import type { EmpreendimentoPerf, SegmentoPerf, CorretorPerf } from "@/hooks/useLeadIntelligence";
 
 interface Props {
   kpis: { leadsHoje: number; leadsMes: number; taxaContato: number; taxaVisita: number; taxaVenda: number };
-  campanhas: CampaignPerf[];
-  formularios: CampaignPerf[];
+  empreendimentoPerf: EmpreendimentoPerf[];
   segmentoPerf: SegmentoPerf[];
   corretorPerf: CorretorPerf[];
   periodo: string;
 }
 
-export default function LeadInsightsAI({ kpis, campanhas, formularios, segmentoPerf, corretorPerf, periodo }: Props) {
+export default function LeadInsightsAI({ kpis, empreendimentoPerf, segmentoPerf, corretorPerf, periodo }: Props) {
   const [insights, setInsights] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
