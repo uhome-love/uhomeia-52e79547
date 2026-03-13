@@ -266,31 +266,68 @@ export function usePipeline(pipelineTipo: string = "leads") {
       .finally(() => setLoading(false));
   }, [user, loadStages, loadSegmentos, loadLeads]);
 
-  // Realtime subscription — smart debounce to avoid rapid reloads
-  // Ignores changes we made ourselves (optimistic updates already handled)
+  // ─── Granular realtime: update only the changed lead in local state ───
   useEffect(() => {
     if (!user) return;
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    let lastLocalUpdate = 0;
+    let batchTimer: ReturnType<typeof setTimeout> | null = null;
+    const pendingEvents: Array<{ eventType: string; new_record: any; old_record: any }> = [];
+
+    const flushBatch = () => {
+      batchTimer = null;
+      if (pendingEvents.length === 0) return;
+      const events = [...pendingEvents];
+      pendingEvents.length = 0;
+
+      setLeads(prev => {
+        let next = [...prev];
+        for (const evt of events) {
+          if (evt.eventType === "DELETE") {
+            const oldId = evt.old_record?.id;
+            if (oldId) next = next.filter(l => l.id !== oldId);
+          } else if (evt.eventType === "INSERT") {
+            const row = evt.new_record as PipelineLead;
+            if (row?.id && !next.some(l => l.id === row.id)) {
+              next = [row, ...next];
+            }
+          } else if (evt.eventType === "UPDATE") {
+            const row = evt.new_record as PipelineLead;
+            if (!row?.id) continue;
+            const idx = next.findIndex(l => l.id === row.id);
+            if (idx >= 0) {
+              // Merge: keep local fields not in payload, update the rest
+              next[idx] = { ...next[idx], ...row };
+            } else {
+              // Lead appeared (e.g. reassigned to this user's team)
+              next = [row, ...next];
+            }
+          }
+        }
+        return next;
+      });
+    };
+
     const channel = supabase
       .channel("pipeline-leads-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "pipeline_leads" }, (payload) => {
-        // Skip reload if we just made a local change (within 2s)
-        const now = Date.now();
-        if (now - lastLocalUpdate < 2000) return;
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => loadLeads(), 1500);
+        // Skip if we are in the middle of a local mutation (drag, modal edit, etc.)
+        if (localMutationRef.current) return;
+
+        pendingEvents.push({
+          eventType: payload.eventType,
+          new_record: payload.new,
+          old_record: payload.old,
+        });
+        // Batch events arriving within 500ms window
+        if (batchTimer) clearTimeout(batchTimer);
+        batchTimer = setTimeout(flushBatch, 500);
       })
       .subscribe();
 
-    // Track local updates
-    const origSetLeads = setLeads;
-
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
+      if (batchTimer) clearTimeout(batchTimer);
       supabase.removeChannel(channel);
     };
-  }, [user, loadLeads]);
+  }, [user]);
 
   // Auto-refresh when tab becomes visible (replaces manual cache clear)
   useEffect(() => {
