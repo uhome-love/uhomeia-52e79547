@@ -872,16 +872,21 @@ export default function ImoveisPage() {
 
   const openLightbox = (imgs: string[], index: number) => { setLightboxImages(imgs); setLightboxIndex(index); setLightboxOpen(true); };
 
-  // Sort items
+  // Sort items — defensive: always ensure imoveis is an array
   const sortedImoveis = useMemo(() => {
-    let items = [...imoveis];
-    if (showFavoritesOnly) items = items.filter(item => favorites.has(String(item.codigo || item.id_imovel || item.id)));
-    if (somenteObras) items = items.filter(item => extractEntrega(item).emObras);
+    try {
+      let items = [...(Array.isArray(imoveis) ? imoveis : [])];
+      if (showFavoritesOnly) items = items.filter(item => favorites.has(String(item?.codigo || item?.id_imovel || item?.id)));
+      if (somenteObras) items = items.filter(item => extractEntrega(item).emObras);
 
-    if (sortBy === "menor_preco") items.sort((a, b) => (getNum(a, "valor_venda", "valor") || 999999999) - (getNum(b, "valor_venda", "valor") || 999999999));
-    else if (sortBy === "maior_preco") items.sort((a, b) => (getNum(b, "valor_venda", "valor") || 0) - (getNum(a, "valor_venda", "valor") || 0));
-    else if (sortBy === "maior_area") items.sort((a, b) => (getNumIncZero(b, "area_privativa", "area_util") || 0) - (getNumIncZero(a, "area_privativa", "area_util") || 0));
-    return items;
+      if (sortBy === "menor_preco") items.sort((a, b) => (getNum(a, "valor_venda", "valor") || 999999999) - (getNum(b, "valor_venda", "valor") || 999999999));
+      else if (sortBy === "maior_preco") items.sort((a, b) => (getNum(b, "valor_venda", "valor") || 0) - (getNum(a, "valor_venda", "valor") || 0));
+      else if (sortBy === "maior_area") items.sort((a, b) => (getNumIncZero(b, "area_privativa", "area_util") || 0) - (getNumIncZero(a, "area_privativa", "area_util") || 0));
+      return items;
+    } catch (err) {
+      console.error("Sort error:", err);
+      return [];
+    }
   }, [imoveis, sortBy, showFavoritesOnly, favorites, somenteObras]);
 
   // Active filter tags
