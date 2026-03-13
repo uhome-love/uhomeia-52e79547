@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Building2, MapPin, MessageCircle, Eye, BedDouble, Car, Ruler } from "lucide-react";
+import { ChevronLeft, ChevronRight, Building2, MapPin, MessageCircle, Eye, BedDouble, Car, Ruler, Heart, GitCompareArrows } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatBRL } from "@/lib/utils";
 import type { ShowcaseImovel } from "./types";
@@ -15,9 +15,16 @@ interface PropertyCardProps {
   corretorNome?: string;
   onViewDetails?: (item: ShowcaseImovel) => void;
   onTrack?: (action: string, imovelId: number | string) => void;
+  onFavorite?: (item: ShowcaseImovel) => void;
+  isFavorited?: boolean;
+  onCompare?: (item: ShowcaseImovel) => void;
+  isComparing?: boolean;
 }
 
-export default function PropertyCard({ item, index, variant = "selection", whatsappBase, corretorNome, onViewDetails, onTrack }: PropertyCardProps) {
+export default function PropertyCard({
+  item, index, variant = "selection", whatsappBase, corretorNome,
+  onViewDetails, onTrack, onFavorite, isFavorited, onCompare, isComparing,
+}: PropertyCardProps) {
   const [currentImg, setCurrentImg] = useState(0);
   const fotos = item.fotos || [];
   const seg = item.segmento ? getSegmentoStyle(item.segmento) : null;
@@ -34,20 +41,26 @@ export default function PropertyCard({ item, index, variant = "selection", whats
       transition={{ delay: index * 0.08, type: "spring", stiffness: 80, damping: 20 }}
       className="group bg-white rounded-3xl overflow-hidden flex flex-col"
       style={{
-        boxShadow: "0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
-        border: "1px solid rgba(226,232,240,0.8)",
+        boxShadow: isComparing
+          ? "0 0 0 3px #3b82f6, 0 8px 30px rgba(59,130,246,0.2)"
+          : "0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+        border: isComparing ? "1px solid #3b82f6" : "1px solid rgba(226,232,240,0.8)",
         transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.boxShadow = "0 24px 60px rgba(30,64,175,0.12), 0 8px 20px rgba(0,0,0,0.08)";
-        e.currentTarget.style.transform = "translateY(-8px)";
+        if (!isComparing) {
+          e.currentTarget.style.boxShadow = "0 24px 60px rgba(30,64,175,0.12), 0 8px 20px rgba(0,0,0,0.08)";
+          e.currentTarget.style.transform = "translateY(-8px)";
+        }
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.boxShadow = "0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)";
-        e.currentTarget.style.transform = "translateY(0)";
+        if (!isComparing) {
+          e.currentTarget.style.boxShadow = "0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)";
+          e.currentTarget.style.transform = "translateY(0)";
+        }
       }}
     >
-      {/* Image — large aspect ratio */}
+      {/* Image */}
       <div className="relative aspect-[4/3] bg-slate-50 overflow-hidden cursor-pointer"
         onClick={() => { onViewDetails?.(item); onTrack?.("card_click", item.id); }}>
         {fotos.length > 0 ? (
@@ -74,7 +87,7 @@ export default function PropertyCard({ item, index, variant = "selection", whats
             )}
             {/* Photo count badge */}
             {fotos.length > 1 && (
-              <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm rounded-full px-2.5 py-1 text-white text-[10px] font-bold flex items-center gap-1">
+              <div className="absolute top-3 right-14 bg-black/50 backdrop-blur-sm rounded-full px-2.5 py-1 text-white text-[10px] font-bold flex items-center gap-1">
                 <Eye className="h-3 w-3" /> {fotos.length}
               </div>
             )}
@@ -85,7 +98,7 @@ export default function PropertyCard({ item, index, variant = "selection", whats
           </div>
         )}
 
-        {/* Badges */}
+        {/* Badges left */}
         <div className="absolute top-3 left-3 flex gap-2">
           {seg && (
             <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
@@ -94,8 +107,23 @@ export default function PropertyCard({ item, index, variant = "selection", whats
             </span>
           )}
         </div>
+
+        {/* Favorite button */}
+        {onFavorite && (
+          <button
+            onClick={e => { e.stopPropagation(); onFavorite(item); }}
+            className="absolute top-3 right-3 rounded-full p-2 transition-all shadow-lg hover:scale-110"
+            style={{
+              background: isFavorited ? "#ef4444" : "rgba(255,255,255,0.9)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <Heart className={`h-4 w-4 ${isFavorited ? "text-white fill-white" : "text-slate-600"}`} />
+          </button>
+        )}
+
         {item.descontoMax && (
-          <div className="absolute top-3 right-3 px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-lg"
+          <div className="absolute bottom-10 right-3 px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-lg"
             style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)" }}>
             🔥 Até {item.descontoMax} OFF
           </div>
@@ -120,7 +148,7 @@ export default function PropertyCard({ item, index, variant = "selection", whats
           <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">{item.descricao}</p>
         )}
 
-        {/* Specs — clean icon row */}
+        {/* Specs */}
         <div className="flex flex-wrap gap-3 mt-1">
           {item.metragens ? (
             <span className="text-[11px] text-slate-600 font-semibold flex items-center gap-1">
@@ -181,24 +209,26 @@ export default function PropertyCard({ item, index, variant = "selection", whats
               Ver detalhes
             </button>
           )}
+          {onCompare && (
+            <button
+              onClick={() => onCompare(item)}
+              className={`flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl font-bold text-xs transition-all ${
+                isComparing ? "bg-blue-100 text-blue-700 ring-2 ring-blue-300" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              <GitCompareArrows className="h-3.5 w-3.5" />
+            </button>
+          )}
           {whatsappBase && (
             <a
               href={`${whatsappBase}?text=${encodeURIComponent(`Olá${corretorNome ? ` ${corretorNome}` : ""}! ${whatsappMsg}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onTrack?.("whatsapp_click", item.id)}
-              className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all hover:shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, #16a34a, #22c55e)",
-                color: "white",
-                boxShadow: "0 4px 15px rgba(34,197,94,0.3)",
-                flex: onViewDetails ? "0 0 auto" : "1",
-                paddingLeft: onViewDetails ? "1rem" : undefined,
-                paddingRight: onViewDetails ? "1rem" : undefined,
-              }}
+              className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl font-bold text-sm transition-all hover:shadow-lg"
+              style={{ background: "linear-gradient(135deg, #16a34a, #22c55e)", color: "white", boxShadow: "0 4px 15px rgba(34,197,94,0.3)" }}
             >
               <MessageCircle className="h-4 w-4" />
-              {!onViewDetails && "Quero saber mais"}
             </a>
           )}
         </div>
