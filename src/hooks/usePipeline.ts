@@ -575,6 +575,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
       return;
     }
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...updates } : l));
+    setTimeout(() => { localMutationRef.current = false; }, 2000);
   }, [user]);
 
   const deleteLead = useCallback(async (leadId: string) => {
