@@ -18,6 +18,8 @@ export interface ShowcaseImovel {
   fotos: string[];
   empreendimento: string | null;
   descricao: string | null;
+  lat?: number | null;
+  lng?: number | null;
   // Melnick Day specific
   precoDe?: string | null;
   precoPor?: string | null;
