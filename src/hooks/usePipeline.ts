@@ -17,10 +17,10 @@ export interface PipelineLead {
   id: string;
   nome: string;
   telefone: string | null;
-  telefone2: string | null;
+  telefone2?: string | null;
   email: string | null;
   segmento_id: string | null;
-  produto_id: string | null;
+  produto_id?: string | null;
   empreendimento: string | null;
   stage_id: string;
   stage_changed_at: string;
@@ -28,34 +28,35 @@ export interface PipelineLead {
   corretor_id: string | null;
   gerente_id: string | null;
   temperatura: string;
-  modo_conducao: string;
-  complexidade_score: number;
+  modo_conducao?: string;
+  complexidade_score?: number;
   oportunidade_score: number;
-  escalation_level: number;
-  last_escalation_at: string | null;
-  distribuido_em: string | null;
-  aceito_em: string | null;
-  aceite_expira_em: string | null;
+  escalation_level?: number;
+  last_escalation_at?: string | null;
+  distribuido_em?: string | null;
+  aceito_em?: string | null;
+  aceite_expira_em?: string | null;
   aceite_status: string | null;
   origem: string | null;
-  origem_detalhe: string | null;
-  jetimob_lead_id: string | null;
-  observacoes: string | null;
+  origem_detalhe?: string | null;
+  jetimob_lead_id?: string | null;
+  observacoes?: string | null;
   proxima_acao: string | null;
   data_proxima_acao: string | null;
   motivo_descarte: string | null;
   valor_estimado: number | null;
   created_at: string;
   updated_at: string;
-  created_by: string | null;
+  created_by?: string | null;
   negocio_id: string | null;
-  // Marketing attribution
-  campanha: string | null;
-  campanha_id: string | null;
-  formulario: string | null;
-  conjunto_anuncio: string | null;
-  anuncio: string | null;
-  plataforma: string | null;
+  ultima_acao_at?: string | null;
+  // Marketing attribution (loaded on demand)
+  campanha?: string | null;
+  campanha_id?: string | null;
+  formulario?: string | null;
+  conjunto_anuncio?: string | null;
+  anuncio?: string | null;
+  plataforma?: string | null;
 }
 
 export interface PipelineSegmento {
