@@ -241,6 +241,27 @@ const PipelineCard = memo(function PipelineCard({
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || (lead as any).origem_detalhe || "");
   const status = useMemo(() => getCardStatus(lead, proximaTarefa || null), [(lead as any).ultima_acao_at, lead.stage_changed_at, proximaTarefa?.tipo, proximaTarefa?.vence_em, proximaTarefa?.hora_vencimento]);
 
+  // Lead scoring
+  const leadScore = useMemo(() => calculateLeadScore({
+    telefone: lead.telefone,
+    email: lead.email,
+    empreendimento: lead.empreendimento,
+    valor_estimado: lead.valor_estimado,
+    origem: lead.origem,
+    temperatura: lead.temperatura,
+    created_at: lead.created_at,
+    stage_changed_at: lead.stage_changed_at,
+  }), [lead.telefone, lead.email, lead.empreendimento, lead.valor_estimado, lead.origem, lead.temperatura, lead.created_at, lead.stage_changed_at]);
+
+  // Temperature config
+  const tempConfig = useMemo(() => {
+    const t = lead.temperatura;
+    if (t === "quente") return { icon: Flame, cls: "text-orange-500", bg: "bg-orange-500/10", label: "Quente" };
+    if (t === "morno") return { icon: ThermometerSun, cls: "text-amber-500", bg: "bg-amber-500/10", label: "Morno" };
+    if (t === "frio") return { icon: Snowflake, cls: "text-blue-400", bg: "bg-blue-400/10", label: "Frio" };
+    return null;
+  }, [lead.temperatura]);
+
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!lead.telefone) return;
