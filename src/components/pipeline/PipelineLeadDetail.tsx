@@ -484,6 +484,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 📋 Tarefas
                 {pendingTasks > 0 && <Badge variant="secondary" className="h-3.5 text-[8px] px-1 ml-0.5">{pendingTasks}</Badge>}
               </TabsTrigger>
+              <TabsTrigger value="visitas" className="text-xs h-6 data-[state=active]:shadow-sm gap-1">
+                📊 Visitas
+              </TabsTrigger>
               <TabsTrigger value="radar" className="text-xs h-6 data-[state=active]:shadow-sm gap-1">
                 📡 Radar
               </TabsTrigger>
