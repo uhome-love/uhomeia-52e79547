@@ -223,7 +223,7 @@ export default function RhSalaReuniao() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Nova Reserva</DialogTitle>
+            <DialogTitle>{editingReserva ? "Editar Reserva" : "Nova Reserva"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div><Label className="text-xs">Data</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} className="h-9" /></div>
@@ -248,7 +248,7 @@ export default function RhSalaReuniao() {
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button size="sm" onClick={handleAdd}>Reservar</Button>
+            <Button size="sm" onClick={handleSave}>{editingReserva ? "Salvar" : "Reservar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
