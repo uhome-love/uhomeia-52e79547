@@ -5,7 +5,8 @@ import { Phone, Copy, MapPin, Globe, Clock, Eye, FileText, MessageCircle, Check,
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { formatDistanceToNow } from "date-fns";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { differenceInHoursSafe, todayBRT, dateToBRT } from "@/lib/utils";
 import { toast } from "sonner";
