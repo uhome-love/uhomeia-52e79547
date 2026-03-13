@@ -251,12 +251,6 @@ export default function MegaCyrela() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Mega da Cyrela 2026 | UhomeSales</title>
-        <meta name="description" content="Seleção especial Cyrela com studios, 2 dormitórios, 3 dormitórios e 3 suítes em Porto Alegre, com condições especiais até 30 de abril." />
-      </Helmet>
-
       <div className="space-y-5 pb-24">
         {/* ═══ HERO ═══ */}
         <div className="relative rounded-xl overflow-hidden p-5 md:p-8" style={{ background: "linear-gradient(135deg, #0a1f14 0%, #0d3320 40%, #1a5c3a 100%)" }}>
