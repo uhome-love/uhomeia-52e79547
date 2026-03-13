@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import CampaignHeader from "./CampaignHeader";
-import PropertyCard from "./PropertyCard";
+import SafePropertyCard from "./SafePropertyCard";
 import ContactCTA from "./ContactCTA";
 import FooterBranding from "./FooterBranding";
 import type { ShowcaseData } from "./types";
