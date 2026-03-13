@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
           bairro: item.bairro || null,
           cidade: "Porto Alegre",
           area: null, quartos: null, suites: null, vagas: null, banheiros: null,
-          valor: item.precoPor ? parseFloat(item.precoPor.replace(/[^0-9.,]/g, "").replace(/\./g, "").replace(",", ".")) : null,
+          valor: item.precoPor ? parseFloat(item.precoPor.replace(/[^0-9.,]/g, "").replace(/\./g, "").replace(",", ".")) : (item.valor ? parseFloat(String(item.valor).replace(/[^0-9.,]/g, "").replace(/\./g, "").replace(",", ".")) : null),
           fotos: item.imagens?.length > 0 ? item.imagens : (item.imagem ? [item.imagem] : []),
           empreendimento: item.nome,
           descricao: `${item.metragens} · ${item.dorms} · ${item.status}`,
