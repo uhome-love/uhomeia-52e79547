@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
     );
     if (recycleError) console.error("Recycle error:", recycleError);
 
-    // 4b. Notify CEO/gerentes about recycled leads via WhatsApp
+    // 4b. Auto-redistribute recycled leads + notify CEO/gerentes
     if (recycledCount && recycledCount > 0) {
       try {
         const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
@@ -223,13 +223,34 @@ Deno.serve(async (req) => {
 
             const { data: leadData } = await supabase
               .from("pipeline_leads")
-              .select("nome, empreendimento")
+              .select("nome, empreendimento, aceite_status")
               .eq("id", expired.pipeline_lead_id)
               .maybeSingle();
 
             if (!leadData) continue;
 
-            // Find the corretor's gerente via team_members
+            // ── AUTO-REDISTRIBUTE: call distribute-lead excluding the timed-out broker ──
+            if (leadData.aceite_status === "pendente_distribuicao") {
+              try {
+                const distResponse = await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${serviceKey}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    action: "distribute_single",
+                    pipeline_lead_id: expired.pipeline_lead_id,
+                  }),
+                });
+                const distResult = await distResponse.json();
+                console.log(`Auto-redistribute lead ${expired.pipeline_lead_id}: ${JSON.stringify(distResult)}`);
+              } catch (distErr) {
+                console.warn(`Auto-redistribute failed for ${expired.pipeline_lead_id}:`, distErr);
+              }
+            }
+
+            // Notify CEO/gerentes
             const recipientIds = new Set<string>();
             const { data: teamMember } = await supabase
               .from("team_members")
@@ -245,7 +266,6 @@ Deno.serve(async (req) => {
                 .maybeSingle();
               if (gProfile?.user_id) recipientIds.add(gProfile.user_id);
             }
-            // Add all admins/CEOs
             for (const uid of adminUserIds) recipientIds.add(uid);
 
             for (const recipientId of recipientIds) {
