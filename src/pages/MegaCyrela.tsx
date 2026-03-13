@@ -744,10 +744,17 @@ export default function MegaCyrela() {
                     try {
                       const { data: { user } } = await supabase.auth.getUser();
                       if (!user) { toast.error("Faça login"); return; }
+                      // Convert relative image paths to absolute URLs so they work on the public vitrine domain
+                      const origin = "https://uhomeia.lovable.app";
+                      const toAbsoluteUrl = (path: string) => {
+                        if (!path) return "";
+                        if (path.startsWith("http://") || path.startsWith("https://")) return path;
+                        return `${origin}${path.startsWith("/") ? "" : "/"}${path}`;
+                      };
                       const dadosCustom = selectedEmpData.map((emp) => ({
                         nome: emp.nome, bairro: emp.bairro, tipologia: emp.tipologia,
                         metragem: emp.metragem, fase: emp.fase, valor: emp.valor,
-                        unidade: emp.unidade, imagem: emp.imagem, categoria: emp.categoria,
+                        unidade: emp.unidade, imagem: toAbsoluteUrl(emp.imagem), categoria: emp.categoria,
                       }));
                       const { data, error } = await supabase
                         .from("vitrines")
