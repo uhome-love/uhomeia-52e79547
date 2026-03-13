@@ -1,4 +1,4 @@
-import { useState, useCallback, Suspense, lazy } from "react";
+import { useState, useCallback, Suspense, lazy, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Heart, GitCompareArrows } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import ContactCTA from "./ContactCTA";
 import FooterBranding from "./FooterBranding";
 import type { ShowcaseData, ShowcaseImovel } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import { useVitrineTracking } from "@/hooks/useVitrineTracking";
 
 const ShowcaseMap = lazy(() => import("./ShowcaseMap"));
 
@@ -24,6 +25,9 @@ export default function PropertySelectionLayout({ data }: Props) {
   const [showCompare, setShowCompare] = useState(false);
 
   const hasGeoData = imoveis.some(i => i.lat && i.lng);
+
+  // Auto-track page behavior (open, scroll, time)
+  useVitrineTracking(vitrine.id);
 
   const whatsappBase = corretor?.telefone
     ? `https://wa.me/55${corretor.telefone.replace(/\D/g, "")}`
