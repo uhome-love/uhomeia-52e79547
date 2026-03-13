@@ -718,28 +718,24 @@ export default function ImoveisPage() {
         setSuggestions(results);
         setShowSuggestions(true);
       } else {
-        // Fallback to jetimob-proxy autocomplete
-        try {
-          const { data } = await supabase.functions.invoke("jetimob-proxy", {
-            body: { action: "autocomplete", query: value },
-          });
-          if (data?.suggestions?.length) {
-            setSuggestions(data.suggestions);
-            setShowSuggestions(true);
-          } else {
-            setShowSuggestions(false);
-          }
-        } catch { setShowSuggestions(false); }
+        setSuggestions([]);
+        setShowSuggestions(false);
       }
     }, 200);
   }, [typesenseAutocomplete]);
 
   const handleSuggestionClick = (suggestion: { type: string; value: string }) => {
-    setSearch(suggestion.value);
     setShowSuggestions(false);
-    setCampanhaAtiva(false);
-    setUhomeOnly(false);
-    // search state change triggers the reactive useEffect via filterKey
+    setSuggestions([]);
+    if (suggestion.type === "bairro") {
+      setBairro(prev => prev.includes(suggestion.value) ? prev : [...prev, suggestion.value]);
+      setSearch("");
+    } else {
+      setSearch(suggestion.value);
+      if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
+      skipNextDebounce.current = true;
+      setTimeout(() => fetchRef.current(1), 0);
+    }
   };
 
   const getPreco = (item: any): string => {
