@@ -598,6 +598,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
     }
     setLeads(prev => prev.filter(l => l.id !== leadId));
     toast.success("Lead removido do pipeline");
+    setTimeout(() => { localMutationRef.current = false; }, 2000);
   }, [user, isAdmin]);
 
   const getLeadsByStage = useCallback((stageId: string) => {
