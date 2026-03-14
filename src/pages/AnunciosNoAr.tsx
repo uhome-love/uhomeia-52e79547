@@ -1251,6 +1251,23 @@ export default function AnunciosNoAr() {
 
   const totalAnuncios = SEGMENTOS.reduce((acc, s) => acc + s.empreendimentos.length, 0);
   const editingConfig = editingCodigo ? SEGMENTOS.flatMap(s => s.empreendimentos).find(e => e.codigo === editingCodigo) : null;
+  const aiEditingConfig = aiEditingCodigo ? SEGMENTOS.flatMap(s => s.empreendimentos).find(e => e.codigo === aiEditingCodigo) : null;
+
+  // AI completeness summary for header
+  const allConfigs = SEGMENTOS.flatMap(s => s.empreendimentos);
+  const aiStats = useMemo(() => {
+    let complete = 0;
+    let partial = 0;
+    let empty = 0;
+    for (const emp of allConfigs) {
+      const ov = overrides[emp.codigo];
+      const { score } = computeAICompleteness(ov as AIKnowledgeData | null);
+      if (score === 100) complete++;
+      else if (score > 0) partial++;
+      else empty++;
+    }
+    return { complete, partial, empty, total: allConfigs.length };
+  }, [overrides]);
 
   return (
     <div className="space-y-6 pb-8">
