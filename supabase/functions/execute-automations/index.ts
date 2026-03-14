@@ -232,6 +232,10 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (totalExecuted > 0) {
+      logOps("info", "business", `Automations run: ${totalExecuted} actions executed`, { totalExecuted });
+    }
+
     return new Response(JSON.stringify({ success: true, totalExecuted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
