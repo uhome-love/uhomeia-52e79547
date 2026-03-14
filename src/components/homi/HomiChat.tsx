@@ -169,7 +169,7 @@ export default function HomiChat({ onBack }: Props) {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) upsertAssistant(content);
-          } catch { /* ignore */ }
+          } catch (e) { console.warn("[HomiChat] Malformed SSE line in flush:", e); }
         }
       }
 
