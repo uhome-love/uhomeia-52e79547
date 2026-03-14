@@ -259,6 +259,7 @@ Deno.serve(async (req) => {
     }
 
     L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, source });
+    logOps("info", "business", "Lead created via Landing Page", { lead_id: insertedLead.id, name, empreendimento, source });
 
     // ── Auto-distribute (propagate trace) ──
     try {
