@@ -42,8 +42,7 @@ Deno.serve(async (req) => {
       L.error("Fetch pending sequences failed", {}, fetchError);
       return new Response(JSON.stringify({ error: fetchError.message }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
