@@ -448,7 +448,10 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           await supabase.from("pipeline_leads").update({
             temperatura: "frio",
           } as any).eq("id", lead.id);
-        } catch {}
+        } catch (e) {
+          console.error("[OA] Falha ao atualizar temperatura (descarte_oa):", e);
+          toast.error("Erro ao atualizar temperatura do lead. Atualize manualmente no Pipeline.");
+        }
       }
 
       const idKey = currentIdempotencyKey || `${user?.id}_${lead.id}_${Date.now()}`;
@@ -491,7 +494,10 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             await supabase.from("pipeline_leads").update({
               temperatura: "frio",
             } as any).eq("id", lead.id);
-          } catch {}
+          } catch (e) {
+            console.error("[OA] Falha ao atualizar temperatura (sem_interesse):", e);
+            toast.error("Erro ao atualizar temperatura do lead. Atualize manualmente no Pipeline.");
+          }
         } else if (resultado === "descarte_oa") {
           toast("📤 Lead enviado para Oferta Ativa — registrado no Pipeline", { duration: 2500 });
         }
@@ -1081,7 +1087,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                     session_id: sessionId,
                     metadata: { skip_number: skipCount + 1 },
                   });
-                } catch {}
+                } catch (e) {
+                  console.warn("[OA] Falha ao registrar evento de skip:", e);
+                }
                 await unlockLead(lead.id);
               }
               await fetchNext();
