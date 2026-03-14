@@ -29,6 +29,7 @@ serve(async (req) => {
       page = 1,
       per_page = 24,
       facet_by = "",
+      max_facet_values = "",
       typo_tokens_threshold = 1,
       num_typos = 2,
       prefix = true,
@@ -66,7 +67,10 @@ serve(async (req) => {
 
       if (filter_by) params.set("filter_by", filter_by);
       if (sort_by) params.set("sort_by", sort_by);
-      if (facet_by) params.set("facet_by", facet_by);
+      if (facet_by) {
+        params.set("facet_by", facet_by);
+        if (max_facet_values) params.set("max_facet_values", String(max_facet_values));
+      }
 
       searchPath = `/collections/${COLLECTION_NAME}/documents/search?${params.toString()}`;
     }

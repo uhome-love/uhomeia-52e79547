@@ -27,6 +27,7 @@ import { PropertyCardGrid, PropertyCardList } from "@/components/imoveis/Propert
 import { getNum, fmtBRL, fmtCompact } from "@/lib/imovelHelpers";
 import { useImoveisFilters } from "@/hooks/useImoveisFilters";
 import { useImoveisSearch } from "@/hooks/useImoveisSearch";
+import { useBairroFacets } from "@/hooks/useBairroFacets";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -34,8 +35,11 @@ export default function ImoveisPage() {
   const { user } = useAuth();
   const { searchWithAI, clearAISearch, removeTag, aiLoading, aiResult, aiError, aiProperties, aiTotal, aiSearchTime } = useAISearch();
 
+  // ── Bairro facets ──
+  const { bairroFacets } = useBairroFacets();
+
   // ── Filters ──
-  const filters = useImoveisFilters();
+  const filters = useImoveisFilters(bairroFacets);
   const {
     contrato, tipo, setTipo, bairro, setBairro, bairroSearch, setBairroSearch,
     dormitorios, setDormitorios, suitesFilter, setSuitesFilter,
@@ -351,11 +355,13 @@ export default function ImoveisPage() {
                           <X className="mr-2 h-3 w-3 text-muted-foreground" /> Limpar seleção
                         </CommandItem>
                       )}
-                      {filteredBairros.map((b) => {
-                        const selected = bairro.includes(b);
+                      {filteredBairros.map((facet) => {
+                        const selected = bairro.includes(facet.value);
                         return (
-                          <CommandItem key={b} value={b} onSelect={() => { setBairro(prev => selected ? prev.filter(x => x !== b) : [...prev, b]); setBairroSearch(""); }}>
-                            <Check className={cn("mr-2 h-3 w-3", selected ? "opacity-100" : "opacity-0")} /> {b}
+                          <CommandItem key={facet.value} value={facet.value} onSelect={() => { setBairro(prev => selected ? prev.filter(x => x !== facet.value) : [...prev, facet.value]); setBairroSearch(""); }}>
+                            <Check className={cn("mr-2 h-3 w-3", selected ? "opacity-100" : "opacity-0")} />
+                            <span className="flex-1">{facet.value}</span>
+                            {facet.count > 0 && <span className="text-[10px] text-muted-foreground ml-1">({facet.count})</span>}
                           </CommandItem>
                         );
                       })}
