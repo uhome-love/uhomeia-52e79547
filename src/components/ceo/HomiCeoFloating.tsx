@@ -168,7 +168,7 @@ export default function HomiCeoFloating({ dashboardData }: Props) {
                 return [...prev, { role: "assistant", content: assistantContent }];
               });
             }
-          } catch { /* partial */ }
+          } catch (e) { console.warn("[HomiCeoFloating] Partial SSE chunk:", e); }
         }
       }
     } catch {
