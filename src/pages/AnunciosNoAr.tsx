@@ -1121,6 +1121,20 @@ function EmpreendimentoCard({
 
           {/* Landing Page + Vitrine Buttons */}
           <div className="space-y-2">
+            {/* Admin: edit AI Knowledge */}
+            {isAdmin && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onEditAIKnowledge}
+                className="w-full gap-2 text-xs font-bold border-violet-500/30 text-violet-600 hover:bg-violet-500/10"
+              >
+                <Brain className="h-3.5 w-3.5" />
+                Conhecimento IA
+                <AICompletenessBadge data={override as AIKnowledgeData | null} compact />
+              </Button>
+            )}
+
             {/* Admin: edit landing page */}
             {isAdmin && (
               <Button
