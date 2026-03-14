@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       const longestRaw = candidates.sort((a, b) => b.length - a.length)[0] || "";
       if (longestRaw) {
         const parsed = extractFieldValuePairs(longestRaw);
-        console.log("TIKTOK-LEAD FALLBACK PARSE:", JSON.stringify(parsed));
+        L.info("Fallback parse applied", { parsed });
         if (parsed.name || parsed.full_name || parsed.nome) {
           name = parsed.name || parsed.full_name || parsed.nome || name;
         }
