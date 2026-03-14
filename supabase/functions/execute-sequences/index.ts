@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
     }
 
     const result = { executed, errors, enrolled, timestamp: now.toISOString() };
-    console.log("Sequence execution run:", result);
+    L.info("Run complete", result as unknown as Record<string, unknown>);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
