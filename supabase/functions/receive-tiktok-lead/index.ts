@@ -440,14 +440,15 @@ Deno.serve(async (req) => {
       acao: "tiktok_ads_webhook",
       descricao: `Lead TikTok Ads: ${name} — ${empreendimento} (campaign_id: ${campaignId})`,
       origem: "webhook",
+      request_id: traceId,
     });
 
     return new Response(
-      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed: true }),
+      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed: true, trace_id: traceId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("receive-tiktok-lead error:", err);
+    console.error(JSON.stringify({ fn: "receive-tiktok-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
