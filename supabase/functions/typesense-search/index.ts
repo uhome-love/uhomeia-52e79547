@@ -29,6 +29,7 @@ serve(async (req) => {
       page = 1,
       per_page = 24,
       facet_by = "",
+      max_facet_values = "",
       typo_tokens_threshold = 1,
       num_typos = 2,
       prefix = true,
