@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
 
     if (existing) {
       if (!existing.corretor_id) {
-        console.log(`TIKTOK-LEAD DEDUP: ${telefone} already pending (lead ${existing.id})`);
+        L.info("Dedup: pending distribution", { telefone, leadId: existing.id });
         return new Response(
           JSON.stringify({ success: true, action: "skipped_duplicate_pending", lead_id: existing.id }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
