@@ -234,10 +234,10 @@ serve(async (req) => {
         const message = `Olá ${v.nome_cliente || ""}! 🔔 Lembrete: amanhã às ${formatTime(v.hora_visita)} você tem visita ao ${v.empreendimento || "empreendimento"} com ${corretorNome}. Confirma sua presença? Responda SIM para confirmar ou NOS chame para reagendar.`;
 
         try {
-          await sendWhatsApp(apiKey, v.telefone, message);
+          await sendWhatsApp(apiKey, v.telefone, message, L);
           sent++;
         } catch (e) {
-          L.warn("Reminder send failed", { visita_id: v.id }, e);
+          L.warn("Reminder send failed after retries", { visita_id: v.id }, e);
           errors++;
         }
 
