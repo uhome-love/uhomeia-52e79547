@@ -12,6 +12,7 @@ serve(async (req) => {
   const L = (level: string, msg: string, ctx?: Record<string, unknown>) => {
     const line = JSON.stringify({ fn: "generate-corretor-report", level, msg, traceId, ctx, ts: new Date().toISOString() });
     level === "error" ? console.error(line) : console.info(line);
+  };
 
   try {
     const {
@@ -139,8 +140,8 @@ ${observacoes ? `OBSERVAÇÕES ADICIONAIS:\n${observacoes}` : ""}`;
       if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (response.status === 402) return new Response(JSON.stringify({ error: "Payment required" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       throw new Error("AI gateway error");
-  }
-});
+    }
+
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "Sem resposta.";
 
