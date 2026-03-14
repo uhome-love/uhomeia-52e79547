@@ -417,7 +417,7 @@ const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx, isCam
                 <Copy className="h-3 w-3" />
               </Button>
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Confira este imóvel: ${titulo} - ${loc.bairro} - ${getPreco(item)}\nhttps://uhomesales.com/imovel/${codigo}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`Confira este imóvel: ${titulo} - ${loc.bairro} - ${getPreco(item)} (Cód. ${codigo})`)}`}
                 target="_blank" rel="noopener noreferrer"
               >
                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-green-600">
