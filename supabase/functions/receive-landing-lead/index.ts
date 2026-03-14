@@ -237,14 +237,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error("Insert error:", insertError.message);
+      L.error("Lead insert failed", { name, telefone, empreendimento }, insertError);
       return new Response(
         JSON.stringify({ error: insertError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`LANDING-LEAD: Created lead ${insertedLead.id} — ${name} — ${empreendimento}`);
+    L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, source });
 
     // ── Auto-distribute ──
     try {
