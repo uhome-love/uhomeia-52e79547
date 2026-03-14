@@ -448,7 +448,10 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           await supabase.from("pipeline_leads").update({
             temperatura: "frio",
           } as any).eq("id", lead.id);
-        } catch {}
+        } catch (e) {
+          console.error("[OA] Falha ao atualizar temperatura (descarte_oa):", e);
+          toast.error("Erro ao atualizar temperatura do lead. Atualize manualmente no Pipeline.");
+        }
       }
 
       const idKey = currentIdempotencyKey || `${user?.id}_${lead.id}_${Date.now()}`;
