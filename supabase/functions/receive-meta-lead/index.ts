@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
       }
 
       if (existingExternal) {
-        console.log(`META-LEAD DEDUP: external lead id ${externalLeadId} already processed, skipping`);
+        L.info("Dedup: external id already processed", { externalLeadId });
         return new Response(
           JSON.stringify({ success: true, action: "skipped_external_id_dedup" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
