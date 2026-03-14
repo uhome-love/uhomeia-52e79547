@@ -410,8 +410,9 @@ const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx, isCam
               <Button
                 variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary"
                 onClick={() => {
-                  navigator.clipboard.writeText(`https://uhomesales.com/imovel/${codigo}`);
-                  toast.success("Link copiado!");
+                  const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo}`;
+                  navigator.clipboard.writeText(text);
+                  toast.success("Dados copiados!");
                 }}
               >
                 <Copy className="h-3 w-3" />
