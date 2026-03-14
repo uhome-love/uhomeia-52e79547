@@ -8,6 +8,11 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+  const L = (level: string, msg: string, ctx?: Record<string, unknown>) => {
+    const line = JSON.stringify({ fn: "generate-corretor-report", level, msg, traceId, ctx, ts: new Date().toISOString() });
+    level === "error" ? console.error(line) : console.info(line);
+
   try {
     const {
       corretor_nome,
@@ -130,7 +135,7 @@ ${observacoes ? `OBSERVAÇÕES ADICIONAIS:\n${observacoes}` : ""}`;
 
     if (!response.ok) {
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
+      L("error", "AI gateway error", { status: response.status, body: t.slice(0, 200) });
       if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (response.status === 402) return new Response(JSON.stringify({ error: "Payment required" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       throw new Error("AI gateway error");
@@ -139,11 +144,12 @@ ${observacoes ? `OBSERVAÇÕES ADICIONAIS:\n${observacoes}` : ""}`;
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "Sem resposta.";
 
-    return new Response(JSON.stringify({ content }), {
+    L("info", "Report generated", { corretor_nome });
+    return new Response(JSON.stringify({ content, trace_id: traceId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("generate-corretor-report error:", e);
+    L("error", "Unhandled error", { error: e instanceof Error ? e.message : String(e) });
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -24,6 +24,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getMetricPeriodRange, periodToTimestamps } from "./metricDefinitions";
 import { log } from "@/lib/logger";
+import { generateTraceId } from "@/lib/traceContext";
 
 // ─── Types ───
 
@@ -60,6 +61,7 @@ export async function fetchKPIs(
   period: MetricPeriod,
   userId?: string
 ): Promise<CorretorKPIs[]> {
+  const traceId = generateTraceId();
   const { data, error } = await supabase.rpc("get_kpis_por_periodo", {
     p_start: period.start,
     p_end: period.end,
@@ -67,7 +69,7 @@ export async function fetchKPIs(
   });
 
   if (error) {
-    log.error("metrics", "fetchKPIs RPC failed", { period, userId }, error);
+    log.error("metrics", "fetchKPIs RPC failed", { traceId, period, userId }, error);
     throw error;
   }
 

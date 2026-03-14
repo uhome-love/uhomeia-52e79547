@@ -18,6 +18,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { log } from "@/lib/logger";
+import { generateTraceId } from "@/lib/traceContext";
 
 // ─── Types ───
 
@@ -64,14 +65,16 @@ export async function fetchCheckpointSummary(
   date: string,
   userIds?: string[]
 ): Promise<CheckpointSummaryRow[]> {
+  const traceId = generateTraceId();
   const { data, error } = await supabase.rpc("get_checkpoint_summary", {
     p_date: date,
     p_user_ids: userIds ?? null,
   });
   if (error) {
-    log.error("checkpoint", "get_checkpoint_summary RPC failed", { date, userIds }, error);
+    log.error("checkpoint", "get_checkpoint_summary RPC failed", { traceId, date, userIds }, error);
     return [];
   }
+  log.info("checkpoint", "Summary fetched", { traceId, date, count: data?.length ?? 0 });
   return (data || []) as CheckpointSummaryRow[];
 }
 

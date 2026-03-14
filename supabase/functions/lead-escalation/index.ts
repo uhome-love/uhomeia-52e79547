@@ -6,16 +6,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Structured logger
-const L = {
-  _emit: (level: string, msg: string, ctx?: Record<string, unknown>, err?: unknown) => {
-    const payload = { fn: "lead-escalation", level, msg, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() };
-    level === "error" ? console.error(JSON.stringify(payload)) : level === "warn" ? console.warn(JSON.stringify(payload)) : console.info(JSON.stringify(payload));
-  },
-  info: (msg: string, ctx?: Record<string, unknown>) => L._emit("info", msg, ctx),
-  warn: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => L._emit("warn", msg, ctx, err),
-  error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => L._emit("error", msg, ctx, err),
-};
+// Structured logger with trace support
+function _emit(level: string, msg: string, traceId?: string, ctx?: Record<string, unknown>, err?: unknown) {
+  const payload = { fn: "lead-escalation", level, msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() };
+  level === "error" ? console.error(JSON.stringify(payload)) : level === "warn" ? console.warn(JSON.stringify(payload)) : console.info(JSON.stringify(payload));
+}
+
+function makeLogger(traceId: string) {
+  return {
+    info: (msg: string, ctx?: Record<string, unknown>) => _emit("info", msg, traceId, ctx),
+    warn: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => _emit("warn", msg, traceId, ctx, err),
+    error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => _emit("error", msg, traceId, ctx, err),
+  };
+}
 
 async function sendPush(supabaseUrl: string, serviceKey: string, userId: string, title: string, body: string, data?: Record<string, any>) {
   try {
@@ -56,6 +59,8 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
+    const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+    const L = makeLogger(traceId);
 
     // 1. Run the DB-level escalation (creates in-app notifications)
     const { data: escalationCount, error: escError } = await supabase.rpc(

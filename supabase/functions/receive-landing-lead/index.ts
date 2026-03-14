@@ -25,16 +25,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Structured logger
-const L = {
-  _emit: (level: string, msg: string, ctx?: Record<string, unknown>, err?: unknown) => {
-    const payload = { fn: "receive-landing-lead", level, msg, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() };
-    level === "error" ? console.error(JSON.stringify(payload)) : level === "warn" ? console.warn(JSON.stringify(payload)) : console.info(JSON.stringify(payload));
-  },
-  info: (msg: string, ctx?: Record<string, unknown>) => L._emit("info", msg, ctx),
-  warn: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => L._emit("warn", msg, ctx, err),
-  error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => L._emit("error", msg, ctx, err),
-};
+// Structured logger with trace support
+function _emit(level: string, msg: string, traceId?: string, ctx?: Record<string, unknown>, err?: unknown) {
+  const payload = { fn: "receive-landing-lead", level, msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() };
+  level === "error" ? console.error(JSON.stringify(payload)) : level === "warn" ? console.warn(JSON.stringify(payload)) : console.info(JSON.stringify(payload));
+}
+
+function extractTraceId(req: Request): string {
+  return req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function makeLogger(traceId: string) {
+  return {
+    info: (msg: string, ctx?: Record<string, unknown>) => _emit("info", msg, traceId, ctx),
+    warn: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => _emit("warn", msg, traceId, ctx, err),
+    error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => _emit("error", msg, traceId, ctx, err),
+  };
+}
 
 function normalizePhone(phone: string | null | undefined): string | null {
   if (!phone) return null;
@@ -52,6 +59,8 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
+  const traceId = extractTraceId(req);
+  const L = makeLogger(traceId);
 
   try {
     const body = await req.json();
@@ -246,13 +255,14 @@ Deno.serve(async (req) => {
 
     L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, source });
 
-    // ── Auto-distribute ──
+    // ── Auto-distribute (propagate trace) ──
     try {
       await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${serviceKey}`,
           "Content-Type": "application/json",
+          "x-trace-id": traceId,
         },
         body: JSON.stringify({
           action: "distribute_single",
@@ -270,10 +280,11 @@ Deno.serve(async (req) => {
       acao: "landing_page_lead",
       descricao: `Lead via Landing Page: ${name} — ${empreendimento} (source: ${source})`,
       origem: "webhook",
+      request_id: traceId,
     }).then(r => { if (r.error) L.warn("Audit insert failed", {}, r.error); });
 
     return new Response(
-      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed: true }),
+      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed: true, trace_id: traceId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
