@@ -3341,6 +3341,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_events: {
+        Row: {
+          category: string | null
+          created_at: string
+          ctx: Json | null
+          error_detail: string | null
+          fn: string
+          id: string
+          level: string
+          message: string
+          trace_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          ctx?: Json | null
+          error_detail?: string | null
+          fn: string
+          id?: string
+          level?: string
+          message: string
+          trace_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          ctx?: Json | null
+          error_detail?: string | null
+          fn?: string
+          id?: string
+          level?: string
+          message?: string
+          trace_id?: string | null
+        }
+        Relationships: []
+      }
       pagadoria_config: {
         Row: {
           config: Json
