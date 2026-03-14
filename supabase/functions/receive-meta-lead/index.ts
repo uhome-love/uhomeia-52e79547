@@ -457,6 +457,7 @@ Deno.serve(async (req) => {
         headers: {
           Authorization: `Bearer ${serviceKey}`,
           "Content-Type": "application/json",
+          "x-trace-id": traceId,
         },
         body: JSON.stringify({
           action: "distribute_single",
@@ -464,7 +465,7 @@ Deno.serve(async (req) => {
         }),
       });
     } catch (distErr) {
-      console.warn("Auto-distribute failed:", distErr);
+      L.warn("Auto-distribute failed", { leadId: insertedLead.id }, distErr);
     }
 
     // ── Audit ──
