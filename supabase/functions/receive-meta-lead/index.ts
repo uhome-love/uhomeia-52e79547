@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (existingExternalError) {
-        console.warn("META-LEAD DEDUP warn (external id):", existingExternalError.message);
+        L.warn("Dedup check warn (external)", { externalLeadId }, existingExternalError);
       }
 
       if (existingExternal) {
