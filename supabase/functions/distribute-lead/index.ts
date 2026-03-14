@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
           .eq("id", lead.id);
 
         if (updateErr) {
-          console.error(`Failed to assign lead ${lead.id}:`, updateErr.message);
+          L.error("Failed to assign lead", { leadId: lead.id }, updateErr);
           failed++;
           continue;
         }
