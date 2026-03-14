@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
       ? [...new Set(batchLeadIdsRaw.map((id: any) => String(id || "").trim()).filter(Boolean))]
       : [];
 
-    console.log(`Action: ${action}, Lead: ${singleLeadId}, Leads: ${batchLeadIds.length}`);
+    L.info("Request", { action, singleLeadId, batchCount: batchLeadIds.length });
 
     // ─── Accept / Reject (now using atomic RPCs) ───
     if (action === "aceitar" || action === "rejeitar") {
