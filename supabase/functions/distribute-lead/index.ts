@@ -329,7 +329,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Unknown action" }, 400);
   } catch (err) {
     console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
-    logOps("error", "system", "Unhandled exception", {}, err instanceof Error ? err.message : String(err));
+    try {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      sb.from("ops_events").insert({ fn: "distribute-lead", level: "error", category: "system", message: "Unhandled exception", trace_id: traceId, ctx: {}, error_detail: err instanceof Error ? err.message : String(err) }).then(() => {});
+    } catch {}
     return jsonResponse({ error: "Internal error" }, 500);
   }
 });
