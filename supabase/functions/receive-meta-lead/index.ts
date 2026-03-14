@@ -57,16 +57,24 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
+  const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+
+  const L = {
+    info: (msg: string, ctx?: Record<string, unknown>) => console.info(JSON.stringify({ fn: "receive-meta-lead", level: "info", msg, traceId, ctx, ts: new Date().toISOString() })),
+    warn: (msg: string, ctx?: Record<string, unknown>) => console.warn(JSON.stringify({ fn: "receive-meta-lead", level: "warn", msg, traceId, ctx, ts: new Date().toISOString() })),
+    error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "receive-meta-lead", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
+  };
 
   try {
     const body = await req.json();
-    console.log("META-LEAD RAW BODY:", JSON.stringify(body));
+    L.info("Raw body received", { source: body.source || body.platform, hasData: !!body.data });
 
     // ── Auth: simple secret or Authorization header ──
     const webhookSecret = Deno.env.get("META_WEBHOOK_SECRET");
     if (webhookSecret) {
       const provided = body.secret || req.headers.get("x-webhook-secret") || "";
       if (provided !== webhookSecret) {
+        L.warn("Auth failed", { source: body.source });
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -147,24 +155,10 @@ Deno.serve(async (req) => {
     const telefone = normalizePhone(phone);
     const isTestLead = isLikelyTestLead(name, email, message);
 
-    console.log("META-LEAD PARSED:", JSON.stringify({
-      name,
-      phone,
-      telefone,
-      email,
-      campaignId,
-      campaignName,
-      message,
-      propertyCode,
-      formName,
-      adName,
-      adsetName,
-      externalLeadId,
-      isTestLead,
-    }));
+    L.info("Parsed", { name, telefone, campaignId, propertyCode, empreendimento: empreendimento || "pending", externalLeadId, isTestLead });
 
     if (isTestLead) {
-      console.warn("META-LEAD IGNORED — detected test payload", JSON.stringify({ name, email, externalLeadId }));
+      L.info("Ignored test payload", { name, email, externalLeadId });
       return new Response(
         JSON.stringify({ success: true, action: "ignored_test_payload" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -172,7 +166,7 @@ Deno.serve(async (req) => {
     }
 
     if (!telefone) {
-      console.warn("META-LEAD IGNORED — missing/invalid phone", JSON.stringify({ name, email, campaignId, formName }));
+      L.warn("Missing phone", { name, email, campaignId, formName });
       return new Response(
         JSON.stringify({ success: true, action: "ignored_missing_phone", reason: "telefone obrigatório" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -259,11 +253,11 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (existingExternalError) {
-        console.warn("META-LEAD DEDUP warn (external id):", existingExternalError.message);
+        L.warn("Dedup check warn (external)", { externalLeadId }, existingExternalError);
       }
 
       if (existingExternal) {
-        console.log(`META-LEAD DEDUP: external lead id ${externalLeadId} already processed, skipping`);
+        L.info("Dedup: external id already processed", { externalLeadId });
         return new Response(
           JSON.stringify({ success: true, action: "skipped_external_id_dedup" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -280,7 +274,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (alreadyProcessedError) {
-      console.warn("META-LEAD DEDUP warn (phone registry):", alreadyProcessedError.message);
+      L.warn("Dedup check warn (phone)", { telefone }, alreadyProcessedError);
     }
 
     const { data: existing } = await supabase
@@ -294,7 +288,7 @@ Deno.serve(async (req) => {
     if (existing) {
       // If lead exists but is still pending distribution (no corretor), just skip silently
       if (!existing.corretor_id) {
-        console.log(`META-LEAD DEDUP: ${telefone} already pending distribution (lead ${existing.id}), skipping`);
+        L.info("Dedup: pending distribution", { telefone, leadId: existing.id });
         return new Response(
           JSON.stringify({ success: true, action: "skipped_duplicate_pending", lead_id: existing.id }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -331,18 +325,18 @@ Deno.serve(async (req) => {
             url: `/pipeline-leads?lead=${existing.id}`,
           }),
         });
-      } catch (e) { console.warn("Push error:", e); }
+      } catch (e) { L.warn("Push error", { leadId: existing.id }, e); }
 
-      console.log(`META-LEAD DEDUP: ${telefone} already exists (lead ${existing.id}), notified corretor`);
+      L.info("Reactivated existing lead", { telefone, leadId: existing.id, corretor: existing.corretor_id });
       return new Response(
-        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id }),
+        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id, trace_id: traceId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Also skip if phone was ever processed before (permanent dedup)
     if (alreadyProcessed) {
-      console.log(`META-LEAD DEDUP: ${telefone} found in permanent dedup registry, skipping`);
+      L.info("Dedup: permanent registry", { telefone });
       return new Response(
         JSON.stringify({ success: true, action: "skipped_permanent_dedup" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -435,14 +429,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error("Insert error:", insertError.message);
+      L.error("Lead insert failed", { name, telefone, empreendimento }, insertError);
       return new Response(
         JSON.stringify({ error: insertError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`META-LEAD: Created lead ${insertedLead.id} — ${name} — ${empreendimento} (campaign_id: ${campaignId}, property_code: ${propertyCode})`);
+    L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, campaignId, propertyCode });
 
     // Register in permanent dedup registry
     const { error: registryError } = await supabase
@@ -453,7 +447,7 @@ Deno.serve(async (req) => {
       );
 
     if (registryError) {
-      console.warn("META-LEAD registry upsert warning:", registryError.message);
+      L.warn("Registry upsert warn", { dedupRegistryId }, registryError);
     }
 
     // ── Auto-distribute via roleta ──
@@ -463,6 +457,7 @@ Deno.serve(async (req) => {
         headers: {
           Authorization: `Bearer ${serviceKey}`,
           "Content-Type": "application/json",
+          "x-trace-id": traceId,
         },
         body: JSON.stringify({
           action: "distribute_single",
@@ -470,7 +465,7 @@ Deno.serve(async (req) => {
         }),
       });
     } catch (distErr) {
-      console.warn("Auto-distribute failed:", distErr);
+      L.warn("Auto-distribute failed", { leadId: insertedLead.id }, distErr);
     }
 
     // ── Audit ──
@@ -480,14 +475,15 @@ Deno.serve(async (req) => {
       acao: "meta_ads_webhook",
       descricao: `Lead direto Meta Ads: ${name} — ${empreendimento} (campaign_id: ${campaignId}, property_code: ${propertyCode})`,
       origem: "webhook",
-    }).then(r => { if (r.error) console.warn("audit:", r.error.message); });
+      request_id: traceId,
+    }).then(r => { if (r.error) L.warn("Audit insert failed", {}, r.error); });
 
     return new Response(
-      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, propertyCode, distributed: true }),
+      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, propertyCode, distributed: true, trace_id: traceId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("receive-meta-lead error:", err);
+    console.error(JSON.stringify({ fn: "receive-meta-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

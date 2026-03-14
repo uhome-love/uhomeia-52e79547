@@ -60,6 +60,13 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+  const L = {
+    info: (msg: string, ctx?: Record<string, unknown>) => console.info(JSON.stringify({ fn: "distribute-lead", level: "info", msg, traceId, ctx, ts: new Date().toISOString() })),
+    warn: (msg: string, ctx?: Record<string, unknown>) => console.warn(JSON.stringify({ fn: "distribute-lead", level: "warn", msg, traceId, ctx, ts: new Date().toISOString() })),
+    error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
+  };
+
   try {
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
@@ -106,7 +113,7 @@ Deno.serve(async (req) => {
       ? [...new Set(batchLeadIdsRaw.map((id: any) => String(id || "").trim()).filter(Boolean))]
       : [];
 
-    console.log(`Action: ${action}, Lead: ${singleLeadId}, Leads: ${batchLeadIds.length}`);
+    L.info("Request", { action, singleLeadId, batchCount: batchLeadIds.length });
 
     // ─── Accept / Reject (now using atomic RPCs) ───
     if (action === "aceitar" || action === "rejeitar") {
@@ -218,7 +225,7 @@ Deno.serve(async (req) => {
         }
 
         if (eligible.length === 0) {
-          console.warn(`No eligible corretor for lead ${lead.id} (emp: ${lead.empreendimento}, seg: ${segmentoId})`);
+          L.warn("No eligible corretor", { leadId: lead.id, empreendimento: lead.empreendimento, segmentoId });
           failed++;
           continue;
         }
@@ -232,7 +239,7 @@ Deno.serve(async (req) => {
           return 0;
         });
 
-        console.log(`Lead ${lead.nome}: ${eligible.length} eligible. Top 3: ${eligible.slice(0, 3).map(e => `${e.authUserId.slice(0,8)}(hoje=${e.leadsHoje},total=${e.totalAtivos})`).join(", ")}`);
+        L.info("Lead routing", { leadNome: lead.nome, eligible: eligible.length, top: eligible.slice(0, 3).map(e => ({ id: e.authUserId.slice(0,8), hoje: e.leadsHoje, total: e.totalAtivos })) });
         const chosen = eligible[0];
         const now = new Date();
         const expireAt = new Date(now.getTime() + 10 * 60 * 1000);
@@ -249,7 +256,7 @@ Deno.serve(async (req) => {
           .eq("id", lead.id);
 
         if (updateErr) {
-          console.error(`Failed to assign lead ${lead.id}:`, updateErr.message);
+          L.error("Failed to assign lead", { leadId: lead.id }, updateErr);
           failed++;
           continue;
         }
@@ -300,7 +307,7 @@ Deno.serve(async (req) => {
         }).then(r => { if (r.error) console.warn("audit_log insert:", r.error.message); });
       }
 
-      console.log(`Dispatch complete: ${dispatched} distributed, ${failed} failed`);
+      L.info("Dispatch complete", { dispatched, failed });
       return jsonResponse({ success: true, dispatched, failed });
     }
 
@@ -315,7 +322,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ error: "Unknown action" }, 400);
   } catch (err) {
-    console.error("Unexpected error:", err);
+    console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
     return jsonResponse({ error: "Internal error" }, 500);
   }
 });
@@ -452,7 +459,7 @@ async function distributeSingleLead(
     .eq("id", leadId);
 
   if (error) {
-    console.error(`Failed to assign lead ${leadId}:`, error.message);
+    console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg: "Failed to assign single lead", ctx: { leadId }, err: { message: error.message }, ts: new Date().toISOString() }));
     return { success: false, reason: "update_failed", error: error.message };
   }
 

@@ -136,6 +136,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+  const L = {
+    info: (msg: string, ctx?: Record<string, unknown>) => console.info(JSON.stringify({ fn: "notify", level: "info", msg, traceId, ctx, ts: new Date().toISOString() })),
+    warn: (msg: string, ctx?: Record<string, unknown>) => console.warn(JSON.stringify({ fn: "notify", level: "warn", msg, traceId, ctx, ts: new Date().toISOString() })),
+    error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "notify", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
+  };
+
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -146,6 +153,7 @@ serve(async (req) => {
 
     const config = EVENT_CONFIG[evento];
     if (!config) {
+      L.warn("Unknown event", { evento });
       return new Response(JSON.stringify({ error: "Evento desconhecido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -210,13 +218,15 @@ serve(async (req) => {
       results.push({ user_id: userId, notification_id: data, error: error?.message });
     }
 
+    L.info("Notified", { evento, count: uniqueUsers.length });
     return new Response(
       JSON.stringify({ success: true, notified: uniqueUsers.length, results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    L.error("Unhandled exception", {}, err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

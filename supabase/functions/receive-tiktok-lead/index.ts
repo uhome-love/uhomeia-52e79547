@@ -76,19 +76,26 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
+  const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+
+  const L = {
+    info: (msg: string, ctx?: Record<string, unknown>) => console.info(JSON.stringify({ fn: "receive-tiktok-lead", level: "info", msg, traceId, ctx, ts: new Date().toISOString() })),
+    warn: (msg: string, ctx?: Record<string, unknown>) => console.warn(JSON.stringify({ fn: "receive-tiktok-lead", level: "warn", msg, traceId, ctx, ts: new Date().toISOString() })),
+    error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "receive-tiktok-lead", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
+  };
 
   try {
     const body = await req.json();
-    console.log("TIKTOK-LEAD RAW BODY:", JSON.stringify(body));
+    L.info("Raw body received", { hasData: !!body.data });
 
     // ── Auth: simple secret ──
     const webhookSecret = Deno.env.get("TIKTOK_WEBHOOK_SECRET") || Deno.env.get("META_WEBHOOK_SECRET");
     if (webhookSecret) {
       const provided = body.secret || req.headers.get("x-webhook-secret") || "";
       if (provided !== webhookSecret) {
+        L.warn("Auth failed");
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         });
       }
     }
@@ -151,7 +158,7 @@ Deno.serve(async (req) => {
       const longestRaw = candidates.sort((a, b) => b.length - a.length)[0] || "";
       if (longestRaw) {
         const parsed = extractFieldValuePairs(longestRaw);
-        console.log("TIKTOK-LEAD FALLBACK PARSE:", JSON.stringify(parsed));
+        L.info("Fallback parse applied", { parsed });
         if (parsed.name || parsed.full_name || parsed.nome) {
           name = parsed.name || parsed.full_name || parsed.nome || name;
         }
@@ -167,13 +174,10 @@ Deno.serve(async (req) => {
     const isTestLead = isLikelyTestLead(name, email, message);
     const platform = "tiktok_ads";
 
-    console.log("TIKTOK-LEAD PARSED:", JSON.stringify({
-      name, phone, telefone, email, campaignId, campaignName,
-      message, propertyCode, formName, adName, adsetName, externalLeadId, isTestLead,
-    }));
+    L.info("Parsed", { name, telefone, campaignId, externalLeadId, isTestLead });
 
     if (isTestLead) {
-      console.warn("TIKTOK-LEAD IGNORED — test payload", JSON.stringify({ name, email, externalLeadId }));
+      L.info("Ignored test payload", { name, email, externalLeadId });
       return new Response(
         JSON.stringify({ success: true, action: "ignored_test_payload" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -181,7 +185,7 @@ Deno.serve(async (req) => {
     }
 
     if (!telefone) {
-      console.warn("TIKTOK-LEAD IGNORED — missing/invalid phone", JSON.stringify({ name, email, campaignId }));
+      L.warn("Missing phone", { name, email, campaignId });
       return new Response(
         JSON.stringify({ success: true, action: "ignored_missing_phone", reason: "telefone obrigatório" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -241,7 +245,7 @@ Deno.serve(async (req) => {
         .eq("jetimob_lead_id", `tiktok:${externalLeadId}`)
         .maybeSingle();
       if (existingExternal) {
-        console.log(`TIKTOK-LEAD DEDUP: external id ${externalLeadId} already processed`);
+        L.info("Dedup: external id already processed", { externalLeadId });
         return new Response(
           JSON.stringify({ success: true, action: "skipped_external_id_dedup" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -266,7 +270,7 @@ Deno.serve(async (req) => {
 
     if (existing) {
       if (!existing.corretor_id) {
-        console.log(`TIKTOK-LEAD DEDUP: ${telefone} already pending (lead ${existing.id})`);
+        L.info("Dedup: pending distribution", { telefone, leadId: existing.id });
         return new Response(
           JSON.stringify({ success: true, action: "skipped_duplicate_pending", lead_id: existing.id }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -302,17 +306,17 @@ Deno.serve(async (req) => {
             url: `/pipeline-leads?lead=${existing.id}`,
           }),
         });
-      } catch (e) { console.warn("Push error:", e); }
+      } catch (e) { L.warn("Push error", { leadId: existing.id }, e); }
 
-      console.log(`TIKTOK-LEAD DEDUP: ${telefone} reactivated (lead ${existing.id})`);
+      L.info("Reactivated existing lead", { telefone, leadId: existing.id });
       return new Response(
-        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id }),
+        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id, trace_id: traceId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (alreadyProcessed) {
-      console.log(`TIKTOK-LEAD DEDUP: ${telefone} in permanent registry, skipping`);
+      L.info("Dedup: permanent registry", { telefone });
       return new Response(
         JSON.stringify({ success: true, action: "skipped_permanent_dedup" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -404,14 +408,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error("Insert error:", insertError.message);
+      L.error("Lead insert failed", { name, telefone, empreendimento }, insertError);
       return new Response(
         JSON.stringify({ error: insertError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`TIKTOK-LEAD: Created lead ${insertedLead.id} — ${name} — ${empreendimento}`);
+    L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, campaignId });
 
     // Register in permanent dedup registry
     await supabase
@@ -422,11 +426,11 @@ Deno.serve(async (req) => {
     try {
       await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json", "x-trace-id": traceId },
         body: JSON.stringify({ action: "distribute_single", pipeline_lead_id: insertedLead.id }),
       });
     } catch (distErr) {
-      console.warn("Auto-distribute failed:", distErr);
+      L.warn("Auto-distribute failed", { leadId: insertedLead.id }, distErr);
     }
 
     // ── Audit ──
@@ -436,14 +440,15 @@ Deno.serve(async (req) => {
       acao: "tiktok_ads_webhook",
       descricao: `Lead TikTok Ads: ${name} — ${empreendimento} (campaign_id: ${campaignId})`,
       origem: "webhook",
+      request_id: traceId,
     });
 
     return new Response(
-      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed: true }),
+      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed: true, trace_id: traceId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("receive-tiktok-lead error:", err);
+    console.error(JSON.stringify({ fn: "receive-tiktok-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
