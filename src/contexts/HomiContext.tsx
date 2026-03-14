@@ -184,6 +184,12 @@ export function HomiProvider({ children }: { children: ReactNode }) {
         throw new Error("Erro ao conectar com o HOMI");
       }
 
+      // Parse knowledge source header (admin debug)
+      try {
+        const ksHeader = resp.headers.get("x-knowledge-source");
+        if (ksHeader) setKnowledgeSource(JSON.parse(ksHeader));
+      } catch { /* ignore */ }
+
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
