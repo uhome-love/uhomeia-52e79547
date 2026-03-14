@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (alreadyProcessedError) {
-      console.warn("META-LEAD DEDUP warn (phone registry):", alreadyProcessedError.message);
+      L.warn("Dedup check warn (phone)", { telefone }, alreadyProcessedError);
     }
 
     const { data: existing } = await supabase
