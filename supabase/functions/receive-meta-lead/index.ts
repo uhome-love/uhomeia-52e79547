@@ -57,10 +57,17 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
+  const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+
+  const L = {
+    info: (msg: string, ctx?: Record<string, unknown>) => console.info(JSON.stringify({ fn: "receive-meta-lead", level: "info", msg, traceId, ctx, ts: new Date().toISOString() })),
+    warn: (msg: string, ctx?: Record<string, unknown>) => console.warn(JSON.stringify({ fn: "receive-meta-lead", level: "warn", msg, traceId, ctx, ts: new Date().toISOString() })),
+    error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "receive-meta-lead", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
+  };
 
   try {
     const body = await req.json();
-    console.log("META-LEAD RAW BODY:", JSON.stringify(body));
+    L.info("Raw body received", { source: body.source || body.platform, hasData: !!body.data });
 
     // ── Auth: simple secret or Authorization header ──
     const webhookSecret = Deno.env.get("META_WEBHOOK_SECRET");
