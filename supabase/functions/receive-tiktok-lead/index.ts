@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
         .eq("jetimob_lead_id", `tiktok:${externalLeadId}`)
         .maybeSingle();
       if (existingExternal) {
-        console.log(`TIKTOK-LEAD DEDUP: external id ${externalLeadId} already processed`);
+        L.info("Dedup: external id already processed", { externalLeadId });
         return new Response(
           JSON.stringify({ success: true, action: "skipped_external_id_dedup" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
