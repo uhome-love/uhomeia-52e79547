@@ -51,6 +51,34 @@ function normalizePhone(phone: string | null | undefined): string | null {
   return digits;
 }
 
+/** Retry distribute-lead call with exponential backoff */
+async function distributeWithRetry(
+  supabaseUrl: string, serviceKey: string, leadId: string, traceId: string,
+  L: { warn: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => void },
+  maxRetries = 2
+): Promise<boolean> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serviceKey}`,
+          "Content-Type": "application/json",
+          "x-trace-id": traceId,
+        },
+        body: JSON.stringify({ action: "distribute_single", pipeline_lead_id: leadId }),
+      });
+      if (resp.ok) return true;
+      const body = await resp.text().catch(() => "");
+      L.warn(`Distribute attempt ${attempt + 1} failed`, { leadId, status: resp.status, body: body.slice(0, 200) });
+    } catch (err) {
+      L.warn(`Distribute attempt ${attempt + 1} exception`, { leadId, attempt }, err);
+    }
+    if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+  }
+  return false;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -117,17 +145,33 @@ Deno.serve(async (req) => {
     }
     if (!empreendimento) empreendimento = "Avulso - Landing Page";
 
-    // ── Dedup by phone ──
+    // ── Dedup by phone (including permanent registry) ──
     if (telefone) {
+      // Check permanent dedup registry first
+      const { data: alreadyProcessed } = await supabase
+        .from("jetimob_processed")
+        .select("jetimob_lead_id")
+        .eq("telefone", telefone)
+        .limit(1)
+        .maybeSingle();
+
       const { data: existing } = await supabase
         .from("pipeline_leads")
         .select("id, corretor_id, nome, empreendimento")
         .eq("telefone", telefone)
-        .not("corretor_id", "is", null)
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (existing) {
+        if (!existing.corretor_id) {
+          L.info("Dedup: pending distribution", { telefone, leadId: existing.id });
+          return new Response(
+            JSON.stringify({ success: true, action: "skipped_duplicate_pending", lead_id: existing.id }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         const todayStamp = new Date().toISOString().slice(0, 10);
         const interestLabel = empreendimento || existing.empreendimento || "mesmo imóvel";
 
@@ -157,11 +201,20 @@ Deno.serve(async (req) => {
               url: `/pipeline-leads?lead=${existing.id}`,
             }),
           });
-        } catch (e) { console.warn("Push error:", e); }
+        } catch (e) { L.warn("Push error", {}, e); }
 
-        console.log(`LANDING DEDUP: ${telefone} already exists (lead ${existing.id})`);
+        L.info("Reactivated existing lead", { telefone, leadId: existing.id });
         return new Response(
           JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Skip if phone was ever processed before (permanent dedup)
+      if (alreadyProcessed) {
+        L.info("Dedup: permanent registry", { telefone });
+        return new Response(
+          JSON.stringify({ success: true, action: "skipped_permanent_dedup" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -220,10 +273,28 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── Register in permanent dedup BEFORE insert (prevents race condition) ──
+    if (telefone) {
+      const dedupRegistryId = `landing-phone:${telefone}`;
+      const { error: registryError } = await supabase
+        .from("jetimob_processed")
+        .upsert({ jetimob_lead_id: dedupRegistryId, telefone }, { onConflict: "jetimob_lead_id" });
+
+      if (registryError) {
+        if (registryError.code === "23505") {
+          L.info("Dedup: race condition caught by registry", { dedupRegistryId, telefone });
+          return new Response(
+            JSON.stringify({ success: true, action: "skipped_race_dedup" }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        L.warn("Registry upsert warn", { dedupRegistryId }, registryError);
+      }
+    }
+
     // ── Insert ──
     const origemDetalhe = [utmSource, utmMedium, utmCampaign].filter(Boolean).join(" / ") || source;
 
-    // ── Derive campaign name from source ──
     const isMelnickDay = source?.toLowerCase().includes("melnick_day") || source?.toLowerCase().includes("melnick-day");
     const campanha = body.campaign_name || (isMelnickDay ? "Melnick Day - Landing Page" : source) || "Landing Page";
     const plataforma = body.platform || (isMelnickDay ? "Landing Page Melnick Day" : "Landing Page");
@@ -261,22 +332,10 @@ Deno.serve(async (req) => {
     L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, source });
     logOps("info", "business", "Lead created via Landing Page", { lead_id: insertedLead.id, name, empreendimento, source });
 
-    // ── Auto-distribute (propagate trace) ──
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${serviceKey}`,
-          "Content-Type": "application/json",
-          "x-trace-id": traceId,
-        },
-        body: JSON.stringify({
-          action: "distribute_single",
-          pipeline_lead_id: insertedLead.id,
-        }),
-      });
-    } catch (distErr) {
-      L.warn("Auto-distribute failed", { leadId: insertedLead.id }, distErr);
+    // ── Auto-distribute (with retry + trace propagation) ──
+    const distributed = await distributeWithRetry(supabaseUrl, serviceKey, insertedLead.id, traceId, L);
+    if (!distributed) {
+      logOps("error", "integration", "Distribution failed after retries — lead orphaned", { lead_id: insertedLead.id, name, empreendimento });
     }
 
     // ── Audit ──
@@ -290,7 +349,7 @@ Deno.serve(async (req) => {
     }).then(r => { if (r.error) L.warn("Audit insert failed", {}, r.error); });
 
     return new Response(
-      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed: true, trace_id: traceId }),
+      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed, trace_id: traceId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
