@@ -570,7 +570,8 @@ export default function VendasRealizadas() {
                       {filtered.map((v, i) => {
                         const vgv = v.vgv_final || v.vgv_estimado || 0;
                         const corr = v.corretor_id ? profiles[v.corretor_id] : null;
-                        const annualVgv = v.corretor_id ? (annualVgvByCorretor[v.corretor_id] || 0) : 0;
+                        const authId = v.corretor_id ? profileIdToAuthId[v.corretor_id] : null;
+                        const annualVgv = authId ? (annualVgvByCorretor[authId] || 0) : 0;
                         const comissao = calcComissaoCorretor(vgv, annualVgv);
                         const tier = getCorretorTier(annualVgv);
 
