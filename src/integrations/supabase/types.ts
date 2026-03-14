@@ -104,6 +104,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "academia_certificados_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "academia_certificados_trilha_id_fkey"
             columns: ["trilha_id"]
             isOneToOne: false
@@ -195,6 +202,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academia_progresso_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "academia_progresso_trilha_id_fkey"
@@ -337,6 +351,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academia_trilhas_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -648,6 +669,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "checkpoint_diario_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
+          },
         ]
       }
       checkpoint_lines: {
@@ -743,6 +771,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "team_members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkpoint_lines_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["team_member_id"]
           },
         ]
       }
@@ -1263,6 +1298,13 @@ export type Database = {
             referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "corretor_reports_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["team_member_id"]
+          },
         ]
       }
       custom_list_sessions: {
@@ -1478,6 +1520,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "empreendimento_fichas_atualizado_por_fkey"
+            columns: ["atualizado_por"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -2069,6 +2118,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lead_progressao_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "lead_progressao_negocio_id_fkey"
             columns: ["negocio_id"]
             isOneToOne: false
@@ -2629,6 +2685,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_scripts_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -4594,6 +4657,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "pos_vendas_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "pos_vendas_negocio_id_fkey"
             columns: ["negocio_id"]
             isOneToOne: false
@@ -5281,11 +5351,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "roleta_credenciamentos_aprovado_por_fkey"
+            columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "roleta_credenciamentos_corretor_id_fkey"
             columns: ["corretor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roleta_credenciamentos_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "roleta_credenciamentos_segmento_1_id_fkey"
@@ -5352,6 +5436,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "roleta_distribuicoes_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "roleta_distribuicoes_segmento_id_fkey"
             columns: ["segmento_id"]
             isOneToOne: false
@@ -5401,6 +5492,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roleta_fila_corretor_id_fkey"
+            columns: ["corretor_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "roleta_fila_credenciamento_id_fkey"
@@ -5607,11 +5705,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tarefas_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "tarefas_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -5981,6 +6093,105 @@ export type Database = {
       }
     }
     Views: {
+      v_checkpoint_daily: {
+        Row: {
+          auth_user_id: string | null
+          corretor_nome: string | null
+          created_at: string | null
+          data: string | null
+          gerente_id: string | null
+          id: string | null
+          meta_aproveitados: number | null
+          meta_ligacoes: number | null
+          meta_visitas_marcar: number | null
+          obs_dia: string | null
+          obs_gerente: string | null
+          presenca: string | null
+          profile_id: string | null
+          publicado: boolean | null
+          res_aproveitados: number | null
+          res_ligacoes: number | null
+          res_propostas: number | null
+          res_vgv: number | null
+          res_visitas_marcadas: number | null
+          res_visitas_realizadas: number | null
+          team_member_id: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkpoint_diario_corretor_id_fkey"
+            columns: ["auth_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkpoint_diario_corretor_id_fkey"
+            columns: ["auth_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
+      v_checkpoint_lines_canonical: {
+        Row: {
+          auth_user_id: string | null
+          checkpoint_date: string | null
+          checkpoint_gerente_id: string | null
+          checkpoint_id: string | null
+          checkpoint_status: string | null
+          corretor_nome: string | null
+          created_at: string | null
+          gerente_id: string | null
+          id: string | null
+          meta_leads: number | null
+          meta_ligacoes: number | null
+          meta_presenca: string | null
+          meta_propostas: number | null
+          meta_vgv_assinado: number | null
+          meta_vgv_gerado: number | null
+          meta_visitas_marcadas: number | null
+          meta_visitas_realizadas: number | null
+          obs_dia: string | null
+          obs_gerente: string | null
+          real_leads: number | null
+          real_ligacoes: number | null
+          real_presenca: string | null
+          real_propostas: number | null
+          real_vgv_assinado: number | null
+          real_vgv_gerado: number | null
+          real_visitas_marcadas: number | null
+          real_visitas_realizadas: number | null
+          status_dia: string | null
+          team_member_id: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkpoint_lines_checkpoint_id_fkey"
+            columns: ["checkpoint_id"]
+            isOneToOne: false
+            referencedRelation: "checkpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkpoint_lines_corretor_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkpoint_lines_corretor_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "v_checkpoint_daily"
+            referencedColumns: ["team_member_id"]
+          },
+        ]
+      }
       v_kpi_disponibilidade: {
         Row: {
           auth_user_id: string | null
@@ -6259,6 +6470,31 @@ export type Database = {
       get_batch_lista_stats: {
         Args: { p_corretor_id?: string; p_lista_ids: string[] }
         Returns: Json
+      }
+      get_checkpoint_summary: {
+        Args: { p_date: string; p_user_ids?: string[] }
+        Returns: {
+          auth_user_id: string
+          corretor_nome: string
+          gerente_id: string
+          live_aproveitados: number
+          live_ligacoes: number
+          live_visitas_marcadas: number
+          live_visitas_realizadas: number
+          meta_aproveitados: number
+          meta_ligacoes: number
+          meta_visitas_marcar: number
+          obs_dia: string
+          obs_gerente: string
+          presenca: string
+          publicado: boolean
+          saved_res_aproveitados: number
+          saved_res_ligacoes: number
+          saved_res_propostas: number
+          saved_res_visitas_marcadas: number
+          saved_res_visitas_realizadas: number
+          team_member_id: string
+        }[]
       }
       get_corretor_daily_visitas: {
         Args: { p_user_id?: string }

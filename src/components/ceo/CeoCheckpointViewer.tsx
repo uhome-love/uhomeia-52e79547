@@ -6,14 +6,20 @@ import { Calendar, ChevronLeft, ChevronRight, Users, TrendingUp, Eye, AlertTrian
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  fetchCheckpointSummary,
+  fetchDailyOAStats,
+  fetchDailyVisitasStats,
+  resolveEffectiveMetrics,
+  type CheckpointSummaryRow,
+} from "@/lib/checkpointService";
 
 interface GerenteCheckpoint {
   gerente_id: string;
   gerente_nome: string;
-  checkpoint_id: string | null;
   checkpoint_status: string;
   lines: {
-    corretor_id: string;
+    auth_user_id: string;
     corretor_nome: string;
     meta_ligacoes: number;
     meta_leads: number;
@@ -65,161 +71,85 @@ export default function CeoCheckpointViewer() {
   const load = useCallback(async () => {
     setLoading(true);
 
+    // 1. Get all gestors
     const { data: gestorRoles } = await supabase.from("user_roles").select("user_id").eq("role", "gestor");
     const gestorIds = (gestorRoles || []).map(r => r.user_id);
     if (gestorIds.length === 0) { setGerentesData([]); setLoading(false); return; }
 
+    // 2. Get gestor names
     const { data: profiles } = await supabase.from("profiles").select("user_id, nome").in("user_id", gestorIds);
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p.nome]));
 
-    const { data: cps } = await supabase.from("checkpoints").select("*").eq("data", date).in("gerente_id", gestorIds);
-    const cpMap = new Map((cps || []).map(c => [c.gerente_id, c]));
+    // 3. Get checkpoint status via checkpoints table
+    const { data: cps } = await supabase.from("checkpoints").select("id, gerente_id, status").eq("data", date).in("gerente_id", gestorIds);
+    const cpStatusMap = new Map((cps || []).map(c => [c.gerente_id, c.status]));
 
-    const { data: allTeam } = await supabase.from("team_members").select("id, nome, gerente_id, status, user_id").in("gerente_id", gestorIds).eq("status", "ativo").order("nome");
-    const teamByGerente = new Map<string, typeof allTeam>();
-    for (const t of (allTeam || [])) {
-      const arr = teamByGerente.get(t.gerente_id) || [];
-      arr.push(t);
-      teamByGerente.set(t.gerente_id, arr);
-    }
+    // 4. Use canonical checkpoint summary RPC — resolves ALL identity in SQL
+    const summaryRows = await fetchCheckpointSummary(date);
 
-    // Fetch OA stats for all linked team members
-    const linkedMembers = (allTeam || []).filter(m => m.user_id);
-    const userIds = linkedMembers.map(m => m.user_id!);
-    const oaStatsById: Record<string, { ligacoes: number; leads: number }> = {};
-    const visitasStatsById: Record<string, { marcadas: number; realizadas: number }> = {};
-    if (userIds.length > 0) {
-      const dayStart = `${date}T00:00:00-03:00`;
-      const dayEnd = `${date}T23:59:59.999-03:00`;
-      // Fetch OA tentativas and visitas in parallel batches
-      // V.Marc = visitas created on this date; V.Real = visitas realized on this date
-      const visitasCriadasPromise = supabase
-        .from("visitas")
-        .select("corretor_id, status")
-        .in("corretor_id", userIds)
-        .gte("created_at", dayStart)
-        .lte("created_at", dayEnd);
-      const visitasRealizadasPromise = supabase
-        .from("visitas")
-        .select("corretor_id, status")
-        .in("corretor_id", userIds)
-        .eq("data_visita", date)
-        .eq("status", "realizada");
-
-      for (let i = 0; i < userIds.length; i += 50) {
-        const batch = userIds.slice(i, i + 50);
-        const { data: tentativas } = await supabase
-          .from("oferta_ativa_tentativas")
-          .select("corretor_id, resultado")
-          .in("corretor_id", batch)
-          .gte("created_at", dayStart)
-          .lte("created_at", dayEnd);
-        for (const t of (tentativas || [])) {
-          if (!oaStatsById[t.corretor_id]) oaStatsById[t.corretor_id] = { ligacoes: 0, leads: 0 };
-          oaStatsById[t.corretor_id].ligacoes++;
-          if (t.resultado === "com_interesse") oaStatsById[t.corretor_id].leads++;
-        }
-      }
-
-      const [{ data: visitasCriadas }, { data: visitasRealizadas }] = await Promise.all([
-        visitasCriadasPromise,
-        visitasRealizadasPromise,
-      ]);
-      for (const v of (visitasCriadas || [])) {
-        if (!visitasStatsById[v.corretor_id]) visitasStatsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
-        if (v.status !== "cancelada") visitasStatsById[v.corretor_id].marcadas++;
-      }
-      for (const v of (visitasRealizadas || [])) {
-        if (!visitasStatsById[v.corretor_id]) visitasStatsById[v.corretor_id] = { marcadas: 0, realizadas: 0 };
-        visitasStatsById[v.corretor_id].realizadas++;
-      }
-    }
-    // Map user_id -> team_member.id for OA stats and visitas stats
-    const oaStatsByMemberId: Record<string, { ligacoes: number; leads: number }> = {};
-    const visitasStatsByMemberId: Record<string, { marcadas: number; realizadas: number }> = {};
-    for (const m of linkedMembers) {
-      if (m.user_id && oaStatsById[m.user_id]) {
-        oaStatsByMemberId[m.id] = oaStatsById[m.user_id];
-      }
-      if (m.user_id && visitasStatsById[m.user_id]) {
-        visitasStatsByMemberId[m.id] = visitasStatsById[m.user_id];
-      }
-    }
-
-    // Fetch corretor daily goals for metas
-    const goalsMap: Record<string, { meta_ligacoes: number; meta_aproveitados: number; meta_visitas_marcadas: number }> = {};
-    if (userIds.length > 0) {
-      const { data: goals } = await supabase
-        .from("corretor_daily_goals")
-        .select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas")
-        .in("corretor_id", userIds)
-        .eq("data", date);
-      for (const g of (goals || []) as any[]) {
-        const member = linkedMembers.find(m => m.user_id === g.corretor_id);
-        if (member) {
-          goalsMap[member.id] = { meta_ligacoes: g.meta_ligacoes, meta_aproveitados: g.meta_aproveitados, meta_visitas_marcadas: g.meta_visitas_marcadas ?? 0 };
-        }
-      }
-      // Fallback to most recent goals for corretores without today's goals
-      const foundIds = new Set((goals || []).map((g: any) => g.corretor_id));
-      const missingIds = userIds.filter(id => !foundIds.has(id));
-      if (missingIds.length > 0) {
-        const { data: recentGoals } = await supabase
+    // 5. Get daily goals for metas (uses auth_user_id)
+    const allUserIds = summaryRows.map(r => r.auth_user_id);
+    const { data: goals } = allUserIds.length > 0
+      ? await supabase
           .from("corretor_daily_goals")
-          .select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas, data")
-          .in("corretor_id", missingIds)
-          .lte("data", date)
-          .order("data", { ascending: false });
-        const seenRecent = new Set<string>();
-        for (const g of (recentGoals || []) as any[]) {
-          if (seenRecent.has(g.corretor_id)) continue;
-          seenRecent.add(g.corretor_id);
-          const member = linkedMembers.find(m => m.user_id === g.corretor_id);
-          if (member) {
-            goalsMap[member.id] = { meta_ligacoes: g.meta_ligacoes, meta_aproveitados: g.meta_aproveitados, meta_visitas_marcadas: g.meta_visitas_marcadas ?? 0 };
-          }
-        }
+          .select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas")
+          .in("corretor_id", allUserIds)
+          .eq("data", date)
+      : { data: [] };
+    const goalsMap = new Map((goals || []).map((g: any) => [g.corretor_id, g]));
+
+    // Fallback to recent goals for missing
+    const foundGoalIds = new Set((goals || []).map((g: any) => g.corretor_id));
+    const missingGoalIds = allUserIds.filter(id => !foundGoalIds.has(id));
+    if (missingGoalIds.length > 0) {
+      const { data: recentGoals } = await supabase
+        .from("corretor_daily_goals")
+        .select("corretor_id, meta_ligacoes, meta_aproveitados, meta_visitas_marcadas, data")
+        .in("corretor_id", missingGoalIds)
+        .lte("data", date)
+        .order("data", { ascending: false });
+      const seenRecent = new Set<string>();
+      for (const g of (recentGoals || []) as any[]) {
+        if (seenRecent.has(g.corretor_id)) continue;
+        seenRecent.add(g.corretor_id);
+        goalsMap.set(g.corretor_id, g);
       }
     }
 
-    const cpIds = (cps || []).map(c => c.id);
-    const { data: allLines } = cpIds.length > 0
-      ? await supabase.from("checkpoint_lines").select("*").in("checkpoint_id", cpIds)
-      : { data: [] };
-    const linesByCp = new Map<string, typeof allLines>();
-    for (const l of (allLines || [])) {
-      const arr = linesByCp.get(l.checkpoint_id) || [];
-      arr.push(l);
-      linesByCp.set(l.checkpoint_id, arr);
+    // 6. Group by gerente_id
+    const byGerente = new Map<string, CheckpointSummaryRow[]>();
+    for (const row of summaryRows) {
+      const arr = byGerente.get(row.gerente_id) || [];
+      arr.push(row);
+      byGerente.set(row.gerente_id, arr);
     }
 
-    const result: GerenteCheckpoint[] = [];
-    for (const gId of gestorIds) {
-      const cp = cpMap.get(gId);
-      const team = teamByGerente.get(gId) || [];
-      const cpLines = cp ? (linesByCp.get(cp.id) || []) : [];
-      const linesMap = new Map(cpLines.map(l => [l.corretor_id, l]));
+    // 7. Build GerenteCheckpoint for each gestor
+    const result: GerenteCheckpoint[] = gestorIds.map(gId => {
+      const rows = byGerente.get(gId) || [];
+      const lines = rows.map(row => {
+        const eff = resolveEffectiveMetrics(row);
+        const goal = goalsMap.get(row.auth_user_id);
+        const metaLig = row.meta_ligacoes > 0 ? row.meta_ligacoes : (goal?.meta_ligacoes ?? 0);
+        const metaAprov = row.meta_aproveitados > 0 ? row.meta_aproveitados : (goal?.meta_aproveitados ?? 0);
+        const metaVm = row.meta_visitas_marcar > 0 ? row.meta_visitas_marcar : ((goal as any)?.meta_visitas_marcadas ?? 0);
+        const isAbsent = ["ausente", "atestado", "folga"].includes(row.presenca);
 
-      const lines = team.map(t => {
-        const l = linesMap.get(t.id);
-        const oa = oaStatsByMemberId[t.id];
-        const vis = visitasStatsByMemberId[t.id];
-        const cGoal = goalsMap[t.id];
         return {
-          corretor_id: t.id,
-          corretor_nome: t.nome,
-          meta_ligacoes: cGoal ? cGoal.meta_ligacoes : (l?.meta_ligacoes ?? 0),
-          meta_leads: cGoal ? cGoal.meta_aproveitados : (l?.meta_leads ?? 0),
-          meta_visitas_marcadas: cGoal ? cGoal.meta_visitas_marcadas : (l?.meta_visitas_marcadas ?? 0),
-          meta_presenca: l?.meta_presenca ?? "sim",
-          obs_gerente: l?.obs_gerente ?? "",
-          real_ligacoes: l?.real_ligacoes != null ? l.real_ligacoes : (oa?.ligacoes ?? null),
-          real_leads: l?.real_leads != null ? l.real_leads : (oa?.leads ?? null),
-          real_visitas_marcadas: vis ? vis.marcadas : (l?.real_visitas_marcadas ?? null),
-          real_visitas_realizadas: vis ? vis.realizadas : (l?.real_visitas_realizadas ?? null),
-          real_propostas: l?.real_propostas ?? null,
-          obs_dia: l?.obs_dia ?? null,
-          status_dia: l?.status_dia ?? null,
+          auth_user_id: row.auth_user_id,
+          corretor_nome: row.corretor_nome,
+          meta_ligacoes: metaLig,
+          meta_leads: metaAprov,
+          meta_visitas_marcadas: metaVm,
+          meta_presenca: isAbsent ? "falta" : "sim",
+          obs_gerente: row.obs_gerente,
+          real_ligacoes: eff.ligacoes > 0 ? eff.ligacoes : null,
+          real_leads: eff.aproveitados > 0 ? eff.aproveitados : null,
+          real_visitas_marcadas: eff.visitas_marcadas > 0 ? eff.visitas_marcadas : null,
+          real_visitas_realizadas: eff.visitas_realizadas > 0 ? eff.visitas_realizadas : null,
+          real_propostas: eff.propostas > 0 ? eff.propostas : null,
+          obs_dia: row.obs_dia || null,
+          status_dia: null as string | null,
         };
       });
 
@@ -237,15 +167,14 @@ export default function CeoCheckpointViewer() {
         total: lines.length,
       };
 
-      result.push({
+      return {
         gerente_id: gId,
         gerente_nome: profileMap.get(gId) || "Gerente",
-        checkpoint_id: cp?.id || null,
-        checkpoint_status: cp?.status || "não_criado",
+        checkpoint_status: cpStatusMap.get(gId) || "não_criado",
         lines,
         totals,
-      });
-    }
+      };
+    });
 
     result.sort((a, b) => a.gerente_nome.localeCompare(b.gerente_nome));
     setGerentesData(result);
@@ -293,7 +222,6 @@ export default function CeoCheckpointViewer() {
     text: `${g.gerente_nome} não criou checkpoint hoje`,
   }));
 
-  // Low conversion alerts
   for (const g of gerentesData) {
     const txVisita = g.totals.real_visitas_marcadas > 0 ? Math.round((g.totals.real_visitas_realizadas / g.totals.real_visitas_marcadas) * 100) : -1;
     if (txVisita >= 0 && txVisita < 40) {
@@ -363,7 +291,7 @@ export default function CeoCheckpointViewer() {
             ))}
           </div>
 
-          {/* Comparativo lado a lado - Enhanced with conversion rates */}
+          {/* Comparativo lado a lado */}
           <div className="rounded-xl border border-border bg-card shadow-card overflow-x-auto">
             <div className="px-4 py-3 border-b border-border">
               <h3 className="font-display font-semibold text-sm">Comparativo entre Gerentes</h3>
@@ -522,7 +450,7 @@ export default function CeoCheckpointViewer() {
                           {g.lines.map(line => {
                             const isFalta = line.meta_presenca === "falta";
                             return (
-                              <tr key={line.corretor_id} className={`border-b border-border hover:bg-muted/10 ${isFalta ? "opacity-50 bg-destructive/5" : ""}`}>
+                              <tr key={line.auth_user_id} className={`border-b border-border hover:bg-muted/10 ${isFalta ? "opacity-50 bg-destructive/5" : ""}`}>
                                 <td className="px-3 py-1.5 font-medium">
                                   {line.corretor_nome}
                                   {isFalta && <span className="ml-1 text-[9px] text-destructive">(falta)</span>}
