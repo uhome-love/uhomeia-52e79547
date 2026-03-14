@@ -1,9 +1,10 @@
 import { useRef, useEffect, memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Loader2, Trash2, Sparkles } from "lucide-react";
+import { X, Send, Loader2, Trash2, Sparkles, Database, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useHomi } from "@/contexts/HomiContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import ReactMarkdown from "react-markdown";
 import HomiAnimated from "./HomiAnimated";
 import type { HomiAnimState } from "./HomiAnimated";
@@ -31,8 +32,9 @@ const QUICK_ACTIONS: Record<string, { label: string; prompt: string }[]> = {
 
 function HomiPanelInner() {
   const {
-    isOpen, closeHomi, messages, sendMessage, clearMessages, isLoading, homiRole, userName,
+    isOpen, closeHomi, messages, sendMessage, clearMessages, isLoading, homiRole, userName, knowledgeSource,
   } = useHomi();
+  const { isAdmin } = useUserRole();
 
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -195,6 +197,29 @@ function HomiPanelInner() {
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Admin debug: knowledge source indicator */}
+              {isAdmin && knowledgeSource && messages.length > 0 && !isLoading && (
+                <div className="flex justify-center pt-1">
+                  <div className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border ${
+                    knowledgeSource.source === "db"
+                      ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+                      : knowledgeSource.source === "fallback"
+                        ? "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400"
+                        : "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
+                  }`}>
+                    {knowledgeSource.source === "db" ? (
+                      <Database className="h-3 w-3" />
+                    ) : (
+                      <AlertTriangle className="h-3 w-3" />
+                    )}
+                    <span>
+                      Knowledge: {knowledgeSource.source === "db" ? "100% DB" : knowledgeSource.source === "fallback" ? "100% Fallback" : "Misto"}
+                      {" "}({knowledgeSource.db}db/{knowledgeSource.fallback}fb/{knowledgeSource.partial}p de {knowledgeSource.total})
+                    </span>
                   </div>
                 </div>
               )}

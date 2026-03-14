@@ -8,6 +8,14 @@ export type HomiRole = "corretor" | "gestor" | "ceo";
 
 export type Message = { role: "user" | "assistant"; content: string };
 
+export type KnowledgeSourceInfo = {
+  source: "db" | "fallback" | "partial";
+  db: number;
+  fallback: number;
+  partial: number;
+  total: number;
+} | null;
+
 export type ProactiveAlert = {
   id: string;
   priority: "critical" | "normal" | "info";
@@ -43,6 +51,9 @@ interface HomiContextType {
   homiRole: HomiRole;
   userName: string;
 
+  // Debug (admin only)
+  knowledgeSource: KnowledgeSourceInfo;
+
   // Conversation persistence
   conversationId: string | null;
 }
@@ -66,6 +77,7 @@ export function HomiProvider({ children }: { children: ReactNode }) {
   const [alerts, setAlerts] = useState<ProactiveAlert[]>([]);
   const [userName, setUserName] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [knowledgeSource, setKnowledgeSource] = useState<KnowledgeSourceInfo>(null);
   const pendingMessageRef = useRef<string | null>(null);
 
   const homiRole: HomiRole = isAdmin ? "ceo" : isCorretor ? "corretor" : "gestor";
@@ -172,6 +184,12 @@ export function HomiProvider({ children }: { children: ReactNode }) {
         throw new Error("Erro ao conectar com o HOMI");
       }
 
+      // Parse knowledge source header (admin debug)
+      try {
+        const ksHeader = resp.headers.get("x-knowledge-source");
+        if (ksHeader) setKnowledgeSource(JSON.parse(ksHeader));
+      } catch { /* ignore */ }
+
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -230,6 +248,7 @@ export function HomiProvider({ children }: { children: ReactNode }) {
   const clearMessages = useCallback(() => {
     setMessages([]);
     setConversationId(null);
+    setKnowledgeSource(null);
   }, []);
 
   // Proactive alerts
@@ -257,6 +276,7 @@ export function HomiProvider({ children }: { children: ReactNode }) {
       messages, sendMessage, clearMessages, isLoading,
       alerts, addProactiveAlert, dismissAlert, unseenCount,
       currentPage, homiRole, userName,
+      knowledgeSource,
       conversationId,
     }}>
       {children}

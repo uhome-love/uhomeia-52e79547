@@ -6,7 +6,7 @@
  */
 import { withCorsAndErrorHandling, requireApiKey, callAI } from "../_shared/ai-helpers.ts";
 import { jsonResponse, errorResponse } from "../_shared/cors.ts";
-import { loadEnterpriseKnowledge, formatForMarketing } from "../_shared/enterprise-knowledge.ts";
+import { loadEnterpriseKnowledge, formatForMarketing, getKnowledgeSourceReport } from "../_shared/enterprise-knowledge.ts";
 
 async function buildSystemPrompt(): Promise<string> {
   const knowledge = await loadEnterpriseKnowledge();
@@ -42,7 +42,9 @@ Deno.serve(withCorsAndErrorHandling("homi-ana", async (req) => {
   }
 
   const apiKey = requireApiKey();
+  const knowledge = await loadEnterpriseKnowledge();
   const systemPrompt = await buildSystemPrompt();
+  const knowledgeReport = getKnowledgeSourceReport(knowledge);
 
   const reply = await callAI(apiKey, [
     { role: "system", content: systemPrompt },
@@ -52,5 +54,13 @@ Deno.serve(withCorsAndErrorHandling("homi-ana", async (req) => {
     })),
   ], { fnName: "homi-ana", maxTokens: 2000 });
 
-  return jsonResponse({ reply: reply || "Sem resposta no momento." });
+  return jsonResponse({
+    reply: reply || "Sem resposta no momento.",
+    _debug: {
+      knowledgeSource: knowledgeReport.summary,
+      db: knowledgeReport.dbCount,
+      fallback: knowledgeReport.fallbackCount,
+      partial: knowledgeReport.partialCount,
+    },
+  });
 }));

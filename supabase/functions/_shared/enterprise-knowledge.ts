@@ -295,6 +295,104 @@ export function formatForList(records: EnterpriseRecord[]): string {
 }
 
 /**
+ * Knowledge source report for admin debug/validation.
+ * Analyzes which enterprises use DB-backed vs fallback knowledge.
+ */
+export type KnowledgeSource = "db" | "fallback" | "partial";
+
+export interface KnowledgeSourceEntry {
+  nome: string;
+  source: KnowledgeSource;
+  dbFields: string[];
+  fallbackFields: string[];
+}
+
+export interface KnowledgeSourceReport {
+  summary: KnowledgeSource; // "db" if all DB, "fallback" if all fallback, "mixed" otherwise
+  dbCount: number;
+  fallbackCount: number;
+  partialCount: number;
+  total: number;
+  entries: KnowledgeSourceEntry[];
+}
+
+const AI_FIELDS: (keyof EnterpriseRecord)[] = [
+  "descricao_completa", "objecoes", "estrategia_conversao",
+  "perfil_cliente", "argumentos_venda", "segmento_comercial", "hashtags",
+];
+
+function classifyEntry(record: EnterpriseRecord | undefined, name: string): KnowledgeSourceEntry {
+  if (!record) {
+    return { nome: name, source: "fallback", dbFields: [], fallbackFields: AI_FIELDS.map(String) };
+  }
+
+  const dbFields: string[] = [];
+  const fallbackFields: string[] = [];
+
+  for (const field of AI_FIELDS) {
+    const val = record[field];
+    const hasValue = val !== null && val !== undefined &&
+      (Array.isArray(val) ? val.length > 0 : typeof val === "string" ? val.trim().length > 0 : true);
+    if (hasValue) {
+      dbFields.push(field);
+    } else {
+      fallbackFields.push(field);
+    }
+  }
+
+  const source: KnowledgeSource = fallbackFields.length === 0
+    ? "db"
+    : dbFields.length === 0
+      ? "fallback"
+      : "partial";
+
+  return { nome: name, source, dbFields, fallbackFields };
+}
+
+export function getKnowledgeSourceReport(records: EnterpriseRecord[]): KnowledgeSourceReport {
+  const allNames = new Set<string>();
+  records.forEach(r => allNames.add(r.nome || r.codigo));
+  Object.keys(FALLBACK_KNOWLEDGE).forEach(name => allNames.add(name));
+
+  const entries: KnowledgeSourceEntry[] = [];
+  let dbCount = 0, fallbackCount = 0, partialCount = 0;
+
+  for (const name of allNames) {
+    const record = records.find(r =>
+      (r.nome || r.codigo || "").toLowerCase() === name.toLowerCase()
+    );
+    const entry = classifyEntry(record, name);
+    entries.push(entry);
+    if (entry.source === "db") dbCount++;
+    else if (entry.source === "fallback") fallbackCount++;
+    else partialCount++;
+  }
+
+  const total = entries.length;
+  const summary: KnowledgeSource = fallbackCount === 0 && partialCount === 0
+    ? "db"
+    : dbCount === 0 && partialCount === 0
+      ? "fallback"
+      : "partial";
+
+  return { summary, dbCount, fallbackCount, partialCount, total, entries };
+}
+
+/**
+ * Compact string for response headers (lightweight).
+ */
+export function getKnowledgeSourceHeader(records: EnterpriseRecord[]): string {
+  const report = getKnowledgeSourceReport(records);
+  return JSON.stringify({
+    source: report.summary,
+    db: report.dbCount,
+    fallback: report.fallbackCount,
+    partial: report.partialCount,
+    total: report.total,
+  });
+}
+
+/**
  * Get just the list of empreendimento names (for gerencial/ceo simple lists).
  */
 export function getEmpreendimentoNames(records: EnterpriseRecord[]): string[] {

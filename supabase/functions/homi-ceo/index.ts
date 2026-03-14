@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { loadEnterpriseKnowledge, getEmpreendimentoNames } from "../_shared/enterprise-knowledge.ts";
+import { loadEnterpriseKnowledge, getEmpreendimentoNames, getKnowledgeSourceHeader } from "../_shared/enterprise-knowledge.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -316,8 +316,9 @@ ${quickActionContext}`;
       throw new Error("AI gateway error");
     }
 
+    const knowledgeSourceHeader = getKnowledgeSourceHeader(knowledge);
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "x-knowledge-source": knowledgeSourceHeader },
     });
   } catch (e) {
     console.error("homi-ceo error:", e);
