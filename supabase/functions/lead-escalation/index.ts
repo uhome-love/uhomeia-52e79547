@@ -337,6 +337,9 @@ Deno.serve(async (req) => {
     };
 
     L.info("Lead escalation run", result);
+    if (result.escalated > 0 || result.recycled > 0) {
+      logOps("info", "business", `Escalation run: ${result.escalated} escalated, ${result.recycled} recycled`, result as unknown as Record<string, unknown>);
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
