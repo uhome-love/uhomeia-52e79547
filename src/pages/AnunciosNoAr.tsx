@@ -1215,6 +1215,7 @@ export default function AnunciosNoAr() {
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
   const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
+  const [aiEditingCodigo, setAiEditingCodigo] = useState<string | null>(null);
   const [landingCodigo, setLandingCodigo] = useState<string | null>(null);
   const [landingRefreshKey, setLandingRefreshKey] = useState(0);
 
