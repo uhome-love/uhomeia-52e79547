@@ -229,7 +229,8 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
   const { data: negociosData } = useQuery({
     queryKey: ["ceo-negocios", user?.id],
     queryFn: async () => {
-      const { data: negocios } = await supabase.from("negocios").select("id, fase, status, vgv_estimado, vgv_final, corretor_id, updated_at, empreendimento").limit(500);
+      // MIGRATED: Include auth_user_id for canonical identity lookup
+      const { data: negocios } = await supabase.from("negocios").select("id, fase, status, vgv_estimado, vgv_final, auth_user_id, updated_at, empreendimento").limit(500);
       const now = new Date();
       const faseMap = new Map<string, { count: number; vgv: number }>();
       let risco = 0;
@@ -245,16 +246,17 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       }
       const negocioFases = Array.from(faseMap.entries()).map(([fase, d]) => ({ fase, ...d }));
 
-      // Top corretores by VGV de vendas realizadas (assinado/vendido)
+      // MIGRATED: Top corretores by VGV using auth_user_id (canonical)
       const corrMap = new Map<string, number>();
       for (const n of (negocios || [])) {
-        if (!n.corretor_id) continue;
+        const uid = n.auth_user_id;
+        if (!uid) continue;
         if (n.fase !== "assinado" && n.fase !== "vendido") continue;
-        corrMap.set(n.corretor_id, (corrMap.get(n.corretor_id) || 0) + (n.vgv_final || n.vgv_estimado || 0));
+        corrMap.set(uid, (corrMap.get(uid) || 0) + (n.vgv_final || n.vgv_estimado || 0));
       }
       const corrIds = [...corrMap.keys()];
-      const { data: profs } = corrIds.length > 0 ? await supabase.from("profiles").select("id, nome").in("id", corrIds) : { data: [] as { id: string; nome: string }[] };
-      const profMap = new Map((profs || []).map(p => [p.id, p.nome] as [string, string]));
+      const { data: profs } = corrIds.length > 0 ? await supabase.from("profiles").select("user_id, nome").in("user_id", corrIds) : { data: [] as { user_id: string; nome: string }[] };
+      const profMap = new Map((profs || []).map(p => [p.user_id, p.nome] as [string, string]));
       const topCorretoresVgv = Array.from(corrMap.entries()).map(([id, vgv]) => ({ nome: profMap.get(id) || "Corretor", vgv })).sort((a, b) => b.vgv - a.vgv).slice(0, 5);
 
       return { negocioFases, vgvEmRisco: risco, topCorretoresVgv };
