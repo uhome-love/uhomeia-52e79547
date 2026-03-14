@@ -201,6 +201,29 @@ function HomiPanelInner() {
                   </div>
                 </div>
               )}
+
+              {/* Admin debug: knowledge source indicator */}
+              {isAdmin && knowledgeSource && messages.length > 0 && !isLoading && (
+                <div className="flex justify-center pt-1">
+                  <div className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border ${
+                    knowledgeSource.source === "db"
+                      ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+                      : knowledgeSource.source === "fallback"
+                        ? "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400"
+                        : "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
+                  }`}>
+                    {knowledgeSource.source === "db" ? (
+                      <Database className="h-3 w-3" />
+                    ) : (
+                      <AlertTriangle className="h-3 w-3" />
+                    )}
+                    <span>
+                      Knowledge: {knowledgeSource.source === "db" ? "100% DB" : knowledgeSource.source === "fallback" ? "100% Fallback" : "Misto"}
+                      {" "}({knowledgeSource.db}db/{knowledgeSource.fallback}fb/{knowledgeSource.partial}p de {knowledgeSource.total})
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick actions when in conversation */}
