@@ -6540,6 +6540,7 @@ export type Database = {
         Returns: {
           auth_user_id: string
           dias_presente: number
+          perdidos: number
           pontos_gestao: number
           propostas: number
           taxa_aproveitamento: number

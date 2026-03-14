@@ -36,6 +36,7 @@ export interface CorretorKPIs {
   visitas_no_show: number;
   propostas: number;
   vendas: number;
+  perdidos: number;
   vgv_gerado: number;
   vgv_assinado: number;
   pontos_gestao: number;
@@ -78,6 +79,7 @@ export async function fetchKPIs(
     visitas_no_show: Number(row.visitas_no_show) || 0,
     propostas: Number(row.propostas) || 0,
     vendas: Number(row.vendas) || 0,
+    perdidos: Number(row.perdidos) || 0,
     vgv_gerado: Number(row.vgv_gerado) || 0,
     vgv_assinado: Number(row.vgv_assinado) || 0,
     pontos_gestao: Number(row.pontos_gestao) || 0,
