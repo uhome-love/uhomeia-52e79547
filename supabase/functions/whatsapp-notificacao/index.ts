@@ -11,6 +11,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+  const L = {
+    info: (msg: string, ctx?: Record<string, unknown>) => console.info(JSON.stringify({ fn: "whatsapp-notificacao", level: "info", msg, traceId, ctx, ts: new Date().toISOString() })),
+    warn: (msg: string, ctx?: Record<string, unknown>) => console.warn(JSON.stringify({ fn: "whatsapp-notificacao", level: "warn", msg, traceId, ctx, ts: new Date().toISOString() })),
+    error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "whatsapp-notificacao", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
+  };
+
   try {
     const { telefone, tipo, dados } = await req.json();
 
@@ -18,7 +25,7 @@ serve(async (req) => {
     const phoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || Deno.env.get("WHATSAPP_PHONE_ID");
 
     if (!token || !phoneId) {
-      console.error("WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID not configured");
+      L.error("Credentials not configured", { hasToken: !!token, hasPhoneId: !!phoneId });
       return new Response(
         JSON.stringify({ error: "WhatsApp credentials not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -28,7 +35,7 @@ serve(async (req) => {
     const numeroLimpo = telefone.replace(/\D/g, "");
     const numeroFinal = numeroLimpo.startsWith("55") ? numeroLimpo : `55${numeroLimpo}`;
 
-    console.log(`Sending WhatsApp to ${numeroFinal}, tipo: ${tipo}, dados:`, JSON.stringify(dados));
+    L.info("Sending", { to: numeroFinal, tipo, leadNome: dados?.nome });
 
     // Template-based messages
     const TEMPLATE_MESSAGES: Record<string, () => any> = {
@@ -67,12 +74,11 @@ serve(async (req) => {
     let body: any;
 
     if (TEMPLATE_MESSAGES[tipo]) {
-      // Use approved template
       body = TEMPLATE_MESSAGES[tipo]();
     } else if (TEXT_MESSAGES[tipo]) {
-      // Fallback to text (only works within 24h window)
       const mensagem = TEXT_MESSAGES[tipo]();
       if (!mensagem) {
+        L.warn("Empty message", { tipo });
         return new Response(
           JSON.stringify({ error: `Mensagem vazia para tipo: ${tipo}` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -85,6 +91,7 @@ serve(async (req) => {
         text: { body: mensagem },
       };
     } else {
+      L.warn("Unknown message type", { tipo });
       return new Response(
         JSON.stringify({ error: `Tipo de mensagem desconhecido: ${tipo}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -104,16 +111,21 @@ serve(async (req) => {
     );
 
     const result = await response.json();
-    console.log("WhatsApp response:", JSON.stringify(result));
+
+    if (response.ok) {
+      L.info("Sent successfully", { tipo, to: numeroFinal, messageId: result?.messages?.[0]?.id });
+    } else {
+      L.error("API error", { tipo, to: numeroFinal, status: response.status, error: result?.error });
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: response.ok ? 200 : 400,
     });
   } catch (err) {
-    console.error("whatsapp-notificacao error:", err);
+    L.error("Unhandled exception", {}, err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

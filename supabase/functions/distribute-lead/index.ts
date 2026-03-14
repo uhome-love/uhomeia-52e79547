@@ -452,7 +452,7 @@ async function distributeSingleLead(
     .eq("id", leadId);
 
   if (error) {
-    console.error(`Failed to assign lead ${leadId}:`, error.message);
+    console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg: "Failed to assign single lead", ctx: { leadId }, err: { message: error.message }, ts: new Date().toISOString() }));
     return { success: false, reason: "update_failed", error: error.message };
   }
 

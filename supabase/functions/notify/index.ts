@@ -218,13 +218,15 @@ serve(async (req) => {
       results.push({ user_id: userId, notification_id: data, error: error?.message });
     }
 
+    L.info("Notified", { evento, count: uniqueUsers.length });
     return new Response(
       JSON.stringify({ success: true, notified: uniqueUsers.length, results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    L.error("Unhandled exception", {}, err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
