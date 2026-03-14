@@ -411,6 +411,7 @@ Deno.serve(async (req) => {
       push_sent: pushSent,
       stale_alerts: staleCount || 0,
       recycled: recycledCount || 0,
+      stuck_redistributed: stuckRedistributed,
       locks_cleaned: cleanedCount || 0,
       timestamp: new Date().toISOString(),
     };
