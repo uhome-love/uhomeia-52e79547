@@ -621,34 +621,8 @@ export default function ImoveisPage() {
   // Sequence number to prevent stale responses from updating state
   const fetchSeqRef = useRef(0);
 
-  // Helper to map Typesense docs to card format
-  const mapTypesenseDocs = (docs: any[]) => docs.map((doc: any) => ({
-    ...doc,
-    codigo: doc.codigo || doc.id,
-    titulo_anuncio: doc.titulo,
-    empreendimento_nome: doc.empreendimento,
-    endereco_bairro: doc.bairro,
-    endereco_cidade: doc.cidade,
-    endereco_logradouro: doc.endereco,
-    valor_venda: doc.valor_venda,
-    valor_locacao: doc.valor_locacao,
-    area_privativa: doc.area_privativa,
-    garagens: doc.vagas,
-    suites: doc.suites,
-    banheiros: doc.banheiros,
-    dormitorios: doc.dormitorios,
-    valor_condominio: doc.valor_condominio,
-    situacao: doc.situacao,
-    latitude: doc.latitude,
-    longitude: doc.longitude,
-    _fotos_normalized: doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-    _fotos_full: doc.fotos_full?.length ? doc.fotos_full : doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-    imagens: (doc.fotos || []).map((url: string, i: number) => ({
-      link_thumb: url,
-      link: doc.fotos_full?.[i] || url,
-      link_large: doc.fotos_full?.[i] || url,
-    })),
-  }));
+  // mapTypesenseDocs imported from @/lib/typesenseMapping
+
 
   // ── Typesense search ──
   const fetchViaTypesense = useCallback(async (pageNum: number, seq: number): Promise<"ok" | "aborted" | "error"> => {
