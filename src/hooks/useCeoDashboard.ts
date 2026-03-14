@@ -290,12 +290,11 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const profileToUserId = new Map((corrProfs || []).map(p => [p.id, p.user_id]));
       const allMemberProfileIds = (corrProfs || []).map(p => p.id).filter(Boolean) as string[];
 
+      // MIGRATED: Use auth_user_id for negocios instead of profile_id lookup
       const [{ data: allVisMarcadas }, { data: allVisRealizadas }, { data: allNeg }] = await Promise.all([
         supabase.from("visitas").select("id, corretor_id").in("corretor_id", allMemberUserIds).gte("created_at", startTs).lte("created_at", endTs),
         supabase.from("visitas").select("id, status, corretor_id").in("corretor_id", allMemberUserIds).gte("data_visita", range.start).lte("data_visita", range.end),
-        allMemberProfileIds.length > 0
-          ? supabase.from("negocios").select("id, fase, vgv_estimado, vgv_final, corretor_id, data_assinatura").in("corretor_id", allMemberProfileIds).in("fase", ["assinado", "vendido"])
-          : Promise.resolve({ data: [] as any[] }),
+        supabase.from("negocios").select("id, fase, vgv_estimado, vgv_final, auth_user_id, data_assinatura").in("auth_user_id", allMemberUserIds).in("fase", ["assinado", "vendido"]),
       ]);
 
       // Paginated tentativas
@@ -324,11 +323,10 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
           const aprov = tent.filter(t => t.resultado === "com_interesse").length;
           const vm = (allVisMarcadas || []).filter(v => v.corretor_id === uid).length;
           const vr = (allVisRealizadas || []).filter(v => v.corretor_id === uid && v.status === "realizada").length;
-          // Negocios use profile_id as corretor_id
-          const profId = userToProfileId.get(uid);
-          const neg = profId ? (allNeg || []).filter(n => n.corretor_id === profId) : [];
+          // MIGRATED: Use auth_user_id directly (no profile_id conversion needed)
+          const neg = (allNeg || []).filter(n => n.auth_user_id === uid);
           const prop = neg.filter(n => n.fase === "proposta" || n.fase === "negociacao").length;
-          const vgv = neg.reduce((s, n) => s + (n.vgv_final || n.vgv_estimado || 0), 0);
+          const vgv = neg.reduce((s: number, n: any) => s + (n.vgv_final || n.vgv_estimado || 0), 0);
           tLig += lig; tAprov += aprov; tVM += vm; tVR += vr; tProp += prop; tVgv += vgv;
           corretoresAll.push({
             corretor_id: uid, nome: corrNameMap.get(uid) || "Corretor", gerente_nome: gerenteNome,
