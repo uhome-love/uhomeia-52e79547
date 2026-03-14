@@ -475,10 +475,11 @@ Deno.serve(async (req) => {
       acao: "meta_ads_webhook",
       descricao: `Lead direto Meta Ads: ${name} — ${empreendimento} (campaign_id: ${campaignId}, property_code: ${propertyCode})`,
       origem: "webhook",
-    }).then(r => { if (r.error) console.warn("audit:", r.error.message); });
+      request_id: traceId,
+    }).then(r => { if (r.error) L.warn("Audit insert failed", {}, r.error); });
 
     return new Response(
-      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, propertyCode, distributed: true }),
+      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, propertyCode, distributed: true, trace_id: traceId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
