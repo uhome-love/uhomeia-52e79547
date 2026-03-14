@@ -86,6 +86,10 @@ Seja direto, use dados concretos. Máximo 300 palavras. Período: ${periodo || "
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    // ─── Load enterprise names from DB (cached) ───
+    const knowledge = await loadEnterpriseKnowledge(adminClient);
+    const empreendimentoNamesList = getEmpreendimentoNames(knowledge).join(", ");
+
     const today = new Date().toISOString().slice(0, 10);
     const currentMonth = today.slice(0, 7);
     const weekStart = getWeekStart(today);

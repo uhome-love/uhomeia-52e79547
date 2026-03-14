@@ -31,6 +31,10 @@ serve(async (req) => {
     const { messages, quickAction } = await req.json();
     const gerenteId = user.id;
 
+    // ─── Load enterprise names from DB (cached) ───
+    const knowledge = await loadEnterpriseKnowledge(adminClient);
+    const empreendimentoNamesList = getEmpreendimentoNames(knowledge).join(", ");
+
     // ─── Fetch real data for the manager's team ───
     const today = new Date().toISOString().slice(0, 10);
     const currentMonth = today.slice(0, 7);
