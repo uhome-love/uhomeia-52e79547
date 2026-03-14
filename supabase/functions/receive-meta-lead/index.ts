@@ -325,11 +325,11 @@ Deno.serve(async (req) => {
             url: `/pipeline-leads?lead=${existing.id}`,
           }),
         });
-      } catch (e) { console.warn("Push error:", e); }
+      } catch (e) { L.warn("Push error", { leadId: existing.id }, e); }
 
-      console.log(`META-LEAD DEDUP: ${telefone} already exists (lead ${existing.id}), notified corretor`);
+      L.info("Reactivated existing lead", { telefone, leadId: existing.id, corretor: existing.corretor_id });
       return new Response(
-        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id }),
+        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id, trace_id: traceId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
