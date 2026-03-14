@@ -67,6 +67,11 @@ interface VendaRow {
   pipeline_lead_id: string | null;
 }
 
+interface PartnerInfo {
+  auth_user_ids: string[];
+  fator_split: number;
+}
+
 interface ProfileInfo {
   id: string;
   nome: string;
