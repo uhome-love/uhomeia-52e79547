@@ -48,7 +48,7 @@ export function AuditStatsBar() {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
       {items.map((item) => (
         <Card key={item.label}>
           <CardContent className="p-4 flex items-center gap-3">
