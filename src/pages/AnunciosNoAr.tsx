@@ -998,14 +998,17 @@ function EmpreendimentoCard({
           </button>
         )}
 
-        {/* Override indicator */}
-        {hasOverride && (
-          <div className="absolute top-2 left-2 z-20">
+        {/* Override + AI indicators */}
+        <div className="absolute top-2 left-2 z-20 flex flex-col gap-1">
+          {hasOverride && (
             <Badge className="text-[8px] bg-primary/80 text-primary-foreground border-0 px-1.5 py-0.5">
               ✏️ Personalizado
             </Badge>
-          </div>
-        )}
+          )}
+          {isAdmin && (
+            <AICompletenessBadge data={override as AIKnowledgeData | null} compact />
+          )}
+        </div>
 
         {/* Image */}
         {loading && !hasOverride ? (
