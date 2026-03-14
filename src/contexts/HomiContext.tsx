@@ -51,6 +51,9 @@ interface HomiContextType {
   homiRole: HomiRole;
   userName: string;
 
+  // Debug (admin only)
+  knowledgeSource: KnowledgeSourceInfo;
+
   // Conversation persistence
   conversationId: string | null;
 }
