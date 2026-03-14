@@ -221,8 +221,9 @@ ${quickActionContext}`;
       throw new Error("AI gateway error");
     }
 
+    const knowledgeSourceHeader = getKnowledgeSourceHeader(knowledge);
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "x-knowledge-source": knowledgeSourceHeader },
     });
   } catch (e) {
     console.error("homi-gerencial error:", e);
