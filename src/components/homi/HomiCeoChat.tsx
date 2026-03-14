@@ -94,7 +94,6 @@ export default function HomiCeoChat() {
         if (resp.status === 429) toast.error("Rate limit excedido, aguarde.");
         else if (resp.status === 402) toast.error("Créditos esgotados.");
         else toast.error(errorData.error || "Erro ao conectar com o HOMI CEO");
-        setIsLoading(false);
         return;
       }
 
