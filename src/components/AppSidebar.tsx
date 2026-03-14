@@ -247,7 +247,27 @@ export function AppSidebar() {
     return () => clearInterval(interval);
   }, [fetchAceitePendentes]);
 
+  // Fetch homi_alerts unread count for CEO/Gestor badge
+  const fetchAlertasPendentes = useCallback(async () => {
+    if (!user || (!isAdmin && !isGestor)) return;
+    const { count } = await (supabase as any)
+      .from("homi_alerts")
+      .select("id", { count: "exact", head: true })
+      .eq("destinatario_id", user.id)
+      .eq("dispensada", false)
+      .eq("lida", false)
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    setAlertasPendentes(count ?? 0);
+  }, [user, isAdmin, isGestor]);
+
   useEffect(() => {
+    fetchAlertasPendentes();
+    if (!isAdmin && !isGestor) return;
+    const interval = setInterval(fetchAlertasPendentes, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchAlertasPendentes, isAdmin, isGestor]);
+
+
     if (toastShown.current || alerts.length === 0) return;
     toastShown.current = true;
     const critical = alerts.filter(a => a.severity === "critical");
