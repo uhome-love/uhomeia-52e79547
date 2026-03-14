@@ -222,6 +222,7 @@ Deno.serve(async (req) => {
         }
       } catch (err) {
         console.error(`Automation ${auto.id} failed:`, err);
+        logOps("error", "system", `Automation ${auto.name} failed`, { automation_id: auto.id }, err.message || "Unknown error");
         await supabase.from("automation_logs").insert({
           automation_id: auto.id,
           actions_executed: [],
