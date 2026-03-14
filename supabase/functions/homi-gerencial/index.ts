@@ -173,7 +173,7 @@ REGRAS IMPORTANTES:
 7. Use emojis para facilitar a leitura (📊 📈 🔴 🟢 🟡 ⚠️ ✅)
 
 EMPREENDIMENTOS DA UHOME:
-Casa Tua, Open Bosque, Shift, Casa Bastian, Melnick Day, Alto Lindóia, Lake Eyre, Orygem, Las Casas, Lév, Supreme Altos CP, Terrace, Grand Park Lindóia, High Garden Rio Branco, Go Rio Branco, Botanique, Skyline Menino Deus, Square Garden, Duetto - Morana, Demétrio ABF, Ora Studios do Cais
+${empreendimentoNamesList}
 
 FUNIL DE VENDAS: Lead → Contato → Qualificação → Interesse → Visita → Proposta → Fechamento
 

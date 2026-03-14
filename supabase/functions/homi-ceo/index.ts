@@ -270,7 +270,7 @@ REGRAS:
 6. Ao sugerir estratégias, seja específico: quem faz o quê, quando e como medir
 
 EMPREENDIMENTOS DA UHOME:
-Casa Tua, Open Bosque, Shift, Casa Bastian, Melnick Day, Alto Lindóia, Lake Eyre, Orygem, Las Casas, Lév, Supreme Altos CP, Terrace, Grand Park Lindóia, High Garden Rio Branco, Go Rio Branco, Botanique, Skyline Menino Deus, Square Garden, Duetto - Morana, Demétrio ABF, Ora Studios do Cais
+${empreendimentoNamesList}
 
 FUNIL: Lead → Contato → Qualificação → Interesse → Visita → Proposta → Fechamento
 
