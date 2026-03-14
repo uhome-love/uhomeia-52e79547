@@ -8,7 +8,11 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
+  const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+  const L = (level: string, msg: string, ctx?: Record<string, unknown>) => {
+    const line = JSON.stringify({ fn: "generate-corretor-report", level, msg, traceId, ctx, ts: new Date().toISOString() });
+    level === "error" ? console.error(line) : console.info(line);
+  };
     const {
       corretor_nome,
       gerente_nome,

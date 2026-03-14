@@ -59,6 +59,8 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
+    const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+    const L = makeLogger(traceId);
 
     // 1. Run the DB-level escalation (creates in-app notifications)
     const { data: escalationCount, error: escError } = await supabase.rpc(
