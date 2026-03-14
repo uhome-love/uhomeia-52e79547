@@ -176,6 +176,22 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
     onReload();
   };
 
+  const handleEditSave = async () => {
+    if (!editId) return;
+    const finalTipo = editTipo;
+    const titulo = `${TIPO_LABELS[finalTipo] || finalTipo}: ${leadNome}`;
+    await supabase.from("pipeline_tarefas").update({
+      tipo: finalTipo,
+      titulo,
+      descricao: editObs || null,
+      vence_em: editData || null,
+      hora_vencimento: editHora || null,
+    } as any).eq("id", editId);
+    toast.success("Tarefa atualizada ✅");
+    setEditId(null);
+    onReload();
+  };
+
   const renderTarefa = (tarefa: PipelineTarefa) => {
     const isOverdue = tarefa.status === "pendente" && tarefa.vence_em && isBefore(parseDateBRT(tarefa.vence_em), today);
     const isConcluida = tarefa.status === "concluida";
