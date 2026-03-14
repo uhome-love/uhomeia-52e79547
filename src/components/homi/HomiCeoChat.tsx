@@ -77,6 +77,8 @@ export default function HomiCeoChat() {
         return;
       }
 
+      abortRef.current = new AbortController();
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
