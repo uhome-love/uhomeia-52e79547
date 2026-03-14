@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Activity, AlertTriangle, FileText, Zap } from "lucide-react";
+import { Activity, AlertTriangle, FileText, Radio, Zap } from "lucide-react";
 import { subDays } from "date-fns";
 
 interface Stats {
   total24h: number;
   errors48h: number;
-  modules: number;
+  opsEvents24h: number;
+  opsErrors24h: number;
   traced: number;
 }
 
