@@ -7,10 +7,11 @@ import { HealthScore } from "@/components/audit/HealthScore";
 import { IssuesList } from "@/components/audit/IssuesList";
 import { AuditLogPanel } from "@/components/audit/AuditLogPanel";
 import { CriticalErrorsPanel } from "@/components/audit/CriticalErrorsPanel";
+import { OpsEventsPanel } from "@/components/audit/OpsEventsPanel";
 import { AuditStatsBar } from "@/components/audit/AuditStatsBar";
 import { useAudit } from "@/hooks/useAudit";
 import { useUhomeIa } from "@/hooks/useUhomeIa";
-import { Shield, Play, Sparkles, Loader2, Activity, FileText } from "lucide-react";
+import { Shield, Play, Sparkles, Loader2, Activity, FileText, Radio } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import type { AuditIssue } from "@/hooks/useAudit";
@@ -132,16 +133,22 @@ Retorne:
         </Card>
       )}
 
-      {/* Tabs: Logs + Errors */}
-      <Tabs defaultValue="logs">
+      {/* Tabs: Ops Events + Logs + Errors */}
+      <Tabs defaultValue="ops">
         <TabsList>
+          <TabsTrigger value="ops" className="gap-1.5">
+            <Radio className="h-3.5 w-3.5" /> Eventos Ops
+          </TabsTrigger>
           <TabsTrigger value="logs" className="gap-1.5">
             <FileText className="h-3.5 w-3.5" /> Logs de Auditoria
           </TabsTrigger>
           <TabsTrigger value="errors" className="gap-1.5">
-            <Activity className="h-3.5 w-3.5" /> Erros Recentes
+            <Activity className="h-3.5 w-3.5" /> Erros Automação
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="ops" className="mt-4">
+          <OpsEventsPanel />
+        </TabsContent>
         <TabsContent value="logs" className="mt-4">
           <AuditLogPanel />
         </TabsContent>

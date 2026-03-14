@@ -65,6 +65,10 @@ Deno.serve(async (req) => {
     error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "receive-meta-lead", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
   };
 
+  const logOps = (level: string, category: string, message: string, ctx?: Record<string, unknown>, errorDetail?: string) => {
+    supabase.from("ops_events").insert({ fn: "receive-meta-lead", level, category, message, trace_id: traceId, ctx: ctx || {}, error_detail: errorDetail || null }).then(r => { if (r.error) console.warn("ops_events insert err:", r.error.message); });
+  };
+
   try {
     const body = await req.json();
     L.info("Raw body received", { source: body.source || body.platform, hasData: !!body.data });
@@ -430,6 +434,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       L.error("Lead insert failed", { name, telefone, empreendimento }, insertError);
+      logOps("error", "system", "Lead insert failed", { name, telefone, empreendimento }, insertError.message);
       return new Response(
         JSON.stringify({ error: insertError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -437,6 +442,7 @@ Deno.serve(async (req) => {
     }
 
     L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, campaignId, propertyCode });
+    logOps("info", "business", "Lead created via Meta Ads", { lead_id: insertedLead.id, name, empreendimento, campaign_id: campaignId });
 
     // Register in permanent dedup registry
     const { error: registryError } = await supabase
@@ -484,6 +490,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error(JSON.stringify({ fn: "receive-meta-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
+    logOps("error", "system", "Unhandled exception", {}, err instanceof Error ? err.message : String(err));
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -23,6 +23,11 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+    const logOps = (level: string, category: string, message: string, ctx?: Record<string, unknown>, errorDetail?: string) => {
+      supabase.from("ops_events").insert({ fn: "generate-monthly-report", level, category, message, trace_id: traceId, ctx: ctx || {}, error_detail: errorDetail || null }).then(r => { if (r.error) console.warn("ops_events insert err:", r.error.message); });
+    };
+
     // Determine target month — default: previous month
     let targetMes: string;
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
@@ -330,11 +335,17 @@ ${diagnosticoIa}
       });
     }
 
+    logOps("info", "business", `Monthly report generated: ${targetMes}`, { mes: targetMes });
+
     return new Response(JSON.stringify({ success: true, mes: targetMes }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("generate-monthly-report error:", e);
+    try {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      sb.from("ops_events").insert({ fn: "generate-monthly-report", level: "error", category: "system", message: "Report generation failed", trace_id: null, ctx: {}, error_detail: e instanceof Error ? e.message : String(e) }).then(() => {});
+    } catch {}
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -18,6 +18,12 @@ serve(async (req) => {
     error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "whatsapp-notificacao", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
   };
 
+  // Lazy supabase init for ops_events only
+  const getSupabase = () => createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const logOps = (level: string, category: string, message: string, ctx?: Record<string, unknown>, errorDetail?: string) => {
+    try { getSupabase().from("ops_events").insert({ fn: "whatsapp-notificacao", level, category, message, trace_id: traceId, ctx: ctx || {}, error_detail: errorDetail || null }).then(() => {}); } catch {}
+  };
+
   try {
     const { telefone, tipo, dados } = await req.json();
 
@@ -26,6 +32,7 @@ serve(async (req) => {
 
     if (!token || !phoneId) {
       L.error("Credentials not configured", { hasToken: !!token, hasPhoneId: !!phoneId });
+      logOps("error", "integration", "WhatsApp credentials not configured", { hasToken: !!token, hasPhoneId: !!phoneId });
       return new Response(
         JSON.stringify({ error: "WhatsApp credentials not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -116,6 +123,7 @@ serve(async (req) => {
       L.info("Sent successfully", { tipo, to: numeroFinal, messageId: result?.messages?.[0]?.id });
     } else {
       L.error("API error", { tipo, to: numeroFinal, status: response.status, error: result?.error });
+      logOps("error", "integration", `WhatsApp API error: ${response.status}`, { tipo, to: numeroFinal, status: response.status }, JSON.stringify(result?.error || {}));
     }
 
     return new Response(JSON.stringify(result), {
@@ -124,6 +132,7 @@ serve(async (req) => {
     });
   } catch (err) {
     L.error("Unhandled exception", {}, err);
+    logOps("error", "system", "Unhandled exception", {}, err instanceof Error ? err.message : String(err));
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

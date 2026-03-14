@@ -67,6 +67,10 @@ Deno.serve(async (req) => {
     error: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg, traceId, ctx, err: err instanceof Error ? { name: err.name, message: err.message } : err ? { raw: String(err) } : undefined, ts: new Date().toISOString() })),
   };
 
+  const logOps = (level: string, category: string, message: string, ctx?: Record<string, unknown>, errorDetail?: string) => {
+    supabase.from("ops_events").insert({ fn: "distribute-lead", level, category, message, trace_id: traceId, ctx: ctx || {}, error_detail: errorDetail || null }).then(r => { if (r.error) console.warn("ops_events insert err:", r.error.message); });
+  };
+
   try {
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
@@ -308,6 +312,8 @@ Deno.serve(async (req) => {
       }
 
       L.info("Dispatch complete", { dispatched, failed });
+      if (failed > 0) logOps("warn", "business", `Dispatch partial failure: ${failed} leads failed`, { dispatched, failed, janela: targetJanela });
+      logOps("info", "business", `Dispatch complete: ${dispatched} leads`, { dispatched, failed, janela: targetJanela });
       return jsonResponse({ success: true, dispatched, failed });
     }
 
@@ -323,6 +329,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Unknown action" }, 400);
   } catch (err) {
     console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
+    try {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      sb.from("ops_events").insert({ fn: "distribute-lead", level: "error", category: "system", message: "Unhandled exception", trace_id: traceId, ctx: {}, error_detail: err instanceof Error ? err.message : String(err) }).then(() => {});
+    } catch {}
     return jsonResponse({ error: "Internal error" }, 500);
   }
 });
@@ -460,6 +470,7 @@ async function distributeSingleLead(
 
   if (error) {
     console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg: "Failed to assign single lead", ctx: { leadId }, err: { message: error.message }, ts: new Date().toISOString() }));
+    // Note: logOps not available in this standalone function scope; error persisted via stdout
     return { success: false, reason: "update_failed", error: error.message };
   }
 

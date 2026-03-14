@@ -62,6 +62,10 @@ Deno.serve(async (req) => {
   const traceId = extractTraceId(req);
   const L = makeLogger(traceId);
 
+  const logOps = (level: string, category: string, message: string, ctx?: Record<string, unknown>, errorDetail?: string) => {
+    supabase.from("ops_events").insert({ fn: "receive-landing-lead", level, category, message, trace_id: traceId, ctx: ctx || {}, error_detail: errorDetail || null }).then(r => { if (r.error) console.warn("ops_events insert err:", r.error.message); });
+  };
+
   try {
     const body = await req.json();
 
@@ -247,6 +251,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       L.error("Lead insert failed", { name, telefone, empreendimento }, insertError);
+      logOps("error", "system", "Lead insert failed", { name, telefone, empreendimento }, insertError.message);
       return new Response(
         JSON.stringify({ error: insertError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -254,6 +259,7 @@ Deno.serve(async (req) => {
     }
 
     L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, source });
+    logOps("info", "business", "Lead created via Landing Page", { lead_id: insertedLead.id, name, empreendimento, source });
 
     // ── Auto-distribute (propagate trace) ──
     try {
@@ -289,6 +295,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     L.error("Unhandled exception", {}, err);
+    logOps("error", "system", "Unhandled exception", {}, err instanceof Error ? err.message : String(err));
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

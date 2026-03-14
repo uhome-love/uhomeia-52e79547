@@ -62,11 +62,18 @@ Deno.serve(async (req) => {
     const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
     const L = makeLogger(traceId);
 
+    const logOps = (level: string, category: string, message: string, ctx?: Record<string, unknown>, errorDetail?: string) => {
+      supabase.from("ops_events").insert({ fn: "lead-escalation", level, category, message, trace_id: traceId, ctx: ctx || {}, error_detail: errorDetail || null }).then(r => { if (r.error) console.warn("ops_events insert err:", r.error.message); });
+    };
+
     // 1. Run the DB-level escalation (creates in-app notifications)
     const { data: escalationCount, error: escError } = await supabase.rpc(
       "escalonar_notificacoes_leads"
     );
-    if (escError) L.error("Escalation RPC failed", {}, escError);
+    if (escError) {
+      L.error("Escalation RPC failed", {}, escError);
+      logOps("error", "system", "Escalation RPC failed", {}, escError.message);
+    }
 
     // 2. Send push + WhatsApp for leads at escalation thresholds
     // Fetch leads currently pending acceptance with their escalation state
@@ -330,12 +337,19 @@ Deno.serve(async (req) => {
     };
 
     L.info("Lead escalation run", result);
+    if (result.escalated > 0 || result.recycled > 0) {
+      logOps("info", "business", `Escalation run: ${result.escalated} escalated, ${result.recycled} recycled`, result as unknown as Record<string, unknown>);
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    L.error("Unhandled exception", {}, err);
+    _emit("error", "Unhandled exception", undefined, {}, err);
+    try {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      sb.from("ops_events").insert({ fn: "lead-escalation", level: "error", category: "system", message: "Unhandled exception", trace_id: null, ctx: {}, error_detail: err instanceof Error ? err.message : String(err) }).then(() => {});
+    } catch {}
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -14,6 +14,11 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const traceId = req.headers.get("x-trace-id") || `t-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+    const logOps = (level: string, category: string, message: string, ctx?: Record<string, unknown>, errorDetail?: string) => {
+      supabase.from("ops_events").insert({ fn: "execute-automations", level, category, message, trace_id: traceId, ctx: ctx || {}, error_detail: errorDetail || null }).then(r => { if (r.error) console.warn("ops_events insert err:", r.error.message); });
+    };
+
     // Fetch all active automations
     const { data: automations, error: autoErr } = await supabase
       .from("automations")
@@ -217,6 +222,7 @@ Deno.serve(async (req) => {
         }
       } catch (err) {
         console.error(`Automation ${auto.id} failed:`, err);
+        logOps("error", "system", `Automation ${auto.name} failed`, { automation_id: auto.id }, err.message || "Unknown error");
         await supabase.from("automation_logs").insert({
           automation_id: auto.id,
           actions_executed: [],
@@ -224,6 +230,10 @@ Deno.serve(async (req) => {
           error_message: err.message || "Unknown error",
         });
       }
+    }
+
+    if (totalExecuted > 0) {
+      logOps("info", "business", `Automations run: ${totalExecuted} actions executed`, { totalExecuted });
     }
 
     return new Response(JSON.stringify({ success: true, totalExecuted }), {

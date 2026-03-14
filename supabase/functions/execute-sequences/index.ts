@@ -23,6 +23,10 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    const logOps = (level: string, category: string, message: string, ctx?: Record<string, unknown>, errorDetail?: string) => {
+      supabase.from("ops_events").insert({ fn: "execute-sequences", level, category, message, trace_id: traceId, ctx: ctx || {}, error_detail: errorDetail || null }).then(r => { if (r.error) console.warn("ops_events insert err:", r.error.message); });
+    };
+
     const now = new Date();
     let executed = 0;
     let errors = 0;
@@ -240,12 +244,22 @@ Deno.serve(async (req) => {
 
     const result = { executed, errors, enrolled, timestamp: now.toISOString() };
     L.info("Run complete", result as unknown as Record<string, unknown>);
+    if (executed > 0 || errors > 0 || enrolled > 0) {
+      logOps("info", "business", `Sequences run: ${executed} executed, ${errors} errors, ${enrolled} enrolled`, result as unknown as Record<string, unknown>);
+    }
+    if (errors > 0) {
+      logOps("warn", "system", `Sequence execution had ${errors} errors`, { executed, errors });
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     L.error("Unhandled exception", {}, err);
+    try {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      sb.from("ops_events").insert({ fn: "execute-sequences", level: "error", category: "system", message: "Unhandled exception", trace_id: null, ctx: {}, error_detail: err instanceof Error ? err.message : String(err) }).then(() => {});
+    } catch {}
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
