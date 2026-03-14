@@ -6377,6 +6377,35 @@ export type Database = {
           },
         ]
       }
+      v_user_partner_leads: {
+        Row: {
+          outro_corretor_id: string | null
+          papel_usuario: string | null
+          parceria_id: string | null
+          pipeline_lead_id: string | null
+        }
+        Insert: {
+          outro_corretor_id?: never
+          papel_usuario?: never
+          parceria_id?: string | null
+          pipeline_lead_id?: string | null
+        }
+        Update: {
+          outro_corretor_id?: never
+          papel_usuario?: never
+          parceria_id?: string | null
+          pipeline_lead_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_parcerias_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       aceitar_lead: {
