@@ -21,6 +21,7 @@ import { cn, formatBRL, formatBRLCompact } from "@/lib/utils";
 import { getVitrinePublicUrl } from "@/lib/vitrineUrl";
 import { motion, AnimatePresence } from "framer-motion";
 import LandingPageEditor from "@/components/landing/LandingPageEditor";
+import { AIKnowledgeEditorModal, AICompletenessBadge, computeAICompleteness, type AIKnowledgeData } from "@/components/admin/AIKnowledgeEditor";
 
 /* ═══════════════════════════════════════════════
    SEGMENTOS + CÓDIGOS DE ANÚNCIOS
