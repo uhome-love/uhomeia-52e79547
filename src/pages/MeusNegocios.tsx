@@ -937,8 +937,8 @@ export default function MeusNegocios() {
             const isDragOver = dragOverFase === fase.key;
             const totalFaseVGV = faseNegocios.reduce((sum, n) => {
               const vgv = n.vgv_estimado || 0;
-              const isParceria = n.pipeline_lead_id ? parceriaMap[n.pipeline_lead_id]?.isParceria : false;
-              return sum + (isParceria ? vgv / 2 : vgv);
+              const parceria = n.pipeline_lead_id ? parceriaMap[n.pipeline_lead_id] : null;
+              return sum + (parceria?.isParceria ? vgv * parceria.fatorSplit : vgv);
             }, 0);
 
             return (
