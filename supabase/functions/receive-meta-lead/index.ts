@@ -288,7 +288,7 @@ Deno.serve(async (req) => {
     if (existing) {
       // If lead exists but is still pending distribution (no corretor), just skip silently
       if (!existing.corretor_id) {
-        console.log(`META-LEAD DEDUP: ${telefone} already pending distribution (lead ${existing.id}), skipping`);
+        L.info("Dedup: pending distribution", { telefone, leadId: existing.id });
         return new Response(
           JSON.stringify({ success: true, action: "skipped_duplicate_pending", lead_id: existing.id }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
