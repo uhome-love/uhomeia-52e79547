@@ -29,12 +29,10 @@ function extractStr(val: any): string {
 /**
  * Attempt to extract structured field/value pairs from a stringified
  * TikTok Answers array that Make.com sometimes dumps into a single field.
- * e.g. '{"field":"email","value":"a@b.com"}, {"field":"name","value":"João"}'
  */
 function extractFieldValuePairs(raw: string): Record<string, string> {
   const result: Record<string, string> = {};
   try {
-    // Try wrapping in array brackets and parsing
     const wrapped = `[${raw.replace(/}\s*,\s*{/g, "},{")}]`;
     const arr = JSON.parse(wrapped);
     if (Array.isArray(arr)) {
@@ -45,7 +43,6 @@ function extractFieldValuePairs(raw: string): Record<string, string> {
       }
     }
   } catch {
-    // Fallback: regex extraction
     const regex = /"field"\s*:\s*"([^"]+)"\s*,\s*"value"\s*:\s*"([^"]*)"/g;
     let match;
     while ((match = regex.exec(raw)) !== null) {
@@ -66,6 +63,34 @@ function isLikelyTestLead(name: string, email: string, message: string): boolean
   if (combined.includes("test@")) return true;
   const testTokens = [" lead teste ", " teste make ", " qa ", " sandbox "];
   return testTokens.some((token) => combined.includes(token));
+}
+
+/** Retry distribute-lead call with exponential backoff */
+async function distributeWithRetry(
+  supabaseUrl: string, serviceKey: string, leadId: string, traceId: string,
+  L: { warn: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => void },
+  maxRetries = 2
+): Promise<boolean> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serviceKey}`,
+          "Content-Type": "application/json",
+          "x-trace-id": traceId,
+        },
+        body: JSON.stringify({ action: "distribute_single", pipeline_lead_id: leadId }),
+      });
+      if (resp.ok) return true;
+      const body = await resp.text().catch(() => "");
+      L.warn(`Distribute attempt ${attempt + 1} failed`, { leadId, status: resp.status, body: body.slice(0, 200) });
+    } catch (err) {
+      L.warn(`Distribute attempt ${attempt + 1} exception`, { leadId, attempt }, err);
+    }
+    if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+  }
+  return false;
 }
 
 Deno.serve(async (req) => {
@@ -99,7 +124,7 @@ Deno.serve(async (req) => {
       if (provided !== webhookSecret) {
         L.warn("Auth failed");
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
@@ -154,10 +179,8 @@ Deno.serve(async (req) => {
     }
 
     // ── Fallback: detect stringified field/value pairs ──
-    // Make.com sometimes dumps the entire Answers[] array into each field
     const allRawValues = [name, email, phone, message].join(" ");
     if (allRawValues.includes('"field"') && allRawValues.includes('"value"')) {
-      // Find the longest raw value (likely contains the full answers array)
       const candidates = [name, email, phone, message].filter(v => v.includes('"field"'));
       const longestRaw = candidates.sort((a, b) => b.length - a.length)[0] || "";
       if (longestRaw) {
@@ -385,6 +408,22 @@ Deno.serve(async (req) => {
     if (propertyCode) obsLines.push(`Cód. Imóvel: ${propertyCode}`);
     const obsText = obsLines.length > 0 ? obsLines.join(" | ") : null;
 
+    // ── Register in permanent dedup BEFORE insert (prevents race condition) ──
+    const { error: registryError } = await supabase
+      .from("jetimob_processed")
+      .upsert({ jetimob_lead_id: dedupRegistryId, telefone }, { onConflict: "jetimob_lead_id" });
+
+    if (registryError) {
+      if (registryError.code === "23505") {
+        L.info("Dedup: race condition caught by registry", { dedupRegistryId, telefone });
+        return new Response(
+          JSON.stringify({ success: true, action: "skipped_race_dedup" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      L.warn("Registry upsert warn", { dedupRegistryId }, registryError);
+    }
+
     // ── Insert lead ──
     const { data: insertedLead, error: insertError } = await supabase
       .from("pipeline_leads")
@@ -423,20 +462,10 @@ Deno.serve(async (req) => {
     L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, campaignId });
     logOps("info", "business", "Lead created via TikTok Ads", { lead_id: insertedLead.id, name, empreendimento, campaign_id: campaignId });
 
-    // Register in permanent dedup registry
-    await supabase
-      .from("jetimob_processed")
-      .upsert({ jetimob_lead_id: dedupRegistryId, telefone }, { onConflict: "jetimob_lead_id" });
-
-    // ── Auto-distribute ──
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json", "x-trace-id": traceId },
-        body: JSON.stringify({ action: "distribute_single", pipeline_lead_id: insertedLead.id }),
-      });
-    } catch (distErr) {
-      L.warn("Auto-distribute failed", { leadId: insertedLead.id }, distErr);
+    // ── Auto-distribute (with retry) ──
+    const distributed = await distributeWithRetry(supabaseUrl, serviceKey, insertedLead.id, traceId, L);
+    if (!distributed) {
+      logOps("error", "integration", "Distribution failed after retries — lead orphaned", { lead_id: insertedLead.id, name, empreendimento });
     }
 
     // ── Audit ──
@@ -450,11 +479,11 @@ Deno.serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed: true, trace_id: traceId }),
+      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, distributed, trace_id: traceId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error(JSON.stringify({ fn: "receive-tiktok-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
+    L.error("Unhandled exception", {}, err);
     logOps("error", "system", "Unhandled exception", {}, err instanceof Error ? err.message : String(err));
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),

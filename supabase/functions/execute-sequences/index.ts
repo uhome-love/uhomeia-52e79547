@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
     const now = new Date();
     let executed = 0;
     let errors = 0;
+    let skippedIdempotent = 0;
 
     // 1. Find active lead-sequence enrollments that need processing
     const { data: pendingSteps, error: fetchError } = await supabase
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
       L.error("Fetch pending sequences failed", {}, fetchError);
       return new Response(JSON.stringify({ error: fetchError.message }), {
         status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -79,6 +80,25 @@ Deno.serve(async (req) => {
             .from("pipeline_lead_sequencias")
             .update({ status: "concluida", concluida_em: now.toISOString() })
             .eq("id", enrollment.id);
+          continue;
+        }
+
+        // ── Idempotency: check if this exact step was already executed ──
+        const idempotencyKey = `seq:${enrollment.id}:step:${enrollment.passo_atual}`;
+        const { data: existingExec } = await supabase
+          .from("pipeline_atividades")
+          .select("id")
+          .eq("pipeline_lead_id", lead?.id)
+          .ilike("titulo", `[Auto] ${passo.titulo}`)
+          .gte("created_at", new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
+          .limit(1)
+          .maybeSingle();
+
+        if (existingExec) {
+          L.info("Idempotency skip — step already executed", { enrollmentId: enrollment.id, passo: enrollment.passo_atual });
+          skippedIdempotent++;
+          // Still advance to next step
+          await advanceToNextStep(supabase, enrollment, now);
           continue;
         }
 
@@ -139,47 +159,17 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Get next step
-        const { data: nextPasso } = await supabase
-          .from("pipeline_sequencia_passos")
-          .select("ordem, dias_apos_inicio")
-          .eq("sequencia_id", enrollment.sequencia_id)
-          .gt("ordem", enrollment.passo_atual)
-          .eq("ativo", true)
-          .order("ordem")
-          .limit(1)
-          .single();
-
-        if (nextPasso) {
-          // Calculate next send time
-          const iniciada = new Date(enrollment.iniciada_em);
-          const nextDate = new Date(iniciada);
-          nextDate.setDate(nextDate.getDate() + nextPasso.dias_apos_inicio);
-
-          await supabase
-            .from("pipeline_lead_sequencias")
-            .update({
-              passo_atual: nextPasso.ordem,
-              proximo_envio_em: nextDate.toISOString(),
-            })
-            .eq("id", enrollment.id);
-        } else {
-          // No more steps
-          await supabase
-            .from("pipeline_lead_sequencias")
-            .update({ status: "concluida", concluida_em: now.toISOString() })
-            .eq("id", enrollment.id);
-        }
-
+        // Advance to next step
+        await advanceToNextStep(supabase, enrollment, now);
         executed++;
       } catch (stepErr) {
-        L.error("Step execution error", { enrollmentId: enrollment.id }, stepErr);
+        L.error("Step execution error", { enrollmentId: enrollment.id, passo: enrollment.passo_atual }, stepErr);
+        logOps("error", "system", "Sequence step failed", { enrollment_id: enrollment.id, passo: enrollment.passo_atual }, stepErr instanceof Error ? stepErr.message : String(stepErr));
         errors++;
       }
     }
 
     // 2. Auto-enroll new leads into matching sequences
-    // Find leads that entered a stage matching a sequence trigger and aren't yet enrolled
     const { data: activeSeqs } = await supabase
       .from("pipeline_sequencias")
       .select("id, stage_gatilho, empreendimento")
@@ -187,15 +177,19 @@ Deno.serve(async (req) => {
 
     let enrolled = 0;
     for (const seq of (activeSeqs || [])) {
+      const { data: stageMatch } = await supabase
+        .from("pipeline_stages")
+        .select("id")
+        .eq("tipo", seq.stage_gatilho)
+        .eq("ativo", true)
+        .single();
+
+      if (!stageMatch) continue;
+
       const { data: matchingLeads } = await supabase
         .from("pipeline_leads")
         .select("id, stage_id, empreendimento, stage_changed_at")
-        .eq("stage_id", (await supabase
-          .from("pipeline_stages")
-          .select("id")
-          .eq("tipo", seq.stage_gatilho)
-          .eq("ativo", true)
-          .single()).data?.id || "")
+        .eq("stage_id", stageMatch.id)
         // Only leads that changed stage in the last hour (prevent old leads)
         .gte("stage_changed_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
 
@@ -203,14 +197,14 @@ Deno.serve(async (req) => {
         // Filter by empreendimento if specified
         if (seq.empreendimento && lead.empreendimento !== seq.empreendimento) continue;
 
-        // Check if already enrolled
+        // Check if already enrolled (idempotency)
         const { data: existing } = await supabase
           .from("pipeline_lead_sequencias")
           .select("id")
           .eq("pipeline_lead_id", lead.id)
           .eq("sequencia_id", seq.id)
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (!existing) {
           // Get first step
@@ -242,10 +236,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    const result = { executed, errors, enrolled, timestamp: now.toISOString() };
+    const result = { executed, errors, enrolled, skippedIdempotent, timestamp: now.toISOString() };
     L.info("Run complete", result as unknown as Record<string, unknown>);
     if (executed > 0 || errors > 0 || enrolled > 0) {
-      logOps("info", "business", `Sequences run: ${executed} executed, ${errors} errors, ${enrolled} enrolled`, result as unknown as Record<string, unknown>);
+      logOps("info", "business", `Sequences run: ${executed} executed, ${errors} errors, ${enrolled} enrolled, ${skippedIdempotent} skipped`, result as unknown as Record<string, unknown>);
     }
     if (errors > 0) {
       logOps("warn", "system", `Sequence execution had ${errors} errors`, { executed, errors });
@@ -258,7 +252,7 @@ Deno.serve(async (req) => {
     L.error("Unhandled exception", {}, err);
     try {
       const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-      sb.from("ops_events").insert({ fn: "execute-sequences", level: "error", category: "system", message: "Unhandled exception", trace_id: null, ctx: {}, error_detail: err instanceof Error ? err.message : String(err) }).then(() => {});
+      sb.from("ops_events").insert({ fn: "execute-sequences", level: "error", category: "system", message: "Unhandled exception", trace_id: traceId, ctx: {}, error_detail: err instanceof Error ? err.message : String(err) }).then(() => {});
     } catch {}
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
@@ -266,3 +260,35 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+/** Advance enrollment to the next step or mark as complete */
+async function advanceToNextStep(supabase: any, enrollment: any, now: Date) {
+  const { data: nextPasso } = await supabase
+    .from("pipeline_sequencia_passos")
+    .select("ordem, dias_apos_inicio")
+    .eq("sequencia_id", enrollment.sequencia_id)
+    .gt("ordem", enrollment.passo_atual)
+    .eq("ativo", true)
+    .order("ordem")
+    .limit(1)
+    .single();
+
+  if (nextPasso) {
+    const iniciada = new Date(enrollment.iniciada_em);
+    const nextDate = new Date(iniciada);
+    nextDate.setDate(nextDate.getDate() + nextPasso.dias_apos_inicio);
+
+    await supabase
+      .from("pipeline_lead_sequencias")
+      .update({
+        passo_atual: nextPasso.ordem,
+        proximo_envio_em: nextDate.toISOString(),
+      })
+      .eq("id", enrollment.id);
+  } else {
+    await supabase
+      .from("pipeline_lead_sequencias")
+      .update({ status: "concluida", concluida_em: now.toISOString() })
+      .eq("id", enrollment.id);
+  }
+}

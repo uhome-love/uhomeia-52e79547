@@ -49,6 +49,34 @@ function isLikelyTestLead(name: string, email: string, message: string): boolean
   return testTokens.some((token) => combined.includes(token));
 }
 
+/** Retry distribute-lead call with exponential backoff */
+async function distributeWithRetry(
+  supabaseUrl: string, serviceKey: string, leadId: string, traceId: string,
+  L: { warn: (msg: string, ctx?: Record<string, unknown>, err?: unknown) => void },
+  maxRetries = 2
+): Promise<boolean> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serviceKey}`,
+          "Content-Type": "application/json",
+          "x-trace-id": traceId,
+        },
+        body: JSON.stringify({ action: "distribute_single", pipeline_lead_id: leadId }),
+      });
+      if (resp.ok) return true;
+      const body = await resp.text().catch(() => "");
+      L.warn(`Distribute attempt ${attempt + 1} failed`, { leadId, status: resp.status, body: body.slice(0, 200) });
+    } catch (err) {
+      L.warn(`Distribute attempt ${attempt + 1} exception`, { leadId, attempt }, err);
+    }
+    if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+  }
+  return false;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -159,25 +187,7 @@ Deno.serve(async (req) => {
     const telefone = normalizePhone(phone);
     const isTestLead = isLikelyTestLead(name, email, message);
 
-    L.info("Parsed", { name, telefone, campaignId, propertyCode, empreendimento: empreendimento || "pending", externalLeadId, isTestLead });
-
-    if (isTestLead) {
-      L.info("Ignored test payload", { name, email, externalLeadId });
-      return new Response(
-        JSON.stringify({ success: true, action: "ignored_test_payload" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!telefone) {
-      L.warn("Missing phone", { name, email, campaignId, formName });
-      return new Response(
-        JSON.stringify({ success: true, action: "ignored_missing_phone", reason: "telefone obrigatório" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ── Resolve empreendimento ──
+    // ── Resolve empreendimento (need to declare before logging) ──
     let empreendimento: string | null = null;
     let segmentoFromMap: string | null = null;
 
@@ -185,7 +195,6 @@ Deno.serve(async (req) => {
     if (propertyCode) {
       const cleanCode = propertyCode.replace(/-UH$/i, "").trim();
       const codeWithSuffix = cleanCode.includes("-") ? cleanCode : `${cleanCode}-UH`;
-      // Try empreendimento_overrides
       const { data: overrideRow } = await supabase
         .from("empreendimento_overrides")
         .select("nome")
@@ -196,7 +205,6 @@ Deno.serve(async (req) => {
         empreendimento = overrideRow.nome;
       }
 
-      // Also try roleta_campanhas by empreendimento code pattern
       if (!empreendimento) {
         const { data: rcByCode } = await supabase
           .from("roleta_campanhas")
@@ -223,12 +231,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Priority 3: Extract from message (e.g. "Lead Gerado do Formulário de Open Bosque")
+    // Priority 3: Extract from message
     if (!empreendimento && message) {
       const msgMatch = message.match(/Formul[aá]rio\s+de\s+(.+?)(?:\s*\(|$)/i);
       if (msgMatch) {
         const extracted = msgMatch[1].trim();
-        // Try roleta_campanhas fuzzy
         const { data: rcMsg } = await supabase
           .from("roleta_campanhas")
           .select("empreendimento")
@@ -245,6 +252,24 @@ Deno.serve(async (req) => {
     if (!empreendimento && campaignName) empreendimento = campaignName;
     if (!empreendimento && formName) empreendimento = formName;
     if (!empreendimento) empreendimento = "Avulso - Meta Ads";
+
+    L.info("Parsed", { name, telefone, campaignId, propertyCode, empreendimento, externalLeadId, isTestLead });
+
+    if (isTestLead) {
+      L.info("Ignored test payload", { name, email, externalLeadId });
+      return new Response(
+        JSON.stringify({ success: true, action: "ignored_test_payload" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!telefone) {
+      L.warn("Missing phone", { name, email, campaignId, formName });
+      return new Response(
+        JSON.stringify({ success: true, action: "ignored_missing_phone", reason: "telefone obrigatório" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // ── Dedup: check external lead id + phone (ALL leads, including pending distribution) ──
     const dedupRegistryId = externalLeadId ? `meta:${externalLeadId}` : `meta-phone:${telefone}`;
@@ -406,6 +431,26 @@ Deno.serve(async (req) => {
     if (propertyCode) obsLines.push(`Cód. Imóvel: ${propertyCode}`);
     const obsText = obsLines.length > 0 ? obsLines.join(" | ") : null;
 
+    // ── Register in permanent dedup BEFORE insert (prevents race condition) ──
+    const { error: registryError } = await supabase
+      .from("jetimob_processed")
+      .upsert(
+        { jetimob_lead_id: dedupRegistryId, telefone },
+        { onConflict: "jetimob_lead_id" }
+      );
+
+    if (registryError) {
+      // If it's a unique violation, another request already processed this lead
+      if (registryError.code === "23505") {
+        L.info("Dedup: race condition caught by registry", { dedupRegistryId, telefone });
+        return new Response(
+          JSON.stringify({ success: true, action: "skipped_race_dedup" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      L.warn("Registry upsert warn", { dedupRegistryId }, registryError);
+    }
+
     // ── Insert lead ──
     const { data: insertedLead, error: insertError } = await supabase
       .from("pipeline_leads")
@@ -444,34 +489,10 @@ Deno.serve(async (req) => {
     L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, campaignId, propertyCode });
     logOps("info", "business", "Lead created via Meta Ads", { lead_id: insertedLead.id, name, empreendimento, campaign_id: campaignId });
 
-    // Register in permanent dedup registry
-    const { error: registryError } = await supabase
-      .from("jetimob_processed")
-      .upsert(
-        { jetimob_lead_id: dedupRegistryId, telefone },
-        { onConflict: "jetimob_lead_id" }
-      );
-
-    if (registryError) {
-      L.warn("Registry upsert warn", { dedupRegistryId }, registryError);
-    }
-
-    // ── Auto-distribute via roleta ──
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/distribute-lead`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${serviceKey}`,
-          "Content-Type": "application/json",
-          "x-trace-id": traceId,
-        },
-        body: JSON.stringify({
-          action: "distribute_single",
-          pipeline_lead_id: insertedLead.id,
-        }),
-      });
-    } catch (distErr) {
-      L.warn("Auto-distribute failed", { leadId: insertedLead.id }, distErr);
+    // ── Auto-distribute via roleta (with retry) ──
+    const distributed = await distributeWithRetry(supabaseUrl, serviceKey, insertedLead.id, traceId, L);
+    if (!distributed) {
+      logOps("error", "integration", "Distribution failed after retries — lead orphaned", { lead_id: insertedLead.id, name, empreendimento });
     }
 
     // ── Audit ──
@@ -485,11 +506,11 @@ Deno.serve(async (req) => {
     }).then(r => { if (r.error) L.warn("Audit insert failed", {}, r.error); });
 
     return new Response(
-      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, propertyCode, distributed: true, trace_id: traceId }),
+      JSON.stringify({ success: true, lead_id: insertedLead.id, empreendimento, propertyCode, distributed, trace_id: traceId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error(JSON.stringify({ fn: "receive-meta-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
+    L.error("Unhandled exception", {}, err);
     logOps("error", "system", "Unhandled exception", {}, err instanceof Error ? err.message : String(err));
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
