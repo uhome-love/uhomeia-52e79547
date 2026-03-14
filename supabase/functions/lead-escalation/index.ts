@@ -412,7 +412,7 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          const ok = await distributeWithRetry(supabaseUrl, serviceKey, stuck.id, traceId);
+          const ok = await distributeWithRetry(supabaseUrl, serviceKey, stuck.id, traceId, 2, supabase);
           if (ok) {
             stuckRedistributed++;
             L.info("Stuck lead redistributed successfully", { leadId: stuck.id, previousAttempts: count });
