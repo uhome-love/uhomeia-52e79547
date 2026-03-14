@@ -66,8 +66,29 @@ Deno.serve(async (req) => {
     }
 
     let notificationsCreated = 0;
+    let skippedIdempotent = 0;
+
+    // Idempotency window: 6 days (cron runs weekly on Mondays, so 6d prevents
+    // duplicates from manual re-runs while allowing the next weekly cycle)
+    const idempotencyCutoff = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString();
 
     for (const [gerenteId, deals] of byGerente) {
+      // ── Idempotency check: skip if this gerente already received a
+      //    "negocios_parados" notification within the last 6 days ──
+      const { data: recentNotif } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("user_id", gerenteId)
+        .eq("tipo", "negocios_parados")
+        .gte("created_at", idempotencyCutoff)
+        .limit(1)
+        .maybeSingle();
+
+      if (recentNotif) {
+        skippedIdempotent++;
+        continue;
+      }
+
       const top5 = deals.slice(0, 5);
       const listText = top5.map(d => `• ${d.nome}${d.empreendimento ? ` (${d.empreendimento})` : ""}`).join("\n");
       const extra = deals.length > 5 ? `\n... e mais ${deals.length - 5} negócios` : "";
@@ -83,7 +104,7 @@ Deno.serve(async (req) => {
       notificationsCreated++;
     }
 
-    const result = { notificationsCreated, totalStalled: stalledDeals.length, gerentes: byGerente.size };
+    const result = { notificationsCreated, skippedIdempotent, totalStalled: stalledDeals.length, gerentes: byGerente.size };
     L.info("Run complete", result as unknown as Record<string, unknown>);
     if (notificationsCreated > 0) {
       logOps("info", "business", `Stalled deals: ${notificationsCreated} gerentes notified, ${stalledDeals.length} deals total`, result as unknown as Record<string, unknown>);
