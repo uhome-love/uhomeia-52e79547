@@ -248,6 +248,7 @@ export function HomiProvider({ children }: { children: ReactNode }) {
   const clearMessages = useCallback(() => {
     setMessages([]);
     setConversationId(null);
+    setKnowledgeSource(null);
   }, []);
 
   // Proactive alerts
