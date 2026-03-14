@@ -306,11 +306,11 @@ Deno.serve(async (req) => {
             url: `/pipeline-leads?lead=${existing.id}`,
           }),
         });
-      } catch (e) { console.warn("Push error:", e); }
+      } catch (e) { L.warn("Push error", { leadId: existing.id }, e); }
 
-      console.log(`TIKTOK-LEAD DEDUP: ${telefone} reactivated (lead ${existing.id})`);
+      L.info("Reactivated existing lead", { telefone, leadId: existing.id });
       return new Response(
-        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id }),
+        JSON.stringify({ success: true, action: "reactivated", lead_id: existing.id, trace_id: traceId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
