@@ -190,9 +190,9 @@ function MiniCard({ item, getPreco, onFavorite, isFavorite }: { item: any; getPr
         <div className="flex items-center justify-between pt-1.5 border-t border-border/40">
           {codigo && <span className="text-[9px] text-muted-foreground/60 font-mono">{codigo}</span>}
           <div className="flex items-center gap-0.5">
-            <button onClick={() => { navigator.clipboard.writeText(`https://uhomesales.com/imovel/${codigo}`); toast.success("Link copiado!"); }}
+            <button onClick={() => { const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo}`; navigator.clipboard.writeText(text); toast.success("Dados copiados!"); }}
               className="p-1 rounded hover:bg-muted transition-colors"><Copy className="h-3 w-3 text-muted-foreground" /></button>
-            <a href={`https://wa.me/?text=${encodeURIComponent(`${titulo} - ${loc.bairro} - ${getPreco(item)}\nhttps://uhomesales.com/imovel/${codigo}`)}`}
+            <a href={`https://wa.me/?text=${encodeURIComponent(`${titulo} - ${loc.bairro} - ${getPreco(item)} (Cód. ${codigo})`)}`}
               target="_blank" rel="noopener noreferrer">
               <button className="p-1 rounded hover:bg-muted transition-colors"><Phone className="h-3 w-3 text-muted-foreground hover:text-green-600" /></button>
             </a>

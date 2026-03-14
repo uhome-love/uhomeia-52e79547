@@ -502,7 +502,7 @@ const PropertyCardList = React.memo(function PropertyCardList({ item, idx, isCam
               )}
             </div>
             <div className="flex items-center gap-0.5">
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(`https://uhomesales.com/imovel/${codigo || item.id}`); toast.success("Link copiado!"); }}>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo || item.id}`; navigator.clipboard.writeText(text); toast.success("Dados copiados!"); }}>
                 <Copy className="h-3 w-3" />
               </Button>
               <a href={`https://wa.me/?text=${encodeURIComponent(`${titulo} - ${loc.bairro} - ${getPreco(item)}`)}`} target="_blank" rel="noopener noreferrer">
