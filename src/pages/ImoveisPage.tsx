@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getVitrinePublicUrl } from "@/lib/vitrineUrl";
 import { useTypesenseSearch, buildFilterBy, buildSortBy } from "@/hooks/useTypesenseSearch";
 import { useAISearch, type AIPropertyResult } from "@/hooks/useAISearch";
+import { mapTypesenseDocs } from "@/lib/typesenseMapping";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -332,7 +333,7 @@ function FilterChip({ label, active, children, onClear }: { label: string; activ
 }
 
 // ── Property Card (Grid) ──
-function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco }: any) {
+const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco }: any) {
   const images = extractImages(item);
   const fullImages = extractFullImages(item);
   const loc = extractEndereco(item);
@@ -409,14 +410,15 @@ function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onTog
               <Button
                 variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary"
                 onClick={() => {
-                  navigator.clipboard.writeText(`https://uhomesales.com/imovel/${codigo}`);
-                  toast.success("Link copiado!");
+                  const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo}`;
+                  navigator.clipboard.writeText(text);
+                  toast.success("Dados copiados!");
                 }}
               >
                 <Copy className="h-3 w-3" />
               </Button>
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Confira este imóvel: ${titulo} - ${loc.bairro} - ${getPreco(item)}\nhttps://uhomesales.com/imovel/${codigo}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`Confira este imóvel: ${titulo} - ${loc.bairro} - ${getPreco(item)} (Cód. ${codigo})`)}`}
                 target="_blank" rel="noopener noreferrer"
               >
                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-green-600">
@@ -430,10 +432,10 @@ function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onTog
       </div>
     </Card>
   );
-}
+});
 
 // ── Property Card (List) ──
-function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco }: any) {
+const PropertyCardList = React.memo(function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco }: any) {
   const images = extractImages(item);
   const fullImages = extractFullImages(item);
   const loc = extractEndereco(item);
@@ -500,7 +502,7 @@ function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onTog
               )}
             </div>
             <div className="flex items-center gap-0.5">
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(`https://uhomesales.com/imovel/${codigo || item.id}`); toast.success("Link copiado!"); }}>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo || item.id}`; navigator.clipboard.writeText(text); toast.success("Dados copiados!"); }}>
                 <Copy className="h-3 w-3" />
               </Button>
               <a href={`https://wa.me/?text=${encodeURIComponent(`${titulo} - ${loc.bairro} - ${getPreco(item)}`)}`} target="_blank" rel="noopener noreferrer">
@@ -513,7 +515,7 @@ function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onTog
       </div>
     </Card>
   );
-}
+});
 
 // ══════════════════════════════════════════
 // ██  MAIN PAGE
@@ -620,34 +622,8 @@ export default function ImoveisPage() {
   // Sequence number to prevent stale responses from updating state
   const fetchSeqRef = useRef(0);
 
-  // Helper to map Typesense docs to card format
-  const mapTypesenseDocs = (docs: any[]) => docs.map((doc: any) => ({
-    ...doc,
-    codigo: doc.codigo || doc.id,
-    titulo_anuncio: doc.titulo,
-    empreendimento_nome: doc.empreendimento,
-    endereco_bairro: doc.bairro,
-    endereco_cidade: doc.cidade,
-    endereco_logradouro: doc.endereco,
-    valor_venda: doc.valor_venda,
-    valor_locacao: doc.valor_locacao,
-    area_privativa: doc.area_privativa,
-    garagens: doc.vagas,
-    suites: doc.suites,
-    banheiros: doc.banheiros,
-    dormitorios: doc.dormitorios,
-    valor_condominio: doc.valor_condominio,
-    situacao: doc.situacao,
-    latitude: doc.latitude,
-    longitude: doc.longitude,
-    _fotos_normalized: doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-    _fotos_full: doc.fotos_full?.length ? doc.fotos_full : doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [],
-    imagens: (doc.fotos || []).map((url: string, i: number) => ({
-      link_thumb: url,
-      link: doc.fotos_full?.[i] || url,
-      link_large: doc.fotos_full?.[i] || url,
-    })),
-  }));
+  // mapTypesenseDocs imported from @/lib/typesenseMapping
+
 
   // ── Typesense search ──
   const fetchViaTypesense = useCallback(async (pageNum: number, seq: number): Promise<"ok" | "aborted" | "error"> => {
