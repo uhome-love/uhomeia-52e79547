@@ -96,7 +96,8 @@ export default function HomiBriefingCard({ dashboardData }: Props) {
         setBriefing({ ...data.briefing, gerado_em: new Date().toISOString() });
         toast.success("Briefing gerado!");
       }
-    } catch {
+    } catch (e) {
+      console.error("[HomiBriefingCard] Generate error:", e);
       toast.error("Erro ao gerar briefing");
     } finally {
       setGenerating(false);
