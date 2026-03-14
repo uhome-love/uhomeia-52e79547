@@ -155,20 +155,20 @@ const App = () => (
             <Route path="/gerente/dashboard" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="gerente-dashboard"><GerenteDashboard /></ErrorBoundary></ProtectedPage>} />
             <Route path="/central-do-gerente" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="checkpoint"><CheckpointGerente /></ErrorBoundary></ProtectedPage>} />
             
-            <Route path="/central-dados" element={<ProtectedPage roles={["gestor", "admin"]}><CentralDados /></ProtectedPage>} />
-            <Route path="/scripts" element={<ProtectedPage><ScriptsGenerator /></ProtectedPage>} />
-            <Route path="/gestao" element={<ProtectedPage roles={["admin"]}><GestorDashboard /></ProtectedPage>} />
-            <Route path="/relatorios" element={<ProtectedPage roles={["gestor", "admin"]}><RelatorioCorretor /></ProtectedPage>} />
-            <Route path="/ranking" element={<ProtectedPage><RankingEquipe /></ProtectedPage>} />
-            <Route path="/meu-time" element={<ProtectedPage roles={["gestor", "admin"]}><MeuTime /></ProtectedPage>} />
+            <Route path="/central-dados" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="central-dados"><CentralDados /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/scripts" element={<ProtectedPage><ErrorBoundary module="scripts"><ScriptsGenerator /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/gestao" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="gestao"><GestorDashboard /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/relatorios" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="relatorios"><RelatorioCorretor /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/ranking" element={<ProtectedPage><ErrorBoundary module="ranking"><RankingEquipe /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/meu-time" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="meu-time"><MeuTime /></ErrorBoundary></ProtectedPage>} />
             <Route path="/oferta-ativa" element={<ProtectedPage><ErrorBoundary module="oferta-ativa"><OfertaAtiva /></ErrorBoundary></ProtectedPage>} />
             <Route path="/roleta" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="roleta"><RoletaLeads /></ErrorBoundary></ProtectedPage>} />
-            <Route path="/marketplace" element={<ProtectedPage><MarketplaceScripts /></ProtectedPage>} />
+            <Route path="/marketplace" element={<ProtectedPage><ErrorBoundary module="marketplace"><MarketplaceScripts /></ErrorBoundary></ProtectedPage>} />
             <Route path="/pipeline-leads" element={<ProtectedPage><ErrorBoundary module="pipeline"><PipelineKanban /></ErrorBoundary></ProtectedPage>} />
-            <Route path="/escala-diaria" element={<ProtectedPage roles={["admin"]}><EscalaDiaria /></ProtectedPage>} />
-            <Route path="/disponibilidade" element={<ProtectedPage roles={["gestor", "admin"]}><DisponibilidadePage /></ProtectedPage>} />
-            <Route path="/automacoes" element={<ProtectedPage roles={["gestor", "admin"]}><AutomacoesPage /></ProtectedPage>} />
-            <Route path="/templates-comunicacao" element={<ProtectedPage roles={["gestor", "admin"]}><TemplatesComunicacao /></ProtectedPage>} />
+            <Route path="/escala-diaria" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="escala-diaria"><EscalaDiaria /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/disponibilidade" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="disponibilidade"><DisponibilidadePage /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/automacoes" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="automacoes"><AutomacoesPage /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/templates-comunicacao" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="templates-comunicacao"><TemplatesComunicacao /></ErrorBoundary></ProtectedPage>} />
 
             {/* Corretor — todos autenticados */}
             <Route path="/corretor" element={<ProtectedPage><ErrorBoundary module="corretor-dashboard"><CorretorDashboard /></ErrorBoundary></ProtectedPage>} />
