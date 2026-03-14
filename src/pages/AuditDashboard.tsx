@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HealthScore } from "@/components/audit/HealthScore";
 import { IssuesList } from "@/components/audit/IssuesList";
 import { AuditLogPanel } from "@/components/audit/AuditLogPanel";
+import { CriticalErrorsPanel } from "@/components/audit/CriticalErrorsPanel";
+import { AuditStatsBar } from "@/components/audit/AuditStatsBar";
 import { useAudit } from "@/hooks/useAudit";
 import { useUhomeIa } from "@/hooks/useUhomeIa";
-import { Shield, Play, Sparkles, Loader2 } from "lucide-react";
+import { Shield, Play, Sparkles, Loader2, Activity, FileText } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import type { AuditIssue } from "@/hooks/useAudit";
@@ -67,10 +70,10 @@ Retorne:
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            Auditoria & Saúde do Sistema
+            Auditoria & Observabilidade
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Valide integridade dos dados, detecte duplicações e inconsistências.
+            Integridade dos dados, logs operacionais e diagnóstico de erros.
           </p>
         </div>
         <div className="flex gap-2">
@@ -81,11 +84,14 @@ Retorne:
           {result && (
             <Button variant="outline" onClick={handleIaAnalysis} disabled={iaLoading}>
               <Sparkles className="h-4 w-4 mr-2" />
-              {iaLoading ? "Analisando..." : "Gerar Análise IA"}
+              {iaLoading ? "Analisando..." : "Análise IA"}
             </Button>
           )}
         </div>
       </div>
+
+      {/* Stats bar */}
+      <AuditStatsBar />
 
       {/* Progress */}
       {loading && (
@@ -126,8 +132,23 @@ Retorne:
         </Card>
       )}
 
-      {/* Audit Log */}
-      <AuditLogPanel />
+      {/* Tabs: Logs + Errors */}
+      <Tabs defaultValue="logs">
+        <TabsList>
+          <TabsTrigger value="logs" className="gap-1.5">
+            <FileText className="h-3.5 w-3.5" /> Logs de Auditoria
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="gap-1.5">
+            <Activity className="h-3.5 w-3.5" /> Erros Recentes
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="logs" className="mt-4">
+          <AuditLogPanel />
+        </TabsContent>
+        <TabsContent value="errors" className="mt-4">
+          <CriticalErrorsPanel />
+        </TabsContent>
+      </Tabs>
 
       {/* Empty state */}
       {!result && !loading && (
