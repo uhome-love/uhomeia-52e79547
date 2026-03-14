@@ -119,3 +119,6 @@ verify_jwt = false
 
 [functions.typesense-sync]
 verify_jwt = false
+
+[functions.homi-alerts-engine]
+verify_jwt = false
