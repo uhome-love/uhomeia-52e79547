@@ -160,133 +160,64 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
       agg.real_propostas += l.real_propostas ?? 0;
     }
 
-    // VGV from negocios (source of truth) — use data_assinatura for assinado/vendido, created_at for others
+    // VGV from v_kpi_negocios (official partnership-aware source of truth)
     const mesKey = dateRange.start.slice(0, 7);
     
-    // Fetch assinado+vendido deals by data_assinatura (source of truth for VGV)
-    let negAssinadoQuery = supabase.from("negocios").select("id, gerente_id, corretor_id, vgv_estimado, vgv_final, fase, nome_cliente, pipeline_lead_id")
+    // Fetch split-attributed deals from canonical view
+    // assinado/vendido by data_assinatura, proposta/negociacao/documentacao by data_criacao
+    let negAssinadoQuery = supabase.from("v_kpi_negocios").select("id, auth_user_id, vgv_efetivo, fase, fator_split, is_parceria, pipeline_lead_id")
       .in("fase", ["assinado", "vendido"])
       .gte("data_assinatura", dateRange.start)
       .lte("data_assinatura", dateRange.end);
-    if (filterGerenteId) negAssinadoQuery = negAssinadoQuery.eq("gerente_id", filterGerenteId);
     
-    // Fetch proposal/negotiation deals by created_at
-    let negPropostaQuery = supabase.from("negocios").select("id, gerente_id, corretor_id, vgv_estimado, vgv_final, fase, nome_cliente, pipeline_lead_id")
+    let negPropostaQuery = supabase.from("v_kpi_negocios").select("id, auth_user_id, vgv_efetivo, fase, fator_split, is_parceria, pipeline_lead_id")
       .in("fase", ["proposta", "negociacao", "documentacao"])
-      .gte("created_at", `${mesKey}-01`)
-      .lt("created_at", `${mesKey}-32`);
-    if (filterGerenteId) negPropostaQuery = negPropostaQuery.eq("gerente_id", filterGerenteId);
+      .gte("data_criacao", `${mesKey}-01`)
+      .lte("data_criacao", `${mesKey}-31`);
     
     const [{ data: pdnsAssinado }, { data: pdnsProposta }] = await Promise.all([negAssinadoQuery, negPropostaQuery]);
     const pdns = [...(pdnsAssinado || []), ...(pdnsProposta || [])];
 
-    // Load partnerships for split VGV calculation
-    const pipelineLeadIdsForParcerias = pdns.map(p => p.pipeline_lead_id).filter(Boolean) as string[];
-    let parceriaMap = new Map<string, { principal_id: string; parceiro_id: string; divisao_principal: number; divisao_parceiro: number }>();
-    if (pipelineLeadIdsForParcerias.length > 0) {
-      const { data: parcerias } = await supabase.from("pipeline_parcerias")
-        .select("pipeline_lead_id, corretor_principal_id, corretor_parceiro_id, divisao_principal, divisao_parceiro")
-        .eq("status", "ativa")
-        .in("pipeline_lead_id", pipelineLeadIdsForParcerias);
-      (parcerias || []).forEach(p => {
-        parceriaMap.set(p.pipeline_lead_id, {
-          principal_id: p.corretor_principal_id,
-          parceiro_id: p.corretor_parceiro_id,
-          divisao_principal: p.divisao_principal || 50,
-          divisao_parceiro: p.divisao_parceiro || 50,
-        });
-      });
-    }
-
-    // Build mapping: profiles.id → team_members.id via user_id
-    const negCorretorIds = [...new Set((pdns || []).map(p => p.corretor_id).filter(Boolean))] as string[];
-    // Also include partnership user IDs for profile resolution
-    const parceriaUserIds = [...parceriaMap.values()].flatMap(p => [p.principal_id, p.parceiro_id]);
-    const allCorretorIdsForProfiles = [...new Set([...negCorretorIds, ...parceriaUserIds])];
-    
-    // Build mapping: profiles.id → auth.user_id for VGV assignment to canonical corretor ID
-    const profileIdToAuthId = new Map<string, string>();
-    // Also build auth.user_id → profiles.id for partnership resolution
-    const authIdToProfileId = new Map<string, string>();
-    
-    if (allCorretorIdsForProfiles.length > 0) {
-      // Query by both id and user_id to handle both profile IDs and auth user IDs
-      const { data: cProfiles } = await supabase.from("profiles").select("id, user_id").in("id", allCorretorIdsForProfiles);
-      (cProfiles || []).forEach(p => {
-        if (p.user_id) {
-          profileIdToAuthId.set(p.id, p.user_id);
-          authIdToProfileId.set(p.user_id, p.id);
-        }
-      });
-      // Also check by user_id for partnership IDs that might be auth user IDs
-      const missingIds = allCorretorIdsForProfiles.filter(id => !profileIdToAuthId.has(id));
-      if (missingIds.length > 0) {
-        const { data: cProfiles2 } = await supabase.from("profiles").select("id, user_id").in("user_id", missingIds);
-        (cProfiles2 || []).forEach(p => {
-          if (p.user_id) {
-            profileIdToAuthId.set(p.id, p.user_id);
-            authIdToProfileId.set(p.user_id, p.id);
-          }
-        });
-      }
-    }
-
-    // Helper to resolve any ID (profile or auth) to canonical auth user_id
-    const resolveToAuthId = (id: string): string | null => {
-      // If it's a profile.id, map to auth user_id
-      if (profileIdToAuthId.has(id)) return profileIdToAuthId.get(id)!;
-      // If it's already an auth user_id (check if it maps to a corretor in our map)
-      if (corretorAggMap.has(id)) return id;
-      return null;
-    };
-
-    // Build VGV + Propostas per gerente from negocios (single source of truth)
+    // Build VGV per gerente and assign to corretores using auth_user_id directly
+    // v_kpi_negocios already handles partnership splits — no manual parceriaMap needed
     const pdnByGerente = new Map<string, { gerado: number; assinado: number; propostas_count: number }>();
-    for (const p of (pdns || [])) {
-      const gId = p.gerente_id;
-      if (!gId) continue;
-      const curr = pdnByGerente.get(gId) || { gerado: 0, assinado: 0, propostas_count: 0 };
+    
+    // Track unique deal IDs per gerente to count propostas correctly (avoid double-counting split deals)
+    const gerenteDealIds = new Map<string, Set<string>>();
+
+    for (const p of pdns) {
+      const authUserId = p.auth_user_id;
+      if (!authUserId) continue;
+      
+      const agg = corretorAggMap.get(authUserId);
+      if (!agg) continue;
+      
+      const gId = agg.gerente_id;
       const fase = p.fase || "";
-      const vgv = Number(p.vgv_final || p.vgv_estimado || 0);
-      if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") { curr.gerado += vgv; curr.propostas_count++; }
+      const vgv = Number(p.vgv_efetivo || 0);
+
+      // Assign split-aware VGV directly to corretor
+      if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") {
+        agg.real_vgv_gerado += vgv;
+      }
+      if (fase === "assinado" || fase === "vendido") {
+        agg.real_vgv_assinado += vgv;
+      }
+
+      // Aggregate at gerente level
+      const curr = pdnByGerente.get(gId) || { gerado: 0, assinado: 0, propostas_count: 0 };
+      if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") {
+        curr.gerado += vgv;
+        // Count unique deals for propostas (partnership deals appear twice in view)
+        if (!gerenteDealIds.has(gId)) gerenteDealIds.set(gId, new Set());
+        const dealKey = p.id;
+        if (!gerenteDealIds.get(gId)!.has(dealKey)) {
+          gerenteDealIds.get(gId)!.add(dealKey);
+          curr.propostas_count++;
+        }
+      }
       if (fase === "assinado" || fase === "vendido") curr.assinado += vgv;
       pdnByGerente.set(gId, curr);
-
-      // Assign VGV to corretor(s) — handle partnership splits
-      const parceria = p.pipeline_lead_id ? parceriaMap.get(p.pipeline_lead_id) : undefined;
-      
-      if (parceria) {
-        // Split VGV between partners
-        const principalAuthId = resolveToAuthId(parceria.principal_id);
-        const parceiroAuthId = resolveToAuthId(parceria.parceiro_id);
-        const vgvPrincipal = vgv * (parceria.divisao_principal / 100);
-        const vgvParceiro = vgv * (parceria.divisao_parceiro / 100);
-
-        if (principalAuthId) {
-          const agg = corretorAggMap.get(principalAuthId);
-          if (agg) {
-            if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") agg.real_vgv_gerado += vgvPrincipal;
-            if (fase === "assinado" || fase === "vendido") agg.real_vgv_assinado += vgvPrincipal;
-          }
-        }
-        if (parceiroAuthId) {
-          const agg = corretorAggMap.get(parceiroAuthId);
-          if (agg) {
-            if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") agg.real_vgv_gerado += vgvParceiro;
-            if (fase === "assinado" || fase === "vendido") agg.real_vgv_assinado += vgvParceiro;
-          }
-        }
-      } else if (p.corretor_id) {
-        // No partnership — assign full VGV to single corretor
-        const authUserId = profileIdToAuthId.get(p.corretor_id);
-        if (authUserId) {
-          const agg = corretorAggMap.get(authUserId);
-          if (agg) {
-            if (fase === "proposta" || fase === "negociacao" || fase === "documentacao") agg.real_vgv_gerado += vgv;
-            if (fase === "assinado" || fase === "vendido") agg.real_vgv_assinado += vgv;
-          }
-        }
-      }
     }
 
     // Get CEO metas for VGV meta values
