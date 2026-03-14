@@ -5,6 +5,7 @@ import { X, Send, Loader2, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useHomi } from "@/contexts/HomiContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import ReactMarkdown from "react-markdown";
 import HomiAnimated from "./HomiAnimated";
 import type { HomiAnimState } from "./HomiAnimated";
