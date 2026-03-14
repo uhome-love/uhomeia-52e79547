@@ -333,7 +333,7 @@ function FilterChip({ label, active, children, onClear }: { label: string; activ
 }
 
 // ── Property Card (Grid) ──
-function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco }: any) {
+const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco }: any) {
   const images = extractImages(item);
   const fullImages = extractFullImages(item);
   const loc = extractEndereco(item);
