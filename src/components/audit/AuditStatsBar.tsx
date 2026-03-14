@@ -13,26 +13,26 @@ interface Stats {
 }
 
 export function AuditStatsBar() {
-  const [stats, setStats] = useState<Stats>({ total24h: 0, errors48h: 0, modules: 0, traced: 0 });
+  const [stats, setStats] = useState<Stats>({ total24h: 0, errors48h: 0, opsEvents24h: 0, opsErrors24h: 0, traced: 0 });
 
   useEffect(() => {
     const load = async () => {
       const since24h = subDays(new Date(), 1).toISOString();
       const since48h = subDays(new Date(), 2).toISOString();
 
-      const [totalRes, errorRes, modulesRes, tracedRes] = await Promise.all([
+      const [totalRes, errorRes, opsRes, opsErrRes, tracedRes] = await Promise.all([
         supabase.from("audit_log").select("id", { count: "exact", head: true }).gte("created_at", since24h),
         supabase.from("automation_logs").select("id", { count: "exact", head: true }).eq("status", "error").gte("triggered_at", since48h),
-        supabase.from("audit_log").select("modulo").gte("created_at", since24h),
-        supabase.from("audit_log").select("id", { count: "exact", head: true }).not("request_id", "is", null).gte("created_at", since24h),
+        supabase.from("ops_events").select("id", { count: "exact", head: true }).gte("created_at", since24h),
+        supabase.from("ops_events").select("id", { count: "exact", head: true }).eq("level", "error").gte("created_at", since24h),
+        supabase.from("ops_events").select("id", { count: "exact", head: true }).not("trace_id", "is", null).gte("created_at", since24h),
       ]);
-
-      const uniqueModules = new Set((modulesRes.data || []).map((r: any) => r.modulo));
 
       setStats({
         total24h: totalRes.count || 0,
         errors48h: errorRes.count || 0,
-        modules: uniqueModules.size,
+        opsEvents24h: opsRes.count || 0,
+        opsErrors24h: opsErrRes.count || 0,
         traced: tracedRes.count || 0,
       });
     };
