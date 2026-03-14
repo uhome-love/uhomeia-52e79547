@@ -12,8 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Slider } from "@/components/ui/slider";
 import {
   Search, Building2, Loader2, ChevronLeft, ChevronRight,
-  MapPin, Megaphone, Check, UserCircle, Phone,
-  Mail, X, Share2, CheckSquare, Square, Link2, Copy, CalendarClock,
+  MapPin, Megaphone, Check, X, Share2, Link2, Copy, CalendarClock,
   LayoutGrid, List, Heart, Zap,
   Sparkles, Brain, ArrowRight, Map
 } from "lucide-react";
