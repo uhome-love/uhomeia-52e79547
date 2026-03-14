@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { loadEnterpriseKnowledge, getEmpreendimentoNames } from "../_shared/enterprise-knowledge.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,6 +86,10 @@ Seja direto, use dados concretos. Máximo 300 palavras. Período: ${periodo || "
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    // ─── Load enterprise names from DB (cached) ───
+    const knowledge = await loadEnterpriseKnowledge(adminClient);
+    const empreendimentoNamesList = getEmpreendimentoNames(knowledge).join(", ");
+
     const today = new Date().toISOString().slice(0, 10);
     const currentMonth = today.slice(0, 7);
     const weekStart = getWeekStart(today);
@@ -269,7 +274,7 @@ REGRAS:
 6. Ao sugerir estratégias, seja específico: quem faz o quê, quando e como medir
 
 EMPREENDIMENTOS DA UHOME:
-Casa Tua, Open Bosque, Shift, Casa Bastian, Melnick Day, Alto Lindóia, Lake Eyre, Orygem, Las Casas, Lév, Supreme Altos CP, Terrace, Grand Park Lindóia, High Garden Rio Branco, Go Rio Branco, Botanique, Skyline Menino Deus, Square Garden, Duetto - Morana, Demétrio ABF, Ora Studios do Cais
+${empreendimentoNamesList}
 
 FUNIL: Lead → Contato → Qualificação → Interesse → Visita → Proposta → Fechamento
 
