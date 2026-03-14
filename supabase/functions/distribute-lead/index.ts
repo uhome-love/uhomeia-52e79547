@@ -312,6 +312,8 @@ Deno.serve(async (req) => {
       }
 
       L.info("Dispatch complete", { dispatched, failed });
+      if (failed > 0) logOps("warn", "business", `Dispatch partial failure: ${failed} leads failed`, { dispatched, failed, janela: targetJanela });
+      logOps("info", "business", `Dispatch complete: ${dispatched} leads`, { dispatched, failed, janela: targetJanela });
       return jsonResponse({ success: true, dispatched, failed });
     }
 
