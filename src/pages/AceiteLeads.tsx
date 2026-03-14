@@ -310,12 +310,7 @@ export default function AceiteLeads() {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [user, fetchPending]);
 
-  // Poll every 30s as backup for realtime
-  useEffect(() => {
-    if (!user) return;
-    const iv = setInterval(fetchPending, 30_000);
-    return () => clearInterval(iv);
-  }, [user, fetchPending]);
+  // Polling removed — realtime channel + visibilitychange handle freshness
 
   const currentLead = leads[currentIndex] || null;
 

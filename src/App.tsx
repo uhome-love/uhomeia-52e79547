@@ -100,6 +100,7 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 2, // 2 min default cache
       gcTime: 1000 * 60 * 5,    // 5 min garbage collection
       refetchOnWindowFocus: false,
+      refetchIntervalInBackground: false, // stop all polling when tab is inactive
       retry: 1,
     },
   },

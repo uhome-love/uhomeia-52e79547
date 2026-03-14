@@ -66,7 +66,7 @@ export function usePendingLeadAlert() {
 
   // Poll every 15s as backup
   useEffect(() => {
-    const iv = setInterval(checkPending, 15_000);
+    const iv = setInterval(checkPending, 30_000);
     return () => clearInterval(iv);
   }, [checkPending]);
 
