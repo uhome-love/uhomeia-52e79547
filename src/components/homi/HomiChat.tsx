@@ -177,13 +177,14 @@ export default function HomiChat({ onBack }: Props) {
       const finalMessages = [...newMessages, { role: "assistant" as const, content: assistantSoFar }];
       setMessages(finalMessages);
       saveConversation(finalMessages);
-    } catch (e) {
-      console.error("Chat error:", e);
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+      console.error("[HomiChat] Stream error:", e);
       toast.error("Erro ao comunicar com o HOMI");
+    } finally {
+      setIsLoading(false);
+      setIsStreaming(false);
     }
-
-    setIsLoading(false);
-    setIsStreaming(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
