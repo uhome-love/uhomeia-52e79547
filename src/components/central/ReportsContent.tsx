@@ -43,27 +43,22 @@ export default function ReportsContent() {
       const { start, end } = getPeriod();
       const mesKey = start.slice(0, 7);
 
-      // Fetch checkpoint data
-      const { data: cps } = await supabase.from("checkpoints").select("id, data").eq("gerente_id", user.id).gte("data", start).lte("data", end);
-      const cpIds = (cps || []).map(c => c.id);
-
-      let lines: any[] = [];
-      if (cpIds.length > 0) {
-        const { data: linesData } = await supabase.from("checkpoint_lines").select("corretor_id, real_leads, real_ligacoes, real_visitas_marcadas, real_visitas_realizadas, real_propostas, real_vgv_gerado, real_vgv_assinado").in("checkpoint_id", cpIds);
-        lines = linesData || [];
-      }
-
-      const { data: team } = await supabase.from("team_members").select("id, nome").eq("gerente_id", user.id).eq("status", "ativo");
-      const teamMap = new Map((team || []).map(t => [t.id, t.nome]));
+      // Fetch checkpoint data via canonical view (single query, no join)
+      const { data: lines } = await supabase
+        .from("v_checkpoint_lines_canonical" as any)
+        .select("team_member_id, corretor_nome, real_leads, real_ligacoes, real_visitas_marcadas, real_visitas_realizadas, real_propostas, real_vgv_gerado, real_vgv_assinado")
+        .eq("checkpoint_gerente_id", user.id)
+        .gte("checkpoint_date", start)
+        .lte("checkpoint_date", end);
 
       // Aggregate
       const byCorretor: Record<string, any> = {};
       let totals = { leads: 0, ligacoes: 0, visitas_marcadas: 0, visitas_realizadas: 0, propostas: 0, vgv_gerado: 0, vgv_assinado: 0 };
 
-      for (const l of lines) {
-        const nome = teamMap.get(l.corretor_id) || "Desconhecido";
-        if (!byCorretor[l.corretor_id]) byCorretor[l.corretor_id] = { nome, leads: 0, ligacoes: 0, visitas_marcadas: 0, visitas_realizadas: 0, propostas: 0, vgv_gerado: 0, vgv_assinado: 0 };
-        const c = byCorretor[l.corretor_id];
+      for (const l of (lines || []) as any[]) {
+        const nome = l.corretor_nome || "Desconhecido";
+        if (!byCorretor[l.team_member_id]) byCorretor[l.team_member_id] = { nome, leads: 0, ligacoes: 0, visitas_marcadas: 0, visitas_realizadas: 0, propostas: 0, vgv_gerado: 0, vgv_assinado: 0 };
+        const c = byCorretor[l.team_member_id];
         const fields = ["leads", "ligacoes", "visitas_marcadas", "visitas_realizadas", "propostas"];
         for (const f of fields) {
           const val = l[`real_${f}`] || 0;
@@ -72,14 +67,45 @@ export default function ReportsContent() {
         }
       }
 
-      // Negocios data
-      const { data: negs } = await supabase.from("negocios").select("*").eq("gerente_id", user.id).gte("created_at", `${mesKey}-01`).lt("created_at", `${mesKey}-32`);
-      const pdnCount = (negs || []).length;
-      const pdnVgv = (negs || []).reduce((s, p: any) => s + Number(p.vgv_final || p.vgv_estimado || 0), 0);
-      const pdnAssinado = (negs || []).filter((p: any) => p.fase === "assinado").reduce((s, p: any) => s + Number(p.vgv_final || p.vgv_estimado || 0), 0);
+      // Negocios aggregates via v_kpi_negocios (partnership-aware, deduplicated)
+      // Get team auth_user_ids for filtering
+      const { data: teamMembers } = await supabase
+        .from("team_members")
+        .select("user_id")
+        .eq("gerente_id", user.id)
+        .eq("status", "ativo");
+      const teamUserIds = (teamMembers || []).map(m => m.user_id).filter(Boolean) as string[];
+
+      let pdnCount = 0;
+      let pdnVgv = 0;
+      let pdnAssinado = 0;
+      let perdidosUnicos = 0;
+
+      if (teamUserIds.length > 0) {
+        const { data: kpiRows } = await supabase
+          .from("v_kpi_negocios" as any)
+          .select("id, auth_user_id, vgv_efetivo, fase, conta_venda, conta_perdido")
+          .in("auth_user_id", teamUserIds)
+          .gte("data_criacao", `${mesKey}-01`)
+          .lt("data_criacao", `${mesKey}-32`);
+
+        const uniqueIds = new Set((kpiRows || []).map((r: any) => r.id));
+        pdnCount = uniqueIds.size;
+        pdnVgv = (kpiRows || []).reduce((s: number, p: any) => s + Number(p.vgv_efetivo || 0), 0);
+        pdnAssinado = (kpiRows || []).filter((p: any) => p.conta_venda === 1).reduce((s: number, p: any) => s + Number(p.vgv_efetivo || 0), 0);
+        const uniqueLostIds = new Set((kpiRows || []).filter((p: any) => p.conta_perdido === 1).map((r: any) => r.id));
+        perdidosUnicos = uniqueLostIds.size;
+      }
 
       // Metas CEO
       const { data: metas } = await supabase.from("ceo_metas_mensais").select("*").eq("gerente_id", user.id).eq("mes", mesKey).maybeSingle();
+
+      // Negocios details (direct query — needs nome_cliente not available in KPI view)
+      let negs: any[] = [];
+      if (reportType === "forecast" || reportType === "completo") {
+        const { data: negsData } = await supabase.from("negocios").select("nome_cliente, empreendimento, fase, vgv_final, vgv_estimado").eq("gerente_id", user.id).gte("created_at", `${mesKey}-01`).lt("created_at", `${mesKey}-32`);
+        negs = negsData || [];
+      }
 
       // Build prompt based on type
       let prompt = "";
@@ -90,12 +116,12 @@ export default function ReportsContent() {
       }
 
       if (reportType === "forecast" || reportType === "completo") {
-        prompt += `\n\n## DADOS NEGÓCIOS / FORECAST\n- Negócios ativos: ${pdnCount}\n- VGV potencial: ${fmtCurrency(pdnVgv)}\n- VGV assinado: ${fmtCurrency(pdnAssinado)}`;
+        prompt += `\n\n## DADOS NEGÓCIOS / FORECAST\n- Negócios ativos: ${pdnCount}\n- VGV potencial: ${fmtCurrency(pdnVgv)}\n- VGV assinado: ${fmtCurrency(pdnAssinado)}\n- Negócios perdidos (únicos): ${perdidosUnicos}`;
         if (metas) {
           prompt += `\n\nMETAS DO MÊS:\n- Meta VGV Assinado: ${fmtCurrency(Number(metas.meta_vgv_assinado))}\n- Meta Visitas Marcadas: ${metas.meta_visitas_marcadas}\n- Meta Visitas Realizadas: ${metas.meta_visitas_realizadas}`;
         }
-        // Negocios details
-        if (negs && negs.length > 0) {
+        // Negocios details (direct — nome_cliente not in KPI view)
+        if (negs.length > 0) {
           prompt += `\n\nDETALHES NEGÓCIOS:\n${negs.slice(0, 20).map((p: any) => `  - ${p.nome_cliente} | ${p.empreendimento} | ${p.fase} | VGV: ${fmtCurrency(Number(p.vgv_final || p.vgv_estimado || 0))}`).join("\n")}`;
         }
       }
