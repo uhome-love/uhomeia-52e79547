@@ -19,8 +19,8 @@ export function useHomiAlerts() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from("homi_alerts" as any)
+      const { data, error } = await (supabase as any)
+        .from("homi_alerts")
         .select("id, tipo, prioridade, mensagem, contexto, created_at")
         .eq("destinatario_id", user.id)
         .eq("dispensada", false)
@@ -33,15 +33,19 @@ export function useHomiAlerts() {
         return;
       }
 
-      for (const alert of data || []) {
+      const alerts = (data || []) as Array<{
+        id: string; tipo: string; prioridade: string; mensagem: string; contexto: any; created_at: string;
+      }>;
+
+      for (const alert of alerts) {
         if (seenIdsRef.current.has(alert.id)) continue;
         seenIdsRef.current.add(alert.id);
 
         addProactiveAlert({
           priority: alert.prioridade as "critical" | "normal" | "info",
           message: alert.mensagem,
-          actions: buildActions(alert.tipo, alert.contexto as any, alert.id),
-          ttl: 30_000, // auto-dismiss after 30s
+          actions: buildActions(alert.tipo, alert.contexto, alert.id),
+          ttl: 30_000,
         });
       }
     } catch (e) {
