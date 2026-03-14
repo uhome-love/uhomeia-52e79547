@@ -154,11 +154,13 @@ export default function HomiCeoChat() {
       const finalMessages = [...allMessages, { role: "assistant" as const, content: assistantSoFar }];
       setMessages(finalMessages);
       saveConversation(finalMessages);
-    } catch (e) {
-      console.error("Chat error:", e);
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+      console.error("[HomiCeoChat] Stream error:", e);
       toast.error("Erro ao comunicar com o HOMI CEO");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const sendMessage = async (text?: string) => {
