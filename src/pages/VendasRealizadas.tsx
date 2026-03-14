@@ -67,6 +67,11 @@ interface VendaRow {
   pipeline_lead_id: string | null;
 }
 
+interface PartnerInfo {
+  auth_user_ids: string[];
+  fator_split: number;
+}
+
 interface ProfileInfo {
   id: string;
   nome: string;
@@ -133,51 +138,69 @@ export default function VendasRealizadas() {
       const { data: vendas } = await query;
       const rows = (vendas || []) as VendaRow[];
 
-      // Load partnerships with partner details
-      const leadIds = rows.map(v => (v as any).pipeline_lead_id).filter(Boolean);
+      // Detect partnerships from v_kpi_negocios (official source of truth)
+      const dealIds = rows.map(v => v.id);
       let parceriaSet = new Set<string>();
-      let parceriaMap: Record<string, { principal_id: string; parceiro_id: string }> = {};
-      if (leadIds.length > 0) {
-        const { data: parcerias } = await supabase.from("pipeline_parcerias")
-          .select("pipeline_lead_id, corretor_principal_id, corretor_parceiro_id")
-          .eq("status", "ativa")
-          .in("pipeline_lead_id", leadIds);
-        (parcerias || []).forEach(p => {
-          parceriaSet.add(p.pipeline_lead_id);
-          parceriaMap[p.pipeline_lead_id] = {
-            principal_id: p.corretor_principal_id,
-            parceiro_id: p.corretor_parceiro_id,
-          };
+      let parceriaPartners: Record<string, PartnerInfo> = {};
+      if (dealIds.length > 0) {
+        const { data: kpiRows } = await supabase.from("v_kpi_negocios")
+          .select("id, auth_user_id, pipeline_lead_id, is_parceria, fator_split")
+          .eq("is_parceria", true)
+          .in("id", dealIds);
+        (kpiRows || []).forEach(r => {
+          const plId = r.pipeline_lead_id;
+          if (!plId) return;
+          parceriaSet.add(plId);
+          if (!parceriaPartners[plId]) parceriaPartners[plId] = { auth_user_ids: [], fator_split: Number(r.fator_split || 0.5) };
+          if (r.auth_user_id && !parceriaPartners[plId].auth_user_ids.includes(r.auth_user_id)) {
+            parceriaPartners[plId].auth_user_ids.push(r.auth_user_id);
+          }
         });
       }
 
-      // Load profiles for corretores + parceiros
-      const corretorIds = new Set(rows.map(v => v.corretor_id).filter(Boolean) as string[]);
-      // Add partner profile IDs
-      Object.values(parceriaMap).forEach(p => {
-        if (p.principal_id) corretorIds.add(p.principal_id);
-        if (p.parceiro_id) corretorIds.add(p.parceiro_id);
-      });
-      const ids = [...corretorIds];
+      // Collect all profile IDs (from negocios.corretor_id) and auth_user_ids (from partnerships)
+      const corretorProfileIds = new Set(rows.map(v => v.corretor_id).filter(Boolean) as string[]);
+      const partnerAuthUserIds = new Set<string>();
+      Object.values(parceriaPartners).forEach(p => p.auth_user_ids.forEach(id => partnerAuthUserIds.add(id)));
+
+      // Load profiles by profile.id (for deal corretor_id)
       let profileMap: Record<string, ProfileInfo> = {};
-      if (ids.length > 0) {
-        const { data: profiles } = await supabase.from("profiles").select("id, nome, avatar_url, avatar_gamificado_url").in("id", ids);
+      const profileIds = [...corretorProfileIds];
+      if (profileIds.length > 0) {
+        const { data: profiles } = await supabase.from("profiles").select("id, nome, avatar_url, avatar_gamificado_url").in("id", profileIds);
         (profiles || []).forEach(p => { profileMap[p.id] = p as ProfileInfo; });
       }
 
-      // Fetch annual VGV for corretor tier (year-to-date)
+      // Load profiles by user_id (for partnership auth_user_ids) — keyed by auth user_id
+      let authProfileMap: Record<string, ProfileInfo> = {};
+      const authIds = [...partnerAuthUserIds];
+      if (authIds.length > 0) {
+        const { data: authProfiles } = await supabase.from("profiles").select("id, user_id, nome, avatar_url, avatar_gamificado_url").in("user_id", authIds);
+        (authProfiles || []).forEach(p => {
+          if (p.user_id) authProfileMap[p.user_id] = { id: p.id, nome: p.nome, avatar_url: p.avatar_url, avatar_gamificado_url: p.avatar_gamificado_url };
+        });
+      }
+
+      // Annual VGV per corretor from v_kpi_negocios (split-aware)
       const yearStart = `${new Date().getFullYear()}-01-01`;
       let annualVgvByCorretor: Record<string, number> = {};
-      if (ids.length > 0) {
-        const { data: annualData } = await supabase.from("negocios")
-          .select("corretor_id, vgv_final, vgv_estimado")
+      // Use auth_user_id based annual VGV for commission tiers
+      if (profileIds.length > 0 || authIds.length > 0) {
+        const { data: annualData } = await supabase.from("v_kpi_negocios")
+          .select("auth_user_id, vgv_efetivo")
           .in("fase", ["assinado", "vendido"])
-          .gte("data_assinatura", yearStart)
-          .in("corretor_id", ids);
+          .gte("data_assinatura", yearStart);
         (annualData || []).forEach(n => {
-          const cid = n.corretor_id as string;
-          annualVgvByCorretor[cid] = (annualVgvByCorretor[cid] || 0) + (n.vgv_final || n.vgv_estimado || 0);
+          const uid = n.auth_user_id as string;
+          annualVgvByCorretor[uid] = (annualVgvByCorretor[uid] || 0) + Number(n.vgv_efetivo || 0);
         });
+      }
+
+      // Map profile.id to auth user_id for commission lookup
+      let profileIdToAuthId: Record<string, string> = {};
+      if (profileIds.length > 0) {
+        const { data: pMap } = await supabase.from("profiles").select("id, user_id").in("id", profileIds);
+        (pMap || []).forEach(p => { if (p.user_id) profileIdToAuthId[p.id] = p.user_id; });
       }
 
       // Load pipeline origin data for sold leads
@@ -198,16 +221,18 @@ export default function VendasRealizadas() {
         });
       }
 
-      return { vendas: rows, profiles: profileMap, annualVgvByCorretor, parceriaSet: [...parceriaSet], parceriaMap, origemMap };
+      return { vendas: rows, profiles: profileMap, authProfiles: authProfileMap, annualVgvByCorretor, parceriaSet: [...parceriaSet], parceriaPartners, origemMap, profileIdToAuthId };
     },
   });
 
   const vendas = data?.vendas || [];
   const profiles = data?.profiles || {};
+  const authProfiles = data?.authProfiles || {};
   const annualVgvByCorretor = data?.annualVgvByCorretor || {};
   const parceriaLeadIds = new Set(data?.parceriaSet || []);
-  const parceriaMap = data?.parceriaMap || {};
+  const parceriaPartners = data?.parceriaPartners || {};
   const origemMap = data?.origemMap || {};
+  const profileIdToAuthId = data?.profileIdToAuthId || {};
 
   const [activeTab, setActiveTab] = useState("vendas");
 
@@ -545,7 +570,8 @@ export default function VendasRealizadas() {
                       {filtered.map((v, i) => {
                         const vgv = v.vgv_final || v.vgv_estimado || 0;
                         const corr = v.corretor_id ? profiles[v.corretor_id] : null;
-                        const annualVgv = v.corretor_id ? (annualVgvByCorretor[v.corretor_id] || 0) : 0;
+                        const authId = v.corretor_id ? profileIdToAuthId[v.corretor_id] : null;
+                        const annualVgv = authId ? (annualVgvByCorretor[authId] || 0) : 0;
                         const comissao = calcComissaoCorretor(vgv, annualVgv);
                         const tier = getCorretorTier(annualVgv);
 
@@ -575,10 +601,10 @@ export default function VendasRealizadas() {
                             {(isAdmin || isGestor) && (
                               <td className="py-3 px-3">
                                 {(() => {
-                                  const parceria = v.pipeline_lead_id ? parceriaMap[v.pipeline_lead_id] : null;
-                                  if (parceria) {
-                                    const p1 = profiles[parceria.principal_id];
-                                    const p2 = profiles[parceria.parceiro_id];
+                                  const parceria = v.pipeline_lead_id ? parceriaPartners[v.pipeline_lead_id] : null;
+                                  if (parceria && parceria.auth_user_ids.length >= 2) {
+                                    const p1 = authProfiles[parceria.auth_user_ids[0]];
+                                    const p2 = authProfiles[parceria.auth_user_ids[1]];
                                     const name1 = p1?.nome?.split(" ")[0] || "Corretor";
                                     const name2 = p2?.nome?.split(" ")[0] || "Corretor";
                                     return (
@@ -617,9 +643,11 @@ export default function VendasRealizadas() {
                             )}
                             <td className="py-3 px-3 text-right">
                               <span className="text-sm font-black text-emerald-500">{formatCurrency(vgv)}</span>
-                              {v.pipeline_lead_id && parceriaLeadIds.has(v.pipeline_lead_id) && (
-                                <p className="text-[9px] font-bold text-violet-500 mt-0.5">🤝 Parceria 50%</p>
-                              )}
+                              {v.pipeline_lead_id && parceriaLeadIds.has(v.pipeline_lead_id) && (() => {
+                                const splitPct = parceriaPartners[v.pipeline_lead_id!]?.fator_split;
+                                const pctLabel = splitPct ? `${Math.round(splitPct * 100)}%` : "50%";
+                                return <p className="text-[9px] font-bold text-violet-500 mt-0.5">🤝 Parceria {pctLabel}</p>;
+                              })()}
                             </td>
                             <td className="py-3 px-3 text-center">
                               <span className="text-xs text-muted-foreground">
