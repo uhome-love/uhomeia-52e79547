@@ -316,7 +316,7 @@ Deno.serve(async (req) => {
     }
 
     if (alreadyProcessed) {
-      console.log(`TIKTOK-LEAD DEDUP: ${telefone} in permanent registry, skipping`);
+      L.info("Dedup: permanent registry", { telefone });
       return new Response(
         JSON.stringify({ success: true, action: "skipped_permanent_dedup" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
