@@ -1764,6 +1764,45 @@ export type Database = {
         }
         Relationships: []
       }
+      homi_alerts: {
+        Row: {
+          contexto: Json | null
+          created_at: string
+          dedup_key: string
+          destinatario_id: string
+          dispensada: boolean
+          id: string
+          lida: boolean
+          mensagem: string
+          prioridade: string
+          tipo: string
+        }
+        Insert: {
+          contexto?: Json | null
+          created_at?: string
+          dedup_key: string
+          destinatario_id: string
+          dispensada?: boolean
+          id?: string
+          lida?: boolean
+          mensagem: string
+          prioridade?: string
+          tipo: string
+        }
+        Update: {
+          contexto?: Json | null
+          created_at?: string
+          dedup_key?: string
+          destinatario_id?: string
+          dispensada?: boolean
+          id?: string
+          lida?: boolean
+          mensagem?: string
+          prioridade?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       homi_briefing_diario: {
         Row: {
           acao_prioritaria: string | null
@@ -6480,6 +6519,7 @@ export type Database = {
       cleanup_audit_log: { Args: never; Returns: undefined }
       cleanup_coaching_sessions: { Args: never; Returns: undefined }
       cleanup_expired_locks: { Args: never; Returns: number }
+      cleanup_homi_alerts: { Args: never; Returns: undefined }
       cleanup_homi_briefings: { Args: never; Returns: undefined }
       cleanup_homi_conversations: { Args: never; Returns: undefined }
       cleanup_jetimob_processed: { Args: never; Returns: undefined }
