@@ -176,6 +176,22 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
     onReload();
   };
 
+  const handleEditSave = async () => {
+    if (!editId) return;
+    const finalTipo = editTipo;
+    const titulo = `${TIPO_LABELS[finalTipo] || finalTipo}: ${leadNome}`;
+    await supabase.from("pipeline_tarefas").update({
+      tipo: finalTipo,
+      titulo,
+      descricao: editObs || null,
+      vence_em: editData || null,
+      hora_vencimento: editHora || null,
+    } as any).eq("id", editId);
+    toast.success("Tarefa atualizada ✅");
+    setEditId(null);
+    onReload();
+  };
+
   const renderTarefa = (tarefa: PipelineTarefa) => {
     const isOverdue = tarefa.status === "pendente" && tarefa.vence_em && isBefore(parseDateBRT(tarefa.vence_em), today);
     const isConcluida = tarefa.status === "concluida";
@@ -403,6 +419,57 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
             <Input type="date" value={adiarData} onChange={e => setAdiarData(e.target.value)} />
             <Input type="time" value={adiarHora} onChange={e => setAdiarHora(e.target.value)} />
             <Button className="w-full" onClick={handleAdiarCustom} disabled={!adiarData}>Reagendar ✅</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit task dialog */}
+      <Dialog open={!!editId} onOpenChange={() => setEditId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>✏️ Editar tarefa</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium">Tipo:</label>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {TIPO_BUTTONS.map(t => (
+                  <button
+                    key={t.value}
+                    onClick={() => setEditTipo(t.value)}
+                    className={`text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+                      editTipo === t.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background border-border hover:border-primary/50"
+                    }`}
+                  >
+                    {t.emoji} {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Data:</label>
+                <Input type="date" value={editData} onChange={e => setEditData(e.target.value)} className="h-8 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Hora:</label>
+                <Input type="time" value={editHora} onChange={e => setEditHora(e.target.value)} className="h-8 text-xs mt-1" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium">Observação:</label>
+              <Textarea
+                value={editObs}
+                onChange={e => setEditObs(e.target.value)}
+                rows={2}
+                className="text-xs mt-1"
+                placeholder="Detalhes da tarefa..."
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setEditId(null)}>Cancelar</Button>
+              <Button size="sm" onClick={handleEditSave}>💾 Salvar</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
