@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
   Building2, MapPin, BedDouble, Maximize2, Tag, Loader2, Download,
   Upload, Trash2, Image as ImageIcon, Video, FileText, ChevronLeft, ChevronRight,
-  Radio, Megaphone, Eye, DollarSign, Sparkles, ChevronDown, Pencil, Save, X, Plus, Send, Link2, ExternalLink, GripVertical, ArrowLeft, ArrowRight
+  Radio, Megaphone, Eye, DollarSign, Sparkles, ChevronDown, Pencil, Save, X, Plus, Send, Link2, ExternalLink, GripVertical, ArrowLeft, ArrowRight, Brain
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ import { cn, formatBRL, formatBRLCompact } from "@/lib/utils";
 import { getVitrinePublicUrl } from "@/lib/vitrineUrl";
 import { motion, AnimatePresence } from "framer-motion";
 import LandingPageEditor from "@/components/landing/LandingPageEditor";
+import { AIKnowledgeEditorModal, AICompletenessBadge, computeAICompleteness, type AIKnowledgeData } from "@/components/admin/AIKnowledgeEditor";
 
 /* ═══════════════════════════════════════════════
    SEGMENTOS + CÓDIGOS DE ANÚNCIOS
@@ -122,6 +123,14 @@ type EmpreendimentoOverride = {
   previsao_entrega: string | null;
   descricao: string | null;
   fotos: string[];
+  // AI Knowledge fields (Phase 2)
+  descricao_completa: string | null;
+  objecoes: Array<{ objecao: string; resposta: string }> | null;
+  estrategia_conversao: string | null;
+  perfil_cliente: string | null;
+  argumentos_venda: string | null;
+  segmento_comercial: string | null;
+  hashtags: string[] | null;
 };
 
 type Material = {
@@ -914,6 +923,7 @@ function EmpreendimentoCard({
   override,
   onEditOverride,
   onEditLanding,
+  onEditAIKnowledge,
   landingRefreshKey,
 }: {
   config: AnuncioConfig;
@@ -926,6 +936,7 @@ function EmpreendimentoCard({
   override: EmpreendimentoOverride | null;
   onEditOverride: () => void;
   onEditLanding: () => void;
+  onEditAIKnowledge: () => void;
   landingRefreshKey: number;
 }) {
   const { user } = useAuth();
@@ -987,14 +998,17 @@ function EmpreendimentoCard({
           </button>
         )}
 
-        {/* Override indicator */}
-        {hasOverride && (
-          <div className="absolute top-2 left-2 z-20">
+        {/* Override + AI indicators */}
+        <div className="absolute top-2 left-2 z-20 flex flex-col gap-1">
+          {hasOverride && (
             <Badge className="text-[8px] bg-primary/80 text-primary-foreground border-0 px-1.5 py-0.5">
               ✏️ Personalizado
             </Badge>
-          </div>
-        )}
+          )}
+          {isAdmin && (
+            <AICompletenessBadge data={override as AIKnowledgeData | null} compact />
+          )}
+        </div>
 
         {/* Image */}
         {loading && !hasOverride ? (
@@ -1107,6 +1121,20 @@ function EmpreendimentoCard({
 
           {/* Landing Page + Vitrine Buttons */}
           <div className="space-y-2">
+            {/* Admin: edit AI Knowledge */}
+            {isAdmin && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onEditAIKnowledge}
+                className="w-full gap-2 text-xs font-bold border-violet-500/30 text-violet-600 hover:bg-violet-500/10"
+              >
+                <Brain className="h-3.5 w-3.5" />
+                Conhecimento IA
+                <AICompletenessBadge data={override as AIKnowledgeData | null} compact />
+              </Button>
+            )}
+
             {/* Admin: edit landing page */}
             {isAdmin && (
               <Button
@@ -1187,6 +1215,7 @@ export default function AnunciosNoAr() {
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [overrides, setOverrides] = useState<Record<string, EmpreendimentoOverride>>({});
   const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
+  const [aiEditingCodigo, setAiEditingCodigo] = useState<string | null>(null);
   const [landingCodigo, setLandingCodigo] = useState<string | null>(null);
   const [landingRefreshKey, setLandingRefreshKey] = useState(0);
 
@@ -1222,6 +1251,23 @@ export default function AnunciosNoAr() {
 
   const totalAnuncios = SEGMENTOS.reduce((acc, s) => acc + s.empreendimentos.length, 0);
   const editingConfig = editingCodigo ? SEGMENTOS.flatMap(s => s.empreendimentos).find(e => e.codigo === editingCodigo) : null;
+  const aiEditingConfig = aiEditingCodigo ? SEGMENTOS.flatMap(s => s.empreendimentos).find(e => e.codigo === aiEditingCodigo) : null;
+
+  // AI completeness summary for header
+  const allConfigs = SEGMENTOS.flatMap(s => s.empreendimentos);
+  const aiStats = useMemo(() => {
+    let complete = 0;
+    let partial = 0;
+    let empty = 0;
+    for (const emp of allConfigs) {
+      const ov = overrides[emp.codigo];
+      const { score } = computeAICompleteness(ov as AIKnowledgeData | null);
+      if (score === 100) complete++;
+      else if (score > 0) partial++;
+      else empty++;
+    }
+    return { complete, partial, empty, total: allConfigs.length };
+  }, [overrides]);
 
   return (
     <div className="space-y-6 pb-8">
@@ -1232,6 +1278,19 @@ export default function AnunciosNoAr() {
           onOpenChange={(v) => { if (!v) setEditingCodigo(null); }}
           config={editingConfig}
           override={overrides[editingConfig.codigo] || null}
+          onSaved={fetchOverrides}
+        />
+      )}
+
+      {/* AI Knowledge Editor Modal */}
+      {aiEditingConfig && (
+        <AIKnowledgeEditorModal
+          open={!!aiEditingCodigo}
+          onOpenChange={(v) => { if (!v) setAiEditingCodigo(null); }}
+          codigo={aiEditingConfig.codigo}
+          nome={aiEditingConfig.nome}
+          overrideId={overrides[aiEditingConfig.codigo]?.id || null}
+          initialData={overrides[aiEditingConfig.codigo] as AIKnowledgeData | null}
           onSaved={fetchOverrides}
         />
       )}
@@ -1284,6 +1343,16 @@ export default function AnunciosNoAr() {
               <p className="text-sm text-white/60">
                 {totalAnuncios} produto{totalAnuncios !== 1 ? "s" : ""} com anúncios ativos por segmento
               </p>
+              {isAdmin && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="text-[9px] bg-white/10 text-white/80 border-white/20 gap-1">
+                    <Brain className="h-3 w-3" />
+                    IA: {aiStats.complete} completo{aiStats.complete !== 1 ? "s" : ""}
+                    {aiStats.partial > 0 && ` · ${aiStats.partial} parcial`}
+                    {aiStats.empty > 0 && ` · ${aiStats.empty} pendente${aiStats.empty !== 1 ? "s" : ""}`}
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1358,6 +1427,7 @@ export default function AnunciosNoAr() {
                     override={overrides[emp.codigo] || null}
                     onEditOverride={() => setEditingCodigo(emp.codigo)}
                     onEditLanding={() => setLandingCodigo(emp.codigo)}
+                    onEditAIKnowledge={() => setAiEditingCodigo(emp.codigo)}
                     landingRefreshKey={landingRefreshKey}
                   />
                 ))}
