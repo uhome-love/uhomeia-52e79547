@@ -329,6 +329,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Unknown action" }, 400);
   } catch (err) {
     console.error(JSON.stringify({ fn: "distribute-lead", level: "error", msg: "Unhandled exception", traceId, err: err instanceof Error ? { name: err.name, message: err.message } : { raw: String(err) }, ts: new Date().toISOString() }));
+    logOps("error", "system", "Unhandled exception", {}, err instanceof Error ? err.message : String(err));
     return jsonResponse({ error: "Internal error" }, 500);
   }
 });
