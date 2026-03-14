@@ -12,7 +12,8 @@ serve(async (req) => {
   const L = (level: string, msg: string, ctx?: Record<string, unknown>) => {
     const line = JSON.stringify({ fn: "generate-corretor-report", level, msg, traceId, ctx, ts: new Date().toISOString() });
     level === "error" ? console.error(line) : console.info(line);
-  };
+
+  try {
     const {
       corretor_nome,
       gerente_nome,
