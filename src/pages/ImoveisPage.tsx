@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getVitrinePublicUrl } from "@/lib/vitrineUrl";
 import { useTypesenseSearch, buildFilterBy, buildSortBy } from "@/hooks/useTypesenseSearch";
 import { useAISearch, type AIPropertyResult } from "@/hooks/useAISearch";
+import { mapTypesenseDocs } from "@/lib/typesenseMapping";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
