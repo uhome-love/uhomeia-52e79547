@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
         }),
       });
     } catch (distErr) {
-      console.warn("Auto-distribute failed:", distErr);
+      L.warn("Auto-distribute failed", { leadId: insertedLead.id }, distErr);
     }
 
     // ── Audit ──
