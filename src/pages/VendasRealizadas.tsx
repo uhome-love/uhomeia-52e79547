@@ -227,10 +227,12 @@ export default function VendasRealizadas() {
 
   const vendas = data?.vendas || [];
   const profiles = data?.profiles || {};
+  const authProfiles = data?.authProfiles || {};
   const annualVgvByCorretor = data?.annualVgvByCorretor || {};
   const parceriaLeadIds = new Set(data?.parceriaSet || []);
-  const parceriaMap = data?.parceriaMap || {};
+  const parceriaPartners = data?.parceriaPartners || {};
   const origemMap = data?.origemMap || {};
+  const profileIdToAuthId = data?.profileIdToAuthId || {};
 
   const [activeTab, setActiveTab] = useState("vendas");
 
