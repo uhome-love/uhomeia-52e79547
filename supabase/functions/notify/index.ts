@@ -158,6 +158,7 @@ serve(async (req) => {
     const config = EVENT_CONFIG[evento];
     if (!config) {
       L.warn("Unknown event", { evento });
+      logOps("warn", "validation", `Unknown notification event: ${evento}`, { evento });
       return new Response(JSON.stringify({ error: "Evento desconhecido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
