@@ -39,29 +39,73 @@ function formatTime(timeStr: string | null): string {
   return timeStr.substring(0, 5);
 }
 
-async function sendWhatsApp(apiKey: string, phone: string, message: string) {
-  const formattedPhone = formatPhone(phone);
+// ─── Retry config ───
+// Max 2 retries (3 total attempts). Delays: 1s, 3s (exponential backoff).
+// Only retries on transient errors: network failures, 429, 5xx.
+// 4xx (except 429) are permanent → no retry to avoid duplicate sends.
+const MAX_ATTEMPTS = 3;
+const BASE_DELAY_MS = 1000;
 
-  const resp = await fetch(DIALOG_API_URL, {
-    method: "POST",
-    headers: {
-      "D360-API-KEY": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: formattedPhone,
-      type: "text",
-      text: { body: message },
-    }),
+function isTransient(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
+async function sendWhatsApp(
+  apiKey: string,
+  phone: string,
+  message: string,
+  logger?: ReturnType<typeof makeLogger>,
+): Promise<{ data: Record<string, unknown>; attempts: number }> {
+  const formattedPhone = formatPhone(phone);
+  const body = JSON.stringify({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: formattedPhone,
+    type: "text",
+    text: { body: message },
   });
 
-  const data = await resp.json();
-  if (!resp.ok) {
-    throw new Error(data?.error?.message || `360dialog error: ${resp.status}`);
+  let lastErr: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const resp = await fetch(DIALOG_API_URL, {
+        method: "POST",
+        headers: { "D360-API-KEY": apiKey, "Content-Type": "application/json" },
+        body,
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+        if (attempt > 1) logger?.info("WhatsApp delivered after retry", { attempt, phone: phone.slice(-4) });
+        return { data, attempts: attempt };
+      }
+
+      // Permanent error → don't retry to avoid duplicate sends
+      if (!isTransient(resp.status)) {
+        throw new Error(data?.error?.message || `360dialog error: ${resp.status}`);
+      }
+
+      // Transient → will retry
+      lastErr = new Error(data?.error?.message || `360dialog transient ${resp.status}`);
+      logger?.warn("WhatsApp transient error, will retry", { attempt, status: resp.status, phone: phone.slice(-4) });
+    } catch (fetchErr) {
+      // Network-level error (DNS, timeout) → transient, retry
+      lastErr = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr));
+      if (attempt < MAX_ATTEMPTS) {
+        logger?.warn("WhatsApp network error, will retry", { attempt, phone: phone.slice(-4) }, fetchErr);
+      }
+    }
+
+    // Backoff before next attempt (skip after last attempt)
+    if (attempt < MAX_ATTEMPTS) {
+      const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1); // 1s, 2s
+      await new Promise(r => setTimeout(r, delay));
+    }
   }
-  return data;
+
+  throw lastErr || new Error("sendWhatsApp failed after retries");
 }
 
 serve(async (req) => {
