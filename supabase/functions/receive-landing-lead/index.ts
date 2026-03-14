@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
     const utmCampaign = body.utm_campaign || "";
 
     if (!name && !telefone) {
+      L.warn("Validation failed — missing name and phone", { source, body: { name: body.name, phone: body.phone } });
       return new Response(
         JSON.stringify({ error: "Nome ou telefone obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
