@@ -367,6 +367,7 @@ export function AppSidebar() {
           {
             label: "Visão Geral",
             items: [
+              { title: "Alertas HOMI", url: "/alertas", icon: Bell },
               { title: "Central do Gerente", url: "/central-do-gerente", icon: ClipboardCheck },
             ],
           },
