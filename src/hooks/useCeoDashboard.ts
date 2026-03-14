@@ -79,12 +79,12 @@ async function fetchKPIs(r: { start: string; end: string }): Promise<KPIs> {
   const vgvAssinado = allKPIs.reduce((s, k) => s + k.vgv_assinado, 0);
   const propostas = allKPIs.reduce((s, k) => s + k.propostas, 0);
   const vendas = allKPIs.reduce((s, k) => s + k.vendas, 0);
-  const perdidos = allKPIs.reduce((s, k) => s + k.perdidos, 0);
+  const perdidosUnicos = allKPIs.reduce((s, k) => s + k.perdidos_unicos, 0);
 
   return {
     ligacoes: lig, aproveitados: aprov, taxaConversao: lig > 0 ? Math.round((aprov / lig) * 100) : 0,
     visitasMarcadas, visitasRealizadas, taxaRealizacao: visitasMarcadas > 0 ? Math.round((visitasRealizadas / visitasMarcadas) * 100) : 0,
-    vgvGerado, vgvAssinado, propostas, negociosPerdidos: perdidos, noShows,
+    vgvGerado, vgvAssinado, propostas, negociosPerdidos: perdidosUnicos, noShows,
   };
 }
 
