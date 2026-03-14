@@ -3,7 +3,7 @@
  *
  * Responsibilities:
  *  - All filter state variables + setters
- *  - Derived filteredBairros list
+ *  - Derived filteredBairros list (from dynamic facets)
  *  - Active filter tags (for display + removal)
  *  - clearAllFilters action
  *  - Serialized filterKey for change-detection
@@ -11,23 +11,9 @@
 
 import { useState, useMemo } from "react";
 import { fmtCompact } from "@/lib/imovelHelpers";
+import type { BairroFacet } from "@/hooks/useBairroFacets";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-const BAIRROS_POA = [
-  "Auxiliadora", "Bela Vista", "Bom Fim", "Camaquã", "Cavalhada",
-  "Centro Histórico", "Chácara das Pedras", "Cidade Baixa", "Cristal",
-  "Farroupilha", "Floresta", "Higienópolis", "Humaitá", "Independência",
-  "Ipanema", "Jardim Botânico", "Jardim do Salso", "Jardim Europa",
-  "Jardim Isabel", "Jardim Lindóia", "Jardim Planalto", "Jardim São Pedro",
-  "Lami", "Lomba do Pinheiro", "Medianeira", "Menino Deus", "Moinhos de Vento",
-  "Mont'Serrat", "Navegantes", "Nonoai", "Partenon", "Passo d'Areia",
-  "Pedra Redonda", "Petrópolis", "Praia de Belas", "Rio Branco",
-  "Santa Cecília", "Santa Tereza", "Santana", "Santo Antônio",
-  "São Geraldo", "São João", "São José", "São Sebastião",
-  "Teresópolis", "Três Figueiras", "Tristeza", "Vila Assunção",
-  "Vila Conceição", "Vila Ipiranga", "Vila Jardim", "Vila Nova",
-];
 
 export interface ActiveFilter {
   key: string;
@@ -35,7 +21,7 @@ export interface ActiveFilter {
   onRemove: () => void;
 }
 
-export function useImoveisFilters() {
+export function useImoveisFilters(bairroFacets?: BairroFacet[]) {
   // ── Core filter state ──
   const [contrato, setContrato] = useState("venda");
   const [tipo, setTipo] = useState<string[]>([]);
@@ -56,12 +42,14 @@ export function useImoveisFilters() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("relevancia");
 
-  // ── Derived ──
+  // ── Derived: filteredBairros from dynamic facets ──
+  const allBairros = useMemo(() => bairroFacets || [], [bairroFacets]);
+
   const filteredBairros = useMemo(() => {
-    if (!bairroSearch) return BAIRROS_POA;
+    if (!bairroSearch) return allBairros;
     const q = bairroSearch.toLowerCase();
-    return BAIRROS_POA.filter((b) => b.toLowerCase().includes(q));
-  }, [bairroSearch]);
+    return allBairros.filter((b) => b.value.toLowerCase().includes(q));
+  }, [bairroSearch, allBairros]);
 
   // ── Active filter tags ──
   const activeFilters: ActiveFilter[] = [];
