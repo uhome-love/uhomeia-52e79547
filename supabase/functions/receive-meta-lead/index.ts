@@ -442,6 +442,7 @@ Deno.serve(async (req) => {
     }
 
     L.info("Lead created", { leadId: insertedLead.id, name, empreendimento, campaignId, propertyCode });
+    logOps("info", "business", "Lead created via Meta Ads", { lead_id: insertedLead.id, name, empreendimento, campaign_id: campaignId });
 
     // Register in permanent dedup registry
     const { error: registryError } = await supabase
