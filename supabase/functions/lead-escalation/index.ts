@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
     const { data: staleCount, error: staleError } = await supabase.rpc(
       "detectar_leads_parados"
     );
-    if (staleError) console.error("Stale detection error:", staleError);
+    if (staleError) L.error("Stale detection RPC failed", {}, staleError);
 
     // 4. Recycle expired acceptance leads
     const { data: recycledCount, error: recycleError } = await supabase.rpc(
