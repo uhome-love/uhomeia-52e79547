@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHomi } from "@/contexts/HomiContext";
+import { useHomiAlerts } from "@/hooks/useHomiAlerts";
 
 const homiMascot = "/images/homi-mascot-opt.png";
 
 function HomiProactiveAlertInner() {
   const { alerts, dismissAlert } = useHomi();
+  useHomiAlerts(); // polls DB alerts and feeds into context
 
   const visibleAlerts = alerts.filter(a => !a.dismissed).slice(0, 2);
 
