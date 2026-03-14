@@ -188,7 +188,7 @@ export function HomiProvider({ children }: { children: ReactNode }) {
       try {
         const ksHeader = resp.headers.get("x-knowledge-source");
         if (ksHeader) setKnowledgeSource(JSON.parse(ksHeader));
-      } catch { /* ignore */ }
+      } catch (e) { console.warn("[HomiContext] Failed to parse x-knowledge-source header:", e); }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
