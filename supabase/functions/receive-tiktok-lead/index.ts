@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
     L.info("Parsed", { name, telefone, campaignId, externalLeadId, isTestLead });
 
     if (isTestLead) {
-      console.warn("TIKTOK-LEAD IGNORED — test payload", JSON.stringify({ name, email, externalLeadId }));
+      L.info("Ignored test payload", { name, email, externalLeadId });
       return new Response(
         JSON.stringify({ success: true, action: "ignored_test_payload" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
