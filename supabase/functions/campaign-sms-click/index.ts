@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       const variants = phoneVariants(telefoneNormalizado);
       const { data } = await supabase
         .from("pipeline_leads")
-        .select("id, nome, tags, stage_id, corretor_id")
+        .select("id, nome, email, tags, stage_id, corretor_id")
         .in("telefone_normalizado", variants)
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
