@@ -45,13 +45,16 @@ Deno.serve(async (req) => {
       utm_source, utm_medium, utm_campaign,
       canal = "brevo", origem = "SMS_MELNICK_DAY",
       campanha = "MELNICK_DAY_POA_2026",
+      bloco = "",
       user_agent,
     } = body;
 
     const telefoneNormalizado = normalizePhone(phone);
     const tags = ["MELNICK_DAY", "SMS", "Brevo"];
+    const blocoLabel = bloco ? ` - bloco ${bloco}` : "";
+    const obsText = `Lead veio do email Melnick Day 2026${blocoLabel} (${new Date().toLocaleDateString("pt-BR")})`;
 
-    log("info", "Click received", { phone, telefoneNormalizado, nome, canal, origem });
+    log("info", "Click received", { phone, telefoneNormalizado, nome, email, canal, origem, bloco });
 
     // Base click record
     const clickBase: Record<string, unknown> = {
@@ -70,34 +73,51 @@ Deno.serve(async (req) => {
       user_agent: user_agent || null,
     };
 
-    // If no phone, still log click and redirect
-    if (!telefoneNormalizado) {
-      log("warn", "No valid phone, logging click only", { phone });
-      await insertClick({ ...clickBase, status: "click_no_phone", lead_action: "none", redirected: true });
-      return jsonResponse({ success: true, action: "redirect_only", redirect_url: WHATSAPP_REDIRECT });
+    // ─── Try to find existing lead by phone OR email ───
+    let existingLead: Record<string, unknown> | null = null;
+
+    if (telefoneNormalizado) {
+      const { data } = await supabase
+        .from("pipeline_leads")
+        .select("id, nome, tags, stage_id, corretor_id")
+        .eq("telefone_normalizado", telefoneNormalizado)
+        .not("aceite_status", "eq", "descartado")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      existingLead = data;
     }
 
-    // ─── Check existing lead by phone ───
-    const { data: existingLead } = await supabase
-      .from("pipeline_leads")
-      .select("id, nome, tags, stage_id, corretor_id")
-      .eq("telefone_normalizado", telefoneNormalizado)
-      .not("aceite_status", "eq", "descartado")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    if (!existingLead && email) {
+      const { data } = await supabase
+        .from("pipeline_leads")
+        .select("id, nome, tags, stage_id, corretor_id")
+        .eq("email", email)
+        .not("aceite_status", "eq", "descartado")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      existingLead = data;
+    }
+
+    // If no phone AND no email, still log click and redirect
+    if (!telefoneNormalizado && !email) {
+      log("warn", "No valid phone or email, logging click only", { phone, email });
+      await insertClick({ ...clickBase, status: "click_no_contact", lead_action: "none", redirected: true });
+      return jsonResponse({ success: true, action: "redirect_only", redirect_url: WHATSAPP_REDIRECT });
+    }
 
     if (existingLead) {
       // ─── UPDATE existing lead ───
       log("info", "Lead exists, updating", { leadId: existingLead.id });
 
-      const currentTags: string[] = existingLead.tags || [];
+      const currentTags: string[] = (existingLead.tags as string[]) || [];
       const newTags = [...new Set([...currentTags, ...tags])];
 
       await supabase.from("pipeline_leads").update({
         tags: newTags,
         campanha: campanha,
-        observacoes: `Lead entrou via campanha de SMS do Brevo - Melnick Day Porto Alegre (${new Date().toLocaleDateString("pt-BR")})`,
+        observacoes: obsText,
       }).eq("id", existingLead.id);
 
       // Log progression
