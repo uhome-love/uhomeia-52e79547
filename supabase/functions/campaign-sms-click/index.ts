@@ -164,15 +164,19 @@ Deno.serve(async (req) => {
       const updateData: Record<string, unknown> = {
         tags: newTags,
         campanha: campanha,
-        observacoes: obsText,
+        observacoes: interesseBrevo
+          ? `${obsText} | Interesse: ${interesseBrevo}`
+          : obsText,
       };
       // Update name if we have one and existing is generic
-      if (nome && (!existingLead.nome || existingLead.nome === "Lead Melnick Day")) {
-        updateData.nome = nome;
+      const bestNome = enrichedNome || nome;
+      if (bestNome && (!existingLead.nome || existingLead.nome === "Lead Melnick Day")) {
+        updateData.nome = bestNome;
       }
       // Update email if we have one and existing doesn't
-      if (email && !existingLead.email) {
-        updateData.email = email;
+      const bestEmail = enrichedEmail || email;
+      if (bestEmail && !existingLead.email) {
+        updateData.email = bestEmail;
       }
 
       await supabase.from("pipeline_leads").update(updateData).eq("id", existingLead.id);
