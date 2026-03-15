@@ -26,22 +26,22 @@ function brtEnd(d: Date) { return `${dateStr(d)}T23:59:59.999-03:00`; }
 
 // ── KPIs ──
 export function useWeeklyKpis(week: WeekRange) {
-  const s = iso(week.start);
-  const e = iso(week.end);
+  const s = brtStart(week.start);
+  const e = brtEnd(week.end);
   const ds = dateStr(week.start);
   const de = dateStr(week.end);
-
-  const prev = getWeekRange(-1 + Math.round((week.start.getTime() - startOfWeek(new Date(), { weekStartsOn: 1 }).getTime()) / (7 * 86400000)));
 
   return useQuery({
     queryKey: ["weekly-kpis", ds, de],
     staleTime: 5 * 60_000,
     queryFn: async () => {
       // Previous week for comparison
-      const ps = iso(addWeeks(week.start, -1));
-      const pe = iso(addWeeks(week.end, -1));
+      const ps = brtStart(addWeeks(week.start, -1));
+      const pe = brtEnd(addWeeks(week.end, -1));
       const pds = dateStr(addWeeks(week.start, -1));
       const pde = dateStr(addWeeks(week.end, -1));
+
+      console.log("[RelatorioSemanal] Week range:", { start: s, end: e, prevStart: ps, prevEnd: pe });
 
       const [
         { count: novosLeads },
@@ -65,8 +65,8 @@ export function useWeeklyKpis(week: WeekRange) {
         supabase.from("pipeline_historico").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe),
         supabase.from("visitas").select("id", { count: "exact", head: true }).eq("status", "realizada").gte("data_visita", ds).lte("data_visita", de),
         supabase.from("visitas").select("id", { count: "exact", head: true }).eq("status", "realizada").gte("data_visita", pds).lte("data_visita", pde),
-        supabase.from("negocios").select("id", { count: "exact", head: true }).gte("updated_at", s).lte("updated_at", e),
-        supabase.from("negocios").select("id", { count: "exact", head: true }).gte("updated_at", ps).lte("updated_at", pe),
+        supabase.from("negocios").select("id", { count: "exact", head: true }).gte("created_at", s).lte("created_at", e),
+        supabase.from("negocios").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe),
         supabase.from("negocios").select("id, vgv_final").in("fase", ["assinado", "vendido"]).gte("data_assinatura", ds).lte("data_assinatura", de),
         supabase.from("negocios").select("id, vgv_final").in("fase", ["assinado", "vendido"]).gte("data_assinatura", pds).lte("data_assinatura", pde),
       ]);
