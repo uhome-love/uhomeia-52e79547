@@ -37,7 +37,9 @@ function PhotoLightboxInner({ images, initialIndex, open, onClose }: PhotoLightb
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
-  const getFullRes = (url: string) => url.replace(/\/thumb\//, "/large/").replace(/_thumb\./i, ".");
+  // Images passed in should already be high-res from getPropertyFullscreenImages
+  // Keep a minimal fallback for edge cases where thumbs leak through
+  const toHighRes = (url: string) => url.replace(/\/thumb\//i, "/large/").replace(/_thumb\./i, ".");
 
   if (!open || images.length === 0) return null;
   return createPortal(
