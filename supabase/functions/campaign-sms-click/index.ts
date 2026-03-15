@@ -150,12 +150,16 @@ Deno.serve(async (req) => {
     // ─── Try to find existing lead by phone OR email ───
     let existingLead: Record<string, unknown> | null = null;
 
-    if (telefoneNormalizado) {
-      const variants = phoneVariants(telefoneNormalizado);
+    // Search with all available phone numbers (original + enriched)
+    const phonesToSearch = new Set<string>();
+    if (telefoneNormalizado) phoneVariants(telefoneNormalizado).forEach(v => phonesToSearch.add(v));
+    if (enrichedPhone && enrichedPhone !== telefoneNormalizado) phoneVariants(enrichedPhone).forEach(v => phonesToSearch.add(v));
+
+    if (phonesToSearch.size > 0) {
       const { data } = await supabase
         .from("pipeline_leads")
-        .select("id, nome, email, tags, stage_id, corretor_id")
-        .in("telefone_normalizado", variants)
+        .select("id, nome, email, telefone, telefone_normalizado, tags, stage_id, corretor_id")
+        .in("telefone_normalizado", [...phonesToSearch])
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
         .limit(1)
@@ -167,7 +171,7 @@ Deno.serve(async (req) => {
       const searchEmail = enrichedEmail || email;
       const { data } = await supabase
         .from("pipeline_leads")
-        .select("id, nome, email, tags, stage_id, corretor_id")
+        .select("id, nome, email, telefone, telefone_normalizado, tags, stage_id, corretor_id")
         .eq("email", searchEmail)
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
