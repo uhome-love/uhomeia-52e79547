@@ -427,8 +427,11 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
             </DropdownMenu>
           </div>
 
-          {/* Row 4: Context line — empreendimento + formulário + status */}
+          {/* Row 4: Context line — empreendimento + formulário + status + tags */}
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
+            {((lead as any).tags || []).includes("MELNICK_DAY") && (
+              <Badge className="text-[9px] h-4 px-1.5 bg-orange-500 text-white border-none">🔥 Melnick Day</Badge>
+            )}
             {(lead.empreendimento || lead.plataforma) && (
               <span className="flex items-center gap-1">
                 <Building2 className="h-3 w-3" />
