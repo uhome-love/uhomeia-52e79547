@@ -145,11 +145,12 @@ export default function CeoDashboard() {
   // Fetch consolidated CEO metas for current month
   const [ceoMetasConsolidadas, setCeoMetasConsolidadas] = useState<{
     meta_ligacoes: number; meta_visitas_marcadas: number; meta_visitas_realizadas: number; meta_vgv_assinado: number;
-  }>({ meta_ligacoes: 0, meta_visitas_marcadas: 0, meta_visitas_realizadas: 0, meta_vgv_assinado: 0 });
+    meta_propostas: number; meta_contratos: number; meta_assinados: number; meta_aproveitados: number;
+  }>({ meta_ligacoes: 0, meta_visitas_marcadas: 0, meta_visitas_realizadas: 0, meta_vgv_assinado: 0, meta_propostas: 0, meta_contratos: 0, meta_assinados: 0, meta_aproveitados: 0 });
 
   useEffect(() => {
     const mesAtual = format(new Date(), "yyyy-MM");
-    supabase.from("ceo_metas_mensais").select("meta_ligacoes, meta_visitas_marcadas, meta_visitas_realizadas, meta_vgv_assinado").eq("mes", mesAtual)
+    supabase.from("ceo_metas_mensais").select("meta_ligacoes, meta_visitas_marcadas, meta_visitas_realizadas, meta_vgv_assinado, meta_propostas, meta_contratos, meta_assinados, meta_aproveitados").eq("mes", mesAtual)
       .then(({ data }) => {
         if (data && data.length > 0) {
           setCeoMetasConsolidadas({
@@ -157,6 +158,10 @@ export default function CeoDashboard() {
             meta_visitas_marcadas: data.reduce((a, m) => a + (m.meta_visitas_marcadas || 0), 0),
             meta_visitas_realizadas: data.reduce((a, m) => a + (m.meta_visitas_realizadas || 0), 0),
             meta_vgv_assinado: data.reduce((a, m) => a + (m.meta_vgv_assinado || 0), 0),
+            meta_propostas: data.reduce((a, m) => a + ((m as any).meta_propostas || 0), 0),
+            meta_contratos: data.reduce((a, m) => a + ((m as any).meta_contratos || 0), 0),
+            meta_assinados: data.reduce((a, m) => a + ((m as any).meta_assinados || 0), 0),
+            meta_aproveitados: data.reduce((a, m) => a + ((m as any).meta_aproveitados || 0), 0),
           });
         }
       });
