@@ -97,19 +97,21 @@ Deno.serve(async (req) => {
       user_agent: user_agent || null,
     };
 
-    // ─── Enrich from brevo_contacts if name/email missing ───
+    // ─── Enrich from brevo_contacts — always lookup to fill missing name/phone/email ───
     let enrichedNome = nome;
     let enrichedEmail = email;
+    let enrichedPhone = telefoneNormalizado;
     let interesseBrevo: string | null = null;
 
     if (telefoneNormalizado || email) {
       let brevoContact: Record<string, unknown> | null = null;
+      const brevoFields = "nome_completo, nome, sobrenome, email, telefone, telefone_normalizado, conversao_recente";
 
       if (telefoneNormalizado) {
         const variants = phoneVariants(telefoneNormalizado);
         const { data } = await supabase
           .from("brevo_contacts")
-          .select("nome_completo, email, conversao_recente")
+          .select(brevoFields)
           .in("telefone_normalizado", variants)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -120,7 +122,7 @@ Deno.serve(async (req) => {
       if (!brevoContact && email) {
         const { data } = await supabase
           .from("brevo_contacts")
-          .select("nome_completo, email, conversao_recente")
+          .select(brevoFields)
           .eq("email", email.toLowerCase().trim())
           .order("created_at", { ascending: false })
           .limit(1)
@@ -129,10 +131,19 @@ Deno.serve(async (req) => {
       }
 
       if (brevoContact) {
-        if (!enrichedNome && brevoContact.nome_completo) enrichedNome = brevoContact.nome_completo as string;
-        if (!enrichedEmail && brevoContact.email) enrichedEmail = brevoContact.email as string;
-        if (brevoContact.conversao_recente) interesseBrevo = brevoContact.conversao_recente as string;
-        log("info", "Enriched from brevo_contacts", { enrichedNome, enrichedEmail, interesseBrevo });
+        if (!enrichedNome || enrichedNome === "Lead Melnick Day") {
+          enrichedNome = (brevoContact.nome_completo as string) || enrichedNome;
+        }
+        if (!enrichedEmail && brevoContact.email) {
+          enrichedEmail = brevoContact.email as string;
+        }
+        if (!enrichedPhone && brevoContact.telefone_normalizado) {
+          enrichedPhone = brevoContact.telefone_normalizado as string;
+        }
+        if (brevoContact.conversao_recente) {
+          interesseBrevo = brevoContact.conversao_recente as string;
+        }
+        log("info", "Enriched from brevo_contacts", { enrichedNome, enrichedEmail, enrichedPhone, interesseBrevo });
       }
     }
 
