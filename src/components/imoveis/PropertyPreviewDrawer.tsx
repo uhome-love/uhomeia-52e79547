@@ -174,7 +174,9 @@ export default function PropertyPreviewDrawer({
 
   const thumbs = extractImages(item);
   const fullImages = extractFullImages(item);
-  const heroImages = fullImages.length > 0 ? fullImages : thumbs;
+  // Apply URL transform to get best resolution: /thumb/ → /large/, _thumb. → .
+  const toFullRes = (url: string) => url.replace(/\/thumb\//i, "/large/").replace(/_thumb\./i, ".");
+  const heroImages = (fullImages.length > 0 ? fullImages : thumbs).map(toFullRes);
   const thumbStrip = thumbs.length > 0 ? thumbs : heroImages;
   const loc = extractEndereco(item);
   const codigo = item.codigo;
@@ -242,7 +244,7 @@ export default function PropertyPreviewDrawer({
       {/* ── Scrollable body ── */}
       <div className="flex-1 overflow-y-auto">
         {/* ── Hero Image ── */}
-        <div className="relative bg-muted/60 aspect-[4/3] group cursor-pointer" onClick={() => heroImages.length > 0 && onOpenLightbox(heroImages, imageIdx)}>
+        <div className="relative bg-muted/60 aspect-[4/3] group cursor-pointer" onClick={() => heroImages.length > 1 && nextImage()}>
           {heroImages.length > 0 ? (
             <>
               <img
@@ -310,7 +312,7 @@ export default function PropertyPreviewDrawer({
             ))}
             {heroImages.length > 8 && (
               <button
-                onClick={() => onOpenLightbox(heroImages, 8)}
+                onClick={() => setImageIdx(8)}
                 className="shrink-0 w-14 h-10 rounded-md bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground border-2 border-transparent hover:border-primary/30"
               >
                 +{heroImages.length - 8}
