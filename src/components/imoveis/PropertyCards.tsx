@@ -207,11 +207,14 @@ export const PropertyCardList = React.memo(function PropertyCardList({ item, idx
   const imovelId = String(codigo || item.id_imovel || item.id || idx);
 
   return (
-    <Card className={cn(
-      "overflow-hidden hover:shadow-lg transition-all duration-200 relative border-border/40",
-      isCampanha && "ring-1 ring-primary/20",
-      selectMode && isSelected && "ring-2 ring-primary"
-    )}>
+    <Card
+      className={cn(
+        "overflow-hidden hover:shadow-lg transition-all duration-200 relative border-border/40 cursor-pointer",
+        isCampanha && "ring-1 ring-primary/20",
+        selectMode && isSelected && "ring-2 ring-primary"
+      )}
+      onClick={() => onPreview?.(item)}
+    >
       {selectMode && (
         <button onClick={() => onToggleSelect(imovelId)} className="absolute top-2 left-2 z-20 bg-background/90 rounded-md p-0.5 shadow-sm">
           {isSelected ? <CheckSquare className="h-5 w-5 text-primary" /> : <Square className="h-5 w-5 text-muted-foreground" />}
