@@ -55,15 +55,34 @@ function Variation({ current, previous, suffix = "" }: { current: number; previo
   );
 }
 
+// ─── Semaphore helper ───
+function getSemaphore(value: number, meta: number | undefined | null): { color: string; bg: string; border: string; label: string } | null {
+  if (!meta || meta <= 0) return null;
+  const pct = (value / meta) * 100;
+  if (pct >= 100) return { color: "bg-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/30", label: "No alvo" };
+  if (pct >= 70) return { color: "bg-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/30", label: "Atenção" };
+  return { color: "bg-red-500", bg: "bg-red-500/10", border: "border-red-500/30", label: "Abaixo" };
+}
+
 // ─── KPI Card ───
-function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor }: {
-  icon: any; label: string; value: number; displayValue?: string; meta?: number; prev?: number; iconColor?: string;
+function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor, ceoMeta }: {
+  icon: any; label: string; value: number; displayValue?: string; meta?: number; prev?: number; iconColor?: string; ceoMeta?: number | null;
 }) {
   const pct = meta && meta > 0 ? Math.min(Math.round((value / meta) * 100), 100) : null;
+  const semaphore = getSemaphore(value, ceoMeta);
+  const metaPct = ceoMeta && ceoMeta > 0 ? Math.round((value / ceoMeta) * 100) : null;
+
   return (
-    <Card>
+    <Card className="relative">
       <CardContent className="pt-4 pb-3 px-4">
-        <div className="flex items-start justify-between mb-1">
+        {/* Semaphore dot */}
+        {ceoMeta !== undefined && (
+          <div className="absolute top-2.5 right-2.5" title={semaphore ? `${metaPct}% da meta (${semaphore.label})` : "Sem meta"}>
+            <div className={`h-2.5 w-2.5 rounded-full ${semaphore ? semaphore.color : "bg-muted-foreground/30"}`} />
+          </div>
+        )}
+
+        <div className="flex items-start justify-between mb-1 pr-4">
           <div className="flex items-center gap-2">
             <Icon className={`h-4 w-4 ${iconColor || "text-primary"}`} />
             <span className="text-xs text-muted-foreground">{label}</span>
@@ -71,6 +90,14 @@ function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor
           {prev !== undefined && <Variation current={value} previous={prev} />}
         </div>
         <p className="text-2xl font-bold">{displayValue || value}</p>
+
+        {/* Meta line from ceo_metas_mensais */}
+        {ceoMeta !== undefined && ceoMeta !== null && ceoMeta > 0 && (
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {metaPct}% da meta · meta: {ceoMeta}
+          </p>
+        )}
+
         {pct !== null && (
           <div className="mt-2 space-y-1">
             <div className="flex justify-between text-[10px] text-muted-foreground">
