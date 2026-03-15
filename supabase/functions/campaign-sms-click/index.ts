@@ -359,7 +359,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "No pipeline stages", redirect_url: WHATSAPP_REDIRECT }, 500);
     }
 
-    const leadNome = enrichedNome || nome || "Lead Melnick Day";
+    const leadNome = enrichedNome || nome || nameFromEmail(enrichedEmail || email) || "Lead Melnick Day";
     const leadEmail = enrichedEmail || email;
     const leadPhone = enrichedPhone || telefoneNormalizado;
     const obsComInteresse = interesseBrevo
