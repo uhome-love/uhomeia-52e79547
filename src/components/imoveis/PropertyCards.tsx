@@ -8,8 +8,8 @@
  *  - isCampanha: boolean
  *  - selectMode / isSelected / onToggleSelect: vitrine selection
  *  - onFavorite / isFavorite: favorites
- *  - onOpenLightbox: (images, index) => void
  *  - getPreco: (item) => string
+ *  - onPreview: (item) => void
  */
 
 import React, { useState } from "react";
