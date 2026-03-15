@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorState, EmptyState } from "@/components/ui/screen-states";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
