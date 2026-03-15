@@ -97,19 +97,21 @@ Deno.serve(async (req) => {
       user_agent: user_agent || null,
     };
 
-    // ─── Enrich from brevo_contacts if name/email missing ───
+    // ─── Enrich from brevo_contacts — always lookup to fill missing name/phone/email ───
     let enrichedNome = nome;
     let enrichedEmail = email;
+    let enrichedPhone = telefoneNormalizado;
     let interesseBrevo: string | null = null;
 
     if (telefoneNormalizado || email) {
       let brevoContact: Record<string, unknown> | null = null;
+      const brevoFields = "nome_completo, nome, sobrenome, email, telefone, telefone_normalizado, conversao_recente";
 
       if (telefoneNormalizado) {
         const variants = phoneVariants(telefoneNormalizado);
         const { data } = await supabase
           .from("brevo_contacts")
-          .select("nome_completo, email, conversao_recente")
+          .select(brevoFields)
           .in("telefone_normalizado", variants)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -120,7 +122,7 @@ Deno.serve(async (req) => {
       if (!brevoContact && email) {
         const { data } = await supabase
           .from("brevo_contacts")
-          .select("nome_completo, email, conversao_recente")
+          .select(brevoFields)
           .eq("email", email.toLowerCase().trim())
           .order("created_at", { ascending: false })
           .limit(1)
@@ -129,22 +131,35 @@ Deno.serve(async (req) => {
       }
 
       if (brevoContact) {
-        if (!enrichedNome && brevoContact.nome_completo) enrichedNome = brevoContact.nome_completo as string;
-        if (!enrichedEmail && brevoContact.email) enrichedEmail = brevoContact.email as string;
-        if (brevoContact.conversao_recente) interesseBrevo = brevoContact.conversao_recente as string;
-        log("info", "Enriched from brevo_contacts", { enrichedNome, enrichedEmail, interesseBrevo });
+        if (!enrichedNome || enrichedNome === "Lead Melnick Day") {
+          enrichedNome = (brevoContact.nome_completo as string) || enrichedNome;
+        }
+        if (!enrichedEmail && brevoContact.email) {
+          enrichedEmail = brevoContact.email as string;
+        }
+        if (!enrichedPhone && brevoContact.telefone_normalizado) {
+          enrichedPhone = brevoContact.telefone_normalizado as string;
+        }
+        if (brevoContact.conversao_recente) {
+          interesseBrevo = brevoContact.conversao_recente as string;
+        }
+        log("info", "Enriched from brevo_contacts", { enrichedNome, enrichedEmail, enrichedPhone, interesseBrevo });
       }
     }
 
     // ─── Try to find existing lead by phone OR email ───
     let existingLead: Record<string, unknown> | null = null;
 
-    if (telefoneNormalizado) {
-      const variants = phoneVariants(telefoneNormalizado);
+    // Search with all available phone numbers (original + enriched)
+    const phonesToSearch = new Set<string>();
+    if (telefoneNormalizado) phoneVariants(telefoneNormalizado).forEach(v => phonesToSearch.add(v));
+    if (enrichedPhone && enrichedPhone !== telefoneNormalizado) phoneVariants(enrichedPhone).forEach(v => phonesToSearch.add(v));
+
+    if (phonesToSearch.size > 0) {
       const { data } = await supabase
         .from("pipeline_leads")
-        .select("id, nome, email, tags, stage_id, corretor_id")
-        .in("telefone_normalizado", variants)
+        .select("id, nome, email, telefone, telefone_normalizado, tags, stage_id, corretor_id")
+        .in("telefone_normalizado", [...phonesToSearch])
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
         .limit(1)
@@ -156,7 +171,7 @@ Deno.serve(async (req) => {
       const searchEmail = enrichedEmail || email;
       const { data } = await supabase
         .from("pipeline_leads")
-        .select("id, nome, email, tags, stage_id, corretor_id")
+        .select("id, nome, email, telefone, telefone_normalizado, tags, stage_id, corretor_id")
         .eq("email", searchEmail)
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
@@ -195,6 +210,12 @@ Deno.serve(async (req) => {
       const bestEmail = enrichedEmail || email;
       if (bestEmail && !existingLead.email) {
         updateData.email = bestEmail;
+      }
+      // Update phone if we have one and existing doesn't
+      const bestPhone = enrichedPhone || telefoneNormalizado;
+      if (bestPhone && !existingLead.telefone_normalizado) {
+        updateData.telefone_normalizado = bestPhone;
+        updateData.telefone = phone || bestPhone;
       }
 
       await supabase.from("pipeline_leads").update(updateData).eq("id", existingLead.id);
@@ -271,6 +292,7 @@ Deno.serve(async (req) => {
 
     const leadNome = enrichedNome || nome || "Lead Melnick Day";
     const leadEmail = enrichedEmail || email;
+    const leadPhone = enrichedPhone || telefoneNormalizado;
     const obsComInteresse = interesseBrevo
       ? `${obsText} | Interesse: ${interesseBrevo}`
       : obsText;
@@ -279,8 +301,8 @@ Deno.serve(async (req) => {
       .from("pipeline_leads")
       .insert({
         nome: leadNome,
-        telefone: phone || null,
-        telefone_normalizado: telefoneNormalizado,
+        telefone: phone || leadPhone || null,
+        telefone_normalizado: leadPhone,
         email: leadEmail || null,
         origem: origem,
         campanha: campanha,
