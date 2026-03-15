@@ -47,11 +47,12 @@ export default function ImovelPage() {
     supabase.functions
       .invoke("jetimob-proxy", { body: { action: "get_imovel", codigo } })
       .then(({ data }) => {
-        const detail = data?.data || data;
-        if (!detail || detail.not_found) {
+        // jetimob-proxy returns { imovel: {...}, not_found: bool }
+        const imovel = data?.imovel ?? data?.data?.imovel ?? null;
+        if (!imovel || data?.not_found) {
           setError(true);
         } else {
-          setItem(detail);
+          setItem(imovel);
         }
       })
       .catch(() => setError(true))
@@ -102,7 +103,8 @@ export default function ImovelPage() {
   const prevImage = () => setImageIdx(i => (i > 0 ? i - 1 : heroImages.length - 1));
   const nextImage = () => setImageIdx(i => (i < heroImages.length - 1 ? i + 1 : 0));
 
-  const shareUrl = `${window.location.origin}/imovel/${codigo}`;
+  const PUBLIC_DOMAIN = "https://uhomesales.com";
+  const shareUrl = `${PUBLIC_DOMAIN}/imovel/${codigo}`;
   const whatsappText = encodeURIComponent(
     [titulo, loc.bairro, preco, shareUrl].filter(Boolean).join(" - ")
   );

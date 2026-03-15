@@ -89,8 +89,9 @@ export default function PropertyPreviewDrawer({
     setOrigemLoading(true);
     supabase.functions.invoke("jetimob-proxy", { body: { action: "get_imovel", codigo } })
       .then(({ data }) => {
-        const detail = data?.data || data;
-        const result = (detail && !detail.not_found) ? extractOrigemExterna(detail) : null;
+        // jetimob-proxy returns { imovel: {...}, not_found: bool }
+        const imovel = data?.imovel ?? data?.data?.imovel ?? null;
+        const result = imovel ? extractOrigemExterna(imovel) : null;
         responsavelCache.set(codigo, { origem: result });
         setOrigem(result);
       })
@@ -195,6 +196,7 @@ export default function PropertyPreviewDrawer({
   const nextImage = () => setImageIdx(i => (i < heroImages.length - 1 ? i + 1 : 0));
 
   const copyData = () => {
+    const propUrl = codigo ? `https://uhomesales.com/imovel/${codigo}` : "";
     const text = [
       titulo, getPreco(item),
       `${[loc.endereco, loc.bairro, loc.cidade].filter(Boolean).join(" · ")}`,
@@ -202,13 +204,16 @@ export default function PropertyPreviewDrawer({
       area ? `${area} m²` : "",
       vagasVal ? `${vagasVal} vaga${vagasVal > 1 ? "s" : ""}` : "",
       codigo ? `Cód. ${codigo}` : "",
+      propUrl,
     ].filter(Boolean).join(" · ");
     navigator.clipboard.writeText(text);
     toast.success("Dados copiados!");
   };
 
+  const PUBLIC_DOMAIN = "https://uhomesales.com";
+  const propertyUrl = codigo ? `${PUBLIC_DOMAIN}/imovel/${codigo}` : "";
   const whatsappText = encodeURIComponent(
-    [titulo, loc.bairro, getPreco(item), codigo ? `Cód. ${codigo}` : ""].filter(Boolean).join(" - ")
+    [titulo, loc.bairro, getPreco(item), propertyUrl].filter(Boolean).join(" - ")
   );
 
   const specs = [
