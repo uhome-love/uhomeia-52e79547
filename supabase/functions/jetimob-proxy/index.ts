@@ -235,7 +235,9 @@ serve(async (req) => {
       }
 
       if (imovel) {
-        imovel._fotos_normalized = normalizeImages(imovel, requestedCodigo);
+        const imgs = normalizeImages(imovel, requestedCodigo);
+        imovel._fotos_normalized = imgs.thumbs;
+        imovel._fotos_full = imgs.full;
       }
 
       return new Response(JSON.stringify({ imovel, not_found: !imovel }), {
