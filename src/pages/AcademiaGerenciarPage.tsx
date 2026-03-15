@@ -48,6 +48,42 @@ export default function AcademiaGerenciarPage() {
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [uploadedPath, setUploadedPath] = useState<string | null>(null);
 
+  // Engagement stats per trilha
+  const [engagementMap, setEngagementMap] = useState<Record<string, { iniciaram: number; concluiram: number; mediaProgresso: number }>>({});
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("academia_progresso")
+        .select("trilha_id, status, corretor_id");
+      if (!data || data.length === 0) return;
+
+      const map: Record<string, { users: Set<string>; concluded: Set<string>; total: number; doneCount: number }> = {};
+      for (const row of data) {
+        const tid = row.trilha_id;
+        if (!tid) continue;
+        if (!map[tid]) map[tid] = { users: new Set(), concluded: new Set(), total: 0, doneCount: 0 };
+        const uid = row.corretor_id || (row as any).auth_user_id || "anon";
+        map[tid].users.add(uid);
+        map[tid].total++;
+        if (row.status === "concluida") {
+          map[tid].concluded.add(uid);
+          map[tid].doneCount++;
+        }
+      }
+
+      const result: typeof engagementMap = {};
+      for (const [tid, v] of Object.entries(map)) {
+        result[tid] = {
+          iniciaram: v.users.size,
+          concluiram: v.concluded.size,
+          mediaProgresso: v.total > 0 ? Math.round((v.doneCount / v.total) * 100) : 0,
+        };
+      }
+      setEngagementMap(result);
+    })();
+  }, [trilhas]);
+
   const selectedTrilhaAulas = aulas.filter(a => a.trilha_id === selectedTrilhaId).sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
   // Save trilha
