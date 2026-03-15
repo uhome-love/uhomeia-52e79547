@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Phone, Lock, Kanban, CalendarDays, AlertCircle, Zap, LogOut, Loader2 } from "lucide-react";
+import { LoadingState } from "@/components/ui/screen-states";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -140,10 +141,10 @@ export default function CorretorDashboard() {
   // While roles are still loading, show a brief loader instead of rendering the full dashboard
   if (roleLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="text-sm text-muted-foreground">Carregando...</span>
-      </div>
+      <LoadingState
+        title="Preparando seu painel..."
+        description="Verificando seu perfil e permissões."
+      />
     );
   }
 

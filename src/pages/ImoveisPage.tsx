@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorState, EmptyState } from "@/components/ui/screen-states";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -711,12 +712,11 @@ export default function ImoveisPage() {
                 </div>
               </div>
               {fetchError ? (
-                <Card className="p-16 text-center border-destructive/30 bg-destructive/5">
-                  <Search className="h-12 w-12 mx-auto text-destructive/30 mb-4" />
-                  <p className="text-lg font-semibold text-foreground">Erro ao carregar imóveis</p>
-                  <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
-                  <Button variant="outline" size="sm" className="mt-4" onClick={() => fetchPage(1)}>Tentar novamente</Button>
-                </Card>
+                <ErrorState
+                  title="Erro ao carregar imóveis"
+                  description={fetchError}
+                  action={{ label: "Tentar novamente", onClick: () => fetchPage(1) }}
+                />
               ) : loading ? (
                 <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
                   {Array.from({ length: 8 }).map((_, i) => (
@@ -726,12 +726,12 @@ export default function ImoveisPage() {
                   ))}
                 </div>
               ) : sortedImoveis.length === 0 ? (
-                <Card className="p-16 text-center border-border/40">
-                  <Search className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" />
-                  <p className="text-lg font-semibold text-foreground">Nenhum imóvel encontrado</p>
-                  <p className="text-sm text-muted-foreground mt-1">Tente ajustar seus filtros ou termo de busca</p>
-                  {activeFilters.length > 0 && <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}><X className="h-3.5 w-3.5 mr-1.5" /> Limpar filtros</Button>}
-                </Card>
+                <EmptyState
+                  title="Nenhum imóvel encontrado"
+                  description="Tente ajustar seus filtros ou termo de busca."
+                  icon={<Search className="h-10 w-10 text-muted-foreground/30" />}
+                  action={activeFilters.length > 0 ? { label: "Limpar filtros", onClick: clearAllFilters } : undefined}
+                />
               ) : (
                 <>
                   <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
