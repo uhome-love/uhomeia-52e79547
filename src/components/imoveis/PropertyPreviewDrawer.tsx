@@ -46,12 +46,14 @@ interface PropertyPreviewDrawerProps {
   hasPrev?: boolean;
   hasNext?: boolean;
   positionLabel?: string;
+  trackEvent?: (params: { event_type: string; imovel_codigo?: string; payload?: Record<string, any> }) => void;
 }
 
 export default function PropertyPreviewDrawer({
   item, open, onClose, isFavorite, onFavorite, getPreco,
   selectMode, isSelected, onToggleSelect, onOpenLightbox,
   onPrev, onNext, hasPrev = false, hasNext = false, positionLabel,
+  trackEvent,
 }: PropertyPreviewDrawerProps) {
   const [imageIdx, setImageIdx] = useState(0);
   const [origem, setOrigem] = useState<any>(null);
@@ -110,7 +112,26 @@ export default function PropertyPreviewDrawer({
     return () => window.removeEventListener("keydown", handler);
   }, [open, hasPrev, hasNext, onPrev, onNext]);
 
-  // Mobile swipe navigation (horizontal swipe with angle discrimination)
+  // Track property_previewed with 60s dedup per imovel_codigo
+  const trackedRef = useRef<Map<string, number>>(new Map());
+  const DEDUP_WINDOW = 60_000; // 60 seconds
+  useEffect(() => {
+    if (!open || !item?.codigo || !trackEvent) return;
+    const codigo = String(item.codigo);
+    const now = Date.now();
+    const lastTracked = trackedRef.current.get(codigo);
+    if (lastTracked && now - lastTracked < DEDUP_WINDOW) return;
+    trackedRef.current.set(codigo, now);
+    trackEvent({
+      event_type: "property_previewed",
+      imovel_codigo: codigo,
+      payload: {
+        titulo: item.titulo_anuncio || item.empreendimento_nome || null,
+        bairro: item.bairro || item.endereco_bairro || null,
+        preco: getPreco(item),
+      },
+    });
+  }, [open, item?.codigo, trackEvent, getPreco]);
   const touchRef = useRef<{ startX: number; startY: number; swiping: boolean } | null>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const SWIPE_THRESHOLD = 50; // min px horizontal
