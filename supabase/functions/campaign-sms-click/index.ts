@@ -83,10 +83,12 @@ Deno.serve(async (req) => {
     let existingLead: Record<string, unknown> | null = null;
 
     if (telefoneNormalizado) {
+      // Search both with and without country code prefix
+      const variants = phoneVariants(telefoneNormalizado);
       const { data } = await supabase
         .from("pipeline_leads")
         .select("id, nome, tags, stage_id, corretor_id")
-        .eq("telefone_normalizado", telefoneNormalizado)
+        .in("telefone_normalizado", variants)
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
         .limit(1)
