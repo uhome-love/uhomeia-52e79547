@@ -116,6 +116,7 @@ const DevAIPage = lazyRetry(() => import("./pages/DevAIPage"));
 const AlertasPage = lazyRetry(() => import("./pages/AlertasPage"));
 const MelnickDayLanding = lazyRetry(() => import("./pages/MelnickDayLanding"));
 const CampaignAnalyticsPage = lazyRetry(() => import("./pages/CampaignAnalyticsPage"));
+const ImportBrevoContacts = lazyRetry(() => import("./pages/ImportBrevoContacts"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
