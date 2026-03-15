@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Phone, Lock, Kanban, CalendarDays, AlertCircle, Zap, LogOut } from "lucide-react";
+import { Phone, Lock, Kanban, CalendarDays, AlertCircle, Zap, LogOut, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -137,7 +137,18 @@ export default function CorretorDashboard() {
     }
   }, [allMetasComplete, metaCelebrated]);
 
-  if (!roleLoading && (isGestor || isAdmin)) {
+  // While roles are still loading, show a brief loader instead of rendering the full dashboard
+  if (roleLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="text-sm text-muted-foreground">Carregando...</span>
+      </div>
+    );
+  }
+
+  // Admin/Gestor should not see corretor dashboard
+  if (isGestor || isAdmin) {
     return <Navigate to="/" replace />;
   }
 
