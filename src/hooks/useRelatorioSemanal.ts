@@ -109,7 +109,7 @@ export function useLeadsByEmpreendimento(week: WeekRange) {
     queryKey: ["weekly-leads-emp", dateStr(week.start)],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data } = await supabase.from("pipeline_leads").select("empreendimento").gte("created_at", iso(week.start)).lte("created_at", iso(week.end));
+      const { data } = await supabase.from("pipeline_leads").select("empreendimento").gte("created_at", brtStart(week.start)).lte("created_at", brtEnd(week.end));
       const map: Record<string, number> = {};
       (data || []).forEach(l => {
         const emp = l.empreendimento || "Sem empreendimento";
