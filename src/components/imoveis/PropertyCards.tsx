@@ -260,7 +260,7 @@ export const PropertyCardList = React.memo(function PropertyCardList({ item, idx
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo || item.id}`; navigator.clipboard.writeText(text); toast.success("Dados copiados!"); }}>
                 <Copy className="h-3 w-3" />
               </Button>
