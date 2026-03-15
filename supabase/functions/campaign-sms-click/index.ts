@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
           : obsText,
       };
       // Update name if we have one and existing is generic
-      const bestNome = enrichedNome || nome;
+      const bestNome = enrichedNome || nome || nameFromEmail(enrichedEmail || email);
       if (bestNome && (!existingLead.nome || existingLead.nome === "Lead Melnick Day")) {
         updateData.nome = bestNome;
       }
