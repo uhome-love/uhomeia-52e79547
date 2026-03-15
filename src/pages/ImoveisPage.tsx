@@ -46,7 +46,7 @@ export default function ImoveisPage() {
     vagas, setVagas, areaRange, setAreaRange, valorRange, setValorRange,
     somenteObras, setSomenteObras, campanhaAtiva, setCampanhaAtiva,
     uhomeOnly, setUhomeOnly, search, setSearch, sortBy, setSortBy,
-    filteredBairros, activeFilters, clearAllFilters, filterKey,
+    filteredBairros, tipoOptions, activeFilters, clearAllFilters, filterKey,
   } = filters;
 
   // ── UI state (local to page) ──
