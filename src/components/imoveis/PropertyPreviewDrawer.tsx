@@ -5,7 +5,7 @@
  * Reuses existing helpers and cached ResponsavelButton pattern.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
@@ -41,11 +41,17 @@ interface PropertyPreviewDrawerProps {
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   onOpenLightbox: (images: string[], index: number) => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
+  positionLabel?: string;
 }
 
 export default function PropertyPreviewDrawer({
   item, open, onClose, isFavorite, onFavorite, getPreco,
   selectMode, isSelected, onToggleSelect, onOpenLightbox,
+  onPrev, onNext, hasPrev = false, hasNext = false, positionLabel,
 }: PropertyPreviewDrawerProps) {
   const [imageIdx, setImageIdx] = useState(0);
   const [origem, setOrigem] = useState<any>(null);
@@ -93,6 +99,17 @@ export default function PropertyPreviewDrawer({
       .finally(() => { setOrigemLoading(false); setOrigemFetched(true); });
   }, [open, item?.codigo, origemFetched]);
 
+  // Keyboard navigation (left/right arrows)
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" && hasPrev && onPrev) { e.preventDefault(); onPrev(); }
+      if (e.key === "ArrowRight" && hasNext && onNext) { e.preventDefault(); onNext(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, hasPrev, hasNext, onPrev, onNext]);
+
   if (!item) return null;
 
   const images = extractImages(item);
@@ -134,6 +151,29 @@ export default function PropertyPreviewDrawer({
 
   const content = (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Prev/Next navigation header */}
+      <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-border/50 bg-muted/30">
+        <Button
+          variant="ghost" size="sm"
+          onClick={onPrev}
+          disabled={!hasPrev}
+          className="gap-1 text-xs h-7 px-2"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+        </Button>
+        {positionLabel && (
+          <span className="text-[11px] font-medium text-muted-foreground tabular-nums">{positionLabel}</span>
+        )}
+        <Button
+          variant="ghost" size="sm"
+          onClick={onNext}
+          disabled={!hasNext}
+          className="gap-1 text-xs h-7 px-2"
+        >
+          Próximo <ChevronRight className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
       {/* Image gallery */}
       <div className="relative bg-muted aspect-[16/10] shrink-0 group">
         {allImages.length > 0 ? (

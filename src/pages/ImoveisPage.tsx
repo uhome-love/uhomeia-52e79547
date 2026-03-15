@@ -74,6 +74,7 @@ export default function ImoveisPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const openPreview = (item: any) => { setPreviewItem(item); setPreviewOpen(true); };
   const closePreview = () => setPreviewOpen(false);
+
   // ── Search ──
   const {
     loading, fetchError, page, totalPages, total, searchTimeMs, sortedImoveis,
@@ -92,6 +93,18 @@ export default function ImoveisPage() {
     showFavoritesOnly,
     favorites,
   });
+
+  // Prev/next navigation in preview
+  const previewIndex = previewItem ? sortedImoveis.findIndex((it: any) => {
+    const pid = String(previewItem.codigo || previewItem.id_imovel || previewItem.id);
+    const iid = String(it.codigo || it.id_imovel || it.id);
+    return pid === iid;
+  }) : -1;
+  const hasPrevPreview = previewIndex > 0;
+  const hasNextPreview = previewIndex >= 0 && previewIndex < sortedImoveis.length - 1;
+  const goToPrevPreview = () => { if (hasPrevPreview) setPreviewItem(sortedImoveis[previewIndex - 1]); };
+  const goToNextPreview = () => { if (hasNextPreview) setPreviewItem(sortedImoveis[previewIndex + 1]); };
+  const previewPositionLabel = previewIndex >= 0 ? `${previewIndex + 1} / ${sortedImoveis.length}` : undefined;
 
   // ── Favorites persistence ──
   useEffect(() => {
@@ -137,6 +150,11 @@ export default function ImoveisPage() {
         isSelected={previewItem ? selectedIds.has(String(previewItem.codigo || previewItem.id_imovel || previewItem.id)) : false}
         onToggleSelect={toggleSelect}
         onOpenLightbox={openLightbox}
+        onPrev={goToPrevPreview}
+        onNext={goToNextPreview}
+        hasPrev={hasPrevPreview}
+        hasNext={hasNextPreview}
+        positionLabel={previewPositionLabel}
       />
 
       {/* Lead context banner */}
