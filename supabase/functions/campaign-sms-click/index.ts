@@ -138,13 +138,28 @@ Deno.serve(async (req) => {
 
       await supabase.from("pipeline_leads").update(updateData).eq("id", existingLead.id);
 
+      // ─── Notify the responsible corretor ───
+      const corretorId = existingLead.corretor_id as string | null;
+      if (corretorId) {
+        const leadNome = (nome || existingLead.nome || "Lead") as string;
+        await supabase.from("notifications").insert({
+          user_id: corretorId,
+          titulo: `🔥 ${leadNome} clicou no Melnick Day!`,
+          mensagem: `Seu lead "${leadNome}" demonstrou interesse clicando na campanha Melnick Day 2026${blocoLabel}. Entre em contato agora!`,
+          tipo: "lead_reengajado",
+          categoria: "leads",
+          dados: { pipeline_lead_id: existingLead.id, campanha, bloco, origem },
+        });
+        log("info", "Corretor notified", { corretorId, leadId: existingLead.id });
+      }
+
       // Log progression
       await supabase.from("lead_progressao").insert({
         lead_id: existingLead.id,
-        modulo_origem: "campanha_sms",
+        modulo_origem: "campanha_email",
         modulo_destino: "pipeline",
-        fase_origem: "sms_click",
-        fase_destino: "lead_updated",
+        fase_origem: "email_click",
+        fase_destino: "lead_reengaged",
         triggered_by: "campaign-sms-click",
       });
 
@@ -154,7 +169,7 @@ Deno.serve(async (req) => {
         pipeline_lead_id: existingLead.id,
         telefone: telefoneNormalizado,
         origem_canal: canal,
-        rule_applied: "sms_existing",
+        rule_applied: "existing_lead_notified",
       });
 
       await insertClick({
@@ -165,7 +180,7 @@ Deno.serve(async (req) => {
         redirected: true,
       });
 
-      log("info", "Lead updated successfully", { leadId: existingLead.id });
+      log("info", "Lead updated & corretor notified", { leadId: existingLead.id, corretorId });
       return jsonResponse({
         success: true,
         action: "updated",
