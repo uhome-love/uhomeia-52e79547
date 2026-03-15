@@ -99,6 +99,17 @@ export default function PropertyPreviewDrawer({
       .finally(() => { setOrigemLoading(false); setOrigemFetched(true); });
   }, [open, item?.codigo, origemFetched]);
 
+  // Keyboard navigation (left/right arrows)
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" && hasPrev && onPrev) { e.preventDefault(); onPrev(); }
+      if (e.key === "ArrowRight" && hasNext && onNext) { e.preventDefault(); onNext(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, hasPrev, hasNext, onPrev, onNext]);
+
   if (!item) return null;
 
   const images = extractImages(item);
