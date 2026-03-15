@@ -27,7 +27,8 @@ import SharePropertyButton from "@/components/imoveis/SharePropertyButton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  extractImages, extractFullImages, extractOrigemExterna, extractEntrega, extractEndereco,
+  getPropertyHeroImages, getPropertyFullscreenImages,
+  extractOrigemExterna, extractEntrega, extractEndereco,
   getNum, getNumIncZero, fmtBRL,
 } from "@/lib/imovelHelpers";
 
@@ -57,7 +58,7 @@ function ResponsavelButton({ codigo }: { codigo: string }) {
       const result = imovel ? extractOrigemExterna(imovel) : null;
       responsavelCache.set(codigo, { origem: result });
       setOrigem(result);
-    } catch { /* */ } finally { setLoading(false); setFetched(true); }
+    } catch (err) { console.warn("[ResponsavelButton] fetch failed for", codigo, err); } finally { setLoading(false); setFetched(true); }
   };
   return (
     <Popover onOpenChange={handleOpen}>
@@ -88,8 +89,8 @@ function ResponsavelButton({ codigo }: { codigo: string }) {
 // ── Grid Card ──
 
 export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco, onPreview }: any) {
-  const images = extractImages(item);
-  const fullImages = extractFullImages(item);
+  const images = getPropertyHeroImages(item);
+  const fullImages = getPropertyFullscreenImages(item);
   const loc = extractEndereco(item);
   const codigo = item.codigo;
   const titulo = item.titulo_anuncio || item.empreendimento_nome || "";
@@ -182,8 +183,8 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
 // ── List Card ──
 
 export const PropertyCardList = React.memo(function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco, onPreview }: any) {
-  const images = extractImages(item);
-  const fullImages = extractFullImages(item);
+  const images = getPropertyHeroImages(item);
+  const fullImages = getPropertyFullscreenImages(item);
   const loc = extractEndereco(item);
   const codigo = item.codigo;
   const titulo = item.titulo_anuncio || item.empreendimento_nome || "";
