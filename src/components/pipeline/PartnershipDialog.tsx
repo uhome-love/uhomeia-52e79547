@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { Users, Loader2, UserPlus, Handshake } from "lucide-react";
+import { useLeadParcerias, useCreateParceria } from "@/hooks/useParcerias";
 
 interface Props {
   open: boolean;
@@ -23,32 +23,29 @@ interface TeamMember {
   nome: string;
 }
 
-const FIXED_PARTNER_SHARE = 50;
-
 export default function PartnershipDialog({ open, onOpenChange, leadId, leadNome, corretorPrincipalId }: Props) {
   const { user } = useAuth();
   const [corretores, setCorretores] = useState<TeamMember[]>([]);
   const [parceiro, setParceiro] = useState("");
   const [motivo, setMotivo] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [existingPartnerships, setExistingPartnerships] = useState<any[]>([]);
 
   const excludedUserId = useMemo(() => corretorPrincipalId || user?.id || null, [corretorPrincipalId, user?.id]);
 
+  // React Query: existing partnerships
+  const { data: existingPartnerships = [] } = useLeadParcerias(open ? leadId : null);
+
+  // React Query: create mutation
+  const createMutation = useCreateParceria();
+
+  // Load team members (still imperative — not partnership data)
   useEffect(() => {
     if (!open) return;
-
     (async () => {
-      const [membersRes, profilesRes, partnershipsRes] = await Promise.all([
+      const [membersRes, profilesRes] = await Promise.all([
         supabase.from("team_members").select("user_id, nome").order("nome", { ascending: true }),
         supabase.from("profiles").select("user_id, nome").order("nome", { ascending: true }),
-        supabase.from("pipeline_parcerias").select("*").eq("pipeline_lead_id", leadId),
       ]);
 
-      if (partnershipsRes.error) console.error("Erro ao carregar parcerias:", partnershipsRes.error);
-      setExistingPartnerships(partnershipsRes.data || []);
-
-      // Merge team_members + profiles, dedup by user_id, prefer team_members name
       const memberMap = new Map<string, string>();
       (profilesRes.data || []).forEach((p: any) => {
         if (p.user_id && p.nome) memberMap.set(p.user_id, p.nome);
@@ -62,40 +59,21 @@ export default function PartnershipDialog({ open, onOpenChange, leadId, leadNome
         .filter(m => !excludedUserId || m.user_id !== excludedUserId)
         .sort((a, b) => a.nome.localeCompare(b.nome));
 
-      console.log("Corretores para parceria:", allMembers.length, allMembers);
       setCorretores(allMembers);
-      if (allMembers.length === 0) toast.error("Nenhum corretor disponível para parceria");
     })();
-  }, [open, leadId, excludedUserId]);
+  }, [open, excludedUserId]);
 
   const handleSave = async () => {
     if (!parceiro || !user) return;
-    setSaving(true);
-
-    try {
-      const { error } = await supabase.from("pipeline_parcerias").insert({
-        pipeline_lead_id: leadId,
-        corretor_principal_id: corretorPrincipalId || user.id,
-        corretor_parceiro_id: parceiro,
-        divisao_principal: 50,
-        divisao_parceiro: FIXED_PARTNER_SHARE,
-        motivo: motivo || null,
-        criado_por: user.id,
-      });
-
-      if (error) {
-        if (error.code === "23505") toast.error("Parceria já existe com este corretor");
-        else toast.error("Erro ao criar parceria");
-        return;
-      }
-
-      toast.success("Parceria registrada com sucesso!");
-      onOpenChange(false);
-      setParceiro("");
-      setMotivo("");
-    } finally {
-      setSaving(false);
-    }
+    await createMutation.mutateAsync({
+      leadId,
+      corretorPrincipalId: corretorPrincipalId || user.id,
+      corretorParceiroId: parceiro,
+      motivo: motivo || undefined,
+    });
+    onOpenChange(false);
+    setParceiro("");
+    setMotivo("");
   };
 
   return (
@@ -172,8 +150,8 @@ export default function PartnershipDialog({ open, onOpenChange, leadId, leadNome
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={!parceiro || saving} className="gap-1.5">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Handshake className="h-4 w-4" />}
+          <Button onClick={handleSave} disabled={!parceiro || createMutation.isPending} className="gap-1.5">
+            {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Handshake className="h-4 w-4" />}
             Registrar Parceria
           </Button>
         </DialogFooter>

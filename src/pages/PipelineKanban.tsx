@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useMemo, useCallback, lazy, Suspense } from "react";
 import PeriodBadge from "@/components/PeriodBadge";
 import { usePipeline } from "@/hooks/usePipeline";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
@@ -8,6 +8,7 @@ import type { PipelineStage } from "@/hooks/usePipeline";
 import { useMemo as useMemoReact } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQueryClient } from "@tanstack/react-query";
+import { useParceriasMap } from "@/hooks/useParcerias";
 
 // Lazy load heavy tab components
 const PipelineFlowDashboard = lazy(() => import("@/components/pipeline/PipelineFlowDashboard"));
@@ -97,13 +98,13 @@ export default function PipelineKanban() {
   const [addOpen, setAddOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<PipelineLead | null>(null);
   const [filters, setFilters] = useState<PipelineFilters>({ ...EMPTY_FILTERS });
-  const [parcerias, setParcerias] = useState<Record<string, string>>({});
-  const [refreshing, setRefreshing] = useState(false);
+  const { data: parcerias = {} } = useParceriasMap();
   const [activeTab, setActiveTab] = useState("kanban");
   const [filaCeoFilter, setFilaCeoFilter] = useState(false);
   const [corretorFilter, setCorretorFilter] = useState<string>("all");
   const [dispatchOpen, setDispatchOpen] = useState(false);
   const [forecastExpanded, setForecastExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Bulk selection state
   const [selectionMode, setSelectionMode] = useState(false);
@@ -113,8 +114,7 @@ export default function PipelineKanban() {
   const toggleLeadSelection = useCallback((leadId: string) => {
     setSelectedLeads(prev => {
       const next = new Set(prev);
-      if (next.has(leadId)) next.delete(leadId);
-      else next.add(leadId);
+      if (next.has(leadId)) next.delete(leadId); else next.add(leadId);
       return next;
     });
   }, []);
@@ -123,22 +123,6 @@ export default function PipelineKanban() {
     setSelectedLeads(new Set());
     setSelectionMode(false);
   }, []);
-
-  // Load partnerships from v_pipeline_parcerias_visual (names resolved in SQL)
-  const [parceriasLoaded, setParceriasLoaded] = useState(false);
-  useEffect(() => {
-    if (parceriasLoaded || pipeline.loading) return;
-    (async () => {
-      const { data } = await supabase
-        .from("v_pipeline_parcerias_visual")
-        .select("pipeline_lead_id, parceiro_nome");
-      if (!data || data.length === 0) { setParceriasLoaded(true); return; }
-      const result: Record<string, string> = {};
-      data.forEach(p => { result[p.pipeline_lead_id] = p.parceiro_nome || "Parceiro"; });
-      setParcerias(result);
-      setParceriasLoaded(true);
-    })();
-  }, [pipeline.loading, parceriasLoaded]);
 
   const canAdd = isGestor || isAdmin || isCorretor;
 
