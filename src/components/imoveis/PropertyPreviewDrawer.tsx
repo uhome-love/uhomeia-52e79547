@@ -21,8 +21,9 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  extractImages, extractFullImages, extractOrigemExterna,
-  extractEntrega, extractEndereco, getNum, getNumIncZero, fmtBRL,
+  getPropertyHeroImages, getPropertyThumbImages, getPropertyFullscreenImages,
+  extractOrigemExterna, extractEntrega, extractEndereco,
+  getNum, getNumIncZero, fmtBRL,
 } from "@/lib/imovelHelpers";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
