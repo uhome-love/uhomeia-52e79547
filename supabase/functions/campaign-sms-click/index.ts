@@ -237,11 +237,11 @@ Deno.serve(async (req) => {
     }
 
     if (!existingLead && (enrichedEmail || email)) {
-      const searchEmail = enrichedEmail || email;
+      const searchEmail = (enrichedEmail || email).toLowerCase().trim();
       const { data } = await supabase
         .from("pipeline_leads")
         .select("id, nome, email, telefone, telefone_normalizado, tags, stage_id, corretor_id")
-        .eq("email", searchEmail)
+        .ilike("email", searchEmail)
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
         .limit(1)
