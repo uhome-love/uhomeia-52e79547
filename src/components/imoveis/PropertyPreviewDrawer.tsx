@@ -110,6 +110,57 @@ export default function PropertyPreviewDrawer({
     return () => window.removeEventListener("keydown", handler);
   }, [open, hasPrev, hasNext, onPrev, onNext]);
 
+  // Mobile swipe navigation (horizontal swipe with angle discrimination)
+  const touchRef = useRef<{ startX: number; startY: number; swiping: boolean } | null>(null);
+  const swipeContainerRef = useRef<HTMLDivElement>(null);
+  const SWIPE_THRESHOLD = 50; // min px horizontal
+  const SWIPE_ANGLE_MAX = 30; // max degrees from horizontal to count as swipe
+
+  useEffect(() => {
+    if (!open || !isMobile) return;
+    const el = swipeContainerRef.current;
+    if (!el) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      touchRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, swiping: false };
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchRef.current || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - touchRef.current.startX;
+      const dy = e.touches[0].clientY - touchRef.current.startY;
+      const angle = Math.abs(Math.atan2(dy, dx) * (180 / Math.PI));
+      // Only mark as swiping if predominantly horizontal
+      if (Math.abs(dx) > 10 && (angle < SWIPE_ANGLE_MAX || angle > 180 - SWIPE_ANGLE_MAX)) {
+        touchRef.current.swiping = true;
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!touchRef.current) return;
+      const t = touchRef.current;
+      touchRef.current = null;
+      if (!t.swiping) return;
+
+      const endX = e.changedTouches[0].clientX;
+      const dx = endX - t.startX;
+      if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+
+      if (dx < 0 && hasNext && onNext) onNext(); // swipe left → next
+      if (dx > 0 && hasPrev && onPrev) onPrev(); // swipe right → prev
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [open, isMobile, hasPrev, hasNext, onPrev, onNext]);
+
   if (!item) return null;
 
   const images = extractImages(item);
