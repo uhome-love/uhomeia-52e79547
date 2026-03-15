@@ -326,7 +326,7 @@ export default function AgendaVisitas() {
         quickFilter={quickFilter}
         onQuickFilterChange={handleQuickFilterChange}
         counts={counts}
-        totalCount={visitas.length}
+        totalCount={allVisitasByTipo.length}
       />
 
       {/* ─── CONTROLLED TABS ─── */}
