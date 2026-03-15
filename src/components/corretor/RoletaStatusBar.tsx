@@ -43,8 +43,8 @@ interface Segmento {
 }
 
 // TODO: TEMPORÁRIO - ajustar horários após período de teste
-type JanelaKey = "manha" | "tarde" | "noite";
-type JanelaDb = "manha" | "tarde" | "noturna";
+type JanelaKey = "manha" | "tarde" | "noite" | "dia_todo";
+type JanelaDb = "manha" | "tarde" | "noturna" | "dia_todo";
 
 interface JanelaConfig {
   key: JanelaKey;
