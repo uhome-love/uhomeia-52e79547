@@ -315,21 +315,19 @@ export default function ImoveisPage() {
               active={tipo.length > 0}
               onClear={() => setTipo([])}
             >
-              <div className="space-y-1 w-44">
+              <div className="space-y-1 w-48">
                 <p className="text-xs font-semibold text-foreground mb-2">Tipo de imóvel <span className="text-muted-foreground font-normal">(múltipla)</span></p>
-                {[
-                  { v: "apartamento", l: "Apartamento" }, { v: "casa", l: "Casa" },
-                  { v: "cobertura", l: "Cobertura" }, { v: "terreno", l: "Terreno" }, { v: "comercial", l: "Comercial" },
-                  { v: "loft", l: "Loft / Studio" }, { v: "kitnet", l: "Kitnet" }
-                ].map(({ v, l }) => {
-                  const selected = tipo.includes(v);
+                {tipoOptions.map((facet) => {
+                  const selected = tipo.includes(facet.value);
+                  const label = facet.value.charAt(0).toUpperCase() + facet.value.slice(1);
                   return (
-                    <button key={v} onClick={() => setTipo(prev => selected ? prev.filter(t => t !== v) : [...prev, v])} className={cn(
+                    <button key={facet.value} onClick={() => setTipo(prev => selected ? prev.filter(t => t !== facet.value) : [...prev, facet.value])} className={cn(
                       "w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-all flex items-center gap-2",
                       selected ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted/50"
                     )}>
                       <Check className={cn("h-3 w-3 shrink-0", selected ? "opacity-100" : "opacity-0")} />
-                      {l}
+                      <span className="flex-1">{label}</span>
+                      {facet.count > 0 && <span className="text-[10px] text-muted-foreground">({facet.count})</span>}
                     </button>
                   );
                 })}
