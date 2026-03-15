@@ -11,7 +11,7 @@
 
 import { useState, useMemo } from "react";
 import { fmtCompact } from "@/lib/imovelHelpers";
-import type { BairroFacet } from "@/hooks/useBairroFacets";
+import type { Facet } from "@/hooks/useTypesenseFacets";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -21,7 +21,7 @@ export interface ActiveFilter {
   onRemove: () => void;
 }
 
-export function useImoveisFilters(bairroFacets?: BairroFacet[]) {
+export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[]) {
   // ── Core filter state ──
   const [contrato, setContrato] = useState("venda");
   const [tipo, setTipo] = useState<string[]>([]);
@@ -44,12 +44,14 @@ export function useImoveisFilters(bairroFacets?: BairroFacet[]) {
 
   // ── Derived: filteredBairros from dynamic facets ──
   const allBairros = useMemo(() => bairroFacets || [], [bairroFacets]);
-
   const filteredBairros = useMemo(() => {
     if (!bairroSearch) return allBairros;
     const q = bairroSearch.toLowerCase();
     return allBairros.filter((b) => b.value.toLowerCase().includes(q));
   }, [bairroSearch, allBairros]);
+
+  // ── Derived: tipoOptions from dynamic facets ──
+  const tipoOptions = useMemo(() => tipoFacets || [], [tipoFacets]);
 
   // ── Active filter tags ──
   const activeFilters: ActiveFilter[] = [];
@@ -95,6 +97,7 @@ export function useImoveisFilters(bairroFacets?: BairroFacet[]) {
     sortBy, setSortBy,
     // Derived
     filteredBairros,
+    tipoOptions,
     activeFilters,
     clearAllFilters,
     filterKey,
