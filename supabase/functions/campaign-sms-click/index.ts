@@ -122,11 +122,21 @@ Deno.serve(async (req) => {
       const currentTags: string[] = (existingLead.tags as string[]) || [];
       const newTags = [...new Set([...currentTags, ...tags])];
 
-      await supabase.from("pipeline_leads").update({
+      const updateData: Record<string, unknown> = {
         tags: newTags,
         campanha: campanha,
         observacoes: obsText,
-      }).eq("id", existingLead.id);
+      };
+      // Update name if we have one and existing is generic
+      if (nome && (!existingLead.nome || existingLead.nome === "Lead Melnick Day")) {
+        updateData.nome = nome;
+      }
+      // Update email if we have one and existing doesn't
+      if (email && !existingLead.email) {
+        updateData.email = email;
+      }
+
+      await supabase.from("pipeline_leads").update(updateData).eq("id", existingLead.id);
 
       // Log progression
       await supabase.from("lead_progressao").insert({
