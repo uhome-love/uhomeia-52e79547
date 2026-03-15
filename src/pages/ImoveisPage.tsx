@@ -557,7 +557,7 @@ export default function ImoveisPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <Input value={vitrineLink} readOnly className="text-xs h-8 w-64" />
                     <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(vitrineLink); toast.success("Link copiado!"); }}><Copy className="h-3.5 w-3.5" /></Button>
-                    <a href={`https://wa.me/?text=${encodeURIComponent(`Confira esta seleção de imóveis: ${vitrineLink}`)}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`https://wa.me/?text=${encodeURIComponent(`Confira esta seleção de imóveis: ${vitrineLink}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => { if (hasLeadContext) trackEvent({ event_type: "vitrine_sent", payload: { link: vitrineLink, channel: "whatsapp" } }); }}>
                       <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white gap-1"><Phone className="h-3.5 w-3.5" /> WhatsApp</Button>
                     </a>
                   </div>
