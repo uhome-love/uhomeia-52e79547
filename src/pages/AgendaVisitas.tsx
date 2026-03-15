@@ -94,10 +94,23 @@ export default function AgendaVisitas() {
     setSearchParams(params, { replace: true });
   }, [statusFilter, searchTerm, corretorFilter, empreendimentoFilter, agendaTipo, teamFilter, quickFilter, setSearchParams]);
 
-  const { visitas: allVisitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas();
+  // ─── SERVER-SIDE date filtering: tab determines the query range ───
+  // Tabs with date ranges (semana-atual, semana-anterior, mes) → server-filtered query
+  const tabFilters = useMemo(() => {
+    const f: { startDate?: string; endDate?: string } = {};
+    if (dateRange.from) f.startDate = dateRange.from;
+    if (dateRange.to) f.endDate = dateRange.to;
+    return f;
+  }, [dateRange]);
+
+  const { visitas: tabVisitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas(tabFilters);
+
+  // Broad query (no date filter) for calendar, alertas, performance, pending counts
+  const { visitas: allVisitas, isLoading: isLoadingAll } = useVisitas();
 
   // Split by tipo
-  const visitas = useMemo(() => allVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo), [allVisitas, agendaTipo]);
+  const visitas = useMemo(() => tabVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo), [tabVisitas, agendaTipo]);
+  const allVisitasByTipo = useMemo(() => allVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo), [allVisitas, agendaTipo]);
   const negocioCount = useMemo(() => allVisitas.filter(v => (v as any).tipo === "negocio").length, [allVisitas]);
   const leadCount = useMemo(() => allVisitas.filter(v => (v as any).tipo !== "negocio").length, [allVisitas]);
 
