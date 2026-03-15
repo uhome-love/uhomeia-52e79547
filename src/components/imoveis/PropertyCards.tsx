@@ -260,12 +260,15 @@ export const PropertyCardList = React.memo(function PropertyCardList({ item, idx
               )}
             </div>
             <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+              <SharePropertyButton
+                codigo={codigo || String(item.id)}
+                titulo={titulo}
+                bairro={loc.bairro}
+                preco={getPreco(item)}
+              />
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo || item.id}`; navigator.clipboard.writeText(text); toast.success("Dados copiados!"); }}>
                 <Copy className="h-3 w-3" />
               </Button>
-              <a href={`https://wa.me/?text=${encodeURIComponent(`${titulo} - ${loc.bairro} - ${getPreco(item)}`)}`} target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-green-600"><Phone className="h-3 w-3" /></Button>
-              </a>
               {codigo && <ResponsavelButton codigo={codigo} />}
             </div>
           </div>
