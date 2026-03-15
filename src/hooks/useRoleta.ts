@@ -156,7 +156,7 @@ export function getCurrentWindowInfo(): {
 
   return {
     janela,
-    label: janela === "madrugada" ? "Madrugada" : janela === "manha" ? "Manhã" : janela === "tarde" ? "Tarde" : "Noturna",
+    label: janela === "dia_todo" ? "Dia Todo" : janela === "madrugada" ? "Madrugada" : janela === "manha" ? "Manhã" : janela === "tarde" ? "Tarde" : "Noturna",
     emoji,
     descricao,
     credenciamentoAberto,
