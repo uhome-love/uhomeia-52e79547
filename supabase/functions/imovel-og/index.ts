@@ -107,7 +107,6 @@ Deno.serve(async (req) => {
 
     if (!imovel) {
       // Also check empreendimento_overrides as fallback
-      const supabase = createClient(supabaseUrl, serviceKey);
       const { data: override } = await supabase
         .from("empreendimento_overrides")
         .select("nome, descricao, bairro, fotos, valor_venda, dormitorios, area_privativa, landing_titulo")
