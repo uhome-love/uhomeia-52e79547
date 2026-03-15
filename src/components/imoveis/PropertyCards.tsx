@@ -23,6 +23,7 @@ import {
   CheckSquare, Square, Copy, CalendarClock, Heart,
 } from "lucide-react";
 import ImageSlider from "@/components/imoveis/ImageSlider";
+import SharePropertyButton from "@/components/imoveis/SharePropertyButton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
