@@ -247,6 +247,7 @@ export default function RelatorioSemanal() {
   const [downloading, setDownloading] = useState(false);
   const isMobile = useIsMobile();
 
+  const { data: kpis, isLoading: kpisLoading } = useWeeklyKpis(week);
   const { data: leadsOrigin, isLoading: originLoading } = useLeadsByOrigin(week);
   const { data: leadsEmp, isLoading: empLoading } = useLeadsByEmpreendimento(week);
   const { data: funnel, isLoading: funnelLoading } = useFunnelData(week);
