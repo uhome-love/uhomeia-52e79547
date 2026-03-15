@@ -15,8 +15,14 @@ function normalizePhone(phone: string | null | undefined): string | null {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 10) return null;
+  // Remove country code 55
   if (digits.startsWith("55") && digits.length >= 12) return digits.slice(2);
   return digits;
+}
+
+// Build all normalized variants for matching (with and without 55)
+function phoneVariants(normalized: string): string[] {
+  return [normalized, `55${normalized}`];
 }
 
 Deno.serve(async (req) => {
