@@ -1,9 +1,34 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, ChevronLeft, ChevronRight, Users, TrendingUp, Eye, AlertTriangle } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Users, TrendingUp, Eye, AlertTriangle, CalendarOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Feriados nacionais brasileiros 2026
+const FERIADOS_2026 = [
+  "2026-01-01", // Confraternização Universal
+  "2026-02-16", // Carnaval (segunda)
+  "2026-02-17", // Carnaval (terça)
+  "2026-04-03", // Sexta-feira Santa
+  "2026-04-21", // Tiradentes
+  "2026-05-01", // Dia do Trabalho
+  "2026-06-04", // Corpus Christi
+  "2026-09-07", // Independência
+  "2026-10-12", // N.S. Aparecida
+  "2026-11-02", // Finados
+  "2026-11-15", // Proclamação da República
+  "2026-12-25", // Natal
+];
+
+function isDiaUtil(dateStr: string): boolean {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const dayOfWeek = dateObj.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) return false; // domingo ou sábado
+  if (FERIADOS_2026.includes(dateStr)) return false;
+  return true;
+}
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -217,10 +242,18 @@ export default function CeoCheckpointViewer() {
   };
 
   // Alerts
-  const alerts = gerentesData.filter(g => g.checkpoint_status === "não_criado").map(g => ({
-    type: "warning" as const,
-    text: `${g.gerente_nome} não criou checkpoint hoje`,
-  }));
+  const diaUtil = isDiaUtil(date);
+  const alerts: { type: "warning" | "info"; text: string }[] = [];
+
+  if (!diaUtil) {
+    alerts.push({ type: "info", text: "Dia não útil — checkpoint não obrigatório" });
+  } else {
+    for (const g of gerentesData) {
+      if (g.checkpoint_status === "não_criado") {
+        alerts.push({ type: "warning", text: `${g.gerente_nome} não criou checkpoint hoje` });
+      }
+    }
+  }
 
   for (const g of gerentesData) {
     const txVisita = g.totals.real_visitas_marcadas > 0 ? Math.round((g.totals.real_visitas_realizadas / g.totals.real_visitas_marcadas) * 100) : -1;
@@ -255,12 +288,22 @@ export default function CeoCheckpointViewer() {
       {/* Checkpoint Alerts */}
       {alerts.length > 0 && (
         <div className="space-y-2">
-          {alerts.map((a, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-warning/20 bg-warning/5 text-xs text-warning">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              {a.text}
-            </div>
-          ))}
+          {alerts.map((a, i) => {
+            const isInfo = a.type === "info";
+            return (
+              <div
+                key={i}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${
+                  isInfo
+                    ? "border-border bg-muted/50 text-muted-foreground"
+                    : "border-warning/20 bg-warning/5 text-warning"
+                }`}
+              >
+                {isInfo ? <CalendarOff className="h-3.5 w-3.5 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
+                {a.text}
+              </div>
+            );
+          })}
         </div>
       )}
 
