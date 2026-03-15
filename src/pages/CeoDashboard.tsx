@@ -551,6 +551,7 @@ export default function CeoDashboard() {
             value={presentesHoje}
             displayValue={`${presentesHoje} corretores`}
             iconColor="text-emerald-600"
+            ceoMeta={null}
           />
           <KpiCard
             icon={Target}
@@ -574,6 +575,7 @@ export default function CeoDashboard() {
             displayValue={`${kpis.aproveitados} (${kpis.taxaConversao}%)`}
             prev={prevKpis?.aproveitados}
             iconColor="text-emerald-600"
+            ceoMeta={ceoMetasConsolidadas.meta_aproveitados || null}
           />
         </div>
       </div>
