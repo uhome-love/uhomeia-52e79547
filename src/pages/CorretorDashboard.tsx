@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Phone, Lock, Kanban, CalendarDays, AlertCircle, Zap, LogOut } from "lucide-react";
+import { Phone, Lock, Kanban, CalendarDays, AlertCircle, Zap, LogOut, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
