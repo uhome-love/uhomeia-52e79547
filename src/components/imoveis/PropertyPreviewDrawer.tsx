@@ -89,8 +89,9 @@ export default function PropertyPreviewDrawer({
     setOrigemLoading(true);
     supabase.functions.invoke("jetimob-proxy", { body: { action: "get_imovel", codigo } })
       .then(({ data }) => {
-        const detail = data?.data || data;
-        const result = (detail && !detail.not_found) ? extractOrigemExterna(detail) : null;
+        // jetimob-proxy returns { imovel: {...}, not_found: bool }
+        const imovel = data?.imovel ?? data?.data?.imovel ?? null;
+        const result = imovel ? extractOrigemExterna(imovel) : null;
         responsavelCache.set(codigo, { origem: result });
         setOrigem(result);
       })
