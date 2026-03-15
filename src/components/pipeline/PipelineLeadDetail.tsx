@@ -24,7 +24,7 @@ import {
   Plus, CheckCircle2, AlertTriangle, ChevronRight,
   FileText, ChevronDown, ClipboardList,
   Flame, Snowflake, Sun, Zap, Brain, TrendingUp,
-  Trash2, Ban, Handshake, MoreHorizontal, Bot, History, Tag
+  Trash2, Ban, Handshake, MoreHorizontal, Bot, History, Tag, Search
 } from "lucide-react";
 import PartnershipDialog from "./PartnershipDialog";
 import LeadSequenceSuggestion from "./LeadSequenceSuggestion";
