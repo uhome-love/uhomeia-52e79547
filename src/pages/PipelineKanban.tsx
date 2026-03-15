@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, lazy, Suspense } from "react";
+import { LoadingState, ErrorState } from "@/components/ui/screen-states";
 import PeriodBadge from "@/components/PeriodBadge";
 import { usePipeline } from "@/hooks/usePipeline";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
