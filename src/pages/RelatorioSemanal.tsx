@@ -55,61 +55,106 @@ const KPI_CONFIG = [
 ] as const;
 
 // ── Section 7 - AI Analysis ──
-function AIAnalysisSection({ week }: { week: WeekRange }) {
+function AIAnalysisSection({ week, kpis, rankings, visitDays }: { 
+  week: WeekRange; 
+  kpis: any; 
+  rankings: any;
+  visitDays: any;
+}) {
   const { session } = useAuth();
   const [analysis, setAnalysis] = useState<{ atencao: string[]; oportunidades: string[]; recomendacao: string } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const weekKey = `weekly_ceo_${format(week.start, "yyyy")}-W${String(getISOWeek(week.start)).padStart(2, "0")}`;
 
-  const generate = useCallback(async () => {
+  const generate = useCallback(async (force = false) => {
     if (!session?.access_token) return;
     setLoading(true);
+    setError(false);
     try {
-      const weekKey = format(week.start, "yyyy-MM-dd");
-      // Check cache
-      const { data: cached } = await supabase
-        .from("homi_briefing_diario")
-        .select("*")
-        .eq("data", weekKey)
-        .eq("status_geral", "weekly_ceo")
-        .maybeSingle();
-
-      if (cached?.dados_contexto && !loaded) {
-        const ctx = cached.dados_contexto as any;
-        if (ctx.atencao) {
-          setAnalysis({ atencao: ctx.atencao, oportunidades: ctx.oportunidades, recomendacao: ctx.recomendacao });
-          setLoading(false);
-          setLoaded(true);
-          return;
-        }
+      // Check cache (unless forced)
+      if (!force) {
+        try {
+          const { data: cached } = await supabase
+            .from("homi_briefing_diario")
+            .select("*")
+            .eq("data", weekKey)
+            .eq("status_geral", "weekly_ceo")
+            .maybeSingle();
+          if (cached?.dados_contexto) {
+            const ctx = cached.dados_contexto as any;
+            if (ctx.atencao || ctx.pontos_atencao) {
+              setAnalysis({ 
+                atencao: ctx.atencao || ctx.pontos_atencao || [], 
+                oportunidades: ctx.oportunidades || [], 
+                recomendacao: ctx.recomendacao || "" 
+              });
+              setLoading(false);
+              return;
+            }
+          }
+        } catch { /* ignore cache read errors */ }
       }
 
+      // Build context from real data
+      const pct = (cur: number, prev: number) => prev > 0 ? `${Math.round(((cur - prev) / prev) * 100)}%` : "N/A";
+      const totalTaxa = visitDays?.length
+        ? (() => { const m = visitDays.reduce((a: any, d: any) => a + d.marcadas, 0); const r = visitDays.reduce((a: any, d: any) => a + d.realizadas, 0); return m > 0 ? Math.round((r / m) * 100) : 0; })()
+        : 0;
+      const bestTeam = rankings?.teams?.[0];
+      const topCorretor = rankings?.top10?.[0];
+
       const periodo = `${format(week.start, "dd/MM")} a ${format(week.end, "dd/MM/yyyy")}`;
-      const { data, error } = await supabase.functions.invoke("homi-ceo", {
-        body: {
-          messages: [{
-            role: "user",
-            content: `Analise os dados da semana ${periodo} do sistema UHome Sales e gere:\n1. Os 3 principais pontos de atenção operacional\n2. As 2 maiores oportunidades identificadas nos dados\n3. Uma recomendação estratégica prioritária para a próxima semana\nSeja direto, use dados reais, máximo 200 palavras. Retorne em JSON com as chaves: atencao (array de 3 strings), oportunidades (array de 2 strings), recomendacao (string).`
-          }]
-        },
+      const prompt = `Você é o HOMI CEO, assistente estratégico da Uhome Sales.
+Analise os dados da Semana ${getISOWeek(week.start)} (${periodo}) e gere uma análise executiva estruturada em JSON com exatamente este formato:
+{"pontos_atencao":["ponto 1","ponto 2","ponto 3"],"oportunidades":["oportunidade 1","oportunidade 2"],"recomendacao":"texto da recomendação principal"}
+
+Dados da semana:
+- Novos Leads: ${kpis?.novosLeads?.current ?? 0} (${pct(kpis?.novosLeads?.current ?? 0, kpis?.novosLeads?.prev ?? 0)} vs semana anterior)
+- Aproveitados OA: ${kpis?.aproveitadosOA?.current ?? 0} (${pct(kpis?.aproveitadosOA?.current ?? 0, kpis?.aproveitadosOA?.prev ?? 0)})
+- Avanços Pipeline: ${kpis?.avancosPipeline?.current ?? 0}
+- Visitas Realizadas: ${kpis?.visitasRealizadas?.current ?? 0} (${pct(kpis?.visitasRealizadas?.current ?? 0, kpis?.visitasRealizadas?.prev ?? 0)})
+- Negócios Abertos: ${kpis?.negociosAbertos?.current ?? 0}
+- Assinados: ${kpis?.assinados?.current ?? 0} com VGV R$ ${(kpis?.assinados?.vgv ?? 0).toLocaleString("pt-BR")}
+- Taxa de visitas: ${totalTaxa}%
+- Melhor equipe: ${bestTeam?.equipe ?? "N/A"} com score ${bestTeam?.score?.toFixed(1) ?? "0"}
+- Top corretor: ${topCorretor?.nome ?? "N/A"} com score ${topCorretor?.score?.toFixed(1) ?? "0"}
+
+Responda APENAS com o JSON, sem texto adicional.`;
+
+      const { data, error: fnError } = await supabase.functions.invoke("homi-ceo", {
+        body: { messages: [{ role: "user", content: prompt }] },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
-      if (error) throw error;
+      if (fnError) throw fnError;
 
       let parsed: any;
       try {
         const text = typeof data === "string" ? data : data?.content || data?.message || JSON.stringify(data);
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : { atencao: ["Dados insuficientes"], oportunidades: ["—"], recomendacao: "Acompanhe os indicadores" };
+        parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+        if (parsed) {
+          // Normalize key names
+          parsed = {
+            atencao: parsed.atencao || parsed.pontos_atencao || [],
+            oportunidades: parsed.oportunidades || [],
+            recomendacao: parsed.recomendacao || "",
+          };
+        }
       } catch {
-        parsed = { atencao: ["Análise gerada com sucesso"], oportunidades: ["—"], recomendacao: typeof data === "string" ? data.slice(0, 200) : "Acompanhe os indicadores" };
+        // Fallback: show raw text
+        const rawText = typeof data === "string" ? data : data?.content || data?.message || "";
+        parsed = { atencao: [], oportunidades: [], recomendacao: rawText.slice(0, 500) || "Acompanhe os indicadores" };
+      }
+
+      if (!parsed) {
+        parsed = { atencao: ["Dados insuficientes para análise"], oportunidades: ["—"], recomendacao: "Acompanhe os indicadores" };
       }
 
       setAnalysis(parsed);
-      setLoaded(true);
 
-      // Cache (ignore errors — RLS may block)
+      // Cache
       try {
         await supabase.from("homi_briefing_diario").upsert({
           user_id: session.user.id,
@@ -121,57 +166,72 @@ function AIAnalysisSection({ week }: { week: WeekRange }) {
       } catch { /* ignore cache errors */ }
     } catch (e) {
       console.error("AI analysis error:", e);
-      toast.error("Erro ao gerar análise IA");
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }, [week, session, loaded]);
+  }, [week, session, kpis, rankings, visitDays, weekKey]);
 
-  // Auto-load on mount
-  useEffect(() => { generate(); }, []);
+  // Auto-load when kpis are ready
+  useEffect(() => {
+    if (kpis && !analysis && !loading) {
+      generate();
+    }
+  }, [kpis]);
 
   return (
     <Card className="bg-card border-border">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base flex items-center gap-2">🤖 Análise HOMI da Semana</CardTitle>
-        <Button variant="ghost" size="sm" onClick={() => { setLoaded(false); generate(); }} disabled={loading}>
+        <Button variant="ghost" size="sm" onClick={() => generate(true)} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Regenerar
         </Button>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
+          <div className="grid gap-3 md:grid-cols-3">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="rounded-lg bg-muted/30 p-4 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+                <p className="text-[10px] text-muted-foreground animate-pulse">HOMI está analisando a semana...</p>
+              </div>
+            ))}
           </div>
+        ) : error ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Não foi possível gerar a análise. Clique em Regenerar.</p>
         ) : analysis ? (
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-lg bg-destructive/10 p-4 space-y-2">
               <div className="flex items-center gap-2 font-semibold text-destructive text-sm">
                 <AlertTriangle className="h-4 w-4" /> Pontos de Atenção
               </div>
-              <ul className="text-xs space-y-1 text-muted-foreground">
-                {(analysis.atencao || []).map((a, i) => <li key={i}>• {a}</li>)}
-              </ul>
+              {analysis.atencao.length > 0 ? (
+                <ul className="text-xs space-y-1 text-muted-foreground">
+                  {analysis.atencao.map((a, i) => <li key={i}>• {a}</li>)}
+                </ul>
+              ) : <p className="text-xs text-muted-foreground">Nenhum ponto identificado</p>}
             </div>
             <div className="rounded-lg bg-amber-500/10 p-4 space-y-2">
               <div className="flex items-center gap-2 font-semibold text-amber-600 text-sm">
                 <Lightbulb className="h-4 w-4" /> Oportunidades
               </div>
-              <ul className="text-xs space-y-1 text-muted-foreground">
-                {(analysis.oportunidades || []).map((o, i) => <li key={i}>• {o}</li>)}
-              </ul>
+              {analysis.oportunidades.length > 0 ? (
+                <ul className="text-xs space-y-1 text-muted-foreground">
+                  {analysis.oportunidades.map((o, i) => <li key={i}>• {o}</li>)}
+                </ul>
+              ) : <p className="text-xs text-muted-foreground">Nenhuma oportunidade identificada</p>}
             </div>
             <div className="rounded-lg bg-primary/10 p-4 space-y-2">
               <div className="flex items-center gap-2 font-semibold text-primary text-sm">
                 <Target className="h-4 w-4" /> Recomendação da Semana
               </div>
-              <p className="text-xs text-muted-foreground">{analysis.recomendacao}</p>
+              <p className="text-xs text-muted-foreground">{analysis.recomendacao || "—"}</p>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Briefing indisponível — acesse o HOMI CEO para análise manual.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">Clique em Regenerar para gerar a análise da semana.</p>
         )}
       </CardContent>
     </Card>
