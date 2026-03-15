@@ -27,7 +27,7 @@ import { PropertyCardGrid, PropertyCardList } from "@/components/imoveis/Propert
 import { getNum, fmtBRL, fmtCompact } from "@/lib/imovelHelpers";
 import { useImoveisFilters } from "@/hooks/useImoveisFilters";
 import { useImoveisSearch } from "@/hooks/useImoveisSearch";
-import { useBairroFacets } from "@/hooks/useBairroFacets";
+import { useTypesenseFacets } from "@/hooks/useTypesenseFacets";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
