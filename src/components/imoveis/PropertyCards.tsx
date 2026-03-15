@@ -99,11 +99,14 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
   const imovelId = String(codigo || item.id_imovel || item.id || idx);
 
   return (
-    <Card className={cn(
-      "overflow-hidden group hover:shadow-xl transition-all duration-300 relative border-border/40 bg-card",
-      isCampanha && "ring-1 ring-primary/20",
-      selectMode && isSelected && "ring-2 ring-primary"
-    )}>
+    <Card
+      className={cn(
+        "overflow-hidden group hover:shadow-xl transition-all duration-300 relative border-border/40 bg-card cursor-pointer",
+        isCampanha && "ring-1 ring-primary/20",
+        selectMode && isSelected && "ring-2 ring-primary"
+      )}
+      onClick={() => onPreview?.(item)}
+    >
       {selectMode && (
         <button onClick={() => onToggleSelect(imovelId)} className="absolute top-3 left-3 z-20 bg-background/90 backdrop-blur-sm rounded-md p-1 shadow-sm">
           {isSelected ? <CheckSquare className="h-5 w-5 text-primary" /> : <Square className="h-5 w-5 text-muted-foreground" />}
