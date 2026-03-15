@@ -18,15 +18,13 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  extractImages, extractFullImages, extractOrigemExterna,
-  extractEntrega, extractEndereco, getNum, getNumIncZero, fmtBRL, fmtCompact,
+  getPropertyHeroImages, getPropertyThumbImages,
+  extractOrigemExterna, extractEntrega, extractEndereco,
+  getNum, getNumIncZero, fmtBRL, fmtCompact,
 } from "@/lib/imovelHelpers";
 import PhotoLightbox from "@/components/imoveis/PhotoLightbox";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-const toFullRes = (url: string) =>
-  url.replace(/\/thumb\//i, "/large/").replace(/_thumb\./i, ".");
 
 function getPrecoFromItem(item: any): string {
   const v = item.valor_venda || item.valor || item.preco || item.valor_locacao;
