@@ -242,25 +242,25 @@ export default function PropertyPreviewDrawer({
       {/* ── Scrollable body ── */}
       <div className="flex-1 overflow-y-auto">
         {/* ── Hero Image ── */}
-        <div className="relative bg-muted/60 aspect-[4/3] group cursor-pointer" onClick={() => allImages.length > 0 && onOpenLightbox(allImages, imageIdx)}>
-          {allImages.length > 0 ? (
+        <div className="relative bg-muted/60 aspect-[4/3] group cursor-pointer" onClick={() => heroImages.length > 0 && onOpenLightbox(heroImages, imageIdx)}>
+          {heroImages.length > 0 ? (
             <>
               <img
-                src={allImages[imageIdx] || ""}
+                src={heroImages[imageIdx] || ""}
                 alt={titulo}
                 className="w-full h-full object-cover transition-transform duration-500"
               />
               {/* Gradient overlay at bottom for text legibility */}
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
               {/* Image counter pill */}
-              {allImages.length > 1 && (
+              {heroImages.length > 1 && (
                 <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md rounded-full px-3 py-1 text-[11px] font-semibold text-white tabular-nums flex items-center gap-1.5">
                   <Maximize2 className="h-3 w-3" />
-                  {imageIdx + 1} / {allImages.length}
+                  {imageIdx + 1} / {heroImages.length}
                 </div>
               )}
               {/* Nav arrows */}
-              {allImages.length > 1 && (
+              {heroImages.length > 1 && (
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); prevImage(); }}
