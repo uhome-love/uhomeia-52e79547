@@ -377,13 +377,19 @@ async function distributeSingleLead(
   const todayStart = getTodayStartUTC();
   const todayStr = getTodayDateStr();
 
-  const { data: creds } = await supabase
+  // On Sunday (dia_todo), accept credenciamentos from any janela
+  let credsQuery = supabase
     .from("roleta_credenciamentos")
     .select("corretor_id, segmento_1_id, segmento_2_id")
     .eq("data", todayStr)
     .eq("status", "aprovado")
-    .eq("janela", targetJanela)
     .is("saiu_em", null);
+  
+  if (targetJanela !== "dia_todo") {
+    credsQuery = credsQuery.eq("janela", targetJanela);
+  }
+
+  const { data: creds } = await credsQuery;
   if (!creds || creds.length === 0) {
     return { success: false, reason: "no_credenciados" };
   }
