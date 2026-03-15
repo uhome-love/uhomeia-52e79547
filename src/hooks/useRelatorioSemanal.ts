@@ -134,17 +134,18 @@ export function useLeadsByEmpreendimento(week: WeekRange) {
   });
 }
 
-// ── Funnel ──
-export function useFunnelData(week: WeekRange) {
+// ── Funnel (snapshot atual — same as CEO dashboard) ──
+export function useFunnelData(_week: WeekRange) {
   return useQuery({
-    queryKey: ["weekly-funnel", dateStr(week.start)],
+    queryKey: ["weekly-funnel-snapshot"],
     staleTime: 5 * 60_000,
     queryFn: async () => {
+      // Fetch stages ordered + all leads (no date filter — current snapshot)
       const [{ data: stages }, { data: leads }] = await Promise.all([
         supabase.from("pipeline_stages").select("id, nome, ordem").eq("ativo", true).eq("pipeline_tipo", "leads").order("ordem"),
         supabase.from("pipeline_leads").select("stage_id"),
       ]);
-      if (!stages) return [];
+      if (!stages || !stages.length) return [];
       const countMap: Record<string, number> = {};
       (leads || []).forEach(l => { countMap[l.stage_id] = (countMap[l.stage_id] || 0) + 1; });
       return stages.map((s, i) => {
