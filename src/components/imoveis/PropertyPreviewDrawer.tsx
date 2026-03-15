@@ -5,7 +5,7 @@
  * Reuses existing helpers and cached ResponsavelButton pattern.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
