@@ -289,17 +289,24 @@ export function useRoleta() {
   }, [hoje]);
 
   // Load fila for today — enriched with REAL lead counts from pipeline_leads
-  // Only shows entries for the CURRENT janela (shift window)
+  // Only shows entries for the CURRENT janela (shift window), except Sunday (all)
   const loadFila = useCallback(async () => {
     const windowInfo = getCurrentWindowInfo();
     const currentJanela = windowInfo.janela;
+    const sunday = isSundayBRT();
 
-    const { data: filaData } = await supabase
+    let query = supabase
       .from("roleta_fila")
       .select("*")
       .eq("data", hoje)
-      .eq("ativo", true)
-      .eq("janela", currentJanela);
+      .eq("ativo", true);
+    
+    // On Sunday, show all janelas; otherwise filter by current
+    if (!sunday) {
+      query = query.eq("janela", currentJanela);
+    }
+
+    const { data: filaData } = await query;
 
     if (!filaData?.length) { setFila([]); return; }
 
