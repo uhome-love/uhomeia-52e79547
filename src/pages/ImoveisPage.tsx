@@ -67,6 +67,11 @@ export default function ImoveisPage() {
   const [creatingVitrine, setCreatingVitrine] = useState(false);
   const [vitrineLink, setVitrineLink] = useState<string | null>(null);
 
+  // Preview drawer
+  const [previewItem, setPreviewItem] = useState<any>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const openPreview = (item: any) => { setPreviewItem(item); setPreviewOpen(true); };
+  const closePreview = () => setPreviewOpen(false);
   // ── Search ──
   const {
     loading, fetchError, page, totalPages, total, searchTimeMs, sortedImoveis,
