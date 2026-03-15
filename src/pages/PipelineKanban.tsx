@@ -497,6 +497,13 @@ export default function PipelineKanban() {
             corretorNomes={pipeline.corretorNomes}
           />
         )}
+
+        {/* Melnick Campaign Analytics — shown when filter is active */}
+        {melnickDayFilter && (
+          <Suspense fallback={null}>
+            <MelnickCampaignAnalytics />
+          </Suspense>
+        )}
       </div>
 
       {/* Content area — kanban + side panel */}
