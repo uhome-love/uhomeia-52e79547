@@ -443,14 +443,19 @@ export default function CeoDashboard() {
           <Target className="h-4 w-4" /> Gestão de Leads
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <KpiCard icon={Users} label="Total de Leads" value={totalLeadsPeriodo} iconColor="text-blue-600" />
-          <Card>
+          <KpiCard icon={Users} label="Total de Leads" value={totalLeadsPeriodo} iconColor="text-blue-600" ceoMeta={null} />
+          <Card className="relative">
             <CardContent className="pt-4 pb-3 px-4">
+              {/* Grey semaphore dot for no-meta */}
+              <div className="absolute top-2.5 right-2.5" title="Sem meta">
+                <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
+              </div>
               <div className="flex items-center gap-2 mb-1">
                 <Send className="h-4 w-4 text-orange-500" />
                 <span className="text-xs text-muted-foreground">Leads Distribuídos</span>
               </div>
               <LeadsDistribuidosPanel teamUserIds={null} period={period === "hoje" ? "dia" : period === "semana" ? "semana" : "mes"} compact showPeriodSelector={false} />
+              <p className="text-[10px] text-muted-foreground/50 mt-0.5">Sem meta definida</p>
             </CardContent>
           </Card>
           <KpiCard icon={CalendarDays} label="Visitas Marcadas" value={kpis.visitasMarcadas} prev={prevKpis?.visitasMarcadas} iconColor="text-amber-600" ceoMeta={ceoMetasConsolidadas.meta_visitas_marcadas || null} />
@@ -466,9 +471,11 @@ export default function CeoDashboard() {
           <KpiCard
             icon={TrendingDown}
             label="Conversão Lead→Visita"
-            value={kpis.visitasMarcadas}
+            value={totalLeadsPeriodo > 0 ? Math.round((kpis.visitasMarcadas / totalLeadsPeriodo) * 100) : 0}
             displayValue={`${totalLeadsPeriodo > 0 ? Math.round((kpis.visitasMarcadas / totalLeadsPeriodo) * 100) : 0}%`}
             iconColor="text-purple-600"
+            ceoMeta={null}
+            metaType="percent"
           />
         </div>
       </div>
