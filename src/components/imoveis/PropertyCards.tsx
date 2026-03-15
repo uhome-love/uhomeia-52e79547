@@ -27,7 +27,7 @@ import SharePropertyButton from "@/components/imoveis/SharePropertyButton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  getPropertyHeroImages, getPropertyFullscreenImages,
+  getPropertyCardImages,
   extractOrigemExterna, extractEntrega, extractEndereco,
   getNum, getNumIncZero, fmtBRL,
 } from "@/lib/imovelHelpers";
