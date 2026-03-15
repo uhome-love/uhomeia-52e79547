@@ -79,11 +79,49 @@ Deno.serve(async (req) => {
       user_agent: user_agent || null,
     };
 
+    // ─── Enrich from brevo_contacts if name/email missing ───
+    let enrichedNome = nome;
+    let enrichedEmail = email;
+    let interesseBrevo: string | null = null;
+
+    if (telefoneNormalizado || email) {
+      let brevoContact: Record<string, unknown> | null = null;
+
+      if (telefoneNormalizado) {
+        const variants = phoneVariants(telefoneNormalizado);
+        const { data } = await supabase
+          .from("brevo_contacts")
+          .select("nome_completo, email, conversao_recente")
+          .in("telefone_normalizado", variants)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        brevoContact = data;
+      }
+
+      if (!brevoContact && email) {
+        const { data } = await supabase
+          .from("brevo_contacts")
+          .select("nome_completo, email, conversao_recente")
+          .eq("email", email.toLowerCase().trim())
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        brevoContact = data;
+      }
+
+      if (brevoContact) {
+        if (!enrichedNome && brevoContact.nome_completo) enrichedNome = brevoContact.nome_completo as string;
+        if (!enrichedEmail && brevoContact.email) enrichedEmail = brevoContact.email as string;
+        if (brevoContact.conversao_recente) interesseBrevo = brevoContact.conversao_recente as string;
+        log("info", "Enriched from brevo_contacts", { enrichedNome, enrichedEmail, interesseBrevo });
+      }
+    }
+
     // ─── Try to find existing lead by phone OR email ───
     let existingLead: Record<string, unknown> | null = null;
 
     if (telefoneNormalizado) {
-      // Search both with and without country code prefix
       const variants = phoneVariants(telefoneNormalizado);
       const { data } = await supabase
         .from("pipeline_leads")
@@ -96,11 +134,12 @@ Deno.serve(async (req) => {
       existingLead = data;
     }
 
-    if (!existingLead && email) {
+    if (!existingLead && (enrichedEmail || email)) {
+      const searchEmail = enrichedEmail || email;
       const { data } = await supabase
         .from("pipeline_leads")
         .select("id, nome, email, tags, stage_id, corretor_id")
-        .eq("email", email)
+        .eq("email", searchEmail)
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
         .limit(1)
@@ -108,8 +147,8 @@ Deno.serve(async (req) => {
       existingLead = data;
     }
 
-    // If no phone AND no email, still log click and redirect
-    if (!telefoneNormalizado && !email) {
+    // If no phone AND no email (even after enrichment), still log click and redirect
+    if (!telefoneNormalizado && !email && !enrichedEmail) {
       log("warn", "No valid phone or email, logging click only", { phone, email });
       await insertClick({ ...clickBase, status: "click_no_contact", lead_action: "none", redirected: true });
       return jsonResponse({ success: true, action: "redirect_only", redirect_url: WHATSAPP_REDIRECT });
@@ -125,15 +164,19 @@ Deno.serve(async (req) => {
       const updateData: Record<string, unknown> = {
         tags: newTags,
         campanha: campanha,
-        observacoes: obsText,
+        observacoes: interesseBrevo
+          ? `${obsText} | Interesse: ${interesseBrevo}`
+          : obsText,
       };
       // Update name if we have one and existing is generic
-      if (nome && (!existingLead.nome || existingLead.nome === "Lead Melnick Day")) {
-        updateData.nome = nome;
+      const bestNome = enrichedNome || nome;
+      if (bestNome && (!existingLead.nome || existingLead.nome === "Lead Melnick Day")) {
+        updateData.nome = bestNome;
       }
       // Update email if we have one and existing doesn't
-      if (email && !existingLead.email) {
-        updateData.email = email;
+      const bestEmail = enrichedEmail || email;
+      if (bestEmail && !existingLead.email) {
+        updateData.email = bestEmail;
       }
 
       await supabase.from("pipeline_leads").update(updateData).eq("id", existingLead.id);
@@ -141,14 +184,15 @@ Deno.serve(async (req) => {
       // ─── Notify the responsible corretor ───
       const corretorId = existingLead.corretor_id as string | null;
       if (corretorId) {
-        const leadNome = (nome || existingLead.nome || "Lead") as string;
+        const leadNome = (enrichedNome || nome || existingLead.nome || "Lead") as string;
+        const interesseMsg = interesseBrevo ? `\nInteresse detectado: ${interesseBrevo}` : "";
         await supabase.from("notifications").insert({
           user_id: corretorId,
           titulo: `🔥 ${leadNome} clicou no Melnick Day!`,
-          mensagem: `Seu lead "${leadNome}" demonstrou interesse clicando na campanha Melnick Day 2026${blocoLabel}. Entre em contato agora!`,
+          mensagem: `Seu lead "${leadNome}" demonstrou interesse clicando na campanha Melnick Day 2026${blocoLabel}. Entre em contato agora!${interesseMsg}`,
           tipo: "lead_reengajado",
           categoria: "leads",
-          dados: { pipeline_lead_id: existingLead.id, campanha, bloco, origem },
+          dados: { pipeline_lead_id: existingLead.id, campanha, bloco, origem, interesse: interesseBrevo },
         });
         log("info", "Corretor notified", { corretorId, leadId: existingLead.id });
       }
@@ -190,7 +234,7 @@ Deno.serve(async (req) => {
     }
 
     // ─── CREATE new lead ───
-    log("info", "Creating new lead", { telefoneNormalizado, nome });
+    log("info", "Creating new lead", { telefoneNormalizado, enrichedNome, enrichedEmail, interesseBrevo });
 
     // Get first pipeline stage
     const { data: firstStage } = await supabase
@@ -207,19 +251,25 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "No pipeline stages", redirect_url: WHATSAPP_REDIRECT }, 500);
     }
 
+    const leadNome = enrichedNome || nome || "Lead Melnick Day";
+    const leadEmail = enrichedEmail || email;
+    const obsComInteresse = interesseBrevo
+      ? `${obsText} | Interesse: ${interesseBrevo}`
+      : obsText;
+
     const { data: newLead, error: insertErr } = await supabase
       .from("pipeline_leads")
       .insert({
-        nome: nome || "Lead Melnick Day",
+        nome: leadNome,
         telefone: phone || null,
         telefone_normalizado: telefoneNormalizado,
-        email: email || null,
+        email: leadEmail || null,
         origem: origem,
         campanha: campanha,
         stage_id: firstStage.id,
         aceite_status: "pendente_distribuicao",
         tags,
-        observacoes: obsText,
+        observacoes: obsComInteresse,
       })
       .select("id")
       .single();
