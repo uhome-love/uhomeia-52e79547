@@ -110,6 +110,7 @@ function LeadOrigemInfo({ lead }: { lead: PipelineLead }) {
   );
 }
 
+function buildTimeline(historico: PipelineHistorico[], atividades: PipelineAtividade[], tarefas: PipelineTarefa[], stages: PipelineStage[], lead: PipelineLead, imovelEvents?: LeadImovelEvent[]): TimelineItem[] {
   const items: TimelineItem[] = [];
 
   for (const h of historico) {
