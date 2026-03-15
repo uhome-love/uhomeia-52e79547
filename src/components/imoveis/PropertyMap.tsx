@@ -138,7 +138,7 @@ function FitBoundsOnLoad({ coords }: { coords: [number, number][] }) {
 // ── Mini Card (popup) ──
 
 function MiniCard({ item, getPreco, onFavorite, isFavorite }: { item: any; getPreco: (i: any) => string; onFavorite?: (id: string) => void; isFavorite?: boolean }) {
-  const images = extractImages(item);
+  const images = getPropertyCardImages(item);
   const [imgIdx, setImgIdx] = useState(0);
   const loc = extractEndereco(item);
   const codigo = item.codigo;
