@@ -27,7 +27,7 @@ import SharePropertyButton from "@/components/imoveis/SharePropertyButton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  getPropertyHeroImages, getPropertyFullscreenImages,
+  getPropertyCardImages,
   extractOrigemExterna, extractEntrega, extractEndereco,
   getNum, getNumIncZero, fmtBRL,
 } from "@/lib/imovelHelpers";
@@ -89,8 +89,7 @@ function ResponsavelButton({ codigo }: { codigo: string }) {
 // ── Grid Card ──
 
 export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco, onPreview }: any) {
-  const images = getPropertyHeroImages(item);
-  const fullImages = getPropertyFullscreenImages(item);
+  const images = getPropertyCardImages(item);
   const loc = extractEndereco(item);
   const codigo = item.codigo;
   const titulo = item.titulo_anuncio || item.empreendimento_nome || "";
@@ -183,8 +182,7 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
 // ── List Card ──
 
 export const PropertyCardList = React.memo(function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco, onPreview }: any) {
-  const images = getPropertyHeroImages(item);
-  const fullImages = getPropertyFullscreenImages(item);
+  const images = getPropertyCardImages(item);
   const loc = extractEndereco(item);
   const codigo = item.codigo;
   const titulo = item.titulo_anuncio || item.empreendimento_nome || "";
