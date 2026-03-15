@@ -292,6 +292,7 @@ Deno.serve(async (req) => {
 
     const leadNome = enrichedNome || nome || "Lead Melnick Day";
     const leadEmail = enrichedEmail || email;
+    const leadPhone = enrichedPhone || telefoneNormalizado;
     const obsComInteresse = interesseBrevo
       ? `${obsText} | Interesse: ${interesseBrevo}`
       : obsText;
@@ -300,8 +301,8 @@ Deno.serve(async (req) => {
       .from("pipeline_leads")
       .insert({
         nome: leadNome,
-        telefone: phone || null,
-        telefone_normalizado: telefoneNormalizado,
+        telefone: phone || leadPhone || null,
+        telefone_normalizado: leadPhone,
         email: leadEmail || null,
         origem: origem,
         campanha: campanha,
