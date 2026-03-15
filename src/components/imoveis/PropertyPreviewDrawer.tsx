@@ -53,6 +53,7 @@ export default function PropertyPreviewDrawer({
   item, open, onClose, isFavorite, onFavorite, getPreco,
   selectMode, isSelected, onToggleSelect, onOpenLightbox,
   onPrev, onNext, hasPrev = false, hasNext = false, positionLabel,
+  trackEvent,
 }: PropertyPreviewDrawerProps) {
   const [imageIdx, setImageIdx] = useState(0);
   const [origem, setOrigem] = useState<any>(null);
