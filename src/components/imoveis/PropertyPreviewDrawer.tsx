@@ -292,9 +292,9 @@ export default function PropertyPreviewDrawer({
         </div>
 
         {/* ── Thumbnail strip ── */}
-        {allImages.length > 1 && (
+        {heroImages.length > 1 && (
           <div className="flex gap-1.5 px-4 py-2.5 overflow-x-auto bg-muted/30 scrollbar-none">
-            {allImages.slice(0, 8).map((img, i) => (
+            {thumbStrip.slice(0, 8).map((img, i) => (
               <button
                 key={i}
                 onClick={() => setImageIdx(i)}
@@ -305,15 +305,15 @@ export default function PropertyPreviewDrawer({
                     : "border-transparent opacity-60 hover:opacity-100"
                 )}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}
-            {allImages.length > 8 && (
+            {heroImages.length > 8 && (
               <button
-                onClick={() => onOpenLightbox(allImages, 8)}
+                onClick={() => onOpenLightbox(heroImages, 8)}
                 className="shrink-0 w-14 h-10 rounded-md bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground border-2 border-transparent hover:border-primary/30"
               >
-                +{allImages.length - 8}
+                +{heroImages.length - 8}
               </button>
             )}
           </div>
