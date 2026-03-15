@@ -190,8 +190,8 @@ export default function PropertyPreviewDrawer({
   const descricao = item.descricao || item.descricao_interna || "";
   const tipo = item.tipo || item.subtipo || "";
 
-  const prevImage = () => setImageIdx(i => (i > 0 ? i - 1 : allImages.length - 1));
-  const nextImage = () => setImageIdx(i => (i < allImages.length - 1 ? i + 1 : 0));
+  const prevImage = () => setImageIdx(i => (i > 0 ? i - 1 : heroImages.length - 1));
+  const nextImage = () => setImageIdx(i => (i < heroImages.length - 1 ? i + 1 : 0));
 
   const copyData = () => {
     const text = [
