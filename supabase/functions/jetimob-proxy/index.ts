@@ -381,10 +381,14 @@ serve(async (req) => {
       const paginatedResults = results.slice(start, start + pageSize);
 
       // Normalize images only for the paginated results (not all items)
-      const paginatedItems = paginatedResults.map(entry => ({
-        ...entry.item,
-        _fotos_normalized: normalizeImages(entry.item),
-      }));
+      const paginatedItems = paginatedResults.map(entry => {
+        const imgs = normalizeImages(entry.item);
+        return {
+          ...entry.item,
+          _fotos_normalized: imgs.thumbs,
+          _fotos_full: imgs.full,
+        };
+      });
 
       console.timeEnd("list_imoveis");
       console.log(`list_imoveis: ${totalFiltered} filtered, page ${page}/${totalPagesCalc}, returning ${paginatedItems.length}`);
