@@ -136,7 +136,7 @@ function AIAnalysisSection({ week }: { week: WeekRange }) {
         </Button>
       </CardHeader>
       <CardContent>
-        {loading && !analysis ? (
+        {loading ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-16 w-full" />
