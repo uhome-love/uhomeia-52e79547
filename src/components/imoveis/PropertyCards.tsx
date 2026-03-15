@@ -114,7 +114,7 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
       )}
 
       <div className="aspect-[16/10] relative bg-muted overflow-hidden">
-        <ImageSlider images={images} alt={titulo || loc.endereco} onClickImage={() => onOpenLightbox(fullImages.length > 0 ? fullImages : images, 0)} />
+        <ImageSlider images={images} alt={titulo || loc.endereco} onClickImage={(e?: React.MouseEvent) => { e?.stopPropagation(); onOpenLightbox(fullImages.length > 0 ? fullImages : images, 0); }} />
         {isCampanha && (
           <Badge className="absolute top-3 left-3 text-[10px] bg-primary/90 text-primary-foreground backdrop-blur-sm shadow-sm">
             <Megaphone className="h-2.5 w-2.5 mr-1" /> Campanha
