@@ -35,11 +35,11 @@ export default function ImoveisPage() {
   const { user } = useAuth();
   const { searchWithAI, clearAISearch, removeTag, aiLoading, aiResult, aiError, aiProperties, aiTotal, aiSearchTime } = useAISearch();
 
-  // ── Bairro facets ──
-  const { bairroFacets } = useBairroFacets();
+  // ── Dynamic facets ──
+  const { bairroFacets, tipoFacets } = useTypesenseFacets();
 
   // ── Filters ──
-  const filters = useImoveisFilters(bairroFacets);
+  const filters = useImoveisFilters(bairroFacets, tipoFacets);
   const {
     contrato, tipo, setTipo, bairro, setBairro, bairroSearch, setBairroSearch,
     dormitorios, setDormitorios, suitesFilter, setSuitesFilter,
