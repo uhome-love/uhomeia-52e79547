@@ -43,6 +43,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { differenceInDaysSafe, differenceInHoursSafe, formatDateSafe, formatDistanceToNowSafe, parseDateBRTSafe } from "@/lib/utils";
+import { getScoreTemperature } from "@/lib/scoreTemperatureLabels";
 
 interface Props {
   lead: PipelineLead;
