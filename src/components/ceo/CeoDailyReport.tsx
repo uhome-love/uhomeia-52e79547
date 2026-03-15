@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function CeoDailyReport({ teams, corretoresRank, kpis, totalLeads, presentesHoje }: Props) {
+  const navigate = useNavigate();
   const reportRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -94,6 +96,11 @@ export default function CeoDailyReport({ teams, corretoresRank, kpis, totalLeads
             Baixar PDF
           </Button>
         </div>
+      </div>
+      <div className="flex justify-end">
+        <Button variant="link" size="sm" className="text-xs gap-1 text-primary" onClick={() => navigate("/relatorio-semanal")}>
+          Ver relatório semanal →
+        </Button>
       </div>
 
       {/* Report content (this is what gets exported) */}

@@ -83,6 +83,7 @@ const MelnickDay = lazy(() => import("./pages/MelnickDay"));
 const OrygemCampanha = lazy(() => import("./pages/OrygemCampanha"));
 const MegaCyrela = lazy(() => import("./pages/MegaCyrela"));
 const VendasRealizadas = lazy(() => import("./pages/VendasRealizadas"));
+const RelatorioSemanal = lazy(() => import("./pages/RelatorioSemanal"));
 const AnunciosNoAr = lazy(() => import("./pages/AnunciosNoAr"));
 const IntegracaoJetimob = lazy(() => import("./pages/IntegracaoJetimob"));
 const CadastrosPage = lazy(() => import("./pages/CadastrosPage"));
@@ -211,6 +212,7 @@ const App = () => (
 
             {/* CEO / Admin only */}
             <Route path="/ceo" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="ceo-dashboard"><CeoDashboard /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/relatorio-semanal" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="relatorio-semanal"><RelatorioSemanal /></ErrorBoundary></ProtectedPage>} />
             <Route path="/marketing" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="marketing"><MarketingDashboard /></ErrorBoundary></ProtectedPage>} />
             <Route path="/auditoria" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="auditoria"><AuditDashboard /></ErrorBoundary></ProtectedPage>} />
             <Route path="/admin" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="admin"><AdminPanel /></ErrorBoundary></ProtectedPage>} />
