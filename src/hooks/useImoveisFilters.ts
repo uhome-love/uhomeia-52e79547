@@ -44,12 +44,14 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[]) 
 
   // ── Derived: filteredBairros from dynamic facets ──
   const allBairros = useMemo(() => bairroFacets || [], [bairroFacets]);
-
   const filteredBairros = useMemo(() => {
     if (!bairroSearch) return allBairros;
     const q = bairroSearch.toLowerCase();
     return allBairros.filter((b) => b.value.toLowerCase().includes(q));
   }, [bairroSearch, allBairros]);
+
+  // ── Derived: tipoOptions from dynamic facets ──
+  const tipoOptions = useMemo(() => tipoFacets || [], [tipoFacets]);
 
   // ── Active filter tags ──
   const activeFilters: ActiveFilter[] = [];
