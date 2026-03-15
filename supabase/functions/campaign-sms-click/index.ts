@@ -9,7 +9,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
-const WHATSAPP_REDIRECT = "https://wa.me/5551992597097?text=Quero%20saber%20mais%20Melnick%20Day";
+const WHATSAPP_REDIRECT = "https://wa.me/5551992597097?text=Quero%20saber%20mais%20sobre%20o%20Melnick%20Day";
 
 function normalizePhone(phone: string | null | undefined): string | null {
   if (!phone) return null;

@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-const WHATSAPP_URL = "https://wa.me/5551992597097?text=Quero%20saber%20mais%20Melnick%20Day";
+const WHATSAPP_URL = "https://wa.me/5551992597097?text=Quero%20saber%20mais%20sobre%20o%20Melnick%20Day";
 const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/campaign-sms-click`;
 
 export default function MelnickDayLanding() {
@@ -23,9 +23,12 @@ export default function MelnickDayLanding() {
     const phone = searchParams.get("phone") || searchParams.get("telefone") || "";
     const nome = searchParams.get("nome") || searchParams.get("name") || "";
     const email = searchParams.get("email") || "";
-    const utm_source = searchParams.get("utm_source") || "brevo";
-    const utm_medium = searchParams.get("utm_medium") || "sms";
-    const utm_campaign = searchParams.get("utm_campaign") || "melnick_day_poa_2026";
+    const origem = searchParams.get("origem") || "brevo_sms";
+    const campanha = searchParams.get("campanha") || "melnick_day_poa_2026";
+    const bloco = searchParams.get("bloco") || "";
+    const utm_source = searchParams.get("utm_source") || origem;
+    const utm_medium = searchParams.get("utm_medium") || (origem.includes("email") ? "email" : "sms");
+    const utm_campaign = searchParams.get("utm_campaign") || campanha;
 
     const payload = {
       phone,
@@ -34,9 +37,10 @@ export default function MelnickDayLanding() {
       utm_source,
       utm_medium,
       utm_campaign,
-      canal: "brevo",
-      origem: "SMS_MELNICK_DAY",
-      campanha: "MELNICK_DAY_POA_2026",
+      canal: origem.includes("email") ? "email" : "brevo",
+      origem,
+      campanha,
+      bloco,
       user_agent: navigator.userAgent,
     };
 
