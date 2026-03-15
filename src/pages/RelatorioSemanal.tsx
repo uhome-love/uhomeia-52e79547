@@ -408,7 +408,8 @@ export default function RelatorioSemanal() {
               <div className="space-y-2">
                 {(funnel || []).map((stage, i) => {
                   const width = Math.max((stage.count / maxFunnel) * 100, 5);
-                  const lowConversion = stage.conversionRate < 40 && i < (funnel?.length || 0) - 1;
+                  const isLast = i >= (funnel?.length || 0) - 1;
+                  const rateColor = stage.conversionRate >= 60 ? "text-emerald-600" : stage.conversionRate >= 40 ? "text-amber-500" : "text-destructive";
                   return (
                     <div key={stage.id} className="flex items-center gap-3">
                       <span className="text-xs w-28 truncate text-muted-foreground">{stage.nome}</span>
@@ -416,8 +417,8 @@ export default function RelatorioSemanal() {
                         <div className="h-6 rounded bg-primary/80 flex items-center justify-end px-2 transition-all" style={{ width: `${width}%` }}>
                           <span className="text-[10px] text-primary-foreground font-bold">{stage.count}</span>
                         </div>
-                        {i < (funnel?.length || 0) - 1 && (
-                          <span className={`text-[10px] font-medium ${lowConversion ? "text-destructive" : "text-muted-foreground"}`}>
+                        {!isLast && (
+                          <span className={`text-[10px] font-medium ${rateColor}`}>
                             → {stage.conversionRate}%
                           </span>
                         )}
