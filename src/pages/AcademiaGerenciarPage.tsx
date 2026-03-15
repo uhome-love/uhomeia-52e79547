@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useAcademia, CATEGORIAS, NIVEL_CONFIG, TIPO_CONFIG, type Trilha, type Aula } from "@/hooks/useAcademia";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
