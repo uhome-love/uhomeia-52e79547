@@ -156,6 +156,11 @@ export default function PipelineKanban() {
     [pipeline.leads]
   );
 
+  const melnickDayCount = useMemo(() =>
+    pipeline.leads.filter(l => (l.tags || []).includes("MELNICK_DAY")).length,
+    [pipeline.leads]
+  );
+
   const totalVGV = useMemo(() =>
     filteredLeads.reduce((sum, l) => sum + (l.valor_estimado || 0), 0),
     [filteredLeads]
