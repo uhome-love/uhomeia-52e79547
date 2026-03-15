@@ -36,6 +36,7 @@ import { useLeadContext } from "@/hooks/useLeadContext";
 export default function ImoveisPage() {
   const { user } = useAuth();
   const { searchWithAI, clearAISearch, removeTag, aiLoading, aiResult, aiError, aiProperties, aiTotal, aiSearchTime } = useAISearch();
+  const { leadId, leadNome, hasLeadContext, trackEvent } = useLeadContext();
 
   // ── Dynamic facets ──
   const { bairroFacets, tipoFacets } = useTypesenseFacets();
