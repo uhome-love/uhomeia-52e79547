@@ -155,6 +155,7 @@ export default function ImoveisPage() {
         hasPrev={hasPrevPreview}
         hasNext={hasNextPreview}
         positionLabel={previewPositionLabel}
+        trackEvent={hasLeadContext ? trackEvent : undefined}
       />
 
       {/* Lead context banner */}

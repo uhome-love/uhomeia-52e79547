@@ -46,6 +46,7 @@ interface PropertyPreviewDrawerProps {
   hasPrev?: boolean;
   hasNext?: boolean;
   positionLabel?: string;
+  trackEvent?: (params: { event_type: string; imovel_codigo?: string; payload?: Record<string, any> }) => void;
 }
 
 export default function PropertyPreviewDrawer({
