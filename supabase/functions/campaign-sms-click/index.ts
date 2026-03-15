@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     if (!existingLead && email) {
       const { data } = await supabase
         .from("pipeline_leads")
-        .select("id, nome, tags, stage_id, corretor_id")
+        .select("id, nome, email, tags, stage_id, corretor_id")
         .eq("email", email)
         .not("aceite_status", "eq", "descartado")
         .order("created_at", { ascending: false })
