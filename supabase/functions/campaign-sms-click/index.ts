@@ -20,6 +20,28 @@ function normalizePhone(phone: string | null | undefined): string | null {
   return digits;
 }
 
+// Extract a human-readable name from an email address as last resort
+function nameFromEmail(email: string | null | undefined): string | null {
+  if (!email) return null;
+  const local = email.split("@")[0];
+  if (!local || local.length < 3) return null;
+  // Skip purely numeric or random-looking usernames
+  if (/^\d+$/.test(local) || /^[a-z0-9]{20,}$/i.test(local)) return null;
+  // Replace common separators with spaces, then title-case
+  const cleaned = local
+    .replace(/[._-]/g, " ")
+    .replace(/\d+/g, "") // remove numbers
+    .trim();
+  if (cleaned.length < 3) return null;
+  // Title case each word
+  const titled = cleaned
+    .split(/\s+/)
+    .filter(w => w.length > 0)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+  return titled || null;
+}
+
 // Build all normalized variants for matching (with/without 55, with/without 9th digit)
 function phoneVariants(normalized: string): string[] {
   const variants = new Set<string>();
@@ -249,7 +271,7 @@ Deno.serve(async (req) => {
           : obsText,
       };
       // Update name if we have one and existing is generic
-      const bestNome = enrichedNome || nome;
+      const bestNome = enrichedNome || nome || nameFromEmail(enrichedEmail || email);
       if (bestNome && (!existingLead.nome || existingLead.nome === "Lead Melnick Day")) {
         updateData.nome = bestNome;
       }
@@ -337,7 +359,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "No pipeline stages", redirect_url: WHATSAPP_REDIRECT }, 500);
     }
 
-    const leadNome = enrichedNome || nome || "Lead Melnick Day";
+    const leadNome = enrichedNome || nome || nameFromEmail(enrichedEmail || email) || "Lead Melnick Day";
     const leadEmail = enrichedEmail || email;
     const leadPhone = enrichedPhone || telefoneNormalizado;
     const obsComInteresse = interesseBrevo
