@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import PropertyMap from "@/components/imoveis/PropertyMap";
 import PhotoLightbox from "@/components/imoveis/PhotoLightbox";
+import PropertyPreviewDrawer from "@/components/imoveis/PropertyPreviewDrawer";
 import FilterChip from "@/components/imoveis/FilterChip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -66,6 +67,11 @@ export default function ImoveisPage() {
   const [creatingVitrine, setCreatingVitrine] = useState(false);
   const [vitrineLink, setVitrineLink] = useState<string | null>(null);
 
+  // Preview drawer
+  const [previewItem, setPreviewItem] = useState<any>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const openPreview = (item: any) => { setPreviewItem(item); setPreviewOpen(true); };
+  const closePreview = () => setPreviewOpen(false);
   // ── Search ──
   const {
     loading, fetchError, page, totalPages, total, searchTimeMs, sortedImoveis,
@@ -118,6 +124,18 @@ export default function ImoveisPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <PhotoLightbox images={lightboxImages} initialIndex={lightboxIndex} open={lightboxOpen} onClose={() => setLightboxOpen(false)} />
+      <PropertyPreviewDrawer
+        item={previewItem}
+        open={previewOpen}
+        onClose={closePreview}
+        isFavorite={previewItem ? favorites.has(String(previewItem.codigo || previewItem.id_imovel || previewItem.id)) : false}
+        onFavorite={toggleFavorite}
+        getPreco={getPreco}
+        selectMode={selectMode}
+        isSelected={previewItem ? selectedIds.has(String(previewItem.codigo || previewItem.id_imovel || previewItem.id)) : false}
+        onToggleSelect={toggleSelect}
+        onOpenLightbox={openLightbox}
+      />
 
       {/* ── Sticky top bar ── */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/50">
@@ -490,7 +508,7 @@ export default function ImoveisPage() {
                 {sortedImoveis.map((item, idx) => {
                   const isCampanha = campanhaOverrides.some((c) => c.codigo === item.codigo);
                   const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
-                  return <PropertyCardList key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />;
+                  return <PropertyCardList key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} onPreview={openPreview} />;
                 })}
                 {totalPages > 1 && !campanhaAtiva && (
                   <div className="flex items-center justify-center gap-2 py-3">
@@ -609,7 +627,7 @@ export default function ImoveisPage() {
                             <div className={cn("absolute top-3 left-3 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm backdrop-blur-sm", score >= 90 ? "bg-emerald-500/90 text-white" : score >= 75 ? "bg-primary/90 text-primary-foreground" : score >= 60 ? "bg-amber-500/90 text-white" : "bg-muted/90 text-foreground")}>
                               <Sparkles className="h-2.5 w-2.5" />{score}%
                             </div>
-                            <PropertyCardGrid item={item} idx={idx} isCampanha={false} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />
+                            <PropertyCardGrid item={item} idx={idx} isCampanha={false} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} onPreview={openPreview} />
                           </div>
                         );
                       })}
@@ -697,7 +715,7 @@ export default function ImoveisPage() {
                     {sortedImoveis.map((item, idx) => {
                       const isCampanha = campanhaOverrides.some((c) => c.codigo === item.codigo);
                       const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
-                      return <PropertyCardGrid key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} />;
+                      return <PropertyCardGrid key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} onOpenLightbox={openLightbox} getPreco={getPreco} onPreview={openPreview} />;
                     })}
                   </div>
                   {totalPages > 1 && !campanhaAtiva && (

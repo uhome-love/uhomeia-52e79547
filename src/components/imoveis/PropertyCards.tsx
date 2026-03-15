@@ -85,7 +85,7 @@ function ResponsavelButton({ codigo }: { codigo: string }) {
 
 // ── Grid Card ──
 
-export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco }: any) {
+export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco, onPreview }: any) {
   const images = extractImages(item);
   const fullImages = extractFullImages(item);
   const loc = extractEndereco(item);
@@ -99,19 +99,22 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
   const imovelId = String(codigo || item.id_imovel || item.id || idx);
 
   return (
-    <Card className={cn(
-      "overflow-hidden group hover:shadow-xl transition-all duration-300 relative border-border/40 bg-card",
-      isCampanha && "ring-1 ring-primary/20",
-      selectMode && isSelected && "ring-2 ring-primary"
-    )}>
+    <Card
+      className={cn(
+        "overflow-hidden group hover:shadow-xl transition-all duration-300 relative border-border/40 bg-card cursor-pointer",
+        isCampanha && "ring-1 ring-primary/20",
+        selectMode && isSelected && "ring-2 ring-primary"
+      )}
+      onClick={() => onPreview?.(item)}
+    >
       {selectMode && (
-        <button onClick={() => onToggleSelect(imovelId)} className="absolute top-3 left-3 z-20 bg-background/90 backdrop-blur-sm rounded-md p-1 shadow-sm">
+        <button onClick={(e) => { e.stopPropagation(); onToggleSelect(imovelId); }} className="absolute top-3 left-3 z-20 bg-background/90 backdrop-blur-sm rounded-md p-1 shadow-sm">
           {isSelected ? <CheckSquare className="h-5 w-5 text-primary" /> : <Square className="h-5 w-5 text-muted-foreground" />}
         </button>
       )}
 
       <div className="aspect-[16/10] relative bg-muted overflow-hidden">
-        <ImageSlider images={images} alt={titulo || loc.endereco} onClickImage={() => onOpenLightbox(fullImages.length > 0 ? fullImages : images, 0)} />
+        <ImageSlider images={images} alt={titulo || loc.endereco} onClickImage={(e?: React.MouseEvent) => { e?.stopPropagation(); onOpenLightbox(fullImages.length > 0 ? fullImages : images, 0); }} />
         {isCampanha && (
           <Badge className="absolute top-3 left-3 text-[10px] bg-primary/90 text-primary-foreground backdrop-blur-sm shadow-sm">
             <Megaphone className="h-2.5 w-2.5 mr-1" /> Campanha
@@ -158,7 +161,7 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
         {codigo && (
           <div className="flex items-center justify-between pt-1.5 border-t border-border/40">
             <span className="text-[10px] text-muted-foreground/60 font-mono">{codigo}</span>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
               <Button
                 variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary"
                 onClick={() => {
@@ -188,7 +191,7 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
 
 // ── List Card ──
 
-export const PropertyCardList = React.memo(function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco }: any) {
+export const PropertyCardList = React.memo(function PropertyCardList({ item, idx, isCampanha, selectMode, isSelected, onToggleSelect, onFavorite, isFavorite, onOpenLightbox, getPreco, onPreview }: any) {
   const images = extractImages(item);
   const fullImages = extractFullImages(item);
   const loc = extractEndereco(item);
@@ -204,26 +207,29 @@ export const PropertyCardList = React.memo(function PropertyCardList({ item, idx
   const imovelId = String(codigo || item.id_imovel || item.id || idx);
 
   return (
-    <Card className={cn(
-      "overflow-hidden hover:shadow-lg transition-all duration-200 relative border-border/40",
-      isCampanha && "ring-1 ring-primary/20",
-      selectMode && isSelected && "ring-2 ring-primary"
-    )}>
+    <Card
+      className={cn(
+        "overflow-hidden hover:shadow-lg transition-all duration-200 relative border-border/40 cursor-pointer",
+        isCampanha && "ring-1 ring-primary/20",
+        selectMode && isSelected && "ring-2 ring-primary"
+      )}
+      onClick={() => onPreview?.(item)}
+    >
       {selectMode && (
-        <button onClick={() => onToggleSelect(imovelId)} className="absolute top-2 left-2 z-20 bg-background/90 rounded-md p-0.5 shadow-sm">
+        <button onClick={(e) => { e.stopPropagation(); onToggleSelect(imovelId); }} className="absolute top-2 left-2 z-20 bg-background/90 rounded-md p-0.5 shadow-sm">
           {isSelected ? <CheckSquare className="h-5 w-5 text-primary" /> : <Square className="h-5 w-5 text-muted-foreground" />}
         </button>
       )}
       <div className="flex">
         <div className="w-56 h-40 flex-shrink-0 bg-muted relative">
-          <ImageSlider images={images} alt={titulo || loc.endereco} onClickImage={() => onOpenLightbox(fullImages.length > 0 ? fullImages : images, 0)} />
+          <ImageSlider images={images} alt={titulo || loc.endereco} onClickImage={(e?: React.MouseEvent) => { e?.stopPropagation(); onOpenLightbox(fullImages.length > 0 ? fullImages : images, 0); }} />
           {isCampanha && <Badge className="absolute top-2 left-2 text-[10px] bg-primary/90 text-primary-foreground"><Megaphone className="h-2.5 w-2.5 mr-0.5" /> Campanha</Badge>}
         </div>
         <div className="flex-1 p-3.5 flex flex-col justify-between min-w-0">
           <div className="space-y-1">
             <div className="flex items-start justify-between gap-2">
               <p className="text-lg font-bold text-foreground">{getPreco(item)}</p>
-              <button onClick={() => onFavorite(imovelId)} className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); onFavorite(imovelId); }} className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors">
                 <Heart className={cn("h-4 w-4", isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
               </button>
             </div>
@@ -254,7 +260,7 @@ export const PropertyCardList = React.memo(function PropertyCardList({ item, idx
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo || item.id}`; navigator.clipboard.writeText(text); toast.success("Dados copiados!"); }}>
                 <Copy className="h-3 w-3" />
               </Button>
