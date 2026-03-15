@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  getPropertyHeroImages, getPropertyThumbImages,
+  getPropertyPreviewImages, getPropertyThumbImages,
   extractOrigemExterna, extractEntrega, extractEndereco,
   getNum, getNumIncZero, fmtBRL, fmtCompact,
 } from "@/lib/imovelHelpers";
@@ -82,7 +82,7 @@ export default function ImovelPage() {
     );
   }
 
-  const heroImages = getPropertyHeroImages(item);
+  const heroImages = getPropertyPreviewImages(item);
   const thumbStrip = getPropertyThumbImages(item);
   const displayThumbs = thumbStrip.length > 0 ? thumbStrip : heroImages;
 

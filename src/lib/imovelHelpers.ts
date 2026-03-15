@@ -1,73 +1,43 @@
 /**
  * Shared helper functions for property (imóvel) data extraction and formatting.
- * Extracted from ImoveisPage to be reused across components.
  *
- * IMAGE STRATEGY (centralized):
- * - Hero/Preview: getPropertyHeroImages() → best resolution available
- * - Thumbnails:   getPropertyThumbImages() → lightweight thumbs
- * - Fullscreen:   getPropertyFullscreenImages() → same as hero or better
+ * CENTRALIZED IMAGE API — single source of truth:
  *
- * Priority order for hero/fullscreen:
- *   1. _fotos_full (from typesense-sync or jetimob-proxy)
- *   2. imagens[].link_large
- *   3. imagens[].link
- *   4. _fotos_normalized (thumbnails, last resort)
+ * | Helper                        | Use case              | Priority                                         |
+ * |-------------------------------|-----------------------|--------------------------------------------------|
+ * | getPropertyCardImages(item)   | Grid/list card thumbs | _fotos_normalized → link_thumb → link → hero     |
+ * | getPropertyPreviewImages(item)| Quick Preview hero    | _fotos_full → link_large → link → normalized     |
+ * | getPropertyFullscreenImages() | Lightbox fullscreen   | _fotos_full → link_large → link → normalized     |
  *
- * Priority order for thumbnails:
- *   1. _fotos_normalized
- *   2. imagens[].link_thumb
- *   3. imagens[].link
+ * Rules:
+ * - No component picks image URLs ad hoc — always use these helpers.
+ * - Thumbnail URLs must never be used for preview/fullscreen if better exists.
+ * - Graceful degradation: if only thumbs exist, they're used everywhere.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// ── Legacy helpers (used by PropertyCards, ImageSlider) — kept for compatibility ──
+// ── Internal: best-quality images available ──
 
-export function extractImages(item: any): string[] {
-  if (item._fotos_normalized?.length) return item._fotos_normalized;
-  const arr = item.imagens;
-  if (!Array.isArray(arr) || arr.length === 0) return [];
-  return arr.map((img: any) => img.link_thumb || img.link || img.url || img.src || "").filter(Boolean);
-}
-
-export function extractFullImages(item: any): string[] {
-  if (item._fotos_full?.length) return item._fotos_full;
-  const arr = item.imagens;
-  if (Array.isArray(arr) && arr.length > 0) {
-    const full = arr.map((img: any) => img.link_large || img.link || img.link_medio || img.link_thumb || img.url || img.src || "").filter(Boolean);
-    if (full.length > 0) return full;
-  }
-  if (item._fotos_normalized?.length) return item._fotos_normalized;
-  return [];
-}
-
-// ── Centralized image strategy (new, canonical API) ──
-
-/**
- * Returns the best-quality images for hero/preview display.
- * Priority: _fotos_full > imagens[].link_large > imagens[].link > _fotos_normalized
- */
-export function getPropertyHeroImages(item: any): string[] {
+function _bestQualityImages(item: any): string[] {
   // 1. Explicit full-res array (from Typesense mapping or proxy)
   if (item._fotos_full?.length) return item._fotos_full;
 
-  // 2. Try imagens array for link_large
+  // 2. Try imagens array for link_large (skip thumbs)
   const arr = item.imagens;
   if (Array.isArray(arr) && arr.length > 0) {
     const large = arr.map((img: any) => img.link_large || img.link || "").filter(Boolean);
     if (large.length > 0) return large;
   }
 
-  // 3. Fallback to normalized thumbs
+  // 3. Fallback to normalized thumbs (graceful degradation)
   if (item._fotos_normalized?.length) return item._fotos_normalized;
   return [];
 }
 
-/**
- * Returns lightweight thumbnail images for strips/grids.
- * Priority: _fotos_normalized > imagens[].link_thumb > imagens[].link
- */
-export function getPropertyThumbImages(item: any): string[] {
+// ── Internal: lightweight thumb images ──
+
+function _thumbImages(item: any): string[] {
   if (item._fotos_normalized?.length) return item._fotos_normalized;
   const arr = item.imagens;
   if (Array.isArray(arr) && arr.length > 0) {
@@ -76,22 +46,48 @@ export function getPropertyThumbImages(item: any): string[] {
   return [];
 }
 
+// ── Public API ──
+
 /**
- * Returns highest-quality images for fullscreen/lightbox.
- * Same as hero — if a better source existed, it would go here.
+ * Card images (grid/list thumbnails) — lightweight, fast loading.
+ * Falls back to best-quality if no thumbs exist.
  */
-export function getPropertyFullscreenImages(item: any): string[] {
-  return getPropertyHeroImages(item);
+export function getPropertyCardImages(item: any): string[] {
+  const thumbs = _thumbImages(item);
+  return thumbs.length > 0 ? thumbs : _bestQualityImages(item);
 }
 
 /**
- * Returns images for property cards (grid/list thumbnails).
- * Uses thumbs when available; falls back to hero.
+ * Preview hero images (Quick Preview drawer) — high quality.
  */
-export function getPropertyCardImages(item: any): string[] {
-  const thumbs = getPropertyThumbImages(item);
-  return thumbs.length > 0 ? thumbs : getPropertyHeroImages(item);
+export function getPropertyPreviewImages(item: any): string[] {
+  return _bestQualityImages(item);
 }
+
+/**
+ * Fullscreen/lightbox images — highest quality available.
+ */
+export function getPropertyFullscreenImages(item: any): string[] {
+  return _bestQualityImages(item);
+}
+
+/**
+ * Thumbnail strip images — always lightweight.
+ * Falls back to best-quality if no thumbs.
+ */
+export function getPropertyThumbImages(item: any): string[] {
+  const thumbs = _thumbImages(item);
+  return thumbs.length > 0 ? thumbs : _bestQualityImages(item);
+}
+
+// ── Legacy aliases (kept for any external consumers) ──
+
+/** @deprecated Use getPropertyCardImages */
+export const extractImages = getPropertyCardImages;
+/** @deprecated Use getPropertyFullscreenImages */
+export const extractFullImages = getPropertyFullscreenImages;
+/** @deprecated Use getPropertyPreviewImages */
+export const getPropertyHeroImages = getPropertyPreviewImages;
 
 // ── Other property helpers ──
 

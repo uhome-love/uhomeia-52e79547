@@ -2,10 +2,16 @@
  * Premium Quick Preview Drawer — vitrine-inspired mini-landing-page.
  * Desktop: right-side sheet (520px).
  * Mobile: nearly full-screen sheet (92vh).
- * Preserves: prev/next nav, lightbox, lead-context tracking, swipe gestures.
+ *
+ * OWNS its own lightbox: clicking the hero opens a true fullscreen gallery
+ * rendered via portal above everything. No nested/competing viewers.
+ *
+ * Navigation separation:
+ *  - Drawer prev/next = navigate properties
+ *  - Lightbox prev/next = navigate photos (keyboard captured in lightbox)
  */
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
@@ -14,14 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Heart, Copy, Phone, MapPin, CalendarClock, Share2, Building2,
-  Loader2, UserCircle, Mail, ExternalLink, BedDouble, Bath, Car,
+  Loader2, UserCircle, Mail, BedDouble, Bath, Car,
   Maximize2, ChevronLeft, ChevronRight, RulerIcon, DoorOpen,
-  MessageCircle, Calendar,
+  MessageCircle,
 } from "lucide-react";
+import PhotoLightbox from "@/components/imoveis/PhotoLightbox";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  getPropertyHeroImages, getPropertyThumbImages, getPropertyFullscreenImages,
+  getPropertyPreviewImages, getPropertyThumbImages, getPropertyFullscreenImages,
   extractOrigemExterna, extractEntrega, extractEndereco,
   getNum, getNumIncZero, fmtBRL,
 } from "@/lib/imovelHelpers";
@@ -40,7 +47,6 @@ interface PropertyPreviewDrawerProps {
   selectMode: boolean;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
-  onOpenLightbox: (images: string[], index: number) => void;
   onPrev?: () => void;
   onNext?: () => void;
   hasPrev?: boolean;
@@ -51,7 +57,7 @@ interface PropertyPreviewDrawerProps {
 
 export default function PropertyPreviewDrawer({
   item, open, onClose, isFavorite, onFavorite, getPreco,
-  selectMode, isSelected, onToggleSelect, onOpenLightbox,
+  selectMode, isSelected, onToggleSelect,
   onPrev, onNext, hasPrev = false, hasNext = false, positionLabel,
   trackEvent,
 }: PropertyPreviewDrawerProps) {
@@ -60,6 +66,10 @@ export default function PropertyPreviewDrawer({
   const [origemLoading, setOrigemLoading] = useState(false);
   const [origemFetched, setOrigemFetched] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // ── Internal lightbox state ──
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -72,6 +82,7 @@ export default function PropertyPreviewDrawer({
     setImageIdx(0);
     setOrigem(null);
     setOrigemFetched(false);
+    setLightboxOpen(false);
     if (item?.codigo && responsavelCache.has(item.codigo)) {
       setOrigem(responsavelCache.get(item.codigo)!.origem);
       setOrigemFetched(true);
@@ -89,7 +100,6 @@ export default function PropertyPreviewDrawer({
     setOrigemLoading(true);
     supabase.functions.invoke("jetimob-proxy", { body: { action: "get_imovel", codigo } })
       .then(({ data }) => {
-        // jetimob-proxy returns { imovel: {...}, not_found: bool }
         const imovel = data?.imovel ?? data?.data?.imovel ?? null;
         const result = imovel ? extractOrigemExterna(imovel) : null;
         responsavelCache.set(codigo, { origem: result });
@@ -99,16 +109,18 @@ export default function PropertyPreviewDrawer({
       .finally(() => { setOrigemLoading(false); setOrigemFetched(true); });
   }, [open, item?.codigo, origemFetched]);
 
+  // ── Keyboard: property nav (suppressed when lightbox is open) ──
   useEffect(() => {
-    if (!open) return;
+    if (!open || lightboxOpen) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" && hasPrev && onPrev) { e.preventDefault(); onPrev(); }
       if (e.key === "ArrowRight" && hasNext && onNext) { e.preventDefault(); onNext(); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, hasPrev, hasNext, onPrev, onNext]);
+  }, [open, lightboxOpen, hasPrev, hasNext, onPrev, onNext]);
 
+  // ── Tracking ──
   const trackedRef = useRef<Map<string, number>>(new Map());
   const DEDUP_WINDOW = 60_000;
   useEffect(() => {
@@ -129,13 +141,14 @@ export default function PropertyPreviewDrawer({
     });
   }, [open, item?.codigo, trackEvent, getPreco]);
 
+  // ── Swipe: property navigation on mobile ──
   const touchRef = useRef<{ startX: number; startY: number; swiping: boolean } | null>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const SWIPE_THRESHOLD = 50;
   const SWIPE_ANGLE_MAX = 30;
 
   useEffect(() => {
-    if (!open || !isMobile) return;
+    if (!open || !isMobile || lightboxOpen) return;
     const el = swipeContainerRef.current;
     if (!el) return;
     const onTouchStart = (e: TouchEvent) => {
@@ -170,14 +183,13 @@ export default function PropertyPreviewDrawer({
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [open, isMobile, hasPrev, hasNext, onPrev, onNext]);
+  }, [open, isMobile, lightboxOpen, hasPrev, hasNext, onPrev, onNext]);
 
   if (!item) return null;
 
-  const heroImages = getPropertyHeroImages(item);
+  const previewImages = getPropertyPreviewImages(item);
+  const fullscreenImages = getPropertyFullscreenImages(item);
   const thumbStrip = getPropertyThumbImages(item);
-  // If no separate thumbs, use hero images for strip
-  const displayThumbs = thumbStrip.length > 0 ? thumbStrip : heroImages;
   const loc = extractEndereco(item);
   const codigo = item.codigo;
   const titulo = item.titulo_anuncio || item.empreendimento_nome || "";
@@ -192,8 +204,14 @@ export default function PropertyPreviewDrawer({
   const descricao = item.descricao || item.descricao_interna || "";
   const tipo = item.tipo || item.subtipo || "";
 
-  const prevImage = () => setImageIdx(i => (i > 0 ? i - 1 : heroImages.length - 1));
-  const nextImage = () => setImageIdx(i => (i < heroImages.length - 1 ? i + 1 : 0));
+  const prevImage = () => setImageIdx(i => (i > 0 ? i - 1 : previewImages.length - 1));
+  const nextImage = () => setImageIdx(i => (i < previewImages.length - 1 ? i + 1 : 0));
+
+  const openFullscreen = () => {
+    if (previewImages.length === 0) return;
+    setLightboxIndex(imageIdx);
+    setLightboxOpen(true);
+  };
 
   const copyData = () => {
     const propUrl = codigo ? `https://uhomesales.com/imovel/${codigo}` : "";
@@ -247,26 +265,23 @@ export default function PropertyPreviewDrawer({
 
       {/* ── Scrollable body ── */}
       <div className="flex-1 overflow-y-auto">
-        {/* ── Hero Image ── */}
-        <div className="relative bg-muted/60 aspect-[4/3] group cursor-pointer" onClick={() => heroImages.length > 0 && onOpenLightbox(getPropertyFullscreenImages(item), imageIdx)}>
-          {heroImages.length > 0 ? (
+        {/* ── Hero Image — click opens fullscreen lightbox ── */}
+        <div className="relative bg-muted/60 aspect-[4/3] group cursor-pointer" onClick={openFullscreen}>
+          {previewImages.length > 0 ? (
             <>
               <img
-                src={heroImages[imageIdx] || ""}
+                src={previewImages[imageIdx] || ""}
                 alt={titulo}
                 className="w-full h-full object-cover transition-transform duration-500"
               />
-              {/* Gradient overlay at bottom for text legibility */}
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-              {/* Image counter pill */}
-              {heroImages.length > 1 && (
+              {previewImages.length > 1 && (
                 <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md rounded-full px-3 py-1 text-[11px] font-semibold text-white tabular-nums flex items-center gap-1.5">
                   <Maximize2 className="h-3 w-3" />
-                  {imageIdx + 1} / {heroImages.length}
+                  {imageIdx + 1} / {previewImages.length}
                 </div>
               )}
-              {/* Nav arrows */}
-              {heroImages.length > 1 && (
+              {previewImages.length > 1 && (
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); prevImage(); }}
@@ -282,7 +297,6 @@ export default function PropertyPreviewDrawer({
                   </button>
                 </>
               )}
-              {/* Obra badge overlay */}
               {entrega.emObras && (
                 <Badge className="absolute top-3 left-3 text-[10px] bg-amber-500 text-white border-0 shadow-lg gap-1 font-bold uppercase tracking-wider">
                   <CalendarClock className="h-3 w-3" />
@@ -298,9 +312,9 @@ export default function PropertyPreviewDrawer({
         </div>
 
         {/* ── Thumbnail strip ── */}
-        {heroImages.length > 1 && (
+        {previewImages.length > 1 && (
           <div className="flex gap-1.5 px-4 py-2.5 overflow-x-auto bg-muted/30 scrollbar-none">
-            {displayThumbs.slice(0, 8).map((img, i) => (
+            {thumbStrip.slice(0, 8).map((img, i) => (
               <button
                 key={i}
                 onClick={() => setImageIdx(i)}
@@ -314,12 +328,12 @@ export default function PropertyPreviewDrawer({
                 <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}
-            {heroImages.length > 8 && (
+            {previewImages.length > 8 && (
               <button
-                onClick={() => setImageIdx(8)}
+                onClick={() => openFullscreen()}
                 className="shrink-0 w-14 h-10 rounded-md bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground border-2 border-transparent hover:border-primary/30"
               >
-                +{heroImages.length - 8}
+                +{previewImages.length - 8}
               </button>
             )}
           </div>
@@ -327,7 +341,6 @@ export default function PropertyPreviewDrawer({
 
         {/* ── Content block ── */}
         <div className="px-5 pt-5 pb-4 space-y-5">
-          {/* Title + location */}
           <div>
             {tipo && (
               <p className="text-[11px] font-semibold uppercase tracking-widest text-primary mb-1">{tipo}</p>
@@ -344,7 +357,6 @@ export default function PropertyPreviewDrawer({
             )}
           </div>
 
-          {/* ── Price block ── */}
           <div className="rounded-xl bg-primary/5 border border-primary/15 p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70 mb-1">Valor</p>
             <p className="text-2xl font-extrabold text-foreground tracking-tight">{getPreco(item)}</p>
@@ -353,7 +365,6 @@ export default function PropertyPreviewDrawer({
             )}
           </div>
 
-          {/* ── Specs grid ── */}
           {specs.length > 0 && (
             <div className={cn(
               "grid gap-2",
@@ -369,14 +380,12 @@ export default function PropertyPreviewDrawer({
             </div>
           )}
 
-          {/* ── Primary CTA: WhatsApp ── */}
           <a href={`https://wa.me/?text=${whatsappText}`} target="_blank" rel="noopener noreferrer" className="block">
             <Button className="w-full h-12 text-sm font-bold gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 rounded-xl">
               <MessageCircle className="h-5 w-5" /> Enviar por WhatsApp
             </Button>
           </a>
 
-          {/* ── Secondary CTAs ── */}
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline" size="sm"
@@ -447,7 +456,6 @@ export default function PropertyPreviewDrawer({
             )}
           </div>
 
-          {/* ── Description ── */}
           {descricao && (
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Descrição</p>
@@ -456,6 +464,14 @@ export default function PropertyPreviewDrawer({
           )}
         </div>
       </div>
+
+      {/* ── Fullscreen Lightbox (owned by drawer, rendered via portal) ── */}
+      <PhotoLightbox
+        images={fullscreenImages}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
 
