@@ -149,7 +149,9 @@ export default function LeadHistoricoTab({ leadId, lead, stages, atividades, ano
   const [followUpDate, setFollowUpDate] = useState("");
   const [newNota, setNewNota] = useState("");
 
-  const timeline = buildTimeline(historico, atividades, tarefas, stages, lead);
+  const { data: imovelEvents } = useLeadImoveisEvents(leadId);
+
+  const timeline = buildTimeline(historico, atividades, tarefas, stages, lead, imovelEvents);
 
   const handleSave = async () => {
     const titulo = descricao.trim() || (ATIVIDADE_TIPOS[tipo]?.label || tipo);
