@@ -124,6 +124,18 @@ export default function ImoveisPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <PhotoLightbox images={lightboxImages} initialIndex={lightboxIndex} open={lightboxOpen} onClose={() => setLightboxOpen(false)} />
+      <PropertyPreviewDrawer
+        item={previewItem}
+        open={previewOpen}
+        onClose={closePreview}
+        isFavorite={previewItem ? favorites.has(String(previewItem.codigo || previewItem.id_imovel || previewItem.id)) : false}
+        onFavorite={toggleFavorite}
+        getPreco={getPreco}
+        selectMode={selectMode}
+        isSelected={previewItem ? selectedIds.has(String(previewItem.codigo || previewItem.id_imovel || previewItem.id)) : false}
+        onToggleSelect={toggleSelect}
+        onOpenLightbox={openLightbox}
+      />
 
       {/* ── Sticky top bar ── */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/50">
