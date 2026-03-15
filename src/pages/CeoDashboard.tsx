@@ -533,6 +533,7 @@ export default function CeoDashboard() {
             value={kpis.ligacoes}
             prev={prevKpis?.ligacoes}
             iconColor="text-blue-600"
+            ceoMeta={ceoMetasConsolidadas.meta_ligacoes || null}
           />
           <KpiCard
             icon={ThumbsUp}
