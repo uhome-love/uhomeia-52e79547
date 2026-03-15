@@ -99,7 +99,30 @@ export default function PipelineKanban() {
   const [selectedLead, setSelectedLead] = useState<PipelineLead | null>(null);
   const [filters, setFilters] = useState<PipelineFilters>({ ...EMPTY_FILTERS });
   const { data: parcerias = {} } = useParceriasMap();
+  const [activeTab, setActiveTab] = useState("kanban");
+  const [filaCeoFilter, setFilaCeoFilter] = useState(false);
+  const [corretorFilter, setCorretorFilter] = useState<string>("all");
+  const [dispatchOpen, setDispatchOpen] = useState(false);
+  const [forecastExpanded, setForecastExpanded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Bulk selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+  const [bulkActionOpen, setBulkActionOpen] = useState(false);
+
+  const toggleLeadSelection = useCallback((leadId: string) => {
+    setSelectedLeads(prev => {
+      const next = new Set(prev);
+      if (next.has(leadId)) next.delete(leadId); else next.add(leadId);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedLeads(new Set());
+    setSelectionMode(false);
+  }, []);
 
   const canAdd = isGestor || isAdmin || isCorretor;
 
