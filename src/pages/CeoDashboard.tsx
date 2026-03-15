@@ -57,12 +57,19 @@ function Variation({ current, previous, suffix = "" }: { current: number; previo
 }
 
 // ─── Semaphore helper ───
-function getSemaphore(value: number, meta: number | undefined | null): { color: string; bg: string; border: string; label: string } | null {
+function getSemaphore(value: number, meta: number | undefined | null): { color: string; label: string } | null {
   if (!meta || meta <= 0) return null;
   const pct = (value / meta) * 100;
-  if (pct >= 100) return { color: "bg-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/30", label: "No alvo" };
-  if (pct >= 70) return { color: "bg-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/30", label: "Atenção" };
-  return { color: "bg-red-500", bg: "bg-red-500/10", border: "border-red-500/30", label: "Abaixo" };
+  if (pct >= 100) return { color: "bg-emerald-500", label: "No alvo" };
+  if (pct >= 70) return { color: "bg-amber-500", label: "Atenção" };
+  return { color: "bg-red-500", label: "Abaixo" };
+}
+
+// ─── Format meta display value ───
+function formatMetaDisplay(value: number, type: "currency" | "number" | "percent"): string {
+  if (type === "currency") return formatBRLCompact(value);
+  if (type === "percent") return `${value}%`;
+  return value.toLocaleString("pt-BR");
 }
 
 // ─── KPI Card ───
