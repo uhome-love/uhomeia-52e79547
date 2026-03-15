@@ -172,9 +172,10 @@ export default function PropertyPreviewDrawer({
 
   if (!item) return null;
 
-  const images = extractImages(item);
+  const thumbs = extractImages(item);
   const fullImages = extractFullImages(item);
-  const allImages = fullImages.length > 0 ? fullImages : images;
+  const heroImages = fullImages.length > 0 ? fullImages : thumbs;
+  const thumbStrip = thumbs.length > 0 ? thumbs : heroImages;
   const loc = extractEndereco(item);
   const codigo = item.codigo;
   const titulo = item.titulo_anuncio || item.empreendimento_nome || "";
@@ -189,8 +190,8 @@ export default function PropertyPreviewDrawer({
   const descricao = item.descricao || item.descricao_interna || "";
   const tipo = item.tipo || item.subtipo || "";
 
-  const prevImage = () => setImageIdx(i => (i > 0 ? i - 1 : allImages.length - 1));
-  const nextImage = () => setImageIdx(i => (i < allImages.length - 1 ? i + 1 : 0));
+  const prevImage = () => setImageIdx(i => (i > 0 ? i - 1 : heroImages.length - 1));
+  const nextImage = () => setImageIdx(i => (i < heroImages.length - 1 ? i + 1 : 0));
 
   const copyData = () => {
     const text = [
@@ -241,25 +242,25 @@ export default function PropertyPreviewDrawer({
       {/* ── Scrollable body ── */}
       <div className="flex-1 overflow-y-auto">
         {/* ── Hero Image ── */}
-        <div className="relative bg-muted/60 aspect-[4/3] group cursor-pointer" onClick={() => allImages.length > 0 && onOpenLightbox(allImages, imageIdx)}>
-          {allImages.length > 0 ? (
+        <div className="relative bg-muted/60 aspect-[4/3] group cursor-pointer" onClick={() => heroImages.length > 0 && onOpenLightbox(heroImages, imageIdx)}>
+          {heroImages.length > 0 ? (
             <>
               <img
-                src={allImages[imageIdx] || ""}
+                src={heroImages[imageIdx] || ""}
                 alt={titulo}
                 className="w-full h-full object-cover transition-transform duration-500"
               />
               {/* Gradient overlay at bottom for text legibility */}
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
               {/* Image counter pill */}
-              {allImages.length > 1 && (
+              {heroImages.length > 1 && (
                 <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md rounded-full px-3 py-1 text-[11px] font-semibold text-white tabular-nums flex items-center gap-1.5">
                   <Maximize2 className="h-3 w-3" />
-                  {imageIdx + 1} / {allImages.length}
+                  {imageIdx + 1} / {heroImages.length}
                 </div>
               )}
               {/* Nav arrows */}
-              {allImages.length > 1 && (
+              {heroImages.length > 1 && (
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); prevImage(); }}
@@ -291,9 +292,9 @@ export default function PropertyPreviewDrawer({
         </div>
 
         {/* ── Thumbnail strip ── */}
-        {allImages.length > 1 && (
+        {heroImages.length > 1 && (
           <div className="flex gap-1.5 px-4 py-2.5 overflow-x-auto bg-muted/30 scrollbar-none">
-            {allImages.slice(0, 8).map((img, i) => (
+            {thumbStrip.slice(0, 8).map((img, i) => (
               <button
                 key={i}
                 onClick={() => setImageIdx(i)}
@@ -304,15 +305,15 @@ export default function PropertyPreviewDrawer({
                     : "border-transparent opacity-60 hover:opacity-100"
                 )}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}
-            {allImages.length > 8 && (
+            {heroImages.length > 8 && (
               <button
-                onClick={() => onOpenLightbox(allImages, 8)}
+                onClick={() => onOpenLightbox(heroImages, 8)}
                 className="shrink-0 w-14 h-10 rounded-md bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground border-2 border-transparent hover:border-primary/30"
               >
-                +{allImages.length - 8}
+                +{heroImages.length - 8}
               </button>
             )}
           </div>
