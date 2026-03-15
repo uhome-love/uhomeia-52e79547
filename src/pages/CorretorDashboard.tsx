@@ -104,9 +104,22 @@ export default function CorretorDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("nome, avatar_preview_url").eq("user_id", user.id).single().then(({ data }) => {
+    supabase.from("profiles").select("nome, avatar_preview_url, avatar_url, avatar_gamificado_url").eq("user_id", user.id).maybeSingle().then(({ data, error }) => {
+      if (error) {
+        console.warn("[CorretorDashboard] profile fetch error:", error.message);
+        // Retry once after 2s
+        setTimeout(() => {
+          supabase.from("profiles").select("nome, avatar_preview_url, avatar_url, avatar_gamificado_url").eq("user_id", user.id).maybeSingle().then(({ data: d2 }) => {
+            if (d2?.nome) setNome(d2.nome.split(" ")[0]);
+            const av = d2?.avatar_preview_url || d2?.avatar_gamificado_url || d2?.avatar_url || null;
+            if (av) setAvatarUrl(av);
+          });
+        }, 2000);
+        return;
+      }
       if (data?.nome) setNome(data.nome.split(" ")[0]);
-      if ((data as any)?.avatar_preview_url) setAvatarUrl((data as any).avatar_preview_url);
+      const av = data?.avatar_preview_url || (data as any)?.avatar_gamificado_url || (data as any)?.avatar_url || null;
+      if (av) setAvatarUrl(av);
     });
   }, [user]);
 
