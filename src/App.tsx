@@ -77,6 +77,7 @@ const GerenteDashboard = lazy(() => import("./pages/GerenteDashboard"));
 const RoletaLeads = lazy(() => import("./pages/RoletaLeads"));
 const ImoveisPage = lazy(() => import("./pages/ImoveisPage"));
 const VitrinePage = lazy(() => import("./pages/VitrinePage"));
+const ImovelPage = lazy(() => import("./pages/ImovelPage"));
 const PosVendas = lazy(() => import("./pages/PosVendas"));
 const MelnickDay = lazy(() => import("./pages/MelnickDay"));
 const OrygemCampanha = lazy(() => import("./pages/OrygemCampanha"));
@@ -149,6 +150,7 @@ const App = () => (
             <Route path="/visita/:token" element={<Suspense fallback={<PageLoader />}><VisitaConfirmacao /></Suspense>} />
             <Route path="/indica/:codigo" element={<Suspense fallback={<PageLoader />}><ReferralPage /></Suspense>} />
             <Route path="/vitrine/:id" element={<Suspense fallback={<PageLoader />}><VitrinePage /></Suspense>} />
+            <Route path="/imovel/:codigo" element={<Suspense fallback={<PageLoader />}><ImovelPage /></Suspense>} />
             {/* Acessível a todos os autenticados */}
             <Route path="/" element={<ProtectedPage><ErrorBoundary module="home-dashboard"><HomeDashboard /></ErrorBoundary></ProtectedPage>} />
 

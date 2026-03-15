@@ -23,6 +23,7 @@ import {
   CheckSquare, Square, Copy, CalendarClock, Heart,
 } from "lucide-react";
 import ImageSlider from "@/components/imoveis/ImageSlider";
+import SharePropertyButton from "@/components/imoveis/SharePropertyButton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -162,6 +163,12 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
           <div className="flex items-center justify-between pt-1.5 border-t border-border/40">
             <span className="text-[10px] text-muted-foreground/60 font-mono">{codigo}</span>
             <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+              <SharePropertyButton
+                codigo={codigo}
+                titulo={titulo}
+                bairro={loc.bairro}
+                preco={getPreco(item)}
+              />
               <Button
                 variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary"
                 onClick={() => {
@@ -172,14 +179,6 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
               >
                 <Copy className="h-3 w-3" />
               </Button>
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Confira este imóvel: ${titulo} - ${loc.bairro} - ${getPreco(item)} (Cód. ${codigo})`)}`}
-                target="_blank" rel="noopener noreferrer"
-              >
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-green-600">
-                  <Phone className="h-3 w-3" />
-                </Button>
-              </a>
               <ResponsavelButton codigo={codigo} />
             </div>
           </div>
@@ -261,12 +260,15 @@ export const PropertyCardList = React.memo(function PropertyCardList({ item, idx
               )}
             </div>
             <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+              <SharePropertyButton
+                codigo={codigo || String(item.id)}
+                titulo={titulo}
+                bairro={loc.bairro}
+                preco={getPreco(item)}
+              />
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { const text = `${titulo} · ${loc.bairro} · ${getPreco(item)} · Cód. ${codigo || item.id}`; navigator.clipboard.writeText(text); toast.success("Dados copiados!"); }}>
                 <Copy className="h-3 w-3" />
               </Button>
-              <a href={`https://wa.me/?text=${encodeURIComponent(`${titulo} - ${loc.bairro} - ${getPreco(item)}`)}`} target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-green-600"><Phone className="h-3 w-3" /></Button>
-              </a>
               {codigo && <ResponsavelButton codigo={codigo} />}
             </div>
           </div>
