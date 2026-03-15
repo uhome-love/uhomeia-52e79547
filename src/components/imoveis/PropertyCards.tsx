@@ -58,7 +58,7 @@ function ResponsavelButton({ codigo }: { codigo: string }) {
       const result = imovel ? extractOrigemExterna(imovel) : null;
       responsavelCache.set(codigo, { origem: result });
       setOrigem(result);
-    } catch { /* */ } finally { setLoading(false); setFetched(true); }
+    } catch (err) { console.warn("[ResponsavelButton] fetch failed for", codigo, err); } finally { setLoading(false); setFetched(true); }
   };
   return (
     <Popover onOpenChange={handleOpen}>
