@@ -8,7 +8,13 @@ import { todayBRT } from "@/lib/utils";
 
 // ─── Time Window Logic ───
 
-export type JanelaId = "manha" | "tarde" | "noturna" | "madrugada";
+export type JanelaId = "manha" | "tarde" | "noturna" | "madrugada" | "dia_todo";
+
+export function isSundayBRT(): boolean {
+  const now = new Date();
+  const brt = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  return brt.getDay() === 0;
+}
 
 interface JanelaInfo {
   id: JanelaId;
@@ -49,9 +55,10 @@ export function getCurrentWindowInfo(): {
   const now = new Date();
   const mins = getMinutesFromMidnight(now.getHours(), now.getMinutes());
 
-  // Detect Saturday (BRT = UTC-3)
+  // Detect Saturday/Sunday (BRT = UTC-3)
   const brtNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
   const isSaturday = brtNow.getDay() === 6;
+  const isSunday = brtNow.getDay() === 0;
 
   // Janelas de distribuição:
   // Manhã:   07:30 — 09:30 (cred 07:30-09:30, sábado até 10:30)
@@ -74,7 +81,25 @@ export function getCurrentWindowInfo(): {
   let credenciamentoJanela: JanelaId | null = null;
   let nextTransitionMins: number;
 
-  if (mins < t0730) {
+  // ─── Sunday Exception: No shifts, open all day (08:00–23:59) ───
+  if (isSunday) {
+    const t0800 = parseTime("08:00");
+    const t2359 = parseTime("23:59");
+
+    if (mins < t0800) {
+      janela = "madrugada";
+      emoji = "🌅";
+      descricao = "Domingo · Roleta abre às 08:00";
+      nextTransitionMins = t0800;
+    } else {
+      janela = "dia_todo";
+      emoji = "☀️";
+      descricao = "Domingo · Roleta aberta o dia todo";
+      credenciamentoAberto = true;
+      credenciamentoJanela = "dia_todo";
+      nextTransitionMins = t2359;
+    }
+  } else if (mins < t0730) {
     // 00:00 — 07:30: Madrugada, nenhum credenciamento aberto
     janela = "madrugada";
     emoji = "🌅";
@@ -131,7 +156,7 @@ export function getCurrentWindowInfo(): {
 
   return {
     janela,
-    label: janela === "madrugada" ? "Madrugada" : janela === "manha" ? "Manhã" : janela === "tarde" ? "Tarde" : "Noturna",
+    label: janela === "dia_todo" ? "Dia Todo" : janela === "madrugada" ? "Madrugada" : janela === "manha" ? "Manhã" : janela === "tarde" ? "Tarde" : "Noturna",
     emoji,
     descricao,
     credenciamentoAberto,
@@ -264,17 +289,24 @@ export function useRoleta() {
   }, [hoje]);
 
   // Load fila for today — enriched with REAL lead counts from pipeline_leads
-  // Only shows entries for the CURRENT janela (shift window)
+  // Only shows entries for the CURRENT janela (shift window), except Sunday (all)
   const loadFila = useCallback(async () => {
     const windowInfo = getCurrentWindowInfo();
     const currentJanela = windowInfo.janela;
+    const sunday = isSundayBRT();
 
-    const { data: filaData } = await supabase
+    let query = supabase
       .from("roleta_fila")
       .select("*")
       .eq("data", hoje)
-      .eq("ativo", true)
-      .eq("janela", currentJanela);
+      .eq("ativo", true);
+    
+    // On Sunday, show all janelas; otherwise filter by current
+    if (!sunday) {
+      query = query.eq("janela", currentJanela);
+    }
+
+    const { data: filaData } = await query;
 
     if (!filaData?.length) { setFila([]); return; }
 

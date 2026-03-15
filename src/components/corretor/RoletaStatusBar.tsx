@@ -43,8 +43,8 @@ interface Segmento {
 }
 
 // TODO: TEMPORÁRIO - ajustar horários após período de teste
-type JanelaKey = "manha" | "tarde" | "noite";
-type JanelaDb = "manha" | "tarde" | "noturna";
+type JanelaKey = "manha" | "tarde" | "noite" | "dia_todo";
+type JanelaDb = "manha" | "tarde" | "noturna" | "dia_todo";
 
 interface JanelaConfig {
   key: JanelaKey;
@@ -56,8 +56,8 @@ interface JanelaConfig {
   temRequisitos: boolean;
 }
 
-const toDbJanela = (janela: JanelaKey): JanelaDb => (janela === "noite" ? "noturna" : janela);
-const toUiJanela = (janela: string): JanelaKey => (janela === "noturna" ? "noite" : (janela as JanelaKey));
+const toDbJanela = (janela: JanelaKey): JanelaDb => (janela === "noite" ? "noturna" : janela === "dia_todo" ? "dia_todo" : (janela as JanelaDb));
+const toUiJanela = (janela: string): JanelaKey => (janela === "noturna" ? "noite" : janela === "dia_todo" ? "dia_todo" : (janela as JanelaKey));
 
 // Detect Saturday (BRT)
 function isSaturdayBRT(): boolean {
@@ -66,9 +66,25 @@ function isSaturdayBRT(): boolean {
   return brt.getDay() === 6;
 }
 
+// Detect Sunday (BRT)
+function isSundayBRTLocal(): boolean {
+  const now = new Date();
+  const brt = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  return brt.getDay() === 0;
+}
+
 // Janelas de credenciamento com horários de abertura e fechamento
 function getJanelasConfig(): JanelaConfig[] {
   const saturdayMorning = isSaturdayBRT();
+  const sunday = isSundayBRTLocal();
+  
+  // Sunday: single "Dia Todo" window, open 08:00–23:59
+  if (sunday) {
+    return [
+      { key: "dia_todo" as JanelaKey, label: "Dia Todo", emoji: "☀️", icon: Sun, credAberto: { inicio: 8, fim: 23.99 }, recebimento: "08:00 — 23:59", temRequisitos: false },
+    ];
+  }
+  
   return [
     { key: "manha", label: "Manhã", emoji: "🌅", icon: Sun, credAberto: { inicio: 7.5, fim: saturdayMorning ? 10.5 : 9.5 }, recebimento: saturdayMorning ? "7h30 — 10h30" : "7h30 — 9h30", temRequisitos: false },
     { key: "tarde", label: "Tarde", emoji: "🌞", icon: Sunset, credAberto: { inicio: 12, fim: 13.5 }, recebimento: "13h30 — 18h", temRequisitos: false },

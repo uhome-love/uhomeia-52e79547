@@ -39,7 +39,20 @@ async function resolveSegmento(supabase: any, empreendimento: string | null): Pr
   return null;
 }
 
+function isSundayBRT(): boolean {
+  const now = new Date();
+  const brHour = (now.getUTCHours() - 3 + 24) % 24;
+  // Approximate BRT day: if brHour < UTC hour, we crossed midnight
+  const utcDay = now.getUTCDay();
+  const brDay = brHour < now.getUTCHours() ? (utcDay + 1) % 7 : utcDay;
+  // Fix: recalculate properly using offset
+  const brtMs = now.getTime() - 3 * 60 * 60 * 1000;
+  const brtDate = new Date(brtMs);
+  return brtDate.getUTCDay() === 0; // 0 = Sunday
+}
+
 function getCurrentJanela(): string {
+  if (isSundayBRT()) return "dia_todo";
   const now = new Date();
   const brHour = (now.getUTCHours() - 3 + 24) % 24;
   if (brHour >= 8 && brHour < 13) return "manha";
@@ -144,13 +157,19 @@ Deno.serve(async (req) => {
 
       const todayStart = getTodayStartUTC();
 
-      const { data: creds } = await supabase
+      // On Sunday (dia_todo), accept credenciamentos from any janela
+      let credsQuery = supabase
         .from("roleta_credenciamentos")
         .select("corretor_id, segmento_1_id, segmento_2_id, janela")
         .eq("data", getTodayDateStr())
         .eq("status", "aprovado")
-        .eq("janela", targetJanela)
         .is("saiu_em", null);
+      
+      if (targetJanela !== "dia_todo") {
+        credsQuery = credsQuery.eq("janela", targetJanela);
+      }
+
+      const { data: creds } = await credsQuery;
       if (!creds || creds.length === 0) {
         return jsonResponse({ success: false, reason: "no_credenciados", dispatched: 0 });
       }
@@ -358,13 +377,19 @@ async function distributeSingleLead(
   const todayStart = getTodayStartUTC();
   const todayStr = getTodayDateStr();
 
-  const { data: creds } = await supabase
+  // On Sunday (dia_todo), accept credenciamentos from any janela
+  let credsQuery = supabase
     .from("roleta_credenciamentos")
     .select("corretor_id, segmento_1_id, segmento_2_id")
     .eq("data", todayStr)
     .eq("status", "aprovado")
-    .eq("janela", targetJanela)
     .is("saiu_em", null);
+  
+  if (targetJanela !== "dia_todo") {
+    credsQuery = credsQuery.eq("janela", targetJanela);
+  }
+
+  const { data: creds } = await credsQuery;
   if (!creds || creds.length === 0) {
     return { success: false, reason: "no_credenciados" };
   }
