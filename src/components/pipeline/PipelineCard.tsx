@@ -1,28 +1,23 @@
 import { memo, useState, useMemo } from "react";
 import type { PipelineLead, PipelineSegmento, PipelineStage } from "@/hooks/usePipeline";
-import { Phone, MessageCircle, Zap, Calendar, UserPlus, StickyNote, XCircle, Handshake, ArrowRightLeft, Eye, MapPin, PhoneCall, Send, FileText, Mail, MoreVertical, ArrowRight, Trash2, Flame, Snowflake, ThermometerSun, ClipboardList, Loader2 } from "lucide-react";
+import { Phone, MessageCircle, Handshake, ArrowRightLeft, FileText, Flame, Snowflake, ThermometerSun } from "lucide-react";
 import { calculateLeadScore } from "@/lib/leadScoring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserRole } from "@/hooks/useUserRole";
-import { differenceInHours, differenceInDays } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
-import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { todayBRT, dateToBRT } from "@/lib/utils";
 import { toast } from "sonner";
 import PartnershipDialog from "./PartnershipDialog";
 import PipelineTransferDialog from "./PipelineTransferDialog";
 import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 import WhatsAppTemplatesDialog from "./WhatsAppTemplatesDialog";
-import QuickActionMenu from "./QuickActionMenu";
-import { format, isToday as isTodayFn, isTomorrow as isTomorrowFn, isYesterday as isYesterdayFn, startOfDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+
+// Extracted sub-components
+import CardStatusLine, { getCardStatus } from "./CardStatusLine";
+import CardActionBar from "./CardActionBar";
+import CardScheduleVisitDialog from "./CardScheduleVisitDialog";
 
 function formatPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
@@ -33,12 +28,6 @@ function formatPhone(phone: string) {
   return phone;
 }
 
-function getWhatsAppUrl(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  const number = digits.startsWith("55") ? digits : `55${digits}`;
-  return `https://wa.me/${number}`;
-}
-
 function deduplicateEmpreendimento(raw: string): string {
   if (!raw) return "";
   const parts = raw.split(/[·,;|]/).map(s => s.trim()).filter(Boolean);
@@ -46,9 +35,7 @@ function deduplicateEmpreendimento(raw: string): string {
   const seen = new Map<string, string>();
   for (const part of parts) {
     const key = normalize(part);
-    if (!seen.has(key)) {
-      seen.set(key, part.replace(/\s*\(.*?\)\s*/g, "").trim());
-    }
+    if (!seen.has(key)) seen.set(key, part.replace(/\s*\(.*?\)\s*/g, "").trim());
   }
   return [...seen.values()].join(" · ");
 }
@@ -60,151 +47,6 @@ function cleanName(name: string) {
   const secondHalf = name.substring(half).trim();
   if (firstHalf === secondHalf) return firstHalf;
   return name;
-}
-
-const TIPO_LABELS: Record<string, string> = {
-  follow_up: "Follow-up", ligar: "Ligar", whatsapp: "WhatsApp",
-  enviar_proposta: "Proposta", enviar_material: "Material",
-  marcar_visita: "Visita", confirmar_visita: "Confirmar visita",
-  retornar_cliente: "Retornar", outro: "Tarefa",
-};
-
-const CARD_QUICK_TASK_TYPES = [
-  { value: "ligar", label: "Ligar", emoji: "📞" },
-  { value: "whatsapp", label: "WhatsApp", emoji: "💬" },
-  { value: "follow_up", label: "Follow-up", emoji: "📋" },
-  { value: "marcar_visita", label: "Visita", emoji: "🏠" },
-  { value: "enviar_proposta", label: "Proposta", emoji: "📄" },
-];
-
-function toValidDate(value: string | null | undefined): Date | null {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function toValidDateFromYMD(value: string | null | undefined): Date | null {
-  if (!value) return null;
-  const date = new Date(`${value}T12:00:00`);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-// Status indicator + task status line
-function getCardStatus(lead: PipelineLead, proximaTarefa: { tipo: string; vence_em: string | null; hora_vencimento: string | null } | null) {
-  const now = new Date();
-  const todayStart = startOfDay(now);
-
-  // Check task status
-  if (proximaTarefa?.vence_em) {
-    const d = toValidDateFromYMD(proximaTarefa.vence_em);
-    const hora = proximaTarefa.hora_vencimento?.slice(0, 5) || "";
-    const label = TIPO_LABELS[proximaTarefa.tipo] || proximaTarefa.tipo;
-
-    if (!d) {
-      return {
-        indicator: "🟡",
-        indicatorCls: "text-amber-500",
-        text: `🟡 Próximo: ${label} ${hora}`.trim(),
-        textCls: "text-amber-600 dark:text-amber-400 font-semibold",
-        borderCls: "border-l-amber-400",
-      };
-    }
-
-    if (d < todayStart) {
-      const dateLabel = isYesterdayFn(d) ? "ontem" : format(d, "dd/MM");
-      return {
-        indicator: "🔴",
-        indicatorCls: "text-destructive",
-        text: `🔴 Atrasado: ${label} ${dateLabel} ${hora}`,
-        textCls: "text-destructive font-semibold",
-        borderCls: "border-l-destructive",
-      };
-    }
-
-    if (isTodayFn(d)) {
-      return {
-        indicator: "🟡",
-        indicatorCls: "text-amber-500",
-        text: `🟡 Hoje ${hora}: ${label}`,
-        textCls: "text-amber-600 dark:text-amber-400 font-semibold",
-        borderCls: "border-l-amber-400",
-      };
-    }
-
-    const dateLabel = isTomorrowFn(d) ? "amanhã" : format(d, "dd/MM");
-    return {
-      indicator: "✅",
-      indicatorCls: "text-green-500",
-      text: `✅ Próximo: ${label} ${dateLabel} ${hora}`,
-      textCls: "text-muted-foreground",
-      borderCls: "border-l-green-400",
-    };
-  }
-
-  // No task — check contact status
-  const lastContactDate = toValidDate((lead as any).ultima_acao_at);
-  if (!lastContactDate) {
-    const stageDate = toValidDate(lead.stage_changed_at);
-    const hoursInStage = stageDate ? differenceInHours(now, stageDate) : 999;
-
-    if (Number.isFinite(hoursInStage) && hoursInStage < 2) {
-      return {
-        indicator: null,
-        indicatorCls: "",
-        text: "",
-        textCls: "",
-        borderCls: "border-l-blue-400",
-      };
-    }
-
-    return {
-      indicator: "🟡",
-      indicatorCls: "text-amber-500",
-      text: "🟡 Sem contato · Aguardando ação",
-      textCls: "text-amber-600 dark:text-amber-400 font-semibold",
-      borderCls: "border-l-amber-400",
-    };
-  }
-
-  const hoursSinceContact = differenceInHours(now, lastContactDate);
-  if (!Number.isFinite(hoursSinceContact)) {
-    return {
-      indicator: "🟡",
-      indicatorCls: "text-amber-500",
-      text: "🟡 Sem contato · Aguardando ação",
-      textCls: "text-amber-600 dark:text-amber-400 font-semibold",
-      borderCls: "border-l-amber-400",
-    };
-  }
-
-  if (hoursSinceContact > 48) {
-    return {
-      indicator: "🔴",
-      indicatorCls: "text-destructive",
-      text: "🔴 Sem contato · Aguardando ação",
-      textCls: "text-destructive font-semibold",
-      borderCls: "border-l-destructive",
-    };
-  }
-
-  if (hoursSinceContact > 24) {
-    return {
-      indicator: "🟡",
-      indicatorCls: "text-amber-500",
-      text: "🟡 Sem contato · Aguardando ação",
-      textCls: "text-amber-600 dark:text-amber-400 font-semibold",
-      borderCls: "border-l-amber-400",
-    };
-  }
-
-  // Recent contact, no task → DESATUALIZADO
-  return {
-    indicator: "⚠️",
-    indicatorCls: "text-amber-500",
-    text: `⚠️ Desatualizado · falta tarefa`,
-    textCls: "text-amber-600 dark:text-amber-400 font-semibold",
-    borderCls: "border-l-amber-400",
-  };
 }
 
 interface ProximaTarefa {
@@ -237,29 +79,16 @@ const PipelineCard = memo(function PipelineCard({
   const { user } = useAuth();
   const { isAdmin, isGestor } = useUserRole();
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState<Date>();
-  const [scheduleTime, setScheduleTime] = useState("10:00");
   const [partnerOpen, setPartnerOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [whatsappTemplatesOpen, setWhatsappTemplatesOpen] = useState(false);
-  const [scheduleLocal, setScheduleLocal] = useState("");
-  const [scheduleObs, setScheduleObs] = useState("");
   const [criandoNegocio, setCriandoNegocio] = useState(false);
   const [negocioCriado, setNegocioCriado] = useState(false);
-  const [quickTaskOpen, setQuickTaskOpen] = useState(false);
-  const [quickTaskType, setQuickTaskType] = useState("follow_up");
-  const [quickTaskObs, setQuickTaskObs] = useState("");
-  const [quickTaskSaving, setQuickTaskSaving] = useState(false);
-  const [quickTaskCustomDate, setQuickTaskCustomDate] = useState<Date>();
-  const [quickTaskTime, setQuickTaskTime] = useState("10:00");
-  const [quickTaskDateMode, setQuickTaskDateMode] = useState<"hoje" | "amanha" | "custom">("hoje");
-  const [quickTaskObsError, setQuickTaskObsError] = useState(false);
 
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || (lead as any).origem_detalhe || "");
   const status = useMemo(() => getCardStatus(lead, proximaTarefa || null), [(lead as any).ultima_acao_at, lead.stage_changed_at, proximaTarefa?.tipo, proximaTarefa?.vence_em, proximaTarefa?.hora_vencimento]);
 
-  // Lead scoring
   const leadScore = useMemo(() => calculateLeadScore({
     telefone: lead.telefone,
     email: lead.email,
@@ -271,7 +100,6 @@ const PipelineCard = memo(function PipelineCard({
     stage_changed_at: lead.stage_changed_at,
   }), [lead.telefone, lead.email, lead.empreendimento, lead.valor_estimado, lead.origem, lead.temperatura, lead.created_at, lead.stage_changed_at]);
 
-  // Temperature config
   const tempConfig = useMemo(() => {
     const t = lead.temperatura;
     if (t === "quente") return { icon: Flame, cls: "text-orange-500", bg: "bg-orange-500/10", label: "Quente" };
@@ -286,15 +114,10 @@ const PipelineCard = memo(function PipelineCard({
     window.open(`tel:${lead.telefone}`, "_self");
     if (user) {
       supabase.from("pipeline_atividades").insert({
-        pipeline_lead_id: lead.id,
-        tipo: "ligacao",
-        titulo: "Ligação realizada",
-        created_by: user.id,
+        pipeline_lead_id: lead.id, tipo: "ligacao", titulo: "Ligação realizada", created_by: user.id,
       }).then(() => {});
-      // Update ultima_acao_at
       supabase.from("pipeline_leads").update({
-        ultima_acao_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        ultima_acao_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       } as any).eq("id", lead.id).then(() => {});
       if (stage?.tipo === "novo_lead" && onMoveLead) {
         const contatoStage = stages.find(s => s.tipo === "atendimento" || s.nome.toLowerCase().includes("contato"));
@@ -308,92 +131,6 @@ const PipelineCard = memo(function PipelineCard({
     e.stopPropagation();
     if (!lead.telefone) return;
     setWhatsappTemplatesOpen(true);
-  };
-
-  const handleQuickTaskCreate = async () => {
-    if (!user) { toast.error("Faça login primeiro"); return; }
-    if (!quickTaskObs.trim()) {
-      setQuickTaskObsError(true);
-      toast.error("Preencha a observação da tarefa");
-      return;
-    }
-    setQuickTaskSaving(true);
-    try {
-      let venceEm: string;
-      if (quickTaskDateMode === "hoje") {
-        venceEm = todayBRT();
-      } else if (quickTaskDateMode === "amanha") {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        venceEm = dateToBRT(tomorrow);
-      } else if (quickTaskCustomDate) {
-        venceEm = dateToBRT(quickTaskCustomDate);
-      } else {
-        toast.error("Selecione uma data");
-        setQuickTaskSaving(false);
-        return;
-      }
-      const titulo = `${TIPO_LABELS[quickTaskType] || quickTaskType}: ${lead.nome || "Lead"}`;
-      await supabase.from("pipeline_tarefas").insert({
-        pipeline_lead_id: lead.id,
-        titulo,
-        descricao: quickTaskObs,
-        tipo: quickTaskType,
-        vence_em: venceEm,
-        hora_vencimento: quickTaskTime || null,
-        prioridade: "media",
-        status: "pendente",
-        created_by: user.id,
-        responsavel_id: user.id,
-      } as any);
-      await supabase.from("pipeline_leads").update({
-        proxima_acao: TIPO_LABELS[quickTaskType] || titulo,
-        data_proxima_acao: venceEm,
-        updated_at: new Date().toISOString(),
-      } as any).eq("id", lead.id);
-      const dateLabel = quickTaskDateMode === "hoje" ? "hoje" : quickTaskDateMode === "amanha" ? "amanhã" : format(quickTaskCustomDate!, "dd/MM");
-      toast.success(`Tarefa "${TIPO_LABELS[quickTaskType]}" criada para ${dateLabel} às ${quickTaskTime} ✅`);
-      setQuickTaskOpen(false);
-      setQuickTaskObs("");
-      setQuickTaskObsError(false);
-      setQuickTaskType("follow_up");
-      setQuickTaskDateMode("hoje");
-      setQuickTaskCustomDate(undefined);
-      setQuickTaskTime("10:00");
-    } catch (err: any) {
-      toast.error("Erro ao criar tarefa: " + (err.message || ""));
-    } finally {
-      setQuickTaskSaving(false);
-    }
-  };
-
-
-  const handleScheduleVisit = async () => {
-    if (!scheduleDate || !user) return;
-    const dateStr = format(scheduleDate, "yyyy-MM-dd");
-    await supabase.from("visitas").insert({
-      nome_cliente: lead.nome,
-      data_visita: dateStr,
-      hora_visita: scheduleTime,
-      empreendimento: lead.empreendimento || "",
-      corretor_id: lead.corretor_id || user.id,
-      origem: "pipeline",
-      status: "marcada",
-      gerente_id: user.id,
-      created_by: user.id,
-      pipeline_lead_id: lead.id,
-      local_visita: scheduleLocal || null,
-      observacoes: scheduleObs || null,
-    });
-    if (onMoveLead) {
-      const visitaStage = stages.find(s => s.nome.toLowerCase().includes("visita marcada") || s.tipo === "visita");
-      if (visitaStage) onMoveLead(lead.id, visitaStage.id);
-    }
-    setScheduleOpen(false);
-    setScheduleDate(undefined);
-    setScheduleLocal("");
-    setScheduleObs("");
-    toast.success("📅 Visita agendada e lead movido");
   };
 
   const handleMoveStage = (e: React.MouseEvent, stageId: string) => {
@@ -427,6 +164,50 @@ const PipelineCard = memo(function PipelineCard({
     onClick();
   };
 
+  const handleCreateNegocio = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user || criandoNegocio) return;
+    setCriandoNegocio(true);
+    try {
+      const corretorUserId = lead.corretor_id;
+      const gerenteUserId = lead.gerente_id || user.id;
+      const { data: profileRows } = await supabase
+        .from("profiles")
+        .select("id, user_id")
+        .in("user_id", [corretorUserId, gerenteUserId].filter(Boolean) as string[]);
+      const profileMap = new Map((profileRows || []).map(p => [p.user_id, p.id]));
+
+      const { data: negocio, error } = await supabase
+        .from("negocios")
+        .insert({
+          nome_cliente: lead.nome,
+          pipeline_lead_id: lead.id,
+          corretor_id: corretorUserId ? profileMap.get(corretorUserId) || null : null,
+          gerente_id: profileMap.get(gerenteUserId) || null,
+          empreendimento: lead.empreendimento || null,
+          telefone: lead.telefone || null,
+          fase: "novo_negocio",
+          origem: "visita_realizada",
+          vgv_estimado: lead.valor_estimado || null,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (negocio) {
+        await supabase.from("pipeline_leads").update({ negocio_id: negocio.id } as any).eq("id", lead.id);
+        setNegocioCriado(true);
+        toast.success(`🎉 Negócio criado para ${lead.nome}!`, { description: "🎯 Lead será movido para Convertidos" });
+        const convertidoStage = stages.find(s => s.tipo === "convertido");
+        if (convertidoStage && onMoveLead) onMoveLead(lead.id, convertidoStage.id);
+      }
+    } catch (err: any) {
+      console.error("Erro ao criar negócio:", err);
+      toast.error("Erro ao criar negócio: " + (err?.message || "Erro desconhecido"));
+    } finally {
+      setCriandoNegocio(false);
+    }
+  };
+
   return (
     <div
       draggable
@@ -454,13 +235,11 @@ const PipelineCard = memo(function PipelineCard({
             {cleanName(lead.nome)}
           </span>
           <div className="flex items-center gap-1 shrink-0">
-            {/* Temperature indicator */}
             {tempConfig && (
               <span className={cn("inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-bold", tempConfig.bg, tempConfig.cls)}>
                 <tempConfig.icon className="h-2.5 w-2.5" />
               </span>
             )}
-            {/* Lead Score badge */}
             <span className={cn(
               "inline-flex items-center justify-center h-5 w-5 rounded text-[10px] font-black",
               leadScore.bgColor, leadScore.color
@@ -475,7 +254,7 @@ const PipelineCard = memo(function PipelineCard({
           </div>
         </div>
 
-        {/* Line 2: Corretor (for managers) + Empreendimento · Phone · Origin badge */}
+        {/* Line 2: Corretor + Empreendimento · Phone · Origin */}
         {corretorNome && (
           <div className="text-[11px] text-muted-foreground truncate leading-tight flex items-center gap-1.5">
             <Avatar className="h-4 w-4 shrink-0 ring-1 ring-primary/20">
@@ -510,37 +289,15 @@ const PipelineCard = memo(function PipelineCard({
           </div>
         )}
 
-        {/* Negócio criado badge */}
+        {/* Negócio badge */}
         {lead.negocio_id && (
           <div className="flex items-center gap-1 pt-0.5">
             <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">✅ Negócio criado</span>
           </div>
         )}
 
-        {/* Line 3: Task status + days in stage */}
-        <div className="flex items-center justify-between gap-1 pt-0.5">
-          <p className={cn("text-[11px] truncate font-medium", status.text ? status.textCls : "text-muted-foreground")}>
-            {status.text || "✅ Em dia"}
-          </p>
-          {(() => {
-            const stageChangedDate = toValidDate(lead.stage_changed_at);
-            if (!stageChangedDate) return null;
-
-            const days = differenceInDays(new Date(), stageChangedDate);
-            if (!Number.isFinite(days) || days < 1) return null;
-
-            return (
-              <span className={cn(
-                "text-[9px] font-semibold shrink-0 px-1.5 py-0.5 rounded-md",
-                days >= 7 ? "text-destructive bg-destructive/10" :
-                days >= 3 ? "text-amber-600 dark:text-amber-400 bg-amber-500/10" :
-                "text-muted-foreground bg-muted/50"
-              )}>
-                {days}d na etapa
-              </span>
-            );
-          })()}
-        </div>
+        {/* Line 3: Status line (extracted) */}
+        <CardStatusLine status={status} stageChangedAt={lead.stage_changed_at} />
       </div>
 
       {/* Create Negócio button — only on Visita Realizada without linked deal */}
@@ -551,52 +308,7 @@ const PipelineCard = memo(function PipelineCard({
             variant="outline"
             disabled={criandoNegocio}
             className="w-full h-7 text-[11px] gap-1.5 font-semibold border-green-500/40 text-green-600 dark:text-green-400 hover:bg-green-500/10"
-            onClick={async (e) => {
-              e.stopPropagation();
-              if (!user || criandoNegocio) return;
-              setCriandoNegocio(true);
-              try {
-                const corretorUserId = lead.corretor_id;
-                const gerenteUserId = lead.gerente_id || user.id;
-                const { data: profileRows } = await supabase
-                  .from("profiles")
-                  .select("id, user_id")
-                  .in("user_id", [corretorUserId, gerenteUserId].filter(Boolean) as string[]);
-                const profileMap = new Map((profileRows || []).map(p => [p.user_id, p.id]));
-
-                const { data: negocio, error } = await supabase
-                  .from("negocios")
-                  .insert({
-                    nome_cliente: lead.nome,
-                    pipeline_lead_id: lead.id,
-                    corretor_id: corretorUserId ? profileMap.get(corretorUserId) || null : null,
-                    gerente_id: profileMap.get(gerenteUserId) || null,
-                    empreendimento: lead.empreendimento || null,
-                    telefone: lead.telefone || null,
-                    fase: "novo_negocio",
-                    origem: "visita_realizada",
-                    vgv_estimado: lead.valor_estimado || null,
-                  })
-                  .select("id")
-                  .single();
-                if (error) throw error;
-                if (negocio) {
-                  await supabase.from("pipeline_leads").update({ negocio_id: negocio.id } as any).eq("id", lead.id);
-                  setNegocioCriado(true);
-                  toast.success(`🎉 Negócio criado para ${lead.nome}!`, { description: "🎯 Lead será movido para Convertidos" });
-                  // Move to Convertido immediately
-                  const convertidoStage = stages.find(s => s.tipo === "convertido");
-                  if (convertidoStage && onMoveLead) {
-                    onMoveLead(lead.id, convertidoStage.id);
-                  }
-                }
-              } catch (err: any) {
-                console.error("Erro ao criar negócio:", err);
-                toast.error("Erro ao criar negócio: " + (err?.message || "Erro desconhecido"));
-              } finally {
-                setCriandoNegocio(false);
-              }
-            }}
+            onClick={handleCreateNegocio}
           >
             {criandoNegocio ? (
               <><span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> Criando...</>
@@ -607,7 +319,6 @@ const PipelineCard = memo(function PipelineCard({
         </div>
       )}
 
-      {/* Show success state after negócio created */}
       {negocioCriado && (
         <div data-actions-area className="px-3 pb-1.5">
           <div className="w-full h-7 flex items-center justify-center text-[11px] font-semibold text-green-600 dark:text-green-400 bg-green-500/10 rounded-md">
@@ -616,7 +327,7 @@ const PipelineCard = memo(function PipelineCard({
         </div>
       )}
 
-      {/* Convertido stage — show "Voltar para Pipeline" button */}
+      {/* Convertido stage — "Voltar para Pipeline" */}
       {stage?.tipo === "convertido" && (
         <div data-actions-area className="px-3 pb-1.5 space-y-1">
           <div className="text-[10px] text-muted-foreground text-center">🎯 Negócio em andamento</div>
@@ -627,11 +338,9 @@ const PipelineCard = memo(function PipelineCard({
             onClick={(e) => {
               e.stopPropagation();
               if (!onMoveLead) return;
-              // Move back to Qualificação by default
               const qualStage = stages.find(s => s.nome.toLowerCase().includes("qualifica"));
               if (qualStage) {
                 onMoveLead(lead.id, qualStage.id);
-                // Clear negocio_id
                 supabase.from("pipeline_leads").update({ negocio_id: null } as any).eq("id", lead.id).then(() => {});
                 toast.success("🔄 Lead retornado ao Pipeline");
               }
@@ -644,259 +353,43 @@ const PipelineCard = memo(function PipelineCard({
 
       <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
-      {/* Line 4: Action buttons + 3-dot menu */}
-      <div data-actions-area className="px-2.5 py-1.5 flex items-center justify-between">
-        <div className="flex items-center gap-0.5">
-          <Popover open={quickTaskOpen} onOpenChange={setQuickTaskOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold text-foreground/80 hover:bg-accent hover:text-foreground rounded-lg"
-                onClick={(e) => { e.stopPropagation(); setQuickTaskOpen(true); }}
-              >
-                <ClipboardList className="h-3.5 w-3.5" /> Tarefa
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent side="top" align="start" className="w-72 p-2.5 space-y-2" onClick={(e) => e.stopPropagation()}>
-              <p className="text-[10px] font-bold text-foreground">➕ Tarefa rápida para {lead.nome?.split(" ")[0]}</p>
-              <div className="flex flex-wrap gap-1">
-                {CARD_QUICK_TASK_TYPES.map(t => (
-                  <button
-                    key={t.value}
-                    onClick={() => setQuickTaskType(t.value)}
-                    className={cn(
-                      "text-[10px] px-2 py-1 rounded-md border transition-colors",
-                      quickTaskType === t.value
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border hover:border-primary/50"
-                    )}
-                  >
-                    {t.emoji} {t.label}
-                  </button>
-                ))}
-              </div>
-              <Input
-                className={cn("h-7 text-[11px]", quickTaskObsError && !quickTaskObs.trim() && "border-destructive")}
-                placeholder="Obs (obrigatório): ex. Retornar sobre financiamento"
-                value={quickTaskObs}
-                onChange={e => { setQuickTaskObs(e.target.value); setQuickTaskObsError(false); }}
-                onKeyDown={e => { if (e.key === "Enter" && quickTaskObs.trim()) handleQuickTaskCreate(); }}
-              />
-              {quickTaskObsError && !quickTaskObs.trim() && (
-                <p className="text-[9px] text-destructive">⚠️ Observação obrigatória</p>
-              )}
-              {/* Date mode selector */}
-              <div className="flex gap-1">
-                {([
-                  { value: "hoje" as const, label: "Hoje" },
-                  { value: "amanha" as const, label: "Amanhã" },
-                  { value: "custom" as const, label: "📅 Data" },
-                ]).map(d => (
-                  <button
-                    key={d.value}
-                    onClick={() => setQuickTaskDateMode(d.value)}
-                    className={cn(
-                      "text-[10px] px-2.5 py-1 rounded-md border transition-colors flex-1",
-                      quickTaskDateMode === d.value
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border hover:border-primary/50"
-                    )}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-              {/* Custom date picker */}
-              {quickTaskDateMode === "custom" && (
-                <div className="border border-border rounded-md overflow-hidden">
-                  <CalendarPicker
-                    mode="single"
-                    selected={quickTaskCustomDate}
-                    onSelect={(d) => setQuickTaskCustomDate(d as Date | undefined)}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    className={cn("p-1 pointer-events-auto text-[10px] [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-head_cell]:text-[9px]")}
-                  />
-                </div>
-              )}
-              {/* Time input */}
-              <div className="flex items-center gap-2">
-                <label className="text-[10px] text-muted-foreground font-medium shrink-0">⏰ Horário:</label>
-                <Input
-                  type="time"
-                  className="h-7 text-[11px] flex-1"
-                  value={quickTaskTime}
-                  onChange={e => setQuickTaskTime(e.target.value)}
-                />
-              </div>
-              {/* Submit */}
-              <Button
-                size="sm"
-                className="h-7 text-[11px] w-full gap-1"
-                disabled={quickTaskSaving || (quickTaskDateMode === "custom" && !quickTaskCustomDate)}
-                onClick={() => handleQuickTaskCreate()}
-              >
-                {quickTaskSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "✅ Criar Tarefa"}
-              </Button>
-            </PopoverContent>
-          </Popover>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 rounded-lg"
-            onClick={handleWhatsApp}
-          >
-            <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-          </Button>
-
-          <QuickActionMenu
-            leadId={lead.id}
-            leadNome={lead.nome}
-            onOpenDetail={onClick}
-            onScheduleVisit={() => setScheduleOpen(true)}
-          >
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold text-primary hover:bg-primary/10 rounded-lg"
-            >
-              <Zap className="h-3.5 w-3.5" /> Ação
-            </Button>
-          </QuickActionMenu>
-        </div>
-
-        {/* 3-dot quick actions menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-accent" onClick={(e) => e.stopPropagation()}>
-              <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
-            {onMoveLead && stages.filter(s => s.id !== lead.stage_id).slice(0, 5).map(s => (
-              <DropdownMenuItem key={s.id} onClick={(e) => handleMoveStage(e as any, s.id)}>
-                <ArrowRight className="h-3.5 w-3.5 mr-2" /> {s.nome}
-              </DropdownMenuItem>
-            ))}
-            {onMoveLead && <DropdownMenuSeparator />}
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setScheduleOpen(true); }}>
-              <Calendar className="h-3.5 w-3.5 mr-2" /> Agendar visita
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setComunicacaoOpen(true); }}>
-              <Send className="h-3.5 w-3.5 mr-2" /> Central de comunicação
-            </DropdownMenuItem>
-            {(isAdmin || isGestor || lead.corretor_id === user?.id) && (
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTransferOpen(true); }}>
-                <ArrowRightLeft className="h-3.5 w-3.5 mr-2" /> Repassar lead
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setPartnerOpen(true); }}>
-              <Handshake className="h-3.5 w-3.5 mr-2" /> Parceria
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleMarkLost(); }}>
-              <Trash2 className="h-3.5 w-3.5 mr-2" /> Descartar lead
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {/* Line 4: Action bar (extracted) */}
+      <CardActionBar
+        leadId={lead.id}
+        leadNome={lead.nome}
+        leadTelefone={lead.telefone}
+        stageId={lead.stage_id}
+        stages={stages}
+        canTransfer={isAdmin || isGestor || lead.corretor_id === user?.id}
+        onWhatsApp={handleWhatsApp}
+        onOpenDetail={onClick}
+        onScheduleVisit={() => setScheduleOpen(true)}
+        onOpenComunicacao={() => setComunicacaoOpen(true)}
+        onOpenTransfer={() => setTransferOpen(true)}
+        onOpenPartner={() => setPartnerOpen(true)}
+        onMarkLost={handleMarkLost}
+        onMoveStage={handleMoveStage}
+      />
 
       {/* Dialogs */}
       <div data-no-card-click onClick={(e) => e.stopPropagation()}>
-        <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
-          <DialogContent className="max-w-[360px] p-5 gap-4">
-            <DialogHeader className="p-0 mb-1">
-              <DialogTitle className="text-base font-semibold">📅 Agendar Visita</DialogTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">{cleanName(lead.nome)}</p>
-            </DialogHeader>
-            <CalendarPicker
-              mode="single"
-              selected={scheduleDate}
-              onSelect={setScheduleDate}
-              className={cn("p-0 mx-auto pointer-events-auto border rounded-md")}
-              locale={ptBR}
-              disabled={(date) => date < startOfDay(new Date())}
-            />
-            <div className="space-y-3 mt-1">
-              <div>
-                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Horário</label>
-                <Input
-                  type="time"
-                  value={scheduleTime}
-                  onChange={(e) => setScheduleTime(e.target.value)}
-                  className="h-9 text-sm w-full"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Empreendimento</label>
-                <div className="text-sm font-medium text-foreground">
-                  {lead.empreendimento || <span className="text-amber-500">Sem empreendimento definido</span>}
-                </div>
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Local da visita (opcional)</label>
-                <Input
-                  placeholder="Ex: Stand do empreendimento, sala 3..."
-                  value={scheduleLocal}
-                  onChange={(e) => setScheduleLocal(e.target.value)}
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Observações (opcional)</label>
-                <Input
-                  placeholder="Ex: Cliente prefere período da tarde..."
-                  value={scheduleObs}
-                  onChange={(e) => setScheduleObs(e.target.value)}
-                  className="h-9 text-sm"
-                />
-              </div>
-              <Button className="w-full h-9 text-sm font-semibold mt-1" disabled={!scheduleDate} onClick={handleScheduleVisit}>
-                <Calendar className="h-4 w-4 mr-1.5" /> Marcar Visita
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CardScheduleVisitDialog
+          open={scheduleOpen}
+          onOpenChange={setScheduleOpen}
+          lead={lead}
+          stages={stages}
+          onMoveLead={onMoveLead}
+        />
         {partnerOpen && (
-          <PartnershipDialog
-            open={partnerOpen}
-            onOpenChange={setPartnerOpen}
-            leadId={lead.id}
-            leadNome={lead.nome}
-            corretorPrincipalId={lead.corretor_id}
-          />
+          <PartnershipDialog open={partnerOpen} onOpenChange={setPartnerOpen} leadId={lead.id} leadNome={lead.nome} corretorPrincipalId={lead.corretor_id} />
         )}
         {transferOpen && (
-          <PipelineTransferDialog
-            open={transferOpen}
-            onOpenChange={setTransferOpen}
-            leadId={lead.id}
-            leadNome={lead.nome}
-            currentCorretorId={lead.corretor_id}
-            stages={stages}
-            onTransferred={(corretorId, nome) => onTransferred?.(lead.id, corretorId, nome)}
-          />
+          <PipelineTransferDialog open={transferOpen} onOpenChange={setTransferOpen} leadId={lead.id} leadNome={lead.nome} currentCorretorId={lead.corretor_id} stages={stages} onTransferred={(corretorId, nome) => onTransferred?.(lead.id, corretorId, nome)} />
         )}
         {comunicacaoOpen && (
-          <CentralComunicacao
-            open={comunicacaoOpen}
-            onOpenChange={setComunicacaoOpen}
-            leadId={lead.id}
-            leadNome={lead.nome}
-            leadTelefone={lead.telefone}
-            leadEmpreendimento={lead.empreendimento}
-          />
+          <CentralComunicacao open={comunicacaoOpen} onOpenChange={setComunicacaoOpen} leadId={lead.id} leadNome={lead.nome} leadTelefone={lead.telefone} leadEmpreendimento={lead.empreendimento} />
         )}
-        <WhatsAppTemplatesDialog
-          open={whatsappTemplatesOpen}
-          onOpenChange={setWhatsappTemplatesOpen}
-          leadNome={lead.nome}
-          leadTelefone={lead.telefone}
-          leadEmpreendimento={lead.empreendimento}
-          leadId={lead.id}
-          corretorNome={corretorNome}
-        />
+        <WhatsAppTemplatesDialog open={whatsappTemplatesOpen} onOpenChange={setWhatsappTemplatesOpen} leadNome={lead.nome} leadTelefone={lead.telefone} leadEmpreendimento={lead.empreendimento} leadId={lead.id} corretorNome={corretorNome} />
       </div>
     </div>
   );
