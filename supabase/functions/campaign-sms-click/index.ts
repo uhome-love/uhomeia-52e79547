@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
     }
 
     // ─── CREATE new lead ───
-    log("info", "Creating new lead", { telefoneNormalizado, nome });
+    log("info", "Creating new lead", { telefoneNormalizado, enrichedNome, enrichedEmail, interesseBrevo });
 
     // Get first pipeline stage
     const { data: firstStage } = await supabase
@@ -251,19 +251,25 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "No pipeline stages", redirect_url: WHATSAPP_REDIRECT }, 500);
     }
 
+    const leadNome = enrichedNome || nome || "Lead Melnick Day";
+    const leadEmail = enrichedEmail || email;
+    const obsComInteresse = interesseBrevo
+      ? `${obsText} | Interesse: ${interesseBrevo}`
+      : obsText;
+
     const { data: newLead, error: insertErr } = await supabase
       .from("pipeline_leads")
       .insert({
-        nome: nome || "Lead Melnick Day",
+        nome: leadNome,
         telefone: phone || null,
         telefone_normalizado: telefoneNormalizado,
-        email: email || null,
+        email: leadEmail || null,
         origem: origem,
         campanha: campanha,
         stage_id: firstStage.id,
         aceite_status: "pendente_distribuicao",
         tags,
-        observacoes: obsText,
+        observacoes: obsComInteresse,
       })
       .select("id")
       .single();
