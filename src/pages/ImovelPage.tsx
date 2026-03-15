@@ -81,10 +81,9 @@ export default function ImovelPage() {
     );
   }
 
-  const thumbs = extractImages(item);
-  const fullImages = extractFullImages(item);
-  const heroImages = (fullImages.length > 0 ? fullImages : thumbs).map(toFullRes);
-  const thumbStrip = thumbs.length > 0 ? thumbs : heroImages;
+  const heroImages = getPropertyHeroImages(item);
+  const thumbStrip = getPropertyThumbImages(item);
+  const displayThumbs = thumbStrip.length > 0 ? thumbStrip : heroImages;
 
   const loc = extractEndereco(item);
   const titulo = item.titulo_anuncio || item.empreendimento_nome || "";
