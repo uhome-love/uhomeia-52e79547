@@ -83,28 +83,29 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceKey);
+    const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
 
-    // Call jetimob-proxy internally to get property data
-    const proxyUrl = `${supabaseUrl}/functions/v1/jetimob-proxy`;
-    const proxyRes = await fetch(proxyUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({ action: "get_imovel", codigo }),
-      signal: AbortSignal.timeout(8000),
-    });
+    let imovel: any = null;
 
-    if (!proxyRes.ok) {
-      console.error("jetimob-proxy error:", proxyRes.status);
-      return Response.redirect(spaUrl, 302);
+    // Try Jetimob API directly
+    if (JETIMOB_API_KEY) {
+      try {
+        const res = await fetch(
+          `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/codigo/${encodeURIComponent(codigo)}?v=6`,
+          { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(6000) },
+        );
+        if (res.ok) {
+          const raw = await res.json();
+          const items = Array.isArray(raw?.data) ? raw.data : raw?.imovel ? [raw.imovel] : raw?.codigo ? [raw] : [];
+          imovel = items[0] || null;
+        }
+      } catch (e) {
+        console.error("Jetimob API error:", e);
+      }
     }
 
-    const result = await proxyRes.json();
-    const imovel = result?.imovel;
-
-    if (!imovel || result?.not_found) {
+    if (!imovel) {
       // Also check empreendimento_overrides as fallback
       const supabase = createClient(supabaseUrl, serviceKey);
       const { data: override } = await supabase
