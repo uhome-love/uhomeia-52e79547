@@ -50,6 +50,7 @@ export interface PipelineLead {
   created_by?: string | null;
   negocio_id: string | null;
   ultima_acao_at?: string | null;
+  tags?: string[] | null;
   // Marketing attribution (loaded on demand)
   campanha?: string | null;
   campanha_id?: string | null;

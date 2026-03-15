@@ -140,8 +140,11 @@ export default function PipelineKanban() {
         result = result.filter(l => l.corretor_id === corretorFilter);
       }
     }
+    if (melnickDayFilter) {
+      result = result.filter(l => (l.tags || []).includes("MELNICK_DAY"));
+    }
     return result;
-  }, [pipeline.leads, filters, pipeline.stages, filaCeoFilter, corretorFilter]);
+  }, [pipeline.leads, filters, pipeline.stages, filaCeoFilter, corretorFilter, melnickDayFilter]);
 
   const corretorOptions = useMemo(() => {
     const entries = Object.entries(pipeline.corretorNomes).sort((a, b) => a[1].localeCompare(b[1]));
