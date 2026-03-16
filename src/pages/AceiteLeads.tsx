@@ -27,6 +27,9 @@ function getCampaignLabel(origem?: string | null, campanha?: string | null) {
   if (!origem && !campanha) return null;
   const o = origem?.toLowerCase() || "";
   const c = campanha?.toLowerCase() || "";
+  if (o.includes("site_uhome") || o.includes("jetimob") || o === "site") {
+    return "🌐 Site Uhome";
+  }
   if (o.includes("brevo_email") || o.includes("email")) {
     return c.includes("melnick") ? "📧 Email Melnick Day" : "📧 Campanha Email";
   }
@@ -37,6 +40,12 @@ function getCampaignLabel(origem?: string | null, campanha?: string | null) {
     return c.includes("melnick") ? "💬 WhatsApp Melnick Day" : "💬 Campanha WhatsApp";
   }
   return null;
+}
+
+function extractPropertyCode(obs?: string | null): string | null {
+  if (!obs) return null;
+  const match = obs.match(/C[oó]d\.?\s*Im[oó]vel:\s*(\S+)/i);
+  return match ? match[1] : null;
 }
 
 const REJECTION_REASONS = [
@@ -89,6 +98,7 @@ function CountdownRing({ expiresAt }: { expiresAt: string }) {
 }
 
 function LeadPopupCard({ lead, onResult, total, current }: { lead: PendingLead; onResult: () => void; total: number; current: number }) {
+  const propertyCode = extractPropertyCode(lead.observacoes);
   const [mode, setMode] = useState<"initial" | "rejecting">("initial");
   const [selectedReason, setSelectedReason] = useState("ocupado");
   const [loading, setLoading] = useState(false);
@@ -196,11 +206,21 @@ function LeadPopupCard({ lead, onResult, total, current }: { lead: PendingLead; 
                 {getCampaignLabel(lead.origem, lead.campanha) || lead.origem}
               </div>
             )}
+            {propertyCode && (
+              <div className="flex items-center gap-1 bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-full text-xs font-medium">
+                🏠 Cód. {propertyCode}
+              </div>
+            )}
           </div>
 
-          {lead.observacoes && (
+          {lead.observacoes && !propertyCode && (
             <p className="text-xs text-muted-foreground italic text-center bg-muted/50 rounded-lg p-2">
               "{lead.observacoes}"
+            </p>
+          )}
+          {lead.observacoes && propertyCode && (
+            <p className="text-xs text-muted-foreground italic text-center bg-muted/50 rounded-lg p-2">
+              "{lead.observacoes.replace(/\s*\|\s*Cód\.?\s*Imóvel:\s*\S+/i, '').trim()}"
             </p>
           )}
 

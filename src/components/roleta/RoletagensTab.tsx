@@ -22,6 +22,7 @@ interface Roletagem {
   segmento_nome: string;
   origem?: string | null;
   campanha?: string | null;
+  observacoes?: string | null;
 }
 
 /* Helper: human-readable campaign origin badge */
@@ -29,7 +30,10 @@ function getCampaignBadge(origem?: string | null, campanha?: string | null) {
   if (!origem && !campanha) return null;
   const o = origem?.toLowerCase() || "";
   const c = campanha?.toLowerCase() || "";
-  
+
+  if (o.includes("site_uhome") || o.includes("jetimob") || o === "site") {
+    return { label: "🌐 Site Uhome", className: "border-indigo-300 text-indigo-700 bg-indigo-50 dark:bg-indigo-950/20 dark:text-indigo-400" };
+  }
   if (o.includes("brevo_email") || o.includes("email")) {
     const label = c.includes("melnick") ? "📧 Email Melnick Day" : `📧 Email${campanha ? ` ${campanha}` : ""}`;
     return { label, className: "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/20 dark:text-blue-400" };
@@ -46,6 +50,13 @@ function getCampaignBadge(origem?: string | null, campanha?: string | null) {
     return { label: `🎯 ${campanha}`, className: "border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-950/20 dark:text-purple-400" };
   }
   return null;
+}
+
+/** Extract property code from observacoes (e.g. "Cód. Imóvel: 18273-BT") */
+function extractPropertyCode(obs?: string | null): string | null {
+  if (!obs) return null;
+  const match = obs.match(/C[oó]d\.?\s*Im[oó]vel:\s*(\S+)/i);
+  return match ? match[1] : null;
 }
 
 interface LeadPerdido {
@@ -118,7 +129,7 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
       // Get leads that have been distributed (have distribuido_em set)
       const { data: leads } = await supabase
         .from("pipeline_leads")
-        .select("id, nome, telefone, empreendimento, corretor_id, aceite_status, distribuido_em, aceite_expira_em, aceito_em, segmento_id, origem, campanha")
+        .select("id, nome, telefone, empreendimento, corretor_id, aceite_status, distribuido_em, aceite_expira_em, aceito_em, segmento_id, origem, campanha, observacoes")
         .not("distribuido_em", "is", null)
         .order("distribuido_em", { ascending: false })
         .limit(100);
@@ -305,7 +316,13 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
                         </div>
                         {(() => {
                           const cb = getCampaignBadge(r.origem, r.campanha);
-                          return cb ? <Badge variant="outline" className={`text-[9px] ${cb.className}`}>{cb.label}</Badge> : null;
+                          const pc = extractPropertyCode(r.observacoes);
+                          return (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {cb && <Badge variant="outline" className={`text-[9px] ${cb.className}`}>{cb.label}</Badge>}
+                              {pc && <Badge variant="outline" className="text-[9px] border-indigo-300 text-indigo-700 bg-indigo-50 dark:bg-indigo-950/20 dark:text-indigo-400">🏠 {pc}</Badge>}
+                            </div>
+                          );
                         })()}
                       </div>
                     </div>
@@ -426,7 +443,13 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
                               )}
                               {(() => {
                                 const cb = getCampaignBadge(r.origem, r.campanha);
-                                return cb ? <Badge variant="outline" className={`text-[8px] py-0 px-1 ${cb.className}`}>{cb.label}</Badge> : null;
+                                const pc = extractPropertyCode(r.observacoes);
+                                return (
+                                  <>
+                                    {cb && <Badge variant="outline" className={`text-[8px] py-0 px-1 ${cb.className}`}>{cb.label}</Badge>}
+                                    {pc && <Badge variant="outline" className="text-[8px] py-0 px-1 border-indigo-300 text-indigo-700 bg-indigo-50 dark:bg-indigo-950/20 dark:text-indigo-400">🏠 {pc}</Badge>}
+                                  </>
+                                );
                               })()}
                             </div>
                           </div>
