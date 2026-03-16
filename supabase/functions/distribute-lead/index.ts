@@ -233,11 +233,23 @@ Deno.serve(async (req) => {
       for (const lead of leads) {
         const segmentoId = await resolveSegmento(supabase, lead.empreendimento);
 
+        // ── Exclude corretors who already timed out on this lead ──
+        const excludeAuthIds = new Set<string>();
+        const { data: prevTimeouts } = await supabase
+          .from("distribuicao_historico")
+          .select("corretor_id")
+          .eq("pipeline_lead_id", lead.id)
+          .eq("acao", "timeout");
+        for (const t of prevTimeouts || []) {
+          if (t.corretor_id) excludeAuthIds.add(t.corretor_id);
+        }
+
         const eligible: CorretorCandidate[] = [];
         for (const [profileId, segs] of corretorSegments.entries()) {
           if (segmentoId && !segs.has(segmentoId)) continue;
           const authId = profileToAuth.get(profileId);
           if (!authId) continue;
+          if (excludeAuthIds.has(authId)) continue;
           eligible.push({
             corretorId: profileId,
             authUserId: authId,
@@ -453,9 +465,27 @@ async function distributeSingleLead(
     if (!prev || l.distribuido_em > prev) lastReceived.set(l.corretor_id, l.distribuido_em);
   }
 
+  // ── Exclude corretors who already timed out on this lead ──
+  const excludeAuthIds = new Set<string>();
+  if (excludeAuthUserId) excludeAuthIds.add(excludeAuthUserId);
+
+  const { data: prevTimeouts } = await supabase
+    .from("distribuicao_historico")
+    .select("corretor_id")
+    .eq("pipeline_lead_id", leadId)
+    .eq("acao", "timeout");
+
+  if (prevTimeouts && prevTimeouts.length > 0) {
+    // corretor_id in distribuicao_historico is auth user_id
+    for (const t of prevTimeouts) {
+      if (t.corretor_id) excludeAuthIds.add(t.corretor_id);
+    }
+    console.info(JSON.stringify({ fn: "distribute-lead", level: "info", msg: "Excluding timed-out corretors", ctx: { leadId, excluded: excludeAuthIds.size }, ts: new Date().toISOString() }));
+  }
+
   const candidates: CorretorCandidate[] = [];
   for (const [profileId, authId] of profileToAuth.entries()) {
-    if (excludeAuthUserId && authId === excludeAuthUserId) continue;
+    if (excludeAuthIds.has(authId)) continue;
     candidates.push({
       corretorId: profileId,
       authUserId: authId,
