@@ -20,6 +20,32 @@ interface Roletagem {
   aceite_expira_em: string | null;
   aceito_em: string | null;
   segmento_nome: string;
+  origem?: string | null;
+  campanha?: string | null;
+}
+
+/* Helper: human-readable campaign origin badge */
+function getCampaignBadge(origem?: string | null, campanha?: string | null) {
+  if (!origem && !campanha) return null;
+  const o = origem?.toLowerCase() || "";
+  const c = campanha?.toLowerCase() || "";
+  
+  if (o.includes("brevo_email") || o.includes("email")) {
+    const label = c.includes("melnick") ? "📧 Email Melnick Day" : `📧 Email${campanha ? ` ${campanha}` : ""}`;
+    return { label, className: "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/20 dark:text-blue-400" };
+  }
+  if (o.includes("brevo_sms") || o.includes("sms")) {
+    const label = c.includes("melnick") ? "📱 SMS Melnick Day" : `📱 SMS${campanha ? ` ${campanha}` : ""}`;
+    return { label, className: "border-emerald-300 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:text-emerald-400" };
+  }
+  if (o.includes("whatsapp")) {
+    const label = c.includes("melnick") ? "💬 WhatsApp Melnick Day" : `💬 WhatsApp${campanha ? ` ${campanha}` : ""}`;
+    return { label, className: "border-green-300 text-green-700 bg-green-50 dark:bg-green-950/20 dark:text-green-400" };
+  }
+  if (campanha) {
+    return { label: `🎯 ${campanha}`, className: "border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-950/20 dark:text-purple-400" };
+  }
+  return null;
 }
 
 interface LeadPerdido {
