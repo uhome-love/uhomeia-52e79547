@@ -82,11 +82,19 @@ export default function AiCallPanel() {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex-row items-center justify-between">
         <CardTitle className="text-sm flex items-center gap-2">
           <Bot className="h-4 w-4 text-primary" />
           Discagem IA (Twilio + ElevenLabs)
         </CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/disparador-ligacoes-ia")}
+          className="gap-1.5 text-xs"
+        >
+          <List className="h-3.5 w-3.5" /> Disparador em Lote
+        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Quick dial form */}
