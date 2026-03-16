@@ -655,7 +655,9 @@ function CampanhasTab({ selectedBatchId, onSelect }: { selectedBatchId: string |
                 </TableHeader>
                 <TableBody>
                   {sends.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-4 text-muted-foreground">Carregando envios...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                      {selectedBatch.status === "draft" ? "Nenhum envio realizado ainda — inicie o disparo" : "Carregando envios..."}
+                    </TableCell></TableRow>
                   ) : sends.slice(0, 200).map((s) => (
                     <TableRow key={s.id}>
                       <TableCell className="text-xs font-medium">{s.nome || "—"}</TableCell>
