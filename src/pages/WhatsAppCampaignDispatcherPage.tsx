@@ -43,10 +43,10 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   skipped: { label: "Ignorado", color: "bg-gray-100 text-gray-600" },
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_MAP[status] || { label: status, color: "bg-muted" };
+const StatusBadge = ({ status }: { status: string }) => {
+  const cfg = STATUS_MAP[status] || { label: status, color: "bg-muted text-muted-foreground" };
   return <Badge variant="outline" className={`${cfg.color} border-0 text-xs`}>{cfg.label}</Badge>;
-}
+};
 
 /* ─── Main Page ─── */
 export default function WhatsAppCampaignDispatcherPage() {
@@ -172,6 +172,8 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   };
 
   const handleConfirm = () => {
+    const normalizedHeaderImageUrl = headerImageUrl.trim();
+
     createBatch.mutate(
       {
         nome,
@@ -181,7 +183,7 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
         templateParams: {
           body_params: ["nome"],
           button_url: redirectUrl || undefined,
-          header_image_url: headerImageUrl || undefined,
+          header_image_url: normalizedHeaderImageUrl || undefined,
         },
         redirectUrl,
         filtros: { campanha, empreendimento, periodo, limite, origem, tag },
