@@ -291,7 +291,7 @@ export function useCreateCampaignBatch() {
       // Create send records
       const sendRows = params.leads.map((l) => ({
         batch_id: (batch as any).id,
-        pipeline_lead_id: l.id,
+        pipeline_lead_id: l.stage_id ? l.id : null, // OA leads have stage_id="" → no FK
         telefone: l.telefone,
         telefone_normalizado: l.telefone_normalizado,
         nome: l.nome,
