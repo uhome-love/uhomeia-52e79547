@@ -98,10 +98,13 @@ const TEMPLATE_DEFAULT_IMAGES: Record<string, string> = {
   melnick_day_wa_v2: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fmelnick-day-2026-header.png",
 };
 
-/* ─── Templates that use dynamic button URL ─── */
-const TEMPLATES_WITH_DYNAMIC_BUTTON: string[] = [
-  "melnick_day_wa_v2",
-];
+/* ─── Template default redirect URLs ─── */
+const TEMPLATE_DEFAULT_URLS: Record<string, string> = {
+  melnick_day_poa_2026: "https://uhomesales.com/wa?origem=whatsapp_api&campanha=melnick_day_2026&bloco=cta1",
+  melnick_day_wa_v2: "https://uhomesales.com/wa?phone={{phone}}&nome={{nome}}&origem=whatsapp_api&campanha=melnick_day_2026&bloco=cta1",
+};
+
+
 
 /* ─── Tab: Nova Campanha ─── */
 function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
