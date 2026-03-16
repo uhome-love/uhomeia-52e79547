@@ -172,6 +172,7 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
         templateParams: {
           body_params: ["nome"],
           button_url: redirectUrl || undefined,
+          header_image_url: headerImageUrl || undefined,
         },
         redirectUrl,
         filtros: { campanha, empreendimento, periodo, limite, origem, tag },
