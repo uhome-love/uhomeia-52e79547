@@ -223,6 +223,20 @@ serve(async (req) => {
           });
         }
 
+        // Also check visitas table for previous 4 weeks
+        const { data: prevVisitasData } = await supabase
+          .from("visitas")
+          .select("id, status")
+          .eq("corretor_id", member.user_id)
+          .gte("data_visita", prev4WeeksStart.toISOString().split("T")[0])
+          .lt("data_visita", periodoInicio)
+          .neq("status", "cancelada");
+
+        const prevVisitasFromTable = (prevVisitasData || []).length;
+        const prevVisitasRFromTable = (prevVisitasData || []).filter((v: any) => v.status === "realizada").length;
+        if (prevVisitasFromTable > prevVisitasM) prevVisitasM = prevVisitasFromTable;
+        if (prevVisitasRFromTable > prevVisitasR) prevVisitasR = prevVisitasRFromTable;
+
         const avgLigacoes = Math.round(prevLigacoes / prevWeeks);
         const avgAproveitados = Math.round(prevAproveitados / prevWeeks);
         const avgVisitasM = Math.round(prevVisitasM / prevWeeks);
