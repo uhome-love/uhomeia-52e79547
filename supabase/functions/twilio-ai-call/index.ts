@@ -160,6 +160,8 @@ Deno.serve(async (req) => {
     });
 
     const data = await response.json();
+    console.info("[twilio-ai-call] ElevenLabs response:", JSON.stringify(data));
+
     if (!response.ok) {
       console.error("[twilio-ai-call] ElevenLabs outbound error:", JSON.stringify(data));
       return errorResponse(
@@ -168,7 +170,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const callSid = data.call_sid || data.sid || data.id || "unknown";
+    // ElevenLabs may return call_sid, conversation_id, or other identifiers
+    const callSid = data.call_sid || data.conversation_id || data.sid || data.id || "unknown";
 
     // ── Log the call ──
     await adminClient.from("ai_calls").insert({
