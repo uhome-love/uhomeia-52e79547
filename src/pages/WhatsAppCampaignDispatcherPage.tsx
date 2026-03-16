@@ -93,6 +93,7 @@ export default function WhatsAppCampaignDispatcherPage() {
 /* ─── Tab: Nova Campanha ─── */
 function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   const [nome, setNome] = useState("");
+  const [fonte, setFonte] = useState<"pipeline" | "oferta_ativa">("pipeline");
   const [campanha, setCampanha] = useState("melnick_day_2026");
   const [empreendimento, setEmpreendimento] = useState("");
   const [templateName, setTemplateName] = useState("melnick_day_poa_2026");
@@ -104,31 +105,53 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   const [tag, setTag] = useState("");
   const [stageId, setStageId] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("https://uhomeia.lovable.app/wa?origem=whatsapp_api&campanha=melnick_day_2026&bloco=cta1");
+  const [selectedListaIds, setSelectedListaIds] = useState<string[]>([]);
 
   const [eligibleLeads, setEligibleLeads] = useState<EligibleLead[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const fetchLeads = useFetchEligibleLeads();
+  const fetchOALeads = useFetchOAEligibleLeads();
   const createBatch = useCreateCampaignBatch();
+  const { listas: oaListas } = useOAListas();
+
+  const toggleListaId = (id: string) => {
+    setSelectedListaIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const handleBuscar = () => {
-    fetchLeads.mutate(
-      {
-        campanha: campanha || undefined,
-        empreendimento: empreendimento || undefined,
-        periodosDias: parseInt(periodo) || 90,
-        limite: parseInt(limite) || 3000,
-        origem: origem || undefined,
-        tag: tag || undefined,
-        stageId: stageId || undefined,
-      },
-      {
-        onSuccess: (leads) => {
-          setEligibleLeads(leads);
-          toast.success(`${leads.length} leads elegíveis encontrados`);
+    if (fonte === "oferta_ativa") {
+      if (selectedListaIds.length === 0) return toast.error("Selecione ao menos uma lista da Oferta Ativa");
+      fetchOALeads.mutate(
+        { listaIds: selectedListaIds, limite: parseInt(limite) || 3000 },
+        {
+          onSuccess: (leads) => {
+            setEligibleLeads(leads);
+            toast.success(`${leads.length} leads da OA (fora do pipeline) encontrados`);
+          },
+        }
+      );
+    } else {
+      fetchLeads.mutate(
+        {
+          campanha: campanha || undefined,
+          empreendimento: empreendimento || undefined,
+          periodosDias: parseInt(periodo) || 90,
+          limite: parseInt(limite) || 3000,
+          origem: origem || undefined,
+          tag: tag || undefined,
+          stageId: stageId || undefined,
         },
-      }
-    );
+        {
+          onSuccess: (leads) => {
+            setEligibleLeads(leads);
+            toast.success(`${leads.length} leads elegíveis encontrados`);
+          },
+        }
+      );
+    }
   };
 
   const handleCriar = () => {
