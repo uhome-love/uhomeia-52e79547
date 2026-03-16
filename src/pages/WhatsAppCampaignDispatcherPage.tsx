@@ -381,7 +381,12 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
           <CardContent className="space-y-3">
             <div>
               <Label className="text-xs">Template Name (Meta)</Label>
-              <Input value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="melnick_day_poa_2026" />
+              <Input value={templateName} onChange={(e) => {
+                const val = e.target.value;
+                setTemplateName(val);
+                const defaultImg = TEMPLATE_DEFAULT_IMAGES[val];
+                if (defaultImg) setHeaderImageUrl(defaultImg);
+              }} placeholder="melnick_day_poa_2026" />
             </div>
             <div>
               <Label className="text-xs">Idioma</Label>
