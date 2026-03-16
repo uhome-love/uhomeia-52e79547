@@ -13,7 +13,8 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Loader2, Clock, RefreshCw, CheckCircle2, XCircle, Phone, ThumbsUp, CalendarDays, CalendarCheck, DollarSign, Trophy, FileText, TrendingDown, Target, AlertTriangle, Users, BarChart3, Brain, ArrowUp, ArrowDown, Rocket, Inbox, CalendarRange, Send, Building2 } from "lucide-react";
+import { Loader2, Clock, RefreshCw, CheckCircle2, XCircle, Phone, ThumbsUp, CalendarDays, CalendarCheck, DollarSign, Trophy, FileText, TrendingDown, Target, AlertTriangle, Users, BarChart3, Brain, ArrowUp, ArrowDown, Rocket, Inbox, CalendarRange, Send, Building2, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { format, getWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -126,6 +127,7 @@ function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor
 
 // ─── Main Page ───
 export default function CeoDashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { period, range } = useDateFilter();
   const [frase] = useState(() => FRASES[Math.floor(Math.random() * FRASES.length)]);
@@ -435,7 +437,29 @@ export default function CeoDashboard() {
         </CardContent>
       </Card>
 
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ─── DISPARADOR WHATSAPP ─── */}
+      <Card className="border-green-500/30">
+        <CardContent className="pt-4 pb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-semibold">📲 Disparador WhatsApp</span>
+              <p className="text-xs text-muted-foreground">Campanhas em lote via WhatsApp API</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => navigate("/disparador-whatsapp")}
+            className="w-full sm:w-auto gap-1.5 bg-green-600 hover:bg-green-700 text-white mt-2"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            Abrir Disparador
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* ─── SEÇÃO 2: GESTÃO DE LEADS ─── */}
       {/* ═══════════════════════════════════════════════════════ */}
       <div>
