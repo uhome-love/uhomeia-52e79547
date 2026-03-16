@@ -22,6 +22,7 @@ interface Roletagem {
   segmento_nome: string;
   origem?: string | null;
   campanha?: string | null;
+  observacoes?: string | null;
 }
 
 /* Helper: human-readable campaign origin badge */
