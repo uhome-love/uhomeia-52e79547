@@ -420,9 +420,15 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
                         <td className="py-2.5">
                           <div>
                             <p className="font-medium text-sm">{r.nome}</p>
-                            {r.empreendimento && (
-                              <p className="text-[10px] text-muted-foreground">{r.empreendimento}</p>
-                            )}
+                            <div className="flex items-center gap-1.5">
+                              {r.empreendimento && (
+                                <p className="text-[10px] text-muted-foreground">{r.empreendimento}</p>
+                              )}
+                              {(() => {
+                                const cb = getCampaignBadge(r.origem, r.campanha);
+                                return cb ? <Badge variant="outline" className={`text-[8px] py-0 px-1 ${cb.className}`}>{cb.label}</Badge> : null;
+                              })()}
+                            </div>
                           </div>
                         </td>
                         <td className="py-2.5">
