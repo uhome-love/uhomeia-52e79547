@@ -1,11 +1,10 @@
 /**
- * twilio-ai-call — Initiates an outbound Twilio call connected to ElevenLabs AI Agent
+ * twilio-ai-call — Initiates an outbound call via ElevenLabs native Twilio integration
  * CEO-only feature for automated lead prospecting calls.
+ * Uses POST https://api.elevenlabs.io/v1/convai/twilio/outbound-call
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse, errorResponse, handleCors } from "../_shared/cors.ts";
-
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors();
@@ -53,55 +52,43 @@ Deno.serve(async (req) => {
   if (!telefone) return errorResponse("Missing telefone", 400);
 
   // ── Check required env vars ──
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) return errorResponse("LOVABLE_API_KEY not configured", 500);
-
-  const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-  if (!TWILIO_API_KEY) return errorResponse("TWILIO_API_KEY not configured", 500);
-
-  const TWILIO_PHONE = Deno.env.get("TWILIO_PHONE_NUMBER");
-  if (!TWILIO_PHONE) return errorResponse("TWILIO_PHONE_NUMBER not configured", 500);
+  const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_CONVAI_KEY") || Deno.env.get("ELEVENLABS_API_KEY");
+  if (!ELEVENLABS_API_KEY) return errorResponse("ELEVENLABS API KEY not configured", 500);
 
   const AGENT_ID = Deno.env.get("ELEVENLABS_AGENT_ID");
   if (!AGENT_ID) return errorResponse("ELEVENLABS_AGENT_ID not configured", 500);
+
+  const PHONE_NUMBER_ID = Deno.env.get("ELEVENLABS_PHONE_NUMBER_ID");
+  if (!PHONE_NUMBER_ID) return errorResponse("ELEVENLABS_PHONE_NUMBER_ID not configured", 500);
 
   // Format phone to E.164
   let toPhone = telefone.replace(/\D/g, "");
   if (!toPhone.startsWith("55")) toPhone = `55${toPhone}`;
   toPhone = `+${toPhone}`;
 
-  // ── TwiML URL (our edge function) ──
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const twimlUrl = `${supabaseUrl}/functions/v1/twilio-ai-twiml?agent_id=${AGENT_ID}&lead_id=${lead_id || ""}&lead_nome=${encodeURIComponent(nome || "")}`;
-
-  // ── Status callback URL ──
-  const statusUrl = `${supabaseUrl}/functions/v1/twilio-ai-status`;
-
   try {
-    // Create outbound call via Twilio Gateway
-    const response = await fetch(`${GATEWAY_URL}/Calls.json`, {
+    // ── Native ElevenLabs outbound call via Twilio ──
+    const response = await fetch("https://api.elevenlabs.io/v1/convai/twilio/outbound-call", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": TWILIO_API_KEY,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "xi-api-key": ELEVENLABS_API_KEY,
+        "Content-Type": "application/json",
       },
-      body: new URLSearchParams({
-        To: toPhone,
-        From: TWILIO_PHONE,
-        Url: twimlUrl,
-        StatusCallback: statusUrl,
-        StatusCallbackEvent: "initiated ringing answered completed",
-        StatusCallbackMethod: "POST",
-        Timeout: "30",
+      body: JSON.stringify({
+        agent_id: AGENT_ID,
+        agent_phone_number_id: PHONE_NUMBER_ID,
+        to_number: toPhone,
+        ...(nome ? { first_message: `Olá ${nome}, tudo bem?` } : {}),
       }),
     });
 
     const data = await response.json();
     if (!response.ok) {
-      console.error("[twilio-ai-call] Twilio error:", data);
-      return errorResponse(`Twilio error: ${JSON.stringify(data)}`, response.status);
+      console.error("[twilio-ai-call] ElevenLabs outbound error:", data);
+      return errorResponse(`ElevenLabs error: ${JSON.stringify(data)}`, response.status);
     }
+
+    const callSid = data.call_sid || data.sid || data.id || "unknown";
 
     // ── Log the call ──
     await adminClient.from("ai_calls").insert({
@@ -109,15 +96,15 @@ Deno.serve(async (req) => {
       telefone: toPhone,
       nome_lead: nome || null,
       empreendimento: empreendimento || null,
-      twilio_call_sid: data.sid,
+      twilio_call_sid: callSid,
       agent_id: AGENT_ID,
       status: "initiated",
       iniciado_por: userId,
       contexto: context || null,
     });
 
-    console.info(`[twilio-ai-call] Call initiated: SID=${data.sid}, to=${toPhone}`);
-    return jsonResponse({ success: true, call_sid: data.sid });
+    console.info(`[twilio-ai-call] Outbound call initiated: ${callSid}, to=${toPhone}`);
+    return jsonResponse({ success: true, call_sid: callSid });
   } catch (err) {
     console.error("[twilio-ai-call] Error:", err);
     return errorResponse(`Internal error: ${err instanceof Error ? err.message : "unknown"}`, 500);
