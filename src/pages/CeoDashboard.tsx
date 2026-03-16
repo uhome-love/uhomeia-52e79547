@@ -24,6 +24,7 @@ import CeoDailyReport from "@/components/ceo/CeoDailyReport";
 import BulkEmpreendimentoAssign from "@/components/ceo/BulkEmpreendimentoAssign";
 import { formatBRLCompact } from "@/lib/utils";
 import HomiBriefingCard from "@/components/ceo/HomiBriefingCard";
+import AiCallPanel from "@/components/ceo/AiCallPanel";
 
 // ─── Greeting ───
 function getGreeting() {
