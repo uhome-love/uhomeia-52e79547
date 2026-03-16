@@ -20,6 +20,23 @@ interface PendingLead {
   aceite_expira_em: string | null;
   distribuido_em: string | null;
   prioridade_lead: string;
+  campanha?: string | null;
+}
+
+function getCampaignLabel(origem?: string | null, campanha?: string | null) {
+  if (!origem && !campanha) return null;
+  const o = origem?.toLowerCase() || "";
+  const c = campanha?.toLowerCase() || "";
+  if (o.includes("brevo_email") || o.includes("email")) {
+    return c.includes("melnick") ? "📧 Email Melnick Day" : "📧 Campanha Email";
+  }
+  if (o.includes("brevo_sms") || o.includes("sms")) {
+    return c.includes("melnick") ? "📱 SMS Melnick Day" : "📱 Campanha SMS";
+  }
+  if (o.includes("whatsapp")) {
+    return c.includes("melnick") ? "💬 WhatsApp Melnick Day" : "💬 Campanha WhatsApp";
+  }
+  return null;
 }
 
 const REJECTION_REASONS = [
