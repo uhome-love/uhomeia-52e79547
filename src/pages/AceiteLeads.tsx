@@ -98,6 +98,7 @@ function CountdownRing({ expiresAt }: { expiresAt: string }) {
 }
 
 function LeadPopupCard({ lead, onResult, total, current }: { lead: PendingLead; onResult: () => void; total: number; current: number }) {
+  const propertyCode = extractPropertyCode(lead.observacoes);
   const [mode, setMode] = useState<"initial" | "rejecting">("initial");
   const [selectedReason, setSelectedReason] = useState("ocupado");
   const [loading, setLoading] = useState(false);
