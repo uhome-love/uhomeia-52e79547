@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Mail, Settings, FileText, BarChart3, Send, Plus, Trash2, Eye, Copy, Pencil, Database, FileSpreadsheet, Upload } from "lucide-react";
+import { Loader2, Mail, Settings, FileText, BarChart3, Send, Plus, Trash2, Eye, Copy, Pencil, Database, FileSpreadsheet, Upload, Pause, Play, RotateCcw } from "lucide-react";
 import { useEmailSettings, useEmailTemplates, useEmailCampaigns } from "@/hooks/useEmail";
 import { useOAListas } from "@/hooks/useOfertaAtiva";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -224,7 +224,7 @@ function EmailTemplatesTab() {
 type FonteDados = "pipeline" | "oferta_ativa" | "manual";
 
 function EmailCampaignsTab() {
-  const { campaigns, loading, createCampaign, deleteCampaign, sendCampaign, reload: reloadCampaigns } = useEmailCampaigns();
+  const { campaigns, loading, createCampaign, updateCampaign, deleteCampaign, sendCampaign, reload: reloadCampaigns } = useEmailCampaigns();
   const { templates } = useEmailTemplates();
   const { listas: oaListas } = useOAListas();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -418,10 +418,34 @@ function EmailCampaignsTab() {
     setSending(null);
   };
 
+  const handlePause = async (id: string) => {
+    await updateCampaign(id, { status: "pausada" } as any);
+    toast.success("Campanha pausada");
+  };
+
+  const handleResume = async (id: string) => {
+    setSending(id);
+    await updateCampaign(id, { status: "enviando" } as any);
+    await sendCampaign(id);
+    setSending(null);
+  };
+
+  const handleResend = async (id: string) => {
+    // Reset errors back to pending
+    await supabase.from("email_campaign_recipients")
+      .update({ status: "pendente", erro: null } as any)
+      .eq("campaign_id", id)
+      .eq("status", "erro");
+    setSending(id);
+    await updateCampaign(id, { status: "enviando" } as any);
+    await sendCampaign(id);
+    setSending(null);
+  };
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
-  const STATUS_COLORS: Record<string, string> = { rascunho: "secondary", enviando: "default", enviada: "default", agendada: "outline" };
-  const STATUS_LABELS: Record<string, string> = { rascunho: "Rascunho", enviando: "Enviando...", enviada: "Enviada", agendada: "Agendada" };
+  const STATUS_COLORS: Record<string, string> = { rascunho: "secondary", enviando: "default", enviada: "default", agendada: "outline", pausada: "secondary" };
+  const STATUS_LABELS: Record<string, string> = { rascunho: "Rascunho", enviando: "Enviando...", enviada: "Enviada", agendada: "Agendada", pausada: "Pausada" };
 
   return (
     <div className="space-y-4">
@@ -453,25 +477,49 @@ function EmailCampaignsTab() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">Assunto: {c.assunto}</p>
-                  {c.status === "enviada" && (
+                  {(c.status === "enviada" || c.status === "enviando" || c.status === "pausada") && (
                     <div className="flex gap-4 text-[11px] text-muted-foreground mt-2">
                       <span>📤 {c.total_enviados} enviados</span>
-                      <span>📬 {c.total_entregues} entregues</span>
-                      <span>👁 {c.total_aberturas} aberturas</span>
-                      <span>🔗 {c.total_cliques} cliques</span>
-                      <span>⛔ {c.total_bounces} bounces</span>
-                      <span>🚫 {c.total_unsubscribes} unsub</span>
+                      {c.total_erros > 0 && <span>❌ {c.total_erros} erros</span>}
+                      {c.status !== "enviada" && (
+                        <span>⏳ {c.total_destinatarios - (c.total_enviados || 0) - (c.total_erros || 0)} pendentes</span>
+                      )}
+                      {c.status === "enviada" && (
+                        <>
+                          <span>📬 {c.total_entregues} entregues</span>
+                          <span>👁 {c.total_aberturas} aberturas</span>
+                          <span>🔗 {c.total_cliques} cliques</span>
+                          <span>⛔ {c.total_bounces} bounces</span>
+                          <span>🚫 {c.total_unsubscribes} unsub</span>
+                        </>
+                      )}
                     </div>
                   )}
                   <p className="text-[10px] text-muted-foreground">
                     {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ptBR })}
                   </p>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap">
                   {c.status === "rascunho" && (
                     <Button size="sm" variant="default" className="gap-1 text-xs" onClick={() => handleSend(c.id)} disabled={sending === c.id}>
                       {sending === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
                       Enviar
+                    </Button>
+                  )}
+                  {c.status === "enviando" && (
+                    <Button size="sm" variant="outline" className="gap-1 text-xs text-amber-600 border-amber-300 hover:bg-amber-50" onClick={() => handlePause(c.id)}>
+                      <Pause className="h-3 w-3" /> Pausar
+                    </Button>
+                  )}
+                  {(c.status === "pausada" || c.status === "enviando") && (
+                    <Button size="sm" variant="default" className="gap-1 text-xs" onClick={() => handleResume(c.id)} disabled={sending === c.id}>
+                      {sending === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                      {c.status === "pausada" ? "Retomar" : "Continuar"}
+                    </Button>
+                  )}
+                  {(c.status === "enviada" || c.status === "pausada" || c.status === "enviando") && (
+                    <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => handleResend(c.id)} disabled={sending === c.id}>
+                      <RotateCcw className="h-3 w-3" /> Reenviar erros
                     </Button>
                   )}
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteCampaign(c.id)}>
