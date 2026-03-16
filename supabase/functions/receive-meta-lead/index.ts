@@ -469,7 +469,7 @@ Deno.serve(async (req) => {
         empreendimento,
         segmento_id: segmentoId,
         stage_id: stageData.id,
-        origem: platform || "Meta Ads",
+        origem: isJetimobSite ? "site_uhome" : (platform || "Meta Ads"),
         origem_detalhe: campaignName || formName || null,
         campanha: campaignName || (message ? message.slice(0, 100) : null),
         campanha_id: campaignId || null,
