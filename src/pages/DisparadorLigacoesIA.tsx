@@ -25,6 +25,8 @@ interface CallResult {
   duration: number | null;
   callSid: string | null;
   error?: string;
+  resultado?: string | null;
+  resumo_ia?: string | null;
 }
 
 const RESULT_FILTERS = [
