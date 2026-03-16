@@ -347,6 +347,7 @@ export function AppSidebar() {
             label: "Operacional",
             items: [
               { title: "Central de Marketing", url: "/marketing", icon: TrendingUp },
+              { title: "Email Marketing", url: "/email-marketing", icon: MailCheck },
               { title: "Tarefas & Marketing", url: "/backoffice/tarefas", icon: ClipboardCheck },
             ],
           },
