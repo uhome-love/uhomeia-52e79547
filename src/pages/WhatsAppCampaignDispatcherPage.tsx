@@ -172,6 +172,8 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   };
 
   const handleConfirm = () => {
+    const normalizedHeaderImageUrl = headerImageUrl.trim();
+
     createBatch.mutate(
       {
         nome,
@@ -181,7 +183,7 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
         templateParams: {
           body_params: ["nome"],
           button_url: redirectUrl || undefined,
-          header_image_url: headerImageUrl || undefined,
+          header_image_url: normalizedHeaderImageUrl || undefined,
         },
         redirectUrl,
         filtros: { campanha, empreendimento, periodo, limite, origem, tag },
