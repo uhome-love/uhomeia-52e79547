@@ -193,7 +193,7 @@ function LeadPopupCard({ lead, onResult, total, current }: { lead: PendingLead; 
             )}
             {lead.origem && (
               <div className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground">
-                {lead.origem}
+                {getCampaignLabel(lead.origem, lead.campanha) || lead.origem}
               </div>
             )}
           </div>
