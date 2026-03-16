@@ -115,21 +115,53 @@ Deno.serve(async (req) => {
     console.info("[twilio-ai-call] Preflight OK — key, agent, phone validated");
 
     // ── Native ElevenLabs outbound call via Twilio ──
+    // Build conversation_config_override with dynamic variables
+    const conversationOverride: Record<string, unknown> = {
+      agent: {
+        prompt: {
+          prompt: undefined, // keep agent's default prompt
+        },
+        first_message: nome ? `Olá ${nome}, tudo bem?` : undefined,
+      },
+    };
+
+    // Pass dynamic variables the agent can use: {{nome}}, {{telefone}}, {{lead_id}}
+    const dynamicVariables: Record<string, string> = {};
+    if (nome) dynamicVariables.nome = nome;
+    if (telefone) dynamicVariables.telefone = toPhone;
+    if (lead_id) dynamicVariables.lead_id = lead_id;
+    if (empreendimento) dynamicVariables.empreendimento = empreendimento;
+
+    const outboundPayload: Record<string, unknown> = {
+      agent_id: AGENT_ID,
+      agent_phone_number_id: PHONE_NUMBER_ID,
+      to_number: toPhone,
+    };
+
+    // Only add overrides if we have meaningful data
+    if (nome) {
+      outboundPayload.conversation_config_override = conversationOverride;
+    }
+    if (Object.keys(dynamicVariables).length > 0) {
+      outboundPayload.custom_llm_extra_body = {
+        dynamic_variables: dynamicVariables,
+      };
+    }
+
+    console.info("[twilio-ai-call] Outbound payload:", JSON.stringify(outboundPayload));
+
     const response = await fetch("https://api.elevenlabs.io/v1/convai/twilio/outbound-call", {
       method: "POST",
       headers: {
         "xi-api-key": ELEVENLABS_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        agent_id: AGENT_ID,
-        agent_phone_number_id: PHONE_NUMBER_ID,
-        to_number: toPhone,
-        ...(nome ? { first_message: `Olá ${nome}, tudo bem?` } : {}),
-      }),
+      body: JSON.stringify(outboundPayload),
     });
 
     const data = await response.json();
+    console.info("[twilio-ai-call] ElevenLabs response:", JSON.stringify(data));
+
     if (!response.ok) {
       console.error("[twilio-ai-call] ElevenLabs outbound error:", JSON.stringify(data));
       return errorResponse(
@@ -138,7 +170,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const callSid = data.call_sid || data.sid || data.id || "unknown";
+    // ElevenLabs may return call_sid, conversation_id, or other identifiers
+    const callSid = data.call_sid || data.conversation_id || data.sid || data.id || "unknown";
 
     // ── Log the call ──
     await adminClient.from("ai_calls").insert({
