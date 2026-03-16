@@ -121,18 +121,27 @@ serve(async (req) => {
             },
           };
 
-          // Add parameters if configured
+          // Add components
           const params = batch.template_params || {};
+          const components: any[] = [];
+
+          // Header image
+          if (params.header_image_url) {
+            components.push({
+              type: "header",
+              parameters: [{ type: "image", image: { link: params.header_image_url } }],
+            });
+          }
+
+          // Body params
           if (params.body_params) {
-            templateBody.template.components = [
-              {
-                type: "body",
-                parameters: (params.body_params as string[]).map((key: string) => ({
-                  type: "text",
-                  text: key === "nome" ? (send.nome || "Cliente") : String(key),
-                })),
-              },
-            ];
+            components.push({
+              type: "body",
+              parameters: (params.body_params as string[]).map((key: string) => ({
+                type: "text",
+                text: key === "nome" ? (send.nome || "Cliente") : String(key),
+              })),
+            });
           }
 
           // If template has button with URL tracking
