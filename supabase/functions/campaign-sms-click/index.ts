@@ -366,7 +366,11 @@ Deno.serve(async (req) => {
       ? `${obsText} | Interesse: ${interesseBrevo}`
       : obsText;
 
-    const { data: newLead, error: insertErr } = await supabase
+    // Use upsert-like approach: try insert, if unique constraint fails, find existing
+    let newLead: { id: string } | null = null;
+    let insertErr: { message: string } | null = null;
+
+    const insertResult = await supabase
       .from("pipeline_leads")
       .insert({
         nome: leadNome,
@@ -382,6 +386,52 @@ Deno.serve(async (req) => {
       })
       .select("id")
       .single();
+
+    if (insertResult.error) {
+      // Unique constraint violation — lead was created between our check and insert (race condition)
+      if (insertResult.error.code === "23505") {
+        log("info", "Duplicate detected by DB constraint, finding existing", { error: insertResult.error.message });
+        // Re-search for the existing lead
+        let raceLead: Record<string, unknown> | null = null;
+        if (leadEmail) {
+          const { data } = await supabase
+            .from("pipeline_leads")
+            .select("id, nome, email, telefone, telefone_normalizado, tags, stage_id, corretor_id")
+            .ilike("email", leadEmail.toLowerCase().trim())
+            .not("aceite_status", "eq", "descartado")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          raceLead = data;
+        }
+        if (!raceLead && leadPhone) {
+          const variants = phoneVariants(leadPhone);
+          const { data } = await supabase
+            .from("pipeline_leads")
+            .select("id, nome, email, telefone, telefone_normalizado, tags, stage_id, corretor_id")
+            .in("telefone_normalizado", variants)
+            .not("aceite_status", "eq", "descartado")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          raceLead = data;
+        }
+        if (raceLead) {
+          // Update the existing lead instead
+          const currentTags: string[] = (raceLead.tags as string[]) || [];
+          const newTags = [...new Set([...currentTags, ...tags])];
+          await supabase.from("pipeline_leads").update({ tags: newTags, campanha, observacoes: obsComInteresse }).eq("id", raceLead.id);
+          await insertClick({ ...clickBase, status: "lead_updated", lead_action: "updated_race", pipeline_lead_id: raceLead.id as string, redirected: true });
+          return jsonResponse({ success: true, action: "updated", lead_id: raceLead.id, redirect_url: WHATSAPP_REDIRECT });
+        }
+        // If we still can't find it, treat as error
+        insertErr = insertResult.error;
+      } else {
+        insertErr = insertResult.error;
+      }
+    } else {
+      newLead = insertResult.data;
+    }
 
     if (insertErr || !newLead) {
       log("error", "Failed to create lead", { error: insertErr?.message });
