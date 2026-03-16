@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Phone, Bot, Clock, CheckCircle, XCircle, PhoneOff } from "lucide-react";
+import { Loader2, Phone, Bot, Clock, CheckCircle, XCircle, PhoneOff, List } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface AiCallEntry {
   id: string;
@@ -29,6 +30,7 @@ const STATUS_MAP: Record<string, { label: string; icon: typeof Phone; color: str
 };
 
 export default function AiCallPanel() {
+  const navigate = useNavigate();
   const [phone, setPhone] = useState("");
   const [nome, setNome] = useState("");
   const [calling, setCalling] = useState(false);
@@ -80,11 +82,19 @@ export default function AiCallPanel() {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex-row items-center justify-between">
         <CardTitle className="text-sm flex items-center gap-2">
           <Bot className="h-4 w-4 text-primary" />
           Discagem IA (Twilio + ElevenLabs)
         </CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/disparador-ligacoes-ia")}
+          className="gap-1.5 text-xs"
+        >
+          <List className="h-3.5 w-3.5" /> Disparador em Lote
+        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Quick dial form */}
