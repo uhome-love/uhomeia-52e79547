@@ -344,11 +344,13 @@ export function AppSidebar() {
             ],
           },
           {
-            label: "Operacional",
+            label: "Marketing",
             items: [
               { title: "Central de Marketing", url: "/marketing", icon: TrendingUp },
               { title: "Email Marketing", url: "/email-marketing", icon: MailCheck },
-              { title: "Tarefas & Marketing", url: "/backoffice/tarefas", icon: ClipboardCheck },
+              { title: "Disparo WhatsApp", url: "/disparador-whatsapp", icon: Phone },
+              { title: "Disparador Ligação IA", url: "/disparador-ligacoes-ia", icon: Phone },
+              { title: "Tarefas & Marketing (Ana)", url: "/backoffice/tarefas", icon: ClipboardCheck },
             ],
           },
           {
