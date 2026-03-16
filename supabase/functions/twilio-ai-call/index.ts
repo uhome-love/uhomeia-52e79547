@@ -115,17 +115,9 @@ Deno.serve(async (req) => {
     console.info("[twilio-ai-call] Preflight OK — key, agent, phone validated");
 
     // ── Native ElevenLabs outbound call via Twilio ──
-    // Build conversation_config_override with dynamic variables
-    const conversationOverride: Record<string, unknown> = {
-      agent: {
-        prompt: {
-          prompt: undefined, // keep agent's default prompt
-        },
-        first_message: nome ? `Olá ${nome}, tudo bem?` : undefined,
-      },
-    };
-
-    // Pass dynamic variables the agent can use: {{nome}}, {{telefone}}, {{lead_id}}
+    // Dynamic variables are interpolated by ElevenLabs into the agent's
+    // first_message template (e.g. "Olá {{nome}}, tudo bem?") configured
+    // in the dashboard. We do NOT override first_message from code.
     const dynamicVariables: Record<string, string> = {};
     if (nome) dynamicVariables.nome = nome;
     if (telefone) dynamicVariables.telefone = toPhone;
@@ -138,12 +130,10 @@ Deno.serve(async (req) => {
       to_number: toPhone,
     };
 
-    // Only add overrides if we have meaningful data
-    if (nome) {
-      outboundPayload.conversation_config_override = conversationOverride;
-    }
+    // Pass dynamic variables via conversation_initiation_client_data
+    // (the correct field per ElevenLabs API spec)
     if (Object.keys(dynamicVariables).length > 0) {
-      outboundPayload.custom_llm_extra_body = {
+      outboundPayload.conversation_initiation_client_data = {
         dynamic_variables: dynamicVariables,
       };
     }
