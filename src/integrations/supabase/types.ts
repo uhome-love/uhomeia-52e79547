@@ -6459,6 +6459,192 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_campaign_batches: {
+        Row: {
+          batch_size: number
+          campanha: string | null
+          completed_at: string | null
+          created_at: string
+          dispatched_by: string
+          filtros: Json | null
+          id: string
+          interval_seconds: number
+          nome: string
+          oferta_id: string | null
+          oferta_nome: string | null
+          paused_at: string | null
+          redirect_url: string | null
+          started_at: string | null
+          status: string
+          template_language: string
+          template_name: string
+          template_params: Json | null
+          total_aproveitado: number
+          total_clicked: number
+          total_delivered: number
+          total_failed: number
+          total_leads: number
+          total_read: number
+          total_replied: number
+          total_sent: number
+          updated_at: string
+        }
+        Insert: {
+          batch_size?: number
+          campanha?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dispatched_by: string
+          filtros?: Json | null
+          id?: string
+          interval_seconds?: number
+          nome: string
+          oferta_id?: string | null
+          oferta_nome?: string | null
+          paused_at?: string | null
+          redirect_url?: string | null
+          started_at?: string | null
+          status?: string
+          template_language?: string
+          template_name: string
+          template_params?: Json | null
+          total_aproveitado?: number
+          total_clicked?: number
+          total_delivered?: number
+          total_failed?: number
+          total_leads?: number
+          total_read?: number
+          total_replied?: number
+          total_sent?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_size?: number
+          campanha?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dispatched_by?: string
+          filtros?: Json | null
+          id?: string
+          interval_seconds?: number
+          nome?: string
+          oferta_id?: string | null
+          oferta_nome?: string | null
+          paused_at?: string | null
+          redirect_url?: string | null
+          started_at?: string | null
+          status?: string
+          template_language?: string
+          template_name?: string
+          template_params?: Json | null
+          total_aproveitado?: number
+          total_clicked?: number
+          total_delivered?: number
+          total_failed?: number
+          total_leads?: number
+          total_read?: number
+          total_replied?: number
+          total_sent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_campaign_sends: {
+        Row: {
+          aproveitado_em: string | null
+          batch_id: string
+          bloco: string | null
+          campanha: string | null
+          clicked_at: string | null
+          corretor_distribuido_id: string | null
+          created_at: string
+          delivered_at: string | null
+          email: string | null
+          enviado_para_roleta_em: string | null
+          error_message: string | null
+          id: string
+          message_id: string | null
+          nome: string | null
+          origem: string | null
+          pipeline_lead_id: string | null
+          read_at: string | null
+          replied_at: string | null
+          response_payload: Json | null
+          sent_at: string | null
+          status_envio: string
+          telefone: string | null
+          telefone_normalizado: string | null
+          template_name: string | null
+        }
+        Insert: {
+          aproveitado_em?: string | null
+          batch_id: string
+          bloco?: string | null
+          campanha?: string | null
+          clicked_at?: string | null
+          corretor_distribuido_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          email?: string | null
+          enviado_para_roleta_em?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          nome?: string | null
+          origem?: string | null
+          pipeline_lead_id?: string | null
+          read_at?: string | null
+          replied_at?: string | null
+          response_payload?: Json | null
+          sent_at?: string | null
+          status_envio?: string
+          telefone?: string | null
+          telefone_normalizado?: string | null
+          template_name?: string | null
+        }
+        Update: {
+          aproveitado_em?: string | null
+          batch_id?: string
+          bloco?: string | null
+          campanha?: string | null
+          clicked_at?: string | null
+          corretor_distribuido_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          email?: string | null
+          enviado_para_roleta_em?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          nome?: string | null
+          origem?: string | null
+          pipeline_lead_id?: string | null
+          read_at?: string | null
+          replied_at?: string | null
+          response_payload?: Json | null
+          sent_at?: string | null
+          status_envio?: string
+          telefone?: string | null
+          telefone_normalizado?: string | null
+          template_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_campaign_sends_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_campaign_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_campaign_sends_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       v_checkpoint_daily: {
