@@ -316,7 +316,13 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
                         </div>
                         {(() => {
                           const cb = getCampaignBadge(r.origem, r.campanha);
-                          return cb ? <Badge variant="outline" className={`text-[9px] ${cb.className}`}>{cb.label}</Badge> : null;
+                          const pc = extractPropertyCode(r.observacoes);
+                          return (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {cb && <Badge variant="outline" className={`text-[9px] ${cb.className}`}>{cb.label}</Badge>}
+                              {pc && <Badge variant="outline" className="text-[9px] border-indigo-300 text-indigo-700 bg-indigo-50 dark:bg-indigo-950/20 dark:text-indigo-400">🏠 {pc}</Badge>}
+                            </div>
+                          );
                         })()}
                       </div>
                     </div>
