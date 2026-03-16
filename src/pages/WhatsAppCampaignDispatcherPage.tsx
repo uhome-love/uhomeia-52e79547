@@ -155,10 +155,19 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
     }
   };
 
+  const validateHeaderImageUrl = (url: string): boolean => {
+    if (!url) return true; // optional
+    if (!url.startsWith("https://")) return false;
+    return /\.(jpe?g|png)(\?.*)?$/i.test(url);
+  };
+
   const handleCriar = () => {
     if (!nome.trim()) return toast.error("Preencha o nome da campanha");
     if (!templateName.trim()) return toast.error("Preencha o template");
     if (eligibleLeads.length === 0) return toast.error("Busque os leads primeiro");
+    if (headerImageUrl && !validateHeaderImageUrl(headerImageUrl)) {
+      return toast.error("URL da imagem inválida. Use HTTPS e formato jpg, jpeg ou png.");
+    }
     setShowConfirm(true);
   };
 
@@ -377,7 +386,8 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
             </div>
             <div>
               <Label className="text-xs">URL da Imagem (header)</Label>
-              <Input value={headerImageUrl} onChange={(e) => setHeaderImageUrl(e.target.value)} placeholder="https://... (deixe vazio se não tiver)" className="text-xs" />
+              <Input value={headerImageUrl} onChange={(e) => setHeaderImageUrl(e.target.value)} placeholder="https://exemplo.com/imagem.jpg" className="text-xs" />
+              <p className="text-[10px] text-muted-foreground mt-1">URL pública HTTPS da imagem (jpg/png, máx 5MB) que aparecerá no cabeçalho do WhatsApp.</p>
             </div>
 
             <Button onClick={handleCriar} disabled={eligibleLeads.length === 0 || createBatch.isPending} className="w-full bg-green-600 hover:bg-green-700 text-white">
