@@ -220,6 +220,10 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
             {fonte === "oferta_ativa" ? (
               /* OA Lista picker */
               <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">Nome da Campanha</Label>
+                  <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: OA Melnick Day" />
+                </div>
                 <Label className="text-xs font-medium">Selecione as listas da Oferta Ativa</Label>
                 {oaListas.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Nenhuma lista encontrada</p>
