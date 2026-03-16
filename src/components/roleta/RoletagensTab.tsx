@@ -124,6 +124,8 @@ export default function RoletagensTab({ view = "all" }: { view?: "all" | "roleta
           aceite_expira_em: l.aceite_expira_em,
           aceito_em: l.aceito_em,
           segmento_nome: l.segmento_id ? segMap.get(l.segmento_id) || "—" : "—",
+          origem: l.origem,
+          campanha: l.campanha,
         })));
       }
 
