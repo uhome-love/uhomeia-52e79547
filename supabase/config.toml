@@ -131,3 +131,6 @@ verify_jwt = false
 
 [functions.campaign-sms-click]
 verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
