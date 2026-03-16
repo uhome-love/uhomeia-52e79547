@@ -156,6 +156,25 @@ serve(async (req) => {
           });
         }
 
+        // Query actual visitas table for real visit data
+        const { data: visitasData } = await supabase
+          .from("visitas")
+          .select("id, status")
+          .eq("corretor_id", member.user_id)
+          .gte("data_visita", periodoInicio)
+          .lte("data_visita", periodoFim)
+          .neq("status", "cancelada");
+
+        const visitasFromTable = (visitasData || []).length;
+        const visitasRealizadasFromTable = (visitasData || []).filter((v: any) => v.status === "realizada").length;
+
+        // Use visitas table data if checkpoint data is empty or lower
+        if (visitasMarcadas === 0 && visitasFromTable > 0) visitasMarcadas = visitasFromTable;
+        else if (visitasFromTable > visitasMarcadas) visitasMarcadas = visitasFromTable;
+        
+        if (visitasRealizadas === 0 && visitasRealizadasFromTable > 0) visitasRealizadas = visitasRealizadasFromTable;
+        else if (visitasRealizadasFromTable > visitasRealizadas) visitasRealizadas = visitasRealizadasFromTable;
+
         // OA tentativas for the week
         const { data: oaTentativas } = await supabase
           .from("oferta_ativa_tentativas")
