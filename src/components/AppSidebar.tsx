@@ -313,6 +313,7 @@ export function AppSidebar() {
               { title: "Alertas HOMI", url: "/alertas", icon: Bell },
               { title: "Meu Time", url: "/meu-time", icon: Users },
               { title: "Central do Gerente", url: "/central-do-gerente", icon: ClipboardCheck },
+              { title: "🎯 Melnick Metas", url: "/melnick-metas", icon: ClipboardCheck },
             ],
           },
           {
@@ -385,6 +386,7 @@ export function AppSidebar() {
             items: [
               { title: "Alertas HOMI", url: "/alertas", icon: Bell },
               { title: "Central do Gerente", url: "/central-do-gerente", icon: ClipboardCheck },
+              { title: "🎯 Melnick Metas", url: "/melnick-metas", icon: ClipboardCheck },
             ],
           },
           {
@@ -637,24 +639,6 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
-                {new Date() <= new Date("2026-03-31T23:59:59") && (isGestor || isAdmin) && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Melnick Day — Metas">
-                      <NavLink
-                        to="/melnick-metas"
-                        end
-                        className={`group/nav text-orange-300 hover:text-orange-200 hover:bg-orange-500/10 transition-all duration-150 rounded-lg relative py-1.5 font-medium px-3`}
-                        activeClassName="!text-orange-200 !font-semibold !bg-orange-500/15 border-l-2 !border-l-orange-400 !rounded-l-none rounded-r-lg"
-                      >
-                        <ClipboardCheck className="mr-2.5 h-4 w-4 shrink-0 text-orange-400" />
-                        <span className="text-sm">🎯 Melnick Metas</span>
-                        {isAdmin && (
-                          <Badge className="ml-auto bg-orange-500/20 text-orange-300 border-orange-500/30 text-[9px] px-1.5 py-0">Ao vivo</Badge>
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Orygem 60 dias">
                     <NavLink
@@ -694,15 +678,6 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {(isGestor || isAdmin) && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Melnick Metas">
-                    <NavLink to="/melnick-metas" end className="justify-center text-orange-300 hover:bg-orange-500/10 rounded-lg py-1.5" activeClassName="!bg-orange-500/15">
-                      <ClipboardCheck className="h-4 w-4 text-orange-400" />
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Orygem 60 dias">
                   <NavLink to="/orygem-60" end className="justify-center text-emerald-300 hover:bg-emerald-500/10 rounded-lg py-1.5" activeClassName="!bg-emerald-500/15">
