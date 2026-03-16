@@ -118,6 +118,7 @@ const MelnickDayLanding = lazyRetry(() => import("./pages/MelnickDayLanding"));
 const WhatsAppLanding = lazyRetry(() => import("./pages/WhatsAppLanding"));
 const CampaignAnalyticsPage = lazyRetry(() => import("./pages/CampaignAnalyticsPage"));
 const ImportBrevoContacts = lazyRetry(() => import("./pages/ImportBrevoContacts"));
+const WhatsAppCampaignDispatcher = lazyRetry(() => import("./pages/WhatsAppCampaignDispatcherPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
