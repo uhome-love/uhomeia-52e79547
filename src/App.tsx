@@ -119,6 +119,7 @@ const WhatsAppLanding = lazyRetry(() => import("./pages/WhatsAppLanding"));
 const CampaignAnalyticsPage = lazyRetry(() => import("./pages/CampaignAnalyticsPage"));
 const ImportBrevoContacts = lazyRetry(() => import("./pages/ImportBrevoContacts"));
 const WhatsAppCampaignDispatcher = lazyRetry(() => import("./pages/WhatsAppCampaignDispatcherPage"));
+const EmailMarketingPage = lazyRetry(() => import("./pages/EmailMarketingPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
