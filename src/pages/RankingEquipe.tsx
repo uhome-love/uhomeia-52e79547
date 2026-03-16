@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Trophy, Phone, DollarSign, ClipboardList, Star, Zap, Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trophy, Phone, DollarSign, ClipboardList, Star, Zap, Gamepad2, ChevronLeft, ChevronRight, History } from "lucide-react";
 import RankingOfertaAtivaTab from "@/components/ranking/RankingOfertaAtivaTab";
 import RankingVGVTab from "@/components/ranking/RankingVGVTab";
 import RankingGestaoLeadsTab from "@/components/ranking/RankingGestaoLeadsTab";
