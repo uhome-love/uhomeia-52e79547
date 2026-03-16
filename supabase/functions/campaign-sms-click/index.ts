@@ -65,6 +65,19 @@ function phoneVariants(normalized: string): string[] {
   return [...variants];
 }
 
+function isBlockedTestLead(input: { nome?: string | null; email?: string | null; phone?: string | null }) {
+  const nome = (input.nome || "").trim().toLowerCase();
+  const email = (input.email || "").trim().toLowerCase();
+  const phone = (input.phone || "").replace(/\D/g, "");
+
+  const blockedNames = new Set(["test", "teste", "test dummy"]);
+  const hasBlockedName = blockedNames.has(nome) || nome.startsWith("<test");
+  const hasBlockedEmail = email.includes("test") || email.endsWith("@example.com") || email.endsWith("@teste.com");
+  const hasBlockedPhone = phone !== "" && /^9{8,}$/.test(phone);
+
+  return hasBlockedName || hasBlockedEmail || hasBlockedPhone;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors();
 
@@ -96,11 +109,35 @@ Deno.serve(async (req) => {
     } = body;
 
     const telefoneNormalizado = normalizePhone(phone);
+    const normalizedEmail = email?.toLowerCase().trim() || null;
     const tags = ["MELNICK_DAY", "SMS", "Brevo"];
     const blocoLabel = bloco ? ` - bloco ${bloco}` : "";
     const obsText = `Lead veio do email Melnick Day 2026${blocoLabel} (${new Date().toLocaleDateString("pt-BR")})`;
 
-    log("info", "Click received", { phone, telefoneNormalizado, nome, email, canal, origem, bloco });
+    log("info", "Click received", { phone, telefoneNormalizado, nome, email: normalizedEmail, canal, origem, bloco });
+
+    if (isBlockedTestLead({ nome, email: normalizedEmail, phone: telefoneNormalizado || phone })) {
+      log("info", "Blocked test lead", { nome, email: normalizedEmail, phone: telefoneNormalizado || phone });
+      await insertClick({
+        telefone: phone || null,
+        telefone_normalizado: telefoneNormalizado,
+        nome: nome || null,
+        email: normalizedEmail,
+        origem,
+        canal,
+        campanha,
+        utm_source: utm_source || null,
+        utm_medium: utm_medium || null,
+        utm_campaign: utm_campaign || null,
+        tags,
+        redirect_url: WHATSAPP_REDIRECT,
+        user_agent: user_agent || null,
+        status: "click_blocked_test",
+        lead_action: "blocked",
+        redirected: true,
+      });
+      return jsonResponse({ success: true, action: "blocked_test", redirect_url: WHATSAPP_REDIRECT });
+    }
 
     // Base click record
     const clickBase: Record<string, unknown> = {
