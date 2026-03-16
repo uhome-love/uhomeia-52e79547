@@ -65,6 +65,19 @@ function phoneVariants(normalized: string): string[] {
   return [...variants];
 }
 
+function isBlockedTestLead(input: { nome?: string | null; email?: string | null; phone?: string | null }) {
+  const nome = (input.nome || "").trim().toLowerCase();
+  const email = (input.email || "").trim().toLowerCase();
+  const phone = (input.phone || "").replace(/\D/g, "");
+
+  const blockedNames = new Set(["test", "teste", "test dummy"]);
+  const hasBlockedName = blockedNames.has(nome) || nome.startsWith("<test");
+  const hasBlockedEmail = email.includes("test") || email.endsWith("@example.com") || email.endsWith("@teste.com");
+  const hasBlockedPhone = phone !== "" && /^9{8,}$/.test(phone);
+
+  return hasBlockedName || hasBlockedEmail || hasBlockedPhone;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors();
 
