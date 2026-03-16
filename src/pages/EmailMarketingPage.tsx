@@ -1,0 +1,457 @@
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Mail, Settings, FileText, BarChart3, Send, Plus, Trash2, Eye, Copy, Pencil } from "lucide-react";
+import { useEmailSettings, useEmailTemplates, useEmailCampaigns } from "@/hooks/useEmail";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+// ─── Settings Tab ───
+function EmailSettingsTab() {
+  const { settings, loading, updateSetting } = useEmailSettings();
+  const [editing, setEditing] = useState<Record<string, string>>({});
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+
+  const fields = [
+    { key: "mailgun_domain", label: "Domínio Mailgun", type: "text" },
+    { key: "mailgun_base_url", label: "Base URL da API", type: "text" },
+    { key: "mailgun_from", label: "Remetente padrão (From)", type: "text" },
+    { key: "mailgun_reply_to", label: "Reply-To padrão", type: "text" },
+    { key: "webhook_signing_key", label: "Webhook Signing Key", type: "password" },
+  ];
+
+  const toggles = [
+    { key: "tracking_opens", label: "Rastrear aberturas" },
+    { key: "tracking_clicks", label: "Rastrear cliques" },
+    { key: "tracking_unsubscribe", label: "Rastrear descadastros" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <Card className="p-6 space-y-4">
+        <h3 className="font-semibold text-sm flex items-center gap-2"><Settings className="h-4 w-4" /> Configuração Mailgun</h3>
+        {fields.map(f => (
+          <div key={f.key} className="space-y-1">
+            <Label className="text-xs">{f.label}</Label>
+            <div className="flex gap-2">
+              <Input
+                type={f.type}
+                value={editing[f.key] ?? settings[f.key] ?? ""}
+                onChange={e => setEditing(prev => ({ ...prev, [f.key]: e.target.value }))}
+                className="text-sm"
+              />
+              {editing[f.key] !== undefined && editing[f.key] !== settings[f.key] && (
+                <Button size="sm" onClick={() => { updateSetting(f.key, editing[f.key]); setEditing(prev => { const n = { ...prev }; delete n[f.key]; return n; }); }}>
+                  Salvar
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </Card>
+      <Card className="p-6 space-y-4">
+        <h3 className="font-semibold text-sm">Tracking</h3>
+        {toggles.map(t => (
+          <div key={t.key} className="flex items-center justify-between">
+            <Label className="text-sm">{t.label}</Label>
+            <Switch
+              checked={settings[t.key] === "true"}
+              onCheckedChange={v => updateSetting(t.key, v ? "true" : "false")}
+            />
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+}
+
+// ─── Templates Tab ───
+function EmailTemplatesTab() {
+  const { templates, loading, createTemplate, updateTemplate, deleteTemplate } = useEmailTemplates();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [form, setForm] = useState({ nome: "", assunto: "", html_content: "", text_content: "", categoria: "geral" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+
+  const handleSave = async () => {
+    if (!form.nome || !form.assunto) { toast.error("Nome e assunto obrigatórios"); return; }
+    if (editingId) {
+      const ok = await updateTemplate(editingId, form as any);
+      if (ok) { setDialogOpen(false); setEditingId(null); }
+    } else {
+      const ok = await createTemplate(form as any);
+      if (ok) { setDialogOpen(false); }
+    }
+    setForm({ nome: "", assunto: "", html_content: "", text_content: "", categoria: "geral" });
+  };
+
+  const openEdit = (t: any) => {
+    setForm({ nome: t.nome, assunto: t.assunto, html_content: t.html_content, text_content: t.text_content || "", categoria: t.categoria });
+    setEditingId(t.id);
+    setDialogOpen(true);
+  };
+
+  const PLACEHOLDERS = ["{{nome}}", "{{email}}", "{{telefone}}", "{{empreendimento}}", "{{bairro}}", "{{corretor}}", "{{link_landing}}", "{{link_whatsapp}}", "{{origem}}", "{{faixa_valor}}"];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">{templates.length} templates</p>
+        <Button size="sm" onClick={() => { setEditingId(null); setForm({ nome: "", assunto: "", html_content: "", text_content: "", categoria: "geral" }); setDialogOpen(true); }} className="gap-1">
+          <Plus className="h-4 w-4" /> Novo Template
+        </Button>
+      </div>
+
+      {templates.length === 0 ? (
+        <Card className="p-8 text-center">
+          <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Nenhum template criado ainda</p>
+        </Card>
+      ) : (
+        <div className="grid gap-3">
+          {templates.map(t => (
+            <Card key={t.id} className={`p-4 ${!t.ativo ? "opacity-50" : ""}`}>
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-sm">{t.nome}</h4>
+                    <Badge variant="secondary" className="text-[10px]">{t.categoria}</Badge>
+                    {!t.ativo && <Badge variant="outline" className="text-[10px]">Inativo</Badge>}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Assunto: {t.assunto}</p>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewHtml(t.html_content)}>
+                    <Eye className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteTemplate(t.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Editar Template" : "Novo Template"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Nome</Label>
+                <Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Categoria</Label>
+                <Select value={form.categoria} onValueChange={v => setForm(p => ({ ...p, categoria: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="geral">Geral</SelectItem>
+                    <SelectItem value="campanha">Campanha</SelectItem>
+                    <SelectItem value="followup">Follow-up</SelectItem>
+                    <SelectItem value="reativacao">Reativação</SelectItem>
+                    <SelectItem value="transacional">Transacional</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Assunto</Label>
+              <Input value={form.assunto} onChange={e => setForm(p => ({ ...p, assunto: e.target.value }))} placeholder="Assunto do email" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Conteúdo HTML</Label>
+              <Textarea value={form.html_content} onChange={e => setForm(p => ({ ...p, html_content: e.target.value }))} rows={12} className="font-mono text-xs" placeholder="<html>...</html>" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Versão texto simples (opcional)</Label>
+              <Textarea value={form.text_content} onChange={e => setForm(p => ({ ...p, text_content: e.target.value }))} rows={4} className="text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs mb-2 block">Placeholders disponíveis</Label>
+              <div className="flex flex-wrap gap-1">
+                {PLACEHOLDERS.map(p => (
+                  <Badge key={p} variant="outline" className="text-[10px] cursor-pointer hover:bg-accent" onClick={() => {
+                    navigator.clipboard.writeText(p);
+                    toast.success(`${p} copiado`);
+                  }}>{p}</Badge>
+                ))}
+              </div>
+            </div>
+            <Button onClick={handleSave} className="w-full">{editingId ? "Salvar alterações" : "Criar template"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewHtml} onOpenChange={() => setPreviewHtml(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader><DialogTitle>Preview do Template</DialogTitle></DialogHeader>
+          <div className="border rounded-lg overflow-auto max-h-[60vh] bg-white">
+            <iframe srcDoc={previewHtml || ""} className="w-full min-h-[400px]" sandbox="" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Campaigns Tab ───
+function EmailCampaignsTab() {
+  const { campaigns, loading, createCampaign, deleteCampaign, sendCampaign } = useEmailCampaigns();
+  const { templates } = useEmailTemplates();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [form, setForm] = useState({ nome: "", assunto: "", template_id: "", html_content: "" });
+  const [sending, setSending] = useState<string | null>(null);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+
+  const handleCreate = async () => {
+    if (!form.nome || !form.assunto) { toast.error("Nome e assunto obrigatórios"); return; }
+    const tpl = templates.find(t => t.id === form.template_id);
+    const result = await createCampaign({
+      nome: form.nome,
+      assunto: form.assunto,
+      template_id: form.template_id || null,
+      html_content: form.html_content || tpl?.html_content || "",
+    } as any);
+    if (result) setDialogOpen(false);
+  };
+
+  const handleSend = async (id: string) => {
+    setSending(id);
+    await sendCampaign(id);
+    setSending(null);
+  };
+
+  const STATUS_COLORS: Record<string, string> = {
+    rascunho: "secondary",
+    enviando: "default",
+    enviada: "default",
+    agendada: "outline",
+  };
+
+  const STATUS_LABELS: Record<string, string> = {
+    rascunho: "Rascunho",
+    enviando: "Enviando...",
+    enviada: "Enviada",
+    agendada: "Agendada",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">{campaigns.length} campanhas</p>
+        <Button size="sm" onClick={() => { setForm({ nome: "", assunto: "", template_id: "", html_content: "" }); setDialogOpen(true); }} className="gap-1">
+          <Plus className="h-4 w-4" /> Nova Campanha
+        </Button>
+      </div>
+
+      {campaigns.length === 0 ? (
+        <Card className="p-8 text-center">
+          <Send className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Nenhuma campanha criada</p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {campaigns.map(c => (
+            <Card key={c.id} className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-sm">{c.nome}</h4>
+                    <Badge variant={STATUS_COLORS[c.status] as any || "secondary"} className="text-[10px]">
+                      {STATUS_LABELS[c.status] || c.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Assunto: {c.assunto}</p>
+                  {c.status === "enviada" && (
+                    <div className="flex gap-4 text-[11px] text-muted-foreground mt-2">
+                      <span>📤 {c.total_enviados} enviados</span>
+                      <span>📬 {c.total_entregues} entregues</span>
+                      <span>👁 {c.total_aberturas} aberturas</span>
+                      <span>🔗 {c.total_cliques} cliques</span>
+                      <span>⛔ {c.total_bounces} bounces</span>
+                      <span>🚫 {c.total_unsubscribes} unsub</span>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">
+                    {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ptBR })}
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  {c.status === "rascunho" && (
+                    <Button size="sm" variant="default" className="gap-1 text-xs" onClick={() => handleSend(c.id)} disabled={sending === c.id}>
+                      {sending === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                      Enviar
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteCampaign(c.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Nova Campanha</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="text-xs">Nome da campanha</Label>
+              <Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Assunto</Label>
+              <Input value={form.assunto} onChange={e => setForm(p => ({ ...p, assunto: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Template (opcional)</Label>
+              <Select value={form.template_id} onValueChange={v => setForm(p => ({ ...p, template_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione um template" /></SelectTrigger>
+                <SelectContent>
+                  {templates.filter(t => t.ativo).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {!form.template_id && (
+              <div className="space-y-1">
+                <Label className="text-xs">HTML do email</Label>
+                <Textarea value={form.html_content} onChange={e => setForm(p => ({ ...p, html_content: e.target.value }))} rows={8} className="font-mono text-xs" />
+              </div>
+            )}
+            <Button onClick={handleCreate} className="w-full">Criar campanha</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Dashboard Tab ───
+function EmailDashboardTab() {
+  const { campaigns } = useEmailCampaigns();
+  const sentCampaigns = campaigns.filter(c => c.status === "enviada");
+  
+  const totals = sentCampaigns.reduce((acc, c) => ({
+    enviados: acc.enviados + c.total_enviados,
+    entregues: acc.entregues + c.total_entregues,
+    aberturas: acc.aberturas + c.total_aberturas,
+    cliques: acc.cliques + c.total_cliques,
+    bounces: acc.bounces + c.total_bounces,
+    unsubscribes: acc.unsubscribes + c.total_unsubscribes,
+  }), { enviados: 0, entregues: 0, aberturas: 0, cliques: 0, bounces: 0, unsubscribes: 0 });
+
+  const taxaEntrega = totals.enviados > 0 ? ((totals.entregues / totals.enviados) * 100).toFixed(1) : "0";
+  const taxaAbertura = totals.entregues > 0 ? ((totals.aberturas / totals.entregues) * 100).toFixed(1) : "0";
+  const taxaClique = totals.aberturas > 0 ? ((totals.cliques / totals.aberturas) * 100).toFixed(1) : "0";
+  const taxaBounce = totals.enviados > 0 ? ((totals.bounces / totals.enviados) * 100).toFixed(1) : "0";
+
+  const stats = [
+    { label: "Enviados", value: totals.enviados, icon: "📤" },
+    { label: "Entregues", value: totals.entregues, icon: "📬", sub: `${taxaEntrega}%` },
+    { label: "Aberturas", value: totals.aberturas, icon: "👁", sub: `${taxaAbertura}%` },
+    { label: "Cliques", value: totals.cliques, icon: "🔗", sub: `${taxaClique}%` },
+    { label: "Bounces", value: totals.bounces, icon: "⛔", sub: `${taxaBounce}%` },
+    { label: "Unsub", value: totals.unsubscribes, icon: "🚫" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {stats.map(s => (
+          <Card key={s.label} className="p-4 text-center">
+            <p className="text-2xl">{s.icon}</p>
+            <p className="text-xl font-bold">{s.value}</p>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+            {s.sub && <p className="text-xs text-primary font-medium">{s.sub}</p>}
+          </Card>
+        ))}
+      </div>
+
+      {sentCampaigns.length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-semibold text-sm mb-3">Campanhas enviadas</h3>
+          <div className="space-y-2">
+            {sentCampaigns.map(c => {
+              const openRate = c.total_entregues > 0 ? ((c.total_aberturas / c.total_entregues) * 100).toFixed(1) : "0";
+              return (
+                <div key={c.id} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
+                  <span className="font-medium">{c.nome}</span>
+                  <div className="flex gap-4 text-xs text-muted-foreground">
+                    <span>{c.total_enviados} env.</span>
+                    <span>{openRate}% abertura</span>
+                    <span>{c.total_cliques} cliques</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {sentCampaigns.length === 0 && (
+        <Card className="p-8 text-center">
+          <BarChart3 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Envie sua primeira campanha para ver métricas aqui</p>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Page ───
+export default function EmailMarketingPage() {
+  return (
+    <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
+      <div>
+        <div className="flex items-center gap-2">
+          <Mail className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-bold">Email Marketing</h1>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Campanhas, templates e rastreamento de emails via Mailgun
+        </p>
+      </div>
+
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="dashboard" className="gap-1"><BarChart3 className="h-3.5 w-3.5" /> Dashboard</TabsTrigger>
+          <TabsTrigger value="campaigns" className="gap-1"><Send className="h-3.5 w-3.5" /> Campanhas</TabsTrigger>
+          <TabsTrigger value="templates" className="gap-1"><FileText className="h-3.5 w-3.5" /> Templates</TabsTrigger>
+          <TabsTrigger value="settings" className="gap-1"><Settings className="h-3.5 w-3.5" /> Configurações</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard"><EmailDashboardTab /></TabsContent>
+        <TabsContent value="campaigns"><EmailCampaignsTab /></TabsContent>
+        <TabsContent value="templates"><EmailTemplatesTab /></TabsContent>
+        <TabsContent value="settings"><EmailSettingsTab /></TabsContent>
+      </Tabs>
+    </div>
+  );
+}

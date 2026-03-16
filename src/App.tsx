@@ -119,6 +119,7 @@ const WhatsAppLanding = lazyRetry(() => import("./pages/WhatsAppLanding"));
 const CampaignAnalyticsPage = lazyRetry(() => import("./pages/CampaignAnalyticsPage"));
 const ImportBrevoContacts = lazyRetry(() => import("./pages/ImportBrevoContacts"));
 const WhatsAppCampaignDispatcher = lazyRetry(() => import("./pages/WhatsAppCampaignDispatcherPage"));
+const EmailMarketingPage = lazyRetry(() => import("./pages/EmailMarketingPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -248,6 +249,7 @@ const App = () => (
             <Route path="/dev-ai" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="dev-ai"><DevAIPage /></ErrorBoundary></ProtectedPage>} />
             <Route path="/campaign-analytics" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="campaign-analytics"><CampaignAnalyticsPage /></ErrorBoundary></ProtectedPage>} />
             <Route path="/disparador-whatsapp" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="disparador-whatsapp"><WhatsAppCampaignDispatcher /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/email-marketing" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="email-marketing"><EmailMarketingPage /></ErrorBoundary></ProtectedPage>} />
             {/* Backoffice — Ana Paula */}
             <Route path="/backoffice" element={<ProtectedPage roles={["backoffice", "admin"]}><ErrorBoundary module="backoffice"><BackofficeDashboard /></ErrorBoundary></ProtectedPage>} />
             <Route path="/backoffice/pagadorias" element={<ProtectedPage roles={["backoffice", "admin"]}><ErrorBoundary module="backoffice-pagadorias"><PagadoriasPage /></ErrorBoundary></ProtectedPage>} />
