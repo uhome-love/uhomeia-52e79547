@@ -194,7 +194,51 @@ export default function DisparadorLigacoesIA() {
     setPendingSession(null);
   }, []);
 
-  // ── Realtime subscription for ai_calls status updates ──
+  // ── Realtime subscription + polling for ai_calls status updates ──
+  const refreshCallResults = useCallback(async () => {
+    setResults(prev => {
+      const sids = prev.filter(r => r.callSid).map(r => r.callSid!);
+      if (sids.length === 0) return prev;
+      
+      // Fire async query and update state when done
+      supabase
+        .from("ai_calls")
+        .select("twilio_call_sid, status, duracao_segundos, resultado, resumo_ia")
+        .in("twilio_call_sid", sids)
+        .then(({ data }) => {
+          if (!data || data.length === 0) return;
+          const callMap = new Map(data.map(c => [c.twilio_call_sid, c]));
+          setResults(current => current.map(r => {
+            if (!r.callSid) return r;
+            const updated = callMap.get(r.callSid);
+            if (!updated) return r;
+            return {
+              ...r,
+              status: updated.status || r.status,
+              duration: updated.duracao_segundos ?? r.duration,
+              resultado: updated.resultado ?? r.resultado,
+              resumo_ia: updated.resumo_ia ?? r.resumo_ia,
+            };
+          }));
+        });
+      
+      return prev;
+    });
+  }, []);
+
+  // Auto-poll every 10s while running or recently done
+  useEffect(() => {
+    if (step !== "running" && step !== "done") return;
+    if (results.length === 0) return;
+    
+    // Initial refresh
+    refreshCallResults();
+    
+    const interval = setInterval(refreshCallResults, 10000);
+    return () => clearInterval(interval);
+  }, [step, results.length, refreshCallResults]);
+
+  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel('ai-calls-status')
