@@ -6,9 +6,9 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 const EMPREENDIMENTOS = [
   "Alfa", "Orygem", "Las Casas", "Casa Tua", "Lake Eyre", "Open Bosque",
-  "Casa Bastian", "Shift", "Seen Menino Deus", "Me Day",
+  "Casa Bastian", "Shift", "Seen Menino Deus", "Seen Três Figueiras", "Me Day",
   "Alto Lindóia", "Terrace", "Duetto", "Salzburg", "Melnick Day",
-  "Boa Vista Country Club",
+  "High Garden Iguatemi", "Boa Vista Country Club",
 ];
 
 interface FichaData {
