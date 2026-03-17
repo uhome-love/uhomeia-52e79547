@@ -569,6 +569,9 @@ Deno.serve(async (req) => {
       log("error", "Roleta failed", { leadId: newLead.id, error: e instanceof Error ? e.message : String(e) });
     }
 
+    // ─── Mark WhatsApp campaign send as clicked (new lead) ───
+    await markWhatsAppSendClicked(telefoneNormalizado || enrichedPhone);
+
     // Analytics
     await supabase.from("melnick_campaign_analytics").insert([
       { tipo: "new_lead", pipeline_lead_id: newLead.id, telefone: telefoneNormalizado, origem_canal: canal, rule_applied: "sms_new" },
