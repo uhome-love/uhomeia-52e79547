@@ -118,12 +118,14 @@ function StageSelect({ value, onChange }: { value: string; onChange: (v: string)
 const TEMPLATE_DEFAULT_IMAGES: Record<string, string> = {
   melnick_day_poa_2026: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fmelnick-day-2026-header.png",
   melnick_day_wa_v2: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fmelnick-day-2026-header.png",
+  ofertas_meday: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fmelnick-day-2026-header.png",
 };
 
 /* ─── Template default redirect URLs ─── */
 const TEMPLATE_DEFAULT_URLS: Record<string, string> = {
   melnick_day_poa_2026: "https://uhomesales.com/wa?origem=whatsapp_api&campanha=melnick_day_2026&bloco=cta1",
   melnick_day_wa_v2: "https://uhomesales.com/wa?phone={{phone}}&nome={{nome}}&origem=whatsapp_api&campanha=melnick_day_2026&bloco=cta1",
+  ofertas_meday: "https://uhomesales.com/wa?phone={{phone}}&nome={{nome}}&origem=whatsapp_api&campanha=ofertas_meday&bloco=cta1",
 };
 
 
@@ -132,9 +134,9 @@ const TEMPLATE_DEFAULT_URLS: Record<string, string> = {
 function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   const [nome, setNome] = useState("");
   const [fonte, setFonte] = useState<"pipeline" | "oferta_ativa">("pipeline");
-  const [campanha, setCampanha] = useState("melnick_day_2026");
+  const [campanha, setCampanha] = useState("ofertas_meday");
   const [empreendimento, setEmpreendimento] = useState("");
-  const [templateName, setTemplateName] = useState("melnick_day_poa_2026");
+  const [templateName, setTemplateName] = useState("ofertas_meday");
   const [templateLang, setTemplateLang] = useState("pt_BR");
   const [periodo, setPeriodo] = useState("90");
   const [limite, setLimite] = useState("3000");
@@ -142,8 +144,8 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   const [origem, setOrigem] = useState("");
   const [tag, setTag] = useState("");
   const [stageId, setStageId] = useState("");
-  const [redirectUrl, setRedirectUrl] = useState(TEMPLATE_DEFAULT_URLS["melnick_day_poa_2026"] || "");
-  const [headerImageUrl, setHeaderImageUrl] = useState(TEMPLATE_DEFAULT_IMAGES["melnick_day_poa_2026"] || "");
+  const [redirectUrl, setRedirectUrl] = useState(TEMPLATE_DEFAULT_URLS["ofertas_meday"] || "");
+  const [headerImageUrl, setHeaderImageUrl] = useState(TEMPLATE_DEFAULT_IMAGES["ofertas_meday"] || "");
   const [selectedListaIds, setSelectedListaIds] = useState<string[]>([]);
 
   const [eligibleLeads, setEligibleLeads] = useState<EligibleLead[]>([]);
@@ -431,8 +433,9 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
                   if (defaultUrl) setRedirectUrl(defaultUrl);
                 }}
               >
+                <option value="ofertas_meday">ofertas_meday (MEDAY Ofertas ✅)</option>
                 <option value="melnick_day_poa_2026">melnick_day_poa_2026 (botão estático)</option>
-                <option value="melnick_day_wa_v2">melnick_day_wa_v2 (botão dinâmico ✅)</option>
+                <option value="melnick_day_wa_v2">melnick_day_wa_v2 (botão dinâmico)</option>
               </select>
             </div>
             <div>
