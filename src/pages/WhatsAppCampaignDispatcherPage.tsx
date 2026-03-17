@@ -369,6 +369,10 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
                 <Label className="text-xs">Tag</Label>
                 <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Opcional" />
               </div>
+              <div>
+                <Label className="text-xs">Etapa do Pipeline</Label>
+                <StageSelect value={stageId} onChange={setStageId} />
+              </div>
             </div>
             )}
 
