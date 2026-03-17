@@ -144,8 +144,8 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   const [origem, setOrigem] = useState("");
   const [tag, setTag] = useState("");
   const [stageId, setStageId] = useState("");
-  const [redirectUrl, setRedirectUrl] = useState(TEMPLATE_DEFAULT_URLS["melnick_day_poa_2026"] || "");
-  const [headerImageUrl, setHeaderImageUrl] = useState(TEMPLATE_DEFAULT_IMAGES["melnick_day_poa_2026"] || "");
+  const [redirectUrl, setRedirectUrl] = useState(TEMPLATE_DEFAULT_URLS["ofertas_meday"] || "");
+  const [headerImageUrl, setHeaderImageUrl] = useState(TEMPLATE_DEFAULT_IMAGES["ofertas_meday"] || "");
   const [selectedListaIds, setSelectedListaIds] = useState<string[]>([]);
 
   const [eligibleLeads, setEligibleLeads] = useState<EligibleLead[]>([]);
