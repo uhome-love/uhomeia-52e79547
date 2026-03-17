@@ -751,10 +751,13 @@ export default function DisparadorLigacoesIA() {
           {/* Results log */}
           {results.length > 0 && (
             <Card>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-2 flex-row items-center justify-between">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" /> Log de Ligações ({results.length})
                 </CardTitle>
+                <Button variant="ghost" size="sm" onClick={refreshCallResults} className="gap-1 text-xs">
+                  <RefreshCw className="h-3.5 w-3.5" /> Atualizar
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="max-h-60 overflow-y-auto space-y-1">
