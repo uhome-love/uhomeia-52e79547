@@ -26,11 +26,13 @@ export default function MelnickDayLanding() {
     const origem = searchParams.get("origem") || "brevo_sms";
     const campanha = searchParams.get("campanha") || "melnick_day_poa_2026";
     const bloco = searchParams.get("bloco") || "";
+    const send_id = searchParams.get("send_id") || "";
+    const batch_id = searchParams.get("batch_id") || "";
     const utm_source = searchParams.get("utm_source") || origem;
     const utm_medium = searchParams.get("utm_medium") || (origem.includes("email") ? "email" : "sms");
     const utm_campaign = searchParams.get("utm_campaign") || campanha;
 
-    const payload = {
+    const payload: Record<string, string> = {
       phone,
       nome,
       email,
@@ -43,6 +45,10 @@ export default function MelnickDayLanding() {
       bloco,
       user_agent: navigator.userAgent,
     };
+
+    // Critical: pass send_id and batch_id for exact click attribution
+    if (send_id) payload.send_id = send_id;
+    if (batch_id) payload.batch_id = batch_id;
 
     const processClick = async () => {
       try {
