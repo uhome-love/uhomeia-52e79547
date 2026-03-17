@@ -524,7 +524,7 @@ export default function PipelineKanban() {
         )}
 
         {/* Melnick Campaign Analytics — shown when filter is active */}
-        {melnickDayFilter && (
+        {campaignTagFilter === "MELNICK_DAY" && (
           <Suspense fallback={null}>
             <MelnickCampaignAnalytics />
           </Suspense>
