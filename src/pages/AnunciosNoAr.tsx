@@ -65,6 +65,7 @@ const SEGMENTOS: SegmentoConfig[] = [
       { nome: "Orygem", codigo: "57290-UH" },
       { nome: "Casa Tua", codigo: "52101-UH" },
       { nome: "Las Casas", codigo: "41190-UH" },
+      { nome: "High Garden Iguatemi", codigo: "HGI-UH" },
       { nome: "Melnick Day Médio Padrão", codigo: "76953-UH" },
     ],
   },
@@ -77,6 +78,7 @@ const SEGMENTOS: SegmentoConfig[] = [
     badgeColor: "bg-violet-500/20 text-violet-300 border-violet-400/30",
     empreendimentos: [
       { nome: "Lake Eyre", codigo: "58935-UH" },
+      { nome: "Seen Três Figueiras", codigo: "STF-UH" },
       { nome: "Melnick Day Alto Padrão", codigo: "91245-UH" },
     ],
   },
