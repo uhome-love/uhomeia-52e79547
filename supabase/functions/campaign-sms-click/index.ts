@@ -97,45 +97,81 @@ Deno.serve(async (req) => {
     if (error) log("error", "Failed to insert click", { error: error.message });
   }
 
-  // Helper: update whatsapp_campaign_sends.clicked_at when lead clicks campaign button
+  // Helper: mark a specific WhatsApp campaign send as clicked (idempotent)
+  async function markWhatsAppSendClickedById(sendId: string | null | undefined, batchIdHint?: string | null) {
+    if (!sendId) return null;
+
+    try {
+      const { data: send, error } = await supabase
+        .from("whatsapp_campaign_sends")
+        .select("id, batch_id, pipeline_lead_id, telefone, telefone_normalizado, nome, email, campanha, origem, bloco, clicked_at, status_envio")
+        .eq("id", sendId)
+        .maybeSingle();
+
+      if (error || !send) {
+        log("warn", "WA send not found for click tracking", { sendId, error: error?.message });
+        return null;
+      }
+
+      if (!send.clicked_at) {
+        const now = new Date().toISOString();
+        await supabase
+          .from("whatsapp_campaign_sends")
+          .update({ clicked_at: now, status_envio: "clicked" })
+          .eq("id", send.id);
+
+        const resolvedBatchId = send.batch_id || batchIdHint || null;
+        if (resolvedBatchId) {
+          const { data: batch } = await supabase
+            .from("whatsapp_campaign_batches")
+            .select("total_clicked")
+            .eq("id", resolvedBatchId)
+            .maybeSingle();
+
+          if (batch) {
+            await supabase
+              .from("whatsapp_campaign_batches")
+              .update({ total_clicked: (batch.total_clicked || 0) + 1 })
+              .eq("id", resolvedBatchId);
+          }
+        }
+
+        send.clicked_at = now;
+        send.status_envio = "clicked";
+      }
+
+      log("info", "Marked whatsapp_campaign_send as clicked", { sendId: send.id, batchId: send.batch_id });
+      return send;
+    } catch (e) {
+      log("error", "Failed to mark WA send clicked by id", { sendId, error: e instanceof Error ? e.message : String(e) });
+      return null;
+    }
+  }
+
+  // Helper: fallback matching by phone when legacy links don't carry a send_id
   async function markWhatsAppSendClicked(phoneNorm: string | null) {
-    if (!phoneNorm) return;
+    if (!phoneNorm) return null;
+
     try {
       const variants = phoneVariants(phoneNorm);
-      const { data: sends } = await supabase
+      const { data: send, error } = await supabase
         .from("whatsapp_campaign_sends")
         .select("id, batch_id")
         .in("telefone_normalizado", variants)
         .in("status_envio", ["sent", "delivered", "read"])
         .is("clicked_at", null)
         .order("sent_at", { ascending: false })
-        .limit(5);
+        .limit(1)
+        .maybeSingle();
 
-      if (sends && sends.length > 0) {
-        const now = new Date().toISOString();
-        for (const send of sends) {
-          await supabase
-            .from("whatsapp_campaign_sends")
-            .update({ clicked_at: now, status_envio: "clicked" })
-            .eq("id", send.id);
-
-          // Increment batch counter
-          const { data: batch } = await supabase
-            .from("whatsapp_campaign_batches")
-            .select("total_clicked")
-            .eq("id", send.batch_id)
-            .single();
-          if (batch) {
-            await supabase
-              .from("whatsapp_campaign_batches")
-              .update({ total_clicked: (batch.total_clicked || 0) + 1 })
-              .eq("id", send.batch_id);
-          }
-        }
-        log("info", "Marked whatsapp_campaign_sends as clicked", { count: sends.length, phoneNorm });
+      if (error || !send) {
+        return null;
       }
+
+      return await markWhatsAppSendClickedById(send.id, send.batch_id);
     } catch (e) {
       log("error", "Failed to mark WA send clicked", { error: e instanceof Error ? e.message : String(e) });
+      return null;
     }
   }
 
