@@ -484,12 +484,12 @@ export default function PipelineKanban() {
                     Visita ×
                   </Badge>
                 )}
-                {melnickDayFilter && (
-                  <Badge variant="secondary" className="text-[9px] gap-0.5 cursor-pointer h-5" onClick={() => setMelnickDayFilter(false)}>
-                    🔥 Melnick Day ×
+                {campaignTagFilter !== "all" && (
+                  <Badge variant="secondary" className="text-[9px] gap-0.5 cursor-pointer h-5" onClick={() => setCampaignTagFilter("all")}>
+                    🏷️ {CAMPAIGN_TAGS.find(c => c.tag === campaignTagFilter)?.label || campaignTagFilter} ×
                   </Badge>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => { clearFilters(); setMelnickDayFilter(false); }} className="text-[10px] h-5 text-destructive gap-0.5 px-1.5">
+                <Button variant="ghost" size="sm" onClick={() => { clearFilters(); setCampaignTagFilter("all"); }} className="text-[10px] h-5 text-destructive gap-0.5 px-1.5">
                   <X className="h-2.5 w-2.5" /> Limpar
                 </Button>
               </div>
