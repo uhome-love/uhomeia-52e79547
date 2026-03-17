@@ -468,8 +468,8 @@ export default function DisparadorLigacoesIA() {
   // ── Stats ──
   const stats = useMemo(() => {
     const total = results.length;
-    const initiated = results.filter(r => ["initiated", "ringing", "in-progress", "completed"].includes(r.status)).length;
-    const failed = results.filter(r => ["failed", "busy", "no-answer"].includes(r.status)).length;
+    const initiated = results.filter(r => ["initiated", "ringing", "in-progress", "completed", "completed_positive"].includes(r.status)).length;
+    const failed = results.filter(r => ["failed", "busy", "no-answer", "nao_atendeu", "erro"].includes(r.status)).length;
     const skipped = results.filter(r => r.status === "skipped").length;
     return { total, initiated, failed, skipped };
   }, [results]);
