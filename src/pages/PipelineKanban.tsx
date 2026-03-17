@@ -156,10 +156,31 @@ export default function PipelineKanban() {
     [pipeline.leads]
   );
 
-  const melnickDayCount = useMemo(() =>
-    pipeline.leads.filter(l => (l.tags || []).includes("MELNICK_DAY")).length,
-    [pipeline.leads]
-  );
+  // Compute all campaign tag counts
+  const CAMPAIGN_TAGS = [
+    { tag: "MELNICK_DAY", label: "🔥 Melnick Day", color: "orange" },
+    { tag: "OPEN_BOSQUE", label: "🌳 Open Bosque", color: "green" },
+    { tag: "CASA_TUA", label: "🏠 Casa Tua", color: "blue" },
+    { tag: "LAKE_EYRE", label: "💎 Lake Eyre", color: "purple" },
+    { tag: "LAS_CASAS", label: "🏡 Las Casas", color: "amber" },
+    { tag: "ORYGEM", label: "✨ Orygem", color: "cyan" },
+    { tag: "HIGH_GARDEN_IGUATEMI", label: "🌿 High Garden Iguatemi", color: "emerald" },
+    { tag: "SEEN_TRES_FIGUEIRAS", label: "👁 Seen Três Figueiras", color: "violet" },
+    { tag: "ALTO_LINDOIA", label: "🏔 Alto Lindóia", color: "sky" },
+    { tag: "SHIFT", label: "⚡ Shift", color: "slate" },
+    { tag: "CASA_BASTIAN", label: "🏰 Casa Bastian", color: "rose" },
+    { tag: "DUETTO", label: "🎵 Duetto", color: "indigo" },
+    { tag: "TERRACE", label: "🌅 Terrace", color: "teal" },
+  ];
+
+  const campaignTagCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const ct of CAMPAIGN_TAGS) {
+      const c = pipeline.leads.filter(l => (l.tags || []).includes(ct.tag)).length;
+      if (c > 0) counts[ct.tag] = c;
+    }
+    return counts;
+  }, [pipeline.leads]);
 
   const totalVGV = useMemo(() =>
     filteredLeads.reduce((sum, l) => sum + (l.valor_estimado || 0), 0),
