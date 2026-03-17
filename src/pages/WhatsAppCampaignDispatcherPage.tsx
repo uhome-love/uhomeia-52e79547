@@ -93,7 +93,28 @@ export default function WhatsAppCampaignDispatcherPage() {
   );
 }
 
-/* ─── Template default images ─── */
+/* ─── Stage Select component ─── */
+function StageSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [stages, setStages] = useState<{ id: string; nome: string }[]>([]);
+  useEffect(() => {
+    supabase.from("pipeline_stages").select("id, nome").order("ordem").then(({ data }) => {
+      if (data) setStages(data);
+    });
+  }, []);
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger><SelectValue placeholder="Todas as etapas" /></SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todas as etapas</SelectItem>
+        {stages.map((s) => (
+          <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+
 const TEMPLATE_DEFAULT_IMAGES: Record<string, string> = {
   melnick_day_poa_2026: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fmelnick-day-2026-header.png",
   melnick_day_wa_v2: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fmelnick-day-2026-header.png",

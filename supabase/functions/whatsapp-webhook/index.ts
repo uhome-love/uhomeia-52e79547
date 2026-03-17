@@ -65,7 +65,6 @@ Deno.serve(async (req) => {
 
             switch (statusType) {
               case "sent":
-                // Already handled at dispatch time, but update if missing
                 updateData.status_envio = "sent";
                 break;
               case "delivered":
@@ -91,10 +90,7 @@ Deno.serve(async (req) => {
               .eq("message_id", waMessageId);
 
             if (error) {
-              console.error(
-                `❌ Error updating ${waMessageId}:`,
-                error.message
-              );
+              console.error(`❌ Error updating ${waMessageId}:`, error.message);
             } else {
               updatedCount++;
             }
@@ -103,12 +99,11 @@ Deno.serve(async (req) => {
           // Process incoming messages (replies)
           const messages = value?.messages || [];
           for (const msg of messages) {
-            // A reply from a contact — try to match by phone
             const from = msg?.from; // e.g. "5551999990000"
             if (!from) continue;
 
             // Update the most recent send to this phone number as "replied"
-            const { error } = await supabase
+            const { data: updatedSends, error } = await supabase
               .from("whatsapp_campaign_sends")
               .update({
                 status_envio: "replied",
@@ -117,9 +112,74 @@ Deno.serve(async (req) => {
               .eq("telefone_normalizado", from)
               .in("status_envio", ["sent", "delivered", "read"])
               .order("sent_at", { ascending: false })
-              .limit(1);
+              .limit(1)
+              .select("id, pipeline_lead_id, batch_id");
 
             if (!error) updatedCount++;
+
+            // ── Notify corretor & update lead history on reply ──
+            const sendRecord = updatedSends?.[0];
+            const leadId = sendRecord?.pipeline_lead_id;
+
+            if (leadId) {
+              // Fetch lead info
+              const { data: lead } = await supabase
+                .from("pipeline_leads")
+                .select("id, nome, empreendimento, corretor_id, observacoes")
+                .eq("id", leadId)
+                .maybeSingle();
+
+              if (lead) {
+                const leadNome = lead.nome || "Lead";
+                const msgText = msg?.text?.body || msg?.type || "mensagem";
+
+                // Get batch/campaign name for context
+                let campanhaLabel = "WhatsApp";
+                if (sendRecord?.batch_id) {
+                  const { data: batch } = await supabase
+                    .from("whatsapp_campaign_batches")
+                    .select("nome, campanha")
+                    .eq("id", sendRecord.batch_id)
+                    .maybeSingle();
+                  if (batch) campanhaLabel = batch.nome || batch.campanha || "WhatsApp";
+                }
+
+                // 1) Notify the corretor
+                if (lead.corretor_id) {
+                  await supabase.from("notifications").insert({
+                    user_id: lead.corretor_id,
+                    titulo: `🔔 NOVO INTERESSE: MENSAGEM WHATSAPP ${campanhaLabel.toUpperCase()}`,
+                    mensagem: `${leadNome} respondeu à campanha "${campanhaLabel}". Mensagem: "${msgText.slice(0, 100)}". Entre em contato agora!`,
+                    tipo: "lead_reengajado",
+                    categoria: "leads",
+                    dados: { pipeline_lead_id: lead.id, campanha: campanhaLabel, tipo_interesse: "whatsapp_reply" },
+                  });
+                  console.log(`📩 Corretor ${lead.corretor_id} notified about reply from ${leadNome}`);
+                }
+
+                // 2) Register activity in lead timeline
+                await supabase.from("pipeline_atividades").insert({
+                  pipeline_lead_id: lead.id,
+                  tipo: "whatsapp",
+                  titulo: `📩 Resposta WhatsApp — ${campanhaLabel}`,
+                  descricao: `Lead respondeu à campanha "${campanhaLabel}": "${msgText.slice(0, 200)}"`,
+                  data: new Date().toISOString().slice(0, 10),
+                  status: "concluida",
+                  responsavel_id: lead.corretor_id || null,
+                });
+
+                // 3) Append to observacoes
+                const newObs = `[${new Date().toISOString().slice(0, 16)}] 📩 Resposta WhatsApp (${campanhaLabel}): "${msgText.slice(0, 200)}"`;
+                const mergedObs = lead.observacoes
+                  ? `${lead.observacoes}\n---\n${newObs}`
+                  : newObs;
+                await supabase.from("pipeline_leads")
+                  .update({ observacoes: mergedObs })
+                  .eq("id", lead.id);
+
+                console.log(`✅ Lead ${lead.id} history updated with reply`);
+              }
+            }
           }
         }
       }
