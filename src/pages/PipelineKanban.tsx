@@ -407,22 +407,26 @@ export default function PipelineKanban() {
               </>
             )}
 
-            {/* 🔥 Campanha Melnick Day quick filter */}
-            <button
-              onClick={() => setMelnickDayFilter(f => !f)}
-              className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border transition-colors ${
-                melnickDayFilter
-                  ? "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-700"
-                  : "bg-card text-muted-foreground border-border hover:border-orange-300 hover:text-orange-600"
-              }`}
-            >
-              🔥 Campanha Melnick Day
-              {melnickDayCount > 0 && (
-                <Badge className="text-[9px] px-1 py-0 h-3.5 bg-orange-500 text-white border-none">
-                  {melnickDayCount}
-                </Badge>
-              )}
-            </button>
+            {/* Campaign tag filter */}
+            {Object.keys(campaignTagCounts).length > 0 && (
+              <Select value={campaignTagFilter} onValueChange={setCampaignTagFilter}>
+                <SelectTrigger className={`h-7 text-[10px] w-[180px] sm:w-[200px] shrink-0 rounded-full ${
+                  campaignTagFilter !== "all" 
+                    ? "bg-primary/10 border-primary/30 text-primary font-medium" 
+                    : "bg-card"
+                }`}>
+                  <SelectValue placeholder="🏷️ Campanha" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">🏷️ Todas as campanhas</SelectItem>
+                  {CAMPAIGN_TAGS.filter(ct => campaignTagCounts[ct.tag]).map(ct => (
+                    <SelectItem key={ct.tag} value={ct.tag}>
+                      {ct.label} ({campaignTagCounts[ct.tag]})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {totalVGV > 0 && (
               <span className="text-[11px] text-muted-foreground">• {formatVGV(totalVGV)} VGV</span>
