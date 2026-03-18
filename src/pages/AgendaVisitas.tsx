@@ -111,7 +111,12 @@ export default function AgendaVisitas() {
 
   // Split by tipo — own visitas only for main tabs
   const { user } = useAuth();
-  const visitas = useMemo(() => tabVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo && v.corretor_id === user?.id), [tabVisitas, agendaTipo, user?.id]);
+  // Gerentes/admins see ALL visitas in main tabs; corretores see only their own
+  const visitas = useMemo(() => {
+    const byTipo = tabVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo);
+    if (isAdmin || isGestor) return byTipo;
+    return byTipo.filter(v => v.corretor_id === user?.id);
+  }, [tabVisitas, agendaTipo, user?.id, isAdmin, isGestor]);
   const teamVisitas = useMemo(() => tabVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo && v.corretor_id !== user?.id), [tabVisitas, agendaTipo, user?.id]);
   const allVisitasByTipo = useMemo(() => allVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo), [allVisitas, agendaTipo]);
   const negocioCount = useMemo(() => allVisitas.filter(v => (v as any).tipo === "negocio").length, [allVisitas]);
