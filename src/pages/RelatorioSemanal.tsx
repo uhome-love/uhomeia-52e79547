@@ -503,6 +503,17 @@ export default function RelatorioSemanal() {
           </div>
         )}
       </div>
+
+      {/* KPI Detail Dialog */}
+      <ExecutiveKpiDetailDialog
+        open={!!kpiDetail}
+        onOpenChange={(o) => !o && setKpiDetail(null)}
+        type={kpiDetail?.type || "ligacoes"}
+        label={kpiDetail?.label || ""}
+        scopeUserIds={null}
+        scopeProfileIds={null}
+        dateRange={kpiDateRange}
+      />
     </div>
   );
 }
