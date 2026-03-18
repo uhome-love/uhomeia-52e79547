@@ -216,7 +216,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       const prevPresQScoped = scopeProfileIds ? prevPresQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : prevPresQ;
 
       // Ligações (OA tentativas)
-      let ligQ = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e);
+      let ligQ = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
       let prevLigQ = supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
       ligQ = applyScope(ligQ, "corretor_id");
       prevLigQ = applyScope(prevLigQ, "corretor_id");
