@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Phone, Award, MapPin, Target, AlertTriangle, TrendingDown, ArrowDown, Trophy } from "lucide-react";
+import ManagerKpiDetailDialog, { type ManagerKpiType } from "./ManagerKpiDetailDialog";
 import { format, subDays } from "date-fns";
 import { formatBRLCompact } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -52,6 +53,16 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
   const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes">("semana");
   const [relatorio, setRelatorio] = useState<RelatorioData | null>(null);
   const [activeSection, setActiveSection] = useState<"performance" | "conversao" | "ranking">("performance");
+  const [kpiDetail, setKpiDetail] = useState<{ type: ManagerKpiType; label: string } | null>(null);
+
+  const kpiDateRange = useMemo(() => {
+    const hoje = new Date();
+    let inicio: Date;
+    if (periodo === "hoje") inicio = hoje;
+    else if (periodo === "semana") inicio = subDays(hoje, 7);
+    else inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    return { start: format(inicio, "yyyy-MM-dd"), end: format(hoje, "yyyy-MM-dd") };
+  }, [periodo]);
 
   const load = useCallback(async () => {
     if (!user || teamUserIds.length === 0) return;
@@ -187,6 +198,7 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
   ];
 
   return (
+    <>
     <div className="bg-card border border-border rounded-xl p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -228,17 +240,21 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
               {/* KPI Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "Ligações", value: fmt(relatorio.total_ligacoes), sub: `${relatorio.taxa_aproveitamento}% aproveitamento`, icon: <Phone size={16} className="text-blue-500" />, accent: "bg-blue-500/10" },
-                  { label: "Aproveitados", value: fmt(relatorio.total_aproveitados), sub: `de ${fmt(relatorio.total_ligacoes)} tentativas`, icon: <Award size={16} className="text-emerald-500" />, accent: "bg-emerald-500/10" },
-                  { label: "Visitas", value: `${relatorio.total_visitas_realizadas}/${relatorio.total_visitas_marcadas}`, sub: "realizadas/marcadas", icon: <MapPin size={16} className="text-amber-500" />, accent: "bg-amber-500/10" },
-                  { label: "VGV Assinado", value: fmtR(relatorio.vgv_assinado), sub: `Gerado: ${fmtR(relatorio.vgv_gerado)}`, icon: <Target size={16} className="text-purple-500" />, accent: "bg-purple-500/10" },
+                  { label: "Ligações", value: fmt(relatorio.total_ligacoes), sub: `${relatorio.taxa_aproveitamento}% aproveitamento`, icon: <Phone size={16} className="text-blue-500" />, accent: "bg-blue-500/10", kpiType: "ligacoes" as ManagerKpiType },
+                  { label: "Aproveitados", value: fmt(relatorio.total_aproveitados), sub: `de ${fmt(relatorio.total_ligacoes)} tentativas`, icon: <Award size={16} className="text-emerald-500" />, accent: "bg-emerald-500/10", kpiType: "aproveitados" as ManagerKpiType },
+                  { label: "Visitas", value: `${relatorio.total_visitas_realizadas}/${relatorio.total_visitas_marcadas}`, sub: "realizadas/marcadas", icon: <MapPin size={16} className="text-amber-500" />, accent: "bg-amber-500/10", kpiType: "visitas" as ManagerKpiType },
+                  { label: "VGV Assinado", value: fmtR(relatorio.vgv_assinado), sub: `Gerado: ${fmtR(relatorio.vgv_gerado)}`, icon: <Target size={16} className="text-purple-500" />, accent: "bg-purple-500/10", kpiType: "vgv" as ManagerKpiType },
                 ].map(card => (
-                  <div key={card.label} className="border border-border rounded-xl p-4 bg-card">
+                  <div
+                    key={card.label}
+                    onClick={() => setKpiDetail({ type: card.kpiType, label: card.label })}
+                    className="border border-border rounded-xl p-4 bg-card cursor-pointer hover:border-primary/40 hover:shadow-md transition-all group"
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${card.accent}`}>{card.icon}</div>
                       <span className="text-xs text-muted-foreground">{card.label}</span>
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{card.value}</p>
+                    <p className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">{card.value}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{card.sub}</p>
                   </div>
                 ))}
@@ -438,5 +454,16 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
         </>
       )}
     </div>
+
+      <ManagerKpiDetailDialog
+        open={!!kpiDetail}
+        onOpenChange={(o) => { if (!o) setKpiDetail(null); }}
+        type={kpiDetail?.type || "ligacoes"}
+        label={kpiDetail?.label || ""}
+        teamUserIds={teamUserIds}
+        teamNameMap={teamNameMap}
+        dateRange={kpiDateRange}
+      />
+    </>
   );
 }
