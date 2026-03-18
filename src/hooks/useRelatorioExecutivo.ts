@@ -189,10 +189,10 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         scopeProfileIds = profileId ? [profileId] : [];
         // Get own team info
         const { data: tm } = await supabase
-          .from("team_members").select("id, nome, equipe, gerente_id, user_id, avatar_url")
+          .from("team_members").select("id, nome, equipe, gerente_id, user_id")
           .eq("user_id", authUserId!)
           .eq("status", "ativo");
-        teamMembersData = tm || [];
+        teamMembersData = (tm || []).map(m => ({ ...m, avatar_url: null }));
       }
 
       // Helper to apply scope filter
