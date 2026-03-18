@@ -112,7 +112,7 @@ export default function MinhaAgendaWidget() {
           .from("negocios")
           .select("id, nome_cliente")
           .in("id", negIds);
-        const negMap = new Map((negs || []).map(n => [n.id, n]));
+        const negMap = new Map((negs as any[] || []).map(n => [n.id, n]));
         rows.forEach(r => {
           const neg = negMap.get(r.negocio_id);
           if (neg) { r.negocio_nome = neg.nome_cliente; }

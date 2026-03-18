@@ -133,7 +133,7 @@ export default function MinhasTarefas() {
       if (leadIds.length > 0) {
         const { data: leads } = await supabase
           .from("pipeline_leads").select("id, nome, telefone, empreendimento").in("id", leadIds);
-        const leadMap = new Map((leads || []).map(l => [l.id, l]));
+        const leadMap = new Map((leads as any[] || []).map((l: any) => [l.id, l]));
         rows.forEach(r => {
           const lead = leadMap.get(r.pipeline_lead_id);
           if (lead) { r.lead_nome = lead.nome; r.lead_telefone = lead.telefone; r.lead_empreendimento = lead.empreendimento; }
