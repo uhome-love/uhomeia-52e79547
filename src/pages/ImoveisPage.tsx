@@ -14,7 +14,7 @@ import {
   Search, Building2, Loader2, ChevronLeft, ChevronRight, Phone,
   MapPin, Megaphone, Check, X, Share2, Link2, Copy, CalendarClock,
   LayoutGrid, List, Heart, Zap,
-  Sparkles, Brain, ArrowRight, Map, MessageCircle
+  Sparkles, Brain, ArrowRight, Map, MessageCircle, Bookmark, Users
 } from "lucide-react";
 import PropertyMap from "@/components/imoveis/PropertyMap";
 import PropertyPreviewDrawer from "@/components/imoveis/PropertyPreviewDrawer";
