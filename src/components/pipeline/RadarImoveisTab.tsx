@@ -23,6 +23,7 @@ import { useLeadPropertyProfile } from "@/hooks/useLeadPropertyProfile";
 import { useLeadPropertySearch } from "@/hooks/useLeadPropertySearch";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import LeadMatchesWidget from "./LeadMatchesWidget";
 
 /* ═══════════════════════════════════════════
    TYPES
