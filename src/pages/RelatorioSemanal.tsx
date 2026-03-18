@@ -77,8 +77,9 @@ export default function RelatorioSemanal() {
     end: format(period.end, "yyyy-MM-dd"),
   }), [period.start, period.end]);
 
-  // Team filter (CEO only)
+  // Team/corretor filter
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
+  const [selectedCorretor, setSelectedCorretor] = useState<string>("all");
 
   // Ranking sort state
   const [sortKey, setSortKey] = useState<SortKey>("vgv");
@@ -98,12 +99,14 @@ export default function RelatorioSemanal() {
     else { setSortKey(key); setSortAsc(false); }
   };
 
-  // Filter corretores by selected team
+  // Filter corretores by selected team or corretor
   const filteredCorretores = useMemo(() => {
     if (!data?.corretores) return [];
-    if (selectedTeam === "all") return data.corretores;
-    return data.corretores.filter(c => c.equipe === selectedTeam);
-  }, [data?.corretores, selectedTeam]);
+    let list = data.corretores;
+    if (selectedTeam !== "all") list = list.filter(c => c.equipe === selectedTeam);
+    if (selectedCorretor !== "all") list = list.filter(c => c.id === selectedCorretor);
+    return list;
+  }, [data?.corretores, selectedTeam, selectedCorretor]);
 
   const sortedCorretores = useMemo(() => {
     return [...filteredCorretores].sort((a, b) => {
@@ -228,19 +231,36 @@ export default function RelatorioSemanal() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        {/* Team filter for CEO */}
-        {scope === "admin" && teamOptions.length > 0 && (
-          <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-            <SelectTrigger className="w-[220px] mx-auto">
-              <SelectValue placeholder="Todas as equipes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as equipes</SelectItem>
-              {teamOptions.map(eq => (
-                <SelectItem key={eq} value={eq}>{eq}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Filters: Team (CEO) + Corretor (Gerente/CEO) */}
+        {scope !== "corretor" && (data?.corretores?.length ?? 0) > 0 && (
+          <div className="flex items-center gap-2 justify-center flex-wrap">
+            {scope === "admin" && teamOptions.length > 0 && (
+              <Select value={selectedTeam} onValueChange={(v) => { setSelectedTeam(v); setSelectedCorretor("all"); }}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Todas as equipes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as equipes</SelectItem>
+                  {teamOptions.map(eq => (
+                    <SelectItem key={eq} value={eq}>{eq}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Select value={selectedCorretor} onValueChange={setSelectedCorretor}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Todos os corretores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os corretores</SelectItem>
+                {(selectedTeam === "all" ? data?.corretores || [] : (data?.corretores || []).filter(c => c.equipe === selectedTeam))
+                  .sort((a, b) => a.nome.localeCompare(b.nome))
+                  .map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
 
