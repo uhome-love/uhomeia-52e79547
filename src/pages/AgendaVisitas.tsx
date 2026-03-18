@@ -396,6 +396,18 @@ export default function AgendaVisitas() {
           <VisitasCalendar visitas={allVisitasFiltered} showTeam={isAdmin} />
         </TabsContent>
 
+        {/* ─── MEU TIME ─── */}
+        <TabsContent value="meu-time" className="mt-3 space-y-3">
+          {tabDateLabel && <Badge variant="secondary" className="text-xs">{tabDateLabel}</Badge>}
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
+          ) : teamVisitas.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma visita do time neste período.</p>
+          ) : (
+            <VisitasList visitas={teamVisitas} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor showTeam={false} mode="all" />
+          )}
+        </TabsContent>
+
         {/* ─── PERFORMANCE ─── */}
         <TabsContent value="performance" className="mt-3">
           <VisitasPerformance visitas={allVisitasByTipo} showCorretor={showCorretor} />
