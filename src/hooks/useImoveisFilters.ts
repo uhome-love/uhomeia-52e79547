@@ -186,6 +186,8 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
   if (construtora.length > 0) activeFilters.push({ key: "construtora", label: construtora.join(", "), onRemove: () => setConstrutora([]) });
   if (empreendimento.length > 0) activeFilters.push({ key: "empreendimento", label: empreendimento.length <= 2 ? empreendimento.join(", ") : `${empreendimento.length} empreend.`, onRemove: () => setEmpreendimento([]) });
   if (situacao.length > 0) activeFilters.push({ key: "situacao", label: situacao.join(", "), onRemove: () => setSituacao([]) });
+  // Only show cidade tag if not the default
+  if (cidade.length > 0 && !(cidade.length === 1 && cidade[0] === "Porto Alegre")) activeFilters.push({ key: "cidade", label: cidade.join(", "), onRemove: () => setCidade(["Porto Alegre"]) });
 
   const clearAllFilters = () => {
     setTipo([]); setBairro([]); setDormitorios([]); setSuitesFilter(""); setVagas("");
