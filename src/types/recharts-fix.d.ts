@@ -11,4 +11,8 @@ declare module "recharts" {
   export class YAxis extends Component<any, any> {}
   export class Tooltip extends Component<any, any> {}
   export class Bar extends Component<any, any> {}
+  export class Line extends Component<any, any> {}
+  export class Area extends Component<any, any> {}
+  export class Pie extends Component<any, any> {}
+  export class Cell extends Component<any, any> {}
 }
