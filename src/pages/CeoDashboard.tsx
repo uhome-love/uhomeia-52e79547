@@ -25,6 +25,7 @@ import BulkEmpreendimentoAssign from "@/components/ceo/BulkEmpreendimentoAssign"
 import { formatBRLCompact } from "@/lib/utils";
 import HomiBriefingCard from "@/components/ceo/HomiBriefingCard";
 import AiCallPanel from "@/components/ceo/AiCallPanel";
+import KpiDetailDialog, { type KpiDetailType } from "@/components/ceo/KpiDetailDialog";
 
 // ─── Greeting ───
 function getGreeting() {
@@ -75,8 +76,8 @@ function formatMetaDisplay(value: number, type: "currency" | "number" | "percent
 }
 
 // ─── KPI Card ───
-function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor, ceoMeta, metaType = "number" }: {
-  icon: any; label: string; value: number; displayValue?: string; meta?: number; prev?: number; iconColor?: string; ceoMeta?: number | null; metaType?: "currency" | "number" | "percent";
+function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor, ceoMeta, metaType = "number", onClick }: {
+  icon: any; label: string; value: number; displayValue?: string; meta?: number; prev?: number; iconColor?: string; ceoMeta?: number | null; metaType?: "currency" | "number" | "percent"; onClick?: () => void;
 }) {
   const pct = meta && meta > 0 ? Math.min(Math.round((value / meta) * 100), 100) : null;
   const semaphore = getSemaphore(value, ceoMeta);
@@ -84,7 +85,7 @@ function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor
   const showNoMeta = ceoMeta !== undefined && (!ceoMeta || ceoMeta <= 0);
 
   return (
-    <Card className="relative">
+    <Card className={`relative ${onClick ? "cursor-pointer hover:shadow-md hover:border-primary/30 transition-all" : ""}`} onClick={onClick}>
       <CardContent className="pt-4 pb-3 px-4">
         {/* Semaphore dot — always show when ceoMeta is passed (even null = grey) */}
         {ceoMeta !== undefined && (
@@ -136,6 +137,7 @@ export default function CeoDashboard() {
   const [filaCeoCount, setFilaCeoCount] = useState(0);
   const [lastDispatch, setLastDispatch] = useState<{ at: string; count: number } | null>(null);
   const [bulkEmpOpen, setBulkEmpOpen] = useState(false);
+  const [kpiDetail, setKpiDetail] = useState<{ type: KpiDetailType; label: string } | null>(null);
 
   const {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
@@ -468,7 +470,7 @@ export default function CeoDashboard() {
           <Target className="h-4 w-4" /> Gestão de Leads
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <KpiCard icon={Users} label="Total de Leads" value={totalLeadsPeriodo} iconColor="text-blue-600" ceoMeta={null} />
+          <KpiCard icon={Users} label="Total de Leads" value={totalLeadsPeriodo} iconColor="text-blue-600" ceoMeta={null} onClick={() => setKpiDetail({ type: "total_leads", label: "Total de Leads" })} />
           <Card className="relative">
             <CardContent className="pt-4 pb-3 px-4">
               {/* Grey semaphore dot for no-meta */}
@@ -483,7 +485,7 @@ export default function CeoDashboard() {
               <p className="text-[10px] text-muted-foreground/50 mt-0.5">Sem meta definida</p>
             </CardContent>
           </Card>
-          <KpiCard icon={CalendarDays} label="Visitas Marcadas" value={kpis.visitasMarcadas} prev={prevKpis?.visitasMarcadas} iconColor="text-amber-600" ceoMeta={ceoMetasConsolidadas.meta_visitas_marcadas || null} />
+          <KpiCard icon={CalendarDays} label="Visitas Marcadas" value={kpis.visitasMarcadas} prev={prevKpis?.visitasMarcadas} iconColor="text-amber-600" ceoMeta={ceoMetasConsolidadas.meta_visitas_marcadas || null} onClick={() => setKpiDetail({ type: "visitas_marcadas", label: "Visitas Marcadas" })} />
           <KpiCard
             icon={CalendarCheck}
             label="Visitas Realizadas"
@@ -492,6 +494,7 @@ export default function CeoDashboard() {
             prev={prevKpis?.visitasRealizadas}
             iconColor="text-emerald-600"
             ceoMeta={ceoMetasConsolidadas.meta_visitas_realizadas || null}
+            onClick={() => setKpiDetail({ type: "visitas_realizadas", label: "Visitas Realizadas" })}
           />
           <KpiCard
             icon={TrendingDown}
@@ -519,6 +522,7 @@ export default function CeoDashboard() {
             value={negocioFases.reduce((a, f) => a + f.count, 0)}
             iconColor="text-blue-600"
             ceoMeta={null}
+            onClick={() => setKpiDetail({ type: "negocios", label: "Nº Negócios" })}
           />
           <KpiCard
             icon={FileText}
@@ -527,6 +531,7 @@ export default function CeoDashboard() {
             prev={prevKpis?.propostas}
             iconColor="text-amber-600"
             ceoMeta={ceoMetasConsolidadas.meta_propostas || null}
+            onClick={() => setKpiDetail({ type: "propostas", label: "Propostas" })}
           />
           <KpiCard
             icon={FileText}
@@ -534,6 +539,7 @@ export default function CeoDashboard() {
             value={negocioFases.filter(f => f.fase === "negociacao").reduce((a, f) => a + f.count, 0)}
             iconColor="text-orange-600"
             ceoMeta={null}
+            onClick={() => setKpiDetail({ type: "negociacao", label: "Negociação" })}
           />
           <KpiCard
             icon={FileText}
@@ -541,6 +547,7 @@ export default function CeoDashboard() {
             value={negocioFases.filter(f => f.fase === "documentacao" || f.fase === "contrato").reduce((a, f) => a + f.count, 0)}
             iconColor="text-purple-600"
             ceoMeta={ceoMetasConsolidadas.meta_contratos || null}
+            onClick={() => setKpiDetail({ type: "contratos", label: "Contratos Gerados" })}
           />
           <KpiCard
             icon={Trophy}
@@ -548,6 +555,7 @@ export default function CeoDashboard() {
             value={negocioFases.filter(f => f.fase === "assinado" || f.fase === "vendido").reduce((a, f) => a + f.count, 0)}
             iconColor="text-emerald-600"
             ceoMeta={ceoMetasConsolidadas.meta_assinados || null}
+            onClick={() => setKpiDetail({ type: "assinados", label: "Assinados" })}
           />
           <KpiCard
             icon={DollarSign}
@@ -558,6 +566,7 @@ export default function CeoDashboard() {
             iconColor="text-emerald-600"
             ceoMeta={ceoMetasConsolidadas.meta_vgv_assinado || null}
             metaType="currency"
+            onClick={() => setKpiDetail({ type: "vgv_assinado", label: "VGV Assinado" })}
           />
         </div>
       </div>
@@ -577,6 +586,7 @@ export default function CeoDashboard() {
             displayValue={`${presentesHoje} corretores`}
             iconColor="text-emerald-600"
             ceoMeta={null}
+            onClick={() => setKpiDetail({ type: "presentes_hoje", label: "Presentes Hoje" })}
           />
           <KpiCard
             icon={Target}
@@ -592,6 +602,7 @@ export default function CeoDashboard() {
             prev={prevKpis?.ligacoes}
             iconColor="text-blue-600"
             ceoMeta={ceoMetasConsolidadas.meta_ligacoes || null}
+            onClick={() => setKpiDetail({ type: "tentativas", label: "Nº Tentativas" })}
           />
           <KpiCard
             icon={ThumbsUp}
@@ -601,6 +612,7 @@ export default function CeoDashboard() {
             prev={prevKpis?.aproveitados}
             iconColor="text-emerald-600"
             ceoMeta={ceoMetasConsolidadas.meta_aproveitados || null}
+            onClick={() => setKpiDetail({ type: "aproveitados", label: "Aproveitados" })}
           />
         </div>
       </div>
@@ -1007,6 +1019,15 @@ export default function CeoDashboard() {
         open={dispatchOpen}
         onOpenChange={setDispatchOpen}
         onDispatched={() => { reload(); loadFilaCeo(); }}
+      />
+
+      {/* KPI Detail Dialog */}
+      <KpiDetailDialog
+        open={!!kpiDetail}
+        onOpenChange={(o) => { if (!o) setKpiDetail(null); }}
+        type={kpiDetail?.type || "total_leads"}
+        label={kpiDetail?.label || ""}
+        dateRange={{ start: range.start, end: range.end }}
       />
     </div>
   );
