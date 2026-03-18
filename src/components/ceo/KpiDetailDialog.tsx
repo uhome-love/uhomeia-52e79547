@@ -57,6 +57,7 @@ export default function KpiDetailDialog({ open, onOpenChange, type, label, dateR
     if (!open) return;
     setLoading(true);
     fetchData().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, type, dateRange.start, dateRange.end]);
 
   async function fetchData() {
@@ -72,17 +73,20 @@ export default function KpiDetailDialog({ open, onOpenChange, type, label, dateR
         .order("created_at", { ascending: false })
         .limit(200);
       setRows((data || []).map(l => ({
-        id: l.id, nome: l.nome || "Sem nome", sub: l.empreendimento || l.origem || "",
-        date: l.created_at, leadId: l.id,
+        id: l.id, nome: l.nome || "Sem nome",
+        sub: l.empreendimento || "",
+        date: l.created_at,
+        leadId: l.id,
         extra: l.origem || "",
       })));
+
     } else if (type === "visitas_marcadas" || type === "visitas_realizadas") {
       const statusFilter = type === "visitas_marcadas"
         ? ["marcada", "confirmada", "realizada", "reagendada"]
         : ["realizada"];
       const { data } = await supabase
         .from("visitas")
-        .select("id, nome_cliente, empreendimento, data_visita, status, corretor_nome, pipeline_lead_id")
+        .select("id, nome_cliente, empreendimento, data_visita, status, pipeline_lead_id")
         .in("status", statusFilter)
         .gte("data_visita", start)
         .lte("data_visita", end)
@@ -90,16 +94,17 @@ export default function KpiDetailDialog({ open, onOpenChange, type, label, dateR
         .limit(200);
       setRows((data || []).map(v => ({
         id: v.id, nome: v.nome_cliente || "Sem nome",
-        sub: [v.empreendimento, v.corretor_nome].filter(Boolean).join(" · "),
+        sub: v.empreendimento || "",
         date: v.data_visita + "T12:00:00",
         leadId: v.pipeline_lead_id || undefined,
         extra: v.status,
       })));
+
     } else if (["negocios", "propostas", "negociacao", "contratos", "assinados", "vgv_assinado"].includes(type)) {
       const fases = NEGOCIO_FASES[type];
       let q = supabase
         .from("negocios")
-        .select("id, titulo, fase, vgv_estimado, vgv_final, corretor_nome, pipeline_lead_id, created_at")
+        .select("id, nome_cliente, fase, vgv_estimado, vgv_final, empreendimento, pipeline_lead_id, created_at")
         .gte("created_at", start)
         .lte("created_at", end + "T23:59:59")
         .order("created_at", { ascending: false })
@@ -109,47 +114,37 @@ export default function KpiDetailDialog({ open, onOpenChange, type, label, dateR
       }
       const { data } = await q;
       setRows((data || []).map(n => ({
-        id: n.id, nome: n.titulo || "Negócio",
-        sub: [n.corretor_nome, n.fase].filter(Boolean).join(" · "),
-        date: n.created_at,
+        id: n.id, nome: n.nome_cliente || "Negócio",
+        sub: n.empreendimento || "",
+        date: n.created_at || undefined,
         leadId: n.pipeline_lead_id || undefined,
-        extra: type === "vgv_assinado" ? formatBRLCompact(n.vgv_final || n.vgv_estimado || 0) : n.fase,
+        extra: type === "vgv_assinado" ? formatBRLCompact(n.vgv_final || n.vgv_estimado || 0) : (n.fase || ""),
       })));
-    } else if (type === "tentativas") {
-      const { data } = await supabase
-        .from("oferta_ativa_ligacoes")
-        .select("id, created_at, resultado, observacoes")
+
+    } else if (type === "tentativas" || type === "aproveitados") {
+      let q = supabase
+        .from("oferta_ativa_tentativas")
+        .select("id, created_at, resultado, feedback, empreendimento")
         .gte("created_at", start)
         .lte("created_at", end + "T23:59:59")
         .order("created_at", { ascending: false })
         .limit(200);
+      if (type === "aproveitados") {
+        q = q.eq("resultado", "aproveitado");
+      }
+      const { data } = await q;
       setRows((data || []).map(l => ({
-        id: l.id, nome: l.resultado || "Ligação",
-        sub: l.observacoes?.slice(0, 60) || "",
+        id: l.id, nome: type === "aproveitados" ? "Aproveitado" : (l.resultado || "Ligação"),
+        sub: l.empreendimento || l.feedback?.slice(0, 60) || "",
         date: l.created_at,
         extra: l.resultado || "",
       })));
-    } else if (type === "aproveitados") {
-      const { data } = await supabase
-        .from("oferta_ativa_ligacoes")
-        .select("id, created_at, resultado, observacoes")
-        .eq("resultado", "aproveitado")
-        .gte("created_at", start)
-        .lte("created_at", end + "T23:59:59")
-        .order("created_at", { ascending: false })
-        .limit(200);
-      setRows((data || []).map(l => ({
-        id: l.id, nome: "Aproveitado",
-        sub: l.observacoes?.slice(0, 60) || "",
-        date: l.created_at,
-      })));
+
     } else if (type === "presentes_hoje") {
-      const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
       const { data } = await supabase
         .from("corretor_disponibilidade")
         .select("id, user_id, status, entrada_em")
         .eq("na_roleta", true);
-      // Get profile names
       const userIds = (data || []).map(d => d.user_id);
       let profileMap: Record<string, string> = {};
       if (userIds.length > 0) {
