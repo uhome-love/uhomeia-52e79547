@@ -39,6 +39,7 @@ export function buildFilterBy(filters: {
   uhomeOnly?: boolean;
   construtora?: string | string[];
   empreendimento?: string | string[];
+  situacao?: string | string[];
 }): string {
   const parts: string[] = [];
 
