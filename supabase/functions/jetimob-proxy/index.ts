@@ -198,30 +198,34 @@ serve(async (req) => {
     const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
     if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY is not configured");
 
-    // ═══ Debug action — no auth required ═══
+    // ═══ Debug action — fetch 1 page directly, no auth ═══
     if (action === "debug_raw_fields") {
-      const catalogItems = await fetchJetimobCatalog(JETIMOB_API_KEY);
-      const sample = catalogItems.find(it => String(it.codigo || "").includes("-UH") && it.empreendimento_nome) || catalogItems[0];
+      const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=1&pageSize=5`;
+      const resp = await fetch(url, { headers: { Accept: "application/json" } });
+      const raw = await resp.json();
+      const items = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.result) ? raw.result : Array.isArray(raw) ? raw : [];
+      const sample = items.find((it: any) => String(it.codigo || "").includes("-UH")) || items[0];
       
       const allKeys = new Set<string>();
-      for (const item of catalogItems.slice(0, 200)) {
+      for (const item of items) {
         for (const key of Object.keys(item)) allKeys.add(key);
       }
       
       const sampleFields: Record<string, any> = {};
-      for (const key of [...allKeys].sort()) {
-        const val = sample?.[key];
-        if (Array.isArray(val)) {
-          sampleFields[key] = `[Array: ${val.length} items]${val.length > 0 ? ` first: ${JSON.stringify(val[0]).slice(0,200)}` : ""}`;
-        } else if (typeof val === "object" && val !== null) {
-          sampleFields[key] = `{Object: keys=[${Object.keys(val).join(",")}]}`;
-        } else {
-          sampleFields[key] = val;
+      if (sample) {
+        for (const key of [...allKeys].sort()) {
+          const val = sample[key];
+          if (Array.isArray(val)) {
+            sampleFields[key] = `[Array: ${val.length} items]${val.length > 0 ? ` first: ${JSON.stringify(val[0]).slice(0,300)}` : ""}`;
+          } else if (typeof val === "object" && val !== null) {
+            sampleFields[key] = val;
+          } else {
+            sampleFields[key] = val;
+          }
         }
       }
       
       return new Response(JSON.stringify({
-        total_items: catalogItems.length,
         total_unique_keys: allKeys.size,
         all_keys: [...allKeys].sort(),
         sample_codigo: sample?.codigo,
