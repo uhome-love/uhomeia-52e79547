@@ -16,7 +16,7 @@ import {
   LayoutGrid, List, Heart, Zap,
   Sparkles, Brain, ArrowRight, Map, MessageCircle
 } from "lucide-react";
-import PropertyMap from "@/components/imoveis/PropertyMap";
+import PropertyMap, { MapBounds } from "@/components/imoveis/PropertyMap";
 import PropertyPreviewDrawer from "@/components/imoveis/PropertyPreviewDrawer";
 import FilterChip from "@/components/imoveis/FilterChip";
 import { toast } from "sonner";
@@ -64,6 +64,7 @@ export default function ImoveisPage() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [searchMode, setSearchMode] = useState<"normal" | "ai">("normal");
   const [aiQuery, setAiQuery] = useState("");
+  const [geoRadius, setGeoRadius] = useState<{ lat: number; lng: number; radiusKm: number } | undefined>();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Vitrine selection
@@ -88,6 +89,7 @@ export default function ImoveisPage() {
       search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas,
       areaRange, valorRange, somenteObras, uhomeOnly, campanhaAtiva, sortBy,
       construtora, empreendimento, situacao,
+      geoRadius: viewMode === "map" ? geoRadius : undefined,
     },
     filterKey,
     setSearch,
@@ -97,6 +99,21 @@ export default function ImoveisPage() {
     showFavoritesOnly,
     favorites,
   });
+
+  // ── Map bounds → geo-radius ──
+  const mapSearchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
+    const lat = (bounds.north + bounds.south) / 2;
+    const lng = (bounds.east + bounds.west) / 2;
+    const dLat = ((bounds.north - bounds.south) / 2) * 111.32;
+    const dLng = ((bounds.east - bounds.west) / 2) * 111.32 * Math.cos(lat * Math.PI / 180);
+    const radiusKm = Math.max(0.5, Math.sqrt(dLat * dLat + dLng * dLng));
+    setGeoRadius({ lat, lng, radiusKm: Math.round(radiusKm * 10) / 10 });
+    if (mapSearchDebounce.current) clearTimeout(mapSearchDebounce.current);
+    mapSearchDebounce.current = setTimeout(() => {
+      fetchRef.current(1);
+    }, 600);
+  }, [fetchRef]);
 
   // ── Lead adherence scoring (when lead context + profile exists) ──
   const scorePropertyForLead = useCallback((item: any): number => {
@@ -692,6 +709,7 @@ export default function ImoveisPage() {
               <PropertyMap
                 properties={displayImoveis}
                 loading={loading}
+                onBoundsChange={handleMapBoundsChange}
                 onFavorite={toggleFavorite}
                 favorites={favorites}
                 getPreco={getPreco}

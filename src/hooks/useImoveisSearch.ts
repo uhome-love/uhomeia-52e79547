@@ -74,6 +74,7 @@ interface UseImoveisSearchParams {
     construtora: string[];
     empreendimento: string[];
     situacao: string[];
+    geoRadius?: { lat: number; lng: number; radiusKm: number };
   };
   /** Serialized filter key for change-detection */
   filterKey: string;
@@ -180,13 +181,14 @@ export function useImoveisSearch({
         construtora: filters.construtora,
         empreendimento: filters.empreendimento,
         situacao: filters.situacao,
+        geoRadius: filters.geoRadius,
       });
       const sortByStr = filters.search ? "" : buildSortBy(filters.sortBy, filters.contrato);
 
       const result = await typesenseSearch({
         q: filters.search || "*",
         page: pageNum,
-        per_page: 24,
+        per_page: filters.geoRadius ? 250 : 24,
         filter_by: filterBy || undefined,
         sort_by: sortByStr || undefined,
       });
@@ -206,7 +208,7 @@ export function useImoveisSearch({
       console.error("Typesense fetch error:", err);
       return "error";
     }
-  }, [filters.search, filters.contrato, filters.tipo, filters.bairro, filters.dormitorios, filters.suitesFilter, filters.vagas, filters.areaRange, filters.valorRange, filters.somenteObras, filters.uhomeOnly, filters.sortBy, typesenseSearch]);
+  }, [filters.search, filters.contrato, filters.tipo, filters.bairro, filters.dormitorios, filters.suitesFilter, filters.vagas, filters.areaRange, filters.valorRange, filters.somenteObras, filters.uhomeOnly, filters.sortBy, filters.geoRadius, typesenseSearch]);
 
   // ── Jetimob fallback ──
   const fetchViaJetimob = useCallback(async (pageNum: number, campanha = filters.campanhaAtiva, uhome = filters.uhomeOnly) => {
