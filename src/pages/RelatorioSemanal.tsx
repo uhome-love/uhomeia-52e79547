@@ -77,6 +77,9 @@ export default function RelatorioSemanal() {
     end: format(period.end, "yyyy-MM-dd"),
   }), [period.start, period.end]);
 
+  // Team filter (CEO only)
+  const [selectedTeam, setSelectedTeam] = useState<string>("all");
+
   // Ranking sort state
   const [sortKey, setSortKey] = useState<SortKey>("vgv");
   const [sortAsc, setSortAsc] = useState(false);
