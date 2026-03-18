@@ -252,6 +252,65 @@ export default function RelatorioSemanal() {
           </div>
         )}
 
+        {/* ═══ BLOCO 2.5 — Visão por Equipe (tabela comparativa) ═══ */}
+        {!isLoading && data?.teams && data.teams.length > 0 && scope !== "corretor" && (
+          <div className="bg-background border border-border rounded-xl shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-border">
+              <h3 className="text-sm font-semibold text-foreground">👥 Visão por Equipe</h3>
+              <p className="text-[10px] text-muted-foreground">Comparativo consolidado entre equipes</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Equipe</th>
+                    <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Corretores</th>
+                    <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Presenças</th>
+                    <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Ligações</th>
+                    <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Leads</th>
+                    <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Vis.Marc.</th>
+                    <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Vis.Real.</th>
+                    <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Neg.Cri.</th>
+                    <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Assinados</th>
+                    <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">VGV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.teams.map((team, i) => (
+                    <tr key={team.equipe} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${i % 2 !== 0 ? "bg-muted/5" : ""}`}>
+                      <td className="px-3 py-2.5">
+                        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${team.color}`}>{team.equipe}</span>
+                      </td>
+                      <td className="text-center px-2 py-2.5 font-medium">{team.corretores.length}</td>
+                      <td className="text-center px-2 py-2.5 font-semibold">{team.totals.presencas}</td>
+                      <td className="text-center px-2 py-2.5 font-semibold">{team.totals.ligacoes}</td>
+                      <td className="text-center px-2 py-2.5 font-semibold">{team.totals.leads}</td>
+                      <td className="text-center px-2 py-2.5 font-semibold">{team.totals.visitasMarcadas}</td>
+                      <td className="text-center px-2 py-2.5 font-semibold">{team.totals.visitasRealizadas}</td>
+                      <td className="text-center px-2 py-2.5 font-semibold">{team.totals.negociosCriados}</td>
+                      <td className="text-center px-2 py-2.5 font-semibold">{team.totals.negociosAssinados}</td>
+                      <td className="text-right px-3 py-2.5 font-bold text-emerald-600">{formatBRLCompact(team.totals.vgv)}</td>
+                    </tr>
+                  ))}
+                  {/* Total row */}
+                  <tr className="border-t-2 border-border bg-muted/30 font-bold">
+                    <td className="px-3 py-2.5 text-foreground">Total</td>
+                    <td className="text-center px-2 py-2.5">{data.teams.reduce((s, t) => s + t.corretores.length, 0)}</td>
+                    <td className="text-center px-2 py-2.5">{data.teams.reduce((s, t) => s + t.totals.presencas, 0)}</td>
+                    <td className="text-center px-2 py-2.5">{data.teams.reduce((s, t) => s + t.totals.ligacoes, 0)}</td>
+                    <td className="text-center px-2 py-2.5">{data.teams.reduce((s, t) => s + t.totals.leads, 0)}</td>
+                    <td className="text-center px-2 py-2.5">{data.teams.reduce((s, t) => s + t.totals.visitasMarcadas, 0)}</td>
+                    <td className="text-center px-2 py-2.5">{data.teams.reduce((s, t) => s + t.totals.visitasRealizadas, 0)}</td>
+                    <td className="text-center px-2 py-2.5">{data.teams.reduce((s, t) => s + t.totals.negociosCriados, 0)}</td>
+                    <td className="text-center px-2 py-2.5">{data.teams.reduce((s, t) => s + t.totals.negociosAssinados, 0)}</td>
+                    <td className="text-right px-3 py-2.5 text-emerald-600">{formatBRLCompact(data.teams.reduce((s, t) => s + t.totals.vgv, 0))}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* ═══ BLOCO 3 — Ranking de Corretores ═══ */}
         {!isLoading && sortedCorretores.length > 0 && (
           <div className="bg-background border border-border rounded-xl shadow-sm overflow-hidden">

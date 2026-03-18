@@ -247,9 +247,18 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       prevVisMarcQ = applyScope(prevVisMarcQ, "corretor_id");
       prevVisRealQ = applyScope(prevVisRealQ, "corretor_id");
 
-      // Negócios
-      let negQ = supabase.from("negocios").select("id, corretor_id, auth_user_id, vgv_estimado, vgv_final, fase, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
-      let prevNegQ = supabase.from("negocios").select("id, vgv_estimado, vgv_final, fase").gte("created_at", ps).lte("created_at", pe).limit(10000);
+      // Negócios criados (by created_at)
+      let negQ = supabase.from("negocios").select("id, corretor_id, auth_user_id, vgv_estimado, vgv_final, fase, created_at, data_assinatura").gte("created_at", s).lte("created_at", e).limit(10000);
+      let prevNegQ = supabase.from("negocios").select("id, vgv_estimado, vgv_final, fase, data_assinatura").gte("created_at", ps).lte("created_at", pe).limit(10000);
+
+      // Negócios assinados (by data_assinatura within period)
+      let negAssinadosQ = supabase.from("negocios").select("id, corretor_id, auth_user_id, vgv_estimado, vgv_final, fase, data_assinatura")
+        .in("fase", ["assinado", "vendido"])
+        .gte("data_assinatura", dStart).lte("data_assinatura", dEnd).limit(10000);
+      let prevNegAssinadosQ = supabase.from("negocios").select("id, vgv_estimado, vgv_final, fase, data_assinatura")
+        .in("fase", ["assinado", "vendido"])
+        .gte("data_assinatura", pdStart).lte("data_assinatura", pdEnd).limit(10000);
+
       // Negocios uses corretor_id (profile_id) and auth_user_id
       if (scopeProfileIds) {
         const orParts = [
@@ -259,6 +268,8 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         if (orParts.length > 0) {
           negQ = negQ.or(orParts.join(","));
           prevNegQ = prevNegQ.or(orParts.join(","));
+          negAssinadosQ = negAssinadosQ.or(orParts.join(","));
+          prevNegAssinadosQ = prevNegAssinadosQ.or(orParts.join(","));
         }
       }
 
@@ -275,6 +286,8 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         { count: prevVisRealCount },
         { data: negData },
         { data: prevNegData },
+        { data: negAssinadosData },
+        { data: prevNegAssinadosData },
       ] = await Promise.all([
         presQScoped,
         prevPresQScoped,
@@ -288,6 +301,8 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         prevVisRealQ,
         negQ,
         prevNegQ,
+        negAssinadosQ,
+        prevNegAssinadosQ,
       ]);
 
       // ── Calculate KPIs ──
@@ -310,16 +325,17 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       const negGerados = (negData || []).filter(n => 
         ["proposta", "negociacao", "documentacao", "assinado", "vendido"].includes(n.fase || "")
       ).length;
-      const negAssinados = (negData || []).filter(n => ["assinado", "vendido"].includes(n.fase || "")).length;
-      const vgvTotal = (negData || []).filter(n => ["assinado", "vendido"].includes(n.fase || ""))
+      // Assinados & VGV: use data_assinatura-based queries
+      const negAssinados = (negAssinadosData || []).length;
+      const vgvTotal = (negAssinadosData || [])
         .reduce((sum, n) => sum + Number(n.vgv_final || n.vgv_estimado || 0), 0);
 
       const prevNegCriados = (prevNegData || []).length;
       const prevNegGerados = (prevNegData || []).filter(n => 
         ["proposta", "negociacao", "documentacao", "assinado", "vendido"].includes(n.fase || "")
       ).length;
-      const prevNegAssinados = (prevNegData || []).filter(n => ["assinado", "vendido"].includes(n.fase || "")).length;
-      const prevVgv = (prevNegData || []).filter(n => ["assinado", "vendido"].includes(n.fase || ""))
+      const prevNegAssinados = (prevNegAssinadosData || []).length;
+      const prevVgv = (prevNegAssinadosData || [])
         .reduce((sum, n) => sum + Number(n.vgv_final || n.vgv_estimado || 0), 0);
 
       const kpis: ExecutiveKpis = {
@@ -379,8 +395,10 @@ export function useRelatorioExecutivo(period: PeriodRange) {
 
         const myNeg = (negData || []).filter(n => n.corretor_id === pid || n.auth_user_id === uid);
         const negociosCriados = myNeg.length;
-        const negociosAssinados = myNeg.filter(n => ["assinado", "vendido"].includes(n.fase || "")).length;
-        const vgv = myNeg.filter(n => ["assinado", "vendido"].includes(n.fase || ""))
+        // Assinados & VGV: use data_assinatura-based query results
+        const myNegAssinados = (negAssinadosData || []).filter(n => n.corretor_id === pid || n.auth_user_id === uid);
+        const negociosAssinados = myNegAssinados.length;
+        const vgv = myNegAssinados
           .reduce((s, n) => s + Number(n.vgv_final || n.vgv_estimado || 0), 0);
 
         const presencas = presPerProfile[pid]?.size || 0;
