@@ -586,6 +586,7 @@ export default function CeoDashboard() {
             displayValue={`${presentesHoje} corretores`}
             iconColor="text-emerald-600"
             ceoMeta={null}
+            onClick={() => setKpiDetail({ type: "presentes_hoje", label: "Presentes Hoje" })}
           />
           <KpiCard
             icon={Target}
