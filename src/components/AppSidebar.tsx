@@ -75,7 +75,7 @@ const homiMascot = "/images/homi-48.png";
 
 type NavItem = { title: string; url: string; icon: React.ComponentType<{ className?: string }> };
 
-const COLLAPSED_BY_DEFAULT = new Set(["Visão Geral", "Gestão de Leads", "Gestão de Vendas", "Performance", "Marketing", "Financeiro", "RH & Recepção", "Ferramentas", "Campanhas Comerciais"]);
+const COLLAPSED_BY_DEFAULT = new Set(["Principal", "Visão Geral", "Gestão de Leads", "Gestão de Vendas", "Performance", "Marketing", "Financeiro", "RH & Recepção", "Ferramentas", "Campanhas Comerciais"]);
 
 function SidebarNavGroup({ label, items, badges, collapsed, index }: {
   label: string;
@@ -307,10 +307,9 @@ export function AppSidebar() {
         topItem: { title: "Dashboard CEO", url: "/ceo", icon: Home },
         groups: [
           {
-            label: "Visão Geral",
+            label: "Principal",
             items: [
-              { title: "Relatório Semanal", url: "/relatorio-semanal", icon: FileBarChart },
-              { title: "Meu Time", url: "/meu-time", icon: Users },
+              { title: "Relatório Geral", url: "/relatorio-semanal", icon: FileBarChart },
               { title: "Checkpoint", url: "/central-do-gerente", icon: ClipboardCheck },
             ],
           },
@@ -363,6 +362,7 @@ export function AppSidebar() {
           {
             label: "Ferramentas",
             items: [
+              { title: "Meu Time", url: "/meu-time", icon: Users },
               { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
               { title: "Integração", url: "/integracao", icon: Zap },
@@ -383,7 +383,7 @@ export function AppSidebar() {
         topItem: { title: "Dashboard", url: "/gerente/dashboard", icon: Home },
         groups: [
           {
-            label: "Visão Geral",
+            label: "Principal",
             items: [
               { title: "Checkpoint", url: "/central-do-gerente", icon: ClipboardCheck },
             ],
