@@ -98,9 +98,9 @@ export function buildFilterBy(filters: {
   const situacoes = Array.isArray(filters.situacao) ? filters.situacao.filter(Boolean) : (filters.situacao ? [filters.situacao] : []);
   if (situacoes.length > 0) {
     if (situacoes.length === 1) {
-      parts.push(`status:=${situacoes[0]}`);
+      parts.push(`status:=\`${situacoes[0]}\``);
     } else {
-      parts.push(`status:[${situacoes.join(",")}]`);
+      parts.push(`status:[\`${situacoes.join("`,`")}\`]`);
     }
   }
   if (filters.uhomeOnly) {
