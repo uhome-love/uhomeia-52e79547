@@ -661,6 +661,9 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
           <TabsTrigger value="radar" className="text-xs h-6 flex-1 gap-1">
             <Radar className="h-3 w-3" /> Radar
           </TabsTrigger>
+          <TabsTrigger value="matches" className="text-xs h-6 flex-1 gap-1">
+            <Sparkles className="h-3 w-3" /> Matches
+          </TabsTrigger>
           <TabsTrigger value="perfil" className="text-xs h-6 flex-1 gap-1">
             <Home className="h-3 w-3" /> Perfil
             {savedProfile && <span className="text-[8px] text-emerald-500">●</span>}
