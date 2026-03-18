@@ -121,7 +121,7 @@ export default function RankingGeralTab({ period, dateRange }: { period: "hoje" 
   }, [isCorretor, user?.id]);
 
   // 1) OA data (Prospecção)
-  const oaPeriod = period === "trimestre" ? "mes" : period;
+  const oaPeriod = (period === "trimestre" || period === "personalizado") ? "mes" : period;
   const { ranking: oaRanking, isLoading: oaLoading } = useOARanking(oaPeriod as "hoje" | "semana" | "mes", dateRange);
 
   // 2) Gestão data
