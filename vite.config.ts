@@ -44,7 +44,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     dedupe: ['react', 'react-dom'],
     alias: {
-      "@/integrations/supabase/client": path.resolve(__dirname, "./src/lib/supabase-client-wrapper.ts"),
       "@": path.resolve(__dirname, "./src"),
     },
   },

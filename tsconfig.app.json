@@ -33,8 +33,6 @@
     "src"
   ],
   "exclude": [
-    "src/integrations/supabase/types.ts",
-    "src/integrations/supabase/client.ts",
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
     "src/**/*.spec.ts",
