@@ -74,6 +74,7 @@ interface UseImoveisSearchParams {
     construtora: string[];
     empreendimento: string[];
     situacao: string[];
+    cidade: string[];
   };
   /** Serialized filter key for change-detection */
   filterKey: string;
