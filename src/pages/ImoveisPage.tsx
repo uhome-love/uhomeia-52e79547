@@ -683,7 +683,7 @@ export default function ImoveisPage() {
           <div className="flex-1 h-[calc(100vh-120px)]">
             <ErrorBoundary fallback={<div className="flex items-center justify-center h-full text-muted-foreground text-sm">Erro ao carregar mapa</div>}>
               <PropertyMap
-                properties={sortedImoveis}
+                properties={displayImoveis}
                 loading={loading}
                 onFavorite={toggleFavorite}
                 favorites={favorites}
