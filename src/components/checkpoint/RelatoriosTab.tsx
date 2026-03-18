@@ -118,13 +118,16 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
     let vgvGerado = 0, vgvAssinado = 0, totalNegocios = 0, totalPropostas = 0;
     neg?.forEach(n => {
       totalNegocios++;
-      if (n.corretor_id) {
-        propMap[n.corretor_id] = (propMap[n.corretor_id] || 0) + 1;
-        if (n.fase === "assinado") vgvMap[n.corretor_id] = (vgvMap[n.corretor_id] || 0) + Number(n.vgv_final ?? 0);
+      const cId = n.corretor_id || n.auth_user_id;
+      if (cId && teamUserIds.includes(cId)) {
+        propMap[cId] = (propMap[cId] || 0) + 1;
+        if (n.fase === "assinado" || n.fase === "vendido") {
+          vgvMap[cId] = (vgvMap[cId] || 0) + Number(n.vgv_final || n.vgv_estimado || 0);
+        }
       }
       vgvGerado += Number(n.vgv_estimado ?? 0);
-      if (n.fase === "assinado") { vgvAssinado += Number(n.vgv_final ?? 0); }
-      if (["proposta", "negociacao", "documentacao", "assinado"].includes(n.fase || "")) totalPropostas++;
+      if (n.fase === "assinado" || n.fase === "vendido") { vgvAssinado += Number(n.vgv_final || n.vgv_estimado || 0); }
+      if (["proposta", "negociacao", "documentacao", "assinado", "vendido"].includes(n.fase || "")) totalPropostas++;
     });
 
     const totalLig = Object.values(ligMap).reduce((a, b) => a + b, 0);
