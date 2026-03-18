@@ -25,6 +25,7 @@ import BulkEmpreendimentoAssign from "@/components/ceo/BulkEmpreendimentoAssign"
 import { formatBRLCompact } from "@/lib/utils";
 import HomiBriefingCard from "@/components/ceo/HomiBriefingCard";
 import AiCallPanel from "@/components/ceo/AiCallPanel";
+import KpiDetailDialog, { type KpiDetailType } from "@/components/ceo/KpiDetailDialog";
 
 // ─── Greeting ───
 function getGreeting() {
