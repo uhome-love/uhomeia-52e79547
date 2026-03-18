@@ -222,7 +222,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       prevLigQ = applyScope(prevLigQ, "corretor_id");
 
       // Leads recebidos
-      let leadsQ = supabase.from("pipeline_leads").select("id, corretor_id, created_at").gte("created_at", s).lte("created_at", e);
+      let leadsQ = supabase.from("pipeline_leads").select("id, corretor_id, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
       let prevLeadsQ = supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
       leadsQ = applyScope(leadsQ, "corretor_id");
       prevLeadsQ = applyScope(prevLeadsQ, "corretor_id");
