@@ -612,6 +612,7 @@ export default function CeoDashboard() {
             prev={prevKpis?.aproveitados}
             iconColor="text-emerald-600"
             ceoMeta={ceoMetasConsolidadas.meta_aproveitados || null}
+            onClick={() => setKpiDetail({ type: "aproveitados", label: "Aproveitados" })}
           />
         </div>
       </div>
