@@ -547,6 +547,7 @@ export default function CeoDashboard() {
             value={negocioFases.filter(f => f.fase === "documentacao" || f.fase === "contrato").reduce((a, f) => a + f.count, 0)}
             iconColor="text-purple-600"
             ceoMeta={ceoMetasConsolidadas.meta_contratos || null}
+            onClick={() => setKpiDetail({ type: "contratos", label: "Contratos Gerados" })}
           />
           <KpiCard
             icon={Trophy}
