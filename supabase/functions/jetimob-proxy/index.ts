@@ -191,6 +191,47 @@ serve(async (req) => {
   }
 
   try {
+    const bodyText = await req.text();
+    const body = JSON.parse(bodyText || "{}");
+    const { action, codigo, broker_id } = body;
+
+    const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
+    if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY is not configured");
+
+    // ═══ Debug action — no auth required ═══
+    if (action === "debug_raw_fields") {
+      const catalogItems = await fetchJetimobCatalog(JETIMOB_API_KEY);
+      const sample = catalogItems.find(it => String(it.codigo || "").includes("-UH") && it.empreendimento_nome) || catalogItems[0];
+      
+      const allKeys = new Set<string>();
+      for (const item of catalogItems.slice(0, 200)) {
+        for (const key of Object.keys(item)) allKeys.add(key);
+      }
+      
+      const sampleFields: Record<string, any> = {};
+      for (const key of [...allKeys].sort()) {
+        const val = sample?.[key];
+        if (Array.isArray(val)) {
+          sampleFields[key] = `[Array: ${val.length} items]${val.length > 0 ? ` first: ${JSON.stringify(val[0]).slice(0,200)}` : ""}`;
+        } else if (typeof val === "object" && val !== null) {
+          sampleFields[key] = `{Object: keys=[${Object.keys(val).join(",")}]}`;
+        } else {
+          sampleFields[key] = val;
+        }
+      }
+      
+      return new Response(JSON.stringify({
+        total_items: catalogItems.length,
+        total_unique_keys: allKeys.size,
+        all_keys: [...allKeys].sort(),
+        sample_codigo: sample?.codigo,
+        sample_fields: sampleFields,
+      }, null, 2), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ═══ Auth required for all other actions ═══
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Não autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -203,12 +244,6 @@ serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Token inválido" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
-    if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY is not configured");
-
-    const body = await req.json();
-    const { action, codigo, broker_id } = body;
 
     // ═══════════════════════════════════════════
     // GET SINGLE IMOVEL
