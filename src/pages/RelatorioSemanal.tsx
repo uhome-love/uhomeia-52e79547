@@ -98,15 +98,49 @@ export default function RelatorioSemanal() {
     else { setSortKey(key); setSortAsc(false); }
   };
 
-  const sortedCorretores = useMemo(() => {
+  // Filter corretores by selected team
+  const filteredCorretores = useMemo(() => {
     if (!data?.corretores) return [];
-    return [...data.corretores].sort((a, b) => {
+    if (selectedTeam === "all") return data.corretores;
+    return data.corretores.filter(c => c.equipe === selectedTeam);
+  }, [data?.corretores, selectedTeam]);
+
+  const sortedCorretores = useMemo(() => {
+    return [...filteredCorretores].sort((a, b) => {
       const va = a[sortKey] ?? 0;
       const vb = b[sortKey] ?? 0;
       if (typeof va === "string") return sortAsc ? (va as string).localeCompare(vb as string) : (vb as string).localeCompare(va as string);
       return sortAsc ? (va as number) - (vb as number) : (vb as number) - (va as number);
     });
-  }, [data?.corretores, sortKey, sortAsc]);
+  }, [filteredCorretores, sortKey, sortAsc]);
+
+  // Filtered KPIs: recalculate from corretores when a team is selected
+  const filteredKpis = useMemo(() => {
+    if (!data?.kpis) return data?.kpis;
+    if (selectedTeam === "all") return data.kpis;
+    // Sum from filtered corretores
+    const cs = filteredCorretores;
+    const sumPresencas = cs.reduce((s, c) => s + c.presencas, 0);
+    const sumLigacoes = cs.reduce((s, c) => s + c.ligacoes, 0);
+    const sumLeads = cs.reduce((s, c) => s + c.leads, 0);
+    const sumVisMarcadas = cs.reduce((s, c) => s + c.visitasMarcadas, 0);
+    const sumVisRealizadas = cs.reduce((s, c) => s + c.visitasRealizadas, 0);
+    const sumNegCriados = cs.reduce((s, c) => s + c.negociosCriados, 0);
+    const sumNegAssinados = cs.reduce((s, c) => s + c.negociosAssinados, 0);
+    const sumVgv = cs.reduce((s, c) => s + c.vgv, 0);
+    const mk = (cur: number) => ({ current: cur, prev: 0, pctChange: 0 });
+    return {
+      ...data.kpis,
+      presencas: mk(sumPresencas),
+      ligacoes: mk(sumLigacoes),
+      leadsRecebidos: mk(sumLeads),
+      visitasMarcadas: mk(sumVisMarcadas),
+      visitasRealizadas: mk(sumVisRealizadas),
+      negociosCriados: mk(sumNegCriados),
+      negociosAssinados: mk(sumNegAssinados),
+      vgvTotal: { ...mk(sumVgv), currentRaw: sumVgv, prevRaw: 0 },
+    } as typeof data.kpis;
+  }, [data?.kpis, selectedTeam, filteredCorretores]);
 
   // Find top performer for each column
   const topPerformers = useMemo(() => {
