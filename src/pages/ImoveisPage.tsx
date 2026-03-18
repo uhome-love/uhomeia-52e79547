@@ -1044,6 +1044,55 @@ export default function ImoveisPage() {
           </div>
         </div>
       )}
+      {/* Lead Match floating counter */}
+      {leadMatch.hasMatch && leadMatch.matchedCodigos.size > 0 && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-primary text-primary-foreground rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
+            <Bookmark className="h-4 w-4 fill-current shrink-0" />
+            <span className="text-sm font-medium">
+              {leadMatch.matchedCodigos.size} imóve{leadMatch.matchedCodigos.size === 1 ? "l" : "is"} para {leadMatch.matchedLead!.nome}
+            </span>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="text-xs h-7 px-3"
+              onClick={() => setMatchConfirmOpen(true)}
+            >
+              Salvar Indicação
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Lead Search Modal */}
+      <LeadSearchModal
+        open={leadSearchOpen}
+        onOpenChange={setLeadSearchOpen}
+        onSelect={(lead) => {
+          leadMatch.selectLead(lead);
+          // Auto-populate filters from lead profile if available
+          if (lead.bairro_regiao) {
+            setBairro([lead.bairro_regiao]);
+          }
+        }}
+      />
+
+      {/* Match Confirm Modal */}
+      <MatchConfirmModal
+        open={matchConfirmOpen}
+        onOpenChange={setMatchConfirmOpen}
+        leadNome={leadMatch.matchedLead?.nome || ""}
+        imoveis={displayImoveis.filter(item => {
+          const id = String(item.codigo || item.id_imovel || item.id);
+          return leadMatch.matchedCodigos.has(id);
+        })}
+        getPreco={getPreco}
+        saving={leadMatch.saving}
+        onConfirm={async (obs) => {
+          const ok = await leadMatch.saveIndicacoes(obs);
+          if (ok) setMatchConfirmOpen(false);
+        }}
+      />
     </div>
   );
 }
