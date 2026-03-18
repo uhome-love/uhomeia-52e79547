@@ -102,7 +102,7 @@ function getNotaColor(nota: number): string {
   return "text-red-500";
 }
 
-export default function RankingGeralTab({ period, dateRange }: { period: "hoje" | "semana" | "mes" | "trimestre"; dateRange?: { start: string; end: string } }) {
+export default function RankingGeralTab({ period, dateRange }: { period: "hoje" | "semana" | "mes" | "trimestre" | "personalizado"; dateRange?: { start: string; end: string } }) {
   const { user } = useAuth();
   const { isCorretor } = useUserRole();
   const [corretorGerenteId, setCorretorGerenteId] = useState<string | undefined>();

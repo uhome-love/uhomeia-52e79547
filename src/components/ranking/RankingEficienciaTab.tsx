@@ -32,7 +32,7 @@ interface EficienciaEntry {
   score: number;
 }
 
-export default function RankingEficienciaTab({ period, dateRange }: { period: "hoje" | "semana" | "mes" | "trimestre"; dateRange?: { start: string; end: string } }) {
+export default function RankingEficienciaTab({ period, dateRange }: { period: "hoje" | "semana" | "mes" | "trimestre" | "personalizado"; dateRange?: { start: string; end: string } }) {
   const { user } = useAuth();
   const { isCorretor } = useUserRole();
   const [corretorGerenteId, setCorretorGerenteId] = useState<string | undefined>();
