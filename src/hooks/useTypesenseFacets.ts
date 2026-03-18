@@ -80,7 +80,7 @@ export function useTypesenseFacets() {
           body: {
             q: "*",
             per_page: 0,
-            facet_by: "bairro,tipo,construtora,empreendimento,status",
+            facet_by: "bairro,tipo,construtora,empreendimento,status,cidade",
             max_facet_values: 200,
           },
         });
