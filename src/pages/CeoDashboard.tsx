@@ -539,6 +539,7 @@ export default function CeoDashboard() {
             value={negocioFases.filter(f => f.fase === "negociacao").reduce((a, f) => a + f.count, 0)}
             iconColor="text-orange-600"
             ceoMeta={null}
+            onClick={() => setKpiDetail({ type: "negociacao", label: "Negociação" })}
           />
           <KpiCard
             icon={FileText}
