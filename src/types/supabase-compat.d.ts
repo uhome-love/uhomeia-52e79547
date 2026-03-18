@@ -1,9 +1,7 @@
 /**
- * Type compatibility augmentations.
- * Uses proper module augmentation (not replacement) to add missing types.
+ * Type compatibility augmentations for supabase-js auth client.
  */
 
-// Must be a module for augmentation to work
 export {};
 
 declare module "@supabase/supabase-js" {
@@ -26,17 +24,6 @@ declare module "@supabase/supabase-js" {
     token_type: string;
     user: User;
     [key: string]: any;
-  }
-
-  // Fix SupabaseAuthClient missing methods
-  interface SupabaseAuthClient {
-    getSession(): Promise<{ data: { session: Session | null }; error: any }>;
-    getUser(jwt?: string): Promise<{ data: { user: User | null }; error: any }>;
-    onAuthStateChange(callback: (event: string, session: Session | null) => void): { data: { subscription: { unsubscribe: () => void } } };
-    signUp(credentials: any): Promise<{ data: any; error: any }>;
-    signInWithPassword(credentials: any): Promise<{ data: any; error: any }>;
-    signOut(): Promise<{ error: any }>;
-    updateUser(attributes: any): Promise<{ data: any; error: any }>;
   }
 }
 
