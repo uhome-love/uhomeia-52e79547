@@ -142,8 +142,25 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
     return () => { if (urlWriteTimer.current) clearTimeout(urlWriteTimer.current); };
   }, [syncToUrl]);
 
-  // ── Derived: filteredBairros from dynamic facets ──
-  const allBairros = useMemo(() => bairroFacets || [], [bairroFacets]);
+  // ── Derived: filteredBairros from dynamic facets (city-aware) ──
+  const [cityBairros, setCityBairros] = useState<Facet[]>([]);
+  const cidadeKeyRef = useRef("");
+
+  useEffect(() => {
+    const key = cidade.sort().join("|");
+    if (key === cidadeKeyRef.current) return;
+    cidadeKeyRef.current = key;
+
+    if (fetchBairrosByCidade) {
+      fetchBairrosByCidade(cidade).then((result) => setCityBairros(result));
+    }
+  }, [cidade, fetchBairrosByCidade]);
+
+  const allBairros = useMemo(() => {
+    if (cityBairros.length > 0) return cityBairros;
+    return bairroFacets || [];
+  }, [cityBairros, bairroFacets]);
+
   const filteredBairros = useMemo(() => {
     if (!bairroSearch) return allBairros;
     const q = bairroSearch.toLowerCase();
