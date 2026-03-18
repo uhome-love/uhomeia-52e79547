@@ -83,16 +83,10 @@ export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, 
   const handleSelectTemplate = (template: string) => {
     const msg = replaceVars(template);
     
-    // Open WhatsApp FIRST (synchronous, in user-gesture context) to avoid popup blockers
-    if (leadTelefone) {
-      window.open(getWhatsAppUrl(leadTelefone), "_blank");
-    }
-    
-    // Then copy and register (async, non-blocking)
     navigator.clipboard.writeText(msg).then(() => {
       toast.success("Mensagem copiada! Cole no WhatsApp 📋");
     }).catch(() => {
-      toast.success("WhatsApp aberto!");
+      toast.info("Não foi possível copiar automaticamente");
     });
 
     if (user) {
@@ -145,10 +139,8 @@ export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, 
         },
       });
       if (data?.mensagem) {
-        // Open WhatsApp first to avoid popup blockers
-        if (leadTelefone) window.open(getWhatsAppUrl(leadTelefone), "_blank");
         navigator.clipboard.writeText(data.mensagem).catch(() => {});
-        toast.success("✨ Mensagem HOMI copiada!");
+        toast.success("✨ Mensagem HOMI copiada! Cole no WhatsApp 📋");
         onOpenChange(false);
       } else {
         toast.error("Erro ao gerar mensagem");
