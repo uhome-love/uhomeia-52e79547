@@ -794,6 +794,7 @@ export default function ImoveisPage() {
                       <SelectItem value="menor_preco">Menor preço</SelectItem>
                       <SelectItem value="maior_preco">Maior preço</SelectItem>
                       <SelectItem value="maior_area">Maior área</SelectItem>
+                      {hasLeadContext && <SelectItem value="aderencia">Aderência ao lead</SelectItem>}
                     </SelectContent>
                   </Select>
                   <div className="flex border border-border/60 rounded-lg overflow-hidden">
