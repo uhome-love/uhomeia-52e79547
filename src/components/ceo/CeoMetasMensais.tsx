@@ -37,15 +37,15 @@ export default function CeoMetasMensais() {
 
     // Get saved metas for this month
     const { data: metas } = await supabase.from("ceo_metas_mensais").select("*").eq("mes", mes).in("gerente_id", gerenteIds);
-    const metaMap = new Map((metas || []).map((m: any) => [m.gerente_id, m]));
+    const metaMap = new Map<string, any>((metas || []).map((m: any) => [m.gerente_id, m]));
 
     // Get real data from checkpoints for this month
     const start = format(startOfMonth(new Date(mes + "-01")), "yyyy-MM-dd");
     const end = format(endOfMonth(new Date(mes + "-01")), "yyyy-MM-dd");
 
     const { data: cps } = await supabase.from("checkpoints").select("id, gerente_id").gte("data", start).lte("data", end).in("gerente_id", gerenteIds);
-    const cpIds = (cps || []).map(c => c.id);
-    const cpGerenteMap = new Map((cps || []).map(c => [c.id, c.gerente_id]));
+    const cpIds = (cps || []).map((c: any) => c.id as string);
+    const cpGerenteMap = new Map<string, string>((cps || []).map((c: any) => [c.id, c.gerente_id]));
 
     // Visitas from checkpoint
     let visitasByGerente = new Map<string, { vmarc: number; vreal: number }>();
