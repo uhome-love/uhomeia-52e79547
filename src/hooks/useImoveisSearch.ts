@@ -208,7 +208,7 @@ export function useImoveisSearch({
       console.error("Typesense fetch error:", err);
       return "error";
     }
-  }, [filters.search, filters.contrato, filters.tipo, filters.bairro, filters.dormitorios, filters.suitesFilter, filters.vagas, filters.areaRange, filters.valorRange, filters.somenteObras, filters.uhomeOnly, filters.sortBy, typesenseSearch]);
+  }, [filters.search, filters.contrato, filters.tipo, filters.bairro, filters.dormitorios, filters.suitesFilter, filters.vagas, filters.areaRange, filters.valorRange, filters.somenteObras, filters.uhomeOnly, filters.sortBy, filters.geoRadius, typesenseSearch]);
 
   // ── Jetimob fallback ──
   const fetchViaJetimob = useCallback(async (pageNum: number, campanha = filters.campanhaAtiva, uhome = filters.uhomeOnly) => {
