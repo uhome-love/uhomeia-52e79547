@@ -172,12 +172,6 @@ export default function CeoDashboard() {
       });
   }, []);
 
-  // Build dashboard data for HOMI
-  const dashboardData = useMemo(() => ({
-    kpis, prevKpis, alertas, teams, campanhas, pipelineStages,
-    filaCeoCount, origens, leadsPorEmpreendimento, visitasPorEmp,
-    negocioFases, vgvEmRisco, topCorretoresVgv, period,
-  }), [kpis, prevKpis, alertas, teams, campanhas, pipelineStages, filaCeoCount, origens, leadsPorEmpreendimento, visitasPorEmp, negocioFases, vgvEmRisco, topCorretoresVgv, period]);
 
   const now = new Date();
   const weekNum = Math.ceil(now.getDate() / 7);
