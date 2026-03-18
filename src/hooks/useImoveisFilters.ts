@@ -194,6 +194,7 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
     setAreaRange([0, 500]); setValorRange([0, 5_000_000]); setSomenteObras(false);
     setSearch(""); setUhomeOnly(false); setCampanhaAtiva(false);
     setConstrutora([]); setEmpreendimento([]); setSituacao([]);
+    setCidade(["Porto Alegre"]); // Reset to default
   };
 
   // ── Serialized key for change-detection by search hook ──
