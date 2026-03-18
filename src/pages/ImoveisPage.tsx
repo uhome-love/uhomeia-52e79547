@@ -76,6 +76,11 @@ export default function ImoveisPage() {
   const [creatingVitrine, setCreatingVitrine] = useState(false);
   const [vitrineLink, setVitrineLink] = useState<string | null>(null);
 
+  // Lead Match
+  const leadMatch = useLeadMatch();
+  const [leadSearchOpen, setLeadSearchOpen] = useState(false);
+  const [matchConfirmOpen, setMatchConfirmOpen] = useState(false);
+
   // Preview drawer
   const [previewItem, setPreviewItem] = useState<any>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
