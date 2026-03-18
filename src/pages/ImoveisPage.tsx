@@ -39,17 +39,20 @@ export default function ImoveisPage() {
   const { leadId, leadNome, hasLeadContext, trackEvent } = useLeadContext();
 
   // ── Dynamic facets ──
-  const { bairroFacets, tipoFacets } = useTypesenseFacets();
+  const { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets } = useTypesenseFacets();
 
   // ── Filters ──
-  const filters = useImoveisFilters(bairroFacets, tipoFacets);
+  const filters = useImoveisFilters(bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets);
   const {
     contrato, tipo, setTipo, bairro, setBairro, bairroSearch, setBairroSearch,
     dormitorios, setDormitorios, suitesFilter, setSuitesFilter,
     vagas, setVagas, areaRange, setAreaRange, valorRange, setValorRange,
     somenteObras, setSomenteObras, campanhaAtiva, setCampanhaAtiva,
     uhomeOnly, setUhomeOnly, search, setSearch, sortBy, setSortBy,
-    filteredBairros, tipoOptions, activeFilters, clearAllFilters, filterKey,
+    construtora, setConstrutora, construtoraSearch, setConstrutoraSearch,
+    empreendimento, setEmpreendimento, empreendimentoSearch, setEmpreendimentoSearch,
+    filteredBairros, tipoOptions, filteredConstrutoras, filteredEmpreendimentos,
+    activeFilters, clearAllFilters, filterKey,
   } = filters;
 
   // ── UI state (local to page) ──
