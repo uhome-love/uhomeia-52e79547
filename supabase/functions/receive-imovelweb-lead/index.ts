@@ -44,8 +44,28 @@ function normalizePhone(phone: string | null | undefined): string | null {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 10) return null;
+  // Handle concatenated phones: if too long, take first valid phone (10-11 digits, optionally with 55 prefix)
+  if (digits.length > 13) {
+    // Try to extract first valid Brazilian phone (with or without country code)
+    const match = digits.match(/^(55)?(\d{10,11})/);
+    if (match) {
+      return match[2]; // return without country code
+    }
+    return null;
+  }
   if (digits.startsWith("55") && digits.length >= 12) return digits.slice(2);
   return digits;
+}
+
+/** Extract a second phone number from a concatenated string (e.g., "5199876123555199371479") */
+function extractSecondPhone(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length <= 13) return null; // Only one phone
+  // After first phone (10-13 digits), try to extract second
+  const firstLen = digits.startsWith("55") ? (digits.length >= 24 ? 13 : 12) : 11;
+  const rest = digits.slice(firstLen);
+  return normalizePhone(rest);
 }
 
 async function distributeWithRetry(
@@ -97,11 +117,22 @@ Deno.serve(async (req) => {
     // ── Parse fields ──
     const name = body.nome || body.name || "";
     const email = body.email || "";
-    const telefone1 = normalizePhone(body.telefone_1 || body.telefone || body.phone || "");
-    const telefone2 = normalizePhone(body.telefone_2 || "");
-    const mensagem = body.mensagem || body.message || "";
+    const rawTelefone1 = body.telefone_1 || body.telefone || body.phone || "";
+    const rawTelefone2 = body.telefone_2 || "";
+    
+    // Clean ImovelWeb boilerplate from message
+    let mensagem = body.mensagem || body.message || "";
+    mensagem = mensagem
+      .replace(/¡Após entrar em contato.*$/s, "")
+      .replace(/https:\/\/www\.imovelweb\.com\.br\/panel\/feedback\/\S*/g, "")
+      .trim();
+    
     const codigoAnuncio = body.codigo_anuncio || "";
     const codigoAnunciante = body.codigo_anunciante || "";
+
+    // Normalize phones — handle concatenated numbers
+    const telefone1 = normalizePhone(rawTelefone1);
+    const telefone2 = normalizePhone(rawTelefone2) || extractSecondPhone(rawTelefone1);
 
     // Use telefone_1 as primary
     const telefone = telefone1;
