@@ -100,6 +100,21 @@ export default function ImoveisPage() {
     favorites,
   });
 
+  // ── Map bounds → geo-radius ──
+  const mapSearchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
+    const lat = (bounds.north + bounds.south) / 2;
+    const lng = (bounds.east + bounds.west) / 2;
+    const dLat = ((bounds.north - bounds.south) / 2) * 111.32;
+    const dLng = ((bounds.east - bounds.west) / 2) * 111.32 * Math.cos(lat * Math.PI / 180);
+    const radiusKm = Math.max(0.5, Math.sqrt(dLat * dLat + dLng * dLng));
+    setGeoRadius({ lat, lng, radiusKm: Math.round(radiusKm * 10) / 10 });
+    if (mapSearchDebounce.current) clearTimeout(mapSearchDebounce.current);
+    mapSearchDebounce.current = setTimeout(() => {
+      fetchRef.current(1);
+    }, 600);
+  }, [fetchRef]);
+
   // ── Lead adherence scoring (when lead context + profile exists) ──
   const scorePropertyForLead = useCallback((item: any): number => {
     if (!leadProfile) return 0;
