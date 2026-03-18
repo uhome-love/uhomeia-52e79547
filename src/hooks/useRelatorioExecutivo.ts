@@ -207,7 +207,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       // Presences: roleta_credenciamentos with status approved or left
       const presQ = supabase.from("roleta_credenciamentos").select("corretor_id, data")
         .in("status", ["aprovado", "saiu"])
-        .gte("data", dStart).lte("data", dEnd);
+        .gte("data", dStart).lte("data", dEnd).limit(10000);
       const prevPresQ = supabase.from("roleta_credenciamentos").select("corretor_id")
         .in("status", ["aprovado", "saiu"])
         .gte("data", pdStart).lte("data", pdEnd);
