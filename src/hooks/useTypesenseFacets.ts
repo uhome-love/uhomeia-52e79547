@@ -2,13 +2,15 @@
  * useTypesenseFacets — fetches distinct facet values + counts from Typesense.
  *
  * Makes a single lightweight facet-only request on mount for multiple fields
- * (bairro, tipo, construtora, empreendimento, situacao). Returns sorted lists
+ * (bairro, tipo, construtora, empreendimento, situacao, cidade). Returns sorted lists
  * of { value, count } with hardcoded fallbacks on failure.
+ *
+ * Also supports city-filtered bairro facets via fetchBairrosByCidade().
  *
  * Cache: session-scoped module-level variables to avoid re-fetching on re-mounts.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Facet {
@@ -50,6 +52,7 @@ let cachedConstrutoras: Facet[] | null = null;
 let cachedEmpreendimentos: Facet[] | null = null;
 let cachedStatusImovel: Facet[] | null = null;
 let cachedCidades: Facet[] | null = null;
+const cachedBairrosByCidade: Record<string, Facet[]> = {};
 
 function parseFacetField(facetCounts: any[], fieldName: string): Facet[] {
   const fc = facetCounts.find((f: any) => f.field_name === fieldName);
@@ -115,7 +118,44 @@ export function useTypesenseFacets() {
     })();
   }, []);
 
-  return { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets, cidadeFacets, facetsLoading: loading };
+  /**
+   * Fetch bairro facets filtered by selected cities.
+   * Results are cached per city key.
+   */
+  const fetchBairrosByCidade = useCallback(async (cidades: string[]): Promise<Facet[]> => {
+    if (!cidades.length) return cachedBairros || BAIRROS_FALLBACK;
+    const cacheKey = cidades.sort().join("|");
+    if (cachedBairrosByCidade[cacheKey]) return cachedBairrosByCidade[cacheKey];
+
+    try {
+      const filterParts = cidades.length === 1
+        ? `cidade:=\`${cidades[0]}\``
+        : `cidade:[\`${cidades.join("`,`")}\`]`;
+
+      const { data, error } = await supabase.functions.invoke("typesense-search", {
+        body: {
+          q: "*",
+          per_page: 0,
+          facet_by: "bairro",
+          max_facet_values: 200,
+          filter_by: filterParts,
+        },
+      });
+
+      if (error || !data?.facet_counts) return cachedBairros || BAIRROS_FALLBACK;
+
+      const bairros = parseFacetField(data.facet_counts, "bairro");
+      if (bairros.length > 0) {
+        cachedBairrosByCidade[cacheKey] = bairros;
+        return bairros;
+      }
+    } catch {
+      // fallback
+    }
+    return cachedBairros || BAIRROS_FALLBACK;
+  }, []);
+
+  return { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets, cidadeFacets, fetchBairrosByCidade, facetsLoading: loading };
 }
 
 // Re-export Facet type as BairroFacet for backward compatibility
