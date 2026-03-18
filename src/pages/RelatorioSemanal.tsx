@@ -27,6 +27,7 @@ import {
   type CorretorRow,
   type TeamRow,
 } from "@/hooks/useRelatorioExecutivo";
+import ExecutiveKpiDetailDialog, { type ExecKpiType } from "@/components/relatorio/ExecutiveKpiDetailDialog";
 
 // ── KPI Card Config ──
 const KPI_CONFIG: { key: keyof ExecutiveKpis; label: string; icon: any; color: string; isCurrency?: boolean }[] = [
@@ -67,6 +68,13 @@ export default function RelatorioSemanal() {
   const reportRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
   const isMobile = useIsMobile();
+
+  // KPI detail dialog state
+  const [kpiDetail, setKpiDetail] = useState<{ type: ExecKpiType; label: string } | null>(null);
+  const kpiDateRange = useMemo(() => ({
+    start: format(period.start, "yyyy-MM-dd"),
+    end: format(period.end, "yyyy-MM-dd"),
+  }), [period.start, period.end]);
 
   // Ranking sort state
   const [sortKey, setSortKey] = useState<SortKey>("vgv");
@@ -187,7 +195,7 @@ export default function RelatorioSemanal() {
           {KPI_CONFIG.map(({ key, label, icon: Icon, color, isCurrency }) => {
             const val = data?.kpis?.[key];
             return (
-              <div key={key} className="bg-background border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div key={key} onClick={() => !isLoading && key !== "leadsAtivos" && setKpiDetail({ type: key, label })} className={`bg-background border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow ${key !== "leadsAtivos" ? "cursor-pointer" : ""}`}>
                 {isLoading ? (
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-20" />
@@ -495,6 +503,17 @@ export default function RelatorioSemanal() {
           </div>
         )}
       </div>
+
+      {/* KPI Detail Dialog */}
+      <ExecutiveKpiDetailDialog
+        open={!!kpiDetail}
+        onOpenChange={(o) => !o && setKpiDetail(null)}
+        type={kpiDetail?.type || "ligacoes"}
+        label={kpiDetail?.label || ""}
+        scopeUserIds={null}
+        scopeProfileIds={null}
+        dateRange={kpiDateRange}
+      />
     </div>
   );
 }
