@@ -66,6 +66,7 @@ export function useTypesenseFacets() {
   const [construtoraFacets, setConstrutoraFacets] = useState<Facet[]>(cachedConstrutoras || []);
   const [empreendimentoFacets, setEmpreendimentoFacets] = useState<Facet[]>(cachedEmpreendimentos || []);
   const [statusImovelFacets, setStatusImovelFacets] = useState<Facet[]>(cachedStatusImovel || []);
+  const [cidadeFacets, setCidadeFacets] = useState<Facet[]>(cachedCidades || [{ value: "Porto Alegre", count: 0 }]);
   const [loading, setLoading] = useState(!cachedBairros);
   const fetched = useRef(!!cachedBairros);
 
