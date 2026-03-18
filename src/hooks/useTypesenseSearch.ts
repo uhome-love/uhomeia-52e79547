@@ -40,6 +40,7 @@ export function buildFilterBy(filters: {
   construtora?: string | string[];
   empreendimento?: string | string[];
   situacao?: string | string[];
+  geoRadius?: { lat: number; lng: number; radiusKm: number };
 }): string {
   const parts: string[] = [];
 
