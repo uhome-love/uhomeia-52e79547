@@ -8,6 +8,7 @@ import { CalendarDays, List, AlertTriangle, History, BarChart3, MessageCircle, U
 import { Button } from "@/components/ui/button";
 import { useVisitas, STATUS_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import VisitasList from "@/components/visitas/VisitasList";
 import VisitasCalendar from "@/components/visitas/VisitasCalendar";
