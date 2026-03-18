@@ -168,15 +168,15 @@ export function useRelatorioExecutivo(period: PeriodRange) {
 
       if (scope === "admin") {
         const { data: tm } = await supabase
-          .from("team_members").select("id, nome, equipe, gerente_id, user_id, avatar_url")
+          .from("team_members").select("id, nome, equipe, gerente_id, user_id")
           .eq("status", "ativo");
-        teamMembersData = tm || [];
+        teamMembersData = (tm || []).map(m => ({ ...m, avatar_url: null }));
       } else if (scope === "gerente") {
         const { data: tm } = await supabase
-          .from("team_members").select("id, nome, equipe, gerente_id, user_id, avatar_url")
+          .from("team_members").select("id, nome, equipe, gerente_id, user_id")
           .eq("gerente_id", authUserId!)
           .eq("status", "ativo");
-        teamMembersData = tm || [];
+        teamMembersData = (tm || []).map(m => ({ ...m, avatar_url: null }));
         scopeUserIds = teamMembersData.map(m => m.user_id).filter(Boolean);
         // Resolve profile IDs for negocios
         if (scopeUserIds.length > 0) {
@@ -189,10 +189,10 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         scopeProfileIds = profileId ? [profileId] : [];
         // Get own team info
         const { data: tm } = await supabase
-          .from("team_members").select("id, nome, equipe, gerente_id, user_id, avatar_url")
+          .from("team_members").select("id, nome, equipe, gerente_id, user_id")
           .eq("user_id", authUserId!)
           .eq("status", "ativo");
-        teamMembersData = tm || [];
+        teamMembersData = (tm || []).map(m => ({ ...m, avatar_url: null }));
       }
 
       // Helper to apply scope filter
