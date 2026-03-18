@@ -40,7 +40,6 @@ export function buildFilterBy(filters: {
   construtora?: string | string[];
   empreendimento?: string | string[];
   situacao?: string | string[];
-  geoRadius?: { lat: number; lng: number; radiusKm: number };
 }): string {
   const parts: string[] = [];
 
@@ -122,12 +121,6 @@ export function buildFilterBy(filters: {
     parts.push(`empreendimento:=${empreendimentos[0]}`);
   } else if (empreendimentos.length > 1) {
     parts.push(`empreendimento:[${empreendimentos.join(",")}]`);
-  }
-
-  // Geo-radius filter (map search)
-  if (filters.geoRadius) {
-    const { lat, lng, radiusKm } = filters.geoRadius;
-    parts.push(`location:(${lat}, ${lng}, ${radiusKm} km)`);
   }
 
   return parts.join(" && ");
