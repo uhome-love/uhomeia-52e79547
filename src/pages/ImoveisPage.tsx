@@ -657,14 +657,14 @@ export default function ImoveisPage() {
                   </Card>
                 ))}
               </div>
-            ) : sortedImoveis.length === 0 ? (
+            ) : displayImoveis.length === 0 ? (
               <div className="text-center py-8">
                 <Search className="h-8 w-8 mx-auto text-muted-foreground/20 mb-2" />
                 <p className="text-sm font-medium text-foreground">Nenhum imóvel</p>
               </div>
             ) : (
               <div className="space-y-2">
-                {sortedImoveis.map((item, idx) => {
+                {displayImoveis.map((item, idx) => {
                   const isCampanha = campanhaOverrides.some((c) => c.codigo === item.codigo);
                   const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
                   return <PropertyCardList key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} getPreco={getPreco} onPreview={openPreview} />;
