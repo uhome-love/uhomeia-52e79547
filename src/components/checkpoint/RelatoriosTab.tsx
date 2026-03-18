@@ -53,6 +53,8 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
   const [periodo, setPeriodo] = useState<"hoje" | "semana" | "mes">("semana");
   const [relatorio, setRelatorio] = useState<RelatorioData | null>(null);
   const [activeSection, setActiveSection] = useState<"performance" | "conversao" | "ranking">("performance");
+  const [kpiDetail, setKpiDetail] = useState<{ type: ManagerKpiType; label: string } | null>(null);
+  const [activeSection, setActiveSection] = useState<"performance" | "conversao" | "ranking">("performance");
 
   const load = useCallback(async () => {
     if (!user || teamUserIds.length === 0) return;
