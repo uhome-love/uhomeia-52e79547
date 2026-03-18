@@ -210,7 +210,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         .gte("data", dStart).lte("data", dEnd).limit(10000);
       const prevPresQ = supabase.from("roleta_credenciamentos").select("corretor_id")
         .in("status", ["aprovado", "saiu"])
-        .gte("data", pdStart).lte("data", pdEnd);
+        .gte("data", pdStart).lte("data", pdEnd).limit(10000);
       // Scope by profile IDs for roleta
       const presQScoped = scopeProfileIds ? presQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : presQ;
       const prevPresQScoped = scopeProfileIds ? prevPresQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : prevPresQ;
