@@ -75,8 +75,8 @@ function formatMetaDisplay(value: number, type: "currency" | "number" | "percent
 }
 
 // ─── KPI Card ───
-function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor, ceoMeta, metaType = "number" }: {
-  icon: any; label: string; value: number; displayValue?: string; meta?: number; prev?: number; iconColor?: string; ceoMeta?: number | null; metaType?: "currency" | "number" | "percent";
+function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor, ceoMeta, metaType = "number", onClick }: {
+  icon: any; label: string; value: number; displayValue?: string; meta?: number; prev?: number; iconColor?: string; ceoMeta?: number | null; metaType?: "currency" | "number" | "percent"; onClick?: () => void;
 }) {
   const pct = meta && meta > 0 ? Math.min(Math.round((value / meta) * 100), 100) : null;
   const semaphore = getSemaphore(value, ceoMeta);
@@ -84,7 +84,7 @@ function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor
   const showNoMeta = ceoMeta !== undefined && (!ceoMeta || ceoMeta <= 0);
 
   return (
-    <Card className="relative">
+    <Card className={`relative ${onClick ? "cursor-pointer hover:shadow-md hover:border-primary/30 transition-all" : ""}`} onClick={onClick}>
       <CardContent className="pt-4 pb-3 px-4">
         {/* Semaphore dot — always show when ceoMeta is passed (even null = grey) */}
         {ceoMeta !== undefined && (
