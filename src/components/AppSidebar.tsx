@@ -383,7 +383,7 @@ export function AppSidebar() {
         topItem: { title: "Dashboard", url: "/gerente/dashboard", icon: Home },
         groups: [
           {
-            label: "Visão Geral",
+            label: "Principal",
             items: [
               { title: "Checkpoint", url: "/central-do-gerente", icon: ClipboardCheck },
             ],
