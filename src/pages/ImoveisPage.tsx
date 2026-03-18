@@ -862,7 +862,7 @@ export default function ImoveisPage() {
                     </Card>
                   ))}
                 </div>
-              ) : sortedImoveis.length === 0 ? (
+              ) : displayImoveis.length === 0 ? (
                 <EmptyState
                   title="Nenhum imóvel encontrado"
                   description="Tente ajustar seus filtros ou termo de busca."
@@ -872,10 +872,25 @@ export default function ImoveisPage() {
               ) : (
                 <>
                   <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
-                    {sortedImoveis.map((item, idx) => {
+                    {displayImoveis.map((item, idx) => {
                       const isCampanha = campanhaOverrides.some((c) => c.codigo === item.codigo);
                       const imovelId = String(item.codigo || item.id_imovel || item.id || idx);
-                      return <PropertyCardGrid key={item.id_imovel || item.codigo || idx} item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} getPreco={getPreco} onPreview={openPreview} />;
+                      return (
+                        <div key={item.id_imovel || item.codigo || idx} className="relative">
+                          {hasLeadContext && leadProfile && sortBy === "aderencia" && (() => {
+                            const score = scorePropertyForLead(item);
+                            return score > 0 ? (
+                              <div className={cn("absolute top-3 left-3 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm backdrop-blur-sm",
+                                score >= 80 ? "bg-emerald-500/90 text-white" : score >= 60 ? "bg-primary/90 text-primary-foreground" : score >= 40 ? "bg-amber-500/90 text-white" : "bg-muted/90 text-foreground"
+                              )}>
+                                <Sparkles className="h-2.5 w-2.5" />{score}%
+                              </div>
+                            ) : null;
+                          })()}
+                          <PropertyCardGrid item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} getPreco={getPreco} onPreview={openPreview} />
+                        </div>
+                      );
+                    })}
                     })}
                   </div>
                   {totalPages > 1 && !campanhaAtiva && (
