@@ -90,9 +90,9 @@ export default function VisitasEquipe() {
 
   // Build corretor color map
   const corretorColors = useMemo(() => {
-    const names = [...new Set(teamVisitas.map(v => v.corretor_nome))];
+    const names = [...new Set(teamVisitas.map(v => v.corretor_nome))] as string[];
     const map = new Map<string, string>();
-    names.forEach((n, i) => map.set(n, CORRETOR_COLORS[i % CORRETOR_COLORS.length]));
+    names.forEach((n: string, i: number) => map.set(n, CORRETOR_COLORS[i % CORRETOR_COLORS.length]));
     return map;
   }, [teamVisitas]);
 
