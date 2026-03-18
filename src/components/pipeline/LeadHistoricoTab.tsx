@@ -128,9 +128,13 @@ function buildTimeline(historico: PipelineHistorico[], atividades: PipelineAtivi
 
   for (const a of atividades) {
     const info = ATIVIDADE_TIPOS[a.tipo];
+    // For "entrada" activities (webhook ingestion), show full descricao with source details
+    const desc = a.tipo === "entrada" && a.descricao
+      ? a.descricao
+      : `${a.titulo} • ${a.status === "concluida" ? "✅" : "⏳"}`;
     items.push({
       title: info?.label || a.titulo,
-      description: `${a.titulo} • ${a.status === "concluida" ? "✅" : "⏳"}`,
+      description: desc,
       date: a.created_at,
       icon: info?.icon || PhoneCall,
       color: a.status === "concluida" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600",
@@ -346,7 +350,7 @@ export default function LeadHistoricoTab({ leadId, lead, stages, atividades, ano
               </div>
               <div className="pt-0.5">
                 <p className="text-sm font-medium text-foreground">{item.title}</p>
-                {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
+                {item.description && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{item.description}</p>}
                 <p className="text-xs text-muted-foreground/60">{formatDateSafe(item.date, "dd/MM 'às' HH:mm", { locale: ptBR, fallback: "Data inválida" })}</p>
               </div>
             </div>
