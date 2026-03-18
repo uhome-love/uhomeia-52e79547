@@ -33,12 +33,76 @@ interface PropertyMapProps {
 
 // ── Helpers ──
 
+const BAIRRO_COORDS: Record<string, [number, number]> = {
+  "Moinhos de Vento": [-30.0280, -51.2020],
+  "Auxiliadora": [-30.0220, -51.1980],
+  "Bela Vista": [-30.0380, -51.2080],
+  "Mont'Serrat": [-30.0300, -51.2100],
+  "Cristal": [-30.0750, -51.2150],
+  "Cidade Baixa": [-30.0420, -51.2200],
+  "Centro Histórico": [-30.0330, -51.2300],
+  "Centro": [-30.0330, -51.2300],
+  "Menino Deus": [-30.0520, -51.2180],
+  "Petrópolis": [-30.0200, -51.1900],
+  "Boa Vista": [-30.0150, -51.1850],
+  "Higienópolis": [-30.0250, -51.2050],
+  "Santana": [-30.0100, -51.1950],
+  "Independência": [-30.0270, -51.2100],
+  "Rio Branco": [-30.0300, -51.2060],
+  "Três Figueiras": [-30.0160, -51.1760],
+  "Chácara das Pedras": [-30.0180, -51.1680],
+  "Tristeza": [-30.1020, -51.2300],
+  "Ipanema": [-30.1180, -51.2300],
+  "Cavalhada": [-30.1010, -51.2080],
+  "Camaquã": [-30.0880, -51.2100],
+  "Jardim Botânico": [-30.0510, -51.1800],
+  "Passo d'Areia": [-30.0070, -51.1700],
+  "Partenon": [-30.0580, -51.1600],
+  "Vila Nova": [-30.0850, -51.1900],
+  "Floresta": [-30.0220, -51.2150],
+  "Bom Fim": [-30.0350, -51.2100],
+  "Farroupilha": [-30.0360, -51.2150],
+  "São Geraldo": [-30.0180, -51.2200],
+  "Navegantes": [-30.0100, -51.2150],
+  "Praia de Belas": [-30.0480, -51.2230],
+  "Nonoai": [-30.0800, -51.1950],
+  "Teresópolis": [-30.0700, -51.1830],
+  "Vila Jardim": [-30.0580, -51.1750],
+  "Humaitá": [-30.0050, -51.1950],
+  "Jardim do Salso": [-30.0600, -51.1700],
+  "Santa Cecília": [-30.0360, -51.1960],
+  "Santo Antônio": [-30.0310, -51.2040],
+  "Medianeira": [-30.0600, -51.1950],
+  "Vila Assunção": [-30.1100, -51.2250],
+  "Vila Conceição": [-30.0650, -51.2050],
+  "Vila Ipiranga": [-30.0450, -51.1600],
+  "Jardim Lindóia": [-30.0100, -51.1600],
+  "São João": [-30.0130, -51.1800],
+  "São José": [-30.0100, -51.1700],
+  "Hípica": [-30.1500, -51.2050],
+  "Ponta Grossa": [-30.1200, -51.2250],
+  "Belém Velho": [-30.1200, -51.1800],
+  "Espírito Santo": [-30.0980, -51.1700],
+  "Glória": [-30.0650, -51.1850],
+  "Jardim Planalto": [-30.0350, -51.1550],
+  "Jardim Europa": [-30.0200, -51.1600],
+  "Rubem Berta": [-29.9700, -51.1500],
+  "Sarandi": [-29.9900, -51.1300],
+  "Lomba do Pinheiro": [-30.0900, -51.1300],
+  "Restinga": [-30.1500, -51.1500],
+  "Lami": [-30.2500, -51.0800],
+};
+
 function getCoords(item: any): [number, number] | null {
   const lat = Number(item.latitude || item.lat || item.endereco_latitude);
   const lng = Number(item.longitude || item.lng || item.lon || item.endereco_longitude);
-  if (!lat || !lng || isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return null;
-  if (lat < -35 || lat > 5 || lng < -75 || lng > -30) return null;
-  return [lat, lng];
+  if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+    if (lat >= -35 && lat <= 5 && lng >= -75 && lng <= -30) return [lat, lng];
+  }
+  // Fallback: bairro-based approximate coords
+  const bairro = item.bairro || item.endereco_bairro;
+  if (bairro && BAIRRO_COORDS[bairro]) return BAIRRO_COORDS[bairro];
+  return null;
 }
 
 
