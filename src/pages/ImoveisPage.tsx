@@ -31,6 +31,9 @@ import { useImoveisSearch } from "@/hooks/useImoveisSearch";
 import { useTypesenseFacets } from "@/hooks/useTypesenseFacets";
 import { useLeadContext } from "@/hooks/useLeadContext";
 import { useLeadPropertyProfile } from "@/hooks/useLeadPropertyProfile";
+import { useLeadMatch } from "@/hooks/useLeadMatch";
+import LeadSearchModal from "@/components/imoveis/LeadSearchModal";
+import MatchConfirmModal from "@/components/imoveis/MatchConfirmModal";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
