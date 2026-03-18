@@ -94,15 +94,14 @@ export function buildFilterBy(filters: {
   if (filters.somenteObras) {
     parts.push(`em_obras:=true`);
   }
-  // Situação multi-select (pronto, em_obras, lancamento)
+  // Situação multi-select — maps to Typesense `status` field (Usado, Novo, Em construção, Na planta)
   const situacoes = Array.isArray(filters.situacao) ? filters.situacao.filter(Boolean) : (filters.situacao ? [filters.situacao] : []);
   if (situacoes.length > 0) {
-    // Map UI values to Typesense field values
-    const hasPronto = situacoes.includes("pronto");
-    const hasObras = situacoes.includes("em_obras") || situacoes.includes("lancamento");
-    if (hasPronto && !hasObras) parts.push(`em_obras:=false`);
-    else if (hasObras && !hasPronto) parts.push(`em_obras:=true`);
-    // If both, no filter needed
+    if (situacoes.length === 1) {
+      parts.push(`status:=${situacoes[0]}`);
+    } else {
+      parts.push(`status:[${situacoes.join(",")}]`);
+    }
   }
   if (filters.uhomeOnly) {
     parts.push(`is_uhome:=true`);

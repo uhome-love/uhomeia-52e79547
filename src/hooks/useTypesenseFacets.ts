@@ -64,7 +64,7 @@ export function useTypesenseFacets() {
   const [tipoFacets, setTipoFacets] = useState<Facet[]>(cachedTipos || TIPOS_FALLBACK);
   const [construtoraFacets, setConstrutoraFacets] = useState<Facet[]>(cachedConstrutoras || []);
   const [empreendimentoFacets, setEmpreendimentoFacets] = useState<Facet[]>(cachedEmpreendimentos || []);
-  const [situacaoFacets, setSituacaoFacets] = useState<Facet[]>(cachedSituacoes || []);
+  const [statusImovelFacets, setStatusImovelFacets] = useState<Facet[]>(cachedStatusImovel || []);
   const [loading, setLoading] = useState(!cachedBairros);
   const fetched = useRef(!!cachedBairros);
 
@@ -78,7 +78,7 @@ export function useTypesenseFacets() {
           body: {
             q: "*",
             per_page: 0,
-            facet_by: "bairro,tipo,construtora,empreendimento,situacao",
+            facet_by: "bairro,tipo,construtora,empreendimento,status",
             max_facet_values: 200,
           },
         });
@@ -100,8 +100,8 @@ export function useTypesenseFacets() {
         const empreendimentos = parseFacetField(data.facet_counts, "empreendimento");
         if (empreendimentos.length > 0) { cachedEmpreendimentos = empreendimentos; setEmpreendimentoFacets(empreendimentos); }
 
-        const situacoes = parseFacetField(data.facet_counts, "situacao");
-        if (situacoes.length > 0) { cachedSituacoes = situacoes; setSituacaoFacets(situacoes); }
+        const statusValues = parseFacetField(data.facet_counts, "status");
+        if (statusValues.length > 0) { cachedStatusImovel = statusValues; setStatusImovelFacets(statusValues); }
       } catch (err) {
         console.warn("Typesense facets fetch failed, using fallback:", err);
       } finally {
@@ -110,7 +110,7 @@ export function useTypesenseFacets() {
     })();
   }, []);
 
-  return { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, situacaoFacets, facetsLoading: loading };
+  return { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets, facetsLoading: loading };
 }
 
 // Re-export Facet type as BairroFacet for backward compatibility
