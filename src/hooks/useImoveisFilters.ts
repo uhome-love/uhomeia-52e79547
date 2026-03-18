@@ -209,6 +209,7 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
     construtoraSearch, setConstrutoraSearch,
     empreendimento, setEmpreendimento,
     empreendimentoSearch, setEmpreendimentoSearch,
+    situacao, setSituacao,
     // Derived
     filteredBairros,
     tipoOptions,
