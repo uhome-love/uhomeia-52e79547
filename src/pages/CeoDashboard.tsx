@@ -555,6 +555,7 @@ export default function CeoDashboard() {
             value={negocioFases.filter(f => f.fase === "assinado" || f.fase === "vendido").reduce((a, f) => a + f.count, 0)}
             iconColor="text-emerald-600"
             ceoMeta={ceoMetasConsolidadas.meta_assinados || null}
+            onClick={() => setKpiDetail({ type: "assinados", label: "Assinados" })}
           />
           <KpiCard
             icon={DollarSign}
