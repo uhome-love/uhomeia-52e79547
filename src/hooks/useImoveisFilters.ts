@@ -199,8 +199,8 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
 
   // ── Serialized key for change-detection by search hook ──
   const filterKey = useMemo(() =>
-    JSON.stringify({ search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao }),
-    [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao]
+    JSON.stringify({ search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao, cidade }),
+    [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao, cidade]
   );
 
   return {
