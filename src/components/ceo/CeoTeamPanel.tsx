@@ -127,7 +127,7 @@ export default function CeoTeamPanel() {
     }
 
     setAdminStaff(
-      adminResults.map(p => ({
+      (adminResults as any[]).map((p: any) => ({
         user_id: p.user_id,
         nome: p.nome || "Colaborador",
         avatar_url: p.avatar_url,

@@ -57,7 +57,7 @@ export default function CheckpointReports() {
       });
     }
 
-    for (const l of (lines || [])) {
+    for (const l of ((lines || []) as any[])) {
       const agg = aggMap.get(l.corretor_id);
       if (!agg) continue;
       agg.meta_ligacoes += l.meta_ligacoes ?? 0;

@@ -16,6 +16,6 @@ export async function getAuthAccessToken(): Promise<string | null> {
 }
 
 export async function getAuthUserId(): Promise<string | null> {
-  const result = await supabase.auth.getUser();
+  const result = await (supabase.auth as any).getUser();
   return (result as any)?.data?.user?.id ?? null;
 }
