@@ -4,10 +4,11 @@ import { format, isBefore, startOfDay, startOfWeek, startOfMonth, endOfWeek, end
 import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, List, AlertTriangle, History, BarChart3, MessageCircle } from "lucide-react";
+import { CalendarDays, List, AlertTriangle, History, BarChart3, MessageCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVisitas, STATUS_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import VisitasList from "@/components/visitas/VisitasList";
 import VisitasCalendar from "@/components/visitas/VisitasCalendar";
@@ -28,7 +29,7 @@ const FIXED_TEAMS = [
 ];
 
 // ─── Tab is the SINGLE SOURCE OF TRUTH for date range ───
-type AgendaTab = "semana-atual" | "semana-anterior" | "mes" | "calendario" | "alertas" | "performance";
+type AgendaTab = "semana-atual" | "semana-anterior" | "mes" | "calendario" | "alertas" | "performance" | "meu-time";
 
 function getDateRangeForTab(tab: AgendaTab): { from: string | null; to: string | null } {
   const today = startOfDay(new Date());
@@ -108,8 +109,10 @@ export default function AgendaVisitas() {
   // Broad query (no date filter) for calendar, alertas, performance, pending counts
   const { visitas: allVisitas, isLoading: isLoadingAll } = useVisitas();
 
-  // Split by tipo
-  const visitas = useMemo(() => tabVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo), [tabVisitas, agendaTipo]);
+  // Split by tipo — own visitas only for main tabs
+  const { user } = useAuth();
+  const visitas = useMemo(() => tabVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo && v.corretor_id === user?.id), [tabVisitas, agendaTipo, user?.id]);
+  const teamVisitas = useMemo(() => tabVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo && v.corretor_id !== user?.id), [tabVisitas, agendaTipo, user?.id]);
   const allVisitasByTipo = useMemo(() => allVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo), [allVisitas, agendaTipo]);
   const negocioCount = useMemo(() => allVisitas.filter(v => (v as any).tipo === "negocio").length, [allVisitas]);
   const leadCount = useMemo(() => allVisitas.filter(v => (v as any).tipo !== "negocio").length, [allVisitas]);
@@ -349,6 +352,10 @@ export default function AgendaVisitas() {
               <AlertTriangle className="h-3.5 w-3.5" /> Alertas <Badge variant="destructive" className="text-[10px] ml-0.5 px-1.5 py-0">{pendingVisitas.length}</Badge>
             </TabsTrigger>
           )}
+          <TabsTrigger value="meu-time" className="gap-1.5 text-xs h-8 px-3">
+            <Users className="h-3.5 w-3.5" /> Meu Time
+            {teamVisitas.length > 0 && <Badge variant="secondary" className="text-[10px] ml-0.5 px-1.5 py-0">{teamVisitas.length}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="performance" className="gap-1.5 text-xs h-8 px-3">
             <BarChart3 className="h-3.5 w-3.5" /> Performance
           </TabsTrigger>
@@ -387,6 +394,18 @@ export default function AgendaVisitas() {
         {/* ─── CALENDÁRIO ─── */}
         <TabsContent value="calendario" className="mt-3">
           <VisitasCalendar visitas={allVisitasFiltered} showTeam={isAdmin} />
+        </TabsContent>
+
+        {/* ─── MEU TIME ─── */}
+        <TabsContent value="meu-time" className="mt-3 space-y-3">
+          {tabDateLabel && <Badge variant="secondary" className="text-xs">{tabDateLabel}</Badge>}
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
+          ) : teamVisitas.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma visita do time neste período.</p>
+          ) : (
+            <VisitasList visitas={teamVisitas} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor showTeam={false} mode="all" />
+          )}
         </TabsContent>
 
         {/* ─── PERFORMANCE ─── */}
