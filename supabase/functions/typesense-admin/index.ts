@@ -49,6 +49,7 @@ const SCHEMA = {
     // Geo fields for map
     { name: "latitude", type: "float" as const, optional: true as const },
     { name: "longitude", type: "float" as const, optional: true as const },
+    { name: "location", type: "geopoint" as const, optional: true as const },
   ],
   default_sorting_field: "data_atualizacao",
   token_separators: ["-", "/"],
