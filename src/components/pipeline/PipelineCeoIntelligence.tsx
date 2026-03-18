@@ -83,7 +83,7 @@ export default function PipelineCeoIntelligence({ leads, stages, corretorNomes, 
     if (!user) return;
     setSending(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       if (!session?.access_token) { toast.error("Sessão expirada"); return; }
 
       // Group by corretor

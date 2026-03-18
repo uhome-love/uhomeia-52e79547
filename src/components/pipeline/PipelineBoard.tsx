@@ -506,7 +506,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
         }
 
         // Save history record before deleting
-        const { data: userData } = await supabase.auth.getUser();
+        const { data: userData } = await (supabase.auth as any).getUser();
         await supabase.from("pipeline_historico").insert({
           pipeline_lead_id: lead.id,
           stage_anterior_id: lead.stage_id,
@@ -558,7 +558,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     // Visita Marcada → create visita in agenda
     if (extra.criarVisita && extra.dataVisita) {
       try {
-        const userId = (await supabase.auth.getUser()).data?.user?.id;
+        const userId = (await (supabase.auth as any).getUser()).data?.user?.id;
         const { error: visitaError } = await supabase.from("visitas").insert({
           pipeline_lead_id: result.leadId,
           lead_nome: lead.nome,
@@ -581,7 +581,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
 
         // Create partnership if parceiro selected
         if (extra.parceiro) {
-          const userId = (await supabase.auth.getUser()).data?.user?.id;
+          const userId = (await (supabase.auth as any).getUser()).data?.user?.id;
           await supabase.from("pipeline_parcerias").insert({
             pipeline_lead_id: result.leadId,
             corretor_principal_id: lead.corretor_id || userId,

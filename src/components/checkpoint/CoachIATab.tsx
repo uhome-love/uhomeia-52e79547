@@ -83,7 +83,7 @@ Seja direto, use dados reais, sem enrolação.`;
       const context = await buildContext();
       if (!context) { setAnalysis("Sem dados para analisar."); setLoading(false); return; }
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/checkpoint-coach`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },

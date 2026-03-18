@@ -239,7 +239,7 @@ export default function CheckpointDaily() {
 
     // Get lines
     const { data: existingLines } = await supabase.from("checkpoint_lines").select("*").eq("checkpoint_id", cp.id);
-    const linesMap = new Map((existingLines || []).map((l: any) => [l.corretor_id, l]));
+    const linesMap = new Map(((existingLines || []) as any[]).map((l: any) => [l.corretor_id, l]));
 
     // Create lines for missing members
     const allLines: CheckpointLine[] = [];

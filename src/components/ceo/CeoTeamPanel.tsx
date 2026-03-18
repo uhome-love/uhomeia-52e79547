@@ -101,7 +101,7 @@ export default function CeoTeamPanel() {
       .from("profiles")
       .select("user_id, nome, avatar_url, avatar_gamificado_url, cargo")
       .in("user_id", allUserIds as string[]);
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+    const profileMap = new Map(((profiles || []) as any[]).map((p: any) => [p.user_id, p]));
 
     // 4. Load admin/marketing staff — broad search
     let adminResults: typeof profiles = [];
@@ -127,7 +127,7 @@ export default function CeoTeamPanel() {
     }
 
     setAdminStaff(
-      adminResults.map(p => ({
+      (adminResults as any[]).map((p: any) => ({
         user_id: p.user_id,
         nome: p.nome || "Colaborador",
         avatar_url: p.avatar_url,
