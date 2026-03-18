@@ -64,11 +64,33 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
     const inicioStr = format(inicio, "yyyy-MM-dd");
     const fimStr = format(hoje, "yyyy-MM-dd");
 
+    // Build queries with proper date filters
+    const tentQuery = supabase.from("oferta_ativa_tentativas")
+      .select("corretor_id, resultado")
+      .in("corretor_id", teamUserIds)
+      .gte("created_at", `${inicioStr}T00:00:00`)
+      .lte("created_at", `${fimStr}T23:59:59`);
+
+    const visQuery = supabase.from("visitas")
+      .select("corretor_id, status")
+      .in("corretor_id", teamUserIds)
+      .gte("data_visita", inicioStr)
+      .lte("data_visita", fimStr);
+
+    const negQuery = supabase.from("negocios")
+      .select("corretor_id, auth_user_id, vgv_estimado, vgv_final, fase, data_assinatura, created_at")
+      .or(teamUserIds.map(id => `corretor_id.eq.${id},auth_user_id.eq.${id}`).join(","))
+      .gte("created_at", `${inicioStr}T00:00:00`)
+      .lte("created_at", `${fimStr}T23:59:59`);
+
+    const pipelineQuery = supabase.from("pipeline_leads")
+      .select("corretor_id, stage_id")
+      .in("corretor_id", teamUserIds)
+      .gte("created_at", `${inicioStr}T00:00:00`)
+      .lte("created_at", `${fimStr}T23:59:59`);
+
     const [{ data: tent }, { data: vis }, { data: neg }, { data: pipelineLeads }] = await Promise.all([
-      supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado").in("corretor_id", teamUserIds).gte("created_at", `${inicioStr}T00:00:00`).lte("created_at", `${fimStr}T23:59:59`),
-      supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", inicioStr).lte("data_visita", fimStr),
-      supabase.from("negocios").select("corretor_id, vgv_estimado, vgv_final, fase").eq("gerente_id", user.id).gte("created_at", `${inicioStr}T00:00:00`).lte("created_at", `${fimStr}T23:59:59`),
-      supabase.from("pipeline_leads").select("corretor_id, stage_id").in("corretor_id", teamUserIds),
+      tentQuery, visQuery, negQuery, pipelineQuery,
     ]);
 
     // Load stage definitions
