@@ -126,7 +126,7 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
     for (const gId of gerenteIdsAll) {
       gerenteMap.set(gId, {
         gerente_id: gId,
-        gerente_nome: profileMap.get(gId) || "Gerente",
+        gerente_nome: profileMap.get(gId) as string || "Gerente",
         corretores: [],
         totals: { meta_ligacoes: 0, real_ligacoes: 0, meta_visitas_marcadas: 0, real_visitas_marcadas: 0, meta_visitas_realizadas: 0, real_visitas_realizadas: 0, meta_propostas: 0, real_propostas: 0, meta_vgv_gerado: 0, real_vgv_gerado: 0, meta_vgv_assinado: 0, real_vgv_assinado: 0, score: 0 },
       });
