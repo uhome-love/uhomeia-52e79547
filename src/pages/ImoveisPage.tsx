@@ -51,6 +51,7 @@ export default function ImoveisPage() {
     uhomeOnly, setUhomeOnly, search, setSearch, sortBy, setSortBy,
     construtora, setConstrutora, construtoraSearch, setConstrutoraSearch,
     empreendimento, setEmpreendimento, empreendimentoSearch, setEmpreendimentoSearch,
+    situacao, setSituacao,
     filteredBairros, tipoOptions, filteredConstrutoras, filteredEmpreendimentos,
     activeFilters, clearAllFilters, filterKey,
   } = filters;
