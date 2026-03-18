@@ -37,6 +37,8 @@ export function buildFilterBy(filters: {
   areaRange?: [number, number];
   somenteObras?: boolean;
   uhomeOnly?: boolean;
+  construtora?: string | string[];
+  empreendimento?: string | string[];
 }): string {
   const parts: string[] = [];
 
