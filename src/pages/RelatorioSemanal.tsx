@@ -195,7 +195,7 @@ export default function RelatorioSemanal() {
           {KPI_CONFIG.map(({ key, label, icon: Icon, color, isCurrency }) => {
             const val = data?.kpis?.[key];
             return (
-              <div key={key} className="bg-background border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div key={key} onClick={() => !isLoading && key !== "leadsAtivos" && setKpiDetail({ type: key, label })} className={`bg-background border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow ${key !== "leadsAtivos" ? "cursor-pointer" : ""}`}>
                 {isLoading ? (
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-20" />
