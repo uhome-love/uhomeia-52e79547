@@ -207,22 +207,22 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       // Presences: roleta_credenciamentos with status approved or left
       const presQ = supabase.from("roleta_credenciamentos").select("corretor_id, data")
         .in("status", ["aprovado", "saiu"])
-        .gte("data", dStart).lte("data", dEnd);
+        .gte("data", dStart).lte("data", dEnd).limit(10000);
       const prevPresQ = supabase.from("roleta_credenciamentos").select("corretor_id")
         .in("status", ["aprovado", "saiu"])
-        .gte("data", pdStart).lte("data", pdEnd);
+        .gte("data", pdStart).lte("data", pdEnd).limit(10000);
       // Scope by profile IDs for roleta
       const presQScoped = scopeProfileIds ? presQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : presQ;
       const prevPresQScoped = scopeProfileIds ? prevPresQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : prevPresQ;
 
       // Ligações (OA tentativas)
-      let ligQ = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e);
+      let ligQ = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
       let prevLigQ = supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
       ligQ = applyScope(ligQ, "corretor_id");
       prevLigQ = applyScope(prevLigQ, "corretor_id");
 
       // Leads recebidos
-      let leadsQ = supabase.from("pipeline_leads").select("id, corretor_id, created_at").gte("created_at", s).lte("created_at", e);
+      let leadsQ = supabase.from("pipeline_leads").select("id, corretor_id, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
       let prevLeadsQ = supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
       leadsQ = applyScope(leadsQ, "corretor_id");
       prevLeadsQ = applyScope(prevLeadsQ, "corretor_id");
@@ -240,7 +240,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       leadsAtivosQ = applyScope(leadsAtivosQ, "corretor_id");
 
       // Visitas
-      let visMarcQ = supabase.from("visitas").select("corretor_id, data_visita, status").gte("data_visita", dStart).lte("data_visita", dEnd);
+      let visMarcQ = supabase.from("visitas").select("corretor_id, data_visita, status").gte("data_visita", dStart).lte("data_visita", dEnd).limit(10000);
       let prevVisMarcQ = supabase.from("visitas").select("id", { count: "exact", head: true }).gte("data_visita", pdStart).lte("data_visita", pdEnd);
       let prevVisRealQ = supabase.from("visitas").select("id", { count: "exact", head: true }).eq("status", "realizada").gte("data_visita", pdStart).lte("data_visita", pdEnd);
       visMarcQ = applyScope(visMarcQ, "corretor_id");
@@ -248,8 +248,8 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       prevVisRealQ = applyScope(prevVisRealQ, "corretor_id");
 
       // Negócios
-      let negQ = supabase.from("negocios").select("id, corretor_id, auth_user_id, vgv_estimado, vgv_final, fase, created_at").gte("created_at", s).lte("created_at", e);
-      let prevNegQ = supabase.from("negocios").select("id, vgv_estimado, vgv_final, fase").gte("created_at", ps).lte("created_at", pe);
+      let negQ = supabase.from("negocios").select("id, corretor_id, auth_user_id, vgv_estimado, vgv_final, fase, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
+      let prevNegQ = supabase.from("negocios").select("id, vgv_estimado, vgv_final, fase").gte("created_at", ps).lte("created_at", pe).limit(10000);
       // Negocios uses corretor_id (profile_id) and auth_user_id
       if (scopeProfileIds) {
         const orParts = [
