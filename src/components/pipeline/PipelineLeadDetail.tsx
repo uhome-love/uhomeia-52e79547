@@ -39,6 +39,7 @@ import WhatsAppTemplatesDialog from "./WhatsAppTemplatesDialog";
 import QuickActionMenu from "./QuickActionMenu";
 import EmpreendimentoCombobox from "@/components/ui/empreendimento-combobox";
 import RadarImoveisTab from "./RadarImoveisTab";
+import LeadImoveisIndicadosTab from "./LeadImoveisIndicadosTab";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -506,6 +507,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               <TabsTrigger value="radar" className="text-xs h-6 data-[state=active]:shadow-sm gap-1">
                 📡 Radar
               </TabsTrigger>
+              <TabsTrigger value="indicados" className="text-xs h-6 data-[state=active]:shadow-sm gap-1">
+                🏠 Indicados
+              </TabsTrigger>
             </TabsList>
             <Button
               size="sm"
@@ -599,6 +603,10 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 }}
                 onUpdate={onUpdate}
               />
+            </TabsContent>
+
+            <TabsContent value="indicados" className="mt-0">
+              <LeadImoveisIndicadosTab leadId={lead.id} corretorNomes={corretorNomes} />
             </TabsContent>
           </ScrollArea>
         </Tabs>

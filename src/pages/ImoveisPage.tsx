@@ -14,7 +14,7 @@ import {
   Search, Building2, Loader2, ChevronLeft, ChevronRight, Phone,
   MapPin, Megaphone, Check, X, Share2, Link2, Copy, CalendarClock,
   LayoutGrid, List, Heart, Zap,
-  Sparkles, Brain, ArrowRight, Map, MessageCircle
+  Sparkles, Brain, ArrowRight, Map, MessageCircle, Bookmark, Users
 } from "lucide-react";
 import PropertyMap from "@/components/imoveis/PropertyMap";
 import PropertyPreviewDrawer from "@/components/imoveis/PropertyPreviewDrawer";
@@ -31,6 +31,9 @@ import { useImoveisSearch } from "@/hooks/useImoveisSearch";
 import { useTypesenseFacets } from "@/hooks/useTypesenseFacets";
 import { useLeadContext } from "@/hooks/useLeadContext";
 import { useLeadPropertyProfile } from "@/hooks/useLeadPropertyProfile";
+import { useLeadMatch } from "@/hooks/useLeadMatch";
+import LeadSearchModal from "@/components/imoveis/LeadSearchModal";
+import MatchConfirmModal from "@/components/imoveis/MatchConfirmModal";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -72,6 +75,11 @@ export default function ImoveisPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [creatingVitrine, setCreatingVitrine] = useState(false);
   const [vitrineLink, setVitrineLink] = useState<string | null>(null);
+
+  // Lead Match
+  const leadMatch = useLeadMatch();
+  const [leadSearchOpen, setLeadSearchOpen] = useState(false);
+  const [matchConfirmOpen, setMatchConfirmOpen] = useState(false);
 
   // Preview drawer
   const [previewItem, setPreviewItem] = useState<any>(null);
@@ -209,6 +217,18 @@ export default function ImoveisPage() {
           <span className="text-xs font-medium text-primary">
             🔗 Buscando imóveis para: <strong>{leadNome || "Lead"}</strong>
           </span>
+        </div>
+      )}
+
+      {/* Lead Match banner */}
+      {leadMatch.hasMatch && (
+        <div className="bg-accent/50 border-b border-accent px-4 py-2 flex items-center justify-center gap-2">
+          <span className="text-xs font-medium text-foreground">
+            🔍 Buscando imóveis para <strong>{leadMatch.matchedLead!.nome}</strong>
+          </span>
+          <button onClick={leadMatch.clearMatch} className="ml-2 p-0.5 rounded-full hover:bg-muted transition-colors">
+            <X className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
         </div>
       )}
 
@@ -661,6 +681,15 @@ export default function ImoveisPage() {
               >
                 <Building2 className="h-3 w-3" /> uHome
               </button>
+              <button
+                onClick={() => setLeadSearchOpen(true)}
+                className={cn(
+                  "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap",
+                  leadMatch.hasMatch ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-primary/40"
+                )}
+              >
+                <Users className="h-3 w-3" /> Match Lead
+              </button>
             </div>
           </div>
         </div>
@@ -929,6 +958,19 @@ export default function ImoveisPage() {
                               </div>
                             ) : null;
                           })()}
+                          {leadMatch.hasMatch && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); leadMatch.toggleImovel(imovelId); }}
+                              className={cn(
+                                "absolute top-3 right-3 z-20 p-1.5 rounded-full shadow-sm backdrop-blur-sm transition-all",
+                                leadMatch.matchedCodigos.has(imovelId)
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-background/70 text-muted-foreground hover:bg-background"
+                              )}
+                            >
+                              <Bookmark className={cn("h-4 w-4", leadMatch.matchedCodigos.has(imovelId) && "fill-current")} />
+                            </button>
+                          )}
                           <PropertyCardGrid item={item} idx={idx} isCampanha={isCampanha} selectMode={selectMode} isSelected={selectedIds.has(imovelId)} onToggleSelect={toggleSelect} onFavorite={toggleFavorite} isFavorite={favorites.has(imovelId)} getPreco={getPreco} onPreview={openPreview} />
                         </div>
                       );
@@ -1002,6 +1044,55 @@ export default function ImoveisPage() {
           </div>
         </div>
       )}
+      {/* Lead Match floating counter */}
+      {leadMatch.hasMatch && leadMatch.matchedCodigos.size > 0 && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-primary text-primary-foreground rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
+            <Bookmark className="h-4 w-4 fill-current shrink-0" />
+            <span className="text-sm font-medium">
+              {leadMatch.matchedCodigos.size} imóve{leadMatch.matchedCodigos.size === 1 ? "l" : "is"} para {leadMatch.matchedLead!.nome}
+            </span>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="text-xs h-7 px-3"
+              onClick={() => setMatchConfirmOpen(true)}
+            >
+              Salvar Indicação
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Lead Search Modal */}
+      <LeadSearchModal
+        open={leadSearchOpen}
+        onOpenChange={setLeadSearchOpen}
+        onSelect={(lead) => {
+          leadMatch.selectLead(lead);
+          // Auto-populate filters from lead profile if available
+          if (lead.bairro_regiao) {
+            setBairro([lead.bairro_regiao]);
+          }
+        }}
+      />
+
+      {/* Match Confirm Modal */}
+      <MatchConfirmModal
+        open={matchConfirmOpen}
+        onOpenChange={setMatchConfirmOpen}
+        leadNome={leadMatch.matchedLead?.nome || ""}
+        imoveis={displayImoveis.filter(item => {
+          const id = String(item.codigo || item.id_imovel || item.id);
+          return leadMatch.matchedCodigos.has(id);
+        })}
+        getPreco={getPreco}
+        saving={leadMatch.saving}
+        onConfirm={async (obs) => {
+          const ok = await leadMatch.saveIndicacoes(obs);
+          if (ok) setMatchConfirmOpen(false);
+        }}
+      />
     </div>
   );
 }
