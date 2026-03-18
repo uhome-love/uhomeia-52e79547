@@ -240,7 +240,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       leadsAtivosQ = applyScope(leadsAtivosQ, "corretor_id");
 
       // Visitas
-      let visMarcQ = supabase.from("visitas").select("corretor_id, data_visita, status").gte("data_visita", dStart).lte("data_visita", dEnd);
+      let visMarcQ = supabase.from("visitas").select("corretor_id, data_visita, status").gte("data_visita", dStart).lte("data_visita", dEnd).limit(10000);
       let prevVisMarcQ = supabase.from("visitas").select("id", { count: "exact", head: true }).gte("data_visita", pdStart).lte("data_visita", pdEnd);
       let prevVisRealQ = supabase.from("visitas").select("id", { count: "exact", head: true }).eq("status", "realizada").gte("data_visita", pdStart).lte("data_visita", pdEnd);
       visMarcQ = applyScope(visMarcQ, "corretor_id");
