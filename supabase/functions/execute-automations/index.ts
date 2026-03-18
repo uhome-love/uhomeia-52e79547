@@ -193,13 +193,16 @@ Deno.serve(async (req) => {
                 }
 
                 case "notify_manager": {
+                  // Replace {{nome}} placeholder in notify_text
+                  const notifyMsg = (action.notify_text || `Lead ${lead.nome} precisa de atenção`)
+                    .replace(/\{\{nome\}\}/g, lead.nome || "Lead");
                   await supabase.from("notifications").insert({
                     user_id: auto.created_by,
-                    titulo: `Automação: ${auto.name}`,
-                    mensagem: action.notify_text || `Ação disparada para lead ${lead.nome}`,
+                    titulo: lead.nome ? `⚙️ ${lead.nome} — ${auto.name}` : `Automação: ${auto.name}`,
+                    mensagem: notifyMsg,
                     tipo: "automacao",
                     categoria: "pipeline",
-                    dados: { lead_id: lead.id, automation_id: auto.id },
+                    dados: { pipeline_lead_id: lead.id, lead_id: lead.id, lead_nome: lead.nome, automation_id: auto.id },
                   });
                   executedActions.push("notify_manager");
                   break;
