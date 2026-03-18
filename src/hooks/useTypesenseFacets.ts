@@ -115,7 +115,7 @@ export function useTypesenseFacets() {
     })();
   }, []);
 
-  return { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets, facetsLoading: loading };
+  return { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets, cidadeFacets, facetsLoading: loading };
 }
 
 // Re-export Facet type as BairroFacet for backward compatibility
