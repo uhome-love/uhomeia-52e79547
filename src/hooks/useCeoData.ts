@@ -94,7 +94,7 @@ export function useCeoData(period: CeoPeriod, customStart?: string, customEnd?: 
     
     // Even with no checkpoints, still load PDN data
     // Get gerente IDs from either checkpoints or the filter
-    let gerenteIds: string[] = gerenteIdsFromCps;
+    let gerenteIds: string[] = gerenteIdsFromCps as string[];
     if (gerenteIds.length === 0 && filterGerenteId) {
       gerenteIds = [filterGerenteId];
     } else if (gerenteIds.length === 0) {
