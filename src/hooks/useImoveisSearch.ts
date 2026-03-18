@@ -181,6 +181,7 @@ export function useImoveisSearch({
         construtora: filters.construtora,
         empreendimento: filters.empreendimento,
         situacao: filters.situacao,
+        cidade: filters.cidade,
       });
       const sortByStr = filters.search ? "" : buildSortBy(filters.sortBy, filters.contrato);
 
