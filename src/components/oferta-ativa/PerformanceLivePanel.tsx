@@ -151,7 +151,7 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
       if (teamFilter) {
         activeLocks = activeLocks.filter(l => teamFilter.includes(l.em_atendimento_por!));
       }
-      const activeCorretorIds = new Set(activeLocks.map(l => l.em_atendimento_por));
+      const activeCorretorIds = new Set(activeLocks.map(l => l.em_atendimento_por as string));
 
       // Group by corretor
       const byCorretor: Record<string, {
