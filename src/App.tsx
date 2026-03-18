@@ -113,7 +113,7 @@ const RhConversas = lazyRetry(() => import("./pages/RhConversas"));
 const RhSalaReuniao = lazyRetry(() => import("./pages/RhSalaReuniao"));
 const RhEntrevistas = lazyRetry(() => import("./pages/RhEntrevistas"));
 const DevAIPage = lazyRetry(() => import("./pages/DevAIPage"));
-const AlertasPage = lazyRetry(() => import("./pages/AlertasPage"));
+
 const MelnickDayLanding = lazyRetry(() => import("./pages/MelnickDayLanding"));
 const WhatsAppLanding = lazyRetry(() => import("./pages/WhatsAppLanding"));
 const CampaignAnalyticsPage = lazyRetry(() => import("./pages/CampaignAnalyticsPage"));
