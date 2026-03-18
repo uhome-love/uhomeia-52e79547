@@ -124,6 +124,12 @@ export function buildFilterBy(filters: {
     parts.push(`empreendimento:[${empreendimentos.join(",")}]`);
   }
 
+  // Geo-radius filter (map search)
+  if (filters.geoRadius) {
+    const { lat, lng, radiusKm } = filters.geoRadius;
+    parts.push(`location:(${lat}, ${lng}, ${radiusKm} km)`);
+  }
+
   return parts.join(" && ");
 }
 
