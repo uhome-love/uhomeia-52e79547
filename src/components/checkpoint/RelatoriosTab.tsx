@@ -55,7 +55,15 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
   const [activeSection, setActiveSection] = useState<"performance" | "conversao" | "ranking">("performance");
   const [kpiDetail, setKpiDetail] = useState<{ type: ManagerKpiType; label: string } | null>(null);
 
-  const load = useCallback(async () => {
+  const kpiDateRange = useMemo(() => {
+    const hoje = new Date();
+    let inicio: Date;
+    if (periodo === "hoje") inicio = hoje;
+    else if (periodo === "semana") inicio = subDays(hoje, 7);
+    else inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    return { start: format(inicio, "yyyy-MM-dd"), end: format(hoje, "yyyy-MM-dd") };
+  }, [periodo]);
+
     if (!user || teamUserIds.length === 0) return;
     const hoje = new Date();
     let inicio: Date;
