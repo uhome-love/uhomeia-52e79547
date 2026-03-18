@@ -506,7 +506,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
 
     const leadEmp = leadData?.empreendimento || "";
     const scored = allResults.map(item => {
-      const { score, justificativas } = scoreProperty(scoringProfile, item, activeObjecoes, leadEmp, discardedCodes);
+      const { score, justificativas } = scoreProperty(scoringProfile, item, activeObjecoes, leadEmp, discardedCodes as Set<string>);
       return { ...item, score, justificativas };
     });
     scored.sort((a, b) => b.score - a.score);
