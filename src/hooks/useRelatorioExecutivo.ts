@@ -168,9 +168,9 @@ export function useRelatorioExecutivo(period: PeriodRange) {
 
       if (scope === "admin") {
         const { data: tm } = await supabase
-          .from("team_members").select("id, nome, equipe, gerente_id, user_id, avatar_url")
+          .from("team_members").select("id, nome, equipe, gerente_id, user_id")
           .eq("status", "ativo");
-        teamMembersData = tm || [];
+        teamMembersData = (tm || []).map(m => ({ ...m, avatar_url: null }));
       } else if (scope === "gerente") {
         const { data: tm } = await supabase
           .from("team_members").select("id, nome, equipe, gerente_id, user_id, avatar_url")
