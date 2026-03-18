@@ -29,11 +29,11 @@ export default function CeoMetasMensais() {
 
     // Get all gerentes (users with gestor/admin role)
     const { data: gerenteRoles } = await supabase.from("user_roles").select("user_id").in("role", ["gestor", "admin"]);
-    const gerenteIds = (gerenteRoles || []).map(r => r.user_id);
+    const gerenteIds = ((gerenteRoles || []) as any[]).map((r: any) => r.user_id as string);
     if (gerenteIds.length === 0) { setGerenteMetas([]); setLoading(false); return; }
 
     const { data: profiles } = await supabase.from("profiles").select("user_id, nome").in("user_id", gerenteIds);
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, p.nome]));
+    const profileMap = new Map(((profiles || []) as any[]).map((p: any) => [p.user_id, p.nome]));
 
     // Get saved metas for this month
     const { data: metas } = await supabase.from("ceo_metas_mensais").select("*").eq("mes", mes).in("gerente_id", gerenteIds);
