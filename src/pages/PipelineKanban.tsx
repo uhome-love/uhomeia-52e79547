@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, lazy, Suspense } from "react";
+import { useState, useMemo, useCallback, lazy, Suspense, useEffect } from "react";
 import { LoadingState, ErrorState } from "@/components/ui/screen-states";
 import PeriodBadge from "@/components/PeriodBadge";
 import { usePipeline } from "@/hooks/usePipeline";
@@ -161,6 +161,13 @@ export default function PipelineKanban() {
     await pipeline.reload();
     setRefreshing(false);
   };
+
+  // Listen for pipeline-reload events from PipelineBoard (e.g. after descarte)
+  useEffect(() => {
+    const handler = () => pipeline.reload();
+    window.addEventListener("pipeline-reload", handler);
+    return () => window.removeEventListener("pipeline-reload", handler);
+  }, [pipeline.reload]);
 
   const [intelView, setIntelView] = useState<"funil" | "radar">("funil");
 
