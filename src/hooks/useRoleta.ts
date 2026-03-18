@@ -346,8 +346,8 @@ export function useRoleta() {
     const enriched = filaData.map(f => ({
       ...f,
       leads_recebidos: f.corretor_id ? profileLeadCount.get(f.corretor_id) ?? (f.leads_recebidos || 0) : 0,
-      corretor_nome: f.corretor_id ? profileMap.get(f.corretor_id)?.nome || "Corretor" : "Corretor",
-      corretor_avatar: f.corretor_id ? profileMap.get(f.corretor_id)?.avatar_url || null : null,
+      corretor_nome: f.corretor_id ? (profileMap.get(f.corretor_id) as any)?.nome || "Corretor" : "Corretor",
+      corretor_avatar: f.corretor_id ? (profileMap.get(f.corretor_id) as any)?.avatar_url || null : null,
     }));
 
     // Sort by leads_recebidos ascending (fewer leads = higher priority = top of list)

@@ -164,8 +164,8 @@ export function useForecast(): ForecastData {
         propostas_estimadas,
         vendas_previstas,
         vgv_previsto,
-        meta_vendas: meta ? Math.round(meta.meta_visitas_realizadas * DEFAULT_CONV_VP * DEFAULT_CONV_PV) : 0,
-        meta_vgv: meta ? Number(meta.meta_vgv_assinado) : 0,
+        meta_vendas: meta ? Math.round((meta as any).meta_visitas_realizadas * DEFAULT_CONV_VP * DEFAULT_CONV_PV) : 0,
+        meta_vgv: meta ? Number((meta as any).meta_vgv_assinado) : 0,
       });
     }
 
