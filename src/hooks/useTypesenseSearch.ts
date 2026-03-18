@@ -40,6 +40,7 @@ export function buildFilterBy(filters: {
   construtora?: string | string[];
   empreendimento?: string | string[];
   situacao?: string | string[];
+  cidade?: string | string[];
 }): string {
   const parts: string[] = [];
 
