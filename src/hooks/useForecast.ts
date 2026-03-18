@@ -153,7 +153,7 @@ export function useForecast(): ForecastData {
 
       result.push({
         gerente_id: gId,
-        gerente_nome: profileMap.get(gId) || "Gerente",
+        gerente_nome: profileMap.get(gId) as string || "Gerente",
         visitas_realizadas,
         propostas_reais,
         vendas_reais,
