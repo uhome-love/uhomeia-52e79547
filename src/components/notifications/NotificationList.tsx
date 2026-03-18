@@ -126,8 +126,12 @@ function getNotificationRoute(n: Notification): string | null {
   // Mensagens
   if (tipo === "mensagem_gerente") return "/notificacoes";
 
-  // Automação / sequências
-  if (tipo === "automacao" || tipo === "sequencias") return "/pipeline-leads";
+  // Automação / sequências — deep-link to lead if available
+  if (tipo === "automacao" || tipo === "sequencias") {
+    const leadId = d.pipeline_lead_id || d.lead_id;
+    if (leadId) return `/pipeline-leads?lead=${leadId}`;
+    return "/pipeline-leads";
+  }
 
   return null;
 }
