@@ -74,6 +74,7 @@ interface UseImoveisSearchParams {
     construtora: string[];
     empreendimento: string[];
     situacao: string[];
+    geoRadius?: { lat: number; lng: number; radiusKm: number };
   };
   /** Serialized filter key for change-detection */
   filterKey: string;
