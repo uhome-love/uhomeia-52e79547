@@ -31,7 +31,12 @@ declare module "@supabase/supabase-js" {
   // Fix SupabaseAuthClient missing methods
   interface SupabaseAuthClient {
     getSession(): Promise<{ data: { session: Session | null }; error: any }>;
-    getUser(): Promise<{ data: { user: User | null }; error: any }>;
+    getUser(jwt?: string): Promise<{ data: { user: User | null }; error: any }>;
+    onAuthStateChange(callback: (event: string, session: Session | null) => void): { data: { subscription: { unsubscribe: () => void } } };
+    signUp(credentials: any): Promise<{ data: any; error: any }>;
+    signInWithPassword(credentials: any): Promise<{ data: any; error: any }>;
+    signOut(): Promise<{ error: any }>;
+    updateUser(attributes: any): Promise<{ data: any; error: any }>;
   }
 }
 
