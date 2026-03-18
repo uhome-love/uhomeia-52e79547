@@ -307,7 +307,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
   } = useLeadPropertySearch(leadId);
 
   // ── Tab state ──
-  const [subTab, setSubTab] = useState<"radar" | "perfil" | "historico">("radar");
+  const [subTab, setSubTab] = useState<"radar" | "matches" | "perfil" | "historico">("radar");
 
   // ── Profile form state (initialized from savedProfile or legacy fields) ──
   const [profileForm, setProfileForm] = useState({
