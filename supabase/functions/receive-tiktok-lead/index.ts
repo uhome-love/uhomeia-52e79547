@@ -370,7 +370,7 @@ Deno.serve(async (req) => {
       const { data: rc } = await supabase
         .from("roleta_campanhas")
         .select("segmento_id")
-        .ilike("empreendimento", empreendimento)
+        .ilike("empreendimento", `%${empreendimento}%`)
         .eq("ativo", true)
         .limit(1)
         .maybeSingle();
