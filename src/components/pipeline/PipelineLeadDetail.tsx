@@ -506,6 +506,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               <TabsTrigger value="radar" className="text-xs h-6 data-[state=active]:shadow-sm gap-1">
                 📡 Radar
               </TabsTrigger>
+              <TabsTrigger value="indicados" className="text-xs h-6 data-[state=active]:shadow-sm gap-1">
+                🏠 Indicados
+              </TabsTrigger>
             </TabsList>
             <Button
               size="sm"
