@@ -198,6 +198,7 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
   ];
 
   return (
+    <>
     <div className="bg-card border border-border rounded-xl p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
