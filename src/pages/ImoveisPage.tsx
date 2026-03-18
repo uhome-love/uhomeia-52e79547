@@ -30,6 +30,7 @@ import { useImoveisFilters } from "@/hooks/useImoveisFilters";
 import { useImoveisSearch } from "@/hooks/useImoveisSearch";
 import { useTypesenseFacets } from "@/hooks/useTypesenseFacets";
 import { useLeadContext } from "@/hooks/useLeadContext";
+import { useLeadPropertyProfile } from "@/hooks/useLeadPropertyProfile";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
