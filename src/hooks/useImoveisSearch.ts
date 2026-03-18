@@ -179,6 +179,7 @@ export function useImoveisSearch({
         uhomeOnly: filters.uhomeOnly,
         construtora: filters.construtora,
         empreendimento: filters.empreendimento,
+        situacao: filters.situacao,
       });
       const sortByStr = filters.search ? "" : buildSortBy(filters.sortBy, filters.contrato);
 
