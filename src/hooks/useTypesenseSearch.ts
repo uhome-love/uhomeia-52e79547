@@ -40,6 +40,7 @@ export function buildFilterBy(filters: {
   construtora?: string | string[];
   empreendimento?: string | string[];
   situacao?: string | string[];
+  cidade?: string | string[];
 }): string {
   const parts: string[] = [];
 
@@ -105,6 +106,14 @@ export function buildFilterBy(filters: {
   }
   if (filters.uhomeOnly) {
     parts.push(`is_uhome:=true`);
+  }
+
+  // Multi-select cidade
+  const cidades = Array.isArray(filters.cidade) ? filters.cidade.filter(Boolean) : (filters.cidade ? [filters.cidade] : []);
+  if (cidades.length === 1) {
+    parts.push(`cidade:=\`${cidades[0]}\``);
+  } else if (cidades.length > 1) {
+    parts.push(`cidade:[\`${cidades.join("`,`")}\`]`);
   }
 
   // Multi-select construtora

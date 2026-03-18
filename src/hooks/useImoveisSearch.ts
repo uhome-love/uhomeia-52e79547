@@ -74,6 +74,7 @@ interface UseImoveisSearchParams {
     construtora: string[];
     empreendimento: string[];
     situacao: string[];
+    cidade: string[];
   };
   /** Serialized filter key for change-detection */
   filterKey: string;
@@ -180,6 +181,7 @@ export function useImoveisSearch({
         construtora: filters.construtora,
         empreendimento: filters.empreendimento,
         situacao: filters.situacao,
+        cidade: filters.cidade,
       });
       const sortByStr = filters.search ? "" : buildSortBy(filters.sortBy, filters.contrato);
 
@@ -206,7 +208,7 @@ export function useImoveisSearch({
       console.error("Typesense fetch error:", err);
       return "error";
     }
-  }, [filters.search, filters.contrato, filters.tipo, filters.bairro, filters.dormitorios, filters.suitesFilter, filters.vagas, filters.areaRange, filters.valorRange, filters.somenteObras, filters.uhomeOnly, filters.sortBy, filters.construtora, filters.empreendimento, filters.situacao, typesenseSearch]);
+  }, [filters.search, filters.contrato, filters.tipo, filters.bairro, filters.dormitorios, filters.suitesFilter, filters.vagas, filters.areaRange, filters.valorRange, filters.somenteObras, filters.uhomeOnly, filters.sortBy, filters.construtora, filters.empreendimento, filters.situacao, filters.cidade, typesenseSearch]);
 
   // ── Jetimob fallback ──
   const fetchViaJetimob = useCallback(async (pageNum: number, campanha = filters.campanhaAtiva, uhome = filters.uhomeOnly) => {
@@ -270,7 +272,7 @@ export function useImoveisSearch({
       if (e?.name === "AbortError" || controller.signal.aborted) return;
       toast.error("Erro de conexão");
     }
-  }, [filters.search, filters.contrato, filters.tipo, filters.bairro, filters.dormitorios, filters.suitesFilter, filters.vagas, filters.areaRange, filters.valorRange, filters.somenteObras, filters.campanhaAtiva, filters.uhomeOnly, campanhaOverrides]);
+  }, [filters.search, filters.contrato, filters.tipo, filters.bairro, filters.dormitorios, filters.suitesFilter, filters.vagas, filters.areaRange, filters.valorRange, filters.somenteObras, filters.campanhaAtiva, filters.uhomeOnly, filters.cidade, campanhaOverrides]);
 
   // ── Main fetch orchestrator ──
   const fetchImoveis = useCallback(async (pageNum: number, campanha = filters.campanhaAtiva, uhome = filters.uhomeOnly) => {

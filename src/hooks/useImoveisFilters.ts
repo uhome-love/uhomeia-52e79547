@@ -15,6 +15,8 @@ import { useSearchParams } from "react-router-dom";
 import { fmtCompact } from "@/lib/imovelHelpers";
 import type { Facet } from "@/hooks/useTypesenseFacets";
 
+type FetchBairrosByCidade = (cidades: string[]) => Promise<Facet[]>;
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // ── URL param helpers ──
@@ -54,7 +56,7 @@ export interface ActiveFilter {
   onRemove: () => void;
 }
 
-export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], construtoraFacets?: Facet[], empreendimentoFacets?: Facet[]) {
+export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], construtoraFacets?: Facet[], empreendimentoFacets?: Facet[], cidadeFacets?: Facet[], fetchBairrosByCidade?: FetchBairrosByCidade) {
   const [searchParams, setSearchParams] = useSearchParams();
   const isInitRef = useRef(true);
 
@@ -84,6 +86,12 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
 
   // ── Situação filter ──
   const [situacao, setSituacao] = useState<string[]>(() => readArr(searchParams, "situacao"));
+
+  // ── Cidade filter (default Porto Alegre) ──
+  const [cidade, setCidade] = useState<string[]>(() => {
+    const fromUrl = readArr(searchParams, "cidade");
+    return fromUrl.length > 0 ? fromUrl : ["Porto Alegre"];
+  });
 
   // ── Mode toggles ──
   const [campanhaAtiva, setCampanhaAtiva] = useState(() => readBool(searchParams, "campanha"));
@@ -117,9 +125,11 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
     if (construtora.length) p.set("construtora", construtora.join(","));
     if (empreendimento.length) p.set("empreendimento", empreendimento.join(","));
     if (situacao.length) p.set("situacao", situacao.join(","));
+    // Only write cidade to URL if not the default ["Porto Alegre"]
+    if (cidade.length > 0 && !(cidade.length === 1 && cidade[0] === "Porto Alegre")) p.set("cidade", cidade.join(","));
 
     setSearchParams(p, { replace: true });
-  }, [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao, setSearchParams]);
+  }, [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao, cidade, setSearchParams]);
 
   useEffect(() => {
     // Skip URL write on first render (we just read from URL)
@@ -132,8 +142,25 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
     return () => { if (urlWriteTimer.current) clearTimeout(urlWriteTimer.current); };
   }, [syncToUrl]);
 
-  // ── Derived: filteredBairros from dynamic facets ──
-  const allBairros = useMemo(() => bairroFacets || [], [bairroFacets]);
+  // ── Derived: filteredBairros from dynamic facets (city-aware) ──
+  const [cityBairros, setCityBairros] = useState<Facet[]>([]);
+  const cidadeKeyRef = useRef("");
+
+  useEffect(() => {
+    const key = cidade.sort().join("|");
+    if (key === cidadeKeyRef.current) return;
+    cidadeKeyRef.current = key;
+
+    if (fetchBairrosByCidade) {
+      fetchBairrosByCidade(cidade).then((result) => setCityBairros(result));
+    }
+  }, [cidade, fetchBairrosByCidade]);
+
+  const allBairros = useMemo(() => {
+    if (cityBairros.length > 0) return cityBairros;
+    return bairroFacets || [];
+  }, [cityBairros, bairroFacets]);
+
   const filteredBairros = useMemo(() => {
     if (!bairroSearch) return allBairros;
     const q = bairroSearch.toLowerCase();
@@ -159,6 +186,9 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
     return allEmpreendimentos.filter((e) => e.value.toLowerCase().includes(q));
   }, [empreendimentoSearch, allEmpreendimentos]);
 
+  // ── Derived: cidade options ──
+  const cidadeOptions = useMemo(() => cidadeFacets || [{ value: "Porto Alegre", count: 0 }], [cidadeFacets]);
+
   // ── Active filter tags ──
   const activeFilters: ActiveFilter[] = [];
   if (search) activeFilters.push({ key: "search", label: `"${search}"`, onRemove: () => setSearch("") });
@@ -175,18 +205,21 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
   if (construtora.length > 0) activeFilters.push({ key: "construtora", label: construtora.join(", "), onRemove: () => setConstrutora([]) });
   if (empreendimento.length > 0) activeFilters.push({ key: "empreendimento", label: empreendimento.length <= 2 ? empreendimento.join(", ") : `${empreendimento.length} empreend.`, onRemove: () => setEmpreendimento([]) });
   if (situacao.length > 0) activeFilters.push({ key: "situacao", label: situacao.join(", "), onRemove: () => setSituacao([]) });
+  // Only show cidade tag if not the default
+  if (cidade.length > 0 && !(cidade.length === 1 && cidade[0] === "Porto Alegre")) activeFilters.push({ key: "cidade", label: cidade.join(", "), onRemove: () => setCidade(["Porto Alegre"]) });
 
   const clearAllFilters = () => {
     setTipo([]); setBairro([]); setDormitorios([]); setSuitesFilter(""); setVagas("");
     setAreaRange([0, 500]); setValorRange([0, 5_000_000]); setSomenteObras(false);
     setSearch(""); setUhomeOnly(false); setCampanhaAtiva(false);
     setConstrutora([]); setEmpreendimento([]); setSituacao([]);
+    setCidade(["Porto Alegre"]); // Reset to default
   };
 
   // ── Serialized key for change-detection by search hook ──
   const filterKey = useMemo(() =>
-    JSON.stringify({ search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao }),
-    [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao]
+    JSON.stringify({ search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao, cidade }),
+    [search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas, areaRange, valorRange, somenteObras, sortBy, uhomeOnly, campanhaAtiva, construtora, empreendimento, situacao, cidade]
   );
 
   return {
@@ -210,11 +243,13 @@ export function useImoveisFilters(bairroFacets?: Facet[], tipoFacets?: Facet[], 
     empreendimento, setEmpreendimento,
     empreendimentoSearch, setEmpreendimentoSearch,
     situacao, setSituacao,
+    cidade, setCidade,
     // Derived
     filteredBairros,
     tipoOptions,
     filteredConstrutoras,
     filteredEmpreendimentos,
+    cidadeOptions,
     activeFilters,
     clearAllFilters,
     filterKey,

@@ -41,10 +41,10 @@ export default function ImoveisPage() {
   const { profile: leadProfile } = useLeadPropertyProfile(leadId);
 
   // ── Dynamic facets ──
-  const { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets } = useTypesenseFacets();
+  const { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets, cidadeFacets, fetchBairrosByCidade } = useTypesenseFacets();
 
   // ── Filters ──
-  const filters = useImoveisFilters(bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets);
+  const filters = useImoveisFilters(bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, cidadeFacets, fetchBairrosByCidade);
   const {
     contrato, tipo, setTipo, bairro, setBairro, bairroSearch, setBairroSearch,
     dormitorios, setDormitorios, suitesFilter, setSuitesFilter,
@@ -54,6 +54,7 @@ export default function ImoveisPage() {
     construtora, setConstrutora, construtoraSearch, setConstrutoraSearch,
     empreendimento, setEmpreendimento, empreendimentoSearch, setEmpreendimentoSearch,
     situacao, setSituacao,
+    cidade, setCidade, cidadeOptions,
     filteredBairros, tipoOptions, filteredConstrutoras, filteredEmpreendimentos,
     activeFilters, clearAllFilters, filterKey,
   } = filters;
@@ -87,7 +88,7 @@ export default function ImoveisPage() {
     filters: {
       search, contrato, tipo, bairro, dormitorios, suitesFilter, vagas,
       areaRange, valorRange, somenteObras, uhomeOnly, campanhaAtiva, sortBy,
-      construtora, empreendimento, situacao,
+      construtora, empreendimento, situacao, cidade,
     },
     filterKey,
     setSearch,
@@ -419,6 +420,40 @@ export default function ImoveisPage() {
                     )}>
                       <Check className={cn("h-3 w-3 shrink-0", selected ? "opacity-100" : "opacity-0")} />
                       <span className="flex-1">{label}</span>
+                      {facet.count > 0 && <span className="text-[10px] text-muted-foreground">({facet.count})</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </FilterChip>
+
+            {/* Cidade */}
+            <FilterChip
+              label={cidade.length === 1 ? cidade[0] : cidade.length > 1 ? `${cidade.length} cidades` : "Cidade"}
+              active={!(cidade.length === 1 && cidade[0] === "Porto Alegre")}
+              onClear={() => setCidade(["Porto Alegre"])}
+            >
+              <div className="space-y-1 w-48">
+                <p className="text-xs font-semibold text-foreground mb-2">Cidade <span className="text-muted-foreground font-normal">(múltipla)</span></p>
+                {cidadeOptions.map((facet) => {
+                  const selected = cidade.includes(facet.value);
+                  return (
+                    <button key={facet.value} onClick={() => {
+                      setCidade(prev => {
+                        if (selected) {
+                          const next = prev.filter(c => c !== facet.value);
+                          return next.length === 0 ? ["Porto Alegre"] : next;
+                        }
+                        return [...prev, facet.value];
+                      });
+                      // Clear bairro selections when city changes
+                      setBairro([]);
+                    }} className={cn(
+                      "w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-all flex items-center gap-2",
+                      selected ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted/50"
+                    )}>
+                      <Check className={cn("h-3 w-3 shrink-0", selected ? "opacity-100" : "opacity-0")} />
+                      <span className="flex-1">{facet.value}</span>
                       {facet.count > 0 && <span className="text-[10px] text-muted-foreground">({facet.count})</span>}
                     </button>
                   );
