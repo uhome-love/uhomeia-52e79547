@@ -38,7 +38,7 @@ export default function BulkActionModal({ open, onOpenChange, selectedLeadIds, o
     let failed = 0;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       if (!session?.access_token) {
         toast.error("Sessão expirada. Faça login novamente.");
         setDispatching(false);

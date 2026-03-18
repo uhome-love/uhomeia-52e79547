@@ -47,7 +47,7 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
 
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const prompt = `Contexto: Estou em uma ligação de vendas.\nLead: ${leadNome}\nEmpreendimento sendo oferecido: ${selectedEmp}\nSituação/Objeção do cliente: ${situacao.trim()}\n\nMe dê uma resposta curta e persuasiva (máximo 3 frases) para usar AGORA na ligação.\nSeja direto, prático e focado em conversão.`;
 
       const res = await fetch(

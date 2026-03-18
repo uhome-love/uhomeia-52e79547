@@ -69,7 +69,7 @@ export default function HomiCeoChat() {
     let assistantSoFar = "";
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const accessToken = session?.access_token;
       if (!accessToken) {
         toast.error("Você precisa estar logado");

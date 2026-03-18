@@ -145,7 +145,7 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
         hora: new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }),
         prioridade: "media",
         status: "concluida",
-        created_by: (await supabase.auth.getUser()).data.user?.id || "",
+        created_by: (await (supabase.auth as any).getUser()).data?.user?.id || "",
       } as any);
     }
 

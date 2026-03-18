@@ -83,7 +83,7 @@ export default function MetaAdsSettings() {
       // Save first so edge function can read them
       await handleSave();
 
-      const { data: session } = await supabase.auth.getSession();
+      const { data: session } = await (supabase.auth as any).getSession();
       const { data, error } = await supabase.functions.invoke("meta-ads-sync", {
         body: { mode: "test" },
         headers: { Authorization: `Bearer ${session.session?.access_token}` },

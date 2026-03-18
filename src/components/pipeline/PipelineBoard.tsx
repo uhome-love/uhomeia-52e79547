@@ -581,7 +581,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
 
         // Create partnership if parceiro selected
         if (extra.parceiro) {
-          const userId = (await supabase.auth.getUser()).data?.user?.id;
+          const userId = (await (supabase.auth as any).getUser()).data?.user?.id;
           await supabase.from("pipeline_parcerias").insert({
             pipeline_lead_id: result.leadId,
             corretor_principal_id: lead.corretor_id || userId,
