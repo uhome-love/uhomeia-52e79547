@@ -15,7 +15,7 @@ import RankingPodium, { type PodiumEntry } from "./RankingPodium";
 import { useEffect, useState } from "react";
 
 const medals = ["👑", "🥈", "🥉"];
-const periodMap: Record<string, CeoPeriod> = { hoje: "dia", semana: "semana", mes: "mes", trimestre: "mes" };
+const periodMap: Record<string, CeoPeriod> = { hoje: "dia", semana: "semana", mes: "mes", trimestre: "mes", personalizado: "mes" };
 
 function getInitials(nome: string) {
   return nome.split(" ").map(n => n[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();

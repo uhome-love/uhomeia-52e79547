@@ -28,7 +28,7 @@ import RankingPositionCard from "./RankingPositionCard";
 import RankingPerformanceBadges, { computePerformanceBadges } from "./RankingPerformanceBadges";
 import { motion } from "framer-motion";
 
-const periodMap: Record<string, string> = { hoje: "dia", semana: "semana", mes: "mes", trimestre: "mes" };
+const periodMap: Record<string, string> = { hoje: "dia", semana: "semana", mes: "mes", trimestre: "mes", personalizado: "mes" };
 
 function getInitials(nome: string) {
   return nome.split(" ").map(n => n[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
