@@ -325,16 +325,17 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       const negGerados = (negData || []).filter(n => 
         ["proposta", "negociacao", "documentacao", "assinado", "vendido"].includes(n.fase || "")
       ).length;
-      const negAssinados = (negData || []).filter(n => ["assinado", "vendido"].includes(n.fase || "")).length;
-      const vgvTotal = (negData || []).filter(n => ["assinado", "vendido"].includes(n.fase || ""))
+      // Assinados & VGV: use data_assinatura-based queries
+      const negAssinados = (negAssinadosData || []).length;
+      const vgvTotal = (negAssinadosData || [])
         .reduce((sum, n) => sum + Number(n.vgv_final || n.vgv_estimado || 0), 0);
 
       const prevNegCriados = (prevNegData || []).length;
       const prevNegGerados = (prevNegData || []).filter(n => 
         ["proposta", "negociacao", "documentacao", "assinado", "vendido"].includes(n.fase || "")
       ).length;
-      const prevNegAssinados = (prevNegData || []).filter(n => ["assinado", "vendido"].includes(n.fase || "")).length;
-      const prevVgv = (prevNegData || []).filter(n => ["assinado", "vendido"].includes(n.fase || ""))
+      const prevNegAssinados = (prevNegAssinadosData || []).length;
+      const prevVgv = (prevNegAssinadosData || [])
         .reduce((sum, n) => sum + Number(n.vgv_final || n.vgv_estimado || 0), 0);
 
       const kpis: ExecutiveKpis = {
