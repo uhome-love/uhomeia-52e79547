@@ -294,7 +294,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
 
   // ─── Granular realtime: update only the changed lead in local state ───
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     let batchTimer: ReturnType<typeof setTimeout> | null = null;
     const pendingEvents: Array<{ eventType: string; new_record: any; old_record: any }> = [];
 
@@ -353,24 +353,19 @@ export function usePipeline(pipelineTipo: string = "leads") {
       if (batchTimer) clearTimeout(batchTimer);
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [userId]);
 
-  // Auto-refresh when tab becomes visible — only if stale (>5 min away)
+  // Ao voltar para a aba, mantemos o estado atual e evitamos reload automático do board.
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const handleVisibility = () => {
       if (document.visibilityState === "hidden") {
         lastVisibleRef.current = Date.now();
-      } else if (document.visibilityState === "visible") {
-        const away = Date.now() - lastVisibleRef.current;
-        if (away > 5 * 60 * 1000) { // only reload if away > 5 min
-          loadLeads();
-        }
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [user, loadLeads]);
+  }, [userId]);
 
   const moveLead = useCallback(async (leadId: string, newStageId: string, observacao?: string) => {
     if (!user) return;
