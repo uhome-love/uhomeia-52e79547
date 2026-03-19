@@ -3,6 +3,8 @@ import { LoadingState, ErrorState } from "@/components/ui/screen-states";
 import PeriodBadge from "@/components/PeriodBadge";
 import { usePipeline } from "@/hooks/usePipeline";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
+import PipelineMobileView from "@/components/pipeline/PipelineMobileView";
+import { useIsMobile } from "@/hooks/use-mobile";
 import PipelineAddLeadDialog from "@/components/pipeline/PipelineAddLeadDialog";
 import PipelineLeadDetail from "@/components/pipeline/PipelineLeadDetail";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
