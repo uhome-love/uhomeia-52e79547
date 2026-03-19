@@ -49,23 +49,15 @@ export default function CardActionBar({
         }} />
 
         {/* Button 1: Tarefa */}
-        <CardQuickTaskPopover leadId={leadId} leadNome={leadNome}>
-          <button
-            style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              padding: "9px 6px", cursor: "pointer",
-              background: "transparent", border: "none",
-              borderRadius: "0 0 0 13px",
-              transition: "background 0.15s ease",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#FFFBEB"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
-            <span style={{ fontSize: 15 }}>📋</span>
-            <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B", marginTop: 2 }}>Tarefa</span>
-          </button>
-        </CardQuickTaskPopover>
+        <div
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "0 0 0 13px",
+          }}
+        >
+          <CardQuickTaskPopover leadId={leadId} leadNome={leadNome} />
+        </div>
 
         {/* Button 2: Mensagem */}
         <button
