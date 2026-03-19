@@ -259,6 +259,8 @@ export function usePipeline(pipelineTipo: string = "leads") {
     } catch (err) {
       console.error("[usePipeline] loadLeads crash:", err);
       toast.error("Erro ao carregar leads. Tente recarregar a página.");
+    } finally {
+      loadingLeadsRef.current = false;
     }
   }, [user, isGestor, isAdmin]);
 
