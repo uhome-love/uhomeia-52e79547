@@ -72,6 +72,7 @@ export default function PipelineKanban() {
   const pipeline = usePipeline();
   const { isGestor, isAdmin, isCorretor } = useUserRole();
   const { user: authUser } = useAuth();
+  const isMobile = useIsMobile();
   const [addOpen, setAddOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<PipelineLead | null>(null);
   const [filters, setFilters] = useState<PipelineFilters>({ ...EMPTY_FILTERS });
