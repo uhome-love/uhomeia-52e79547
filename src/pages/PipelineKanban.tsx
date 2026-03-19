@@ -242,21 +242,83 @@ export default function PipelineKanban() {
           zIndex: 40,
         }}
       >
-        {/* Line 1 — 58px */}
+        {/* Line 1 — Title + Filters + Search + Novo Lead */}
         <div
-          className="flex items-center justify-between md:!h-[58px] md:!px-[28px]"
-          style={{ height: 52, padding: "0 14px", borderBottom: "1px solid #E2E8F0", gap: 8 }}
+          className="flex items-center md:!px-[28px]"
+          style={{ height: 52, padding: "0 14px", borderBottom: "1px solid #E2E8F0", gap: 10 }}
         >
-          {/* LEFT: Logo + divider + label */}
-          <div className="flex items-center min-w-0 flex-shrink-0">
+          {/* LEFT: Title */}
+          <div className="flex items-center flex-shrink-0">
             <span className="whitespace-nowrap" style={{ fontSize: 18, fontWeight: 700, color: "#1E293B", letterSpacing: "-0.3px" }}>
               <span className="md:hidden">Pipeline</span>
               <span className="hidden md:inline">Pipeline de Leads</span>
             </span>
           </div>
 
+          {/* CENTER: Corretor + Campaign + Filters */}
+          <div className="hidden md:flex items-center flex-1 min-w-0 justify-center" style={{ gap: 6 }}>
+            {(isAdmin || isGestor) && (
+              <Select value={corretorFilter} onValueChange={setCorretorFilter}>
+                <SelectTrigger
+                  className="h-8 text-[11px] w-[170px] shrink-0"
+                  style={{
+                    borderRadius: 8, fontSize: 11, fontWeight: 600,
+                    border: corretorFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
+                    background: corretorFilter !== "all" ? "#EFF6FF" : "#fff",
+                    color: corretorFilter !== "all" ? "#1D4ED8" : "#64748B",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                >
+                  <SelectValue placeholder="Todos os corretores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os corretores</SelectItem>
+                  {isAdmin && <SelectItem value="sem_corretor">Sem corretor</SelectItem>}
+                  {corretorOptions.map(([id, nome]) => (
+                    <SelectItem key={id} value={id}>{nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {Object.keys(campaignTagCounts).length > 0 && (
+              <Select value={campaignTagFilter} onValueChange={setCampaignTagFilter}>
+                <SelectTrigger
+                  className="h-8 text-[11px] w-[160px] shrink-0"
+                  style={{
+                    borderRadius: 8, fontSize: 11, fontWeight: 600,
+                    border: campaignTagFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
+                    background: campaignTagFilter !== "all" ? "#EFF6FF" : "#fff",
+                    color: campaignTagFilter !== "all" ? "#1D4ED8" : "#64748B",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                >
+                  <SelectValue placeholder="🏷️ Campanha" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">🏷️ Todas as campanhas</SelectItem>
+                  {CAMPAIGN_TAGS.filter(ct => campaignTagCounts[ct.tag]).map(ct => (
+                    <SelectItem key={ct.tag} value={ct.tag}>
+                      {ct.label} ({campaignTagCounts[ct.tag]})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <PipelineAdvancedFilters
+              filters={filters}
+              onChange={setFilters}
+              stages={pipeline.stages}
+              segmentos={pipeline.segmentos}
+              leads={pipeline.leads}
+              corretorNomes={pipeline.corretorNomes}
+              isManager={isGestor || isAdmin}
+            />
+          </div>
+
           {/* RIGHT: Search + Novo Lead + Avatar */}
-          <div className="flex items-center flex-shrink-0" style={{ gap: 8 }}>
+          <div className="flex items-center flex-shrink-0 ml-auto" style={{ gap: 8 }}>
             <div className="relative" style={{ width: filters.search ? 232 : 192, transition: "width 0.2s ease", maxWidth: "40vw" }}>
               <Search className="absolute top-1/2 -translate-y-1/2" style={{ left: 10, height: 14, width: 14, color: "#94A3B8" }} />
               <input
@@ -393,68 +455,41 @@ export default function PipelineKanban() {
               </div>
             )}
 
-            <div style={{ width: 1, height: 16, background: "#E2E8F0", margin: "0 4px" }} />
-
-            {/* Corretor filter */}
-            {(isAdmin || isGestor) && (
-              <Select value={corretorFilter} onValueChange={setCorretorFilter}>
-                <SelectTrigger
-                  className="h-7 text-[11px] w-[160px] sm:w-[180px] shrink-0"
-                  style={{
-                    borderRadius: 8, fontSize: 11, fontWeight: 600,
-                    border: corretorFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
-                    background: corretorFilter !== "all" ? "#EFF6FF" : "#fff",
-                    color: corretorFilter !== "all" ? "#1D4ED8" : "#64748B",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  <SelectValue placeholder="Todos os corretores" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os corretores</SelectItem>
-                  {isAdmin && <SelectItem value="sem_corretor">Sem corretor</SelectItem>}
-                  {corretorOptions.map(([id, nome]) => (
-                    <SelectItem key={id} value={id}>{nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {/* Campaign tag filter */}
-            {Object.keys(campaignTagCounts).length > 0 && (
-              <Select value={campaignTagFilter} onValueChange={setCampaignTagFilter}>
-                <SelectTrigger
-                  className="h-7 text-[11px] w-[160px] shrink-0"
-                  style={{
-                    borderRadius: 8, fontSize: 11, fontWeight: 600,
-                    border: campaignTagFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
-                    background: campaignTagFilter !== "all" ? "#EFF6FF" : "#fff",
-                    color: campaignTagFilter !== "all" ? "#1D4ED8" : "#64748B",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  <SelectValue placeholder="🏷️ Campanha" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">🏷️ Todas as campanhas</SelectItem>
-                  {CAMPAIGN_TAGS.filter(ct => campaignTagCounts[ct.tag]).map(ct => (
-                    <SelectItem key={ct.tag} value={ct.tag}>
-                      {ct.label} ({campaignTagCounts[ct.tag]})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            <PipelineAdvancedFilters
-              filters={filters}
-              onChange={setFilters}
-              stages={pipeline.stages}
-              segmentos={pipeline.segmentos}
-              leads={pipeline.leads}
-              corretorNomes={pipeline.corretorNomes}
-              isManager={isGestor || isAdmin}
-            />
+            {/* Mobile-only filters (hidden on desktop since they're in Line 1) */}
+            <div className="flex md:hidden items-center" style={{ gap: 6 }}>
+              {(isAdmin || isGestor) && (
+                <Select value={corretorFilter} onValueChange={setCorretorFilter}>
+                  <SelectTrigger
+                    className="h-7 text-[11px] w-[140px] shrink-0"
+                    style={{
+                      borderRadius: 8, fontSize: 11, fontWeight: 600,
+                      border: corretorFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
+                      background: corretorFilter !== "all" ? "#EFF6FF" : "#fff",
+                      color: corretorFilter !== "all" ? "#1D4ED8" : "#64748B",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}
+                  >
+                    <SelectValue placeholder="Corretores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os corretores</SelectItem>
+                    {isAdmin && <SelectItem value="sem_corretor">Sem corretor</SelectItem>}
+                    {corretorOptions.map(([id, nome]) => (
+                      <SelectItem key={id} value={id}>{nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <PipelineAdvancedFilters
+                filters={filters}
+                onChange={setFilters}
+                stages={pipeline.stages}
+                segmentos={pipeline.segmentos}
+                leads={pipeline.leads}
+                corretorNomes={pipeline.corretorNomes}
+                isManager={isGestor || isAdmin}
+              />
+            </div>
 
             {/* Refresh */}
             <button
