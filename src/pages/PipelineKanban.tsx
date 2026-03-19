@@ -328,9 +328,9 @@ export default function PipelineKanban() {
           </div>
         </div>
 
-        {/* Line 2 — 44px */}
+        {/* Line 2 — 44px — hidden on mobile when kanban */}
         <div
-          className="flex items-center justify-between overflow-x-auto"
+          className={`flex items-center justify-between overflow-x-auto ${isMobile && activeTab === "kanban" ? "hidden" : ""}`}
           style={{ minHeight: 44, padding: "0 14px", gap: 6 }}
         >
           {/* LEFT: Segmented control + filters */}
