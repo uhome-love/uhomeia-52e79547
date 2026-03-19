@@ -105,6 +105,19 @@ export default function PipelineKanban() {
     setSelectionMode(false);
   }, []);
 
+  // Auto-open lead from query param (e.g. ?lead=uuid)
+  useEffect(() => {
+    const leadId = searchParams.get("lead");
+    if (leadId && pipeline.leads.length > 0) {
+      const found = pipeline.leads.find(l => l.id === leadId);
+      if (found) {
+        setSelectedLead(found);
+        searchParams.delete("lead");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, pipeline.leads]);
+
   const canAdd = isGestor || isAdmin || isCorretor;
 
   const filteredLeads = useMemo(() => {
