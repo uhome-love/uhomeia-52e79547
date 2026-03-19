@@ -294,10 +294,16 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         }
       }
 
+      // Fetch ligações paginated (separate from Promise.all)
+      const ligDataPromise = fetchAllRows((from, to) => {
+        let q = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e).range(from, to);
+        if (scopeUserIds) q = q.in("corretor_id", scopeUserIds.length > 0 ? scopeUserIds : ["__none__"]);
+        return q;
+      });
+
       const [
         { data: presData },
         { data: prevPresData },
-        { data: ligData },
         { count: prevLigCount },
         { data: leadsData },
         { count: prevLeadsCount },
@@ -309,10 +315,10 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         { data: prevNegData },
         { data: negAssinadosData },
         { data: prevNegAssinadosData },
+        ligData,
       ] = await Promise.all([
         presQScoped,
         prevPresQScoped,
-        ligQ,
         prevLigQ,
         leadsQ,
         prevLeadsQ,
@@ -324,16 +330,18 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         prevNegQ,
         negAssinadosQ,
         prevNegAssinadosQ,
+        ligDataPromise,
       ]);
 
       // ── Calculate KPIs ──
 
-      // Presences: unique corretores per day
+      // Presences: unique corretores per day (max 1 per corretor per day)
       const presSet = new Set<string>();
       (presData || []).forEach(p => presSet.add(`${p.corretor_id}-${p.data}`));
       const presCount = presSet.size;
+      // Previous period: also deduplicate by corretor+day
       const prevPresSet = new Set<string>();
-      (prevPresData || []).forEach(p => prevPresSet.add(p.corretor_id));
+      (prevPresData || []).forEach(p => prevPresSet.add(`${p.corretor_id}-${(p as any).data}`));
       const prevPresCount = prevPresSet.size;
 
       const ligCount = (ligData || []).length;
