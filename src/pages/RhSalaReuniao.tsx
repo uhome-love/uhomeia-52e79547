@@ -183,23 +183,24 @@ export default function RhSalaReuniao() {
               const reserva = isSlotOccupied(hora);
               const isStart = reserva && reserva.hora_inicio === hora;
               return (
-                <div key={hora} className={`flex items-center gap-3 py-1.5 px-2 rounded ${reserva ? "bg-primary/5" : "hover:bg-muted/50"}`}>
-                  <span className="text-xs font-mono text-muted-foreground w-12 shrink-0">{hora}</span>
+                <div key={hora} className={`flex items-center gap-2 sm:gap-3 py-1.5 px-2 rounded ${reserva ? "bg-primary/5" : "hover:bg-muted/50"}`}>
+                  <span className="text-xs font-mono text-muted-foreground w-10 sm:w-12 shrink-0">{hora}</span>
                   {isStart ? (
-                    <div className="flex-1 flex items-center justify-between bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{reserva.responsavel}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" /> {reserva.hora_inicio} – {reserva.hora_fim}
-                          {reserva.assunto && <> · {reserva.assunto}</>}
+                    <div className="flex-1 flex items-center justify-between bg-primary/10 border border-primary/20 rounded-lg px-2 sm:px-3 py-2 gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground truncate">{reserva.responsavel}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          <span>{reserva.hora_inicio} – {reserva.hora_fim}</span>
+                          {reserva.assunto && <span className="truncate">· {reserva.assunto}</span>}
                         </p>
                       </div>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" onClick={() => openEdit(reserva)}>
-                          <Pencil className="h-3.5 w-3.5" />
+                      <div className="flex gap-1 shrink-0">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground" onClick={() => openEdit(reserva)}>
+                          <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleDelete(reserva.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive" onClick={() => handleDelete(reserva.id)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -208,7 +209,7 @@ export default function RhSalaReuniao() {
                       <span className="text-xs text-muted-foreground italic">Ocupado — {reserva.responsavel}</span>
                     </div>
                   ) : (
-                    <div className="flex-1 border-l-2 border-transparent pl-3">
+                    <div className="flex-1 border-l-2 border-transparent pl-3 cursor-pointer" onClick={openAdd}>
                       <span className="text-xs text-muted-foreground/30">Disponível</span>
                     </div>
                   )}
