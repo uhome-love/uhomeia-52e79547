@@ -254,7 +254,7 @@ export default function PipelineKanban() {
 
           {/* RIGHT: Search + Novo Lead + Avatar */}
           <div className="flex items-center flex-shrink-0" style={{ gap: 8 }}>
-            <div className="relative hidden sm:block" style={{ width: filters.search ? 232 : 192, transition: "width 0.2s ease" }}>
+            <div className="relative" style={{ width: filters.search ? 232 : 192, transition: "width 0.2s ease", maxWidth: "40vw" }}>
               <Search className="absolute top-1/2 -translate-y-1/2" style={{ left: 10, height: 14, width: 14, color: "#94A3B8" }} />
               <input
                 placeholder="Buscar..."
