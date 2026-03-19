@@ -112,6 +112,24 @@ function ds(d: Date) { return format(d, "yyyy-MM-dd"); }
 function tsStart(d: Date) { return `${ds(d)}T00:00:00-03:00`; }
 function tsEnd(d: Date) { return `${ds(d)}T23:59:59.999-03:00`; }
 
+/** Paginated fetch to bypass Supabase 1000-row default limit */
+async function fetchAllRows<T = any>(
+  buildQuery: (from: number, to: number) => any,
+  pageSize = 1000,
+): Promise<T[]> {
+  const all: T[] = [];
+  let offset = 0;
+  while (true) {
+    const { data, error } = await buildQuery(offset, offset + pageSize - 1);
+    if (error) { console.error("fetchAllRows error:", error); break; }
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
 const TEAM_COLORS = [
   "bg-blue-100 text-blue-800 border-blue-200",
   "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -208,17 +226,15 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       const presQ = supabase.from("roleta_credenciamentos").select("corretor_id, data")
         .in("status", ["aprovado", "saiu"])
         .gte("data", dStart).lte("data", dEnd).limit(10000);
-      const prevPresQ = supabase.from("roleta_credenciamentos").select("corretor_id")
+      const prevPresQ = supabase.from("roleta_credenciamentos").select("corretor_id, data")
         .in("status", ["aprovado", "saiu"])
         .gte("data", pdStart).lte("data", pdEnd).limit(10000);
       // Scope by profile IDs for roleta
       const presQScoped = scopeProfileIds ? presQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : presQ;
       const prevPresQScoped = scopeProfileIds ? prevPresQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : prevPresQ;
 
-      // Ligações (OA tentativas)
-      let ligQ = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
+      // Ligações — prevLigQ uses count only
       let prevLigQ = supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
-      ligQ = applyScope(ligQ, "corretor_id");
       prevLigQ = applyScope(prevLigQ, "corretor_id");
 
       // Leads recebidos
@@ -273,10 +289,16 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         }
       }
 
+      // Fetch ligações paginated (separate from Promise.all)
+      const ligDataPromise = fetchAllRows((from, to) => {
+        let q = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e).range(from, to);
+        if (scopeUserIds) q = q.in("corretor_id", scopeUserIds.length > 0 ? scopeUserIds : ["__none__"]);
+        return q;
+      });
+
       const [
         { data: presData },
         { data: prevPresData },
-        { data: ligData },
         { count: prevLigCount },
         { data: leadsData },
         { count: prevLeadsCount },
@@ -288,10 +310,10 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         { data: prevNegData },
         { data: negAssinadosData },
         { data: prevNegAssinadosData },
+        ligData,
       ] = await Promise.all([
         presQScoped,
         prevPresQScoped,
-        ligQ,
         prevLigQ,
         leadsQ,
         prevLeadsQ,
@@ -303,16 +325,18 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         prevNegQ,
         negAssinadosQ,
         prevNegAssinadosQ,
+        ligDataPromise,
       ]);
 
       // ── Calculate KPIs ──
 
-      // Presences: unique corretores per day
+      // Presences: unique corretores per day (max 1 per corretor per day)
       const presSet = new Set<string>();
       (presData || []).forEach(p => presSet.add(`${p.corretor_id}-${p.data}`));
       const presCount = presSet.size;
+      // Previous period: also deduplicate by corretor+day
       const prevPresSet = new Set<string>();
-      (prevPresData || []).forEach(p => prevPresSet.add(p.corretor_id));
+      (prevPresData || []).forEach(p => prevPresSet.add(`${p.corretor_id}-${(p as any).data}`));
       const prevPresCount = prevPresSet.size;
 
       const ligCount = (ligData || []).length;
