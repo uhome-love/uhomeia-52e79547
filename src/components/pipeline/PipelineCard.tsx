@@ -403,38 +403,29 @@ const PipelineCard = memo(function PipelineCard({
           )}
         </div>
 
-        {/* Campaign tags */}
-        {(lead.tags || []).length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap" style={{ marginBottom: 4 }}>
-            {(lead.tags || []).map(tag => {
-              const TAG_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-                MELNICK_DAY: { label: "🔥 Melnick Day", color: "#EA580C", bg: "#FFF7ED" },
-                OPEN_BOSQUE: { label: "🌳 Open Bosque", color: "#059669", bg: "#ECFDF5" },
-                CASA_TUA: { label: "🏠 Casa Tua", color: "#2563EB", bg: "#EFF6FF" },
-                LAKE_EYRE: { label: "💎 Lake Eyre", color: "#7C3AED", bg: "#F5F3FF" },
-                LAS_CASAS: { label: "🏡 Las Casas", color: "#D97706", bg: "#FFFBEB" },
-                ORYGEM: { label: "✨ Orygem", color: "#0891B2", bg: "#ECFEFF" },
-                HIGH_GARDEN_IGUATEMI: { label: "🌿 High Garden", color: "#059669", bg: "#ECFDF5" },
-                SEEN_TRES_FIGUEIRAS: { label: "👁 Seen", color: "#7C3AED", bg: "#F5F3FF" },
-                ALTO_LINDOIA: { label: "🏔 Alto Lindóia", color: "#0284C7", bg: "#F0F9FF" },
-                SHIFT: { label: "⚡ Shift", color: "#475569", bg: "#F1F5F9" },
-                CASA_BASTIAN: { label: "🏰 Bastian", color: "#E11D48", bg: "#FFF1F2" },
-                DUETTO: { label: "🎵 Duetto", color: "#4F46E5", bg: "#EEF2FF" },
-                TERRACE: { label: "🌅 Terrace", color: "#0D9488", bg: "#F0FDFA" },
-              };
-              const cfg = TAG_CONFIG[tag];
-              if (!cfg) return null;
-              return (
-                <span key={tag} style={{
-                  fontSize: 9, fontWeight: 700, color: cfg.color, background: cfg.bg,
-                  padding: "2px 6px", borderRadius: 5,
-                }}>
-                  {cfg.label}
-                </span>
-              );
-            })}
-          </div>
-        )}
+        {/* Campaign tags - non-empreendimento only */}
+        {(lead.tags || []).length > 0 && (() => {
+          const NON_EMP_TAGS: Record<string, { label: string; color: string; bg: string }> = {
+            MELNICK_DAY: { label: "🔥 Melnick Day", color: "#EA580C", bg: "#FFF7ED" },
+          };
+          const rendered = (lead.tags || []).map(tag => {
+            const cfg = NON_EMP_TAGS[tag];
+            if (!cfg) return null;
+            return (
+              <span key={tag} style={{
+                fontSize: 9, fontWeight: 700, color: cfg.color, background: cfg.bg,
+                padding: "2px 6px", borderRadius: 5,
+              }}>
+                {cfg.label}
+              </span>
+            );
+          }).filter(Boolean);
+          return rendered.length > 0 ? (
+            <div className="flex items-center gap-1 flex-wrap" style={{ marginBottom: 4 }}>
+              {rendered}
+            </div>
+          ) : null;
+        })()}
 
         {/* ROW 4: Status */}
         <CardStatusLine status={status} stageChangedAt={lead.stage_changed_at} />
