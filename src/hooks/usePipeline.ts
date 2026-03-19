@@ -189,7 +189,7 @@ export function usePipeline(pipelineTipo: string = "leads") {
         query = query.in("corretor_id", teamUserIds);
       } else {
         // Corretores: only their own ACCEPTED leads (pendente ones show on AceiteLeads page)
-        query = query.eq("corretor_id", user.id).eq("aceite_status", "aceito");
+        query = query.eq("corretor_id", userId).eq("aceite_status", "aceito");
       }
 
       const { data, error } = await query;
