@@ -70,6 +70,7 @@ function classifyLeadStatus(lead: PipelineLead, proximaTarefa: any): ClientStatu
 
 export default function PipelineKanban() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const pipeline = usePipeline();
   const { isGestor, isAdmin, isCorretor } = useUserRole();
   const { user: authUser } = useAuth();
