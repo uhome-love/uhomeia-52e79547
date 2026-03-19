@@ -226,9 +226,8 @@ export default function PipelineKanban() {
       >
         {/* Line 1 — 58px */}
         <div
-          className="flex items-center justify-between"
-          style={{ height: 52, padding: "0 16px", borderBottom: "1px solid #E2E8F0" }}
           className="flex items-center justify-between md:!h-[58px] md:!px-[28px]"
+          style={{ height: 52, padding: "0 16px", borderBottom: "1px solid #E2E8F0" }}
         >
           {/* LEFT: Logo + divider + label */}
           <div className="flex items-center min-w-0">
