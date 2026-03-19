@@ -671,26 +671,32 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
         }
       `}</style>
 
-      {/* Mini-map nav pills — colored by stage */}
-      <div className="shrink-0 flex items-center gap-1.5 mb-2 px-0.5 overflow-x-auto scrollbar-none">
+      {/* Mini-map nav pills */}
+      <div className="shrink-0 flex items-center gap-1.5 mb-2 px-0.5 overflow-x-auto scrollbar-none" style={{ paddingTop: 12 }}>
         {visibleStages.map((stage, idx) => {
           const stageLeads = leadsByStage.get(stage.id) || [];
           const isActive = idx === activeIndex;
           const emoji = PIPELINE_STAGE_EMOJIS[stage.nome] || "📍";
-          const stageColorCls = PIPELINE_STAGE_COLORS[stage.nome] || "";
           return (
             <button
               key={stage.id}
               onClick={() => scrollToIndex(idx)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 border ${
-                isActive
-                  ? `${stageColorCls} border shadow-sm font-bold scale-[1.02]`
-                  : "bg-card/80 text-muted-foreground border-border/30 hover:border-primary/30 hover:bg-card"
-              }`}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "6px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600,
+                whiteSpace: "nowrap",
+                background: isActive ? "#fff" : "transparent",
+                border: isActive ? "1px solid #E2E8F0" : "1px solid transparent",
+                boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                color: isActive ? "#1E293B" : "#94A3B8",
+                cursor: "pointer",
+                transition: "all 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
             >
-              <span className="text-sm">{emoji}</span>
+              <span style={{ fontSize: 14 }}>{emoji}</span>
               <span>{stage.nome}</span>
-              <span className="font-black text-foreground">
+              <span style={{ fontWeight: 800, color: isActive ? "#1E293B" : "#94A3B8" }}>
                 {stageLeads.length}
               </span>
             </button>
