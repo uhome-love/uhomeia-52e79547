@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, lazy, Suspense, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { LoadingState, ErrorState } from "@/components/ui/screen-states";
 import PeriodBadge from "@/components/PeriodBadge";
 import { usePipeline } from "@/hooks/usePipeline";
@@ -69,6 +70,7 @@ function classifyLeadStatus(lead: PipelineLead, proximaTarefa: any): ClientStatu
 
 export default function PipelineKanban() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const pipeline = usePipeline();
   const { isGestor, isAdmin, isCorretor } = useUserRole();
   const { user: authUser } = useAuth();
@@ -102,6 +104,19 @@ export default function PipelineKanban() {
     setSelectedLeads(new Set());
     setSelectionMode(false);
   }, []);
+
+  // Auto-open lead from query param (e.g. ?lead=uuid)
+  useEffect(() => {
+    const leadId = searchParams.get("lead");
+    if (leadId && pipeline.leads.length > 0) {
+      const found = pipeline.leads.find(l => l.id === leadId);
+      if (found) {
+        setSelectedLead(found);
+        searchParams.delete("lead");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, pipeline.leads]);
 
   const canAdd = isGestor || isAdmin || isCorretor;
 
