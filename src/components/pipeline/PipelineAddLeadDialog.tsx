@@ -34,6 +34,7 @@ interface DuplicateResult {
   telefone: string;
   corretor_nome?: string;
   empreendimento?: string;
+  etapa_nome?: string;
   source: "pipeline" | "oferta_ativa";
 }
 
@@ -66,48 +67,41 @@ export default function PipelineAddLeadDialog({ open, onOpenChange, stages, segm
     const checkDuplicates = async () => {
       setCheckingDup(true);
       try {
-        // Search pipeline_leads by phone (partial match)
-        const phoneVariants = [normalized];
-        if (normalized.length === 11) {
-          phoneVariants.push(`+55${normalized}`);
-          phoneVariants.push(`55${normalized}`);
-        }
-
-        const { data: pipelineResults } = await supabase
-          .from("pipeline_leads")
-          .select("id, nome, telefone, corretor_id, empreendimento")
-          .or(phoneVariants.map(p => `telefone.ilike.%${p.slice(-8)}%`).join(","))
-          .limit(5);
+        // Use RPC that bypasses RLS to check across all leads
+        const { data: rpcResults } = await supabase
+          .rpc("check_phone_duplicate", { p_telefone: normalized }) as { data: any[] | null };
 
         const results: DuplicateResult[] = [];
 
-        if (pipelineResults && pipelineResults.length > 0) {
-          // Resolve corretor names
-          const corretorIds = [...new Set(pipelineResults.filter(l => l.corretor_id).map(l => l.corretor_id!))];
-          let corretorNames: Record<string, string> = {};
-          if (corretorIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from("profiles")
-              .select("user_id, nome")
-              .in("user_id", corretorIds);
-            for (const p of profiles || []) {
-              corretorNames[p.user_id!] = p.nome || "Corretor";
+        if (rpcResults && rpcResults.length > 0) {
+          // Resolve stage names
+          const stageIds = [...new Set(rpcResults.filter(r => r.lead_stage_id).map(r => r.lead_stage_id))];
+          let stageNames: Record<string, string> = {};
+          if (stageIds.length > 0) {
+            for (const s of stages) {
+              stageNames[s.id] = s.nome;
             }
           }
 
-          for (const lead of pipelineResults) {
+          for (const row of rpcResults) {
             results.push({
-              id: lead.id,
-              nome: lead.nome || "Sem nome",
-              telefone: lead.telefone || "",
-              corretor_nome: lead.corretor_id ? corretorNames[lead.corretor_id] || "Corretor" : "Sem corretor",
-              empreendimento: lead.empreendimento || undefined,
+              id: row.lead_id,
+              nome: row.lead_nome || "Sem nome",
+              telefone: row.lead_telefone || "",
+              corretor_nome: row.corretor_nome || "Sem corretor",
+              empreendimento: row.lead_empreendimento || undefined,
+              etapa_nome: row.lead_stage_id ? stageNames[row.lead_stage_id] || undefined : undefined,
               source: "pipeline",
             });
           }
         }
 
         // Also check oferta_ativa_leads
+        const phoneVariants = [normalized];
+        if (normalized.length === 11) {
+          phoneVariants.push(`+55${normalized}`);
+          phoneVariants.push(`55${normalized}`);
+        }
         const { data: oaResults } = await supabase
           .from("oferta_ativa_leads")
           .select("id, nome, telefone")
@@ -132,7 +126,7 @@ export default function PipelineAddLeadDialog({ open, onOpenChange, stages, segm
     };
 
     checkDuplicates();
-  }, [debouncedPhone]);
+  }, [debouncedPhone, stages]);
 
   const hasDuplicates = duplicates.length > 0;
 
@@ -224,6 +218,7 @@ export default function PipelineAddLeadDialog({ open, onOpenChange, stages, segm
                       <div className="text-muted-foreground">
                         {dup.source === "pipeline" ? "📋 Pipeline" : "📞 Oferta Ativa"}
                         {dup.corretor_nome && ` · 👤 ${dup.corretor_nome}`}
+                        {dup.etapa_nome && ` · 📍 ${dup.etapa_nome}`}
                       </div>
                     </div>
                   ))}
