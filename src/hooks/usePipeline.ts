@@ -354,16 +354,15 @@ export function usePipeline(pipelineTipo: string = "leads") {
     };
   }, [user]);
 
-  // Auto-refresh when tab becomes visible — only if stale (>2 min away)
+  // Auto-refresh when tab becomes visible — only if stale (>5 min away)
   useEffect(() => {
     if (!user) return;
-    let lastVisible = Date.now();
     const handleVisibility = () => {
       if (document.visibilityState === "hidden") {
-        lastVisible = Date.now();
+        lastVisibleRef.current = Date.now();
       } else if (document.visibilityState === "visible") {
-        const away = Date.now() - lastVisible;
-        if (away > 2 * 60 * 1000) { // only reload if away > 2 min
+        const away = Date.now() - lastVisibleRef.current;
+        if (away > 5 * 60 * 1000) { // only reload if away > 5 min
           loadLeads();
         }
       }
