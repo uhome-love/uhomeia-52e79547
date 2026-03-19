@@ -782,7 +782,24 @@ export default function PipelineKanban() {
         }}
       />
 
-      {/* Floating selection toolbar */}
+      {/* FAB Mobile — add lead */}
+      {isMobile && canAdd && activeTab === "kanban" && !selectionMode && (
+        <button
+          onClick={() => setAddOpen(true)}
+          className="md:hidden"
+          style={{
+            position: "fixed", bottom: 24, right: 20,
+            width: 52, height: 52, borderRadius: 16,
+            background: "#2563EB", color: "#fff",
+            fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 16px rgba(37,99,235,0.4)",
+            cursor: "pointer", zIndex: 50, border: "none",
+          }}
+        >
+          ＋
+        </button>
+      )}
+
       {selectionMode && selectedLeads.size > 0 && (
         <div
           className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3"
