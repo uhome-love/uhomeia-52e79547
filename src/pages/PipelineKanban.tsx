@@ -592,8 +592,8 @@ export default function PipelineKanban() {
         </div>
       </div>
 
-      {/* Active filter badges row */}
-      {hasAnyFilter && (
+      {/* Active filter badges row — hidden on mobile kanban */}
+      {hasAnyFilter && !(isMobile && activeTab === "kanban") && (
         <div className="flex items-center gap-1 flex-wrap shrink-0" style={{ padding: "6px 28px 0" }}>
           {filters.temperaturas.length > 0 && (
             <Badge variant="secondary" className="text-[9px] gap-0.5 cursor-pointer h-5" onClick={() => setFilters(f => ({ ...f, temperaturas: [] }))}>
