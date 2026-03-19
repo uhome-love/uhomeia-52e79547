@@ -644,7 +644,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
   }, []);
 
   return (
-    <div className="relative flex flex-col h-full w-full max-w-full min-w-0 overflow-hidden">
+    <div className="relative flex flex-col h-full w-full max-w-full min-w-0 overflow-hidden" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* Animation keyframes */}
       <style>{`
         @keyframes confettiFall {
@@ -664,6 +664,10 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
         @keyframes pulseDot {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.4); opacity: 0.7; }
+        }
+        @keyframes pipelineFadeUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
 
