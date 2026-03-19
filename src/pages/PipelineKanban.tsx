@@ -673,45 +673,65 @@ export default function PipelineKanban() {
       )}
 
       {/* Content area */}
-      <div className="flex-1 min-h-0 overflow-hidden flex" style={{ padding: "0 16px" }}>
-        <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
-          <ErrorBoundary onError={(err) => console.error("[PipelineBoard] Render crash:", err.message, err.stack)}>
-          <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" style={{ color: "#94A3B8" }} /></div>}>
-            {activeTab === "kanban" ? (
-              <PipelineBoard
-                stages={pipeline.stages || []}
-                leads={filteredLeads || []}
-                segmentos={pipeline.segmentos}
-                corretorNomes={pipeline.corretorNomes}
-                corretorAvatars={pipeline.corretorAvatars}
-                parcerias={parcerias}
-                onMoveLead={pipeline.moveLead}
-                onSelectLead={selectionMode ? (lead) => toggleLeadSelection(lead.id) : setSelectedLead}
-                onTransferred={() => pipeline.reload()}
-                selectionMode={selectionMode}
-                selectedLeads={selectedLeads}
-                onToggleSelect={toggleLeadSelection}
-              />
-            ) : activeTab === "inteligencia" ? (
-              intelView === "funil" ? (
-                <PipelineFlowDashboard
-                  stages={pipeline.stages}
-                  leads={filteredLeads}
+      {isMobile && activeTab === "kanban" ? (
+        <PipelineMobileView
+          stages={pipeline.stages || []}
+          leads={filteredLeads || []}
+          segmentos={pipeline.segmentos}
+          corretorNomes={pipeline.corretorNomes}
+          corretorAvatars={pipeline.corretorAvatars}
+          parcerias={parcerias}
+          onMoveLead={pipeline.moveLead}
+          onSelectLead={selectionMode ? (lead) => toggleLeadSelection(lead.id) : setSelectedLead}
+          onTransferred={() => pipeline.reload()}
+          selectionMode={selectionMode}
+          selectedLeads={selectedLeads}
+          onToggleSelect={toggleLeadSelection}
+          clientStatusCounts={clientStatusCounts}
+          clientStatusFilter={clientStatusFilter}
+          onStatusFilterChange={(f) => setClientStatusFilter(f as ClientStatusFilter)}
+        />
+      ) : (
+        <div className="flex-1 min-h-0 overflow-hidden flex" style={{ padding: "0 16px" }}>
+          <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
+            <ErrorBoundary onError={(err) => console.error("[PipelineBoard] Render crash:", err.message, err.stack)}>
+            <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin" style={{ color: "#94A3B8" }} /></div>}>
+              {activeTab === "kanban" ? (
+                <PipelineBoard
+                  stages={pipeline.stages || []}
+                  leads={filteredLeads || []}
+                  segmentos={pipeline.segmentos}
                   corretorNomes={pipeline.corretorNomes}
+                  corretorAvatars={pipeline.corretorAvatars}
+                  parcerias={parcerias}
+                  onMoveLead={pipeline.moveLead}
+                  onSelectLead={selectionMode ? (lead) => toggleLeadSelection(lead.id) : setSelectedLead}
+                  onTransferred={() => pipeline.reload()}
+                  selectionMode={selectionMode}
+                  selectedLeads={selectedLeads}
+                  onToggleSelect={toggleLeadSelection}
                 />
-              ) : (
-                <OpportunityRadar
-                  leads={pipeline.leads}
-                  stages={pipeline.stages}
-                  corretorNomes={pipeline.corretorNomes}
-                  onSelectLead={setSelectedLead}
-                />
-              )
-            ) : null}
-          </Suspense>
-          </ErrorBoundary>
+              ) : activeTab === "inteligencia" ? (
+                intelView === "funil" ? (
+                  <PipelineFlowDashboard
+                    stages={pipeline.stages}
+                    leads={filteredLeads}
+                    corretorNomes={pipeline.corretorNomes}
+                  />
+                ) : (
+                  <OpportunityRadar
+                    leads={pipeline.leads}
+                    stages={pipeline.stages}
+                    corretorNomes={pipeline.corretorNomes}
+                    onSelectLead={setSelectedLead}
+                  />
+                )
+              ) : null}
+            </Suspense>
+            </ErrorBoundary>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Dialogs */}
       {canAdd && (
