@@ -331,7 +331,7 @@ export default function PipelineKanban() {
           style={{ minHeight: 44, padding: "0 14px", gap: 6 }}
         >
           {/* LEFT: Segmented control + filters */}
-          <div className="flex items-center" style={{ gap: 6 }}>
+          <div className="flex items-center flex-shrink-0" style={{ gap: 6 }}>
             {/* Segmented Control */}
             <div
               className="flex items-center"
