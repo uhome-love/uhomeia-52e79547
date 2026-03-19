@@ -233,10 +233,13 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       const presQScoped = scopeProfileIds ? presQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : presQ;
       const prevPresQScoped = scopeProfileIds ? prevPresQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : prevPresQ;
 
-      // Ligações (OA tentativas)
-      let ligQ = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
+      // Ligações (OA tentativas) — paginated to avoid 1000-row cap
+      const ligQBuilder = (from: number, to: number) => {
+        let q = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e).range(from, to);
+        if (scopeUserIds) q = q.in("corretor_id", scopeUserIds.length > 0 ? scopeUserIds : ["__none__"]);
+        return q;
+      };
       let prevLigQ = supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
-      ligQ = applyScope(ligQ, "corretor_id");
       prevLigQ = applyScope(prevLigQ, "corretor_id");
 
       // Leads recebidos
