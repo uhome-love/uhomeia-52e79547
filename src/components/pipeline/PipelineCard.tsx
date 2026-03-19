@@ -344,14 +344,18 @@ const PipelineCard = memo(function PipelineCard({
         )}
 
         {/* ROW 3: Empreendimento + Phone */}
-        <div className="flex items-center gap-2" style={{ marginBottom: 5 }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          flexWrap: "nowrap", overflow: "hidden", marginBottom: 5,
+        }}>
           {displayEmpreendimento && (
             <span style={{
               display: "inline-flex", alignItems: "center", gap: 4,
               background: "#F1F5F9", border: "1px solid #E2E8F0",
               borderRadius: 6, padding: "3px 8px",
               fontSize: 11, fontWeight: 600, color: "#334155",
-              maxWidth: "60%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              flexShrink: 0, maxWidth: 140,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>
               <div style={{
                 width: 6, height: 6, borderRadius: "50%",
@@ -365,6 +369,8 @@ const PipelineCard = memo(function PipelineCard({
             <span style={{
               fontSize: 11, color: "#94A3B8",
               fontFamily: "'DM Mono', monospace",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              flexShrink: 1, minWidth: 0,
             }}>
               {formatPhone(lead.telefone)}
             </span>
