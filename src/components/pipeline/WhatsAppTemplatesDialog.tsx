@@ -154,7 +154,7 @@ export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0">
+      <DialogContent className="max-w-md p-0 gap-0 max-h-[85vh] overflow-y-auto">
         <DialogHeader className="px-5 pt-5 pb-3">
           <DialogTitle className="text-base font-bold flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-green-600" />
