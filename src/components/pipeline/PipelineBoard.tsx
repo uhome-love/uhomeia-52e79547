@@ -540,7 +540,6 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
           console.error("Error setting motivo_descarte:", moveError);
         }
         toast.success("🗑️ Lead movido para Descarte" + (listaId ? " e enviado para Oferta Ativa!" : "."));
-        }
       } catch (err) {
         console.error("Error in descarte flow:", err);
         toast.error("Erro no processo de descarte.");
