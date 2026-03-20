@@ -170,15 +170,24 @@ Deno.serve(async (req) => {
       await new Promise(r => setTimeout(r, SEND_DELAY_MS));
     }
 
-    // Update campaign totals
-    const { data: totals } = await admin
+    // Update campaign totals using count queries to avoid 1000-row limit
+    const { count: totalEnviados } = await admin
       .from("email_campaign_recipients")
-      .select("status")
-      .eq("campaign_id", campaign.id);
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", campaign.id)
+      .eq("status", "enviado");
 
-    const totalEnviados = totals?.filter(t => t.status === "enviado").length || 0;
-    const totalErros = totals?.filter(t => t.status === "erro").length || 0;
-    const totalPendentes = totals?.filter(t => t.status === "pendente").length || 0;
+    const { count: totalErros } = await admin
+      .from("email_campaign_recipients")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", campaign.id)
+      .eq("status", "erro");
+
+    const { count: totalPendentes } = await admin
+      .from("email_campaign_recipients")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", campaign.id)
+      .eq("status", "pendente");
 
     await admin.from("email_campaigns")
       .update({
