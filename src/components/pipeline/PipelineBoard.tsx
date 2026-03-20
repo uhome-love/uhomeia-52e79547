@@ -532,9 +532,8 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
             stage_id: result.targetStageId,
             stage_changed_at: new Date().toISOString(),
             motivo_descarte: extra.motivo ? extra.motivo.replace(/_/g, " ") : (result.observacao || "Descarte"),
-            etapa: "Oferta Ativa",
             updated_at: new Date().toISOString(),
-          } as any)
+          })
           .eq("id", lead.id);
 
         if (moveError) {
