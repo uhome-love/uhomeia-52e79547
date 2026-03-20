@@ -100,7 +100,7 @@ export async function resolveCustomListLeads(
   // For now we query pipeline_leads for the corretor
   let query = supabase
     .from("pipeline_leads")
-    .select("id, stage_id, empreendimento, temperatura, updated_at, motivo_descarte, oportunidade_score, origem")
+    .select("id, stage_id, empreendimento, temperatura, updated_at, motivo_descarte, oportunidade_score, origem, ultima_acao_at, stage_changed_at")
     .eq("corretor_id", userId);
 
   // Filter by pipeline type based on fontes
