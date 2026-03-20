@@ -528,22 +528,18 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
           created_by: userData?.user?.id || "00000000-0000-0000-0000-000000000000",
         });
 
-        // Move lead to descarte stage (not delete — corretores may lack delete permission)
+        // Set motivo_descarte (stage_id already updated by onMoveLead above)
         const { error: moveError } = await supabase
           .from("pipeline_leads")
           .update({
-            stage_id: result.targetStageId,
-            stage_changed_at: new Date().toISOString(),
             motivo_descarte: extra.motivo ? extra.motivo.replace(/_/g, " ") : (result.observacao || "Descarte"),
-            updated_at: new Date().toISOString(),
           })
           .eq("id", lead.id);
 
         if (moveError) {
-          console.error("Error moving lead to descarte:", moveError);
-          toast.error("Erro ao mover lead para descarte.");
-        } else {
-          toast.success("🗑️ Lead movido para Descarte" + (listaId ? " e enviado para Oferta Ativa!" : "."));
+          console.error("Error setting motivo_descarte:", moveError);
+        }
+        toast.success("🗑️ Lead movido para Descarte" + (listaId ? " e enviado para Oferta Ativa!" : "."));
         }
       } catch (err) {
         console.error("Error in descarte flow:", err);
