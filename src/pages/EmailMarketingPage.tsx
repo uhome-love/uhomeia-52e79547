@@ -492,15 +492,11 @@ function EmailCampaignsTab() {
                       {c.status !== "enviada" && (
                         <span>⏳ {c.total_destinatarios - (c.total_enviados || 0) - (c.total_erros || 0)} pendentes</span>
                       )}
-                      {c.status === "enviada" && (
-                        <>
-                          <span>📬 {c.total_entregues} entregues</span>
-                          <span>👁 {c.total_aberturas} aberturas</span>
-                          <span>🔗 {c.total_cliques} cliques</span>
-                          <span>⛔ {c.total_bounces} bounces</span>
-                          <span>🚫 {c.total_unsubscribes} unsub</span>
-                        </>
-                      )}
+                      {c.total_entregues > 0 && <span>📬 {c.total_entregues} entregues</span>}
+                      {c.total_aberturas > 0 && <span>👁 {c.total_aberturas} aberturas</span>}
+                      {c.total_cliques > 0 && <span>🔗 {c.total_cliques} cliques</span>}
+                      {c.total_bounces > 0 && <span>⛔ {c.total_bounces} bounces</span>}
+                      {c.total_unsubscribes > 0 && <span>🚫 {c.total_unsubscribes} unsub</span>}
                     </div>
                   )}
                   <p className="text-[10px] text-muted-foreground">
