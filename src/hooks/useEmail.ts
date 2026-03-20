@@ -134,6 +134,14 @@ export function useEmailCampaigns() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Auto-poll every 5s when any campaign is actively sending
+  useEffect(() => {
+    const hasSending = campaigns.some(c => c.status === "enviando");
+    if (!hasSending) return;
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+  }, [campaigns, load]);
+
   const createCampaign = useCallback(async (c: Partial<EmailCampaign>) => {
     if (!user) return null;
     const { data, error } = await supabase
