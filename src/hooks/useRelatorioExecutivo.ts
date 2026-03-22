@@ -394,7 +394,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
 
       const kpis: ExecutiveKpis = {
         presencas: { current: presCount, prev: prevPresCount, pctChange: pctChange(presCount, prevPresCount) },
-        ligacoes: { current: ligCount, prev: prevLigCount ?? 0, pctChange: pctChange(ligCount, prevLigCount ?? 0) },
+        ligacoes: { current: ligCount, prev: prevLigCount, pctChange: pctChange(ligCount, prevLigCount) },
         leadsRecebidos: { current: leadsCount, prev: prevLeadsCount ?? 0, pctChange: pctChange(leadsCount, prevLeadsCount ?? 0) },
         leadsAtivos: { current: leadsAtivosCount ?? 0, prev: 0, pctChange: 0 },
         visitasMarcadas: { current: visMarcCount, prev: prevVisMarcCount ?? 0, pctChange: pctChange(visMarcCount, prevVisMarcCount ?? 0) },
