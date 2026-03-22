@@ -107,6 +107,7 @@ const AnunciosNoAr = lazyRetry(() => import("./pages/AnunciosNoAr"));
 const IntegracaoJetimob = lazyRetry(() => import("./pages/IntegracaoJetimob"));
 const CadastrosPage = lazyRetry(() => import("./pages/CadastrosPage"));
 const DiagnosticoSite = lazyRetry(() => import("./pages/DiagnosticoSite"));
+const LinksSite = lazyRetry(() => import("./pages/LinksSite"));
 
 // RH pages
 const RhDashboard = lazyRetry(() => import("./pages/RhDashboard"));
