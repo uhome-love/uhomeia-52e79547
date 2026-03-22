@@ -2596,6 +2596,47 @@ export type Database = {
           },
         ]
       }
+      imoveis_interesse: {
+        Row: {
+          created_at: string | null
+          favoritado_em: string | null
+          id: string
+          imovel_bairro: string | null
+          imovel_id_site: string
+          imovel_preco: number | null
+          imovel_titulo: string | null
+          lead_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          favoritado_em?: string | null
+          id?: string
+          imovel_bairro?: string | null
+          imovel_id_site: string
+          imovel_preco?: number | null
+          imovel_titulo?: string | null
+          lead_id: string
+        }
+        Update: {
+          created_at?: string | null
+          favoritado_em?: string | null
+          id?: string
+          imovel_bairro?: string | null
+          imovel_id_site?: string
+          imovel_preco?: number | null
+          imovel_titulo?: string | null
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imoveis_interesse_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integracao_field_mappings: {
         Row: {
           ativo: boolean
@@ -3188,6 +3229,75 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vence_em?: string | null
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          atribuido_para: string | null
+          bairro_interesse: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          imovel_id_site: string | null
+          imovel_interesse: string | null
+          nome: string
+          observacoes: string | null
+          origem: string | null
+          origem_detalhe: string | null
+          preco_interesse: number | null
+          site_lead_id: string | null
+          site_user_id: string | null
+          status: string | null
+          telefone: string
+          updated_at: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          atribuido_para?: string | null
+          bairro_interesse?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          imovel_id_site?: string | null
+          imovel_interesse?: string | null
+          nome: string
+          observacoes?: string | null
+          origem?: string | null
+          origem_detalhe?: string | null
+          preco_interesse?: number | null
+          site_lead_id?: string | null
+          site_user_id?: string | null
+          status?: string | null
+          telefone: string
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          atribuido_para?: string | null
+          bairro_interesse?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          imovel_id_site?: string | null
+          imovel_interesse?: string | null
+          nome?: string
+          observacoes?: string | null
+          origem?: string | null
+          origem_detalhe?: string | null
+          preco_interesse?: number | null
+          site_lead_id?: string | null
+          site_user_id?: string | null
+          status?: string | null
+          telefone?: string
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: []
       }
@@ -4424,6 +4534,59 @@ export type Database = {
         }
         Relationships: []
       }
+      oportunidades: {
+        Row: {
+          created_at: string | null
+          etapa: string | null
+          id: string
+          imovel_titulo: string | null
+          lead_id: string
+          motivo_perda: string | null
+          observacoes: string | null
+          origem: string | null
+          responsavel_id: string | null
+          status: string | null
+          updated_at: string | null
+          valor_estimado: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          etapa?: string | null
+          id?: string
+          imovel_titulo?: string | null
+          lead_id: string
+          motivo_perda?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          responsavel_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          valor_estimado?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          etapa?: string | null
+          id?: string
+          imovel_titulo?: string | null
+          lead_id?: string
+          motivo_perda?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          responsavel_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oportunidades_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ops_events: {
         Row: {
           category: string | null
@@ -4784,6 +4947,59 @@ export type Database = {
             columns: ["linked_visit_id"]
             isOneToOne: false
             referencedRelation: "visitas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perfil_interesse: {
+        Row: {
+          alerta_ativo: boolean | null
+          bairros: string[] | null
+          created_at: string | null
+          diferenciais: string[] | null
+          id: string
+          lead_id: string
+          preco_max: number | null
+          preco_min: number | null
+          quartos_min: number | null
+          query_ia: string | null
+          tipo_imovel: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          alerta_ativo?: boolean | null
+          bairros?: string[] | null
+          created_at?: string | null
+          diferenciais?: string[] | null
+          id?: string
+          lead_id: string
+          preco_max?: number | null
+          preco_min?: number | null
+          quartos_min?: number | null
+          query_ia?: string | null
+          tipo_imovel?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          alerta_ativo?: boolean | null
+          bairros?: string[] | null
+          created_at?: string | null
+          diferenciais?: string[] | null
+          id?: string
+          lead_id?: string
+          preco_max?: number | null
+          preco_min?: number | null
+          quartos_min?: number | null
+          query_ia?: string | null
+          tipo_imovel?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfil_interesse_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -5761,6 +5977,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ativo: boolean | null
           avatar_gamificado_url: string | null
           avatar_preview_url: string | null
           avatar_updated_at: string | null
@@ -5769,6 +5986,7 @@ export type Database = {
           cpf: string | null
           created_at: string
           creci: string | null
+          de_plantao: boolean | null
           email: string | null
           id: string
           jetimob_user_id: string | null
@@ -5780,6 +5998,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ativo?: boolean | null
           avatar_gamificado_url?: string | null
           avatar_preview_url?: string | null
           avatar_updated_at?: string | null
@@ -5788,6 +6007,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           creci?: string | null
+          de_plantao?: boolean | null
           email?: string | null
           id?: string
           jetimob_user_id?: string | null
@@ -5799,6 +6019,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ativo?: boolean | null
           avatar_gamificado_url?: string | null
           avatar_preview_url?: string | null
           avatar_updated_at?: string | null
@@ -5807,6 +6028,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           creci?: string | null
+          de_plantao?: boolean | null
           email?: string | null
           id?: string
           jetimob_user_id?: string | null
