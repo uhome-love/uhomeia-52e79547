@@ -40,6 +40,23 @@ export default function ImovelPage() {
   const [error, setError] = useState(false);
   const [imageIdx, setImageIdx] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const trackedRef = useRef(false);
+
+  // Track property view
+  useEffect(() => {
+    if (item && !trackedRef.current) {
+      trackedRef.current = true;
+      track.visitouImovel({
+        id: item.id,
+        slug: item.slug,
+        titulo: item.titulo_anuncio || item.empreendimento_nome,
+        bairro: extractEndereco(item).bairro,
+        preco: item.valor_venda || item.valor || item.preco,
+        codigo: codigo,
+        jetimob_id: item.jetimob_id ?? codigo,
+      });
+    }
+  }, [item]);
 
   useEffect(() => {
     if (!codigo) return;
