@@ -167,3 +167,6 @@ verify_jwt = false
 
 [functions.receive-imovelweb-lead]
 verify_jwt = false
+
+[functions.crm-webhook]
+verify_jwt = false
