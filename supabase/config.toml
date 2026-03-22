@@ -162,5 +162,8 @@ verify_jwt = false
 [functions.receive-rdstation-lead]
 verify_jwt = false
 
+[functions.sync-status-to-site]
+verify_jwt = false
+
 [functions.receive-imovelweb-lead]
 verify_jwt = false
