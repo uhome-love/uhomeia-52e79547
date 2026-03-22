@@ -251,6 +251,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="admin"><AdminPanel /></ErrorBoundary></ProtectedPage>} />
             <Route path="/integracao" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="integracao"><IntegracaoJetimob /></ErrorBoundary></ProtectedPage>} />
             <Route path="/dev-ai" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="dev-ai"><DevAIPage /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/admin/diagnostico-site" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="diagnostico-site"><DiagnosticoSite /></ErrorBoundary></ProtectedPage>} />
             <Route path="/campaign-analytics" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="campaign-analytics"><CampaignAnalyticsPage /></ErrorBoundary></ProtectedPage>} />
             <Route path="/disparador-whatsapp" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="disparador-whatsapp"><WhatsAppCampaignDispatcher /></ErrorBoundary></ProtectedPage>} />
             <Route path="/email-marketing" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="email-marketing"><EmailMarketingPage /></ErrorBoundary></ProtectedPage>} />
