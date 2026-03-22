@@ -84,7 +84,7 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
   const [loading, setLoading] = useState(false);
   const [dispatching, setDispatching] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
-  const [selectedDestino, setSelectedDestino] = useState<Destino>("qualquer");
+  const [selectedDestino, setSelectedDestino] = useState<Destino>(isSundayBRT() ? "dia_todo" : "qualquer");
   const [includeUnidentified, setIncludeUnidentified] = useState(true);
 
   useEffect(() => {
