@@ -7250,6 +7250,72 @@ export type Database = {
           },
         ]
       }
+      site_events: {
+        Row: {
+          created_at: string | null
+          dados: Json | null
+          email: string | null
+          id: string
+          lead_id: string | null
+          pagina: string | null
+          pipeline_lead_id: string | null
+          session_id: string | null
+          telefone: string | null
+          tipo: string
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dados?: Json | null
+          email?: string | null
+          id?: string
+          lead_id?: string | null
+          pagina?: string | null
+          pipeline_lead_id?: string | null
+          session_id?: string | null
+          telefone?: string | null
+          tipo: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dados?: Json | null
+          email?: string | null
+          id?: string
+          lead_id?: string | null
+          pagina?: string | null
+          pipeline_lead_id?: string | null
+          session_id?: string | null
+          telefone?: string | null
+          tipo?: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_events_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           anexo_url: string | null
