@@ -256,7 +256,12 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Disparar para onde?</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1 mb-1">Roleta</p>
               <div className="grid grid-cols-1 gap-1.5">
-                {DESTINO_OPTIONS.filter(d => d.group === "roleta").map(j => (
+                {DESTINO_OPTIONS.filter(d => d.group === "roleta").filter(d => {
+                  const sunday = isSundayBRT();
+                  if (d.sundayOnly && !sunday) return false;
+                  if (d.weekdayOnly && sunday) return false;
+                  return true;
+                }).map(j => (
                   <button
                     key={j.id}
                     onClick={() => setSelectedDestino(j.id)}
