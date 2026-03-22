@@ -2606,6 +2606,7 @@ export type Database = {
           imovel_preco: number | null
           imovel_titulo: string | null
           lead_id: string
+          pipeline_lead_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -2616,6 +2617,7 @@ export type Database = {
           imovel_preco?: number | null
           imovel_titulo?: string | null
           lead_id: string
+          pipeline_lead_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -2626,6 +2628,7 @@ export type Database = {
           imovel_preco?: number | null
           imovel_titulo?: string | null
           lead_id?: string
+          pipeline_lead_id?: string | null
         }
         Relationships: [
           {
@@ -2633,6 +2636,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imoveis_interesse_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -3245,6 +3255,7 @@ export type Database = {
           observacoes: string | null
           origem: string | null
           origem_detalhe: string | null
+          pipeline_lead_id: string | null
           preco_interesse: number | null
           site_lead_id: string | null
           site_user_id: string | null
@@ -3267,6 +3278,7 @@ export type Database = {
           observacoes?: string | null
           origem?: string | null
           origem_detalhe?: string | null
+          pipeline_lead_id?: string | null
           preco_interesse?: number | null
           site_lead_id?: string | null
           site_user_id?: string | null
@@ -3289,6 +3301,7 @@ export type Database = {
           observacoes?: string | null
           origem?: string | null
           origem_detalhe?: string | null
+          pipeline_lead_id?: string | null
           preco_interesse?: number | null
           site_lead_id?: string | null
           site_user_id?: string | null
@@ -3299,7 +3312,15 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads_backup: {
         Row: {
@@ -4544,6 +4565,7 @@ export type Database = {
           motivo_perda: string | null
           observacoes: string | null
           origem: string | null
+          pipeline_lead_id: string | null
           responsavel_id: string | null
           status: string | null
           updated_at: string | null
@@ -4558,6 +4580,7 @@ export type Database = {
           motivo_perda?: string | null
           observacoes?: string | null
           origem?: string | null
+          pipeline_lead_id?: string | null
           responsavel_id?: string | null
           status?: string | null
           updated_at?: string | null
@@ -4572,6 +4595,7 @@ export type Database = {
           motivo_perda?: string | null
           observacoes?: string | null
           origem?: string | null
+          pipeline_lead_id?: string | null
           responsavel_id?: string | null
           status?: string | null
           updated_at?: string | null
@@ -4583,6 +4607,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -4959,6 +4990,7 @@ export type Database = {
           diferenciais: string[] | null
           id: string
           lead_id: string
+          pipeline_lead_id: string | null
           preco_max: number | null
           preco_min: number | null
           quartos_min: number | null
@@ -4973,6 +5005,7 @@ export type Database = {
           diferenciais?: string[] | null
           id?: string
           lead_id: string
+          pipeline_lead_id?: string | null
           preco_max?: number | null
           preco_min?: number | null
           quartos_min?: number | null
@@ -4987,6 +5020,7 @@ export type Database = {
           diferenciais?: string[] | null
           id?: string
           lead_id?: string
+          pipeline_lead_id?: string | null
           preco_max?: number | null
           preco_min?: number | null
           quartos_min?: number | null
@@ -5000,6 +5034,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: true
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "perfil_interesse_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -7422,6 +7463,7 @@ export type Database = {
           hora_visita: string | null
           id: string
           lead_id: string | null
+          lead_site_id: string | null
           linked_attempt_id: string | null
           linked_pdn_id: string | null
           local_visita: string | null
@@ -7455,6 +7497,7 @@ export type Database = {
           hora_visita?: string | null
           id?: string
           lead_id?: string | null
+          lead_site_id?: string | null
           linked_attempt_id?: string | null
           linked_pdn_id?: string | null
           local_visita?: string | null
@@ -7488,6 +7531,7 @@ export type Database = {
           hora_visita?: string | null
           id?: string
           lead_id?: string | null
+          lead_site_id?: string | null
           linked_attempt_id?: string | null
           linked_pdn_id?: string | null
           local_visita?: string | null
@@ -7512,6 +7556,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "oferta_ativa_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitas_lead_site_id_fkey"
+            columns: ["lead_site_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
           {
