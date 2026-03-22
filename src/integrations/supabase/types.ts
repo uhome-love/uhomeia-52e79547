@@ -3191,6 +3191,75 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          atribuido_para: string | null
+          bairro_interesse: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          imovel_id_site: string | null
+          imovel_interesse: string | null
+          nome: string
+          observacoes: string | null
+          origem: string | null
+          origem_detalhe: string | null
+          preco_interesse: number | null
+          site_lead_id: string | null
+          site_user_id: string | null
+          status: string | null
+          telefone: string
+          updated_at: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          atribuido_para?: string | null
+          bairro_interesse?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          imovel_id_site?: string | null
+          imovel_interesse?: string | null
+          nome: string
+          observacoes?: string | null
+          origem?: string | null
+          origem_detalhe?: string | null
+          preco_interesse?: number | null
+          site_lead_id?: string | null
+          site_user_id?: string | null
+          status?: string | null
+          telefone: string
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          atribuido_para?: string | null
+          bairro_interesse?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          imovel_id_site?: string | null
+          imovel_interesse?: string | null
+          nome?: string
+          observacoes?: string | null
+          origem?: string | null
+          origem_detalhe?: string | null
+          preco_interesse?: number | null
+          site_lead_id?: string | null
+          site_user_id?: string | null
+          status?: string | null
+          telefone?: string
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
       leads_backup: {
         Row: {
           atualizado_em: string | null
