@@ -233,68 +233,14 @@ export function useRelatorioExecutivo(period: PeriodRange) {
       const presQScoped = scopeProfileIds ? presQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : presQ;
       const prevPresQScoped = scopeProfileIds ? prevPresQ.in("corretor_id", scopeProfileIds.length > 0 ? scopeProfileIds : ["__none__"]) : prevPresQ;
 
-      // Ligações — prevLigQ uses count only
-      let prevLigQ = supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
-      prevLigQ = applyScope(prevLigQ, "corretor_id");
-
-      // Leads recebidos
-      let leadsQ = supabase.from("pipeline_leads").select("id, corretor_id, created_at").gte("created_at", s).lte("created_at", e).limit(10000);
-      let prevLeadsQ = supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
-      leadsQ = applyScope(leadsQ, "corretor_id");
-      prevLeadsQ = applyScope(prevLeadsQ, "corretor_id");
-
-      // Leads ativos (current snapshot — not a period metric, but pipeline_leads not in descarte stages)
-      const { data: stagesDef } = await supabase.from("pipeline_stages").select("id, tipo").eq("ativo", true).eq("pipeline_tipo", "leads");
-      const descarteStageIds = (stagesDef || []).filter(s => s.tipo === "descarte").map(s => s.id);
-      let leadsAtivosQ = supabase.from("pipeline_leads").select("id, corretor_id", { count: "exact", head: true });
-      if (descarteStageIds.length > 0) {
-        // Use not.in for filtering out descarte
-        for (const did of descarteStageIds) {
-          leadsAtivosQ = leadsAtivosQ.neq("stage_id", did);
-        }
-      }
-      leadsAtivosQ = applyScope(leadsAtivosQ, "corretor_id");
-
-      // Visitas
-      let visMarcQ = supabase.from("visitas").select("corretor_id, data_visita, status").gte("data_visita", dStart).lte("data_visita", dEnd).limit(10000);
-      let prevVisMarcQ = supabase.from("visitas").select("id", { count: "exact", head: true }).gte("data_visita", pdStart).lte("data_visita", pdEnd);
-      let prevVisRealQ = supabase.from("visitas").select("id", { count: "exact", head: true }).eq("status", "realizada").gte("data_visita", pdStart).lte("data_visita", pdEnd);
-      visMarcQ = applyScope(visMarcQ, "corretor_id");
-      prevVisMarcQ = applyScope(prevVisMarcQ, "corretor_id");
-      prevVisRealQ = applyScope(prevVisRealQ, "corretor_id");
-
-      // Negócios criados (by created_at)
-      let negQ = supabase.from("negocios").select("id, corretor_id, auth_user_id, vgv_estimado, vgv_final, fase, created_at, data_assinatura").gte("created_at", s).lte("created_at", e).limit(10000);
-      let prevNegQ = supabase.from("negocios").select("id, vgv_estimado, vgv_final, fase, data_assinatura").gte("created_at", ps).lte("created_at", pe).limit(10000);
-
-      // Negócios assinados (by data_assinatura within period)
-      let negAssinadosQ = supabase.from("negocios").select("id, corretor_id, auth_user_id, vgv_estimado, vgv_final, fase, data_assinatura")
-        .in("fase", ["assinado", "vendido"])
-        .gte("data_assinatura", dStart).lte("data_assinatura", dEnd).limit(10000);
-      let prevNegAssinadosQ = supabase.from("negocios").select("id, vgv_estimado, vgv_final, fase, data_assinatura")
-        .in("fase", ["assinado", "vendido"])
-        .gte("data_assinatura", pdStart).lte("data_assinatura", pdEnd).limit(10000);
-
-      // Negocios uses corretor_id (profile_id) and auth_user_id
-      if (scopeProfileIds) {
-        const orParts = [
-          ...scopeProfileIds.map(id => `corretor_id.eq.${id}`),
-          ...(scopeUserIds || []).map(id => `auth_user_id.eq.${id}`),
-        ];
-        if (orParts.length > 0) {
-          negQ = negQ.or(orParts.join(","));
-          prevNegQ = prevNegQ.or(orParts.join(","));
-          negAssinadosQ = negAssinadosQ.or(orParts.join(","));
-          prevNegAssinadosQ = prevNegAssinadosQ.or(orParts.join(","));
-        }
-      }
-
-      // Fetch ligações paginated (separate from Promise.all)
-      const ligDataPromise = fetchAllRows((from, to) => {
-        let q = supabase.from("oferta_ativa_tentativas").select("corretor_id, created_at").gte("created_at", s).lte("created_at", e).range(from, to);
-        if (scopeUserIds) q = q.in("corretor_id", scopeUserIds.length > 0 ? scopeUserIds : ["__none__"]);
-        return q;
-      });
+      // Ligações — ALL sources: oferta_ativa_tentativas + pipeline_atividades (tipo=ligacao) + ai_calls
+      // Previous period counts (head-only for performance)
+      let prevLigOAQ = supabase.from("oferta_ativa_tentativas").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
+      prevLigOAQ = applyScope(prevLigOAQ, "corretor_id");
+      let prevLigPAQ = supabase.from("pipeline_atividades" as any).select("id", { count: "exact", head: true }).eq("tipo", "ligacao").gte("created_at", ps).lte("created_at", pe);
+      prevLigPAQ = applyScope(prevLigPAQ, "created_by");
+      let prevLigAIQ = supabase.from("ai_calls").select("id", { count: "exact", head: true }).gte("created_at", ps).lte("created_at", pe);
+      prevLigAIQ = applyScope(prevLigAIQ, "iniciado_por");
 
       const [
         { data: presData },
