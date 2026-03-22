@@ -4493,6 +4493,59 @@ export type Database = {
         }
         Relationships: []
       }
+      oportunidades: {
+        Row: {
+          created_at: string | null
+          etapa: string | null
+          id: string
+          imovel_titulo: string | null
+          lead_id: string
+          motivo_perda: string | null
+          observacoes: string | null
+          origem: string | null
+          responsavel_id: string | null
+          status: string | null
+          updated_at: string | null
+          valor_estimado: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          etapa?: string | null
+          id?: string
+          imovel_titulo?: string | null
+          lead_id: string
+          motivo_perda?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          responsavel_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          valor_estimado?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          etapa?: string | null
+          id?: string
+          imovel_titulo?: string | null
+          lead_id?: string
+          motivo_perda?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          responsavel_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oportunidades_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ops_events: {
         Row: {
           category: string | null
