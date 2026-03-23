@@ -626,8 +626,8 @@ export default function CeoDashboard() {
       {/* ═══════════════════════════════════════════════════════ */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <Trophy className="h-4 w-4" /> Rankings
+          <p className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#4F46E5] flex items-center gap-2">
+            Rankings
           </h2>
           <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
             <button
