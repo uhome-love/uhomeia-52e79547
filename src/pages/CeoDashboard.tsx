@@ -500,7 +500,7 @@ export default function CeoDashboard() {
 
       {/* ─── SEÇÃO 2: LEADS ─── */}
       <div>
-        <p className="text-[11px] font-semibold text-[#a1a1aa] uppercase tracking-widest mb-3">Leads</p>
+        <p className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#4F46E5] mb-3">Leads</p>
         <KpiGrid cols={4}>
           <NewKpiCard
             label="Total de leads"
