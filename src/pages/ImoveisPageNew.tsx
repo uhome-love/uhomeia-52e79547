@@ -24,7 +24,7 @@ import { SitePropertyCard } from "@/components/imoveis/SitePropertyCard";
 import { SearchMapBox } from "@/components/imoveis/SearchMapBox";
 import PropertyPreviewDrawer from "@/components/imoveis/PropertyPreviewDrawer";
 import {
-  fetchSiteImoveis, fetchMapPins, fetchBairros, siteImovelToMapPin,
+  fetchSiteImoveis, fetchMapPins, fetchBairros, fetchImovelBySlug, siteImovelToMapPin,
   type SiteImovel, type MapPin as MapPinType, type BuscaFilters,
   formatPreco, CIDADES_PERMITIDAS, PROPERTY_TYPES,
 } from "@/services/siteImoveis";
