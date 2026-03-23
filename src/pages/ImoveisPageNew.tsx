@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ErrorState, EmptyState } from "@/components/ui/screen-states";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,12 +19,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, Heart, Share2, Link2, Copy,
   Loader2, X, MapPin, RotateCcw, MessageCircle, Phone,
-  ArrowUpDown, Map as MapIcon, List,
+  ArrowUpDown, Map as MapIcon, List, Bell, Sparkles, Send,
 } from "lucide-react";
 import { FilterPill, PillOption } from "@/components/imoveis/SiteFilterPill";
 import { SitePropertyCard } from "@/components/imoveis/SitePropertyCard";
 import { SearchMapBox } from "@/components/imoveis/SearchMapBox";
 import PropertyPreviewDrawer from "@/components/imoveis/PropertyPreviewDrawer";
+import { SearchAlertModal } from "@/components/imoveis/SearchAlertModal";
 import {
   fetchSiteImoveis, fetchMapPins, fetchBairros, fetchImovelBySlug, siteImovelToMapPin,
   type SiteImovel, type MapPin as MapPinType, type BuscaFilters,
@@ -34,6 +35,7 @@ import {
   useImoveisSearchStore, filtersFromParams, filtersToParams,
 } from "@/stores/imoveisSearchStore";
 import { useAuth } from "@/hooks/useAuth";
+import { useAISearch } from "@/hooks/useAISearch";
 import { getVitrinePublicUrl } from "@/lib/vitrineUrl";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -86,6 +88,25 @@ function fmtAreaLabel(min: number, max: number): string {
   return "";
 }
 
+// ── Visualizado helpers ──
+const VIEWED_KEY = "imoveis_visualizados";
+function getViewedSlugs(): Set<string> {
+  try {
+    const raw = localStorage.getItem(VIEWED_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+function markViewed(slug: string) {
+  try {
+    const set = getViewedSlugs();
+    set.add(slug);
+    localStorage.setItem(VIEWED_KEY, JSON.stringify([...set]));
+  } catch { /* ignore */ }
+}
+
+// ── Scroll restore helpers ──
+const SCROLL_KEY = "imoveis_scroll";
+
 export default function ImoveisPage() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -112,6 +133,8 @@ export default function ImoveisPage() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
+  const [viewedSlugs, setViewedSlugs] = useState<Set<string>>(getViewedSlugs);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Sort dropdown
   const [sortOpen, setSortOpen] = useState(false);
@@ -141,6 +164,60 @@ export default function ImoveisPage() {
   // Preview drawer
   const [previewItem, setPreviewItem] = useState<SiteImovel | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  // Alert modal
+  const [alertOpen, setAlertOpen] = useState(false);
+
+  // ── AI Search ──
+  const { search: aiSearch, loading: aiLoading, activeQuery: aiQuery, clear: clearAI } = useAISearch();
+  const [aiMode, setAiMode] = useState(false);
+  const [aiInput, setAiInput] = useState("");
+
+  const handleAISearch = useCallback(async () => {
+    if (!aiInput.trim()) return;
+    const result = await aiSearch(aiInput.trim());
+    if (!result) return;
+
+    const f = result.filters;
+    const updates: any = {};
+    if (f.tipo) updates.tipo = f.tipo;
+    if (f.quartos_min) updates.quartos = f.quartos_min;
+    if (f.banheiros_min) updates.banheiros = f.banheiros_min;
+    if (f.vagas_min) updates.vagas = f.vagas_min;
+    if (f.preco_min) updates.precoMin = f.preco_min;
+    if (f.preco_max) updates.precoMax = f.preco_max;
+    if (f.area_min) updates.areaMin = f.area_min;
+    if (f.area_max) updates.areaMax = f.area_max;
+    if (f.cidade) updates.cidade = f.cidade;
+    if (f.ordem) updates.ordem = f.ordem;
+    if (f.bairros?.length) updates.bairro = f.bairros.join(",");
+    if (f.palavras_chave?.length) updates.q = f.palavras_chave.join(" ");
+
+    setFilters(updates);
+    setPage(0);
+    setAllImoveis([]);
+    setAiMode(false);
+    setAiInput("");
+  }, [aiInput, aiSearch, setFilters]);
+
+  const handleClearAI = useCallback(() => {
+    clearAI();
+    resetFilters();
+    setPage(0);
+    setAllImoveis([]);
+  }, [clearAI, resetFilters]);
+
+  // Scroll restore on mount
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem(SCROLL_KEY);
+    if (savedScroll && scrollContainerRef.current) {
+      const val = parseInt(savedScroll, 10);
+      requestAnimationFrame(() => {
+        scrollContainerRef.current?.scrollTo(0, val);
+      });
+      sessionStorage.removeItem(SCROLL_KEY);
+    }
+  }, []);
 
   // Load favorites
   useEffect(() => {
@@ -299,6 +376,13 @@ export default function ImoveisPage() {
 
   // ── Preview drawer ──
   const openPreview = useCallback((item: SiteImovel) => {
+    // Save scroll position
+    if (scrollContainerRef.current) {
+      sessionStorage.setItem(SCROLL_KEY, String(scrollContainerRef.current.scrollTop));
+    }
+    // Mark as viewed
+    markViewed(item.slug);
+    setViewedSlugs(prev => new Set(prev).add(item.slug));
     setPreviewItem(item);
     setPreviewOpen(true);
   }, []);
@@ -354,6 +438,57 @@ export default function ImoveisPage() {
       : `, ${bairrosSelecionados.slice(0, 3).join(", ")} +${bairrosSelecionados.length - 3}`
     : "";
 
+  // ── Build card list with CTA card inserted after 6th ──
+  const renderCards = useMemo(() => {
+    const cards: React.ReactNode[] = [];
+    imoveis.forEach((item, idx) => {
+      cards.push(
+        <SitePropertyCard
+          key={item.id}
+          imovel={item}
+          index={idx}
+          highlighted={hoveredId === item.id}
+          isFavorite={favorites.has(item.id)}
+          onToggleFavorite={toggleFavorite}
+          selectMode={selectMode}
+          isSelected={selectedIds.has(item.id)}
+          onToggleSelect={toggleSelect}
+          onPreview={openPreview}
+          onHover={setHoveredId}
+          isViewed={viewedSlugs.has(item.slug)}
+        />
+      );
+
+      // Insert CTA card after 6th item
+      if (idx === 5 && imoveis.length > 6) {
+        cards.push(
+          <motion.div
+            key="cta-ia"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.2 }}
+            className="flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 border border-primary/20 p-6 text-center"
+            style={{ aspectRatio: "4/3" }}
+          >
+            <Sparkles className="h-8 w-8 text-primary mb-3" />
+            <h3 className="text-base font-bold text-foreground mb-1.5">Não encontrou o ideal?</h3>
+            <p className="text-xs text-muted-foreground mb-4 max-w-[200px]">
+              Use a Busca IA para descrever em linguagem natural
+            </p>
+            <Button
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setAiMode(true); }}
+              className="gap-1.5 rounded-full"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Tentar Busca IA
+            </Button>
+          </motion.div>
+        );
+      }
+    });
+    return cards;
+  }, [imoveis, hoveredId, favorites, selectMode, selectedIds, viewedSlugs, toggleFavorite, toggleSelect, openPreview]);
+
   const mapContent = (
     <ErrorBoundary fallback={<div className="flex items-center justify-center h-full text-muted-foreground text-sm">Erro ao carregar mapa</div>}>
       <SearchMapBox
@@ -390,6 +525,17 @@ export default function ImoveisPage() {
         />
       )}
 
+      {/* Alert modal */}
+      {user && (
+        <SearchAlertModal
+          open={alertOpen}
+          onClose={() => setAlertOpen(false)}
+          filters={filters}
+          queryIA={aiQuery}
+          userId={user.id}
+        />
+      )}
+
       {/* ── Mobile fullscreen map overlay ── */}
       <AnimatePresence>
         {isMobile && mobileMapOpen && (
@@ -409,6 +555,59 @@ export default function ImoveisPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── AI Search overlay ── */}
+      <AnimatePresence>
+        {aiMode && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="z-40 border-b border-primary/30 bg-primary/5 px-4 sm:px-5 py-3"
+          >
+            <div className="flex items-center gap-2 max-w-2xl mx-auto">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <div className="relative flex-1">
+                <input
+                  autoFocus
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleAISearch(); if (e.key === "Escape") { setAiMode(false); setAiInput(""); } }}
+                  placeholder='Descreva o imóvel ideal... ex: "apartamento 2 quartos perto do Iguatemi até 800k"'
+                  className="w-full rounded-full border border-primary/30 bg-background px-4 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary transition-colors"
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={handleAISearch}
+                disabled={aiLoading || !aiInput.trim()}
+                className="gap-1.5 rounded-full shrink-0"
+              >
+                {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Buscar
+              </Button>
+              <button onClick={() => { setAiMode(false); setAiInput(""); }} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── AI Query active chip ── */}
+      {aiQuery && !aiMode && (
+        <div className="z-30 border-b border-primary/20 bg-primary/5 px-4 sm:px-5 py-2 flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-[12px] font-semibold text-primary">
+            <Sparkles className="h-3 w-3" />
+            IA: "{aiQuery}"
+          </span>
+          <button onClick={handleClearAI} className="text-xs text-muted-foreground hover:text-foreground transition-colors underline">
+            Limpar busca IA
+          </button>
+        </div>
+      )}
 
       {/* ── Sticky filter bar ── */}
       <div className="z-30 border-b border-border bg-background">
@@ -459,6 +658,19 @@ export default function ImoveisPage() {
               </div>
             )}
           </div>
+
+          {/* AI Search button */}
+          <button
+            onClick={() => setAiMode(!aiMode)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-all shrink-0",
+              aiMode || aiQuery
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-card text-foreground hover:border-primary/50 hover:text-primary"
+            )}
+          >
+            <Sparkles className="h-3.5 w-3.5" /> Busca IA
+          </button>
 
           {/* Cidade */}
           <FilterPill label={cidadeLabel} value={cidadeLabel} active={!!filters.cidade && filters.cidade !== "Porto Alegre"} onClear={() => { setFilter("cidade", "Porto Alegre"); setPage(0); setAllImoveis([]); }}>
@@ -547,7 +759,7 @@ export default function ImoveisPage() {
           {/* Divider + actions */}
           <div className="border-l border-border/50 pl-2 ml-1 flex items-center gap-1.5 shrink-0">
             {hasActiveFilters && (
-              <button onClick={() => { resetFilters(); setPage(0); setAllImoveis([]); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border border-border bg-card text-muted-foreground hover:text-foreground transition-all">
+              <button onClick={() => { resetFilters(); clearAI(); setPage(0); setAllImoveis([]); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border border-border bg-card text-muted-foreground hover:text-foreground transition-all">
                 <RotateCcw className="h-3 w-3" /> Limpar
               </button>
             )}
@@ -559,7 +771,7 @@ export default function ImoveisPage() {
         </div>
       </div>
 
-      {/* ── Subheader: counter + bounds badge + sort ── */}
+      {/* ── Subheader: counter + bounds badge + sort + alert ── */}
       <div className={`relative flex flex-wrap items-center justify-between gap-2 border-b border-border/50 bg-background px-4 sm:px-5 py-3 ${sortOpen ? "z-30" : "z-0"}`}>
         <div className="flex items-center gap-2">
           {isLoading && page === 0 ? <Skeleton className="h-7 w-40" /> : (
@@ -571,6 +783,7 @@ export default function ImoveisPage() {
                  )}
                </div>
                <div className="mt-0.5 text-xs text-muted-foreground">
+                 {imoveis.length > 0 && `Mostrando ${imoveis.length.toLocaleString("pt-BR")} de ${total.toLocaleString("pt-BR")} · `}
                  à venda em {filters.cidade || "Porto Alegre"}{bairroDisplay}
                </div>
             </div>
@@ -586,6 +799,14 @@ export default function ImoveisPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Alert */}
+          <button
+            onClick={() => setAlertOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <Bell className="h-3.5 w-3.5" /> Alerta
+          </button>
+
           {/* Sort */}
           <div className="relative" ref={sortRef}>
             <button
@@ -651,7 +872,7 @@ export default function ImoveisPage() {
       {/* ── Main content: cards (left) + map (right) ── */}
       <div className="flex flex-1 overflow-hidden">
         {/* Cards column */}
-        <div className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-5" style={{ minWidth: 0 }}>
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-5" style={{ minWidth: 0 }}>
           {isError ? (
             <ErrorState
               title="Erro ao carregar imóveis"
@@ -674,29 +895,15 @@ export default function ImoveisPage() {
               title="Nenhum imóvel encontrado"
               description="Tente ajustar seus filtros ou termo de busca."
               icon={<Search className="h-10 w-10 text-muted-foreground/30" />}
-              action={hasActiveFilters ? { label: "Limpar filtros", onClick: () => { resetFilters(); setPage(0); setAllImoveis([]); } } : undefined}
+              action={hasActiveFilters ? { label: "Limpar filtros", onClick: () => { resetFilters(); clearAI(); setPage(0); setAllImoveis([]); } } : undefined}
             />
           ) : (
             <>
               <div className="grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2 xl:grid-cols-3">
-                {imoveis.map((item, idx) => (
-                  <SitePropertyCard
-                    key={item.id}
-                    imovel={item}
-                    index={idx}
-                    highlighted={hoveredId === item.id}
-                    isFavorite={favorites.has(item.id)}
-                    onToggleFavorite={toggleFavorite}
-                    selectMode={selectMode}
-                    isSelected={selectedIds.has(item.id)}
-                    onToggleSelect={toggleSelect}
-                    onPreview={openPreview}
-                    onHover={setHoveredId}
-                  />
-                ))}
+                {renderCards}
               </div>
 
-              {/* Load more / infinite scroll trigger */}
+              {/* Load more */}
               {hasMore && (
                 <div ref={loadMoreRef} className="flex items-center justify-center pt-8 pb-4">
                   {isFetching ? (
@@ -709,7 +916,7 @@ export default function ImoveisPage() {
                       onClick={() => setPage(p => p + 1)}
                       className="rounded-full border border-border px-8 py-3 text-sm font-semibold text-foreground transition-all hover:border-foreground hover:shadow-md active:scale-[0.97]"
                     >
-                      Ver mais imóveis
+                      Ver mais imóveis ({imoveis.length.toLocaleString("pt-BR")} de {total.toLocaleString("pt-BR")})
                     </button>
                   )}
                 </div>
@@ -760,13 +967,22 @@ export default function ImoveisPage() {
                 )}
               </>
             ) : (
-              <Button
-                onClick={() => setMobileMapOpen(true)}
-                className="w-full h-11 gap-2 rounded-xl font-semibold shadow-lg"
-              >
-                <MapIcon className="h-4 w-4" />
-                Ver mapa · {total.toLocaleString("pt-BR")} imóveis
-              </Button>
+              <div className="flex w-full gap-2">
+                <Button
+                  onClick={() => setMobileMapOpen(true)}
+                  className="flex-1 h-11 gap-2 rounded-xl font-semibold shadow-lg"
+                >
+                  <MapIcon className="h-4 w-4" />
+                  Ver mapa · {total.toLocaleString("pt-BR")}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setAlertOpen(true)}
+                  className="h-11 px-4 rounded-xl font-semibold shrink-0"
+                >
+                  <Bell className="h-4 w-4" />
+                </Button>
+              </div>
             )}
           </div>
         </div>
