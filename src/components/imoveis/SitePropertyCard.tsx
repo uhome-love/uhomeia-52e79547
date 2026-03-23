@@ -50,7 +50,7 @@ const PUBLIC_DOMAIN = "https://uhome.com.br";
 
 export const SitePropertyCard = React.memo(function SitePropertyCard({
   imovel, index, highlighted, isFavorite, onToggleFavorite,
-  selectMode, isSelected, onToggleSelect, onPreview, onHover,
+  selectMode, isSelected, onToggleSelect, onPreview, onHover, isViewed,
 }: Props) {
   const [hovering, setHovering] = useState(false);
   const [fotoAtiva, setFotoAtiva] = useState(0);
