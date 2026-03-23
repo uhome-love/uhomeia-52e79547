@@ -300,7 +300,7 @@ export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]
       q: filters.q || "*",
       per_page: 250,
       page: 1,
-      filter_by: buildFilterBy({ ...filters, bounds: filters.bounds }) + " && latitude:>-35 && longitude:<-45",
+      filter_by: buildFilterBy({ ...filters, bounds: filters.bounds }) + " && location:(-35, -55, -27, -45)",
       sort_by: buildSortBy(filters.ordem, filters.contrato),
     },
   });
