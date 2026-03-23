@@ -1003,16 +1003,17 @@ export default function CeoDashboard() {
             <CardHeader className="pb-2"><CardTitle className="text-sm">Leads por Origem</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {origens.slice(0, 8).map(o => {
+                {origens.slice(0, 8).map((o, idx) => {
                   const maxO = Math.max(...origens.map(x => x.count), 1);
+                  const barColor = getOriginColor(o.origem, idx);
                   return (
-                    <div key={o.origem} className="space-y-0.5">
+                    <div key={o.origem} className="space-y-0.5 group/bar">
                       <div className="flex justify-between text-xs">
-                        <span className="truncate">{o.origem}</span>
+                        <span className="truncate group-hover/bar:text-foreground transition-colors">{o.origem}</span>
                         <span className="font-semibold">{o.count}</span>
                       </div>
-                      <div className="h-2 rounded bg-muted/40 overflow-hidden">
-                        <div className="h-full rounded bg-primary/60 transition-all" style={{ width: `${(o.count / maxO) * 100}%` }} />
+                      <div className="h-2.5 rounded-full bg-muted/40 overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${(o.count / maxO) * 100}%` }} />
                       </div>
                     </div>
                   );
