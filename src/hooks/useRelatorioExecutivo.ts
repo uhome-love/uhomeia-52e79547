@@ -338,7 +338,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         prevLigOAQ,
         prevLigPAQ,
         prevLigAIQ,
-        leadsQ,
+        leadsPromise,
         prevLeadsQ,
         leadsAtivosQ,
         visMarcQ,
