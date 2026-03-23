@@ -291,20 +291,32 @@ export async function fetchSiteImoveis(filters: BuscaFilters = {}): Promise<{ da
 }
 
 export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]> {
+  // Don't pass bounds to Typesense (no geopoint field); filter client-side
+  const filtersWithoutBounds = { ...filters, bounds: null };
   const { data, error } = await supabase.functions.invoke("typesense-search", {
     body: {
       q: filters.q || "*",
       per_page: 250,
       page: 1,
-      filter_by: buildFilterBy({ ...filters, bounds: filters.bounds }) + " && location:(-35, -55, -27, -45)",
+      filter_by: buildFilterBy(filtersWithoutBounds),
       sort_by: buildSortBy(filters.ordem, filters.contrato),
     },
   });
 
   if (error) return [];
 
+  const bounds = filters.bounds;
   return (data?.data || [])
-    .filter((doc: Record<string, unknown>) => doc.latitude && doc.longitude)
+    .filter((doc: Record<string, unknown>) => {
+      const lat = Number(doc.latitude);
+      const lng = Number(doc.longitude);
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
+      if (bounds) {
+        return lat >= bounds.lat_min && lat <= bounds.lat_max &&
+               lng >= bounds.lng_min && lng <= bounds.lng_max;
+      }
+      return true;
+    })
     .map((doc: Record<string, unknown>): MapPin => ({
       id: String(doc.id || doc.codigo || ""),
       slug: String(doc.slug || doc.codigo || ""),
