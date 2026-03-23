@@ -75,6 +75,26 @@ function formatMetaDisplay(value: number, type: "currency" | "number" | "percent
   return value.toLocaleString("pt-BR");
 }
 
+// ─── Origin color map for semantic charts ───
+const ORIGIN_COLORS: Record<string, string> = {
+  meta_ads: "bg-blue-500",
+  "Meta Ads": "bg-blue-500",
+  "TikTok Ads": "bg-pink-500",
+  "Landing Page": "bg-emerald-500",
+  imovelweb: "bg-orange-500",
+  "ImovelWeb": "bg-orange-500",
+  "site_uhome": "bg-cyan-500",
+  "Site - uhome.com.br": "bg-cyan-500",
+  jetimob: "bg-indigo-500",
+  indicacao: "bg-violet-500",
+  whatsapp: "bg-green-500",
+  rd_station: "bg-amber-500",
+};
+const ORIGIN_COLOR_LIST = ["bg-blue-500", "bg-pink-500", "bg-emerald-500", "bg-orange-500", "bg-cyan-500", "bg-indigo-500", "bg-violet-500", "bg-amber-500", "bg-rose-500", "bg-teal-500"];
+function getOriginColor(name: string, index: number): string {
+  return ORIGIN_COLORS[name] || ORIGIN_COLOR_LIST[index % ORIGIN_COLOR_LIST.length];
+}
+
 // ─── KPI Card ───
 function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor, ceoMeta, metaType = "number", onClick }: {
   icon: any; label: string; value: number; displayValue?: string; meta?: number; prev?: number; iconColor?: string; ceoMeta?: number | null; metaType?: "currency" | "number" | "percent"; onClick?: () => void;
@@ -83,25 +103,30 @@ function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor
   const semaphore = getSemaphore(value, ceoMeta);
   const metaPct = ceoMeta && ceoMeta > 0 ? Math.round((value / ceoMeta) * 100) : null;
   const showNoMeta = ceoMeta !== undefined && (!ceoMeta || ceoMeta <= 0);
+  const isZero = value === 0;
 
   return (
-    <Card className={`relative ${onClick ? "cursor-pointer hover:shadow-md hover:border-primary/30 transition-all" : ""}`} onClick={onClick}>
+    <Card className={`relative group transition-all duration-200 ${onClick ? "cursor-pointer hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5" : "hover:shadow-sm"}`} onClick={onClick}>
       <CardContent className="pt-4 pb-3 px-4">
-        {/* Semaphore dot — always show when ceoMeta is passed (even null = grey) */}
+        {/* Semaphore dot — always show when ceoMeta is passed */}
         {ceoMeta !== undefined && (
           <div className="absolute top-2.5 right-2.5" title={semaphore ? `${metaPct}% da meta (${semaphore.label})` : "Sem meta"}>
-            <div className={`h-2.5 w-2.5 rounded-full ${semaphore ? semaphore.color : "bg-muted-foreground/30"}`} />
+            <div className={`h-2.5 w-2.5 rounded-full ${semaphore ? semaphore.color : "bg-muted-foreground/30"} ${semaphore?.color === "bg-emerald-500" ? "animate-pulse" : ""}`} />
           </div>
         )}
 
         <div className="flex items-start justify-between mb-1 pr-4">
           <div className="flex items-center gap-2">
-            <Icon className={`h-4 w-4 ${iconColor || "text-primary"}`} />
-            <span className="text-xs text-muted-foreground">{label}</span>
+            <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${iconColor ? iconColor.replace("text-", "bg-").replace("600", "100").replace("500", "100") : "bg-primary/10"}`}>
+              <Icon className={`h-3.5 w-3.5 ${iconColor || "text-primary"}`} />
+            </div>
+            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
           </div>
           {prev !== undefined && <Variation current={value} previous={prev} />}
         </div>
-        <p className="text-2xl font-bold">{displayValue || value}</p>
+        <p className={`text-2xl font-bold mt-1 transition-colors ${isZero ? "text-muted-foreground/40" : "text-foreground"}`}>
+          {displayValue || value.toLocaleString("pt-BR")}
+        </p>
 
         {/* Meta line */}
         {ceoMeta !== undefined && ceoMeta !== null && ceoMeta > 0 && (
@@ -121,6 +146,11 @@ function KpiCard({ icon: Icon, label, value, displayValue, meta, prev, iconColor
             </div>
             <Progress value={pct} className="h-1.5" />
           </div>
+        )}
+
+        {/* Hover hint for clickable cards */}
+        {onClick && (
+          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary/0 group-hover:bg-primary/60 transition-all rounded-b-xl" />
         )}
       </CardContent>
     </Card>
