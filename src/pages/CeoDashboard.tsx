@@ -24,6 +24,8 @@ import CeoDailyReport from "@/components/ceo/CeoDailyReport";
 import BulkEmpreendimentoAssign from "@/components/ceo/BulkEmpreendimentoAssign";
 import { formatBRLCompact } from "@/lib/utils";
 import { CeoDashboardSkeleton } from "@/components/ui/skeleton-dashboard";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { KpiCard as NewKpiCard, KpiGrid } from "@/components/ui/KpiCard";
 
 import KpiDetailDialog, { type KpiDetailType } from "@/components/ceo/KpiDetailDialog";
 
@@ -374,45 +376,18 @@ export default function CeoDashboard() {
   }), { ligacoes: 0, aproveitados: 0, visitasMarcadas: 0, visitasRealizadas: 0, propostas: 0, vgv: 0 });
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-[1440px] mx-auto">
+    <div className="bg-[#f7f7f8] dark:bg-[#0f0f12] p-6 -m-6 min-h-full space-y-4 sm:space-y-6 max-w-[1440px] mx-auto">
       {/* ─── HEADER ─── */}
-      <div className="rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 p-4 sm:p-5 text-white">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-white/20 shrink-0">
-            {(profile?.avatar_gamificado_url || profile?.avatar_url) ? (
-              <AvatarImage src={(profile.avatar_gamificado_url || profile.avatar_url)!} className="object-cover" />
-            ) : null}
-            <AvatarFallback className="bg-primary text-primary-foreground text-base sm:text-lg">
-              {(profile?.nome || "C").substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold truncate" style={{ color: "#FFFFFF" }}>{getGreeting()}, {profile?.nome?.split(" ")[0] || "CEO"} 👋</h1>
-            <p className="text-xs sm:text-sm italic mt-0.5 truncate" style={{ color: "#94A3B8" }}>"{frase}"</p>
-            <p className="text-[11px] mt-0.5" style={{ color: "#64748B" }}>
-              {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })} — Semana {weekNum}
-            </p>
-          </div>
-          <div className="hidden sm:flex items-center gap-3 shrink-0">
-            <div className="text-right text-[10px] text-white/40">
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <Clock className="h-3 w-3" /> Atualizado {format(lastUpdate, "HH:mm")}
-              </div>
-              <button onClick={reload} className="flex items-center gap-1 text-white/50 hover:text-white mt-0.5 transition-colors">
-                <RefreshCw className="h-3 w-3" /> Atualizar
-              </button>
-            </div>
-          </div>
-        </div>
-        {/* Period pills — Global Date Filter */}
-        <div className="flex items-center justify-between mt-3 gap-2">
-          <GlobalDateFilterBar variant="header" />
-          <button onClick={reload} className="sm:hidden flex items-center gap-1 text-[10px] text-white/50 hover:text-white">
-            <RefreshCw className="h-3 w-3" /> {format(lastUpdate, "HH:mm")}
+      <PageHeader
+        title="Dashboard CEO"
+        subtitle={`${format(now, "EEEE, d 'de' MMMM", { locale: ptBR })} · Semana ${weekNum}`}
+      />
+      <div className="flex items-center justify-between gap-2">
+        <GlobalDateFilterBar variant="header" />
+        <div className="flex items-center gap-2 text-[10px] text-[#a1a1aa]">
+          <Clock className="h-3 w-3" /> {format(lastUpdate, "HH:mm")}
+          <button onClick={reload} className="hover:text-[#0a0a0a] dark:hover:text-[#fafafa] transition-colors">
+            <RefreshCw className="h-3 w-3" />
           </button>
         </div>
       </div>
@@ -502,112 +477,82 @@ export default function CeoDashboard() {
       </Card>
 
 
-      {/* ─── SEÇÃO 2: GESTÃO DE LEADS ─── */}
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ─── SEÇÃO 2: LEADS ─── */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-          <Target className="h-4 w-4" /> Gestão de Leads
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <KpiCard icon={Users} label="Total de Leads" value={totalLeadsPeriodo} iconColor="text-blue-600" ceoMeta={null} onClick={() => setKpiDetail({ type: "total_leads", label: "Total de Leads" })} />
-          <Card className="relative">
-            <CardContent className="pt-4 pb-3 px-4">
-              {/* Grey semaphore dot for no-meta */}
-              <div className="absolute top-2.5 right-2.5" title="Sem meta">
-                <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <Send className="h-4 w-4 text-orange-500" />
-                <span className="text-xs text-muted-foreground">Leads Distribuídos</span>
-              </div>
-              <LeadsDistribuidosPanel teamUserIds={null} period={period === "hoje" ? "dia" : period === "semana" ? "semana" : "mes"} compact showPeriodSelector={false} />
-              <p className="text-[10px] text-muted-foreground/50 mt-0.5">Sem meta definida</p>
-            </CardContent>
-          </Card>
-          <KpiCard icon={CalendarDays} label="Visitas Marcadas" value={kpis.visitasMarcadas} prev={prevKpis?.visitasMarcadas} iconColor="text-amber-600" ceoMeta={ceoMetasConsolidadas.meta_visitas_marcadas || null} onClick={() => setKpiDetail({ type: "visitas_marcadas", label: "Visitas Marcadas" })} />
-          <KpiCard
-            icon={CalendarCheck}
-            label="Visitas Realizadas"
-            value={kpis.visitasRealizadas}
-            displayValue={`${kpis.visitasRealizadas} (${kpis.taxaRealizacao}%)`}
-            prev={prevKpis?.visitasRealizadas}
-            iconColor="text-emerald-600"
-            ceoMeta={ceoMetasConsolidadas.meta_visitas_realizadas || null}
+        <p className="text-[11px] font-semibold text-[#a1a1aa] uppercase tracking-widest mb-3">Leads</p>
+        <KpiGrid cols={4}>
+          <NewKpiCard
+            label="Total de leads"
+            value={totalLeadsPeriodo}
+            icon={<Users size={14} strokeWidth={1.5} />}
+            onClick={() => setKpiDetail({ type: "total_leads", label: "Total de Leads" })}
+          />
+          <NewKpiCard
+            label="Visitas marcadas"
+            value={kpis.visitasMarcadas}
+            icon={<CalendarDays size={14} strokeWidth={1.5} />}
+            variant={(() => { const p = ceoMetasConsolidadas.meta_visitas_marcadas > 0 ? Math.round((kpis.visitasMarcadas / ceoMetasConsolidadas.meta_visitas_marcadas) * 100) : 0; return p >= 70 ? "success" : p >= 30 ? "warning" : "danger"; })() as any}
+            hint={ceoMetasConsolidadas.meta_visitas_marcadas > 0 ? `${Math.round((kpis.visitasMarcadas / ceoMetasConsolidadas.meta_visitas_marcadas) * 100)}% da meta · meta: ${ceoMetasConsolidadas.meta_visitas_marcadas}` : undefined}
+            onClick={() => setKpiDetail({ type: "visitas_marcadas", label: "Visitas Marcadas" })}
+          />
+          <NewKpiCard
+            label="Visitas realizadas"
+            value={`${kpis.visitasRealizadas} (${kpis.taxaRealizacao}%)`}
+            icon={<CalendarCheck size={14} strokeWidth={1.5} />}
+            variant={(() => { const p = ceoMetasConsolidadas.meta_visitas_realizadas > 0 ? Math.round((kpis.visitasRealizadas / ceoMetasConsolidadas.meta_visitas_realizadas) * 100) : 0; return p >= 70 ? "success" : p >= 30 ? "warning" : "danger"; })() as any}
+            hint={ceoMetasConsolidadas.meta_visitas_realizadas > 0 ? `${Math.round((kpis.visitasRealizadas / ceoMetasConsolidadas.meta_visitas_realizadas) * 100)}% da meta · meta: ${ceoMetasConsolidadas.meta_visitas_realizadas}` : undefined}
             onClick={() => setKpiDetail({ type: "visitas_realizadas", label: "Visitas Realizadas" })}
           />
-          <KpiCard
-            icon={TrendingDown}
-            label="Conversão Lead→Visita"
-            value={totalLeadsPeriodo > 0 ? Math.round((kpis.visitasMarcadas / totalLeadsPeriodo) * 100) : 0}
-            displayValue={`${totalLeadsPeriodo > 0 ? Math.round((kpis.visitasMarcadas / totalLeadsPeriodo) * 100) : 0}%`}
-            iconColor="text-purple-600"
-            ceoMeta={null}
-            metaType="percent"
+          <NewKpiCard
+            label="Conversão lead→visita"
+            value={`${totalLeadsPeriodo > 0 ? Math.round((kpis.visitasMarcadas / totalLeadsPeriodo) * 100) : 0}%`}
           />
-        </div>
+        </KpiGrid>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* ─── SEÇÃO 3: GESTÃO DE NEGÓCIOS ─── */}
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ─── SEÇÃO 3: NEGÓCIOS ─── */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-          <DollarSign className="h-4 w-4" /> Gestão de Negócios
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <KpiCard
-            icon={FileText}
-            label="Nº Negócios"
-            value={negocioFases.reduce((a, f) => a + f.count, 0)}
-            iconColor="text-blue-600"
-            ceoMeta={null}
+        <p className="text-[11px] font-semibold text-[#a1a1aa] uppercase tracking-widest mb-3">Negócios</p>
+        <KpiGrid cols={4}>
+          <NewKpiCard
+            label="Nº negócios"
+            value={negocioFases.reduce((a: number, f: any) => a + f.count, 0)}
             onClick={() => setKpiDetail({ type: "negocios", label: "Nº Negócios" })}
           />
-          <KpiCard
-            icon={FileText}
+          <NewKpiCard
             label="Propostas"
-            value={negocioFases.filter(f => f.fase === "proposta").reduce((a, f) => a + f.count, 0)}
-            prev={prevKpis?.propostas}
-            iconColor="text-amber-600"
-            ceoMeta={ceoMetasConsolidadas.meta_propostas || null}
+            value={negocioFases.filter((f: any) => f.fase === "proposta").reduce((a: number, f: any) => a + f.count, 0)}
+            hint={ceoMetasConsolidadas.meta_propostas > 0 ? `meta: ${ceoMetasConsolidadas.meta_propostas}` : undefined}
             onClick={() => setKpiDetail({ type: "propostas", label: "Propostas" })}
           />
-          <KpiCard
-            icon={FileText}
-            label="Negociação"
-            value={negocioFases.filter(f => f.fase === "negociacao").reduce((a, f) => a + f.count, 0)}
-            iconColor="text-orange-600"
-            ceoMeta={null}
-            onClick={() => setKpiDetail({ type: "negociacao", label: "Negociação" })}
-          />
-          <KpiCard
-            icon={FileText}
-            label="Contratos Gerados"
-            value={negocioFases.filter(f => f.fase === "documentacao" || f.fase === "contrato").reduce((a, f) => a + f.count, 0)}
-            iconColor="text-purple-600"
-            ceoMeta={ceoMetasConsolidadas.meta_contratos || null}
-            onClick={() => setKpiDetail({ type: "contratos", label: "Contratos Gerados" })}
-          />
-          <KpiCard
-            icon={Trophy}
+          <NewKpiCard
             label="Assinados"
-            value={negocioFases.filter(f => f.fase === "assinado" || f.fase === "vendido").reduce((a, f) => a + f.count, 0)}
-            iconColor="text-emerald-600"
-            ceoMeta={ceoMetasConsolidadas.meta_assinados || null}
+            value={negocioFases.filter((f: any) => f.fase === "assinado" || f.fase === "vendido").reduce((a: number, f: any) => a + f.count, 0)}
+            variant="success"
+            hint={ceoMetasConsolidadas.meta_assinados > 0 ? `meta: ${ceoMetasConsolidadas.meta_assinados}` : undefined}
             onClick={() => setKpiDetail({ type: "assinados", label: "Assinados" })}
           />
-          <KpiCard
-            icon={DollarSign}
-            label="VGV Assinado"
-            value={kpis.vgvAssinado}
-            displayValue={formatCurrency(kpis.vgvAssinado)}
-            prev={prevKpis?.vgvAssinado}
-            iconColor="text-emerald-600"
-            ceoMeta={ceoMetasConsolidadas.meta_vgv_assinado || null}
-            metaType="currency"
+          <NewKpiCard
+            label="VGV assinado"
+            value={formatCurrency(kpis.vgvAssinado)}
+            variant={(() => { const p = ceoMetasConsolidadas.meta_vgv_assinado > 0 ? Math.round((kpis.vgvAssinado / ceoMetasConsolidadas.meta_vgv_assinado) * 100) : 0; return p >= 70 ? "success" : p >= 30 ? "warning" : "danger"; })() as any}
+            hint={ceoMetasConsolidadas.meta_vgv_assinado > 0 ? `${Math.round((kpis.vgvAssinado / ceoMetasConsolidadas.meta_vgv_assinado) * 100)}% da meta · meta: ${formatCurrency(ceoMetasConsolidadas.meta_vgv_assinado)}` : undefined}
             onClick={() => setKpiDetail({ type: "vgv_assinado", label: "VGV Assinado" })}
           />
-        </div>
+        </KpiGrid>
+        <KpiGrid cols={4} className="mt-3">
+          <NewKpiCard
+            label="Negociação"
+            value={negocioFases.filter((f: any) => f.fase === "negociacao").reduce((a: number, f: any) => a + f.count, 0)}
+            onClick={() => setKpiDetail({ type: "negociacao", label: "Negociação" })}
+          />
+          <NewKpiCard
+            label="Contratos gerados"
+            value={negocioFases.filter((f: any) => f.fase === "documentacao" || f.fase === "contrato").reduce((a: number, f: any) => a + f.count, 0)}
+            hint={ceoMetasConsolidadas.meta_contratos > 0 ? `meta: ${ceoMetasConsolidadas.meta_contratos}` : undefined}
+            onClick={() => setKpiDetail({ type: "contratos", label: "Contratos Gerados" })}
+          />
+        </KpiGrid>
       </div>
 
       {/* ═══════════════════════════════════════════════════════ */}
