@@ -54,9 +54,10 @@ export function KpiCard({
       className={cn(
         "bg-white dark:bg-white/[0.04]",
         "border border-[#f0f0f0] dark:border-white/[0.07]",
-        "rounded-[14px] p-4",
+        "border-l-[3px] border-l-[#4F46E5]",
+        "rounded-[14px] p-4 pl-4",
         "flex flex-col gap-2",
-        onClick && "cursor-pointer hover:border-[#e0e0e0] dark:hover:border-white/[0.12] transition-colors",
+        onClick && "cursor-pointer hover:border-[#e0e0e0] dark:hover:border-white/[0.12] hover:border-l-[#4338CA] transition-colors",
         className
       )}
     >
