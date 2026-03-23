@@ -287,13 +287,13 @@ export default function Sidebar({
     ? "bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.08]"
     : "bg-[#fafafa] border border-[#ebebeb] hover:bg-[#f3f3f3]";
   const itemBase  = isDark
-    ? "text-[#a1a1aa] hover:bg-white/[0.05] hover:text-[#e4e4e7]"
-    : "text-[#3f3f46] hover:bg-[rgba(79,70,229,0.05)] hover:text-[#0a0a0a]";
+    ? "text-[#a1a1aa] hover:bg-[rgba(99,102,241,0.08)] hover:text-[#818cf8]"
+    : "text-[#3f3f46] hover:bg-[rgba(79,70,229,0.08)] hover:text-[#4F46E5]";
   const itemOn  = isDark
-    ? "bg-[rgba(99,102,241,0.16)] text-[#818cf8] font-medium"
-    : "bg-[rgba(79,70,229,0.08)] text-[#4F46E5] font-medium";
-  const iconDef   = isDark ? "text-[#52525b]"  : "text-[#c4c4c7]";
-  const iconOn    = isDark ? "text-[#818cf8]"  : "text-[#4F46E5]";
+    ? "bg-[#4F46E5] text-white font-medium"
+    : "bg-[#4F46E5] text-white font-medium";
+  const iconDef   = isDark ? "text-[#818cf8]"  : "text-[#4F46E5]";
+  const iconOn    = "text-white";
 
   // Collapsed mode: show only icons
   if (collapsed) {
