@@ -380,7 +380,7 @@ export default function CeoDashboard() {
       {/* ─── GREETING ─── */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-4">
-          <Avatar className="h-12 w-12 ring-2 ring-[#4F46E5]/20">
+          <Avatar className="h-12 w-12 ring-2 ring-[#4F46E5]">
             {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
             <AvatarFallback className="bg-[#4F46E5] text-white font-bold text-sm">
               {(profile?.nome || user?.email || "U").slice(0, 2).toUpperCase()}
@@ -468,15 +468,15 @@ export default function CeoDashboard() {
       </Card>
 
       {/* ─── FILA CEO ─── */}
-      <Card className={filaCeoCount > 0 ? "border-purple-500/40 shadow-[0_0_0_1px_rgba(124,58,237,0.15)]" : ""}>
+      <Card className={filaCeoCount > 0 ? "border-[#4F46E5]/40 shadow-[0_0_0_1px_rgba(79,70,229,0.15)]" : ""}>
         <CardContent className="pt-4 pb-3">
           <div className="flex items-center gap-2 mb-1">
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-              <Inbox className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-[#4F46E5]/10 flex items-center justify-center shrink-0">
+              <Inbox className="h-4 w-4 sm:h-5 sm:w-5 text-[#4F46E5]" />
             </div>
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <span className="text-sm font-semibold whitespace-nowrap">📥 Fila CEO</span>
-              {filaCeoCount > 0 && <Badge className="bg-purple-600 text-white border-none text-xs">{filaCeoCount}</Badge>}
+              {filaCeoCount > 0 && <Badge className="bg-[#4F46E5] text-white border-none text-xs">{filaCeoCount}</Badge>}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mb-2">
@@ -489,7 +489,7 @@ export default function CeoDashboard() {
             size="sm"
             onClick={() => setDispatchOpen(true)}
             disabled={filaCeoCount === 0}
-            className="w-full sm:w-auto gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+            className="w-full sm:w-auto gap-1.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white"
           >
             <Rocket className="h-3.5 w-3.5" />
             Disparar para Roleta
@@ -500,11 +500,12 @@ export default function CeoDashboard() {
 
       {/* ─── SEÇÃO 2: LEADS ─── */}
       <div>
-        <p className="text-[11px] font-semibold text-[#a1a1aa] uppercase tracking-widest mb-3">Leads</p>
+        <p className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#4F46E5] mb-3">Leads</p>
         <KpiGrid cols={4}>
           <NewKpiCard
             label="Total de leads"
             value={totalLeadsPeriodo}
+            variant="highlight"
             icon={<Users size={14} strokeWidth={1.5} />}
             onClick={() => setKpiDetail({ type: "total_leads", label: "Total de Leads" })}
           />
@@ -533,7 +534,7 @@ export default function CeoDashboard() {
 
       {/* ─── SEÇÃO 3: NEGÓCIOS ─── */}
       <div>
-        <p className="text-[11px] font-semibold text-[#a1a1aa] uppercase tracking-widest mb-3">Negócios</p>
+        <p className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#4F46E5] mb-3">Negócios</p>
         <KpiGrid cols={4}>
           <NewKpiCard
             label="Nº negócios"
@@ -580,9 +581,7 @@ export default function CeoDashboard() {
       {/* ─── SEÇÃO 4: PROSPECÇÃO ─── */}
       {/* ═══════════════════════════════════════════════════════ */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-          <Phone className="h-4 w-4" /> Prospecção
-        </h2>
+        <p className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#4F46E5] mb-3">Prospecção</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiCard
             icon={Users}
@@ -627,9 +626,9 @@ export default function CeoDashboard() {
       {/* ═══════════════════════════════════════════════════════ */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <Trophy className="h-4 w-4" /> Rankings
-          </h2>
+          <p className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#4F46E5] flex items-center gap-2">
+            Rankings
+          </p>
           <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
             <button
               onClick={() => setRankingView("equipe")}
