@@ -379,11 +379,11 @@ export default function Sidebar({
             onClick={() => setCampOpen(v => !v)}
             className={cn("w-full flex items-center gap-2.5 px-3 py-[9px] rounded-[9px] transition-all text-left", camp)}
           >
-            <div className="w-[7px] h-[7px] rounded-full bg-amber-400 flex-shrink-0" />
+            <div className="w-[7px] h-[7px] rounded-full bg-[#4F46E5] flex-shrink-0" />
             <span className={cn("text-[12px] font-medium flex-1 tracking-[-0.1px]", tx)}>
               Campanhas ativas
             </span>
-            <span className="text-[10px] font-bold bg-amber-400 text-white rounded-full px-[7px] py-px">
+            <span className="text-[10px] font-bold bg-[#4F46E5] text-white rounded-full px-[7px] py-px">
               {CAMPAIGNS.length}
             </span>
             <ChevronRight
