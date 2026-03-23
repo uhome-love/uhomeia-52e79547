@@ -252,7 +252,7 @@ export function SearchMapBox({ pins = [], hoveredId, onPinHover, onBoundsSearch,
       });
 
       // Pin click → React preview popup
-      map.on("click", "imoveis-pins", (e) => {
+      map.on("click", "imoveis-pin-bubbles", (e) => {
         const props = e.features?.[0]?.properties;
         if (!props) return;
         const pinData = pinsRef.current.find(p => p.id === props.id);
@@ -265,7 +265,7 @@ export function SearchMapBox({ pins = [], hoveredId, onPinHover, onBoundsSearch,
 
       // Click on map (not pin) → close preview
       map.on("click", (e) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ["imoveis-pins", "clusters"] });
+        const features = map.queryRenderedFeatures(e.point, { layers: ["imoveis-pin-bubbles", "clusters"] });
         if (features.length === 0) {
           setPreviewPin(null);
           setPreviewPos(null);
@@ -274,12 +274,12 @@ export function SearchMapBox({ pins = [], hoveredId, onPinHover, onBoundsSearch,
 
       map.on("mouseenter", "clusters", () => { map.getCanvas().style.cursor = "pointer"; });
       map.on("mouseleave", "clusters", () => { map.getCanvas().style.cursor = ""; });
-      map.on("mouseenter", "imoveis-pins", (e) => {
+      map.on("mouseenter", "imoveis-pin-bubbles", (e) => {
         map.getCanvas().style.cursor = "pointer";
         const id = e.features?.[0]?.properties?.id;
         if (id) onPinHoverRef.current?.(id);
       });
-      map.on("mouseleave", "imoveis-pins", () => {
+      map.on("mouseleave", "imoveis-pin-bubbles", () => {
         map.getCanvas().style.cursor = "";
         onPinHoverRef.current?.(null);
       });
