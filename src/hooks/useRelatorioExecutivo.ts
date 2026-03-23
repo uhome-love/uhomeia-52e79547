@@ -442,6 +442,62 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         presPerProfile[p.corretor_id].add(p.data);
       });
 
+      // Build partnership maps for VGV splitting
+      // Map: negocio lead_id → partnership info
+      const parceriaByLeadId: Record<string, { principal: string; parceiro: string; divPrincipal: number; divParceiro: number }> = {};
+      // Map: principal user_id → list of partner user_ids (for negocios without lead_id)
+      const parceriaByPrincipal: Record<string, { parceiro: string; leadId: string; divPrincipal: number; divParceiro: number }[]> = {};
+      (parceriasData || []).forEach((p: any) => {
+        if (p.pipeline_lead_id) {
+          parceriaByLeadId[p.pipeline_lead_id] = {
+            principal: p.corretor_principal_id,
+            parceiro: p.corretor_parceiro_id,
+            divPrincipal: p.divisao_principal || 50,
+            divParceiro: p.divisao_parceiro || 50,
+          };
+        }
+        if (p.corretor_principal_id) {
+          if (!parceriaByPrincipal[p.corretor_principal_id]) parceriaByPrincipal[p.corretor_principal_id] = [];
+          parceriaByPrincipal[p.corretor_principal_id].push({
+            parceiro: p.corretor_parceiro_id,
+            leadId: p.pipeline_lead_id,
+            divPrincipal: p.divisao_principal || 50,
+            divParceiro: p.divisao_parceiro || 50,
+          });
+        }
+      });
+
+      // Pre-compute VGV with partnership splits for each negocio assinado
+      // Returns { userId → { vgv: number, count: number } } including partner attributions
+      const vgvByUser: Record<string, { vgv: number; count: number }> = {};
+      const addVgv = (uid: string, amount: number, count: number) => {
+        if (!uid) return;
+        if (!vgvByUser[uid]) vgvByUser[uid] = { vgv: 0, count: 0 };
+        vgvByUser[uid].vgv += amount;
+        vgvByUser[uid].count += count;
+      };
+
+      (negAssinadosData || []).forEach(n => {
+        const fullVgv = Number(n.vgv_final || n.vgv_estimado || 0);
+        const ownerUid = (n as any).auth_user_id || "";
+        const ownerPid = (n as any).corretor_id || "";
+        const leadId = (n as any).lead_id || "";
+
+        // Check if this negocio has a partnership via lead_id
+        const parceria = leadId ? parceriaByLeadId[leadId] : null;
+
+        if (parceria) {
+          // Split VGV according to partnership percentages
+          const principalVgv = fullVgv * (parceria.divPrincipal / 100);
+          const parceiroVgv = fullVgv * (parceria.divParceiro / 100);
+          addVgv(parceria.principal, principalVgv, 1);
+          addVgv(parceria.parceiro, parceiroVgv, 1);
+        } else {
+          // No partnership — full VGV to owner
+          addVgv(ownerUid, fullVgv, 1);
+        }
+      });
+
       const corretores: CorretorRow[] = teamMembersData.map(m => {
         const uid = m.user_id || "";
         const pid = userToProfile[uid] || "";
@@ -459,11 +515,10 @@ export function useRelatorioExecutivo(period: PeriodRange) {
 
         const myNeg = (negData || []).filter(n => n.corretor_id === pid || n.auth_user_id === uid);
         const negociosCriados = myNeg.length;
-        // Assinados & VGV: use data_assinatura-based query results
-        const myNegAssinados = (negAssinadosData || []).filter(n => n.corretor_id === pid || n.auth_user_id === uid);
-        const negociosAssinados = myNegAssinados.length;
-        const vgv = myNegAssinados
-          .reduce((s, n) => s + Number(n.vgv_final || n.vgv_estimado || 0), 0);
+        // Assinados & VGV: use partnership-aware calculation
+        const partnerData = vgvByUser[uid];
+        const negociosAssinados = partnerData?.count || 0;
+        const vgv = partnerData?.vgv || 0;
 
         const presencas = presPerProfile[pid]?.size || 0;
 
