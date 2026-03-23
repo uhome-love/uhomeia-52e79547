@@ -182,6 +182,7 @@ export default function ImoveisPage() {
 
   const imoveis = result?.data ?? [];
   const total = result?.count ?? 0;
+  const searchTimeMs = result?.search_time_ms;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   // ── Map pins ──
