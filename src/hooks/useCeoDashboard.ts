@@ -141,7 +141,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
   });
 
   // ── KPIs (current period) ──
-  const { data: kpis = EMPTY_KPIS } = useQuery({
+  const { data: kpis = EMPTY_KPIS, isFetching: kpisFetching, isLoading: kpisFirstLoad } = useQuery({
     queryKey: ["ceo-kpis", rangeKey],
     queryFn: () => fetchKPIs(range),
     enabled: !!user,
