@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, addMonths, isSameWeek, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
