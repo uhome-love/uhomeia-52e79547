@@ -181,7 +181,34 @@ export function SearchMapBox({ pins = [], hoveredId, onPinHover, onBoundsSearch,
       map.on("click", "imoveis-pins", (e) => {
         const props = e.features?.[0]?.properties;
         if (!props) return;
+        const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number];
         const pinData = pinsRef.current.find(p => p.id === props.id);
+        
+        // Show popup with photo + price + bairro (per doc spec)
+        const foto = props.foto || "";
+        const preco = formatPreco(Number(props.preco));
+        const bairro = props.bairro || "";
+        const tipo = (props.tipo || "").charAt(0).toUpperCase() + (props.tipo || "").slice(1);
+        const quartos = Number(props.quartos) || 0;
+        const area = Number(props.area) || 0;
+        const titulo = quartos > 0 ? `${tipo} ${quartos} quarto${quartos > 1 ? "s" : ""} — ${bairro}` : `${tipo} — ${bairro}`;
+        
+        const popupHtml = `
+          <div style="min-width:220px;font-family:system-ui,sans-serif;">
+            ${foto ? `<img src="${foto}" style="width:100%;height:120px;object-fit:cover;border-radius:8px 8px 0 0;" />` : ""}
+            <div style="padding:10px 12px;">
+              <div style="font-size:13px;font-weight:600;color:#1a1a2e;margin-bottom:2px;">${titulo}</div>
+              <div style="font-size:11px;color:#6b7280;">${[area > 0 ? `${area} m²` : "", quartos > 0 ? `${quartos} qts` : ""].filter(Boolean).join(" · ")}</div>
+              <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-top:6px;">${preco}</div>
+            </div>
+          </div>
+        `;
+        
+        new mapboxgl.Popup({ offset: 15, maxWidth: "280px", closeButton: true })
+          .setLngLat(coords)
+          .setHTML(popupHtml)
+          .addTo(map);
+        
         if (pinData) onPinClickRef.current?.(pinData);
       });
 
