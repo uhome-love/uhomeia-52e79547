@@ -546,7 +546,7 @@ export default function ImoveisPage() {
           open={alertOpen}
           onClose={() => setAlertOpen(false)}
           filters={filters}
-          queryIA={aiQuery}
+          queryIA={aiActiveQuery}
           userId={user.id}
         />
       )}
@@ -612,11 +612,11 @@ export default function ImoveisPage() {
       </AnimatePresence>
 
       {/* ── AI Query active chip ── */}
-      {aiQuery && !aiMode && (
+      {aiActiveQuery && !aiMode && (
         <div className="z-30 border-b border-primary/20 bg-primary/5 px-4 sm:px-5 py-2 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-[12px] font-semibold text-primary">
             <Sparkles className="h-3 w-3" />
-            IA: "{aiQuery}"
+            IA: "{aiActiveQuery}"
           </span>
           <button onClick={handleClearAI} className="text-xs text-muted-foreground hover:text-foreground transition-colors underline">
             Limpar busca IA
@@ -679,7 +679,7 @@ export default function ImoveisPage() {
             onClick={() => setAiMode(!aiMode)}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-all shrink-0",
-              aiMode || aiQuery
+              aiMode || aiActiveQuery
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-border bg-card text-foreground hover:border-primary/50 hover:text-primary"
             )}
@@ -774,7 +774,7 @@ export default function ImoveisPage() {
           {/* Divider + actions */}
           <div className="border-l border-border/50 pl-2 ml-1 flex items-center gap-1.5 shrink-0">
             {hasActiveFilters && (
-              <button onClick={() => { resetFilters(); clearAI(); setPage(0); setAllImoveis([]); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border border-border bg-card text-muted-foreground hover:text-foreground transition-all">
+              <button onClick={() => { resetFilters(); handleClearAI(); setPage(0); setAllImoveis([]); }} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border border-border bg-card text-muted-foreground hover:text-foreground transition-all">
                 <RotateCcw className="h-3 w-3" /> Limpar
               </button>
             )}
@@ -910,7 +910,7 @@ export default function ImoveisPage() {
               title="Nenhum imóvel encontrado"
               description="Tente ajustar seus filtros ou termo de busca."
               icon={<Search className="h-10 w-10 text-muted-foreground/30" />}
-              action={hasActiveFilters ? { label: "Limpar filtros", onClick: () => { resetFilters(); clearAI(); setPage(0); setAllImoveis([]); } } : undefined}
+              action={hasActiveFilters ? { label: "Limpar filtros", onClick: () => { resetFilters(); handleClearAI(); setPage(0); setAllImoveis([]); } } : undefined}
             />
           ) : (
             <>
