@@ -25,6 +25,7 @@ interface Props {
   onToggleSelect?: (id: string) => void;
   onPreview?: (imovel: SiteImovel) => void;
   onHover?: (id: string | null) => void;
+  isViewed?: boolean;
 }
 
 type BadgeStyle = "novo" | "exclusivo";
@@ -49,7 +50,7 @@ const PUBLIC_DOMAIN = "https://uhome.com.br";
 
 export const SitePropertyCard = React.memo(function SitePropertyCard({
   imovel, index, highlighted, isFavorite, onToggleFavorite,
-  selectMode, isSelected, onToggleSelect, onPreview, onHover,
+  selectMode, isSelected, onToggleSelect, onPreview, onHover, isViewed,
 }: Props) {
   const [hovering, setHovering] = useState(false);
   const [fotoAtiva, setFotoAtiva] = useState(0);
@@ -146,9 +147,16 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
         )}
 
         {/* Badge */}
-        {badge && (
+        {badge && !isViewed && (
           <span className={`absolute left-3 top-3 z-10 rounded-lg px-2.5 py-1 text-[11px] tracking-wide ${badgeClasses[badge.style]}`}>
             {badge.label}
+          </span>
+        )}
+
+        {/* Viewed badge */}
+        {isViewed && (
+          <span className="absolute right-3 top-3 z-10 rounded-lg bg-primary/90 px-2.5 py-1 text-[11px] font-semibold text-primary-foreground tracking-wide shadow-sm">
+            Visualizado
           </span>
         )}
 
