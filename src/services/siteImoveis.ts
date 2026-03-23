@@ -303,7 +303,7 @@ export async function fetchSiteImoveis(filters: BuscaFilters = {}): Promise<{ da
     body: payload,
   });
 
-  console.log("Query result:", { payload, data, error });
+  
 
   if (error) throw new Error(error.message || "Search failed");
   if (data?.error) throw new Error(data.error);
@@ -398,6 +398,30 @@ const BAIRRO_CENTROIDS: Record<string, [number, number]> = {
   "Santa Maria Goretti": [-29.9810, -51.1630],
   "Jardim Leopoldina": [-29.9710, -51.1520],
   "Vila Jardim Europa": [-30.0570, -51.1530],
+  "Passo da Areia": [-30.0100, -51.1640],
+  "Morro Santana": [-30.0550, -51.1180],
+  "Parque Santa Fé": [-30.0080, -51.1200],
+  "Jardim Planalto": [-30.0230, -51.1190],
+  "Jardim Europa": [-30.0570, -51.1530],
+  "Jardim Dona Leopoldina": [-29.9700, -51.1510],
+  "Vila João Pessoa": [-30.0470, -51.2050],
+  "Mato Sampaio": [-30.0060, -51.1430],
+  "São Caetano": [-30.0030, -51.1790],
+  "Conjunto Habitacional Rubem Berta": [-29.9760, -51.1370],
+  "Protásio Alves": [-30.0430, -51.1350],
+  "Vila São José": [-30.0100, -51.1770],
+  "Chapéu do Sol": [-30.1500, -51.2050],
+  "Viamão": [-30.0810, -51.0230],
+  "Canoas": [-29.9170, -51.1740],
+  "Cachoeirinha": [-29.9510, -51.0990],
+  "Gravataí": [-29.9440, -50.9920],
+  "São Leopoldo": [-29.7600, -51.1470],
+  "Novo Hamburgo": [-29.6880, -51.1310],
+  "Esteio": [-29.8610, -51.1770],
+  "Sapucaia do Sul": [-29.8280, -51.1450],
+  "Guaíba": [-30.1130, -51.3250],
+  "Alvorada": [-29.9900, -51.0830],
+  "Eldorado do Sul": [-30.0860, -51.3720],
 };
 
 // Add jitter to avoid stacking pins at same centroid
