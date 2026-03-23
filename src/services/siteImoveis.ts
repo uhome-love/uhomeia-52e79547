@@ -88,6 +88,44 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function toFiniteNumber(value: unknown): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function extractCoordinates(doc: Record<string, unknown>): { latitude: number | null; longitude: number | null } {
+  const directLat = toFiniteNumber(doc.latitude ?? doc.lat ?? doc.endereco_latitude);
+  const directLng = toFiniteNumber(doc.longitude ?? doc.lng ?? doc.lon ?? doc.endereco_longitude);
+
+  if (directLat != null && directLng != null) {
+    return { latitude: directLat, longitude: directLng };
+  }
+
+  const location = doc.location;
+
+  if (Array.isArray(location) && location.length >= 2) {
+    const lat = toFiniteNumber(location[0]);
+    const lng = toFiniteNumber(location[1]);
+    if (lat != null && lng != null) return { latitude: lat, longitude: lng };
+  }
+
+  if (location && typeof location === "object") {
+    const loc = location as Record<string, unknown>;
+    const lat = toFiniteNumber(loc.lat ?? loc.latitude);
+    const lng = toFiniteNumber(loc.lng ?? loc.lon ?? loc.longitude);
+    if (lat != null && lng != null) return { latitude: lat, longitude: lng };
+  }
+
+  if (typeof location === "string") {
+    const [rawLat, rawLng] = location.split(",").map((part) => part.trim());
+    const lat = toFiniteNumber(rawLat);
+    const lng = toFiniteNumber(rawLng);
+    if (lat != null && lng != null) return { latitude: lat, longitude: lng };
+  }
+
+  return { latitude: null, longitude: null };
+}
+
 export function tituloLimpo(imovel: { tipo: string; quartos: number | null; bairro: string }): string {
   const tipo = capitalize(imovel.tipo);
   const quartos = imovel.quartos ?? 0;
@@ -119,6 +157,7 @@ export function formatPrecoCompact(preco: number): string {
 function mapDoc(doc: any): SiteImovel {
   const fotos: string[] = doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [];
   const fotosFull: string[] = doc.fotos_full?.length ? doc.fotos_full : fotos;
+  const coords = extractCoordinates(doc);
   return {
     id: doc.id || doc.codigo || "",
     slug: doc.slug || doc.codigo || "",
@@ -144,8 +183,8 @@ function mapDoc(doc: any): SiteImovel {
     condominio_nome: doc.empreendimento || null,
     empreendimento: doc.empreendimento || null,
     construtora: doc.construtora || null,
-    latitude: doc.latitude ?? null,
-    longitude: doc.longitude ?? null,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
     titulo: doc.titulo || null,
     endereco: doc.endereco || null,
     _raw: doc,
@@ -362,64 +401,82 @@ function jitter(val: number, range = 0.003): number {
   return val + (Math.random() - 0.5) * range;
 }
 
+export function siteImovelToMapPin(imovel: SiteImovel, bounds?: BuscaFilters["bounds"]): MapPin | null {
+  let lat = imovel.latitude;
+  let lng = imovel.longitude;
+
+  if (
+    lat == null || lng == null ||
+    !Number.isFinite(lat) || !Number.isFinite(lng) ||
+    lat === 0 || lng === 0 ||
+    lat < -34 || lat > -27 || lng < -55 || lng > -48
+  ) {
+    const centroid = BAIRRO_CENTROIDS[imovel.bairro];
+    if (!centroid) return null;
+    lat = jitter(centroid[0]);
+    lng = jitter(centroid[1]);
+  }
+
+  if (bounds && (lat < bounds.lat_min || lat > bounds.lat_max || lng < bounds.lng_min || lng > bounds.lng_max)) {
+    return null;
+  }
+
+  return {
+    id: imovel.id,
+    slug: imovel.slug,
+    preco: imovel.preco,
+    latitude: lat,
+    longitude: lng,
+    bairro: imovel.bairro,
+    titulo: imovel.titulo || tituloLimpo({ tipo: imovel.tipo || "imóvel", quartos: imovel.quartos, bairro: imovel.bairro }),
+    tipo: imovel.tipo,
+    quartos: imovel.quartos,
+    area_total: imovel.area_total,
+    foto_principal: imovel.foto_principal || undefined,
+  };
+}
+
 /**
  * Fetch map pins — uses real lat/lng from Typesense.
  * Falls back to bairro centroids with jitter when coordinates are missing.
+ * When bounds are active, scans multiple pages so the current viewport
+ * does not end up empty just because the first search page has no matches.
  */
 export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]> {
-  const { data, error } = await supabase.functions.invoke("typesense-search", {
-    body: {
-      q: filters.q || "*",
-      per_page: 250,
-      page: 1,
-      filter_by: buildFilterBy(filters),
-      sort_by: buildSortBy(filters.ordem, filters.contrato),
-    },
-  });
-
-  if (error) return [];
-
   const bounds = filters.bounds;
   const pins: MapPin[] = [];
+  const seenIds = new Set<string>();
+  const perPage = 250;
+  const maxPages = bounds ? 8 : 3;
 
-  for (const doc of (data?.data || [])) {
-    let lat = Number(doc.latitude);
-    let lng = Number(doc.longitude);
-    let hasRealCoords = true;
+  for (let page = 1; page <= maxPages; page += 1) {
+    const { data, error } = await supabase.functions.invoke("typesense-search", {
+      body: {
+        q: filters.q || "*",
+        per_page: perPage,
+        page,
+        filter_by: buildFilterBy(filters),
+        sort_by: buildSortBy(filters.ordem, filters.contrato),
+      },
+    });
 
-    // If no valid coordinates, use bairro centroid with jitter
-    if (!lat || !lng || isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0 || lat < -34 || lat > -27 || lng < -55 || lng > -48) {
-      const bairro = String(doc.bairro || "");
-      const centroid = BAIRRO_CENTROIDS[bairro];
-      if (centroid) {
-        lat = jitter(centroid[0]);
-        lng = jitter(centroid[1]);
-        hasRealCoords = false;
-      } else {
-        continue; // No coords and no known bairro — skip
-      }
+    if (error || !data?.data?.length) {
+      if (page === 1) return [];
+      break;
     }
 
-    // Client-side bounds filter
-    if (bounds && (lat < bounds.lat_min || lat > bounds.lat_max || lng < bounds.lng_min || lng > bounds.lng_max)) continue;
+    for (const doc of data.data) {
+      const mapped = mapDoc(doc);
+      if (!mapped.id || seenIds.has(mapped.id)) continue;
+      const pin = siteImovelToMapPin(mapped, bounds);
+      if (!pin) continue;
+      seenIds.add(mapped.id);
+      pins.push(pin);
+    }
 
-    const tipo = String(doc.tipo || "imóvel");
-    const bairro = String(doc.bairro || "");
-    const quartos = doc.dormitorios != null ? Number(doc.dormitorios) : null;
-
-    pins.push({
-      id: String(doc.id || doc.codigo || ""),
-      slug: String(doc.slug || doc.codigo || ""),
-      preco: Number(doc.valor_venda || 0),
-      latitude: lat,
-      longitude: lng,
-      bairro,
-      titulo: tituloLimpo({ tipo, quartos, bairro }),
-      tipo,
-      quartos,
-      area_total: doc.area_privativa != null ? Number(doc.area_privativa) : null,
-      foto_principal: (doc.fotos as string[])?.[0] || String(doc.foto_principal || ""),
-    });
+    if (!bounds && pins.length >= 250) break;
+    if (bounds && pins.length >= 120) break;
+    if ((data.found ?? 0) <= page * perPage) break;
   }
 
   return pins;
