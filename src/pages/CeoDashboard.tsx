@@ -395,8 +395,14 @@ export default function CeoDashboard() {
           </div>
           <div className="hidden sm:flex items-center gap-3 shrink-0">
             <div className="text-right text-[10px] text-white/40">
-              <div className="flex items-center gap-1"><Clock className="h-3 w-3" /> Atualizado {format(lastUpdate, "HH:mm")}</div>
-              <button onClick={reload} className="flex items-center gap-1 text-white/50 hover:text-white mt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <Clock className="h-3 w-3" /> Atualizado {format(lastUpdate, "HH:mm")}
+              </div>
+              <button onClick={reload} className="flex items-center gap-1 text-white/50 hover:text-white mt-0.5 transition-colors">
                 <RefreshCw className="h-3 w-3" /> Atualizar
               </button>
             </div>
