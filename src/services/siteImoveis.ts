@@ -117,11 +117,11 @@ async function invoke<T>(action: string, params: Record<string, unknown> = {}): 
 }
 
 export async function fetchSiteImoveis(filters: BuscaFilters = {}): Promise<{ data: SiteImovel[]; count: number }> {
-  return invoke<{ data: SiteImovel[]; count: number }>("list", filters);
+  return invoke<{ data: SiteImovel[]; count: number }>("list", { ...filters });
 }
 
 export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]> {
-  const result = await invoke<{ data: MapPin[] }>("pins", filters);
+  const result = await invoke<{ data: MapPin[] }>("pins", { ...filters });
   return result.data;
 }
 
