@@ -365,61 +365,77 @@ function jitter(val: number, range = 0.003): number {
 /**
  * Fetch map pins — uses real lat/lng from Typesense.
  * Falls back to bairro centroids with jitter when coordinates are missing.
+ * When bounds are active, scans multiple pages so the current viewport
+ * does not end up empty just because the first search page has no matches.
  */
 export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]> {
-  const { data, error } = await supabase.functions.invoke("typesense-search", {
-    body: {
-      q: filters.q || "*",
-      per_page: 250,
-      page: 1,
-      filter_by: buildFilterBy(filters),
-      sort_by: buildSortBy(filters.ordem, filters.contrato),
-    },
-  });
-
-  if (error) return [];
-
   const bounds = filters.bounds;
   const pins: MapPin[] = [];
+  const seenIds = new Set<string>();
+  const perPage = 250;
+  const maxPages = bounds ? 8 : 3;
 
-  for (const doc of (data?.data || [])) {
-    let lat = Number(doc.latitude);
-    let lng = Number(doc.longitude);
-    let hasRealCoords = true;
+  for (let page = 1; page <= maxPages; page += 1) {
+    const { data, error } = await supabase.functions.invoke("typesense-search", {
+      body: {
+        q: filters.q || "*",
+        per_page: perPage,
+        page,
+        filter_by: buildFilterBy(filters),
+        sort_by: buildSortBy(filters.ordem, filters.contrato),
+      },
+    });
 
-    // If no valid coordinates, use bairro centroid with jitter
-    if (!lat || !lng || isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0 || lat < -34 || lat > -27 || lng < -55 || lng > -48) {
-      const bairro = String(doc.bairro || "");
-      const centroid = BAIRRO_CENTROIDS[bairro];
-      if (centroid) {
-        lat = jitter(centroid[0]);
-        lng = jitter(centroid[1]);
-        hasRealCoords = false;
-      } else {
-        continue; // No coords and no known bairro — skip
-      }
+    if (error || !data?.data?.length) {
+      if (page === 1) return [];
+      break;
     }
 
-    // Client-side bounds filter
-    if (bounds && (lat < bounds.lat_min || lat > bounds.lat_max || lng < bounds.lng_min || lng > bounds.lng_max)) continue;
+    for (const doc of data.data) {
+      const docId = String(doc.id || doc.codigo || "");
+      if (!docId || seenIds.has(docId)) continue;
 
-    const tipo = String(doc.tipo || "imóvel");
-    const bairro = String(doc.bairro || "");
-    const quartos = doc.dormitorios != null ? Number(doc.dormitorios) : null;
+      let lat = Number(doc.latitude);
+      let lng = Number(doc.longitude);
 
-    pins.push({
-      id: String(doc.id || doc.codigo || ""),
-      slug: String(doc.slug || doc.codigo || ""),
-      preco: Number(doc.valor_venda || 0),
-      latitude: lat,
-      longitude: lng,
-      bairro,
-      titulo: tituloLimpo({ tipo, quartos, bairro }),
-      tipo,
-      quartos,
-      area_total: doc.area_privativa != null ? Number(doc.area_privativa) : null,
-      foto_principal: (doc.fotos as string[])?.[0] || String(doc.foto_principal || ""),
-    });
+      if (!lat || !lng || isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0 || lat < -34 || lat > -27 || lng < -55 || lng > -48) {
+        const bairro = String(doc.bairro || "");
+        const centroid = BAIRRO_CENTROIDS[bairro];
+        if (centroid) {
+          lat = jitter(centroid[0]);
+          lng = jitter(centroid[1]);
+        } else {
+          continue;
+        }
+      }
+
+      if (bounds && (lat < bounds.lat_min || lat > bounds.lat_max || lng < bounds.lng_min || lng > bounds.lng_max)) {
+        continue;
+      }
+
+      const tipo = String(doc.tipo || "imóvel");
+      const bairro = String(doc.bairro || "");
+      const quartos = doc.dormitorios != null ? Number(doc.dormitorios) : null;
+
+      seenIds.add(docId);
+      pins.push({
+        id: docId,
+        slug: String(doc.slug || doc.codigo || ""),
+        preco: Number(doc.valor_venda || 0),
+        latitude: lat,
+        longitude: lng,
+        bairro,
+        titulo: tituloLimpo({ tipo, quartos, bairro }),
+        tipo,
+        quartos,
+        area_total: doc.area_privativa != null ? Number(doc.area_privativa) : null,
+        foto_principal: (doc.fotos as string[])?.[0] || String(doc.foto_principal || ""),
+      });
+    }
+
+    if (!bounds && pins.length >= 250) break;
+    if (bounds && pins.length >= 120) break;
+    if ((data.found ?? 0) <= page * perPage) break;
   }
 
   return pins;
