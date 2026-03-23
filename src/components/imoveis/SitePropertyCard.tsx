@@ -213,7 +213,7 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
       <div className="px-0.5 pt-2.5">
         <div className="flex items-start justify-between gap-2">
           <span className="truncate text-[13px] font-semibold text-foreground">
-            {tipoCapitalized} · {imovel.bairro}
+            {tituloCard}
           </span>
           {/* Broker action buttons — visible on hover */}
           <div

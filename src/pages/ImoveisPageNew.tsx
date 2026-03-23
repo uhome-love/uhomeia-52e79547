@@ -468,12 +468,15 @@ export default function ImoveisPage() {
         <div className="flex items-center gap-2">
           {isLoading ? <Skeleton className="h-7 w-40" /> : (
             <div>
-              <div className="text-lg font-extrabold leading-tight text-foreground">
-                {total.toLocaleString("pt-BR")} imóveis
-              </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                à venda em {filters.cidade || "Porto Alegre"}{bairroDisplay}
-              </div>
+             <div className="text-lg font-extrabold leading-tight text-foreground">
+                 {total.toLocaleString("pt-BR")} imóveis
+                 {searchTimeMs != null && (
+                   <span className="ml-1.5 text-xs font-normal text-muted-foreground">· {searchTimeMs}ms</span>
+                 )}
+               </div>
+               <div className="mt-0.5 text-xs text-muted-foreground">
+                 à venda em {filters.cidade || "Porto Alegre"}{bairroDisplay}
+               </div>
             </div>
           )}
 

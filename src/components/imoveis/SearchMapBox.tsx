@@ -99,9 +99,9 @@ export function SearchMapBox({ pins = [], hoveredId, onPinHover, onBoundsSearch,
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [-51.2177, -30.0346],
-      zoom: 11,
+      style: "mapbox://styles/mapbox/light-v11",
+      center: [-51.17, -30.04],
+      zoom: 12,
       dragRotate: false,
       attributionControl: false,
     });
