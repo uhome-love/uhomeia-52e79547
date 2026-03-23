@@ -622,7 +622,7 @@ export default function ImoveisPage() {
         </div>
 
         {/* Map — desktop always visible */}
-        <div className="relative hidden w-[45%] shrink-0 border-l border-border lg:block">
+        <div className="relative hidden w-[40%] shrink-0 border-l border-border lg:block">
           <ErrorBoundary fallback={<div className="flex items-center justify-center h-full text-muted-foreground text-sm">Erro ao carregar mapa</div>}>
             <SearchMapBox
               pins={mapPins}
