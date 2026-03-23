@@ -90,9 +90,27 @@ function SidebarNavGroup({ label, items, badges, collapsed, index }: {
 
   const location = useLocation();
   const currentPath = location.pathname;
+  const queryClient = useQueryClient();
 
   // Auto-expand group if any child route is active
   const hasActiveChild = items.some((item) => currentPath === item.url || currentPath.startsWith(item.url + "/"));
+
+  // Prefetch on hover — warm up react-query cache for target route
+  const handlePrefetchHover = useCallback((url: string) => {
+    const prefetchMap: Record<string, string[]> = {
+      "/pipeline": ["pipeline-leads"],
+      "/ceo": ["ceo-dashboard"],
+      "/gerente/dashboard": ["gerente-dashboard"],
+      "/agenda-visitas": ["visitas"],
+      "/negocios": ["negocios"],
+    };
+    const keys = prefetchMap[url];
+    if (keys) {
+      keys.forEach(key => {
+        queryClient.prefetchQuery({ queryKey: [key], staleTime: 30_000 });
+      });
+    }
+  }, [queryClient]);
 
   const shouldCollapse = COLLAPSED_BY_DEFAULT.has(label);
 
