@@ -2,6 +2,7 @@ import UhomeLogo from "@/components/UhomeLogo";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -85,10 +86,28 @@ function SidebarNavGroup({ label, items, badges, collapsed, index }: {
   collapsed: boolean;
   index: number;
 }) {
-  if (items.length === 0) return null;
-
   const location = useLocation();
   const currentPath = location.pathname;
+  const queryClient = useQueryClient();
+
+  // Prefetch on hover — warm up react-query cache for target route
+  const handlePrefetchHover = useCallback((url: string) => {
+    const prefetchMap: Record<string, string[]> = {
+      "/pipeline": ["pipeline-leads"],
+      "/ceo": ["ceo-dashboard"],
+      "/gerente/dashboard": ["gerente-dashboard"],
+      "/agenda-visitas": ["visitas"],
+      "/negocios": ["negocios"],
+    };
+    const keys = prefetchMap[url];
+    if (keys) {
+      keys.forEach(key => {
+        queryClient.prefetchQuery({ queryKey: [key], staleTime: 30_000 });
+      });
+    }
+  }, [queryClient]);
+
+  if (items.length === 0) return null;
 
   // Auto-expand group if any child route is active
   const hasActiveChild = items.some((item) => currentPath === item.url || currentPath.startsWith(item.url + "/"));
@@ -105,6 +124,7 @@ function SidebarNavGroup({ label, items, badges, collapsed, index }: {
               <NavLink
                 to={item.url}
                 end={!item.url.includes("/backoffice/")}
+                onMouseEnter={() => handlePrefetchHover(item.url)}
                 className={`group/nav text-neutral-300 hover:text-white hover:bg-white/[0.08] transition-all duration-150 rounded-lg relative py-1.5 ${collapsed ? "px-0 justify-center" : "px-3"}`}
                 activeClassName="!text-white !font-semibold !bg-white/10 border-l-2 !border-l-blue-400 !rounded-l-none rounded-r-lg [&_svg]:!text-blue-400"
               >
