@@ -313,6 +313,11 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         return q;
       });
 
+      // Fetch active partnerships for VGV splitting
+      const parceriasPromise = supabase.from("pipeline_parcerias" as any)
+        .select("pipeline_lead_id, corretor_principal_id, corretor_parceiro_id, divisao_principal, divisao_parceiro, status")
+        .eq("status", "ativa");
+
       const [
         { data: presData },
         { data: prevPresData },
@@ -332,6 +337,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         ligOAData,
         ligPAData,
         ligAIData,
+        { data: parceriasData },
       ] = await Promise.all([
         presQScoped,
         prevPresQScoped,
@@ -351,6 +357,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         ligOAPromise,
         ligPAPromise,
         ligAIPromise,
+        parceriasPromise,
       ]);
 
       // Merge all call sources into unified ligData with normalized corretor_id
