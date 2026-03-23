@@ -169,43 +169,58 @@ export default function ImoveisPage() {
   const [alertOpen, setAlertOpen] = useState(false);
 
   // ── AI Search ──
-  const { search: aiSearch, loading: aiLoading, activeQuery: aiQuery, clear: clearAI } = useAISearch();
+  const { searchWithAI, clearAISearch, aiLoading, aiResult } = useAISearch();
   const [aiMode, setAiMode] = useState(false);
   const [aiInput, setAiInput] = useState("");
+  const [aiActiveQuery, setAiActiveQuery] = useState<string | null>(null);
+  const aiThrottleRef = useRef(0);
 
   const handleAISearch = useCallback(async () => {
     if (!aiInput.trim()) return;
-    const result = await aiSearch(aiInput.trim());
-    if (!result) return;
+    const now = Date.now();
+    if (now - aiThrottleRef.current < 3000) {
+      toast.info("Aguarde alguns segundos entre buscas IA");
+      return;
+    }
+    aiThrottleRef.current = now;
+    const query = aiInput.trim();
+    setAiActiveQuery(query);
 
-    const f = result.filters;
+    // Call the existing AI search which invokes ai-search-imoveis edge function
+    await searchWithAI(query);
+
+    // Apply discovered filters to the store if aiResult has them
+    // The AI search results are displayed via aiResult/aiProperties in the existing hook
+    // But for the new UX, we want to apply filters to the store
+    setAiMode(false);
+    setAiInput("");
+  }, [aiInput, searchWithAI]);
+
+  // When AI result comes back, apply its filters to the store
+  useEffect(() => {
+    if (!aiResult?.filters || !aiActiveQuery) return;
+    const f = aiResult.filters;
     const updates: any = {};
-    if (f.tipo) updates.tipo = f.tipo;
-    if (f.quartos_min) updates.quartos = f.quartos_min;
-    if (f.banheiros_min) updates.banheiros = f.banheiros_min;
+    if (f.tipos?.length) updates.tipo = f.tipos[0];
+    if (f.dormitorios?.length) updates.quartos = Number(f.dormitorios[0]) || 0;
     if (f.vagas_min) updates.vagas = f.vagas_min;
-    if (f.preco_min) updates.precoMin = f.preco_min;
-    if (f.preco_max) updates.precoMax = f.preco_max;
+    if (f.valor_min) updates.precoMin = f.valor_min;
+    if (f.valor_max) updates.precoMax = f.valor_max;
     if (f.area_min) updates.areaMin = f.area_min;
-    if (f.area_max) updates.areaMax = f.area_max;
-    if (f.cidade) updates.cidade = f.cidade;
-    if (f.ordem) updates.ordem = f.ordem;
     if (f.bairros?.length) updates.bairro = f.bairros.join(",");
-    if (f.palavras_chave?.length) updates.q = f.palavras_chave.join(" ");
-
+    if (aiResult.text_query) updates.q = aiResult.text_query;
     setFilters(updates);
     setPage(0);
     setAllImoveis([]);
-    setAiMode(false);
-    setAiInput("");
-  }, [aiInput, aiSearch, setFilters]);
+  }, [aiResult, aiActiveQuery, setFilters]);
 
   const handleClearAI = useCallback(() => {
-    clearAI();
+    clearAISearch();
+    setAiActiveQuery(null);
     resetFilters();
     setPage(0);
     setAllImoveis([]);
-  }, [clearAI, resetFilters]);
+  }, [clearAISearch, resetFilters]);
 
   // Scroll restore on mount
   useEffect(() => {
