@@ -474,8 +474,8 @@ export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]
       pins.push(pin);
     }
 
-    if (!bounds && pins.length >= 250) break;
-    if (bounds && pins.length >= 120) break;
+    if (!bounds && pins.length >= 1500) break;
+    if (bounds && pins.length >= 500) break;
     if ((data.found ?? 0) <= page * perPage) break;
   }
 
