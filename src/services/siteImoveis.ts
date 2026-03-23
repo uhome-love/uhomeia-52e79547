@@ -241,12 +241,8 @@ function buildFilterBy(filters: BuscaFilters): string {
     }
   }
 
-  // Geo bounds — use Typesense geopoint 'location' field
-  if (filters.bounds) {
-    const { lat_min, lat_max, lng_min, lng_max } = filters.bounds;
-    // location:(lat_min, lng_min, lat_max, lng_max) — bounding box
-    parts.push(`location:(${lat_min}, ${lng_min}, ${lat_max}, ${lng_max})`);
-  }
+  // Geo bounds — filter client-side since Typesense schema has no 'location' geopoint field
+  // (bounds filtering is handled after fetching results)
 
   return parts.join(" && ");
 }
