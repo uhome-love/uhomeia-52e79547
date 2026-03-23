@@ -319,7 +319,7 @@ export function useRelatorioExecutivo(period: PeriodRange) {
         { count: prevLigOACount },
         { count: prevLigPACount },
         { count: prevLigAICount },
-        { data: leadsData },
+        leadsData,
         { count: prevLeadsCount },
         { count: leadsAtivosCount },
         { data: visData },
