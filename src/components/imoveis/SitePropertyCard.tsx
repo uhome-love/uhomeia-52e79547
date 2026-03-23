@@ -61,13 +61,19 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
 
   const price = formatPreco(imovel.preco);
   const area = imovel.area_total ?? 0;
+  const quartos = imovel.quartos ?? 0;
+  const vagasNum = imovel.vagas ?? 0;
   const statsArr = [
     area > 0 ? `${area} m²` : null,
-    (imovel.quartos ?? 0) > 0 ? `${imovel.quartos} quarto${imovel.quartos! > 1 ? "s" : ""}` : null,
-    (imovel.vagas ?? 0) > 0 ? `${imovel.vagas} vaga${imovel.vagas! > 1 ? "s" : ""}` : null,
+    quartos > 0 ? `${quartos} quarto${quartos > 1 ? "s" : ""}` : null,
+    vagasNum > 0 ? `${vagasNum} vaga${vagasNum > 1 ? "s" : ""}` : null,
   ].filter(Boolean);
   const stats = statsArr.join(" · ");
   const tipoCapitalized = imovel.tipo.charAt(0).toUpperCase() + imovel.tipo.slice(1);
+  // Doc spec: "{Tipo} {N} quartos — {Bairro}"
+  const tituloCard = quartos > 0
+    ? `${tipoCapitalized} ${quartos} quarto${quartos > 1 ? "s" : ""} — ${imovel.bairro}`
+    : `${tipoCapitalized} para Venda — ${imovel.bairro}`;
 
   const badge = getBadge(imovel);
 
