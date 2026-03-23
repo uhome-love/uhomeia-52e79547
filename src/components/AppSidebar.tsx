@@ -90,11 +90,6 @@ function SidebarNavGroup({ label, items, badges, collapsed, index }: {
   const currentPath = location.pathname;
   const queryClient = useQueryClient();
 
-  if (items.length === 0) return null;
-
-  // Auto-expand group if any child route is active
-  const hasActiveChild = items.some((item) => currentPath === item.url || currentPath.startsWith(item.url + "/"));
-
   // Prefetch on hover — warm up react-query cache for target route
   const handlePrefetchHover = useCallback((url: string) => {
     const prefetchMap: Record<string, string[]> = {
@@ -111,6 +106,11 @@ function SidebarNavGroup({ label, items, badges, collapsed, index }: {
       });
     }
   }, [queryClient]);
+
+  if (items.length === 0) return null;
+
+  // Auto-expand group if any child route is active
+  const hasActiveChild = items.some((item) => currentPath === item.url || currentPath.startsWith(item.url + "/"));
 
   const shouldCollapse = COLLAPSED_BY_DEFAULT.has(label);
 
