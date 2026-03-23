@@ -1,6 +1,6 @@
 /**
- * Property card for the new /imoveis page (Site Uhome style, dark theme).
- * Supports grid layout with hover photo navigation and broker actions.
+ * Property card for /imoveis — mirrors the SearchPropertyCard from uhome.com.br,
+ * adapted for CRM dark theme with broker actions (share, vitrine).
  */
 
 import React, { useState, useRef, useCallback } from "react";
@@ -13,7 +13,6 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-// supabase import removed — photos come from Typesense directly
 
 interface Props {
   imovel: SiteImovel;
@@ -25,13 +24,32 @@ interface Props {
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   onPreview?: (imovel: SiteImovel) => void;
+  onHover?: (id: string | null) => void;
 }
+
+type BadgeStyle = "novo" | "exclusivo";
+
+function getBadge(imovel: SiteImovel): { label: string; style: BadgeStyle } | null {
+  if (imovel.publicado_em) {
+    const dias = Math.floor(
+      (Date.now() - new Date(imovel.publicado_em).getTime()) / 86400000
+    );
+    if (dias <= 7) return { label: "Anúncio novo", style: "novo" };
+  }
+  if (imovel.destaque) return { label: "Exclusivo", style: "exclusivo" };
+  return null;
+}
+
+const badgeClasses: Record<BadgeStyle, string> = {
+  novo: "bg-white/95 text-gray-900 font-semibold shadow-sm",
+  exclusivo: "bg-black/80 text-white font-semibold shadow-sm",
+};
 
 const PUBLIC_DOMAIN = "https://uhome.com.br";
 
 export const SitePropertyCard = React.memo(function SitePropertyCard({
   imovel, index, highlighted, isFavorite, onToggleFavorite,
-  selectMode, isSelected, onToggleSelect, onPreview,
+  selectMode, isSelected, onToggleSelect, onPreview, onHover,
 }: Props) {
   const [hovering, setHovering] = useState(false);
   const [fotoAtiva, setFotoAtiva] = useState(0);
@@ -51,14 +69,12 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
   const stats = statsArr.join(" · ");
   const tipoCapitalized = imovel.tipo.charAt(0).toUpperCase() + imovel.tipo.slice(1);
 
-  // Badge
-  const isNew = imovel.publicado_em
-    ? Math.floor((Date.now() - new Date(imovel.publicado_em).getTime()) / 86400000) <= 7
-    : false;
+  const badge = getBadge(imovel);
 
   const handleMouseEnter = useCallback(() => {
     setHovering(true);
-    // Use fotos already available from Typesense (fotos_full for high-res)
+    onHover?.(imovel.id);
+    // Use fotos already available from Typesense
     if (!fotosLoadedRef.current && imovel.fotos_full?.length > 1) {
       fotosLoadedRef.current = true;
       setLazyFotos(imovel.fotos_full.slice(0, 8));
@@ -66,11 +82,12 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
       fotosLoadedRef.current = true;
       setLazyFotos(imovel.fotos.slice(0, 8));
     }
-  }, [imovel.fotos, imovel.fotos_full]);
+  }, [imovel.id, imovel.fotos, imovel.fotos_full, onHover]);
 
   const handleMouseLeave = useCallback(() => {
     setHovering(false);
-  }, []);
+    onHover?.(null);
+  }, [onHover]);
 
   const shareUrl = `${PUBLIC_DOMAIN}/imovel/${imovel.slug}`;
 
@@ -115,15 +132,10 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
           </div>
         )}
 
-        {/* Badge */}
-        {isNew && (
-          <span className="absolute left-2.5 top-2.5 z-10 rounded-md bg-primary/90 px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
-            Novo
-          </span>
-        )}
-        {imovel.destaque && !isNew && (
-          <span className="absolute left-2.5 top-2.5 z-10 rounded-md bg-foreground/80 px-2.5 py-1 text-xs font-semibold text-background shadow-sm">
-            Exclusivo
+        {/* Badge — matches site exactly */}
+        {badge && (
+          <span className={`absolute left-2.5 top-2.5 z-10 rounded-md px-2.5 py-1 text-xs ${badgeClasses[badge.style]}`}>
+            {badge.label}
           </span>
         )}
 
@@ -142,7 +154,7 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
           </button>
         )}
 
-        {/* Heart */}
+        {/* Heart — same as site */}
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(imovel.id); }}
           className="absolute right-3 top-3 z-10"
@@ -155,25 +167,25 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
           />
         </button>
 
-        {/* Nav arrows on hover */}
+        {/* Nav arrows on hover — same as site */}
         {hovering && fotos.length > 1 && (
           <>
             {fotoAtiva > 0 && (
               <button
                 onClick={(e) => { e.stopPropagation(); setFotoAtiva(i => i - 1); }}
-                className="absolute left-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-sm shadow transition-transform hover:scale-105"
+                className="absolute left-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-sm shadow transition-transform hover:scale-105 active:scale-95"
               >‹</button>
             )}
             {fotoAtiva < fotos.length - 1 && (
               <button
                 onClick={(e) => { e.stopPropagation(); setFotoAtiva(i => i + 1); }}
-                className="absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-sm shadow transition-transform hover:scale-105"
+                className="absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-sm shadow transition-transform hover:scale-105 active:scale-95"
               >›</button>
             )}
           </>
         )}
 
-        {/* Dots */}
+        {/* Dots — same as site */}
         {hovering && fotos.length > 1 && (
           <div className="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1">
             {fotos.slice(0, 5).map((_, i) => (
@@ -191,7 +203,7 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
         )}
       </div>
 
-      {/* Text */}
+      {/* Text — matches site layout exactly */}
       <div className="px-0.5 pt-2.5">
         <div className="flex items-start justify-between gap-2">
           <span className="truncate text-[13px] font-semibold text-foreground">
@@ -240,14 +252,13 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
           <p className="mt-0.5 truncate text-xs text-muted-foreground">{stats}</p>
         )}
 
-        <div className="mt-1 flex items-baseline gap-2">
-          <p className="text-sm font-bold text-foreground">{price}</p>
-          {(imovel.preco_condominio ?? 0) > 0 && (
-            <span className="text-[11px] text-muted-foreground">
-              + R$ {imovel.preco_condominio!.toLocaleString("pt-BR")}/mês
-            </span>
-          )}
-        </div>
+        <p className="mt-1 text-sm font-bold text-foreground">{price}</p>
+
+        {(imovel.preco_condominio ?? 0) > 0 && (
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            + R$ {imovel.preco_condominio!.toLocaleString("pt-BR")}/mês cond.
+          </p>
+        )}
       </div>
     </motion.div>
   );

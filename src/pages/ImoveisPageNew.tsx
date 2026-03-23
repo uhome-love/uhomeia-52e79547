@@ -1,6 +1,7 @@
 /**
- * New /imoveis page — unified search engine mirroring uhome.com.br,
+ * /imoveis page — unified search engine mirroring uhome.com.br,
  * adapted for CRM dark theme with broker-specific actions.
+ * Layout: cards on the left + map always visible on the right (desktop).
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -13,11 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
-  Search, LayoutGrid, List, Map, Heart, Share2, Link2, Copy,
+  Search, Heart, Share2, Link2, Copy,
   Loader2, ChevronLeft, ChevronRight, X, MapPin, Sparkles,
-  RotateCcw, MessageCircle, Phone, Zap,
+  RotateCcw, MessageCircle, Phone, ArrowUpDown, Map as MapIcon,
 } from "lucide-react";
 import { FilterPill, PillOption } from "@/components/imoveis/SiteFilterPill";
 import { SitePropertyCard } from "@/components/imoveis/SitePropertyCard";
@@ -36,6 +36,7 @@ import { getVitrinePublicUrl } from "@/lib/vitrineUrl";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
+import { motion, AnimatePresence } from "framer-motion";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -50,6 +51,21 @@ const precoRanges = [
   { label: "Acima de R$ 5M", min: 5000000, max: 0 },
 ];
 
+const areaRanges = [
+  { label: "Até 50m²", min: 0, max: 50 },
+  { label: "50 – 100m²", min: 50, max: 100 },
+  { label: "100 – 200m²", min: 100, max: 200 },
+  { label: "200 – 400m²", min: 200, max: 400 },
+  { label: "Acima de 400m²", min: 400, max: 0 },
+];
+
+const sortLabels: Record<string, string> = {
+  recentes: "Mais recentes",
+  preco_asc: "Menor preço",
+  preco_desc: "Maior preço",
+  area_desc: "Maior área",
+};
+
 const quartoOptions = [1, 2, 3, 4];
 
 function fmtPrecoLabel(min: number, max: number): string {
@@ -57,6 +73,13 @@ function fmtPrecoLabel(min: number, max: number): string {
   if (min && max) return `R$ ${fmt(min)} – ${fmt(max)}`;
   if (min) return `A partir de R$ ${fmt(min)}`;
   if (max) return `Até R$ ${fmt(max)}`;
+  return "";
+}
+
+function fmtAreaLabel(min: number, max: number): string {
+  if (min && max) return `${min} – ${max}m²`;
+  if (min) return `A partir de ${min}m²`;
+  if (max) return `Até ${max}m²`;
   return "";
 }
 
@@ -80,9 +103,23 @@ export default function ImoveisPage() {
   }, [debouncedFilters, setSearchParams]);
 
   // ── View state ──
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [page, setPage] = useState(0);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  // Sort dropdown
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  // Close sort on outside click
+  useEffect(() => {
+    if (!sortOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [sortOpen]);
 
   // Vitrine
   const [selectMode, setSelectMode] = useState(false);
@@ -199,7 +236,6 @@ export default function ImoveisPage() {
   const { data: mapPins = [] } = useQuery({
     queryKey: ["site-map-pins", mapPinFilters],
     queryFn: () => fetchMapPins(mapPinFilters),
-    enabled: viewMode === "map",
     staleTime: 2 * 60 * 1000,
   });
 
@@ -244,14 +280,28 @@ export default function ImoveisPage() {
   // Reset page on filter change
   useEffect(() => { setPage(0); }, [filters.tipo, filters.bairro, filters.cidade, filters.precoMin, filters.precoMax, filters.quartos, filters.vagas, filters.ordem, filters.q]);
 
+  // Clear bounds
+  const clearBounds = useCallback(() => {
+    setFilter("bounds", null);
+    setPage(0);
+  }, [setFilter]);
+
   // ── Helpers ──
   const precoLabel = precoRanges.find(r => r.min === filters.precoMin && r.max === filters.precoMax)?.label;
-  const cidadeLabel = filters.cidade || "Todas";
+  const areaLabel = areaRanges.find(r => r.min === filters.areaMin && r.max === filters.areaMax)?.label || (filters.areaMin || filters.areaMax ? fmtAreaLabel(filters.areaMin, filters.areaMax) : undefined);
+  const cidadeLabel = filters.cidade || "Porto Alegre";
   const tipoLabel = PROPERTY_TYPES.find(t => t.value === filters.tipo)?.label;
 
+  // Bairro display for subheader
+  const bairroDisplay = bairrosSelecionados.length > 0
+    ? bairrosSelecionados.length <= 3
+      ? `, ${bairrosSelecionados.join(", ")}`
+      : `, ${bairrosSelecionados.slice(0, 3).join(", ")} +${bairrosSelecionados.length - 3}`
+    : "";
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Preview drawer — reuse existing */}
+    <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-background">
+      {/* Preview drawer */}
       {previewItem && (
         <PropertyPreviewDrawer
           item={previewItem}
@@ -267,7 +317,7 @@ export default function ImoveisPage() {
       )}
 
       {/* ── Sticky filter bar ── */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/50">
+      <div className="z-30 border-b border-border bg-background">
         <div className="flex items-center gap-2 overflow-x-auto px-5 py-3 scrollbar-hide">
           {/* Search input with bairro chips */}
           <div className="relative shrink-0">
@@ -295,7 +345,7 @@ export default function ImoveisPage() {
                   if (e.key === "Enter" && bairroInput && bairroSuggestions.length > 0) { e.preventDefault(); addBairro(bairroSuggestions[0]); }
                   if (e.key === "Escape") { setShowBairroDropdown(false); bairroInputRef.current?.blur(); }
                 }}
-                placeholder={bairrosSelecionados.length > 0 ? "Adicionar bairro..." : "Bairro, cidade ou código..."}
+                placeholder={bairrosSelecionados.length > 0 ? "Adicionar bairro..." : "Bairro, cidade ou tipo..."}
                 className="min-w-[100px] flex-1 border-none bg-transparent py-1 text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
               />
             </div>
@@ -317,10 +367,10 @@ export default function ImoveisPage() {
           </div>
 
           {/* Cidade */}
-          <FilterPill label="Cidade" value={cidadeLabel} active={filters.cidade !== "Porto Alegre"} onClear={() => { setFilter("cidade", "Porto Alegre"); setPage(0); }}>
-            <PillOption selected={!filters.cidade} onClick={() => setFilter("cidade", "")}>Todas</PillOption>
-            {CIDADES_PERMITIDAS.map(c => (
-              <PillOption key={c} selected={filters.cidade === c} onClick={() => { setFilter("cidade", filters.cidade === c ? "" : c); setPage(0); }}>{c}</PillOption>
+          <FilterPill label={cidadeLabel} value={cidadeLabel} active={!!filters.cidade && filters.cidade !== "Porto Alegre"} onClear={() => { setFilter("cidade", "Porto Alegre"); setPage(0); }}>
+            <PillOption selected={!filters.cidade || filters.cidade === "Porto Alegre"} onClick={() => { setFilter("cidade", "Porto Alegre"); setPage(0); }}>Porto Alegre</PillOption>
+            {CIDADES_PERMITIDAS.filter(c => c !== "Porto Alegre").map(c => (
+              <PillOption key={c} selected={filters.cidade === c} onClick={() => { setFilter("cidade", filters.cidade === c ? "Porto Alegre" : c); setPage(0); }}>{c}</PillOption>
             ))}
           </FilterPill>
 
@@ -375,23 +425,27 @@ export default function ImoveisPage() {
             ))}
           </FilterPill>
 
+          {/* Área */}
+          <FilterPill label="Área" value={areaLabel} active={!!(filters.areaMin || filters.areaMax)} onClear={() => { setFilter("areaMin", 0); setFilter("areaMax", 0); setPage(0); }}>
+            {areaRanges.map(r => (
+              <PillOption
+                key={r.label}
+                selected={filters.areaMin === r.min && filters.areaMax === r.max}
+                onClick={() => {
+                  const isSel = filters.areaMin === r.min && filters.areaMax === r.max;
+                  setFilter("areaMin", isSel ? 0 : r.min);
+                  setFilter("areaMax", isSel ? 0 : r.max);
+                  setPage(0);
+                }}
+              >{r.label}</PillOption>
+            ))}
+          </FilterPill>
+
           {/* Vagas */}
           <FilterPill label="Vagas" value={filters.vagas ? `${filters.vagas}+ vagas` : undefined} active={!!filters.vagas} onClear={() => { setFilter("vagas", 0); setPage(0); }}>
             {[1, 2, 3].map(v => (
               <PillOption key={v} selected={filters.vagas === v} onClick={() => { setFilter("vagas", filters.vagas === v ? 0 : v); setPage(0); }}>{v}+ vagas</PillOption>
             ))}
-          </FilterPill>
-
-          {/* Ordenação */}
-          <FilterPill label="Ordenar" value={
-            filters.ordem === "preco_asc" ? "Menor preço" :
-            filters.ordem === "preco_desc" ? "Maior preço" :
-            filters.ordem === "area_desc" ? "Maior área" : "Mais recentes"
-          }>
-            <PillOption selected={filters.ordem === "recentes"} onClick={() => setFilter("ordem", "recentes")}>Mais recentes</PillOption>
-            <PillOption selected={filters.ordem === "preco_asc"} onClick={() => setFilter("ordem", "preco_asc")}>Menor preço</PillOption>
-            <PillOption selected={filters.ordem === "preco_desc"} onClick={() => setFilter("ordem", "preco_desc")}>Maior preço</PillOption>
-            <PillOption selected={filters.ordem === "area_desc"} onClick={() => setFilter("ordem", "area_desc")}>Maior área</PillOption>
           </FilterPill>
 
           {/* Divider + actions */}
@@ -409,109 +463,96 @@ export default function ImoveisPage() {
         </div>
       </div>
 
-      {/* ── Results header ── */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-border/30">
+      {/* ── Subheader: counter + bounds badge + sort ── */}
+      <div className={`relative flex flex-wrap items-center justify-between gap-2 border-b border-border/50 bg-background px-5 py-3 ${sortOpen ? "z-30" : "z-0"}`}>
         <div className="flex items-center gap-2">
-          {isLoading ? <Skeleton className="h-4 w-32" /> : (
-            <span className="text-sm font-medium text-foreground">
-              {total.toLocaleString()} imóveis
-              {searchTimeMs != null && <span className="text-muted-foreground font-normal ml-1.5">· {searchTimeMs}ms</span>}
-            </span>
+          {isLoading ? <Skeleton className="h-7 w-40" /> : (
+            <div>
+              <div className="text-lg font-extrabold leading-tight text-foreground">
+                {total.toLocaleString("pt-BR")} imóveis
+              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                à venda em {filters.cidade || "Porto Alegre"}{bairroDisplay}
+              </div>
+            </div>
+          )}
+
+          {filters.bounds && (
+            <div className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+              <MapPin className="h-3 w-3" />
+              Mapa
+              <button onClick={clearBounds} className="ml-0.5 font-bold leading-none hover:opacity-70">×</button>
+            </div>
           )}
         </div>
-        <div className="flex border border-border/60 rounded-lg overflow-hidden">
-          <button onClick={() => setViewMode("grid")} className={cn("p-1.5 transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted")}><LayoutGrid className="h-4 w-4" /></button>
-          <button onClick={() => setViewMode("list")} className={cn("p-1.5 transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted")}><List className="h-4 w-4" /></button>
-          <button onClick={() => setViewMode("map")} className={cn("p-1.5 transition-colors", viewMode === "map" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted")}><Map className="h-4 w-4" /></button>
+
+        <div className="flex items-center gap-2">
+          {/* Sort */}
+          <div className="relative" ref={sortRef}>
+            <button
+              onClick={() => setSortOpen(!sortOpen)}
+              className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-foreground"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              {sortLabels[filters.ordem] || "Mais recentes"}
+            </button>
+            {sortOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute right-0 top-full z-30 mt-1 w-44 rounded-xl border border-border bg-card p-1 shadow-xl"
+              >
+                {Object.entries(sortLabels).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => { setFilter("ordem", key as any); setSortOpen(false); }}
+                    className={`block w-full rounded-lg px-3 py-2 text-left text-[13px] transition-colors ${
+                      filters.ordem === key
+                        ? "bg-primary/10 font-medium text-primary"
+                        : "text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* ── Vitrine bar ── */}
-      {selectMode && selectedIds.size > 0 && (
-        <div className="px-5 py-2.5">
-          <Card className="p-3 flex items-center justify-between bg-primary/5 border-primary/20 flex-wrap gap-2">
-            <span className="text-sm font-medium">{selectedIds.size} imóvel(is) selecionado(s)</span>
-            <div className="flex items-center gap-2">
-              {vitrineLink ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Input value={vitrineLink} readOnly className="text-xs h-8 w-64" />
-                  <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(vitrineLink); toast.success("Link copiado!"); }}><Copy className="h-3.5 w-3.5" /></Button>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`Confira esta seleção de imóveis: ${vitrineLink}`)}`} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"><Phone className="h-3.5 w-3.5" /> WhatsApp</Button>
-                  </a>
-                </div>
-              ) : (
-                <Button size="sm" disabled={creatingVitrine} onClick={createVitrine} className="gap-1.5">
-                  {creatingVitrine ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />} Gerar Vitrine
-                </Button>
-              )}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* ── Main content ── */}
-      {viewMode === "map" ? (
-        <div className="flex-1 flex overflow-hidden w-full">
-          {/* Sidebar list */}
-          <div className="w-[420px] xl:w-[480px] shrink-0 h-[calc(100vh-130px)] overflow-y-auto px-4 py-3 space-y-3 border-r border-border/50">
-            {isLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Card key={i} className="overflow-hidden border-border/40">
-                    <div className="flex"><Skeleton className="w-32 h-28 rounded-none shrink-0" /><div className="flex-1 p-2.5 space-y-1.5"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-3 w-2/3" /><Skeleton className="h-3 w-1/2" /></div></div>
-                  </Card>
-                ))}
-              </div>
-            ) : imoveis.length === 0 ? (
-              <div className="text-center py-8">
-                <Search className="h-8 w-8 mx-auto text-muted-foreground/20 mb-2" />
-                <p className="text-sm font-medium text-foreground">Nenhum imóvel</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {imoveis.map((item, idx) => (
-                  <Card key={item.id} className="overflow-hidden border-border/40 cursor-pointer hover:shadow-lg transition-all" onClick={() => openPreview(item)}>
-                    <div className="flex">
-                      <div className="w-32 h-28 shrink-0 bg-muted relative overflow-hidden">
-                        <img src={item.foto_principal || "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=300&h=200&fit=crop"} alt={item.bairro} className="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                      <div className="flex-1 p-2.5 min-w-0">
-                        <p className="text-sm font-bold text-foreground">{formatPreco(item.preco)}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          {(item.quartos ?? 0) > 0 && <span><strong className="text-foreground">{item.quartos}</strong> quarto{item.quartos! > 1 ? "s" : ""}</span>}
-                          {(item.area_total ?? 0) > 0 && <span><strong className="text-foreground">{item.area_total}</strong> m²</span>}
-                          {(item.vagas ?? 0) > 0 && <span><strong className="text-foreground">{item.vagas}</strong> vaga{item.vagas! > 1 ? "s" : ""}</span>}
-                        </div>
-                        <p className="text-xs text-foreground/80 font-medium truncate mt-1">{item.tipo.charAt(0).toUpperCase() + item.tipo.slice(1)}</p>
-                        <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                          <MapPin className="h-3 w-3 shrink-0" /> {item.bairro} · {item.cidade}
-                        </p>
-                      </div>
+      <AnimatePresence>
+        {selectMode && selectedIds.size > 0 && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-border/30">
+            <div className="px-5 py-2.5">
+              <Card className="p-3 flex items-center justify-between bg-primary/5 border-primary/20 flex-wrap gap-2">
+                <span className="text-sm font-medium">{selectedIds.size} imóvel(is) selecionado(s)</span>
+                <div className="flex items-center gap-2">
+                  {vitrineLink ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Input value={vitrineLink} readOnly className="text-xs h-8 w-64" />
+                      <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(vitrineLink); toast.success("Link copiado!"); }}><Copy className="h-3.5 w-3.5" /></Button>
+                      <a href={`https://wa.me/?text=${encodeURIComponent(`Confira esta seleção de imóveis: ${vitrineLink}`)}`} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"><Phone className="h-3.5 w-3.5" /> WhatsApp</Button>
+                      </a>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Map */}
-          <div className="flex-1 h-[calc(100vh-130px)]">
-            <ErrorBoundary fallback={<div className="flex items-center justify-center h-full text-muted-foreground text-sm">Erro ao carregar mapa</div>}>
-              <SearchMapBox
-                pins={mapPins}
-                onBoundsSearch={(bounds) => { setFilter("bounds", bounds); setPage(0); }}
-                onBoundsChange={() => {}}
-                onPinClick={(pin) => {
-                  const found = imoveis.find(i => i.id === pin.id);
-                  if (found) openPreview(found);
-                }}
-              />
-            </ErrorBoundary>
-          </div>
-        </div>
-      ) : (
-        /* ═══ GRID / LIST VIEW ═══ */
-        <div className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-6 py-4">
+                  ) : (
+                    <Button size="sm" disabled={creatingVitrine} onClick={createVitrine} className="gap-1.5">
+                      {creatingVitrine ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />} Gerar Vitrine
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Main content: cards (left) + map (right) ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Cards column */}
+        <div className="flex-1 overflow-y-auto px-4 pt-3 pb-5 sm:px-5" style={{ minWidth: 0 }}>
           {isError ? (
             <ErrorState
               title="Erro ao carregar imóveis"
@@ -519,12 +560,14 @@ export default function ImoveisPage() {
               action={{ label: "Tentar novamente", onClick: () => {} }}
             />
           ) : isLoading ? (
-            <div className={cn("grid gap-4", viewMode === "list" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Card key={i} className="overflow-hidden border-border/40">
-                  <Skeleton className="aspect-[4/3] rounded-none" />
-                  <div className="p-3 space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/3" /></div>
-                </Card>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
               ))}
             </div>
           ) : imoveis.length === 0 ? (
@@ -536,36 +579,63 @@ export default function ImoveisPage() {
             />
           ) : (
             <>
-              <div className={cn("grid gap-5", viewMode === "list" ? "grid-cols-1 max-w-3xl" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {imoveis.map((item, idx) => (
                   <SitePropertyCard
                     key={item.id}
                     imovel={item}
                     index={idx}
+                    highlighted={hoveredId === item.id}
                     isFavorite={favorites.has(item.id)}
                     onToggleFavorite={toggleFavorite}
                     selectMode={selectMode}
                     isSelected={selectedIds.has(item.id)}
                     onToggleSelect={toggleSelect}
                     onPreview={openPreview}
+                    onHover={setHoveredId}
                   />
                 ))}
               </div>
+
+              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-3 pt-6 pb-2">
-                  <Button variant="outline" size="sm" disabled={page <= 0 || isLoading} onClick={() => setPage(p => p - 1)} className="gap-1 rounded-full">
-                    <ChevronLeft className="h-4 w-4" /> Anterior
-                  </Button>
+                <div className="flex items-center justify-center gap-3 pt-6 pb-4">
+                  <button
+                    disabled={page <= 0 || isLoading}
+                    onClick={() => setPage(p => p - 1)}
+                    className="rounded-full border border-border px-6 py-2.5 text-sm font-semibold text-foreground transition-all hover:border-foreground active:scale-[0.97] disabled:opacity-40"
+                  >
+                    ← Anterior
+                  </button>
                   <span className="text-sm text-muted-foreground font-medium tabular-nums">{page + 1} de {totalPages}</span>
-                  <Button variant="outline" size="sm" disabled={page >= totalPages - 1 || isLoading} onClick={() => setPage(p => p + 1)} className="gap-1 rounded-full">
-                    Próxima <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <button
+                    disabled={page >= totalPages - 1 || isLoading}
+                    onClick={() => setPage(p => p + 1)}
+                    className="rounded-full border border-border px-6 py-2.5 text-sm font-semibold text-foreground transition-all hover:border-foreground active:scale-[0.97] disabled:opacity-40"
+                  >
+                    Próxima →
+                  </button>
                 </div>
               )}
             </>
           )}
         </div>
-      )}
+
+        {/* Map — desktop always visible */}
+        <div className="relative hidden w-[45%] shrink-0 border-l border-border lg:block">
+          <ErrorBoundary fallback={<div className="flex items-center justify-center h-full text-muted-foreground text-sm">Erro ao carregar mapa</div>}>
+            <SearchMapBox
+              pins={mapPins}
+              onBoundsSearch={(bounds) => { setFilter("bounds", bounds); setPage(0); }}
+              onBoundsChange={() => {}}
+              onPinClick={(pin) => {
+                const found = imoveis.find(i => i.id === pin.id);
+                if (found) openPreview(found);
+              }}
+            />
+          </ErrorBoundary>
+        </div>
+      </div>
 
       {/* ── Mobile vitrine bar ── */}
       {selectMode && selectedIds.size > 0 && (
