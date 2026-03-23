@@ -86,11 +86,11 @@ function SidebarNavGroup({ label, items, badges, collapsed, index }: {
   collapsed: boolean;
   index: number;
 }) {
-  if (items.length === 0) return null;
-
   const location = useLocation();
   const currentPath = location.pathname;
   const queryClient = useQueryClient();
+
+  if (items.length === 0) return null;
 
   // Auto-expand group if any child route is active
   const hasActiveChild = items.some((item) => currentPath === item.url || currentPath.startsWith(item.url + "/"));
