@@ -417,11 +417,10 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
   });
 
   // ── Derived state (stable, no flicker) ──
-  const loading = !kpis || kpis === EMPTY_KPIS;
   const lastUpdate = new Date();
 
   return {
-    loading: false, // Data is always available via keepPreviousData after first load
+    loading: kpisFirstLoad, // true only on very first fetch, false after cache is populated
     lastUpdate,
     profile: profile || null,
     roletaPendentes,
