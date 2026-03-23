@@ -182,6 +182,7 @@ export default function ImoveisPage() {
 
   const imoveis = result?.data ?? [];
   const total = result?.count ?? 0;
+  const searchTimeMs = result?.search_time_ms;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   // ── Map pins ──
@@ -414,6 +415,7 @@ export default function ImoveisPage() {
           {isLoading ? <Skeleton className="h-4 w-32" /> : (
             <span className="text-sm font-medium text-foreground">
               {total.toLocaleString()} imóveis
+              {searchTimeMs != null && <span className="text-muted-foreground font-normal ml-1.5">· {searchTimeMs}ms</span>}
             </span>
           )}
         </div>
