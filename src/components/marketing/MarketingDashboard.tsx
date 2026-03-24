@@ -470,11 +470,11 @@ Dados: ${JSON.stringify(iaContext)}`}
               </div>
             ))}
             {reports.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Nenhum relatório importado</p>
-                <p className="text-xs mt-1">Clique em "Importar Relatório" para começar</p>
-              </div>
+              <EmptyState
+                icon={<Zap size={22} strokeWidth={1.5} />}
+                title="Nenhum relatório importado"
+                description="Clique em 'Importar Relatório' para começar"
+              />
             )}
           </div>
         </TabsContent>

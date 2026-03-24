@@ -731,9 +731,11 @@ export default function RelatorioSemanal() {
 
         {/* Empty state */}
         {!isLoading && (!data?.corretores || data.corretores.length === 0) && (
-          <div className="apple-glass-surface text-center" style={{ padding: 48 }}>
-            <p style={{ color: "rgba(0,0,0,0.4)", fontSize: 15 }}>Sem dados disponíveis para o período selecionado.</p>
-          </div>
+          <EmptyState
+            icon={<FileText size={22} strokeWidth={1.5} />}
+            title="Sem dados disponíveis"
+            description="Nenhum dado encontrado para o período selecionado"
+          />
         )}
       </div>
 
