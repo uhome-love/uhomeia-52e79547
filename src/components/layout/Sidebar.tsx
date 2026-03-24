@@ -361,9 +361,9 @@ export default function Sidebar({
       {/* ── Logo ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-5 pt-5 pb-4">
         <img
-          src="/images/uhome-logo-horizontal-azul.png"
+          src={uhomeLogo}
           alt="UhomeSales"
-          className={cn("h-8 w-auto object-contain", isDark && "brightness-0 invert")}
+          className="h-8 w-auto object-contain"
         />
       </div>
 
