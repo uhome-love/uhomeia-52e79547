@@ -284,16 +284,16 @@ export default function CeoDashboard() {
   const funnelColors = ["#4F46E5","#6366f1","#818cf8","#a5b4fc","#c7d2fe","#22c55e","#ef4444","#10b981","#f59e0b"];
 
   // Negocio funnel order
-  const negFunnelOrder = ["novo_negocio","negociacao","proposta","documentacao","contrato","assinado","vendido","distrato"];
+  const negFunnelOrder = ["novo_negocio","proposta","negociacao","documentacao","assinado","vendido","distrato"];
   const negFunnelLabels: Record<string,string> = {
-    novo_negocio:"Novo Negócio", negociacao:"Negociação", proposta:"Proposta",
-    documentacao:"Documentação", contrato:"Contrato", assinado:"Assinado",
-    vendido:"Vendido", distrato:"Distrato"
+    novo_negocio:"Novo Negócio", proposta:"Proposta", negociacao:"Negociação",
+    documentacao:"Contrato Gerado", assinado:"Assinado",
+    vendido:"Vendido", distrato:"Caiu"
   };
   const negFunnelColors: Record<string,string> = {
-    novo_negocio:"#4F46E5", negociacao:"#6366f1", proposta:"#818cf8",
-    documentacao:"#a78bfa", contrato:"#c084fc", assinado:"#10b981",
-    vendido:"#059669", distrato:"#ef4444"
+    novo_negocio:"#0EA5E9", proposta:"#3B82F6", negociacao:"#F59E0B",
+    documentacao:"#8B5CF6", assinado:"#22C55E",
+    vendido:"#16A34A", distrato:"#EF4444"
   };
 
   if (loading && !profile) return <CeoDashboardSkeleton />;
