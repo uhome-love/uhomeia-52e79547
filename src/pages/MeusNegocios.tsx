@@ -955,30 +955,32 @@ export default function MeusNegocios() {
                 onDragLeave={() => setDragOverFase(null)}
                 onDrop={(e) => handleDrop(e, fase.key)}
               >
-                {/* Column header - glass */}
+                {/* Column header */}
                 <div
                   className="shrink-0 px-3.5 py-3 rounded-t-xl"
                   style={{
                     background: "rgba(255,255,255,0.03)",
-                    borderBottom: `2px solid ${fase.cor}40`,
                     backdropFilter: "blur(8px)",
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="h-2.5 w-2.5 rounded-full shadow-lg" style={{ backgroundColor: fase.cor, boxShadow: `0 0 8px ${fase.cor}80` }} />
-                    <span className="text-sm font-bold text-white/90">{fase.icon} {fase.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white/80" style={{ background: `${fase.cor}20` }}>
-                      {faseNegocios.length}
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: fase.cor }} />
+                      <span className="text-[13px] font-bold text-white">{fase.label}</span>
+                      <span className="text-[13px] font-bold text-[#4F46E5]">{faseNegocios.length}</span>
+                    </div>
                     {totalFaseVGV > 0 && (
-                      <span className="text-[10px] font-semibold flex items-center gap-0.5" style={{ color: fase.cor }}>
-                        <TrendingUp className="h-2.5 w-2.5" />
-                        {formatVGV(totalFaseVGV)}
-                      </span>
+                      <span className="text-[11px] text-[#52525b]">{formatVGV(totalFaseVGV)}</span>
                     )}
                   </div>
+                  {/* Progress bar */}
+                  <div
+                    className="h-[2px] rounded-full"
+                    style={{
+                      backgroundColor: fase.key === "assinado" || fase.key === "vendido" ? "#10b981" : "#4F46E5",
+                      opacity: fase.key === "novo_negocio" ? 0.4 : fase.key === "proposta" ? 0.6 : fase.key === "negociacao" ? 0.8 : fase.key === "documentacao" ? 0.9 : 1,
+                    }}
+                  />
                 </div>
 
                 {/* Cards */}
