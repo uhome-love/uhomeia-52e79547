@@ -378,7 +378,7 @@ export default function CeoDashboard() {
   return (
     <div className="bg-[#f0f0f5] dark:bg-[#0f0f12] p-6 -m-6 min-h-full space-y-4 sm:space-y-6 max-w-[1440px] mx-auto">
       {/* ─── GREETING CARD ─── */}
-      <div className="bg-[#f7f7fb] dark:bg-[#1c1c20] border border-[#e8e8f0] dark:border-white/[0.07] rounded-[14px] p-5 flex items-center justify-between">
+      <div className="bg-[#f7f7fb] dark:bg-[#1a1a1f] border border-[#e8e8f0] dark:border-white/[0.07] rounded-[14px] p-5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12 ring-2 ring-[#4F46E5]">
             {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
@@ -387,16 +387,16 @@ export default function CeoDashboard() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <h2 className="text-[20px] font-bold tracking-[-0.5px] text-[#0a0a0a] dark:text-white leading-none">
+            <h2 className="text-[20px] font-bold tracking-[-0.5px] text-[#0a0a0a] dark:text-[#fafafa] leading-none">
               {getGreeting()}, {profile?.nome?.split(" ")[0] || "CEO"}
             </h2>
-            <p className="text-[12px] text-[#a1a1aa] mt-1 italic">
+            <p className="text-[12px] text-[#a1a1aa] dark:text-[#52525b] mt-1 italic">
               "{frase}"
             </p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[12px] text-[#a1a1aa]">
+          <p className="text-[12px] text-[#a1a1aa] dark:text-[#52525b]">
             {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })} · Semana {weekNum}
           </p>
           <button

@@ -165,13 +165,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               className={cn(
                 "h-14 flex items-center justify-between sticky top-0 z-50 px-4",
                 theme === "dark"
-                  ? "border-b border-white/[0.06]"
+                  ? "bg-[#0f0f12] border-b border-white/[0.06]"
                   : "bg-white border-b border-[#e8e8f0]"
               )}
-              style={theme === "dark" ? { background: "hsl(var(--sidebar-background))" } : undefined}
             >
               <div className="flex items-center gap-3">
-                <SidebarTrigger className={theme === "dark" ? "text-gray-400 hover:text-white" : "text-[#52525b] hover:text-[#0a0a0a]"} />
+                <SidebarTrigger className={theme === "dark" ? "text-[#71717a] hover:text-[#fafafa]" : "text-[#52525b] hover:text-[#0a0a0a]"} />
                 <div className="hidden sm:flex items-center">
                   <UhomeLogo size="md" />
                 </div>
@@ -189,15 +188,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 size="sm"
                 className="hidden sm:flex items-center gap-2 h-8 px-2.5 rounded-lg"
                 style={theme === "dark"
-                  ? { color: "#9CA3AF", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }
+                  ? { color: "#52525b", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }
                   : { color: "#52525b", background: "#f7f7fb", border: "1px solid #e8e8f0" }
                 }
                 onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
               >
-                <Search className="h-3.5 w-3.5" style={{ color: theme === "dark" ? "#9CA3AF" : "#a1a1aa" }} />
-                <span className="text-[11px]" style={{ color: theme === "dark" ? "#6B7280" : "#a1a1aa" }}>Buscar...</span>
+                <Search className="h-3.5 w-3.5" style={{ color: theme === "dark" ? "#71717a" : "#a1a1aa" }} />
+                <span className="text-[11px]" style={{ color: theme === "dark" ? "#52525b" : "#a1a1aa" }}>Buscar...</span>
                 <kbd className="pointer-events-none ml-1 inline-flex h-5 items-center gap-0.5 rounded px-1 font-mono text-[10px] font-medium" style={theme === "dark"
-                  ? { color: "#6B7280", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }
+                  ? { color: "#52525b", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }
                   : { color: "#a1a1aa", background: "#f0f0f5", border: "1px solid #e8e8f0" }
                 }>
                   ⌘K
@@ -223,12 +222,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       </div>
                     )}
                     <div className="text-left hidden sm:block">
-                      <p className="leading-tight" style={{ color: theme === "dark" ? "#FFFFFF" : "#0a0a0a", fontSize: 14, fontWeight: 600 }}>
+                      <p className="leading-tight" style={{ color: theme === "dark" ? "#fafafa" : "#0a0a0a", fontSize: 14, fontWeight: 600 }}>
                         {nome || user?.email?.split("@")[0]}
                       </p>
-                      <p className="leading-tight" style={{ color: theme === "dark" ? "#9CA3AF" : "#71717a", fontSize: 12 }}>{cargoLabel}</p>
+                      <p className="leading-tight" style={{ color: theme === "dark" ? "#52525b" : "#71717a", fontSize: 12 }}>{cargoLabel}</p>
                     </div>
-                    <ChevronDown className="h-3.5 w-3.5 hidden sm:block" style={{ color: theme === "dark" ? "#6B7280" : "#a1a1aa" }} />
+                    <ChevronDown className="h-3.5 w-3.5 hidden sm:block" style={{ color: theme === "dark" ? "#71717a" : "#a1a1aa" }} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">

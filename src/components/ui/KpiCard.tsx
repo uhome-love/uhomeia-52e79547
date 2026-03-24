@@ -52,7 +52,7 @@ export function KpiCard({
     <div
       onClick={onClick}
       className={cn(
-        "bg-[#f7f7fb] dark:bg-white/[0.04]",
+        "bg-[#f7f7fb] dark:bg-[#1a1a1f]",
         "border border-[#e8e8f0] dark:border-white/[0.07] shadow-none",
         "border-l-[3px] border-l-[#4F46E5]",
         "rounded-[14px] p-4 pl-4",
@@ -62,7 +62,7 @@ export function KpiCard({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium text-[#a1a1aa] tracking-[0.01em] truncate">
+        <span className="text-[11px] font-medium text-[#a1a1aa] dark:text-[#52525b] tracking-[0.01em] truncate">
           {label}
         </span>
         {icon && (
