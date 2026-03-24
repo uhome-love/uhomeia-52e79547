@@ -199,6 +199,7 @@ const NAV_BY_ROLE: Record<UserRole, NavGroup[]> = {
       items: [
         { label: "Anúncios no ar",     path: "/anuncios",          icon: <Megaphone    size={15} strokeWidth={1.5} /> },
         { label: "HOMI Assistente",    path: "/homi",              icon: <Bot          size={15} strokeWidth={1.5} /> },
+        { label: "Meus Links",         path: "/links-site",        icon: <Link2        size={15} strokeWidth={1.5} /> },
         { label: "Minhas vitrines",    path: "/minhas-vitrines",   icon: <Building2    size={15} strokeWidth={1.5} /> },
       ],
     },
