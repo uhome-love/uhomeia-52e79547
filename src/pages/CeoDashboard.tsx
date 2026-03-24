@@ -592,21 +592,22 @@ export default function CeoDashboard() {
                 const count = data?.count || 0;
                 const vgv = data?.vgv || 0;
                 const maxCount = Math.max(...negocioFases.map((f: any) => f.count), 1);
-                const heightPct = maxCount > 0 ? Math.max((count / maxCount) * 100, 8) : 8;
+                const heightPct = maxCount > 0 ? Math.max((count / maxCount) * 100, 12) : 12;
                 const color = negFunnelColors[fase] || "#a1a1aa";
                 return (
-                  <div key={fase} className="flex-1 flex flex-col items-center gap-1 group/bar">
-                    <span className="text-[10px] font-bold text-foreground opacity-0 group-hover/bar:opacity-100 transition-opacity">
-                      {count > 0 ? formatBRLCompact(vgv) : ""}
+                  <div key={fase} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-bold" style={{ color }}>
+                      {count > 0 ? count : "0"}
                     </span>
-                    <div className="w-full max-w-[48px] rounded-t-lg transition-all duration-500 relative" style={{ height: `${heightPct}%`, backgroundColor: color }}>
-                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
-                        {count > 0 ? count : ""}
-                      </span>
-                    </div>
-                    <span className="text-[8px] text-[#a1a1aa] text-center leading-tight truncate w-full px-0.5">
+                    <div className="w-full max-w-[48px] rounded-t-lg transition-all duration-500" style={{ height: `${heightPct}%`, backgroundColor: color, minHeight: "8px" }} />
+                    <span className="text-[9px] font-medium text-[#71717a] dark:text-[#a1a1aa] text-center leading-tight truncate w-full px-0.5">
                       {negFunnelLabels[fase] || fase}
                     </span>
+                    {count > 0 && (
+                      <span className="text-[8px] text-[#71717a] dark:text-[#a1a1aa]">
+                        {formatBRLCompact(vgv)}
+                      </span>
+                    )}
                   </div>
                 );
               })}
