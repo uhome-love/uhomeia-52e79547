@@ -16,11 +16,6 @@ import RoletagensTab from "@/components/roleta/RoletagensTab";
 import LeadsGeradosTab from "@/components/roleta/LeadsGeradosTab";
 import LeadIntelligenceTab from "@/components/roleta/LeadIntelligenceTab";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { formatDistanceToNow, differenceInMinutes, format, startOfDay, subHours } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import RoletagensTab from "@/components/roleta/RoletagensTab";
-import LeadsGeradosTab from "@/components/roleta/LeadsGeradosTab";
-import LeadIntelligenceTab from "@/components/roleta/LeadIntelligenceTab";
 // ─── Countdown Timer ───
 function CountdownTimer({ target }: { target: Date }) {
   const [now, setNow] = useState(new Date());
