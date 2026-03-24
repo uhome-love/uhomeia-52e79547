@@ -231,15 +231,18 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
 
   // ── Negocios ──
   const { data: negociosData } = useQuery({
-    queryKey: ["ceo-negocios", user?.id],
+    queryKey: ["ceo-negocios", user?.id, range.start, range.end],
     queryFn: async () => {
-      // MIGRATED: Include auth_user_id for canonical identity lookup
-      const { data: negocios } = await supabase.from("negocios").select("id, fase, status, vgv_estimado, vgv_final, auth_user_id, updated_at, empreendimento").limit(500);
+      // Fetch active negocios only (matching pipeline view)
+      const { data: negocios } = await supabase
+        .from("negocios")
+        .select("id, fase, status, vgv_estimado, vgv_final, auth_user_id, updated_at, empreendimento, created_at, data_assinatura")
+        .eq("status", "ativo")
+        .limit(1000);
       const now = new Date();
       const faseMap = new Map<string, { count: number; vgv: number }>();
       let risco = 0;
       for (const n of (negocios || [])) {
-        if (n.status === "perdido" || n.status === "cancelado") continue;
         const fase = n.fase || "desconhecido";
         const curr = faseMap.get(fase) || { count: 0, vgv: 0 };
         curr.count++;
