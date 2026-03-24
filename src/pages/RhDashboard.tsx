@@ -89,35 +89,12 @@ export default function RhDashboard() {
   ];
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl px-6 py-5 flex items-center justify-between"
-        style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)" }}
-      >
-        <div className="flex items-center gap-4">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={nome} className="rounded-full object-cover shrink-0" style={{ width: 56, height: 56, border: "2px solid #3B82F6" }} />
-          ) : (
-            <div className="flex items-center justify-center rounded-full font-bold text-white text-lg shrink-0" style={{ width: 56, height: 56, background: "#3B82F6", border: "2px solid #3B82F6" }}>
-              {nome ? nome[0].toUpperCase() : "C"}
-            </div>
-          )}
-          <div>
-            <h1 style={{ color: "#FFFFFF", fontSize: 28, fontWeight: 700, lineHeight: 1.2 }}>
-              Fala, {nome}! 👋
-            </h1>
-            <motion.p key={subtitleIdx} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} style={{ color: "#94A3B8", fontSize: 14, marginTop: 4 }}>
-              {subtitles[subtitleIdx]}
-            </motion.p>
-          </div>
-        </div>
-        <div className="text-right hidden sm:block">
-          <p className="capitalize" style={{ color: "#64748B", fontSize: 13 }}>{todayFormatted}</p>
-        </div>
-      </motion.div>
+    <div className="bg-[#f0f0f5] dark:bg-[#0f0f12] p-6 -m-6 min-h-full space-y-6 max-w-5xl mx-auto">
+      <PageHeader
+        title="Dashboard RH"
+        subtitle="Recrutamento, entrevistas e gestão de pessoas"
+        icon={<Users size={18} strokeWidth={1.5} />}
+      />
 
       {/* Quick Access */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
