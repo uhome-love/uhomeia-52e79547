@@ -248,7 +248,7 @@ export default function MarketingDashboard() {
                       <Bar dataKey="cpl" fill="hsl(var(--warning))" name="CPL" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
-                ) : <p className="text-center py-12 text-muted-foreground text-sm">Sem dados</p>}
+                ) : <EmptyState icon={<Zap size={22} strokeWidth={1.5} />} title="Nenhum dado de marketing" description="Importe um relatório ou sincronize com o Meta Ads" />}
               </CardContent>
             </Card>
           </div>
