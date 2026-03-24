@@ -951,11 +951,11 @@ export default function MeusNegocios() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full" style={{ backgroundColor: fase.cor }} />
-                      <span className="text-[13px] font-bold text-white">{fase.label}</span>
-                      <span className="text-[13px] font-bold text-[#4F46E5]">{faseNegocios.length}</span>
+                      <span className="text-[13px] font-bold text-[#0a0a0a] dark:text-white">{fase.label}</span>
+                      <span className="text-[13px] font-bold text-[#4F46E5] dark:text-[#818cf8]">{faseNegocios.length}</span>
                     </div>
                     {totalFaseVGV > 0 && (
-                      <span className="text-[11px] text-[#52525b]">{formatVGV(totalFaseVGV)}</span>
+                      <span className="text-[11px] text-[#a1a1aa] dark:text-[#3f3f46]">{formatVGV(totalFaseVGV)}</span>
                     )}
                   </div>
                   {/* Progress bar */}
