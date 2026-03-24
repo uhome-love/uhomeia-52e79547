@@ -1,29 +1,13 @@
 import UhomeLogo from "@/components/UhomeLogo";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
-import { Mail, Lock, User, Loader2, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
-const homiHero = "/images/homi-mascot-official.png";
-
-const HOMI_PHRASES = [
-  "Pronto para sua melhor sessão hoje? ⚡",
-  "Vamos dominar a Arena! 🔥",
-  "Seus leads estão esperando! 🎯",
-  "Hora de liderar o ranking! 🏆",
-];
-
-const MOTIVATIONAL = [
-  "15.267 leads esperando por você.",
-  "Os melhores corretores já estão dentro.",
-  "Cada login é uma nova chance de liderar.",
-  "A Arena está aberta. Entre agora.",
-];
-
-/* ─── Particle Canvas (blue theme) ─── */
+/* ─── Particle Canvas (stars) ─── */
 function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -49,28 +33,25 @@ function ParticleCanvas() {
     interface Particle {
       x: number; y: number; r: number; vx: number; vy: number;
       baseOpacity: number; opacity: number; twinkle: boolean;
-      twinkleSpeed: number; twinklePhase: number; isBlue: boolean; glow: boolean;
+      twinkleSpeed: number; twinklePhase: number;
     }
 
     const W = () => window.innerWidth;
     const H = () => window.innerHeight;
 
-    const particles: Particle[] = Array.from({ length: 90 }, (_, i) => {
-      const isStar = i < 5;
-      const isBlue = Math.random() < 0.25;
+    const particles: Particle[] = Array.from({ length: 80 }, (_, i) => {
+      const isStar = i < 6;
       return {
         x: Math.random() * W(),
         y: Math.random() * H(),
-        r: isStar ? 2.5 : 0.8 + Math.random() * 1.2,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
-        baseOpacity: isStar ? 0.8 : 0.15 + Math.random() * 0.35,
-        opacity: 0.4,
-        twinkle: isStar || Math.random() < 0.3,
-        twinkleSpeed: 0.006 + Math.random() * 0.012,
+        r: isStar ? 2 : 0.6 + Math.random() * 1,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15,
+        baseOpacity: isStar ? 0.7 : 0.1 + Math.random() * 0.3,
+        opacity: 0.3,
+        twinkle: isStar || Math.random() < 0.25,
+        twinkleSpeed: 0.005 + Math.random() * 0.01,
         twinklePhase: Math.random() * Math.PI * 2,
-        isBlue,
-        glow: isStar,
       };
     });
 
@@ -87,22 +68,11 @@ function ParticleCanvas() {
           p.twinklePhase += p.twinkleSpeed;
           p.opacity = p.baseOpacity * (0.3 + 0.7 * ((Math.sin(p.twinklePhase) + 1) / 2));
         }
-        if (p.glow) {
-          ctx.shadowColor = p.isBlue ? "rgba(59,130,246,0.6)" : "rgba(147,197,253,0.5)";
-          ctx.shadowBlur = 10;
-        } else {
-          ctx.shadowColor = "transparent";
-          ctx.shadowBlur = 0;
-        }
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.isBlue
-          ? `rgba(59,130,246,${p.opacity})`
-          : `rgba(255,255,255,${p.opacity})`;
+        ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
         ctx.fill();
       }
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
       animId = requestAnimationFrame(draw);
     };
     draw();
@@ -112,65 +82,13 @@ function ParticleCanvas() {
   return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }} />;
 }
 
-/* ─── Homi Speech Bubble ─── */
-function HomiSpeechBubble() {
-  const [idx, setIdx] = useState(0);
-  const [visible, setVisible] = useState(false);
-  const [fade, setFade] = useState(true);
-
-  useEffect(() => { const t = setTimeout(() => setVisible(true), 1500); return () => clearTimeout(t); }, []);
-  useEffect(() => {
-    if (!visible) return;
-    const interval = setInterval(() => {
-      setFade(false);
-      setTimeout(() => { setIdx(p => (p + 1) % HOMI_PHRASES.length); setFade(true); }, 300);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [visible]);
-
-  if (!visible) return null;
-  return (
-    <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap transition-opacity duration-300 z-20" style={{ opacity: fade ? 1 : 0 }}>
-      <div style={{ background: "rgba(13,27,75,0.95)", border: "1px solid rgba(59,130,246,0.3)", borderRadius: 12, padding: "8px 14px", fontSize: 13, color: "#E2E8F0", boxShadow: "0 0 20px rgba(59,130,246,0.15)" }}>
-        {HOMI_PHRASES[idx]}
-      </div>
-      <div className="mx-auto" style={{ width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "6px solid rgba(13,27,75,0.95)" }} />
-    </div>
-  );
-}
-
-/* ─── Motivational Rotator ─── */
-function MotivationalLine() {
-  const [idx, setIdx] = useState(0);
-  const [fade, setFade] = useState(true);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFade(false);
-      setTimeout(() => { setIdx(p => (p + 1) % MOTIVATIONAL.length); setFade(true); }, 300);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-  return (
-    <p className="text-center transition-opacity duration-300 mt-4" style={{ opacity: fade ? 1 : 0, color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
-      {MOTIVATIONAL[idx]}
-    </p>
-  );
-}
-
 /* ─── CSS Animations ─── */
 const styles = `
 @keyframes fade-in-up { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:translateY(0) } }
-@keyframes fade-in-scale { from { opacity:0; transform:scale(0.92) } to { opacity:1; transform:scale(1) } }
-@keyframes homiEntrada { 0%{transform:translateY(60px);opacity:0} 60%{transform:translateY(-8px);opacity:1} 80%{transform:translateY(3px)} 100%{transform:translateY(0)} }
-@keyframes homiAceno { 0%,100%{transform:translateY(0) rotate(0)} 25%{transform:translateY(-5px) rotate(2deg)} 75%{transform:translateY(-2px) rotate(-1.5deg)} }
-@keyframes pulse-glow-blue { 0%,100%{box-shadow:0 0 20px rgba(59,130,246,0.4),0 0 0 0 rgba(59,130,246,0.3)} 50%{box-shadow:0 0 20px rgba(59,130,246,0.4),0 0 0 8px rgba(59,130,246,0)} }
-@keyframes glow-pulse-blue { 0%,100%{opacity:0.4} 50%{opacity:0.7} }
-.anim-fiu { animation: fade-in-up 0.5s cubic-bezier(.22,1,.36,1) both }
-.anim-fis { animation: fade-in-scale 0.6s cubic-bezier(.22,1,.36,1) both }
-.anim-d1 { animation-delay:.12s } .anim-d2 { animation-delay:.25s } .anim-d3 { animation-delay:.38s }
-.homi-entrance { opacity:0; animation: homiEntrada .8s cubic-bezier(.34,1.56,.64,1) forwards; animation-delay:.3s }
-.homi-wave { animation: homiAceno 3s ease-in-out infinite; animation-delay:1.2s }
-.auth-input:focus { border-color: rgba(59,130,246,0.5) !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.1), 0 0 16px rgba(59,130,246,0.08) !important }
+@keyframes fade-in-scale { from { opacity:0; transform:scale(0.96) } to { opacity:1; transform:scale(1) } }
+.anim-fiu { animation: fade-in-up 0.6s cubic-bezier(.22,1,.36,1) both }
+.anim-fis { animation: fade-in-scale 0.5s cubic-bezier(.22,1,.36,1) both }
+.anim-d1 { animation-delay:.1s } .anim-d2 { animation-delay:.2s } .anim-d3 { animation-delay:.3s } .anim-d4 { animation-delay:.4s }
 `;
 
 export default function Auth() {
@@ -179,12 +97,13 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0A0F1E" }}>
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#3B82F6" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0a0f" }}>
+        <Loader2 className="h-8 w-8 animate-spin text-[#4F46E5]" />
       </div>
     );
   }
@@ -210,103 +129,185 @@ export default function Auth() {
     } finally { setSubmitting(false); }
   };
 
-  const inputCls = "auth-input pl-10 h-12 w-full text-white placeholder:opacity-40 transition-all duration-200 focus:ring-0 focus:outline-none";
-  const inputStyle: React.CSSProperties = { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "white" };
-
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-between overflow-hidden" style={{ background: "#0A0F1E" }}>
+    <div className="relative min-h-screen flex overflow-hidden" style={{ background: "#0a0a0f" }}>
       <style>{styles}</style>
-
-      {/* BG layers — blue radials, no green */}
-      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 800px 500px at 50% 10%, rgba(59,130,246,0.08) 0%, transparent 70%)" }} />
-      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 400px 300px at 50% 20%, rgba(13,27,75,0.12) 0%, transparent 60%)" }} />
-      <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
       <ParticleCanvas />
 
-      {/* CONTENT */}
-      <div className="relative z-10 w-full max-w-[400px] px-5 pt-10 pb-4 flex-1 flex flex-col">
-
-        {/* Badge top text — white 30% opacity */}
-        <p className="text-center anim-fiu" style={{ letterSpacing: "0.3em", color: "rgba(255,255,255,0.3)", fontSize: 11, marginBottom: 4 }}>
-          ✦ UHOMESALES ✦
-        </p>
-
-        {/* Logo — text-based, no image tint issues */}
-        <div className="flex flex-col items-center anim-fis" style={{ marginBottom: 4 }}>
-          <UhomeLogo size="lg" showTagline />
+      {/* ═══ LEFT — Branding (hidden on mobile) ═══ */}
+      <div className="hidden lg:flex flex-col justify-between relative z-10 w-[52%] p-12 xl:p-16">
+        {/* Logo top */}
+        <div className="anim-fiu">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] bg-[#4F46E5] flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+            </div>
+            <span className="text-[20px] font-bold text-white tracking-[-0.5px]">
+              UhomeSales
+            </span>
+          </div>
         </div>
 
-        {/* Subtitle */}
-        <p className="text-center anim-fiu anim-d1" style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, marginTop: 4, marginBottom: 20 }}>
-          A plataforma dos corretores que vendem mais.
-        </p>
+        {/* Center — headline */}
+        <div className="anim-fiu anim-d1 max-w-[480px]">
+          <h1 className="text-[48px] xl:text-[56px] font-extrabold leading-[1.05] tracking-[-2px] text-white">
+            A plataforma dos{"\n"}
+            <span className="text-[#4F46E5]">corretores</span> que{"\n"}
+            vendem mais.
+          </h1>
+          <p className="text-[16px] text-[#52525b] mt-6 leading-relaxed max-w-[400px]">
+            Gestão de leads, pipeline, performance e IA embarcada em um só lugar.
+          </p>
+        </div>
 
-        {/* FORM */}
-        <div className="anim-fiu anim-d2">
-          <form onSubmit={handleSubmit}>
-            <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, backdropFilter: "blur(10px)", padding: 24 }}>
-              <div className="space-y-3">
-                {!isLogin && (
+        {/* Bottom — stats */}
+        <div className="flex items-center gap-10 anim-fiu anim-d2">
+          <div>
+            <p className="text-[28px] font-bold text-white">2.780+</p>
+            <p className="text-[12px] text-[#3f3f46] mt-0.5">leads gerenciados</p>
+          </div>
+          <div className="w-px h-10 bg-white/[0.08]" />
+          <div>
+            <p className="text-[28px] font-bold text-[#10b981]">R$ 36M</p>
+            <p className="text-[12px] text-[#3f3f46] mt-0.5">VGV no pipeline</p>
+          </div>
+          <div className="w-px h-10 bg-white/[0.08]" />
+          <div>
+            <p className="text-[28px] font-bold text-white">26</p>
+            <p className="text-[12px] text-[#3f3f46] mt-0.5">corretores ativos</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ RIGHT — Form ═══ */}
+      <div className="flex-1 flex items-center justify-center relative z-10 px-6 py-10">
+        <div className="w-full max-w-[400px]">
+
+          {/* Logo mobile only */}
+          <div className="lg:hidden flex items-center justify-center gap-2.5 mb-10 anim-fis">
+            <div className="w-8 h-8 rounded-[9px] bg-[#4F46E5] flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+            </div>
+            <span className="text-[18px] font-bold text-white tracking-[-0.4px]">UhomeSales</span>
+          </div>
+
+          {/* Form card */}
+          <div
+            className="rounded-[20px] p-7 anim-fiu anim-d1"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              backdropFilter: "blur(20px)",
+            }}
+          >
+            <h2 className="text-[22px] font-bold text-white tracking-[-0.5px]">
+              {isLogin ? "Bem-vindo de volta" : "Criar conta"}
+            </h2>
+            <p className="text-[13px] text-[#52525b] mt-1.5 mb-6">
+              {isLogin ? "Entre com suas credenciais para continuar" : "Preencha seus dados para começar"}
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              {/* Nome (signup only) */}
+              {!isLogin && (
+                <div className="anim-fiu">
+                  <label className="text-[12px] font-medium text-[#52525b] mb-1.5 block">Nome</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
-                    <Input placeholder="Seu nome completo" value={nome} onChange={e => setNome(e.target.value)} className={inputCls} style={inputStyle} required={!isLogin} />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3f3f46]" />
+                    <input
+                      value={nome}
+                      onChange={e => setNome(e.target.value)}
+                      placeholder="Seu nome completo"
+                      required={!isLogin}
+                      className="w-full pl-9 pr-4 h-[44px] bg-white/[0.06] border border-white/[0.1] rounded-[10px] text-white text-[13px] placeholder:text-[#3f3f46] focus:border-[#4F46E5] focus:bg-white/[0.08] outline-none transition-all"
+                    />
                   </div>
-                )}
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
-                  <Input type="email" placeholder="Seu e-mail" value={email} onChange={e => setEmail(e.target.value)} className={inputCls} style={inputStyle} required />
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
-                  <Input type="password" placeholder="Sua senha" value={password} onChange={e => setPassword(e.target.value)} className={inputCls} style={inputStyle} minLength={6} required />
-                </div>
+              )}
 
-                <div className="flex items-center gap-3 pt-1">
-                  <Button type="submit" disabled={submitting} className="h-12 flex-1 gap-2 font-black text-sm border-0 rounded-xl text-white" style={{ background: "linear-gradient(135deg, #3B82F6, #2563EB)", letterSpacing: "0.05em", animation: submitting ? "none" : "pulse-glow-blue 2s ease-in-out infinite" }}>
-                    {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Entrando...</span></> : <>{isLogin ? "ENTRAR" : "CRIAR CONTA"}<ArrowRight className="h-4 w-4" /></>}
-                  </Button>
+              {/* Email */}
+              <div>
+                <label className="text-[12px] font-medium text-[#52525b] mb-1.5 block">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3f3f46]" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="voce@email.com"
+                    required
+                    className="w-full pl-9 pr-4 h-[44px] bg-white/[0.06] border border-white/[0.1] rounded-[10px] text-white text-[13px] placeholder:text-[#3f3f46] focus:border-[#4F46E5] focus:bg-white/[0.08] outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Senha */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[12px] font-medium text-[#52525b]">Senha</label>
                   {isLogin && (
-                    <button type="button" className="text-xs transition-colors whitespace-nowrap" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    <button type="button" className="text-[11px] text-[#4F46E5] hover:text-[#6366f1] transition-colors">
                       Esqueceu?
                     </button>
                   )}
                 </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3f3f46]" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    minLength={6}
+                    required
+                    className="w-full pl-9 pr-10 h-[44px] bg-white/[0.06] border border-white/[0.1] rounded-[10px] text-white text-[13px] placeholder:text-[#3f3f46] focus:border-[#4F46E5] focus:bg-white/[0.08] outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3f3f46] hover:text-[#71717a] transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
-          </form>
 
-          {/* Toggle */}
-          <p className="text-center text-sm mt-4">
-            <span style={{ color: "rgba(255,255,255,0.4)" }}>{isLogin ? "Não tem conta?" : "Já tem conta?"} </span>
-            <button onClick={() => setIsLogin(!isLogin)} className="font-semibold transition-colors" style={{ color: "#60A5FA" }}>
-              {isLogin ? "Criar conta" : "Entrar"}
-            </button>
-          </p>
+              {/* Botão entrar */}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full h-[44px] bg-[#4F46E5] hover:bg-[#4338CA] text-white text-[13px] font-semibold rounded-[10px] flex items-center justify-center gap-2 transition-colors disabled:opacity-60 mt-2"
+              >
+                {submitting ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Entrando...</>
+                ) : (
+                  <>{isLogin ? "Entrar" : "Criar conta"} <ArrowRight className="h-4 w-4" /></>
+                )}
+              </button>
+            </form>
 
-          {/* Motivational */}
-          <MotivationalLine />
-        </div>
-
-        <div className="flex-1" />
-      </div>
-
-      {/* HOMI + Footer */}
-      <div className="relative z-10 flex flex-col items-center pb-6 pt-2 gap-3">
-        <div className="relative homi-entrance">
-          <HomiSpeechBubble />
-          <div className="homi-wave">
-            <div className="absolute inset-0 -m-4 rounded-full blur-[40px]" style={{ background: "rgba(59,130,246,0.15)", animation: "glow-pulse-blue 3s ease-in-out infinite" }} />
-            <img
-              src={homiHero}
-              alt="Homi AI"
-              className="relative object-contain"
-              style={{ height: 80, filter: "brightness(1.1) saturate(1.2) drop-shadow(0 0 24px rgba(59,130,246,0.4))" }}
-            />
+            {/* Toggle login/signup */}
+            <p className="text-center text-[13px] mt-5">
+              <span className="text-[#3f3f46]">{isLogin ? "Não tem conta?" : "Já tem conta?"} </span>
+              <button onClick={() => setIsLogin(!isLogin)} className="font-semibold text-[#4F46E5] hover:text-[#6366f1] transition-colors">
+                {isLogin ? "Criar conta" : "Entrar"}
+              </button>
+            </p>
           </div>
+
+          {/* Footer */}
+          <p className="text-center text-[11px] text-[#27272a] mt-8">
+            Powered by{" "}
+            <span className="text-[#4F46E5] font-medium">Homi AI</span>
+            {" "}· © {new Date().getFullYear()} Uhome
+          </p>
         </div>
-        <p className="text-center tracking-wider" style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>
-          © {new Date().getFullYear()} Uhome · Impulsione suas vendas · Todos os direitos reservados
-        </p>
       </div>
     </div>
   );
