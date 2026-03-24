@@ -488,7 +488,7 @@ export default function CampaignManager() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Nome da lista unificada</label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Nome da campanha</label>
               <Input
                 placeholder="Ex: Mega da Cyrela"
                 value={campanhaName}
