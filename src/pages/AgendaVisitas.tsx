@@ -307,8 +307,16 @@ export default function AgendaVisitas() {
   }, [activeTab]);
 
   return (
-    <div className="space-y-3">
-      {/* ─── BLOCO 1: CONTROLES PRINCIPAIS ─── */}
+    <div className="bg-[#f7f7f8] dark:bg-[#0f0f12] p-6 -m-6 min-h-full space-y-3">
+      <PageHeader
+        title="Agenda de visitas"
+        icon={<CalendarDays size={18} strokeWidth={1.5} />}
+        actions={
+          <Button size="sm" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white" onClick={() => setShowTypeSelector(true)}>
+            <Plus size={14} className="mr-1" /> Nova Visita
+          </Button>
+        }
+      />
       <AgendaHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
