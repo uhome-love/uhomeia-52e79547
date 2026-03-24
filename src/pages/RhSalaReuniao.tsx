@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, CalendarDays, Clock, Trash2, Pencil } from "lucide-react";
+import { Plus, CalendarDays, Clock, Trash2, Pencil, Video } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -138,16 +139,17 @@ export default function RhSalaReuniao() {
   });
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">🏢 Sala de Reunião</h1>
-          <p className="text-sm text-muted-foreground">Reservas e horários — Horário comercial (8h–18h)</p>
-        </div>
-        <Button onClick={openAdd} size="sm" className="gap-1">
-          <Plus className="h-4 w-4" /> Nova Reserva
-        </Button>
-      </div>
+    <div className="bg-[#f0f0f5] dark:bg-[#0f0f12] p-6 -m-6 min-h-full space-y-4 max-w-4xl mx-auto">
+      <PageHeader
+        title="Sala de reunião"
+        subtitle="Reserva de espaços"
+        icon={<Video size={18} strokeWidth={1.5} />}
+        actions={
+          <Button onClick={openAdd} size="sm" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white gap-1">
+            <Plus size={14} /> Nova Reserva
+          </Button>
+        }
+      />
 
       {/* Week selector */}
       <div className="flex gap-2">

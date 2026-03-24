@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Phone, Mail } from "lucide-react";
+import { UserPlus, Phone, Mail, Users, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 
 const ETAPAS = [
@@ -82,15 +83,17 @@ export default function RhRecrutamento() {
   const getCandidatosByEtapa = (etapa: string) => candidatos.filter(c => c.etapa === etapa);
 
   return (
-    <div className="space-y-4 overflow-hidden">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">👥 Candidatos</h1>
-        </div>
-        <Button onClick={() => setDialogOpen(true)} size="sm" className="gap-1">
-          <UserPlus className="h-4 w-4" /> Novo Candidato
-        </Button>
-      </div>
+    <div className="bg-[#f0f0f5] dark:bg-[#0f0f12] p-6 -m-6 min-h-full space-y-4 overflow-hidden">
+      <PageHeader
+        title="Candidatos"
+        subtitle="Pipeline de recrutamento"
+        icon={<Users size={18} strokeWidth={1.5} />}
+        actions={
+          <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white gap-1">
+            <Plus size={14} /> Novo Candidato
+          </Button>
+        }
+      />
 
       {/* Kanban */}
       <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: "40vh" }}>
