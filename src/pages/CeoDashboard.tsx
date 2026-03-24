@@ -514,12 +514,12 @@ export default function CeoDashboard() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-white dark:bg-white/[0.04] rounded-xl p-3 text-center border border-[#e8e8f0] dark:border-white/[0.05]">
-                  <p className="text-2xl font-[800] text-[#4F46E5]">{kpis.visitasMarcadas + kpis.visitasRealizadas + kpis.noShows}</p>
-                  <p className="text-[10px] text-[#a1a1aa] mt-0.5">Total Visitas</p>
+                  <p className="text-2xl font-[800] text-[#4F46E5]">{totalVisitasCriadas}</p>
+                  <p className="text-[10px] text-[#a1a1aa] mt-0.5">Total Visitas (Novas)</p>
                 </div>
                 <div className="bg-white dark:bg-white/[0.04] rounded-xl p-3 text-center border border-[#e8e8f0] dark:border-white/[0.05]">
                   <p className="text-2xl font-[800] text-[#f59e0b]">{kpis.visitasMarcadas}</p>
-                  <p className="text-[10px] text-[#a1a1aa] mt-0.5">Marcadas (Futuras)</p>
+                  <p className="text-[10px] text-[#a1a1aa] mt-0.5">Marcadas</p>
                 </div>
                 <div className="bg-white dark:bg-white/[0.04] rounded-xl p-3 text-center border border-[#e8e8f0] dark:border-white/[0.05]">
                   <p className="text-2xl font-[800] text-[#10b981]">{kpis.visitasRealizadas}</p>
