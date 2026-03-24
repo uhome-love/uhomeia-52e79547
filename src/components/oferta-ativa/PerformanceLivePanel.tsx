@@ -696,12 +696,15 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
                   </p>
                   <p className="text-[10px] text-muted-foreground">{subtitle}</p>
                 </div>
-                <div className={`text-sm font-black px-2.5 py-0.5 rounded-lg ${
-                  pct >= 80 ? "text-emerald-400 bg-emerald-500/15" :
-                  pct >= 40 ? "text-blue-400 bg-blue-500/15" :
-                  "text-muted-foreground bg-muted/50"
-                }`}>
-                  {pct}%
+                <div className="flex items-center gap-2">
+                  <div className={`text-sm font-black px-2.5 py-0.5 rounded-lg ${
+                    pct >= 80 ? "text-emerald-400 bg-emerald-500/15" :
+                    pct >= 40 ? "text-blue-400 bg-blue-500/15" :
+                    "text-muted-foreground bg-muted/50"
+                  }`}>
+                    {pct}%
+                  </div>
+                  {isCampanha && <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />}
                 </div>
               </div>
               <div className="h-2 rounded-full bg-muted/50 overflow-hidden mb-2.5">
