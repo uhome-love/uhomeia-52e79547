@@ -946,11 +946,7 @@ export default function MeusNegocios() {
               >
                 {/* Column header */}
                 <div
-                  className="shrink-0 px-3.5 py-3 rounded-t-xl"
-                  style={{
-                    background: "rgba(255,255,255,0.03)",
-                    backdropFilter: "blur(8px)",
-                  }}
+                  className="shrink-0 px-3.5 py-3 rounded-t-xl bg-white/50 dark:bg-[rgba(255,255,255,0.03)] dark:backdrop-blur-[8px]"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
