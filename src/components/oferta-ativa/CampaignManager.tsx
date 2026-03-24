@@ -463,6 +463,7 @@ export default function CampaignManager() {
           onToggle={() => toggleSelect(lista.id)}
           onUpdate={(id, data) => updateLista(id, data)}
           onDelete={(id) => { deleteLista(id); setSelected(prev => { const n = new Set(prev); n.delete(id); return n; }); }}
+          onClean={handleCleanLista}
         />
       ))}
 
