@@ -684,7 +684,7 @@ export default function PipelineKanban() {
           {/* Line 2 — Tabs + Status chips */}
           <div
             className="flex items-center justify-between overflow-x-auto"
-            style={{ minHeight: 44, padding: "0 28px", gap: 6 }}
+            style={{ height: 36, padding: "0 28px", gap: 6 }}
           >
             {/* LEFT: Segmented control + filters */}
             <div className="flex items-center flex-shrink-0" style={{ gap: 6 }}>
