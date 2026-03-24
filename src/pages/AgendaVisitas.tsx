@@ -2,12 +2,13 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format, isBefore, startOfDay, startOfWeek, startOfMonth, endOfWeek, endOfMonth, subWeeks, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, List, AlertTriangle, History, BarChart3, MessageCircle, Users, Plus } from "lucide-react";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { CalendarDays, List, AlertTriangle, History, BarChart3, MessageCircle, Users, Plus, Search, X, LayoutGrid } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { useVisitas, STATUS_LABELS, type Visita, type VisitaStatus } from "@/hooks/useVisitas";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,8 +20,6 @@ import VisitaTypeSelector from "@/components/visitas/VisitaTypeSelector";
 import ReuniaoNegocioForm from "@/components/visitas/ReuniaoNegocioForm";
 import VisitaResultadoDialog, { type ResultadoVisita } from "@/components/visitas/VisitaResultadoDialog";
 import VisitasPerformance from "@/components/visitas/VisitasPerformance";
-import AgendaHeader from "@/components/visitas/AgendaHeader";
-import VisitasQuickFilters, { type QuickFilterKey } from "@/components/visitas/VisitasQuickFilters";
 import VisitasCobrancaDialog from "@/components/visitas/VisitasCobrancaDialog";
 import { toast } from "sonner";
 
@@ -30,7 +29,6 @@ const FIXED_TEAMS = [
   { key: "gabriel", label: "Gabriel", emoji: "🟣" },
 ];
 
-// ─── Tab is the SINGLE SOURCE OF TRUTH for date range ───
 type AgendaTab = "semana-atual" | "semana-anterior" | "mes" | "calendario" | "alertas" | "performance" | "meu-time";
 
 function getDateRangeForTab(tab: AgendaTab): { from: string | null; to: string | null } {
@@ -58,17 +56,31 @@ function getDateRangeForTab(tab: AgendaTab): { from: string | null; to: string |
   }
 }
 
+const STATUS_PILL_STYLES: Record<string, string> = {
+  marcada: "text-[#f59e0b] bg-[#fffbeb] border-[#fde68a]",
+  confirmada: "text-[#3b82f6] bg-[#eff6ff] border-[#bfdbfe]",
+  realizada: "text-[#10b981] bg-[#f0fdf4] border-[#bbf7d0]",
+  reagendada: "text-[#6366f1] bg-[#eef2ff] border-[#c7d2fe]",
+  no_show: "text-[#ef4444] bg-[#fef2f2] border-[#fecaca]",
+  cancelada: "text-[#52525b] bg-[#f7f7fb] border-[#e8e8f0]",
+};
+
+const STATUSES: VisitaStatus[] = ["marcada", "confirmada", "realizada", "reagendada", "no_show", "cancelada"];
+
+const PERIOD_TABS: { key: AgendaTab; label: string }[] = [
+  { key: "semana-atual", label: "Semana atual" },
+  { key: "semana-anterior", label: "Anterior" },
+  { key: "mes", label: "Mês" },
+  { key: "calendario", label: "Calendário" },
+];
+
 export default function AgendaVisitas() {
   const { isAdmin, isGestor } = useUserRole();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ─── CONTROLLED TAB = single source of truth for dates ───
   const [activeTab, setActiveTab] = useState<AgendaTab>("semana-atual");
-
-  // Derived date range — no independent dateFrom/dateTo state
   const dateRange = useMemo(() => getDateRangeForTab(activeTab), [activeTab]);
 
-  // ─── Other filters (independent of date) ───
   const [showForm, setShowForm] = useState(false);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showReuniaoForm, setShowReuniaoForm] = useState(false);
@@ -82,9 +94,7 @@ export default function AgendaVisitas() {
   const [showCobranca, setShowCobranca] = useState(false);
   const [agendaTipo, setAgendaTipo] = useState<"lead" | "negocio">((searchParams.get("tipo") as any) || "lead");
   const [teamFilter, setTeamFilter] = useState<string>(searchParams.get("team") || "all");
-  const [quickFilter, setQuickFilter] = useState<QuickFilterKey>("");
 
-  // Sync to URL
   useEffect(() => {
     const params = new URLSearchParams();
     if (statusFilter !== "all") params.set("status", statusFilter);
@@ -93,12 +103,9 @@ export default function AgendaVisitas() {
     if (empreendimentoFilter !== "all") params.set("empreendimento", empreendimentoFilter);
     if (agendaTipo !== "lead") params.set("tipo", agendaTipo);
     if (teamFilter !== "all") params.set("team", teamFilter);
-    if (quickFilter) params.set("quick", quickFilter);
     setSearchParams(params, { replace: true });
-  }, [statusFilter, searchTerm, corretorFilter, empreendimentoFilter, agendaTipo, teamFilter, quickFilter, setSearchParams]);
+  }, [statusFilter, searchTerm, corretorFilter, empreendimentoFilter, agendaTipo, teamFilter, setSearchParams]);
 
-  // ─── SERVER-SIDE date filtering: tab determines the query range ───
-  // Tabs with date ranges (semana-atual, semana-anterior, mes) → server-filtered query
   const tabFilters = useMemo(() => {
     const f: { startDate?: string; endDate?: string } = {};
     if (dateRange.from) f.startDate = dateRange.from;
@@ -107,13 +114,9 @@ export default function AgendaVisitas() {
   }, [dateRange]);
 
   const { visitas: tabVisitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas(tabFilters);
-
-  // Broad query (no date filter) for calendar, alertas, performance, pending counts
   const { visitas: allVisitas, isLoading: isLoadingAll } = useVisitas();
 
-  // Split by tipo — own visitas only for main tabs
   const { user } = useAuth();
-  // Gerentes/admins see ALL visitas in main tabs; corretores see only their own
   const visitas = useMemo(() => {
     const byTipo = tabVisitas.filter(v => ((v as any).tipo || "lead") === agendaTipo);
     if (isAdmin || isGestor) return byTipo;
@@ -128,7 +131,6 @@ export default function AgendaVisitas() {
   const negocioCount = useMemo(() => allVisitas.filter(v => (v as any).tipo === "negocio").length, [allVisitas]);
   const leadCount = useMemo(() => allVisitas.filter(v => (v as any).tipo !== "negocio").length, [allVisitas]);
 
-  // Handlers
   const handleEdit = useCallback((visita: Visita) => setEditingVisita(visita), []);
   const handleEditSubmit = useCallback(async (data: Partial<Visita>) => {
     if (!editingVisita) return null;
@@ -171,7 +173,6 @@ export default function AgendaVisitas() {
     setResultadoVisita(null);
   }, [resultadoVisita, updateVisita, updateStatus]);
 
-  // Corretores/empreendimentos from broad dataset for dropdown options
   const { corretores, empreendimentos } = useMemo(() => {
     const cSet = new Map<string, string>();
     const eSet = new Set<string>();
@@ -185,7 +186,6 @@ export default function AgendaVisitas() {
     };
   }, [allVisitasByTipo]);
 
-  // Pending uses broad dataset (allVisitasByTipo) — past visitas may be outside tab range
   const pendingVisitas = useMemo(() => {
     const today = startOfDay(new Date());
     return allVisitasByTipo.filter(v => {
@@ -204,11 +204,8 @@ export default function AgendaVisitas() {
     return Array.from(map.values());
   }, [pendingVisitas]);
 
-  // ─── FILTERED list: date already server-side, apply remaining client-side filters ───
   const filtered = useMemo(() => {
     let list = [...visitas];
-
-    // Status filter or quick filter status override
     if (statusFilter !== "all") list = list.filter(v => v.status === statusFilter);
     if (corretorFilter !== "all") list = list.filter(v => v.corretor_id === corretorFilter);
     if (empreendimentoFilter !== "all") list = list.filter(v => v.empreendimento === empreendimentoFilter);
@@ -227,16 +224,6 @@ export default function AgendaVisitas() {
         v.corretor_nome?.toLowerCase().includes(term)
       );
     }
-
-    // Quick filter: sem_feedback = pending past visitas
-    if (quickFilter === "sem_feedback") {
-      const today = startOfDay(new Date());
-      list = list.filter(v => {
-        const d = new Date(v.data_visita + "T12:00:00");
-        return isBefore(d, today) && (v.status === "marcada" || v.status === "confirmada");
-      });
-    }
-
     list.sort((a, b) => {
       const dateComp = a.data_visita.localeCompare(b.data_visita);
       if (dateComp !== 0) return sortOrder === "asc" ? dateComp : -dateComp;
@@ -245,16 +232,14 @@ export default function AgendaVisitas() {
       return sortOrder === "asc" ? timeA.localeCompare(timeB) : timeB.localeCompare(timeA);
     });
     return list;
-  }, [visitas, statusFilter, corretorFilter, empreendimentoFilter, searchTerm, sortOrder, teamFilter, quickFilter]);
+  }, [visitas, statusFilter, corretorFilter, empreendimentoFilter, searchTerm, sortOrder, teamFilter]);
 
-  // Counts from broad dataset so chips show global totals
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const v of allVisitasByTipo) c[v.status] = (c[v.status] || 0) + 1;
     return c;
   }, [allVisitasByTipo]);
 
-  // Calendar: all visitas with search/status/corretor filters but no tab date range
   const allVisitasFiltered = useMemo(() => {
     let list = [...allVisitas];
     if (searchTerm.trim()) {
@@ -272,7 +257,7 @@ export default function AgendaVisitas() {
     return list;
   }, [allVisitas, searchTerm, statusFilter, corretorFilter, empreendimentoFilter]);
 
-  const hasFilters = statusFilter !== "all" || corretorFilter !== "all" || empreendimentoFilter !== "all" || searchTerm.trim() !== "" || teamFilter !== "all" || quickFilter !== "" || activeTab !== "semana-atual";
+  const hasFilters = statusFilter !== "all" || corretorFilter !== "all" || empreendimentoFilter !== "all" || searchTerm.trim() !== "" || teamFilter !== "all";
 
   const clearAll = useCallback(() => {
     setStatusFilter("all");
@@ -280,17 +265,11 @@ export default function AgendaVisitas() {
     setEmpreendimentoFilter("all");
     setTeamFilter("all");
     setSearchTerm("");
-    setQuickFilter("");
-    setActiveTab("semana-atual"); // Reset tab = reset dates
-  }, []);
-
-  const handleQuickFilterChange = useCallback((key: QuickFilterKey) => {
-    setQuickFilter(key);
+    setActiveTab("semana-atual");
   }, []);
 
   const showCorretor = isAdmin || isGestor;
 
-  // Tab period labels
   const tabDateLabel = useMemo(() => {
     const today = new Date();
     switch (activeTab) {
@@ -307,157 +286,264 @@ export default function AgendaVisitas() {
     }
   }, [activeTab]);
 
+  // Determine which content to render based on activeTab
+  const renderContent = () => {
+    if (activeTab === "calendario") {
+      return <VisitasCalendar visitas={allVisitasFiltered} showTeam={isAdmin} />;
+    }
+    if (activeTab === "performance") {
+      return <VisitasPerformance visitas={allVisitasByTipo} showCorretor={showCorretor} />;
+    }
+    if (activeTab === "alertas") {
+      return (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <h3 className="text-sm font-bold text-destructive">
+                {pendingVisitas.length} visita{pendingVisitas.length > 1 ? "s" : ""} sem atualização de status
+              </h3>
+            </div>
+            {isAdmin && (
+              <Button variant="outline" size="sm" className="text-xs gap-1 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setShowCobranca(true)}>
+                <MessageCircle className="h-3.5 w-3.5" /> Cobrar todos
+              </Button>
+            )}
+          </div>
+          <VisitasList visitas={pendingVisitas} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor={showCorretor} showTeam={isAdmin} mode="past" />
+        </div>
+      );
+    }
+    if (activeTab === "meu-time") {
+      if (isLoading) return <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>;
+      if (teamVisitas.length === 0) {
+        return (
+          <EmptyState
+            icon={<CalendarDays size={22} strokeWidth={1.5} />}
+            title="Nenhuma visita do time"
+            description="As visitas agendadas pelo time aparecerão aqui"
+          />
+        );
+      }
+      return <VisitasList visitas={teamVisitas} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor showTeam={false} mode="all" />;
+    }
+    // Default: semana-atual, semana-anterior, mes
+    if (isLoading) return <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>;
+    const mode = activeTab === "semana-anterior" ? "past" : "all";
+    return <VisitasList visitas={filtered} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor={showCorretor} showTeam={isAdmin} mode={mode as any} />;
+  };
+
   return (
     <div className="bg-[#f0f0f5] dark:bg-[#0f0f12] p-6 -m-6 min-h-full space-y-3">
-      <PageHeader
-        title="Agenda de visitas"
-        icon={<CalendarDays size={18} strokeWidth={1.5} />}
-        actions={
-          <Button size="sm" className="bg-[#4F46E5] hover:bg-[#4338CA] text-white" onClick={() => setShowTypeSelector(true)}>
-            <Plus size={14} className="mr-1" /> Nova Visita
-          </Button>
-        }
-      />
-      <AgendaHeader
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        corretorFilter={corretorFilter}
-        onCorretorChange={setCorretorFilter}
-        corretores={corretores}
-        empreendimentoFilter={empreendimentoFilter}
-        onEmpreendimentoChange={setEmpreendimentoFilter}
-        empreendimentos={empreendimentos}
-        teamFilter={teamFilter}
-        onTeamChange={setTeamFilter}
-        teams={FIXED_TEAMS}
-        agendaTipo={agendaTipo}
-        onTipoChange={setAgendaTipo}
-        leadCount={leadCount}
-        negocioCount={negocioCount}
-        onNewVisita={() => setShowTypeSelector(true)}
-        hasFilters={hasFilters}
-        onClearAll={clearAll}
-        showCorretor={showCorretor}
-        showTeam={isAdmin}
-      />
 
-      {/* ─── BLOCO 2: STATUS CHIPS + QUICK FILTERS ─── */}
-      <VisitasQuickFilters
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        quickFilter={quickFilter}
-        onQuickFilterChange={handleQuickFilterChange}
-        counts={counts}
-        totalCount={allVisitasByTipo.length}
-      />
+      {/* ═══════ LINE 1: Title + Filters + Toggle + Nova Visita ═══════ */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Icon + Title */}
+        <div className="w-7 h-7 rounded-[7px] bg-[#4F46E5] flex items-center justify-center flex-shrink-0">
+          <CalendarDays size={13} strokeWidth={1.5} className="text-white" />
+        </div>
+        <h1 className="text-[16px] font-bold tracking-[-0.3px] text-[#0a0a0a] dark:text-[#fafafa]">Agenda de visitas</h1>
+        <span className="text-[12px] text-[#a1a1aa]">{allVisitasByTipo.length} visitas</span>
 
-      {/* ─── CONTROLLED TABS ─── */}
-      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as AgendaTab)}>
-        <TabsList className="h-9 flex-wrap">
-          <TabsTrigger value="semana-atual" className="gap-1.5 text-xs h-8 px-3">
-            <CalendarDays className="h-3.5 w-3.5" /> Semana Atual
-          </TabsTrigger>
-          <TabsTrigger value="semana-anterior" className="gap-1.5 text-xs h-8 px-3">
-            <History className="h-3.5 w-3.5" /> Semana Anterior
-          </TabsTrigger>
-          <TabsTrigger value="mes" className="gap-1.5 text-xs h-8 px-3">
-            <List className="h-3.5 w-3.5" /> Mês
-          </TabsTrigger>
-          <TabsTrigger value="calendario" className="gap-1.5 text-xs h-8 px-3">
-            <CalendarDays className="h-3.5 w-3.5" /> Calendário
-          </TabsTrigger>
-          {pendingVisitas.length > 0 && (
-            <TabsTrigger value="alertas" className="gap-1.5 text-xs h-8 px-3 text-destructive">
-              <AlertTriangle className="h-3.5 w-3.5" /> Alertas <Badge variant="destructive" className="text-[10px] ml-0.5 px-1.5 py-0">{pendingVisitas.length}</Badge>
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="meu-time" className="gap-1.5 text-xs h-8 px-3">
-            <Users className="h-3.5 w-3.5" /> {(isAdmin || isGestor) ? "Meu Time" : "Time"}
-            {teamVisitas.length > 0 && <Badge variant="secondary" className="text-[10px] ml-0.5 px-1.5 py-0">{teamVisitas.length}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="performance" className="gap-1.5 text-xs h-8 px-3">
-            <BarChart3 className="h-3.5 w-3.5" /> Performance
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex-1" />
 
-        {/* ─── SEMANA ATUAL ─── */}
-        <TabsContent value="semana-atual" className="mt-3 space-y-3">
-          {tabDateLabel && <Badge variant="secondary" className="text-xs">{tabDateLabel}</Badge>}
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
-          ) : (
-            <VisitasList visitas={filtered} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor={showCorretor} showTeam={isAdmin} mode="all" />
-          )}
-        </TabsContent>
+        {/* Filters */}
+        {showCorretor && corretores.length > 1 && (
+          <Select value={corretorFilter} onValueChange={setCorretorFilter}>
+            <SelectTrigger className="h-[32px] w-[150px] text-[12px] bg-[#f7f7fb] dark:bg-white/5 border-[#e8e8f0] dark:border-white/10 rounded-[8px] focus:border-[#4F46E5]">
+              <SelectValue placeholder="Todos corretores" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos corretores</SelectItem>
+              {corretores.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
 
-        {/* ─── SEMANA ANTERIOR ─── */}
-        <TabsContent value="semana-anterior" className="mt-3 space-y-3">
-          {tabDateLabel && <Badge variant="secondary" className="text-xs">{tabDateLabel}</Badge>}
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
-          ) : (
-            <VisitasList visitas={filtered} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor={showCorretor} showTeam={isAdmin} mode="past" />
-          )}
-        </TabsContent>
+        {empreendimentos.length > 1 && (
+          <Select value={empreendimentoFilter} onValueChange={setEmpreendimentoFilter}>
+            <SelectTrigger className="h-[32px] w-[150px] text-[12px] bg-[#f7f7fb] dark:bg-white/5 border-[#e8e8f0] dark:border-white/10 rounded-[8px] focus:border-[#4F46E5]">
+              <SelectValue placeholder="Todos empreend." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos empreend.</SelectItem>
+              {empreendimentos.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
 
-        {/* ─── MÊS ─── */}
-        <TabsContent value="mes" className="mt-3 space-y-3">
-          {tabDateLabel && <Badge variant="secondary" className="text-xs">{tabDateLabel}</Badge>}
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
-          ) : (
-            <VisitasList visitas={filtered} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor={showCorretor} showTeam={isAdmin} mode="all" />
-          )}
-        </TabsContent>
+        {isAdmin && (
+          <Select value={teamFilter} onValueChange={setTeamFilter}>
+            <SelectTrigger className="h-[32px] w-[140px] text-[12px] bg-[#f7f7fb] dark:bg-white/5 border-[#e8e8f0] dark:border-white/10 rounded-[8px] focus:border-[#4F46E5]">
+              <SelectValue placeholder="Todas equipes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas equipes</SelectItem>
+              {FIXED_TEAMS.map(t => <SelectItem key={t.key} value={t.key}>{t.emoji} {t.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
 
-        {/* ─── CALENDÁRIO ─── */}
-        <TabsContent value="calendario" className="mt-3">
-          <VisitasCalendar visitas={allVisitasFiltered} showTeam={isAdmin} />
-        </TabsContent>
+        {/* Search */}
+        <div className="relative">
+          <Search size={12} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#a1a1aa]" />
+          <input
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="text-[12px] pl-7 pr-3 h-[32px] w-[160px] bg-[#f7f7fb] dark:bg-white/5 border border-[#e8e8f0] dark:border-white/10 rounded-[8px] focus:border-[#4F46E5] focus:w-[200px] transition-all outline-none text-[#0a0a0a] dark:text-[#fafafa] placeholder:text-[#a1a1aa]"
+          />
+        </div>
 
-        {/* ─── MEU TIME ─── */}
-        <TabsContent value="meu-time" className="mt-3 space-y-3">
-          {tabDateLabel && <Badge variant="secondary" className="text-xs">{tabDateLabel}</Badge>}
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
-          ) : teamVisitas.length === 0 ? (
-            <EmptyState
-              icon={<CalendarDays size={22} strokeWidth={1.5} />}
-              title="Nenhuma visita do time"
-              description="As visitas agendadas pelo time aparecerão aqui"
-            />
-          ) : (
-            <VisitasList visitas={teamVisitas} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor showTeam={false} mode="all" />
-          )}
-        </TabsContent>
+        {/* Visitas / Negócios toggle */}
+        <div className="flex items-center gap-0.5 bg-[#f7f7fb] dark:bg-white/5 border border-[#e8e8f0] dark:border-white/10 rounded-[8px] p-0.5">
+          <button
+            onClick={() => setAgendaTipo("lead")}
+            className={cn(
+              "text-[12px] font-medium px-3 py-1 rounded-[6px] transition-all",
+              agendaTipo === "lead"
+                ? "bg-[#4F46E5] text-white"
+                : "text-[#71717a] hover:text-[#0a0a0a] dark:hover:text-white"
+            )}
+          >
+            Visitas {leadCount}
+          </button>
+          <button
+            onClick={() => setAgendaTipo("negocio")}
+            className={cn(
+              "text-[12px] font-medium px-3 py-1 rounded-[6px] transition-all",
+              agendaTipo === "negocio"
+                ? "bg-[#4F46E5] text-white"
+                : "text-[#71717a] hover:text-[#0a0a0a] dark:hover:text-white"
+            )}
+          >
+            Negócios {negocioCount}
+          </button>
+        </div>
 
-        {/* ─── PERFORMANCE ─── */}
-        <TabsContent value="performance" className="mt-3">
-          <VisitasPerformance visitas={allVisitasByTipo} showCorretor={showCorretor} />
-        </TabsContent>
+        {/* Nova Visita — single instance */}
+        <button
+          onClick={() => setShowTypeSelector(true)}
+          className="h-[32px] px-4 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-[12px] font-semibold rounded-[8px] flex items-center gap-1.5 transition-colors"
+        >
+          <Plus size={13} strokeWidth={2} /> Nova Visita
+        </button>
 
-        {/* ─── ALERTAS ─── */}
-        <TabsContent value="alertas" className="mt-3 space-y-4">
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-                <h3 className="text-sm font-bold text-destructive">
-                  {pendingVisitas.length} visita{pendingVisitas.length > 1 ? "s" : ""} sem atualização de status
-                </h3>
-              </div>
-              {isAdmin && (
-                <Button variant="outline" size="sm" className="text-xs gap-1 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setShowCobranca(true)}>
-                  <MessageCircle className="h-3.5 w-3.5" /> Cobrar todos
-                </Button>
+        {hasFilters && (
+          <button onClick={clearAll} className="h-[32px] px-2 text-[11px] text-[#ef4444] hover:bg-[#fef2f2] rounded-[8px] flex items-center gap-1 transition-colors">
+            <X size={12} /> Limpar
+          </button>
+        )}
+      </div>
+
+      {/* ═══════ LINE 2: Status pills (left) + Period tabs (right) ═══════ */}
+      <div className="flex items-center justify-between gap-3">
+        {/* Status pills */}
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "px-3 py-1 rounded-[7px] text-[12px] font-medium whitespace-nowrap transition-all border",
+              statusFilter === "all"
+                ? "bg-[#4F46E5] text-white border-[#4F46E5]"
+                : "text-[#71717a] bg-[#f7f7fb] dark:bg-white/5 border-[#e8e8f0] dark:border-white/10 hover:text-[#0a0a0a]"
+            )}
+          >
+            Todas {allVisitasByTipo.length}
+          </button>
+          {STATUSES.map(s => {
+            const count = counts[s] || 0;
+            const isActive = statusFilter === s;
+            return (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(statusFilter === s ? "all" : s)}
+                className={cn(
+                  "px-3 py-1 rounded-[7px] text-[12px] font-medium whitespace-nowrap transition-all border",
+                  isActive
+                    ? STATUS_PILL_STYLES[s]
+                    : count === 0
+                      ? "text-[#a1a1aa]/40 bg-[#f7f7fb]/50 dark:bg-white/3 border-transparent cursor-default"
+                      : "text-[#71717a] bg-[#f7f7fb] dark:bg-white/5 border-[#e8e8f0] dark:border-white/10 hover:text-[#0a0a0a]"
+                )}
+              >
+                {STATUS_LABELS[s]} {count}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Period tabs */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {PERIOD_TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={cn(
+                "px-3 py-1 rounded-[7px] text-[12px] font-medium whitespace-nowrap transition-all",
+                activeTab === t.key
+                  ? "bg-[#4F46E5] text-white"
+                  : "text-[#71717a] hover:bg-[#f0f0f5] dark:hover:bg-white/5"
               )}
-            </div>
-            <VisitasList visitas={pendingVisitas} onUpdateStatus={handleUpdateStatus} onEdit={handleEdit} onDelete={deleteVisita} showCorretor={showCorretor} showTeam={isAdmin} mode="past" />
-          </div>
-        </TabsContent>
-      </Tabs>
+            >
+              {t.label}
+            </button>
+          ))}
 
-      {/* ─── DIALOGS ─── */}
+          {pendingVisitas.length > 0 && (
+            <button
+              onClick={() => setActiveTab("alertas")}
+              className={cn(
+                "px-3 py-1 rounded-[7px] text-[12px] font-medium whitespace-nowrap transition-all",
+                activeTab === "alertas"
+                  ? "bg-[#fef2f2] text-[#ef4444] border border-[#fecaca]"
+                  : "text-[#ef4444] hover:bg-[#fef2f2]"
+              )}
+            >
+              Alertas <span className="bg-[#ef4444] text-white text-[10px] rounded-full px-1.5 ml-0.5 inline-flex items-center justify-center">{pendingVisitas.length}</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setActiveTab("meu-time")}
+            className={cn(
+              "px-3 py-1 rounded-[7px] text-[12px] font-medium whitespace-nowrap transition-all",
+              activeTab === "meu-time"
+                ? "bg-[#4F46E5] text-white"
+                : "text-[#71717a] hover:bg-[#f0f0f5] dark:hover:bg-white/5"
+            )}
+          >
+            {(isAdmin || isGestor) ? "Meu Time" : "Time"}
+            {teamVisitas.length > 0 && <span className="text-[#4F46E5] font-semibold ml-1">{teamVisitas.length}</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("performance")}
+            className={cn(
+              "px-3 py-1 rounded-[7px] text-[12px] font-medium whitespace-nowrap transition-all",
+              activeTab === "performance"
+                ? "bg-[#4F46E5] text-white"
+                : "text-[#71717a] hover:bg-[#f0f0f5] dark:hover:bg-white/5"
+            )}
+          >
+            Performance
+          </button>
+        </div>
+      </div>
+
+      {/* Date label */}
+      {tabDateLabel && (
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-[#a1a1aa] font-medium">{tabDateLabel}</span>
+        </div>
+      )}
+
+      {/* ═══════ CONTENT ═══════ */}
+      <div className="mt-1">
+        {renderContent()}
+      </div>
+
+      {/* ═══════ DIALOGS ═══════ */}
       <VisitaTypeSelector
         open={showTypeSelector}
         onClose={() => setShowTypeSelector(false)}
