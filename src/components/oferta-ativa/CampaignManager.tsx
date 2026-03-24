@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Settings, Play, Pause, StopCircle, Loader2, Trash2, FolderOpen, Tag, ChevronDown, ChevronRight } from "lucide-react";
+import { Settings, Play, Pause, StopCircle, Loader2, Trash2, FolderOpen, Tag, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
