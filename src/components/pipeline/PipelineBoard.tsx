@@ -672,8 +672,8 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
         }
       `}</style>
 
-      {/* Mini-map nav pills */}
-      <div className="shrink-0 flex items-center gap-1.5 mb-2 px-0.5 overflow-x-auto scrollbar-none" style={{ paddingTop: 12 }}>
+      {/* Mini-map nav pills — Stage tabs line 3 */}
+      <div className="shrink-0 flex items-center gap-1 mb-2 px-0.5 overflow-x-auto scrollbar-none pb-0.5" style={{ paddingTop: 10 }}>
         {visibleStages.map((stage, idx) => {
           const stageLeads = leadsByStage.get(stage.id) || [];
           const isActive = idx === activeIndex;
@@ -682,22 +682,21 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
             <button
               key={stage.id}
               onClick={() => scrollToIndex(idx)}
+              className="transition-all"
               style={{
                 display: "flex", alignItems: "center", gap: 6,
-                padding: "6px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600,
+                padding: "5px 10px", borderRadius: 7, fontSize: 11, fontWeight: 500,
                 whiteSpace: "nowrap",
-                background: isActive ? "#fff" : "transparent",
-                border: isActive ? "1px solid #E2E8F0" : "1px solid transparent",
-                boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                color: isActive ? "#1E293B" : "#94A3B8",
+                background: isActive ? "#fff" : "#f7f7fb",
+                border: isActive ? "1px solid #4F46E5" : "1px solid #e8e8f0",
+                color: isActive ? "#0a0a0a" : "#52525b",
                 cursor: "pointer",
-                transition: "all 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
             >
-              <span style={{ fontSize: 14 }}>{emoji}</span>
+              {emoji && <span style={{ fontSize: 12 }}>{emoji}</span>}
               <span>{stage.nome}</span>
-              <span style={{ fontWeight: 800, color: isActive ? "#1E293B" : "#94A3B8" }}>
+              <span style={{ fontWeight: 700, color: "#4F46E5", marginLeft: 2 }}>
                 {stageLeads.length}
               </span>
             </button>
