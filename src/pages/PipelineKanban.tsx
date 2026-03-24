@@ -163,7 +163,7 @@ export default function PipelineKanban() {
 
   const filteredLeads = useMemo(() => {
     if (clientStatusFilter !== "todos") {
-      return preFilteredLeads.filter(l => classifyLeadStatus(l, kanbanTarefasMap[l.id] || null) === clientStatusFilter);
+      return preFilteredLeads.filter(l => getLeadStatusFilter(l, kanbanTarefasMap[l.id] || null) === clientStatusFilter);
     }
     return preFilteredLeads;
   }, [preFilteredLeads, clientStatusFilter, kanbanTarefasMap]);
@@ -191,8 +191,8 @@ export default function PipelineKanban() {
   const clientStatusCounts = useMemo(() => {
     const counts = { em_dia: 0, desatualizado: 0, tarefa_atrasada: 0 };
     for (const l of preFilteredLeads) {
-      const s = classifyLeadStatus(l, kanbanTarefasMap[l.id] || null);
-      if (s !== "todos") counts[s]++;
+      const s = getLeadStatusFilter(l, kanbanTarefasMap[l.id] || null);
+      counts[s]++;
     }
     return counts;
   }, [preFilteredLeads, kanbanTarefasMap]);
