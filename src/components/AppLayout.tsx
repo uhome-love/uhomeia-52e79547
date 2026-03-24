@@ -166,12 +166,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 "h-14 flex items-center justify-between sticky top-0 z-50 px-4",
                 theme === "dark"
                   ? "border-b border-white/[0.06]"
-                  : "bg-[#f0f0f5] border-b border-[#e8e8f0]"
+                  : "bg-white border-b border-[#e8e8f0]"
               )}
               style={theme === "dark" ? { background: "hsl(var(--sidebar-background))" } : undefined}
             >
               <div className="flex items-center gap-3">
-                <SidebarTrigger className="text-gray-400 hover:text-white" />
+                <SidebarTrigger className={theme === "dark" ? "text-gray-400 hover:text-white" : "text-[#52525b] hover:text-[#0a0a0a]"} />
                 <div className="hidden sm:flex items-center">
                   <UhomeLogo size="md" />
                 </div>
@@ -188,45 +188,47 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 variant="ghost"
                 size="sm"
                 className="hidden sm:flex items-center gap-2 h-8 px-2.5 rounded-lg"
-                style={{
-                  color: "#9CA3AF",
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
+                style={theme === "dark"
+                  ? { color: "#9CA3AF", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }
+                  : { color: "#52525b", background: "#f7f7fb", border: "1px solid #e8e8f0" }
+                }
                 onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
               >
-                <Search className="h-3.5 w-3.5" style={{ color: "#9CA3AF" }} />
-                <span className="text-[11px]" style={{ color: "#6B7280" }}>Buscar...</span>
-                <kbd className="pointer-events-none ml-1 inline-flex h-5 items-center gap-0.5 rounded px-1 font-mono text-[10px] font-medium" style={{ color: "#6B7280", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <Search className="h-3.5 w-3.5" style={{ color: theme === "dark" ? "#9CA3AF" : "#a1a1aa" }} />
+                <span className="text-[11px]" style={{ color: theme === "dark" ? "#6B7280" : "#a1a1aa" }}>Buscar...</span>
+                <kbd className="pointer-events-none ml-1 inline-flex h-5 items-center gap-0.5 rounded px-1 font-mono text-[10px] font-medium" style={theme === "dark"
+                  ? { color: "#6B7280", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }
+                  : { color: "#a1a1aa", background: "#f0f0f5", border: "1px solid #e8e8f0" }
+                }>
                   ⌘K
                 </kbd>
               </Button>
               <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2.5 h-9 px-3 hover:bg-white/5 rounded-xl">
+                   <Button variant="ghost" className={cn("flex items-center gap-2.5 h-9 px-3 rounded-xl", theme === "dark" ? "hover:bg-white/5" : "hover:bg-[#f0f0f5]")}>
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
                         alt={nome || "Avatar"}
                         className="rounded-full object-cover shrink-0"
-                        style={{ width: 36, height: 36, border: "2px solid #7C3AED" }}
+                        style={{ width: 36, height: 36, border: "2px solid #4F46E5" }}
                       />
                     ) : (
                       <div
                         className="flex items-center justify-center rounded-full font-bold text-white text-[11px] shrink-0"
-                        style={{ width: 36, height: 36, background: "#7C3AED", border: "2px solid #7C3AED" }}
+                        style={{ width: 36, height: 36, background: "#4F46E5", border: "2px solid #4F46E5" }}
                       >
                         {nome ? nome.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : <User className="h-4 w-4" />}
                       </div>
                     )}
                     <div className="text-left hidden sm:block">
-                      <p className="leading-tight" style={{ color: "#FFFFFF", fontSize: 14, fontWeight: 600 }}>
+                      <p className="leading-tight" style={{ color: theme === "dark" ? "#FFFFFF" : "#0a0a0a", fontSize: 14, fontWeight: 600 }}>
                         {nome || user?.email?.split("@")[0]}
                       </p>
-                      <p className="leading-tight" style={{ color: "#9CA3AF", fontSize: 12 }}>{cargoLabel}</p>
+                      <p className="leading-tight" style={{ color: theme === "dark" ? "#9CA3AF" : "#71717a", fontSize: 12 }}>{cargoLabel}</p>
                     </div>
-                    <ChevronDown className="h-3.5 w-3.5 hidden sm:block" style={{ color: "#6B7280" }} />
+                    <ChevronDown className="h-3.5 w-3.5 hidden sm:block" style={{ color: theme === "dark" ? "#6B7280" : "#a1a1aa" }} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
