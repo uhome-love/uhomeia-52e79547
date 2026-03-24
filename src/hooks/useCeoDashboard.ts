@@ -178,7 +178,9 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
 
       const empMap = new Map<string, { leads: number; avancou: number; parados: number }>();
       const now = new Date();
-      for (const l of (leads || [])) {
+      // Filter: only marketing leads (not Oferta Ativa) for empreendimento chart
+      const mktLeads = (leads || []).filter(l => l.origem !== "Oferta Ativa");
+      for (const l of mktLeads) {
         const emp = l.empreendimento || "Sem empreendimento";
         const curr = empMap.get(emp) || { leads: 0, avancou: 0, parados: 0 };
         curr.leads++;
@@ -214,17 +216,17 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       if (bestCamp && bestCamp[1].leads >= 3) alertas.push({ tipo: "green", mensagem: `Campanha ${bestCamp[0]} com melhor taxa de conversão`, link: "/pipeline-leads" });
 
       const origMap = new Map<string, number>();
-      for (const l of (leads || [])) {
+      for (const l of mktLeads) {
         const orig = l.origem || "Desconhecido";
         origMap.set(orig, (origMap.get(orig) || 0) + 1);
       }
       const origens = Array.from(origMap.entries()).map(([origem, count]) => ({ origem, count })).sort((a, b) => b.count - a.count);
       const leadsPorEmpreendimento = Array.from(empMap.entries()).map(([emp, d]) => ({ emp, count: d.leads })).sort((a, b) => b.count - a.count).slice(0, 10);
 
-      // Leads por corretor
+      // Leads por corretor (only marketing, not OA)
       const corrLeadMap = new Map<string, number>();
       const corrIdSet = new Set<string>();
-      for (const l of (leads || [])) {
+      for (const l of mktLeads) {
         if (l.corretor_id) {
           corrLeadMap.set(l.corretor_id, (corrLeadMap.get(l.corretor_id) || 0) + 1);
           corrIdSet.add(l.corretor_id);
