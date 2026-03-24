@@ -820,57 +820,65 @@ export default function MeusNegocios() {
         background: "hsl(222 47% 11%)",
       }}
     >
-      {/* Header */}
-      <div className="shrink-0 space-y-3 pb-3 px-4 pt-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 mr-auto">
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-[#4F46E5]">
-              <Briefcase className="h-4 w-4 text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-white">Pipeline Negócios</h1>
-            <span className="text-[13px] text-white/50">{filteredNegocios.length} negócios · {formatVGV(totalVGV)}</span>
-            <Button size="sm" className="gap-1 h-7 text-xs rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white border-none" onClick={() => setAddNegocioOpen(true)}>
-              <Plus className="h-3.5 w-3.5" /> Novo
-            </Button>
+      {/* Header — Line 1 */}
+      <div className="shrink-0 px-4 pt-4 pb-1">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-[7px] bg-[#4F46E5] flex items-center justify-center flex-shrink-0">
+            <Briefcase size={13} strokeWidth={1.5} className="text-white" />
           </div>
+          <h1 className="text-[16px] font-bold tracking-[-0.3px] text-white">Pipeline negócios</h1>
+          <span className="text-[12px] text-[#52525b]">{filteredNegocios.length} negócios</span>
+          {totalVGV > 0 && (
+            <span className="text-[12px] font-bold text-[#10b981]">{formatVGV(totalVGV)}</span>
+          )}
 
-          <div className="relative flex-1 min-w-[140px] sm:min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-            <Input
+          <div className="flex-1" />
+
+          {/* Search */}
+          <div className="relative hidden sm:block">
+            <Search size={12} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#52525b]" />
+            <input
               placeholder="Buscar negócio..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-white placeholder:text-white/30 border-white/10 rounded-lg"
-              style={{ background: "rgba(255,255,255,0.06)" }}
+              className="text-[12px] pl-7 pr-3 h-[32px] w-[200px] bg-white/[0.06] border border-white/[0.1] rounded-[8px] text-white placeholder:text-[#52525b] focus:border-[#4F46E5] outline-none"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
-                <X className="h-3.5 w-3.5 text-white/40 hover:text-white" />
+                <X className="h-3.5 w-3.5 text-[#52525b] hover:text-white" />
               </button>
             )}
           </div>
 
-          <Button
-            size="sm"
+          {/* Filters */}
+          <button
             onClick={() => setShowFilters(!showFilters)}
-            className="gap-1.5 h-9 rounded-lg text-white border-none bg-[#4F46E5] hover:bg-[#4338CA]"
+            className="h-[32px] px-3 text-[12px] text-[#a1a1aa] border border-white/[0.1] rounded-[8px] hover:border-white/[0.2] flex items-center gap-1.5"
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <SlidersHorizontal size={12} strokeWidth={1.5} />
             <span className="hidden sm:inline">Filtros</span>
-          </Button>
+          </button>
 
-          <Button
-            size="icon"
-            className="h-9 w-9 shrink-0 rounded-lg text-white border-none bg-[#4F46E5] hover:bg-[#4338CA]"
+          {/* Refresh */}
+          <button
             onClick={handleRefresh}
             disabled={refreshing}
+            className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] border border-white/[0.1] text-[#a1a1aa] hover:border-white/[0.2]"
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          </Button>
+            <RefreshCw size={13} strokeWidth={1.5} className={refreshing ? "animate-spin" : ""} />
+          </button>
+
+          {/* New */}
+          <button
+            onClick={() => setAddNegocioOpen(true)}
+            className="h-[32px] px-4 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-[12px] font-semibold rounded-[8px] flex items-center gap-1.5"
+          >
+            <Plus size={13} strokeWidth={2} /> Novo
+          </button>
         </div>
 
         {showFilters && (
-          <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl border border-white/10 animate-fade-in" style={{ background: "rgba(255,255,255,0.04)" }}>
+          <div className="flex items-center gap-2 flex-wrap p-3 mt-2 rounded-xl border border-white/10 animate-fade-in" style={{ background: "rgba(255,255,255,0.04)" }}>
             <Select value={filterCorretor} onValueChange={setFilterCorretor}>
               <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs border-white/10 text-white/70" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <SelectValue placeholder="Corretor" />
@@ -885,18 +893,12 @@ export default function MeusNegocios() {
           </div>
         )}
 
-        {/* Summary */}
-        <div className="flex items-center gap-3 flex-wrap px-1">
-          <div className="flex items-center gap-1.5">
-            <LayoutGrid className="h-3.5 w-3.5 text-blue-400" />
-            <span className="text-xs sm:text-sm font-bold text-white">
-              {filteredNegocios.length} negócios
-            </span>
-          </div>
+        {/* Line 2 — summary */}
+        <div className="flex items-center gap-3 mt-2 pb-2">
+          <span className="text-[12px] text-[#52525b]">{filteredNegocios.length} negócios</span>
+          <span className="text-[12px] text-[#52525b]">·</span>
           {totalVGV > 0 && (
-            <span className="text-sm font-semibold" style={{ color: "hsl(45 93% 58%)" }}>
-              💰 {formatVGV(totalVGV)}
-            </span>
+            <span className="text-[12px] text-[#10b981] font-semibold">{formatVGV(totalVGV)} VGV total</span>
           )}
         </div>
       </div>
