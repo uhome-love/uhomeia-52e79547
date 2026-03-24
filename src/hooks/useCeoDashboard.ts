@@ -232,15 +232,16 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
           corrIdSet.add(l.corretor_id);
         }
       }
-      const corrIds = [...corrIdSet];
+      // Fetch ALL corretores (team members) to show even those with 0 leads
+      const { data: allMembers } = await supabase.from("team_members").select("user_id");
+      const allMemberIds = [...new Set((allMembers || []).map(m => m.user_id).filter(Boolean) as string[])];
       let leadsPorCorretor: { nome: string; count: number }[] = [];
-      if (corrIds.length > 0) {
-        const { data: corrProfs } = await supabase.from("profiles").select("user_id, nome").in("user_id", corrIds);
+      if (allMemberIds.length > 0) {
+        const { data: corrProfs } = await supabase.from("profiles").select("user_id, nome").in("user_id", allMemberIds);
         const nameMap = new Map((corrProfs || []).map(p => [p.user_id, p.nome || "Corretor"] as [string, string]));
-        leadsPorCorretor = Array.from(corrLeadMap.entries())
-          .map(([id, count]) => ({ nome: (nameMap.get(id) || "Corretor") as string, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
+        leadsPorCorretor = allMemberIds
+          .map(id => ({ nome: (nameMap.get(id) || "Corretor") as string, count: corrLeadMap.get(id) || 0 }))
+          .sort((a, b) => b.count - a.count);
       }
 
       return { pipelineStages: stageData, campanhas, alertas, origens, leadsPorEmpreendimento, leadsPorCorretor };
