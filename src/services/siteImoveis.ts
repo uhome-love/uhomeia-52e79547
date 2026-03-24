@@ -201,7 +201,8 @@ function buildGeoBoundsFilter(bounds?: BuscaFilters["bounds"]): string | null {
   if (values.some((value) => !Number.isFinite(value))) return null;
   if (lat_min >= lat_max || lng_min >= lng_max) return null;
 
-  // Typesense geopoint polygon filter: 4 corners of the bounding rectangle (SW, NW, NE, SE)
+  // Uses geopoint polygon filter when `location` field is available in the schema.
+  // Falls back gracefully if the field doesn't exist (Typesense returns error, caught by caller).
   return `location:(${lat_min}, ${lng_min}, ${lat_max}, ${lng_min}, ${lat_max}, ${lng_max}, ${lat_min}, ${lng_max})`;
 }
 
