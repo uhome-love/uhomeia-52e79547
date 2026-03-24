@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarDays, ChevronDown, ChevronRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { type Visita, type VisitaStatus } from "@/hooks/useVisitas";
 import VisitaRow from "./VisitaRow";
@@ -61,14 +60,7 @@ function buildGroups(visitas: Visita[]): DateGroup[] {
 }
 
 function DateGroupCard({
-  g,
-  isOpen,
-  onToggle,
-  showCorretor,
-  showTeam,
-  onUpdateStatus,
-  onEdit,
-  onDelete,
+  g, isOpen, onToggle, showCorretor, showTeam, onUpdateStatus, onEdit, onDelete,
 }: {
   g: DateGroup;
   isOpen: boolean;
@@ -79,75 +71,50 @@ function DateGroupCard({
   onEdit?: (visita: Visita) => void;
   onDelete?: (id: string) => void;
 }) {
-  const taxa = g.total > 0 ? Math.round((g.realizadas / g.total) * 100) : 0;
-
   return (
     <div className={cn(
-      "rounded-lg border overflow-hidden bg-card",
-      g.isToday ? "border-primary/30" : "border-border/40"
+      "rounded-[12px] border overflow-hidden bg-white dark:bg-[#18181b]",
+      g.isToday ? "border-[#4F46E5]/30" : "border-[#e8e8f0] dark:border-white/10"
     )}>
-      {/* 10️⃣ Day header — clean */}
+      {/* Day header */}
       <button
         onClick={onToggle}
         className={cn(
           "w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors",
           g.isToday
-            ? "bg-primary/8 hover:bg-primary/12"
+            ? "bg-[#4F46E5]/5 hover:bg-[#4F46E5]/8"
             : g.isPast
-              ? "bg-muted/20 hover:bg-muted/30"
-              : "hover:bg-accent/20"
+              ? "bg-[#f7f7fb] dark:bg-white/3 hover:bg-[#f0f0f5]"
+              : "hover:bg-[#f7f7fb] dark:hover:bg-white/3"
         )}
       >
         {isOpen
-          ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#a1a1aa]" />
+          : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#a1a1aa]" />
         }
 
-        <div className="flex-1 min-w-0 flex items-baseline gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className={cn(
-            "text-xs font-black uppercase tracking-wide",
-            g.isToday ? "text-primary" : g.isPast ? "text-muted-foreground/70" : "text-foreground"
+            "text-[13px] font-bold tracking-[-0.2px]",
+            g.isToday ? "text-[#0a0a0a] dark:text-white" : g.isPast ? "text-[#71717a]" : "text-[#0a0a0a] dark:text-white"
           )}>
             {g.dayOfWeek}
           </span>
-          <span className="text-[11px] text-muted-foreground/60">•</span>
-          <span className={cn(
-            "text-[11px] font-medium",
-            g.isToday ? "text-primary/70" : "text-muted-foreground/60"
-          )}>
-            {g.label}
-          </span>
-        </div>
-
-        {g.isToday && (
-          <Badge className="bg-primary text-primary-foreground text-[9px] font-black px-2 py-0 border-0 shrink-0">
-            HOJE
-          </Badge>
-        )}
-
-        <div className="flex items-center gap-2 shrink-0 text-[11px]">
-          <span className="text-muted-foreground font-semibold tabular-nums">
-            {g.total} visita{g.total !== 1 ? "s" : ""}
-          </span>
-          {g.realizadas > 0 && (
-            <span className="text-green-600 font-bold tabular-nums">
-              {g.realizadas} ✅
+          <span className="text-[12px] text-[#a1a1aa]">· {g.label}</span>
+          {g.isToday && (
+            <span className="text-[10px] font-bold bg-[#4F46E5] text-white px-2 py-0.5 rounded-full">
+              HOJE
             </span>
           )}
-          {g.isPast && g.total > 0 && (
-            <Badge variant="outline" className={cn(
-              "text-[9px] px-1.5 py-0 font-black tabular-nums",
-              taxa >= 80 ? "border-green-300 text-green-700"
-                : taxa >= 50 ? "border-amber-300 text-amber-700"
-                  : "border-red-300 text-red-700"
-            )}>
-              {taxa}%
-            </Badge>
-          )}
         </div>
+
+        <span className="text-[11px] text-[#a1a1aa] shrink-0">
+          {g.total} visita{g.total !== 1 ? "s" : ""}
+          {g.realizadas > 0 && <span className="text-[#10b981] font-semibold ml-1.5">· {g.realizadas} realizada{g.realizadas !== 1 ? "s" : ""}</span>}
+        </span>
       </button>
 
-      {/* 11️⃣ Visitas — with clear separation */}
+      {/* Visitas */}
       {isOpen && (
         <div>
           {g.visitas.map(v => {
@@ -183,7 +150,6 @@ export default function VisitasList({ visitas, onUpdateStatus, onEdit, onDelete,
     return groups.filter(g => !g.isPast).sort((a, b) => a.dateStr.localeCompare(b.dateStr));
   }, [visitas, mode]);
 
-  // Past days start collapsed by default
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     const initial = new Set<string>();
     const groups = buildGroups(visitas);
