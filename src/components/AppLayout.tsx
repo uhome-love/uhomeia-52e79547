@@ -189,15 +189,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 size="sm"
                 className="hidden sm:flex items-center gap-2 h-8 px-2.5 rounded-lg"
                 style={theme === "dark"
-                  ? { color: "#9CA3AF", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }
+                  ? { color: "#52525b", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }
                   : { color: "#52525b", background: "#f7f7fb", border: "1px solid #e8e8f0" }
                 }
                 onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
               >
-                <Search className="h-3.5 w-3.5" style={{ color: theme === "dark" ? "#9CA3AF" : "#a1a1aa" }} />
-                <span className="text-[11px]" style={{ color: theme === "dark" ? "#6B7280" : "#a1a1aa" }}>Buscar...</span>
+                <Search className="h-3.5 w-3.5" style={{ color: theme === "dark" ? "#71717a" : "#a1a1aa" }} />
+                <span className="text-[11px]" style={{ color: theme === "dark" ? "#52525b" : "#a1a1aa" }}>Buscar...</span>
                 <kbd className="pointer-events-none ml-1 inline-flex h-5 items-center gap-0.5 rounded px-1 font-mono text-[10px] font-medium" style={theme === "dark"
-                  ? { color: "#6B7280", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }
+                  ? { color: "#52525b", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }
                   : { color: "#a1a1aa", background: "#f0f0f5", border: "1px solid #e8e8f0" }
                 }>
                   ⌘K
