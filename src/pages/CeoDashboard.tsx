@@ -133,7 +133,7 @@ export default function CeoDashboard() {
     loading, lastUpdate, profile, roletaPendentes, kpis, prevKpis,
     pipelineStages, campanhas, alertas, negocioFases, vgvEmRisco, topCorretoresVgv,
     teams, corretoresRank, origens, leadsPorEmpreendimento, visitasPorEmp,
-    totalLeadsPeriodo, presentesHoje, metasDiaTotal,
+    totalLeadsPeriodo, leadsReaproveitadosOA, presentesHoje, metasDiaTotal,
     reload, reloadRoleta,
   } = useCeoDashboard(period as DashPeriod, { start: range.start, end: range.end });
 
@@ -397,9 +397,12 @@ export default function CeoDashboard() {
       {/* ═══════════════════════════════════════════════════════════ */}
       <section>
         <SectionLabel icon={Target}>Roleta de Leads</SectionLabel>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <MiniKpi label="Leads Gerados" value={totalLeadsPeriodo} variant="highlight"
-            onClick={() => setKpiDetail({ type: "total_leads", label: "Total de Leads" })} />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+          <MiniKpi label="Leads Gerados (Mkt)" value={totalLeadsPeriodo} variant="highlight"
+            sub="Meta, TikTok, LP, ImovelWeb..."
+            onClick={() => setKpiDetail({ type: "total_leads", label: "Leads Gerados" })} />
+          <MiniKpi label="Reaproveitados (OA)" value={leadsReaproveitadosOA} variant="warning"
+            sub="Leads da Oferta Ativa" />
           <MiniKpi label="Enviados p/ Roleta" value={leadsDistribuidos > 0 ? leadsDistribuidos : 0}
             sub={filaCeoCount > 0 ? `${filaCeoCount} na fila` : "Fila vazia"} />
           <MiniKpi label="Presentes Hoje" value={presentesHoje} sub={`${presentesHoje} corretores ativos`} />
