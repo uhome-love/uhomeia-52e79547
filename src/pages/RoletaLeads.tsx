@@ -172,9 +172,9 @@ function CeoView() {
                 // Already sorted by leads_recebidos ascending from the hook
                 const segFila = fila.filter(f => f.segmento_id === seg.id);
                 return (
-                  <Card key={seg.id}>
+                  <Card key={seg.id} className="border-l-[3px] border-l-[#4F46E5]">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-semibold">{seg.nome}</CardTitle>
+                      <CardTitle className="text-sm font-bold text-[#4F46E5]">{seg.nome}</CardTitle>
                       {seg.campanhas.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {seg.campanhas.map(c => (
