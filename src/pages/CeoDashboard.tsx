@@ -553,7 +553,7 @@ export default function CeoDashboard() {
         <SectionLabel icon={DollarSign}>Gestão de Negócios</SectionLabel>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           <MiniKpi label="Total de Negócios" value={totalNeg} variant="highlight" />
-          <MiniKpi label="VGV em Contrato" value={formatBRLCompact(negTotalVgv)} sub={`${totalNeg} negócios ativos`} />
+          <MiniKpi label="VGV em Contrato Gerado" value={formatBRLCompact(vgvContrato)} sub={`${countContrato} negócio${countContrato !== 1 ? "s" : ""} em contrato`} />
           <MiniKpi label="VGV Assinado" value={formatBRLCompact(kpis.vgvAssinado)} variant="success"
             sub={ceoMetas.meta_vgv_assinado > 0 ? `${Math.round((kpis.vgvAssinado / ceoMetas.meta_vgv_assinado) * 100)}% da meta` : undefined}
             onClick={() => setKpiDetail({ type: "vgv_assinado", label: "VGV Assinado" })} />
