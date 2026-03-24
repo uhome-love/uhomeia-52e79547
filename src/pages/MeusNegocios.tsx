@@ -301,13 +301,13 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             <button onClick={() => { setTaskText(nextTask?.titulo || ""); setEditingTask(true); }} className="w-full text-left group/task">
               {nextTask ? (
                 <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-[#52525b] shrink-0" />
-                  <span className="text-[11px] text-[#52525b] italic truncate group-hover/task:text-[#a1a1aa] transition-colors">{nextTask.titulo}</span>
+                  <Clock className="h-3.5 w-3.5 text-[#a1a1aa] dark:text-[#52525b] shrink-0" />
+                  <span className="text-[11px] text-[#a1a1aa] dark:text-[#52525b] italic truncate group-hover/task:text-[#71717a] dark:group-hover/task:text-[#a1a1aa] transition-colors">{nextTask.titulo}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5">
-                  <Plus className="h-3.5 w-3.5 text-white/25 shrink-0" />
-                  <span className="text-[11px] text-[#52525b] italic group-hover/task:text-[#a1a1aa] transition-colors">Definir próximo passo...</span>
+                  <Plus className="h-3.5 w-3.5 text-[#a1a1aa] dark:text-white/25 shrink-0" />
+                  <span className="text-[11px] text-[#a1a1aa] dark:text-[#52525b] italic group-hover/task:text-[#71717a] dark:group-hover/task:text-[#a1a1aa] transition-colors">Definir próximo passo...</span>
                 </div>
               )}
             </button>
