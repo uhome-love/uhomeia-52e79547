@@ -153,6 +153,7 @@ const NAV_BY_ROLE: Record<UserRole, NavGroup[]> = {
       title: "Principal",
       items: [
         { label: "Minha rotina",       path: "/corretor",          icon: <LayoutGrid   size={15} strokeWidth={1.5} /> },
+        { label: "Central de tarefas", path: "/minhas-tarefas",    icon: <ListTodo     size={15} strokeWidth={1.5} /> },
         { label: "Aceite de leads",    path: "/aceite",            icon: <UserCheck    size={15} strokeWidth={1.5} /> },
       ],
     },
@@ -185,7 +186,6 @@ const NAV_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       title: "Ferramentas",
       items: [
-        { label: "Central de tarefas", path: "/minhas-tarefas",    icon: <ListTodo     size={15} strokeWidth={1.5} /> },
         { label: "Anúncios no ar",     path: "/anuncios",          icon: <Megaphone    size={15} strokeWidth={1.5} /> },
         { label: "HOMI Assistente",    path: "/homi",              icon: <Bot          size={15} strokeWidth={1.5} /> },
         { label: "Minhas vitrines",    path: "/minhas-vitrines",   icon: <Building2    size={15} strokeWidth={1.5} /> },
