@@ -192,7 +192,7 @@ export default function ImoveisPage() {
 
   // ── Render ──
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-[#f0f0f5] dark:bg-[#0f0f12] flex flex-col">
       <PropertyPreviewDrawer
         item={previewItem}
         open={previewOpen}
@@ -233,58 +233,43 @@ export default function ImoveisPage() {
       )}
 
       {/* ── Sticky top bar ── */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/50">
+      <div className="sticky top-0 z-30 bg-[#f0f0f5]/95 dark:bg-[#0f0f12]/95 backdrop-blur-md border-b border-[#e8e8f0] dark:border-white/10">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6">
-          {/* Row 1: Search mode toggle + Search */}
-          <div className="py-3 flex items-center gap-3">
-            {/* Mode toggle */}
-            <div className="flex items-center rounded-full border border-border overflow-hidden shrink-0">
-              <button
-                onClick={() => { setSearchMode("normal"); clearAISearch(); }}
-                className={cn("px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1",
-                  searchMode === "normal" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Search className="h-3 w-3" /> Filtros
-              </button>
-              <button
-                onClick={() => setSearchMode("ai")}
-                className={cn("px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1",
-                  searchMode === "ai" ? "bg-gradient-to-r from-violet-600 to-primary text-white" : "bg-background text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Sparkles className="h-3 w-3" /> Busca IA
-              </button>
+          {/* Row 1: Header + Search + Actions */}
+          <div className="py-2.5 flex items-center gap-2.5">
+            {/* Icon + Title */}
+            <div className="w-7 h-7 rounded-[7px] bg-[#4F46E5] flex items-center justify-center flex-shrink-0">
+              <Building2 size={13} strokeWidth={1.5} className="text-white" />
             </div>
+            <h1 className="text-[16px] font-bold tracking-[-0.3px] text-[#0a0a0a] dark:text-[#fafafa] hidden md:block">Imóveis</h1>
+            {!loading && (
+              <span className="text-[12px] text-[#a1a1aa] hidden md:inline">
+                {total.toLocaleString()} disponíveis{searchTimeMs != null ? ` · ${searchTimeMs}ms` : ""}
+              </span>
+            )}
 
+            {/* Search input */}
             {searchMode === "normal" ? (
-              /* Normal search input */
-              <div className="relative flex-1 max-w-2xl">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
+              <div className="relative flex-1 max-w-[280px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#a1a1aa]" strokeWidth={1.5} />
+                <input
                   ref={searchInputRef}
-                  placeholder="Busque por bairro, empreendimento, código..."
+                  placeholder="Bairro, cidade ou tipo..."
                   value={search}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
                   onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="pl-10 pr-20 h-10 text-sm bg-muted/50 border-border/60 rounded-full focus-visible:ring-primary/30 focus-visible:bg-background"
+                  className="w-full pl-9 pr-8 h-[36px] text-[13px] bg-[#f7f7fb] dark:bg-white/5 border border-[#e8e8f0] dark:border-white/10 rounded-[9px] focus:border-[#4F46E5] outline-none text-[#0a0a0a] dark:text-[#fafafa] placeholder:text-[#a1a1aa]"
                 />
-                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  {search && (
-                    <button onClick={() => { setSearch(""); setShowSuggestions(false); }} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/50">
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                  <Button onClick={() => { handleSearch(); if (hasLeadContext && search.trim()) trackEvent({ event_type: "search_performed", search_query: search.trim(), payload: { contrato, tipo, bairro, dormitorios } }); }} size="sm" className="h-7 px-3 rounded-full text-xs gap-1" disabled={loading}>
-                    {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
-                    Buscar
-                  </Button>
-                </div>
+                {search && (
+                  <button onClick={() => { setSearch(""); setShowSuggestions(false); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#a1a1aa] hover:text-[#0a0a0a]">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 {/* Autocomplete dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-background border border-border rounded-xl shadow-xl z-50 max-h-72 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-[#18181b] border border-[#e8e8f0] dark:border-white/10 rounded-[12px] shadow-xl z-50 max-h-72 overflow-y-auto">
                     {(() => {
                       const bairros = suggestions.filter(s => s.type === "bairro");
                       const empreendimentos = suggestions.filter(s => s.type === "empreendimento");
@@ -293,30 +278,30 @@ export default function ImoveisPage() {
                         <>
                           {bairros.length > 0 && (
                             <div className="px-3 pt-2.5 pb-1">
-                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bairros</p>
+                              <p className="text-[10px] font-semibold text-[#a1a1aa] uppercase tracking-wider">Bairros</p>
                               {bairros.map((s, i) => (
-                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2">
-                                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
+                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-[#f7f7fb] dark:hover:bg-white/5 rounded-md flex items-center gap-2">
+                                  <MapPin className="h-3.5 w-3.5 text-[#a1a1aa]" /> {s.value}
                                 </button>
                               ))}
                             </div>
                           )}
                           {empreendimentos.length > 0 && (
-                            <div className="px-3 pt-2 pb-1 border-t border-border/50">
-                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Empreendimentos</p>
+                            <div className="px-3 pt-2 pb-1 border-t border-[#e8e8f0] dark:border-white/10">
+                              <p className="text-[10px] font-semibold text-[#a1a1aa] uppercase tracking-wider">Empreendimentos</p>
                               {empreendimentos.map((s, i) => (
-                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2">
-                                  <Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
+                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-[#f7f7fb] dark:hover:bg-white/5 rounded-md flex items-center gap-2">
+                                  <Building2 className="h-3.5 w-3.5 text-[#a1a1aa]" /> {s.value}
                                 </button>
                               ))}
                             </div>
                           )}
                           {codigos.length > 0 && (
-                            <div className="px-3 pt-2 pb-2.5 border-t border-border/50">
-                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Códigos</p>
+                            <div className="px-3 pt-2 pb-2.5 border-t border-[#e8e8f0] dark:border-white/10">
+                              <p className="text-[10px] font-semibold text-[#a1a1aa] uppercase tracking-wider">Códigos</p>
                               {codigos.map((s, i) => (
-                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 font-mono">
-                                  <Search className="h-3.5 w-3.5 text-muted-foreground" /> {s.value}
+                                <button key={i} onClick={() => handleSuggestionClick(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-[#f7f7fb] dark:hover:bg-white/5 rounded-md flex items-center gap-2 font-mono">
+                                  <Search className="h-3.5 w-3.5 text-[#a1a1aa]" /> {s.value}
                                 </button>
                               ))}
                             </div>
@@ -329,51 +314,75 @@ export default function ImoveisPage() {
               </div>
             ) : (
               /* AI search input */
-              <div className="relative flex-1 max-w-2xl">
-                <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500" />
-                <Input
-                  placeholder="Descreva o imóvel que você procura... ex: apartamento 3 dorm perto do Iguatemi até 1M"
+              <div className="relative flex-1 max-w-[360px]">
+                <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6366f1]" />
+                <input
+                  placeholder="Descreva o imóvel... ex: 3 dorm perto do Iguatemi até 1M"
                   value={aiQuery}
                   onChange={(e) => setAiQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && aiQuery.trim().length >= 3) searchWithAI(aiQuery); }}
-                  className="pl-10 pr-28 h-10 text-sm bg-violet-50/50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800/40 rounded-full focus-visible:ring-violet-400/30 focus-visible:bg-background"
+                  className="w-full pl-9 pr-28 h-[36px] text-[13px] bg-[#f7f7fb] dark:bg-white/5 border border-[#6366f1]/30 rounded-[9px] focus:border-[#4F46E5] outline-none text-[#0a0a0a] dark:text-[#fafafa] placeholder:text-[#a1a1aa]"
                 />
                 <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   {aiQuery && (
-                    <button onClick={() => { setAiQuery(""); clearAISearch(); }} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/50">
+                    <button onClick={() => { setAiQuery(""); clearAISearch(); }} className="text-[#a1a1aa] hover:text-[#0a0a0a] p-1 rounded-full">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
-                  <Button
+                  <button
                     onClick={() => searchWithAI(aiQuery)}
-                    size="sm"
-                    className="h-7 px-3 rounded-full text-xs gap-1 bg-gradient-to-r from-violet-600 to-primary hover:from-violet-700 hover:to-primary/90 text-white border-0"
+                    className="h-[28px] px-3 rounded-[7px] text-[12px] font-semibold bg-[#4F46E5] hover:bg-[#4338CA] text-white flex items-center gap-1"
                     disabled={aiLoading || aiQuery.trim().length < 3}
                   >
                     {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
-                    Buscar com IA
-                  </Button>
+                    Buscar
+                  </button>
                 </div>
               </div>
             )}
 
+            {/* Busca IA toggle */}
+            <button
+              onClick={() => { searchMode === "ai" ? (setSearchMode("normal"), clearAISearch()) : setSearchMode("ai"); }}
+              className={cn(
+                "flex items-center gap-1.5 h-[36px] px-4 text-[12px] font-medium rounded-[9px] whitespace-nowrap transition-all border",
+                searchMode === "ai"
+                  ? "bg-[#4F46E5] text-white border-[#4F46E5]"
+                  : "border-[#4F46E5] text-[#4F46E5] hover:bg-[#4F46E5]/5"
+              )}
+            >
+              <Sparkles size={12} strokeWidth={1.5} /> Busca IA
+            </button>
+
+            <div className="flex-1" />
+
             {/* Right actions */}
             <div className="flex items-center gap-1.5 shrink-0">
-              <Button
+              <button
                 onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); }}
-                variant={showFavoritesOnly ? "default" : "ghost"} size="sm" className="gap-1.5 h-9"
+                className={cn(
+                  "flex items-center gap-1.5 h-[36px] px-3 text-[12px] font-medium rounded-[9px] border transition-all",
+                  showFavoritesOnly
+                    ? "bg-[#4F46E5] text-white border-[#4F46E5]"
+                    : "text-[#52525b] bg-[#f7f7fb] dark:bg-white/5 border-[#e8e8f0] dark:border-white/10 hover:border-[#4F46E5] hover:text-[#4F46E5]"
+                )}
               >
-                <Heart className={cn("h-4 w-4", showFavoritesOnly && "fill-current")} />
+                <Heart className={cn("h-3.5 w-3.5", showFavoritesOnly && "fill-current")} />
                 <span className="hidden sm:inline">Favoritos</span>
-                {favorites.size > 0 && <Badge variant="secondary" className="text-[10px] h-4 px-1">{favorites.size}</Badge>}
-              </Button>
-              <Button
+                {favorites.size > 0 && <span className="text-[10px] font-bold ml-0.5">{favorites.size}</span>}
+              </button>
+              <button
                 onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); setVitrineLink(null); }}
-                variant={selectMode ? "default" : "ghost"} size="sm" className="gap-1.5 h-9"
+                className={cn(
+                  "flex items-center gap-1.5 h-[36px] px-3 text-[12px] font-medium rounded-[9px] border transition-all",
+                  selectMode
+                    ? "bg-[#4F46E5] text-white border-[#4F46E5]"
+                    : "text-[#52525b] bg-[#f7f7fb] dark:bg-white/5 border-[#e8e8f0] dark:border-white/10 hover:border-[#4F46E5] hover:text-[#4F46E5]"
+                )}
               >
-                <Share2 className="h-4 w-4" />
+                <Share2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{selectMode ? `${selectedIds.size} selecionados` : "Vitrine"}</span>
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -692,11 +701,14 @@ export default function ImoveisPage() {
         /* ═══ MAP SPLIT VIEW ═══ */
         <div className="flex-1 flex overflow-hidden w-full">
           {/* Left: property list */}
-          <div className="w-[420px] xl:w-[480px] shrink-0 h-[calc(100vh-120px)] overflow-y-auto px-4 py-3 space-y-3 border-r border-border/50">
+          <div className="w-[420px] xl:w-[480px] shrink-0 h-[calc(100vh-120px)] overflow-y-auto px-4 py-3 space-y-3 border-r border-[#e8e8f0] dark:border-white/10">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div>
                 {loading ? <Skeleton className="h-4 w-24" /> : (
-                  <span className="text-sm font-medium text-foreground">{total.toLocaleString()} imóveis</span>
+                  <>
+                    <p className="text-[14px] font-bold text-[#0a0a0a] dark:text-white">{total.toLocaleString()} imóveis</p>
+                    <p className="text-[11px] text-[#a1a1aa]">Mostrando {displayImoveis.length}{cidade.length === 1 ? ` · à venda em ${cidade[0]}` : ""}</p>
+                  </>
                 )}
               </div>
               <div className="flex border border-border/60 rounded-lg overflow-hidden">
@@ -885,11 +897,11 @@ export default function ImoveisPage() {
                 </div>
               )}
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
+                <div>
                   {loading ? <Skeleton className="h-4 w-24" /> : (
                     <>
-                      <span className="text-sm font-medium text-foreground">{total.toLocaleString()} imóveis</span>
-                      {searchTimeMs != null && <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><Zap className="h-2.5 w-2.5" /> {searchTimeMs}ms</span>}
+                      <p className="text-[14px] font-bold text-[#0a0a0a] dark:text-white">{total.toLocaleString()} imóveis</p>
+                      <p className="text-[11px] text-[#a1a1aa]">Mostrando {displayImoveis.length}{searchTimeMs != null ? ` · ${searchTimeMs}ms` : ""}{cidade.length === 1 ? ` · ${cidade[0]}` : ""}</p>
                     </>
                   )}
                 </div>

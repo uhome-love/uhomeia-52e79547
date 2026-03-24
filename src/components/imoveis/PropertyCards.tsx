@@ -127,70 +127,70 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
   const imovelId = String(codigo || item.id_imovel || item.id || idx);
 
   return (
-    <Card
+    <div
       className={cn(
-        "overflow-hidden group hover:shadow-xl transition-all duration-300 relative border-border/40 bg-card cursor-pointer",
-        isCampanha && "ring-1 ring-primary/20",
-        selectMode && isSelected && "ring-2 ring-primary"
+        "overflow-hidden group hover:border-[#4F46E5]/30 transition-all duration-300 relative cursor-pointer bg-white dark:bg-[#18181b] border border-[#e8e8f0] dark:border-white/10 rounded-[14px]",
+        isCampanha && "ring-1 ring-[#4F46E5]/20",
+        selectMode && isSelected && "ring-2 ring-[#4F46E5]"
       )}
       onClick={() => onPreview?.(item)}
     >
       {selectMode && (
-        <button onClick={(e) => { e.stopPropagation(); onToggleSelect(imovelId); }} className="absolute top-3 left-3 z-20 bg-background/90 backdrop-blur-sm rounded-md p-1 shadow-sm">
-          {isSelected ? <CheckSquare className="h-5 w-5 text-primary" /> : <Square className="h-5 w-5 text-muted-foreground" />}
+        <button onClick={(e) => { e.stopPropagation(); onToggleSelect(imovelId); }} className="absolute top-3 left-3 z-20 bg-white/90 dark:bg-[#18181b]/90 backdrop-blur-sm rounded-md p-1 shadow-sm">
+          {isSelected ? <CheckSquare className="h-5 w-5 text-[#4F46E5]" /> : <Square className="h-5 w-5 text-[#a1a1aa]" />}
         </button>
       )}
 
-      <div className="aspect-[16/10] relative bg-muted overflow-hidden">
+      <div className="relative h-[160px] bg-[#f7f7fb] dark:bg-white/5 overflow-hidden">
         <ImageSlider images={images} alt={titulo || loc.endereco} />
         {isCampanha && (
-          <Badge className="absolute top-3 left-3 text-[10px] bg-primary/90 text-primary-foreground backdrop-blur-sm shadow-sm">
-            <Megaphone className="h-2.5 w-2.5 mr-1" /> Campanha
-          </Badge>
+          <span className="absolute top-2.5 left-2.5 text-[10px] font-bold bg-[#0a0a0a]/80 text-white px-2 py-1 rounded-[5px]">
+            Campanha
+          </span>
         )}
         {entrega.emObras && (
-          <Badge className="absolute top-3 right-3 text-[10px] bg-amber-500/90 text-white backdrop-blur-sm shadow-sm border-0">
-            <CalendarClock className="h-2.5 w-2.5 mr-1" />
+          <span className="absolute top-2.5 right-2.5 text-[10px] font-bold bg-[#f59e0b]/90 text-white px-2 py-1 rounded-[5px] backdrop-blur-sm flex items-center gap-1">
+            <CalendarClock className="h-2.5 w-2.5" />
             {entrega.previsao ? `Entrega ${entrega.previsao}` : "Em obras"}
-          </Badge>
+          </span>
         )}
         <button
           onClick={(e) => { e.stopPropagation(); onFavorite(imovelId); }}
-          className="absolute top-3 right-3 bg-background/70 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:scale-110"
+          className="absolute top-2.5 right-2.5 w-7 h-7 bg-white/90 dark:bg-[#18181b]/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white shadow-sm"
           style={entrega.emObras ? { top: 'auto', bottom: '12px' } : {}}
         >
-          <Heart className={cn("h-4 w-4", isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+          <Heart className={cn("h-3.5 w-3.5", isFavorite ? "fill-red-500 text-red-500" : "text-[#52525b]")} strokeWidth={1.5} />
         </button>
       </div>
 
-      <div className="p-3.5 space-y-1.5">
-        <p className="text-[17px] font-bold text-foreground leading-tight">{getPreco(item)}</p>
-
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          {dorms != null && dorms > 0 && (
-            <span className="font-medium"><strong className="text-foreground">{dorms}</strong> dorm{suitesVal ? ` · ${suitesVal}s` : ""}</span>
-          )}
-          {area != null && area > 0 && (
-            <span className="font-medium"><strong className="text-foreground">{area}</strong> m²</span>
-          )}
-          {vagas != null && vagas > 0 && (
-            <span className="font-medium"><strong className="text-foreground">{vagas}</strong> vaga{vagas > 1 ? "s" : ""}</span>
-          )}
-        </div>
-
-        {titulo && <p className="text-xs text-foreground/80 font-medium leading-snug line-clamp-1">{titulo}</p>}
+      <div className="p-3 space-y-1">
+        {titulo && <p className="text-[13px] font-semibold text-[#0a0a0a] dark:text-white leading-tight truncate group-hover:text-[#4F46E5] transition-colors">{titulo}</p>}
 
         {(loc.bairro || loc.endereco) && (
-          <p className="text-[11px] text-muted-foreground truncate">
+          <p className="text-[11px] text-[#a1a1aa] truncate">
             {[loc.bairro, loc.cidade].filter(Boolean).join(", ")}
           </p>
         )}
 
+        <p className="text-[15px] font-bold text-[#0a0a0a] dark:text-white mt-2 tracking-[-0.3px]">{getPreco(item)}</p>
+
+        <div className="flex items-center gap-3 text-[11px] text-[#a1a1aa]">
+          {dorms != null && dorms > 0 && (
+            <span><strong className="text-[#0a0a0a] dark:text-white">{dorms}</strong> dorm{suitesVal ? ` · ${suitesVal}s` : ""}</span>
+          )}
+          {area != null && area > 0 && (
+            <span><strong className="text-[#0a0a0a] dark:text-white">{area}</strong> m²</span>
+          )}
+          {vagas != null && vagas > 0 && (
+            <span><strong className="text-[#0a0a0a] dark:text-white">{vagas}</strong> vaga{vagas > 1 ? "s" : ""}</span>
+          )}
+        </div>
+
         {codigo && (
-          <div className="flex items-center justify-between pt-1.5 border-t border-border/40">
-            <span className="text-[10px] text-muted-foreground/60 font-mono">{codigo}</span>
+          <div className="flex items-center justify-between pt-1.5 border-t border-[#e8e8f0] dark:border-white/10 mt-1">
+            <span className="text-[10px] text-[#a1a1aa]/60 font-mono">{codigo}</span>
             <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-emerald-600" title="Copiar para WhatsApp" onClick={() => copyPropertyForWhatsApp(item, getPreco)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-[#a1a1aa] hover:text-emerald-600" title="Copiar para WhatsApp" onClick={() => copyPropertyForWhatsApp(item, getPreco)}>
                 <MessageCircle className="h-4 w-4" />
               </Button>
               <SharePropertyButton
@@ -204,7 +204,7 @@ export const PropertyCardGrid = React.memo(function PropertyCardGrid({ item, idx
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 });
 

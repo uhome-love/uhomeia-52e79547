@@ -326,20 +326,20 @@ export default function PropertyMap({
           font-family: system-ui, sans-serif;
           font-weight: 700;
           font-size: 13px;
-          color: hsl(var(--primary-foreground));
+          color: #fff;
           box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         .cluster-small {
           width: 36px; height: 36px;
-          background: hsl(var(--primary));
+          background: #4F46E5;
         }
         .cluster-medium {
           width: 44px; height: 44px;
-          background: hsl(217 91% 50%);
+          background: #4338CA;
         }
         .cluster-large {
           width: 52px; height: 52px;
-          background: hsl(222 73% 17%);
+          background: #3730A3;
         }
         .leaflet-popup-content-wrapper {
           padding: 0 !important;
@@ -429,8 +429,8 @@ export default function PropertyMap({
       )}
 
       {/* Property count badge */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-background/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md border border-border/60">
-        <span className="text-xs font-medium text-foreground">
+      <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-sm px-3 py-1.5 rounded-[8px] shadow-md border border-[#e8e8f0] dark:border-white/10">
+        <span className="text-[12px] font-medium text-[#0a0a0a] dark:text-white">
           {mappableProperties.length} imóveis no mapa
         </span>
       </div>
