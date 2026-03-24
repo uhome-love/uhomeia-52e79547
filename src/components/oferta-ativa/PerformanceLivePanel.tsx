@@ -1,4 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -694,12 +696,15 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
                   </p>
                   <p className="text-[10px] text-muted-foreground">{subtitle}</p>
                 </div>
-                <div className={`text-sm font-black px-2.5 py-0.5 rounded-lg ${
-                  pct >= 80 ? "text-emerald-400 bg-emerald-500/15" :
-                  pct >= 40 ? "text-blue-400 bg-blue-500/15" :
-                  "text-muted-foreground bg-muted/50"
-                }`}>
-                  {pct}%
+                <div className="flex items-center gap-2">
+                  <div className={`text-sm font-black px-2.5 py-0.5 rounded-lg ${
+                    pct >= 80 ? "text-emerald-400 bg-emerald-500/15" :
+                    pct >= 40 ? "text-blue-400 bg-blue-500/15" :
+                    "text-muted-foreground bg-muted/50"
+                  }`}>
+                    {pct}%
+                  </div>
+                  {isCampanha && <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />}
                 </div>
               </div>
               <div className="h-2 rounded-full bg-muted/50 overflow-hidden mb-2.5">
@@ -734,12 +739,18 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
             </div>
             <div className="grid gap-3">
               {campanhas.map((cp, i) => (
-                <div key={cp.campanha} className="space-y-2">
-                  {renderProgressCard(`camp-${cp.campanha}`, cp.campanha, `${cp.listas.length} lista${cp.listas.length > 1 ? "s" : ""} agrupadas`, cp, i, true)}
-                  <div className="pl-4 border-l-2 border-primary/15 space-y-2">
-                    {cp.listas.map((lp, j) => renderProgressCard(lp.lista_id, lp.nome, lp.empreendimento, lp, j))}
-                  </div>
-                </div>
+                <Collapsible key={cp.campanha}>
+                  <CollapsibleTrigger asChild>
+                    <div className="cursor-pointer">
+                      {renderProgressCard(`camp-${cp.campanha}`, cp.campanha, `${cp.listas.length} lista${cp.listas.length > 1 ? "s" : ""} agrupadas`, cp, i, true)}
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="pl-4 border-l-2 border-primary/15 space-y-2 mt-2">
+                      {cp.listas.map((lp, j) => renderProgressCard(lp.lista_id, lp.nome, lp.empreendimento, lp, j))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               ))}
               {avulsas.length > 0 && campanhas.length > 0 && (
                 <div className="flex items-center gap-2 mt-2">
