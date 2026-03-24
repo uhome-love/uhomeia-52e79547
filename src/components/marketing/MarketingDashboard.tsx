@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, TrendingUp, DollarSign, Users, MousePointerClick, BarChart3, Trophy, Trash2, Plus, FileDown, Loader2, RefreshCw, Target } from "lucide-react";
+import { Upload, TrendingUp, DollarSign, Users, MousePointerClick, BarChart3, Trophy, Trash2, Plus, FileDown, Loader2, RefreshCw, Target, Zap } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, FunnelChart, Funnel, LabelList } from "recharts";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { KpiCard, KpiGrid } from "@/components/ui/KpiCard";
 
 const CANAL_COLORS: Record<string, string> = {
   meta_ads: "#3b82f6",
