@@ -476,6 +476,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
     leadsReaproveitadosOA: extraKpis?.leadsReaproveitadosOA || 0,
     totalVisitasCriadas: extraKpis?.totalVisitasCriadas || 0,
     novoInteresse: extraKpis?.novoInteresse || 0,
+    enviadosRoleta: extraKpis?.enviadosRoleta || 0,
     presentesHoje: extraKpis?.presentesHoje || 0,
     metasDiaTotal: extraKpis?.metasDiaTotal || { ligacoes: 0, aproveitados: 0, visitasMarcadas: 0 },
     reload: useCallback(() => {
