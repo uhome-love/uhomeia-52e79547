@@ -43,14 +43,10 @@ export default function GlobalDateFilterBar({ variant = "inline", className }: P
           key={p.key}
           onClick={() => setPeriod(p.key)}
           className={cn(
-            "px-3 py-1.5 text-xs font-medium rounded-md transition-all border",
+            "px-3 py-1.5 text-[13px] font-medium rounded-[7px] transition-all",
             period === p.key
-              ? isHeader
-                ? "bg-[#1e293b] text-white border-primary"
-                : "bg-primary text-primary-foreground border-primary"
-              : isHeader
-                ? "text-slate-400 hover:text-white border-transparent"
-                : "text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+              ? "bg-[#4F46E5] text-white"
+              : "text-[#71717a] hover:text-[#0a0a0a] hover:bg-[#e8e8f0] dark:hover:text-white dark:hover:bg-white/[0.08]"
           )}
         >
           {p.label}
