@@ -220,7 +220,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
         <div className="px-4 pt-3.5 pb-2.5 space-y-2" onClick={onClick}>
           {/* Row 1: Nome + Days badge */}
           <div className="flex items-center justify-between">
-            <p className="text-[13px] font-bold text-white truncate flex-1">{negocio.nome_cliente}</p>
+            <p className="text-[14px] font-semibold text-white truncate flex-1">{negocio.nome_cliente}</p>
             <span className={`text-[11px] font-bold ml-2 shrink-0 px-2 py-0.5 rounded-full ${
               daysInFase <= 3 ? "bg-emerald-500/15 text-emerald-400" : daysInFase <= 7 ? "bg-amber-500/15 text-amber-400" : "bg-red-500/15 text-red-400"
             }`}>
@@ -229,8 +229,8 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           </div>
 
           {/* Row 2: Imóvel */}
-          <p className="text-[11px] font-medium text-white/70 truncate">
-            {negocio.empreendimento || <span className="italic text-amber-400/80 font-semibold">🏠 Sem imóvel</span>}
+          <p className="text-[12px] text-[#71717a] truncate">
+            {negocio.empreendimento || <span className="italic text-amber-400/80 font-semibold">Sem imóvel</span>}
           </p>
 
           {/* Row 3: Corretor responsável (only for admin/gestor) — show both names if partnership */}
@@ -242,25 +242,25 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
                   <AvatarFallback className="text-[8px]" style={{ background: `${faseInfo?.cor || "#6B7280"}30`, color: faseInfo?.cor }}>{(corretorInfo.nome || "?")[0]}</AvatarFallback>
                 </Avatar>
                 {parceriaInfo?.isParceria ? (
-                  <span className="text-[12px] font-medium text-white/60 truncate">{parceriaInfo.label}</span>
+                  <span className="text-[12px] font-medium text-[#a1a1aa] truncate">{parceriaInfo.label}</span>
                 ) : (
-                  <span className="text-[12px] font-medium text-white/60 truncate">{corretorInfo.nome?.split(" ")[0]}</span>
+                  <span className="text-[12px] font-medium text-[#a1a1aa] truncate">{corretorInfo.nome?.split(" ")[0]}</span>
                 )}
                 {corretorInfo.equipe && !parceriaInfo?.isParceria && (
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-border/40 text-muted-foreground">
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-white/[0.1] text-[#52525b]">
                     {corretorInfo.equipe}
                   </Badge>
                 )}
               </div>
             ) : (
-              <p className="text-[11px] text-muted-foreground italic">Sem corretor</p>
+              <p className="text-[11px] text-[#52525b] italic">Sem corretor</p>
             )
           )}
 
           {/* Row 4: VGV with quick-fill — show half if partnership */}
           <div className="flex items-center gap-2">
             {negocio.vgv_estimado ? (
-              <span className="text-[14px] font-extrabold flex items-center gap-1" style={{ color: faseInfo?.cor || "#22C55E" }}>
+              <span className="text-[14px] font-bold text-[#10b981] flex items-center gap-1">
                 <TrendingUp className="h-3.5 w-3.5" />
                 {parceriaInfo?.isParceria
                   ? `${formatVGV(negocio.vgv_estimado / 2)} (50%)`
@@ -272,7 +272,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
                 onClick={(e) => { e.stopPropagation(); setQuickVgvId(negocio.id); setQuickVgvValue(""); }}
                 className="text-[13px] text-amber-400/90 font-bold hover:text-amber-300 transition-colors flex items-center gap-1"
               >
-                ⚠️ Preencher VGV
+                Preencher VGV
               </button>
             )}
           </div>
@@ -305,13 +305,13 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             <button onClick={() => { setTaskText(nextTask?.titulo || ""); setEditingTask(true); }} className="w-full text-left group/task">
               {nextTask ? (
                 <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                  <span className="text-[12px] font-medium text-blue-300/90 truncate group-hover/task:text-blue-200 transition-colors">{nextTask.titulo}</span>
+                  <Clock className="h-3.5 w-3.5 text-[#52525b] shrink-0" />
+                  <span className="text-[11px] text-[#52525b] italic truncate group-hover/task:text-[#a1a1aa] transition-colors">{nextTask.titulo}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5">
                   <Plus className="h-3.5 w-3.5 text-white/25 shrink-0" />
-                  <span className="text-[12px] text-white/30 italic group-hover/task:text-white/50 transition-colors">Definir próximo passo...</span>
+                  <span className="text-[11px] text-[#52525b] italic group-hover/task:text-[#a1a1aa] transition-colors">Definir próximo passo...</span>
                 </div>
               )}
             </button>
@@ -320,14 +320,14 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
 
         {/* Action bar - glass effect */}
         <div
-          className="flex items-center gap-0 border-t border-white/[0.06]"
+          className="flex items-center border-t border-white/[0.06]"
           style={{ background: "rgba(255,255,255,0.02)" }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Ligar */}
           <button
             onClick={() => setLigarPopup(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium text-[#71717a] hover:text-white hover:bg-white/5 transition-colors border-r border-white/[0.06]"
           >
             <Phone className="h-3.5 w-3.5" /> Ligar
           </button>
@@ -335,25 +335,25 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           {/* WhatsApp */}
           {whatsappUrl ? (
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-green-400 hover:text-green-300 hover:bg-white/5 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium text-[#71717a] hover:text-[#10b981] hover:bg-white/5 transition-colors border-r border-white/[0.06]"
             >
               <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
             </a>
           ) : (
-            <span className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-gray-600">
+            <span className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium text-[#52525b] border-r border-white/[0.06]">
               <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
             </span>
           )}
 
-          {/* ⚡ Ação */}
+          {/* Ação */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium text-amber-400 hover:text-amber-300 hover:bg-white/5 transition-colors">
+              <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium text-[#71717a] hover:text-[#4F46E5] hover:bg-white/5 transition-colors">
                 <Zap className="h-3.5 w-3.5" /> Ação
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
-              <p className="px-2 py-1.5 text-xs font-bold text-muted-foreground">⚡ Ação do Negócio</p>
+              <p className="px-2 py-1.5 text-xs font-bold text-muted-foreground">Ação do Negócio</p>
               <DropdownMenuSeparator />
               {CARD_QUICK_ACTIONS.map(action => (
                 <DropdownMenuItem key={action.id} onClick={() => handleCardAction(action)} className="gap-2 cursor-pointer text-xs">
@@ -820,57 +820,65 @@ export default function MeusNegocios() {
         background: "hsl(222 47% 11%)",
       }}
     >
-      {/* Header */}
-      <div className="shrink-0 space-y-3 pb-3 px-4 pt-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 mr-auto">
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-[#4F46E5]">
-              <Briefcase className="h-4 w-4 text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-white">Pipeline Negócios</h1>
-            <span className="text-[13px] text-white/50">{filteredNegocios.length} negócios · {formatVGV(totalVGV)}</span>
-            <Button size="sm" className="gap-1 h-7 text-xs rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white border-none" onClick={() => setAddNegocioOpen(true)}>
-              <Plus className="h-3.5 w-3.5" /> Novo
-            </Button>
+      {/* Header — Line 1 */}
+      <div className="shrink-0 px-4 pt-4 pb-1">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-[7px] bg-[#4F46E5] flex items-center justify-center flex-shrink-0">
+            <Briefcase size={13} strokeWidth={1.5} className="text-white" />
           </div>
+          <h1 className="text-[16px] font-bold tracking-[-0.3px] text-white">Pipeline negócios</h1>
+          <span className="text-[12px] text-[#52525b]">{filteredNegocios.length} negócios</span>
+          {totalVGV > 0 && (
+            <span className="text-[12px] font-bold text-[#10b981]">{formatVGV(totalVGV)}</span>
+          )}
 
-          <div className="relative flex-1 min-w-[140px] sm:min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-            <Input
+          <div className="flex-1" />
+
+          {/* Search */}
+          <div className="relative hidden sm:block">
+            <Search size={12} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#52525b]" />
+            <input
               placeholder="Buscar negócio..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-white placeholder:text-white/30 border-white/10 rounded-lg"
-              style={{ background: "rgba(255,255,255,0.06)" }}
+              className="text-[12px] pl-7 pr-3 h-[32px] w-[200px] bg-white/[0.06] border border-white/[0.1] rounded-[8px] text-white placeholder:text-[#52525b] focus:border-[#4F46E5] outline-none"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
-                <X className="h-3.5 w-3.5 text-white/40 hover:text-white" />
+                <X className="h-3.5 w-3.5 text-[#52525b] hover:text-white" />
               </button>
             )}
           </div>
 
-          <Button
-            size="sm"
+          {/* Filters */}
+          <button
             onClick={() => setShowFilters(!showFilters)}
-            className="gap-1.5 h-9 rounded-lg text-white border-none bg-[#4F46E5] hover:bg-[#4338CA]"
+            className="h-[32px] px-3 text-[12px] text-[#a1a1aa] border border-white/[0.1] rounded-[8px] hover:border-white/[0.2] flex items-center gap-1.5"
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <SlidersHorizontal size={12} strokeWidth={1.5} />
             <span className="hidden sm:inline">Filtros</span>
-          </Button>
+          </button>
 
-          <Button
-            size="icon"
-            className="h-9 w-9 shrink-0 rounded-lg text-white border-none bg-[#4F46E5] hover:bg-[#4338CA]"
+          {/* Refresh */}
+          <button
             onClick={handleRefresh}
             disabled={refreshing}
+            className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] border border-white/[0.1] text-[#a1a1aa] hover:border-white/[0.2]"
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          </Button>
+            <RefreshCw size={13} strokeWidth={1.5} className={refreshing ? "animate-spin" : ""} />
+          </button>
+
+          {/* New */}
+          <button
+            onClick={() => setAddNegocioOpen(true)}
+            className="h-[32px] px-4 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-[12px] font-semibold rounded-[8px] flex items-center gap-1.5"
+          >
+            <Plus size={13} strokeWidth={2} /> Novo
+          </button>
         </div>
 
         {showFilters && (
-          <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl border border-white/10 animate-fade-in" style={{ background: "rgba(255,255,255,0.04)" }}>
+          <div className="flex items-center gap-2 flex-wrap p-3 mt-2 rounded-xl border border-white/10 animate-fade-in" style={{ background: "rgba(255,255,255,0.04)" }}>
             <Select value={filterCorretor} onValueChange={setFilterCorretor}>
               <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs border-white/10 text-white/70" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <SelectValue placeholder="Corretor" />
@@ -885,18 +893,12 @@ export default function MeusNegocios() {
           </div>
         )}
 
-        {/* Summary */}
-        <div className="flex items-center gap-3 flex-wrap px-1">
-          <div className="flex items-center gap-1.5">
-            <LayoutGrid className="h-3.5 w-3.5 text-blue-400" />
-            <span className="text-xs sm:text-sm font-bold text-white">
-              {filteredNegocios.length} negócios
-            </span>
-          </div>
+        {/* Line 2 — summary */}
+        <div className="flex items-center gap-3 mt-2 pb-2">
+          <span className="text-[12px] text-[#52525b]">{filteredNegocios.length} negócios</span>
+          <span className="text-[12px] text-[#52525b]">·</span>
           {totalVGV > 0 && (
-            <span className="text-sm font-semibold" style={{ color: "hsl(45 93% 58%)" }}>
-              💰 {formatVGV(totalVGV)}
-            </span>
+            <span className="text-[12px] text-[#10b981] font-semibold">{formatVGV(totalVGV)} VGV total</span>
           )}
         </div>
       </div>
@@ -953,30 +955,32 @@ export default function MeusNegocios() {
                 onDragLeave={() => setDragOverFase(null)}
                 onDrop={(e) => handleDrop(e, fase.key)}
               >
-                {/* Column header - glass */}
+                {/* Column header */}
                 <div
                   className="shrink-0 px-3.5 py-3 rounded-t-xl"
                   style={{
                     background: "rgba(255,255,255,0.03)",
-                    borderBottom: `2px solid ${fase.cor}40`,
                     backdropFilter: "blur(8px)",
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="h-2.5 w-2.5 rounded-full shadow-lg" style={{ backgroundColor: fase.cor, boxShadow: `0 0 8px ${fase.cor}80` }} />
-                    <span className="text-sm font-bold text-white/90">{fase.icon} {fase.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white/80" style={{ background: `${fase.cor}20` }}>
-                      {faseNegocios.length}
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: fase.cor }} />
+                      <span className="text-[13px] font-bold text-white">{fase.label}</span>
+                      <span className="text-[13px] font-bold text-[#4F46E5]">{faseNegocios.length}</span>
+                    </div>
                     {totalFaseVGV > 0 && (
-                      <span className="text-[10px] font-semibold flex items-center gap-0.5" style={{ color: fase.cor }}>
-                        <TrendingUp className="h-2.5 w-2.5" />
-                        {formatVGV(totalFaseVGV)}
-                      </span>
+                      <span className="text-[11px] text-[#52525b]">{formatVGV(totalFaseVGV)}</span>
                     )}
                   </div>
+                  {/* Progress bar */}
+                  <div
+                    className="h-[2px] rounded-full"
+                    style={{
+                      backgroundColor: fase.key === "assinado" || fase.key === "vendido" ? "#10b981" : "#4F46E5",
+                      opacity: fase.key === "novo_negocio" ? 0.4 : fase.key === "proposta" ? 0.6 : fase.key === "negociacao" ? 0.8 : fase.key === "documentacao" ? 0.9 : 1,
+                    }}
+                  />
                 </div>
 
                 {/* Cards */}
