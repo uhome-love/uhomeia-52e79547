@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserPlus, Phone, Mail, Users, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 
 const ETAPAS = [
