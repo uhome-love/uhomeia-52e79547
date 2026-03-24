@@ -266,6 +266,7 @@ const PipelineCard = memo(function PipelineCard({
         transition: "all 0.18s cubic-bezier(0.25,0.46,0.45,0.94)",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
+      data-pipeline-card
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "#93C5FD";
         e.currentTarget.style.boxShadow = "0 6px 20px rgba(37,99,235,0.10)";
