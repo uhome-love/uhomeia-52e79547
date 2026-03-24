@@ -261,81 +261,46 @@ export default function PipelineKanban() {
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
-      {/* ═══ HEADER — 2 lines, sticky, clean ═══ */}
+      {/* ═══ HEADER ═══ */}
       <div
         className="shrink-0"
         style={{
           background: "#f7f7fb",
           borderBottom: "1px solid #e8e8f0",
-          boxShadow: "none",
           position: "sticky",
           top: 0,
           zIndex: 40,
         }}
       >
-        {/* Line 1 — Title + Filters + Search + Novo Lead */}
-        <div
-          className="flex items-center md:!px-[28px]"
-          style={{ height: 52, padding: "0 14px", borderBottom: "1px solid #E2E8F0", gap: 10 }}
-        >
-          {/* LEFT: Title */}
-          <div className="flex items-center flex-shrink-0 gap-2">
-            <div className="h-7 w-7 rounded-lg bg-[#4F46E5] flex items-center justify-center">
-              <LayoutGrid className="h-3.5 w-3.5 text-white" />
+        {/* ── MOBILE HEADER (< md) ── */}
+        <div className="md:hidden">
+          {/* Line 1: Title + filters + novo */}
+          <div className="flex items-center gap-2" style={{ height: 46, padding: "0 12px" }}>
+            <div className="h-6 w-6 rounded-md bg-[#4F46E5] flex items-center justify-center shrink-0">
+              <LayoutGrid className="h-3 w-3 text-white" />
             </div>
-            <span className="whitespace-nowrap" style={{ fontSize: 18, fontWeight: 700, color: "#1E293B", letterSpacing: "-0.3px" }}>
-              <span className="md:hidden">Pipeline</span>
-              <span className="hidden md:inline">Pipeline de Leads</span>
-            </span>
-            <span className="text-[13px] text-[#94a3b8] font-medium">{filteredLeads.length} leads</span>
-          </div>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#1E293B" }}>Pipeline</span>
+            <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{filteredLeads.length}</span>
+            <div className="flex-1" />
 
-          {/* CENTER: Corretor + Campaign + Filters */}
-          <div className="hidden md:flex items-center flex-1 min-w-0 justify-center" style={{ gap: 6 }}>
             {(isAdmin || isGestor) && (
               <Select value={corretorFilter} onValueChange={setCorretorFilter}>
                 <SelectTrigger
-                  className="h-8 text-[11px] w-[170px] shrink-0"
+                  className="h-7 text-[10px] w-[100px] shrink-0"
                   style={{
-                    borderRadius: 8, fontSize: 11, fontWeight: 600,
+                    borderRadius: 7, fontSize: 10, fontWeight: 600,
                     border: corretorFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
                     background: corretorFilter !== "all" ? "#EFF6FF" : "#fff",
                     color: corretorFilter !== "all" ? "#1D4ED8" : "#64748B",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                   }}
                 >
-                  <SelectValue placeholder="Todos os corretores" />
+                  <SelectValue placeholder="Corretor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os corretores</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {isAdmin && <SelectItem value="sem_corretor">Sem corretor</SelectItem>}
                   {corretorOptions.map(([id, nome]) => (
                     <SelectItem key={id} value={id}>{nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {Object.keys(campaignTagCounts).length > 0 && (
-              <Select value={campaignTagFilter} onValueChange={setCampaignTagFilter}>
-                <SelectTrigger
-                  className="h-8 text-[11px] w-[160px] shrink-0"
-                  style={{
-                    borderRadius: 8, fontSize: 11, fontWeight: 600,
-                    border: campaignTagFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
-                    background: campaignTagFilter !== "all" ? "#EFF6FF" : "#fff",
-                    color: campaignTagFilter !== "all" ? "#1D4ED8" : "#64748B",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  <SelectValue placeholder="🏷️ Campanha" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">🏷️ Todas as campanhas</SelectItem>
-                  {CAMPAIGN_TAGS.filter(ct => campaignTagCounts[ct.tag]).map(ct => (
-                    <SelectItem key={ct.tag} value={ct.tag}>
-                      {ct.label} ({campaignTagCounts[ct.tag]})
-                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -350,152 +315,264 @@ export default function PipelineKanban() {
               corretorNomes={pipeline.corretorNomes}
               isManager={isGestor || isAdmin}
             />
+
+            {canAdd && activeTab === "kanban" && (
+              <button
+                onClick={() => setAddOpen(true)}
+                style={{
+                  background: "#4F46E5", color: "#fff", borderRadius: 7,
+                  padding: "5px 10px", fontWeight: 700, fontSize: 12, border: "none",
+                  cursor: "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                + Novo
+              </button>
+            )}
           </div>
 
-          {/* RIGHT: Search + Novo Lead + Avatar */}
-          <div className="flex items-center flex-shrink-0 ml-auto" style={{ gap: 8 }}>
-            <div className="relative" style={{ width: filters.search ? 232 : 192, transition: "width 0.2s ease", maxWidth: "40vw" }}>
-              <Search className="absolute top-1/2 -translate-y-1/2" style={{ left: 10, height: 14, width: 14, color: "#94A3B8" }} />
+          {/* Line 2 mobile: Status chips compact */}
+          <div className="flex items-center gap-3 px-3 pb-2" style={{ borderBottom: "1px solid #E2E8F0" }}>
+            <button
+              onClick={() => setClientStatusFilter(f => f === "em_dia" ? "todos" : "em_dia")}
+              className="flex items-center gap-1"
+              style={{ fontSize: 11, fontWeight: 600, color: "#059669", background: "none", border: "none", cursor: "pointer" }}
+            >
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#059669" }} />
+              {clientStatusCounts.em_dia}
+            </button>
+            <button
+              onClick={() => setClientStatusFilter(f => f === "desatualizado" ? "todos" : "desatualizado")}
+              className="flex items-center gap-1"
+              style={{ fontSize: 11, fontWeight: 600, color: "#D97706", background: "none", border: "none", cursor: "pointer" }}
+            >
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#D97706" }} />
+              {clientStatusCounts.desatualizado}
+            </button>
+            <button
+              onClick={() => setClientStatusFilter(f => f === "tarefa_atrasada" ? "todos" : "tarefa_atrasada")}
+              className="flex items-center gap-1"
+              style={{ fontSize: 11, fontWeight: 600, color: "#DC2626", background: "none", border: "none", cursor: "pointer" }}
+            >
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#DC2626" }} />
+              {clientStatusCounts.tarefa_atrasada}
+            </button>
+            <div className="flex-1" />
+            {hasAnyFilter && (
+              <button onClick={clearAllFilters} style={{ fontSize: 10, fontWeight: 600, color: "#DC2626", background: "none", border: "none", cursor: "pointer" }}>
+                <X style={{ height: 10, width: 10 }} /> Limpar
+              </button>
+            )}
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              style={{ width: 24, height: 24, borderRadius: 6, border: "1px solid #E2E8F0", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+            >
+              <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#64748B" }} />
+            </button>
+          </div>
+        </div>
+
+        {/* ── TABLET HEADER (md to lg) ── */}
+        <div className="hidden md:block lg:hidden">
+          <div className="flex items-center gap-2" style={{ height: 48, padding: "0 16px", borderBottom: "1px solid #E2E8F0" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#1E293B" }}>Pipeline</span>
+            <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{filteredLeads.length}</span>
+
+            <div className="flex-1" />
+
+            {/* Tab switcher - icons only */}
+            <div className="flex items-center" style={{ background: "#F1F5F9", borderRadius: 7, padding: 2 }}>
+              {[
+                { key: "kanban", icon: <LayoutGrid style={{ height: 12, width: 12 }} />, label: "Kanban" },
+                { key: "inteligencia", icon: <Brain style={{ height: 12, width: 12 }} />, label: "Intel" },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  title={tab.label}
+                  className="flex items-center gap-1"
+                  style={{
+                    padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    background: activeTab === tab.key ? "#fff" : "transparent",
+                    boxShadow: activeTab === tab.key ? "0 1px 3px rgba(0,0,0,0.09)" : "none",
+                    color: activeTab === tab.key ? "#1E293B" : "#64748B",
+                    border: "none", cursor: "pointer",
+                  }}
+                >
+                  {tab.icon}
+                  <span className="hidden xl:inline">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {(isAdmin || isGestor) && (
+              <Select value={corretorFilter} onValueChange={setCorretorFilter}>
+                <SelectTrigger
+                  className="h-7 text-[10px] w-[110px] shrink-0"
+                  style={{
+                    borderRadius: 7, fontSize: 10, fontWeight: 600,
+                    border: corretorFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
+                    background: corretorFilter !== "all" ? "#EFF6FF" : "#fff",
+                    color: corretorFilter !== "all" ? "#1D4ED8" : "#64748B",
+                  }}
+                >
+                  <SelectValue placeholder="Corretores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {isAdmin && <SelectItem value="sem_corretor">Sem corretor</SelectItem>}
+                  {corretorOptions.map(([id, nome]) => (
+                    <SelectItem key={id} value={id}>{nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <PipelineAdvancedFilters
+              filters={filters}
+              onChange={setFilters}
+              stages={pipeline.stages}
+              segmentos={pipeline.segmentos}
+              leads={pipeline.leads}
+              corretorNomes={pipeline.corretorNomes}
+              isManager={isGestor || isAdmin}
+            />
+
+            <div className="relative" style={{ width: 120 }}>
+              <Search className="absolute top-1/2 -translate-y-1/2" style={{ left: 8, height: 12, width: 12, color: "#94A3B8" }} />
               <input
                 placeholder="Buscar..."
                 value={filters.search}
                 onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
                 className="w-full outline-none"
                 style={{
-                  height: 36, borderRadius: 10, background: "#F8FAFC",
-                  border: "1px solid #E2E8F0", paddingLeft: 32, paddingRight: 10,
-                  fontSize: 13, fontWeight: 500, fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  transition: "all 0.2s ease",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#BFDBFE";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.09)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#E2E8F0";
-                  e.currentTarget.style.boxShadow = "none";
+                  height: 30, borderRadius: 7, background: "#F8FAFC",
+                  border: "1px solid #E2E8F0", paddingLeft: 26, paddingRight: 8,
+                  fontSize: 11, fontWeight: 500,
                 }}
               />
-              {filters.search && (
-                <button onClick={() => setFilters(f => ({ ...f, search: "" }))} className="absolute right-2 top-1/2 -translate-y-1/2">
-                  <X className="h-3 w-3" style={{ color: "#94A3B8" }} />
-                </button>
-              )}
             </div>
+
+            <button onClick={handleRefresh} disabled={refreshing} style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid #E2E8F0", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#64748B" }} />
+            </button>
 
             {canAdd && activeTab === "kanban" && (
               <button
                 onClick={() => setAddOpen(true)}
-                className="whitespace-nowrap"
                 style={{
-                  background: "#2563EB", color: "#fff", borderRadius: 10,
-                  padding: "8px 14px", fontWeight: 700, fontSize: 12, border: "none",
-                  boxShadow: "0 2px 8px rgba(37,99,235,0.28)", cursor: "pointer",
-                  transition: "all 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#1D4ED8";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(37,99,235,0.35)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#2563EB";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(37,99,235,0.28)";
+                  background: "#2563EB", color: "#fff", borderRadius: 8,
+                  padding: "6px 10px", fontWeight: 700, fontSize: 11, border: "none",
+                  cursor: "pointer", whiteSpace: "nowrap",
                 }}
               >
-                <span className="hidden sm:inline">＋ Novo Lead</span>
-                <span className="sm:hidden">＋</span>
+                + Novo Lead
+              </button>
+            )}
+          </div>
+
+          {/* Tablet line 2: status chips + fila ceo */}
+          <div className="flex items-center gap-2 overflow-x-auto" style={{ height: 32, padding: "0 16px" }}>
+            {/* Status chips */}
+            {[
+              { key: "em_dia" as const, label: "Em dia", color: "#059669", bg: "#ECFDF5", border: "#A7F3D0", count: clientStatusCounts.em_dia },
+              { key: "desatualizado" as const, label: "Desatual.", color: "#D97706", bg: "#FFFBEB", border: "#FDE68A", count: clientStatusCounts.desatualizado },
+              { key: "tarefa_atrasada" as const, label: "Atrasado", color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", count: clientStatusCounts.tarefa_atrasada },
+            ].map(chip => (
+              <button
+                key={chip.key}
+                onClick={() => setClientStatusFilter(f => f === chip.key ? "todos" : chip.key)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 4,
+                  padding: "2px 8px", borderRadius: 100, fontSize: 10, fontWeight: 700,
+                  background: clientStatusFilter === chip.key ? chip.bg : "#fff",
+                  color: chip.color,
+                  border: clientStatusFilter === chip.key ? `1.5px solid ${chip.border}` : "1px solid #E2E8F0",
+                  cursor: "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: chip.color }} />
+                {chip.label} {chip.count > 0 && chip.count}
+              </button>
+            ))}
+
+            {isAdmin && filaCeoCount > 0 && (
+              <>
+                <button
+                  onClick={() => setFilaCeoFilter(f => !f)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 3,
+                    padding: "2px 8px", borderRadius: 100, fontSize: 10, fontWeight: 700,
+                    background: filaCeoFilter ? "#F5F3FF" : "#fff",
+                    color: filaCeoFilter ? "#7C3AED" : "#94A3B8",
+                    border: filaCeoFilter ? "1.5px solid #C4B5FD" : "1px solid #E2E8F0",
+                    cursor: "pointer", whiteSpace: "nowrap",
+                  }}
+                >
+                  📥 CEO {filaCeoCount}
+                </button>
+                <button
+                  onClick={() => setDispatchOpen(true)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 3,
+                    height: 20, padding: "0 6px", borderRadius: 6, fontSize: 9, fontWeight: 700,
+                    background: "#7C3AED", color: "#fff", border: "none", cursor: "pointer",
+                  }}
+                >
+                  <Rocket style={{ height: 10, width: 10 }} /> Disparar
+                </button>
+              </>
+            )}
+
+            {isAdmin && activeTab === "kanban" && (
+              <button
+                onClick={() => { if (selectionMode) { clearSelection(); } else { setSelectionMode(true); } }}
+                style={{
+                  height: 22, borderRadius: 6, padding: "0 8px",
+                  border: selectionMode ? "1px solid #2563EB" : "1px solid #E2E8F0",
+                  background: selectionMode ? "#EFF6FF" : "#fff",
+                  color: selectionMode ? "#2563EB" : "#64748B",
+                  fontSize: 10, fontWeight: 600, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 3,
+                }}
+              >
+                {selectionMode ? <CheckSquare style={{ height: 10, width: 10 }} /> : <Square style={{ height: 10, width: 10 }} />}
+                {selectionMode ? "Selec..." : "Selec."}
               </button>
             )}
 
-            <div
-              style={{
-                width: 34, height: 34, borderRadius: "50%",
-                background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
-                boxShadow: "0 0 0 2px #fff, 0 0 0 3.5px #E2E8F0",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 13, fontWeight: 700, color: "#fff",
-                flexShrink: 0,
-              }}
-            >
-              {authUser?.email?.[0]?.toUpperCase() || "U"}
-            </div>
+            {hasAnyFilter && (
+              <button onClick={clearAllFilters} style={{ fontSize: 9, fontWeight: 600, color: "#DC2626", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 2 }}>
+                <X style={{ height: 9, width: 9 }} /> Limpar
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Line 2 — 44px — hidden on mobile when kanban */}
-        <div
-          className={`flex items-center justify-between overflow-x-auto ${isMobile && activeTab === "kanban" ? "hidden" : ""}`}
-          style={{ minHeight: 44, padding: "0 14px", gap: 6 }}
-        >
-          {/* LEFT: Segmented control + filters */}
-          <div className="flex items-center flex-shrink-0" style={{ gap: 6 }}>
-            {/* Segmented Control */}
-            <div
-              className="flex items-center"
-              style={{ background: "#F1F5F9", borderRadius: 9, padding: 3 }}
-            >
-              {[
-                { key: "kanban", label: "Kanban", icon: <LayoutGrid style={{ height: 12, width: 12 }} /> },
-                { key: "inteligencia", label: "Inteligência", icon: <Brain style={{ height: 12, width: 12 }} /> },
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className="flex items-center gap-1.5"
-                  style={{
-                    padding: "4px 12px", borderRadius: 7, fontSize: 12, fontWeight: 600,
-                    background: activeTab === tab.key ? "#fff" : "transparent",
-                    boxShadow: activeTab === tab.key ? "0 1px 3px rgba(0,0,0,0.09)" : "none",
-                    color: activeTab === tab.key ? "#1E293B" : "#64748B",
-                    border: "none", cursor: "pointer",
-                    transition: "all 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              ))}
+        {/* ── DESKTOP HEADER (lg+) ── */}
+        <div className="hidden lg:block">
+          {/* Line 1 — Title + Filters + Search + Novo Lead */}
+          <div
+            className="flex items-center"
+            style={{ height: 52, padding: "0 28px", borderBottom: "1px solid #E2E8F0", gap: 10 }}
+          >
+            {/* LEFT: Title */}
+            <div className="flex items-center flex-shrink-0 gap-2">
+              <div className="h-7 w-7 rounded-lg bg-[#4F46E5] flex items-center justify-center">
+                <LayoutGrid className="h-3.5 w-3.5 text-white" />
+              </div>
+              <span style={{ fontSize: 18, fontWeight: 700, color: "#1E293B", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>
+                Pipeline de Leads
+              </span>
+              <span className="text-[13px] text-[#94a3b8] font-medium">{filteredLeads.length} leads</span>
             </div>
 
-            {activeTab === "inteligencia" && (
-              <div className="flex items-center" style={{ background: "#F1F5F9", borderRadius: 9, padding: 3, marginLeft: 4 }}>
-                <button
-                  onClick={() => setIntelView("funil")}
-                  style={{
-                    padding: "4px 10px", borderRadius: 7, fontSize: 11, fontWeight: 600,
-                    background: intelView === "funil" ? "#fff" : "transparent",
-                    boxShadow: intelView === "funil" ? "0 1px 3px rgba(0,0,0,0.09)" : "none",
-                    color: intelView === "funil" ? "#1E293B" : "#64748B",
-                    border: "none", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  <BarChart3 className="h-3 w-3 inline mr-1" />Funil
-                </button>
-                <button
-                  onClick={() => setIntelView("radar")}
-                  style={{
-                    padding: "4px 10px", borderRadius: 7, fontSize: 11, fontWeight: 600,
-                    background: intelView === "radar" ? "#fff" : "transparent",
-                    boxShadow: intelView === "radar" ? "0 1px 3px rgba(0,0,0,0.09)" : "none",
-                    color: intelView === "radar" ? "#1E293B" : "#64748B",
-                    border: "none", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  <Radar className="h-3 w-3 inline mr-1" />Radar
-                </button>
-              </div>
-            )}
-
-            {/* Mobile-only filters (hidden on desktop since they're in Line 1) */}
-            <div className="flex md:hidden items-center" style={{ gap: 6 }}>
+            {/* CENTER: Corretor + Campaign + Filters */}
+            <div className="flex items-center flex-1 min-w-0 justify-center" style={{ gap: 6 }}>
               {(isAdmin || isGestor) && (
                 <Select value={corretorFilter} onValueChange={setCorretorFilter}>
                   <SelectTrigger
-                    className="h-7 text-[11px] w-[140px] shrink-0"
+                    className="h-8 text-[11px] w-[170px] shrink-0"
                     style={{
                       borderRadius: 8, fontSize: 11, fontWeight: 600,
                       border: corretorFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
@@ -504,7 +581,7 @@ export default function PipelineKanban() {
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
                     }}
                   >
-                    <SelectValue placeholder="Corretores" />
+                    <SelectValue placeholder="Todos os corretores" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os corretores</SelectItem>
@@ -515,6 +592,32 @@ export default function PipelineKanban() {
                   </SelectContent>
                 </Select>
               )}
+
+              {Object.keys(campaignTagCounts).length > 0 && (
+                <Select value={campaignTagFilter} onValueChange={setCampaignTagFilter}>
+                  <SelectTrigger
+                    className="h-8 text-[11px] w-[160px] shrink-0"
+                    style={{
+                      borderRadius: 8, fontSize: 11, fontWeight: 600,
+                      border: campaignTagFilter !== "all" ? "1px solid #BFDBFE" : "1px solid #E2E8F0",
+                      background: campaignTagFilter !== "all" ? "#EFF6FF" : "#fff",
+                      color: campaignTagFilter !== "all" ? "#1D4ED8" : "#64748B",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}
+                  >
+                    <SelectValue placeholder="🏷️ Campanha" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">🏷️ Todas as campanhas</SelectItem>
+                    {CAMPAIGN_TAGS.filter(ct => campaignTagCounts[ct.tag]).map(ct => (
+                      <SelectItem key={ct.tag} value={ct.tag}>
+                        {ct.label} ({campaignTagCounts[ct.tag]})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
               <PipelineAdvancedFilters
                 filters={filters}
                 onChange={setFilters}
@@ -526,138 +629,265 @@ export default function PipelineKanban() {
               />
             </div>
 
-            {/* Refresh */}
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              style={{
-                width: 30, height: 30, borderRadius: 8,
-                border: "1px solid #E2E8F0", background: "#fff",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer",
-              }}
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#64748B" }} />
-            </button>
+            {/* RIGHT: Search + Novo Lead + Avatar */}
+            <div className="flex items-center flex-shrink-0 ml-auto" style={{ gap: 8 }}>
+              <div className="relative" style={{ width: filters.search ? 232 : 192, transition: "width 0.2s ease" }}>
+                <Search className="absolute top-1/2 -translate-y-1/2" style={{ left: 10, height: 14, width: 14, color: "#94A3B8" }} />
+                <input
+                  placeholder="Buscar..."
+                  value={filters.search}
+                  onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+                  className="w-full outline-none"
+                  style={{
+                    height: 36, borderRadius: 10, background: "#F8FAFC",
+                    border: "1px solid #E2E8F0", paddingLeft: 32, paddingRight: 10,
+                    fontSize: 13, fontWeight: 500, fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    transition: "all 0.2s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#BFDBFE";
+                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.09)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#E2E8F0";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                />
+                {filters.search && (
+                  <button onClick={() => setFilters(f => ({ ...f, search: "" }))} className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <X className="h-3 w-3" style={{ color: "#94A3B8" }} />
+                  </button>
+                )}
+              </div>
 
-            {isAdmin && activeTab === "kanban" && (
-              <button
-                onClick={() => {
-                  if (selectionMode) { clearSelection(); } else { setSelectionMode(true); }
-                }}
+              {canAdd && activeTab === "kanban" && (
+                <button
+                  onClick={() => setAddOpen(true)}
+                  className="whitespace-nowrap"
+                  style={{
+                    background: "#2563EB", color: "#fff", borderRadius: 10,
+                    padding: "8px 14px", fontWeight: 700, fontSize: 12, border: "none",
+                    boxShadow: "0 2px 8px rgba(37,99,235,0.28)", cursor: "pointer",
+                    transition: "all 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#1D4ED8";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(37,99,235,0.35)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#2563EB";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(37,99,235,0.28)";
+                  }}
+                >
+                  ＋ Novo Lead
+                </button>
+              )}
+
+              <div
                 style={{
-                  height: 30, borderRadius: 8, padding: "0 10px",
-                  border: selectionMode ? "1px solid #2563EB" : "1px solid #E2E8F0",
-                  background: selectionMode ? "#EFF6FF" : "#fff",
-                  color: selectionMode ? "#2563EB" : "#64748B",
-                  fontSize: 11, fontWeight: 600, cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: 4,
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  width: 34, height: 34, borderRadius: "50%",
+                  background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+                  boxShadow: "0 0 0 2px #fff, 0 0 0 3.5px #E2E8F0",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 700, color: "#fff",
+                  flexShrink: 0,
                 }}
               >
-                {selectionMode ? <CheckSquare style={{ height: 12, width: 12 }} /> : <Square style={{ height: 12, width: 12 }} />}
-                <span className="hidden sm:inline">{selectionMode ? "Selecionando..." : "Selecionar"}</span>
-              </button>
-            )}
+                {authUser?.email?.[0]?.toUpperCase() || "U"}
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT: Lead count + status chips */}
-          <div className="flex items-center" style={{ gap: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#94A3B8" }}>
-              {hasAnyFilter
-                ? `${filteredLeads.length}/${pipeline.leads.length}`
-                : filteredLeads.length.toLocaleString("pt-BR")} leads
-            </span>
+          {/* Line 2 — Tabs + Status chips */}
+          <div
+            className="flex items-center justify-between overflow-x-auto"
+            style={{ minHeight: 44, padding: "0 28px", gap: 6 }}
+          >
+            {/* LEFT: Segmented control + filters */}
+            <div className="flex items-center flex-shrink-0" style={{ gap: 6 }}>
+              <div className="flex items-center" style={{ background: "#F1F5F9", borderRadius: 9, padding: 3 }}>
+                {[
+                  { key: "kanban", label: "Kanban", icon: <LayoutGrid style={{ height: 12, width: 12 }} /> },
+                  { key: "inteligencia", label: "Inteligência", icon: <Brain style={{ height: 12, width: 12 }} /> },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className="flex items-center gap-1.5"
+                    style={{
+                      padding: "4px 12px", borderRadius: 7, fontSize: 12, fontWeight: 600,
+                      background: activeTab === tab.key ? "#fff" : "transparent",
+                      boxShadow: activeTab === tab.key ? "0 1px 3px rgba(0,0,0,0.09)" : "none",
+                      color: activeTab === tab.key ? "#1E293B" : "#64748B",
+                      border: "none", cursor: "pointer",
+                      transition: "all 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-            {/* Fila CEO */}
-            {isAdmin && filaCeoCount > 0 && (
-              <>
-                <button
-                  onClick={() => setFilaCeoFilter(f => !f)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 4,
-                    padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
-                    background: filaCeoFilter ? "#F5F3FF" : "#fff",
-                    color: filaCeoFilter ? "#7C3AED" : "#94A3B8",
-                    border: filaCeoFilter ? "1.5px solid #C4B5FD" : "1px solid #E2E8F0",
-                    cursor: "pointer", transition: "all 0.15s ease",
-                  }}
-                >
-                  📥 Fila CEO <span style={{ fontWeight: 800 }}>{filaCeoCount}</span>
-                </button>
-                <button
-                  onClick={() => setDispatchOpen(true)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 4,
-                    height: 24, padding: "0 8px", borderRadius: 8, fontSize: 10, fontWeight: 700,
-                    background: "#7C3AED", color: "#fff", border: "none", cursor: "pointer",
-                  }}
-                >
-                  <Rocket style={{ height: 12, width: 12 }} /> Disparar
-                </button>
-              </>
-            )}
+              {activeTab === "inteligencia" && (
+                <div className="flex items-center" style={{ background: "#F1F5F9", borderRadius: 9, padding: 3, marginLeft: 4 }}>
+                  <button
+                    onClick={() => setIntelView("funil")}
+                    style={{
+                      padding: "4px 10px", borderRadius: 7, fontSize: 11, fontWeight: 600,
+                      background: intelView === "funil" ? "#fff" : "transparent",
+                      boxShadow: intelView === "funil" ? "0 1px 3px rgba(0,0,0,0.09)" : "none",
+                      color: intelView === "funil" ? "#1E293B" : "#64748B",
+                      border: "none", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}
+                  >
+                    <BarChart3 className="h-3 w-3 inline mr-1" />Funil
+                  </button>
+                  <button
+                    onClick={() => setIntelView("radar")}
+                    style={{
+                      padding: "4px 10px", borderRadius: 7, fontSize: 11, fontWeight: 600,
+                      background: intelView === "radar" ? "#fff" : "transparent",
+                      boxShadow: intelView === "radar" ? "0 1px 3px rgba(0,0,0,0.09)" : "none",
+                      color: intelView === "radar" ? "#1E293B" : "#64748B",
+                      border: "none", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}
+                  >
+                    <Radar className="h-3 w-3 inline mr-1" />Radar
+                  </button>
+                </div>
+              )}
 
-            {/* Status chips */}
-            <button
-              onClick={() => setClientStatusFilter(f => f === "em_dia" ? "todos" : "em_dia")}
-              style={{
-                display: "flex", alignItems: "center", gap: 5,
-                padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
-                background: clientStatusFilter === "em_dia" ? "#ECFDF5" : "#fff",
-                color: "#059669",
-                border: clientStatusFilter === "em_dia" ? "1.5px solid #A7F3D0" : "1px solid #E2E8F0",
-                cursor: "pointer", transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(0.95)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.transform = "none"; }}
-            >
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#059669" }} />
-              Em dia {clientStatusCounts.em_dia > 0 && clientStatusCounts.em_dia}
-            </button>
-            <button
-              onClick={() => setClientStatusFilter(f => f === "desatualizado" ? "todos" : "desatualizado")}
-              style={{
-                display: "flex", alignItems: "center", gap: 5,
-                padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
-                background: clientStatusFilter === "desatualizado" ? "#FFFBEB" : "#fff",
-                color: "#D97706",
-                border: clientStatusFilter === "desatualizado" ? "1.5px solid #FDE68A" : "1px solid #E2E8F0",
-                cursor: "pointer", transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(0.95)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.transform = "none"; }}
-            >
-              Desatualizado {clientStatusCounts.desatualizado > 0 && clientStatusCounts.desatualizado}
-            </button>
-            <button
-              onClick={() => setClientStatusFilter(f => f === "tarefa_atrasada" ? "todos" : "tarefa_atrasada")}
-              style={{
-                display: "flex", alignItems: "center", gap: 5,
-                padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
-                background: clientStatusFilter === "tarefa_atrasada" ? "#FEF2F2" : "#fff",
-                color: "#DC2626",
-                border: clientStatusFilter === "tarefa_atrasada" ? "1.5px solid #FECACA" : "1px solid #E2E8F0",
-                cursor: "pointer", transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(0.95)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.transform = "none"; }}
-            >
-              Atrasado {clientStatusCounts.tarefa_atrasada > 0 && clientStatusCounts.tarefa_atrasada}
-            </button>
-
-            {hasAnyFilter && (
+              {/* Refresh */}
               <button
-                onClick={clearAllFilters}
+                onClick={handleRefresh}
+                disabled={refreshing}
                 style={{
-                  fontSize: 10, fontWeight: 600, color: "#DC2626",
-                  background: "none", border: "none", cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: 2,
+                  width: 30, height: 30, borderRadius: 8,
+                  border: "1px solid #E2E8F0", background: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer",
                 }}
               >
-                <X style={{ height: 10, width: 10 }} /> Limpar
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#64748B" }} />
               </button>
-            )}
+
+              {isAdmin && activeTab === "kanban" && (
+                <button
+                  onClick={() => {
+                    if (selectionMode) { clearSelection(); } else { setSelectionMode(true); }
+                  }}
+                  style={{
+                    height: 30, borderRadius: 8, padding: "0 10px",
+                    border: selectionMode ? "1px solid #2563EB" : "1px solid #E2E8F0",
+                    background: selectionMode ? "#EFF6FF" : "#fff",
+                    color: selectionMode ? "#2563EB" : "#64748B",
+                    fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 4,
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                >
+                  {selectionMode ? <CheckSquare style={{ height: 12, width: 12 }} /> : <Square style={{ height: 12, width: 12 }} />}
+                  {selectionMode ? "Selecionando..." : "Selecionar"}
+                </button>
+              )}
+            </div>
+
+            {/* RIGHT: Lead count + status chips */}
+            <div className="flex items-center" style={{ gap: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#94A3B8" }}>
+                {hasAnyFilter
+                  ? `${filteredLeads.length}/${pipeline.leads.length}`
+                  : filteredLeads.length.toLocaleString("pt-BR")} leads
+              </span>
+
+              {isAdmin && filaCeoCount > 0 && (
+                <>
+                  <button
+                    onClick={() => setFilaCeoFilter(f => !f)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 4,
+                      padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
+                      background: filaCeoFilter ? "#F5F3FF" : "#fff",
+                      color: filaCeoFilter ? "#7C3AED" : "#94A3B8",
+                      border: filaCeoFilter ? "1.5px solid #C4B5FD" : "1px solid #E2E8F0",
+                      cursor: "pointer",
+                    }}
+                  >
+                    📥 Fila CEO <span style={{ fontWeight: 800 }}>{filaCeoCount}</span>
+                  </button>
+                  <button
+                    onClick={() => setDispatchOpen(true)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 4,
+                      height: 24, padding: "0 8px", borderRadius: 8, fontSize: 10, fontWeight: 700,
+                      background: "#7C3AED", color: "#fff", border: "none", cursor: "pointer",
+                    }}
+                  >
+                    <Rocket style={{ height: 12, width: 12 }} /> Disparar
+                  </button>
+                </>
+              )}
+
+              {/* Status chips */}
+              <button
+                onClick={() => setClientStatusFilter(f => f === "em_dia" ? "todos" : "em_dia")}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
+                  background: clientStatusFilter === "em_dia" ? "#ECFDF5" : "#fff",
+                  color: "#059669",
+                  border: clientStatusFilter === "em_dia" ? "1.5px solid #A7F3D0" : "1px solid #E2E8F0",
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#059669" }} />
+                Em dia {clientStatusCounts.em_dia > 0 && clientStatusCounts.em_dia}
+              </button>
+              <button
+                onClick={() => setClientStatusFilter(f => f === "desatualizado" ? "todos" : "desatualizado")}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
+                  background: clientStatusFilter === "desatualizado" ? "#FFFBEB" : "#fff",
+                  color: "#D97706",
+                  border: clientStatusFilter === "desatualizado" ? "1.5px solid #FDE68A" : "1px solid #E2E8F0",
+                  cursor: "pointer",
+                }}
+              >
+                Desatualizado {clientStatusCounts.desatualizado > 0 && clientStatusCounts.desatualizado}
+              </button>
+              <button
+                onClick={() => setClientStatusFilter(f => f === "tarefa_atrasada" ? "todos" : "tarefa_atrasada")}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
+                  background: clientStatusFilter === "tarefa_atrasada" ? "#FEF2F2" : "#fff",
+                  color: "#DC2626",
+                  border: clientStatusFilter === "tarefa_atrasada" ? "1.5px solid #FECACA" : "1px solid #E2E8F0",
+                  cursor: "pointer",
+                }}
+              >
+                Atrasado {clientStatusCounts.tarefa_atrasada > 0 && clientStatusCounts.tarefa_atrasada}
+              </button>
+
+              {hasAnyFilter && (
+                <button
+                  onClick={clearAllFilters}
+                  style={{
+                    fontSize: 10, fontWeight: 600, color: "#DC2626",
+                    background: "none", border: "none", cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 2,
+                  }}
+                >
+                  <X style={{ height: 10, width: 10 }} /> Limpar
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
