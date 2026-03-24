@@ -415,7 +415,7 @@ export default function CeoDashboard() {
 
 
       {/* ─── SEÇÃO 1: ROLETA PENDENTES ─── */}
-      <Card className={`bg-white dark:bg-white/[0.04] border border-[#eeeeee] dark:border-white/[0.07] rounded-[14px] ${localPendentes.length > 0 ? "border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)] animate-pulse-border" : "border-emerald-500/30"}`}>
+      <Card className={`bg-[#f7f7fb] dark:bg-white/[0.04] border border-[#e8e8f0] dark:border-white/[0.07] rounded-[14px] shadow-none ${localPendentes.length > 0 ? "border-primary/50" : "border-emerald-500/30"}`}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
