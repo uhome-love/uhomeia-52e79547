@@ -221,7 +221,27 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const origens = Array.from(origMap.entries()).map(([origem, count]) => ({ origem, count })).sort((a, b) => b.count - a.count);
       const leadsPorEmpreendimento = Array.from(empMap.entries()).map(([emp, d]) => ({ emp, count: d.leads })).sort((a, b) => b.count - a.count).slice(0, 10);
 
-      return { pipelineStages: stageData, campanhas, alertas, origens, leadsPorEmpreendimento };
+      // Leads por corretor
+      const corrLeadMap = new Map<string, number>();
+      const corrIdSet = new Set<string>();
+      for (const l of (leads || [])) {
+        if (l.corretor_id) {
+          corrLeadMap.set(l.corretor_id, (corrLeadMap.get(l.corretor_id) || 0) + 1);
+          corrIdSet.add(l.corretor_id);
+        }
+      }
+      const corrIds = [...corrIdSet];
+      let leadsPorCorretor: { nome: string; count: number }[] = [];
+      if (corrIds.length > 0) {
+        const { data: corrProfs } = await supabase.from("profiles").select("user_id, nome").in("user_id", corrIds);
+        const nameMap = new Map((corrProfs || []).map(p => [p.user_id, p.nome || "Corretor"]));
+        leadsPorCorretor = Array.from(corrLeadMap.entries())
+          .map(([id, count]) => ({ nome: nameMap.get(id) || "Corretor", count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
+      }
+
+      return { pipelineStages: stageData, campanhas, alertas, origens, leadsPorEmpreendimento, leadsPorCorretor };
     },
     enabled: !!user,
     staleTime: 60_000,
