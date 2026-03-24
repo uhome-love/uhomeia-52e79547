@@ -16,6 +16,7 @@ import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { KpiCard, KpiGrid } from "@/components/ui/KpiCard";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const CANAL_COLORS: Record<string, string> = {
   meta_ads: "#3b82f6",

@@ -10,6 +10,8 @@ import {
   CalendarDays, CalendarCheck, Briefcase, TrendingUp, FileSignature, DollarSign,
   ArrowUp, ArrowDown, ChevronDown, ChevronUp,
 } from "lucide-react";
+import { FileText } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid, Legend,
