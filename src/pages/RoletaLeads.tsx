@@ -228,22 +228,13 @@ function CeoView() {
               })}
             </div>
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="leads">
-          <LeadsGeradosTab />
-        </TabsContent>
-
-        <TabsContent value="roletagens">
-          <RoletagensTab view="roletagens" />
-        </TabsContent>
-        <TabsContent value="perdidos">
-          <RoletagensTab view="perdidos" />
-        </TabsContent>
-        <TabsContent value="inteligencia">
-          <LeadIntelligenceTab />
-        </TabsContent>
-      </Tabs>
+      {activeTab === "leads" && <LeadsGeradosTab />}
+      {activeTab === "roletagens" && <RoletagensTab view="roletagens" />}
+      {activeTab === "perdidos" && <RoletagensTab view="perdidos" />}
+      {activeTab === "inteligencia" && <LeadIntelligenceTab />}
 
       {/* Modal: Incluir manualmente na roleta */}
       <Dialog open={showIncluirModal} onOpenChange={setShowIncluirModal}>
