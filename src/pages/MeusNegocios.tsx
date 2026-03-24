@@ -934,12 +934,11 @@ export default function MeusNegocios() {
                 key={fase.key}
                 className={`flex flex-col shrink-0 h-full rounded-xl transition-all duration-200 ${
                   isDragOver ? "scale-[1.01]" : ""
-                }`}
+                } ${isDragOver ? "" : "bg-[#f7f7fb] dark:bg-[rgba(255,255,255,0.02)] border border-[#e8e8f0] dark:border-white/[0.06]"}`}
                 style={{
                   width: 300,
                   scrollSnapAlign: "start",
-                  background: isDragOver ? `${fase.cor}10` : "rgba(255,255,255,0.02)",
-                  border: isDragOver ? `2px solid ${fase.cor}50` : "1px solid rgba(255,255,255,0.06)",
+                  ...(isDragOver ? { background: `${fase.cor}10`, border: `2px solid ${fase.cor}50` } : {}),
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverFase(fase.key); }}
                 onDragLeave={() => setDragOverFase(null)}
