@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Settings, Play, Pause, StopCircle, Loader2, Trash2, FolderOpen, Tag, ChevronDown, ChevronRight } from "lucide-react";
+import { Settings, Play, Pause, StopCircle, Loader2, Trash2, FolderOpen, Tag, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useState, useCallback, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -56,13 +56,14 @@ function ListaStats({ listaId }: { listaId: string }) {
   );
 }
 
-function ListaCard({ lista, isAdmin, isSelected, onToggle, onUpdate, onDelete }: {
+function ListaCard({ lista, isAdmin, isSelected, onToggle, onUpdate, onDelete, onClean }: {
   lista: OALista;
   isAdmin: boolean;
   isSelected: boolean;
   onToggle: () => void;
   onUpdate: (id: string, data: any) => void;
   onDelete: (id: string) => void;
+  onClean: (id: string) => void;
 }) {
   const st = STATUS_CONFIG[lista.status] || STATUS_CONFIG.pendente;
   return (
@@ -115,6 +116,18 @@ function ListaCard({ lista, isAdmin, isSelected, onToggle, onUpdate, onDelete }:
               <Button
                 size="sm"
                 variant="outline"
+                className="gap-1 text-xs h-7 text-blue-500 border-blue-500/30 hover:bg-blue-500/10"
+                onClick={() => {
+                  if (confirm(`Limpar leads já contatados (descartados/aproveitados) da lista "${lista.nome}"?`)) {
+                    onClean(lista.id);
+                  }
+                }}
+              >
+                <Sparkles className="h-3 w-3" /> Limpar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 className="gap-1 text-xs h-7 text-destructive border-destructive/30 hover:bg-destructive/10"
                 onClick={() => {
                   if (confirm(`Excluir a lista "${lista.nome}" e todos os seus leads? Esta ação não pode ser desfeita.`)) {
@@ -142,6 +155,47 @@ export default function CampaignManager() {
   const [campanhaName, setCampanhaName] = useState("");
   const [assigningCampanha, setAssigningCampanha] = useState(false);
   const [collapsedCampanhas, setCollapsedCampanhas] = useState<Set<string>>(new Set());
+
+  const queryClient = useQueryClient();
+
+  const handleCleanLista = useCallback(async (listaId: string) => {
+    const { data: removed, error } = await supabase
+      .from("oferta_ativa_leads")
+      .delete()
+      .eq("lista_id", listaId)
+      .in("status", ["descartado", "aproveitado", "concluido"])
+      .select("id");
+    if (error) { toast.error("Erro ao limpar lista"); console.error(error); return; }
+    const count = removed?.length || 0;
+    if (count > 0) {
+      // Update total_leads count
+      const { data: currentLista } = await supabase
+        .from("oferta_ativa_listas")
+        .select("total_leads")
+        .eq("id", listaId)
+        .single();
+      const newTotal = Math.max(0, (currentLista?.total_leads || 0) - count);
+      await supabase.from("oferta_ativa_listas").update({ total_leads: newTotal } as any).eq("id", listaId);
+      queryClient.invalidateQueries({ queryKey: ["oa-listas"] });
+      queryClient.invalidateQueries({ queryKey: ["oa-lista-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["oa-leads"] });
+    }
+    toast.success(`${count} lead(s) removidos da lista!`);
+  }, [queryClient]);
+
+  const handleBulkClean = useCallback(async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Limpar leads já contatados de ${selected.size} lista(s)? Leads descartados e aproveitados serão removidos.`)) return;
+    setBulkActioning(true);
+    try {
+      for (const id of selected) await handleCleanLista(id);
+      toast.success(`${selected.size} lista(s) limpas!`);
+    } catch {
+      toast.error("Erro ao limpar listas.");
+    } finally {
+      setBulkActioning(false);
+    }
+  }, [selected, handleCleanLista]);
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -325,6 +379,16 @@ export default function CampaignManager() {
               </Button>
               <Button
                 size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs h-7 text-blue-500 border-blue-500/30 hover:bg-blue-500/10"
+                onClick={handleBulkClean}
+                disabled={bulkActioning}
+              >
+                {bulkActioning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                Limpar Contatados
+              </Button>
+              <Button
+                size="sm"
                 variant="destructive"
                 className="gap-1.5 text-xs h-7 ml-auto"
                 onClick={handleBulkDelete}
@@ -387,6 +451,7 @@ export default function CampaignManager() {
                     onToggle={() => toggleSelect(lista.id)}
                     onUpdate={(id, data) => updateLista(id, data)}
                     onDelete={(id) => { deleteLista(id); setSelected(prev => { const n = new Set(prev); n.delete(id); return n; }); }}
+                    onClean={handleCleanLista}
                   />
                 ))}
               </div>
@@ -408,6 +473,7 @@ export default function CampaignManager() {
           onToggle={() => toggleSelect(lista.id)}
           onUpdate={(id, data) => updateLista(id, data)}
           onDelete={(id) => { deleteLista(id); setSelected(prev => { const n = new Set(prev); n.delete(id); return n; }); }}
+          onClean={handleCleanLista}
         />
       ))}
 
