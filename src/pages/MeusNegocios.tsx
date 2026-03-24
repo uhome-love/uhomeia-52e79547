@@ -870,9 +870,9 @@ export default function MeusNegocios() {
         </div>
 
         {showFilters && (
-          <div className="flex items-center gap-2 flex-wrap p-3 mt-2 rounded-xl border border-white/10 animate-fade-in" style={{ background: "rgba(255,255,255,0.04)" }}>
+          <div className="flex items-center gap-2 flex-wrap p-3 mt-2 rounded-xl border border-[#e8e8f0] dark:border-white/10 animate-fade-in bg-white dark:bg-[rgba(255,255,255,0.04)]">
             <Select value={filterCorretor} onValueChange={setFilterCorretor}>
-              <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs border-white/10 text-white/70" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs border-[#e8e8f0] dark:border-white/10 text-[#0a0a0a] dark:text-white/70 bg-[#f7f7fb] dark:bg-[rgba(255,255,255,0.06)]">
                 <SelectValue placeholder="Corretor" />
               </SelectTrigger>
               <SelectContent>
