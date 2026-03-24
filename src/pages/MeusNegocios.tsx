@@ -225,8 +225,8 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           </div>
 
           {/* Row 2: Imóvel */}
-          <p className="text-[12px] text-[#71717a] truncate">
-            {negocio.empreendimento || <span className="italic text-amber-400/80 font-semibold">Sem imóvel</span>}
+          <p className="text-[12px] text-[#71717a] dark:text-[#52525b] truncate">
+            {negocio.empreendimento || <span className="italic text-amber-500 dark:text-amber-400/80 font-semibold">Sem imóvel</span>}
           </p>
 
           {/* Row 3: Corretor responsável (only for admin/gestor) — show both names if partnership */}
