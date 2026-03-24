@@ -736,12 +736,18 @@ export default function PerformanceLivePanel({ teamOnly = false }: Props) {
             </div>
             <div className="grid gap-3">
               {campanhas.map((cp, i) => (
-                <div key={cp.campanha} className="space-y-2">
-                  {renderProgressCard(`camp-${cp.campanha}`, cp.campanha, `${cp.listas.length} lista${cp.listas.length > 1 ? "s" : ""} agrupadas`, cp, i, true)}
-                  <div className="pl-4 border-l-2 border-primary/15 space-y-2">
-                    {cp.listas.map((lp, j) => renderProgressCard(lp.lista_id, lp.nome, lp.empreendimento, lp, j))}
-                  </div>
-                </div>
+                <Collapsible key={cp.campanha}>
+                  <CollapsibleTrigger asChild>
+                    <div className="cursor-pointer">
+                      {renderProgressCard(`camp-${cp.campanha}`, cp.campanha, `${cp.listas.length} lista${cp.listas.length > 1 ? "s" : ""} agrupadas`, cp, i, true)}
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="pl-4 border-l-2 border-primary/15 space-y-2 mt-2">
+                      {cp.listas.map((lp, j) => renderProgressCard(lp.lista_id, lp.nome, lp.empreendimento, lp, j))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               ))}
               {avulsas.length > 0 && campanhas.length > 0 && (
                 <div className="flex items-center gap-2 mt-2">
