@@ -182,8 +182,8 @@ const PipelineMobileView = memo(function PipelineMobileView({
         onScroll={handleScroll}
         style={{
           flex: 1, minHeight: 0, overflowY: "auto",
-          display: "flex", flexDirection: "column", gap: 10,
-          padding: "12px 16px 80px",
+          display: "flex", flexDirection: "column", gap: 6,
+          padding: "8px 12px 80px",
           WebkitOverflowScrolling: "touch",
         }}
       >
