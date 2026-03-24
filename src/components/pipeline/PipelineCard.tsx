@@ -266,6 +266,7 @@ const PipelineCard = memo(function PipelineCard({
         transition: "all 0.18s cubic-bezier(0.25,0.46,0.45,0.94)",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
+      data-pipeline-card
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "#93C5FD";
         e.currentTarget.style.boxShadow = "0 6px 20px rgba(37,99,235,0.10)";
@@ -282,7 +283,7 @@ const PipelineCard = memo(function PipelineCard({
       <div style={{ height: 3, background: stripeGradient }} />
 
       {/* Body */}
-      <div style={{ padding: "13px 14px 11px", height: 140, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div className="pipeline-card-body" style={{ padding: "13px 14px 11px", display: "flex", flexDirection: "column" }}>
         {/* ROW 1: Name + tags + days badge */}
         <div className="flex items-center justify-between gap-1.5" style={{ marginBottom: 6 }}>
           <span style={{
