@@ -133,14 +133,23 @@ export default function Auth() {
         <div className="flex justify-center items-center">
           <div className="w-full max-w-[420px]">
             {/* Mobile logo */}
-            <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-              <div className="w-8 h-8 rounded-[9px] bg-[#4F46E5] flex items-center justify-center" style={{ boxShadow: "0 4px 16px rgba(79,70,229,0.40)" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-                  <path d="M9 21V12h6v9" />
-                </svg>
+            <div className="lg:hidden flex flex-col items-center gap-4 pt-2 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-[9px] bg-[#4F46E5] flex items-center justify-center" style={{ boxShadow: "0 4px 16px rgba(79,70,229,0.40)" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
+                    <path d="M9 21V12h6v9" />
+                  </svg>
+                </div>
+                <div className="flex flex-col gap-px">
+                  <span className="text-[15px] font-bold text-[#f0f0f8] leading-none tracking-[-0.3px]">UhomeSales</span>
+                  <span className="text-[10px] font-medium text-[rgba(240,240,248,0.35)] leading-none flex items-center gap-1">
+                    Powered by
+                    <span className="inline-block w-[5px] h-[5px] rounded-full bg-[#f59e0b]" style={{ boxShadow: "0 0 6px rgba(245,158,11,0.7)", animation: "pulse-dot 2s ease-in-out infinite" }} />
+                    Homi AI
+                  </span>
+                </div>
               </div>
-              <span className="text-[16px] font-bold text-[#f0f0f8] tracking-[-0.3px]">UhomeSales</span>
             </div>
 
             {/* Card */}
