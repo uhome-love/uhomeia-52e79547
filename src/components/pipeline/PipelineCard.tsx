@@ -352,9 +352,9 @@ const PipelineCard = memo(function PipelineCard({
           {displayEmpreendimento && (
             <span style={{
               display: "inline-flex", alignItems: "center", gap: 4,
-              background: "#F1F5F9", border: "1px solid #E2E8F0",
+              background: "#f7f7fb", border: "1px solid #e8e8f0",
               borderRadius: 6, padding: "3px 8px",
-              fontSize: 11, fontWeight: 600, color: "#334155",
+              fontSize: 11, fontWeight: 600, color: "#52525b",
               flexShrink: 0, maxWidth: 140,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>
