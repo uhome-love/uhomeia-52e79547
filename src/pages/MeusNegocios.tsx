@@ -256,7 +256,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           {/* Row 4: VGV with quick-fill — show half if partnership */}
           <div className="flex items-center gap-2">
             {negocio.vgv_estimado ? (
-              <span className="text-[14px] font-bold text-[#10b981] flex items-center gap-1">
+              <span className="text-[14px] font-bold text-[#10b981] dark:text-[#34d399] flex items-center gap-1">
                 <TrendingUp className="h-3.5 w-3.5" />
                 {parceriaInfo?.isParceria
                   ? `${formatVGV(negocio.vgv_estimado / 2)} (50%)`
