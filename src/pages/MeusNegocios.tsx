@@ -837,7 +837,7 @@ export default function MeusNegocios() {
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
-                <X className="h-3.5 w-3.5 text-[#52525b] hover:text-white" />
+                <X className="h-3.5 w-3.5 text-[#a1a1aa] dark:text-[#52525b] hover:text-[#0a0a0a] dark:hover:text-white" />
               </button>
             )}
           </div>
