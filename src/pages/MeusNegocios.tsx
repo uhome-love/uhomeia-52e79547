@@ -284,7 +284,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
         </div>
 
         {/* Row 5: Próximo passo — editable */}
-        <div className="px-3.5 pb-2.5 border-t border-white/[0.04] pt-2" onClick={(e) => e.stopPropagation()}>
+        <div className="px-3.5 pb-2.5 border-t border-[#e8e8f0] dark:border-white/[0.04] pt-2" onClick={(e) => e.stopPropagation()}>
           {editingTask ? (
             <div className="flex items-center gap-1.5">
               <input
