@@ -271,64 +271,19 @@ export default function CampaignManager() {
     if (!campanhaName.trim() || selected.size === 0) return;
     setAssigningCampanha(true);
     try {
-      const selectedIds = [...selected];
-      const selectedListas = listas.filter(l => selectedIds.includes(l.id));
-      
-      // Use first selected list as the "target" and merge others into it
-      const targetId = selectedIds[0];
-      const otherIds = selectedIds.slice(1);
-      
-      // Rename target list to the campaign name and set campanha
-      await updateLista(targetId, { 
-        nome: campanhaName.trim(), 
-        campanha: campanhaName.trim() 
-      } as any);
-      
-      if (otherIds.length > 0) {
-        // Move all leads from other lists into the target list
-        const { error: moveError } = await supabase
-          .from("oferta_ativa_leads")
-          .update({ lista_id: targetId } as any)
-          .in("lista_id", otherIds);
-        
-        if (moveError) {
-          console.error("Erro ao mover leads:", moveError);
-          toast.error("Erro ao mover leads para lista unificada.");
-          return;
-        }
-        
-        // Count total leads in the merged list
-        const { count } = await supabase
-          .from("oferta_ativa_leads")
-          .select("id", { count: "exact", head: true })
-          .eq("lista_id", targetId);
-        
-        // Update total_leads on target
-        await supabase
-          .from("oferta_ativa_listas")
-          .update({ total_leads: count || 0 } as any)
-          .eq("id", targetId);
-        
-        // Delete the now-empty source lists
-        for (const id of otherIds) {
-          await supabase.from("oferta_ativa_listas").delete().eq("id", id);
-        }
+      for (const id of selected) {
+        await updateLista(id, { campanha: campanhaName.trim() } as any);
       }
-      
-      queryClient.invalidateQueries({ queryKey: ["oa-listas"] });
-      queryClient.invalidateQueries({ queryKey: ["oa-leads"] });
-      queryClient.invalidateQueries({ queryKey: ["oa-lista-stats"] });
-      
-      toast.success(`${selectedListas.length} lista(s) unificadas em "${campanhaName.trim()}"!`);
+      toast.success(`${selected.size} lista(s) agrupadas na campanha "${campanhaName.trim()}"!`);
       setShowCampanhaDialog(false);
       setCampanhaName("");
       setSelected(new Set());
     } catch {
-      toast.error("Erro ao unificar listas.");
+      toast.error("Erro ao agrupar listas.");
     } finally {
       setAssigningCampanha(false);
     }
-  }, [selected, campanhaName, updateLista, listas, queryClient]);
+  }, [selected, campanhaName, updateLista]);
 
   const handleRemoveCampanha = useCallback(async () => {
     if (selected.size === 0) return;
