@@ -467,11 +467,16 @@ export default function Sidebar({
     );
   }
 
+  // Expanded desktop sidebar
   return (
     <aside
-      className={cn("flex flex-col h-screen w-[228px] min-w-[228px] overflow-y-auto transition-all duration-200", sb)}
+      className={cn("hidden md:flex flex-col h-screen w-[228px] min-w-[228px] overflow-y-auto transition-all duration-200", sb)}
       style={{ scrollbarWidth: "none" }}
     >
+      {renderFullNav()}
+    </aside>
+  );
+}
       {/* ── Logo ─────────────────────────────────────────────────────────── */}
       <div className="px-5 pt-5 pb-4">
         <UhomeLogo size="md" showTagline />
