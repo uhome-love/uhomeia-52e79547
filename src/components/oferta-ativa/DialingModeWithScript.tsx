@@ -154,8 +154,12 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       setInlineObs("");
       setSelectedResult(null);
       setShowResultPopup(false);
+      // In campaign mode, auto-set empreendimento from the lead
+      if (isCampaign && lead.empreendimento) {
+        setSelectedEmp(lead.empreendimento);
+      }
     }
-  }, [lead?.id, sessionLeadsServed]);
+  }, [lead?.id, sessionLeadsServed, isCampaign]);
 
   const triggerConfetti = useCallback(() => {
     const emojis = ['🎉', '✨', '🌟', '⭐', '🔥', '💫', '🎊', '✅', '💎', '🏆',
