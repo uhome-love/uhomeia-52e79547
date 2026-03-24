@@ -701,11 +701,14 @@ export default function ImoveisPage() {
         /* ═══ MAP SPLIT VIEW ═══ */
         <div className="flex-1 flex overflow-hidden w-full">
           {/* Left: property list */}
-          <div className="w-[420px] xl:w-[480px] shrink-0 h-[calc(100vh-120px)] overflow-y-auto px-4 py-3 space-y-3 border-r border-border/50">
+          <div className="w-[420px] xl:w-[480px] shrink-0 h-[calc(100vh-120px)] overflow-y-auto px-4 py-3 space-y-3 border-r border-[#e8e8f0] dark:border-white/10">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div>
                 {loading ? <Skeleton className="h-4 w-24" /> : (
-                  <span className="text-sm font-medium text-foreground">{total.toLocaleString()} imóveis</span>
+                  <>
+                    <p className="text-[14px] font-bold text-[#0a0a0a] dark:text-white">{total.toLocaleString()} imóveis</p>
+                    <p className="text-[11px] text-[#a1a1aa]">Mostrando {displayImoveis.length}{cidade.length === 1 ? ` · à venda em ${cidade[0]}` : ""}</p>
+                  </>
                 )}
               </div>
               <div className="flex border border-border/60 rounded-lg overflow-hidden">
