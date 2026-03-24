@@ -148,7 +148,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen={!isSession}>
       <HomiProvider>
         <ArenaAutoCollapse isSession={isSession} />
-        <div className="min-h-screen flex w-full">
+        <div className="flex h-screen overflow-hidden w-full bg-[#f0f0f5] dark:bg-[#0f0f12]">
           {!isSession && (
             <Sidebar
               role={sidebarRole}
@@ -160,7 +160,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               showCampaigns={sidebarRole === "admin"}
             />
           )}
-          <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <header
               className={cn(
                 "h-14 flex items-center justify-between sticky top-0 z-50 px-4",
@@ -248,7 +248,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </header>
             <PushPromptBanner />
             
-            <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 min-w-0 bg-[#f0f0f5] dark:bg-[#0f0f12]">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 min-w-0 bg-[#f0f0f5] dark:bg-[#0f0f12]" style={{ minHeight: 0 }}>
               {children}
             </main>
           </div>
