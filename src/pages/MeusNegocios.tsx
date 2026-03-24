@@ -855,7 +855,7 @@ export default function MeusNegocios() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] border border-white/[0.1] text-[#a1a1aa] hover:border-white/[0.2]"
+            className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] border border-[#e8e8f0] dark:border-white/[0.1] text-[#71717a] dark:text-[#a1a1aa] hover:border-[#4F46E5] dark:hover:border-white/[0.2] bg-white dark:bg-transparent"
           >
             <RefreshCw size={13} strokeWidth={1.5} className={refreshing ? "animate-spin" : ""} />
           </button>
