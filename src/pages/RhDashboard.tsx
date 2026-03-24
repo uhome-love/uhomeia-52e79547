@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Users, MessageSquare, CalendarDays, ArrowRight, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const subtitles = [
   "Recrutamento, RH & Recepção",
