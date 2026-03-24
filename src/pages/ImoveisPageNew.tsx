@@ -134,7 +134,7 @@ export default function ImoveisPage() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [viewedSlugs, setViewedSlugs] = useState<Set<string>>(getViewedSlugs);
-  const [listBounds, setListBounds] = useState<MapBounds | null>(null);
+  const activeBounds = filters.bounds;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Sort dropdown
