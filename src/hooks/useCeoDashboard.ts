@@ -394,8 +394,9 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const startTs = `${range.start}T00:00:00`;
       const endTs = `${range.end}T23:59:59`;
 
-      const [{ count: leadsCount }, { data: roletaRows }, { data: goals }] = await Promise.all([
-        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs),
+      const [{ count: leadsCount }, { count: leadsOACount }, { data: roletaRows }, { data: goals }] = await Promise.all([
+        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs).neq("origem", "Oferta Ativa"),
+        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs).eq("origem", "Oferta Ativa"),
         supabase.from("roleta_credenciamentos").select("corretor_id").eq("data", hoje).in("status", ["aprovado", "saiu"]),
         supabase.from("corretor_daily_goals").select("meta_ligacoes, meta_aproveitados, meta_visitas_marcadas").eq("data", hoje),
       ]);
@@ -405,6 +406,7 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
 
       return {
         totalLeadsPeriodo: leadsCount || 0,
+        leadsReaproveitadosOA: leadsOACount || 0,
         presentesHoje: dispIds.size,
         metasDiaTotal: {
           ligacoes: (goals || []).reduce((a, g) => a + (g.meta_ligacoes || 0), 0),
