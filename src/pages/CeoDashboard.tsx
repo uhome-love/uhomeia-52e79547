@@ -277,6 +277,9 @@ export default function CeoDashboard() {
   const totalVisitas = kpis.visitasMarcadas + kpis.visitasRealizadas + kpis.noShows;
   const totalNeg = negocioFases.reduce((a: number, f: any) => a + f.count, 0);
   const negTotalVgv = negocioFases.reduce((a: number, f: any) => a + f.vgv, 0);
+  const contratoGerado = negocioFases.find((f: any) => f.fase === "documentacao");
+  const vgvContrato = contratoGerado?.vgv || 0;
+  const countContrato = contratoGerado?.count || 0;
   const leadsDistribuidos = totalLeadsPeriodo - filaCeoCount;
 
   // Pipeline funnel totals
@@ -550,7 +553,7 @@ export default function CeoDashboard() {
         <SectionLabel icon={DollarSign}>Gestão de Negócios</SectionLabel>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           <MiniKpi label="Total de Negócios" value={totalNeg} variant="highlight" />
-          <MiniKpi label="VGV em Contrato" value={formatBRLCompact(negTotalVgv)} sub={`${totalNeg} negócios ativos`} />
+          <MiniKpi label="VGV em Contrato Gerado" value={formatBRLCompact(vgvContrato)} sub={`${countContrato} negócio${countContrato !== 1 ? "s" : ""} em contrato`} />
           <MiniKpi label="VGV Assinado" value={formatBRLCompact(kpis.vgvAssinado)} variant="success"
             sub={ceoMetas.meta_vgv_assinado > 0 ? `${Math.round((kpis.vgvAssinado / ceoMetas.meta_vgv_assinado) * 100)}% da meta` : undefined}
             onClick={() => setKpiDetail({ type: "vgv_assinado", label: "VGV Assinado" })} />
