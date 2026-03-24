@@ -7,6 +7,7 @@ import type { PipelineLead } from "@/hooks/usePipeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, RefreshCw, Loader2, Search, X, Heart, Gift, Settings } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReferralDashboard from "@/components/referral/ReferralDashboard";
