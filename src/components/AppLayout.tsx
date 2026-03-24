@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import UhomeLogo from "@/components/UhomeLogo";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import Sidebar from "@/components/layout/Sidebar";
