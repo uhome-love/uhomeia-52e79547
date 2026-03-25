@@ -853,6 +853,22 @@ export default function ImoveisPage() {
             </Button>
           </div>
         </div>
+        {/* Bairro dropdown — outside overflow container */}
+        {showBairroDropdown && bairroSuggestions.length > 0 && (
+          <div className="absolute left-4 sm:left-5 top-full z-[60] mt-1 max-h-64 w-80 overflow-y-auto rounded-xl border border-border bg-card p-2 shadow-xl">
+            <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Bairros</p>
+            {bairroSuggestions.map(b => (
+              <button
+                key={b}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => addBairro(b)}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent/50"
+              >
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {b}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Subheader: counter + bounds badge + sort + alert ── */}
