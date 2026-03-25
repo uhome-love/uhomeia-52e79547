@@ -26,6 +26,8 @@ import ImageSlider from "@/components/imoveis/ImageSlider";
 import SharePropertyButton from "@/components/imoveis/SharePropertyButton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useBrokerSlug } from "@/hooks/useBrokerSlug";
+import { shareUrlUhome } from "@/services/siteImoveis";
 import {
   getPropertyCardImages,
   extractOrigemExterna, extractEntrega, extractEndereco,
