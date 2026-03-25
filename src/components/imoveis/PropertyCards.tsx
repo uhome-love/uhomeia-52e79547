@@ -35,7 +35,7 @@ import {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // ── WhatsApp copy helper ──
-function copyPropertyForWhatsApp(item: any, getPreco: (item: any) => string) {
+function copyPropertyForWhatsApp(item: any, getPreco: (item: any) => string, shareUrl?: string) {
   const loc = extractEndereco(item);
   const titulo = item.titulo_anuncio || item.empreendimento_nome || "Imóvel";
   const dorms = getNum(item, "dormitorios");
@@ -51,7 +51,9 @@ function copyPropertyForWhatsApp(item: any, getPreco: (item: any) => string) {
   if (vagas && vagas > 0) specs.push(`${vagas} vaga${vagas > 1 ? "s" : ""}`);
   if (specs.length > 0) msg += `${specs.join(" · ")}\n`;
   msg += `💰 ${preco}\n`;
-  if (item.codigo) {
+  if (shareUrl) {
+    msg += `🔗 ${shareUrl}`;
+  } else if (item.codigo) {
     const baseUrl = window.location.origin;
     msg += `🔗 ${baseUrl}/imovel/${item.codigo}`;
   }
