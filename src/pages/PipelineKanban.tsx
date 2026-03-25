@@ -650,6 +650,28 @@ export default function PipelineKanban() {
                 )}
               </div>
 
+              {/* Modo Foco */}
+              {isCorretor && activeTab === "kanban" && (
+                <button
+                  onClick={() => setFocusModeOpen(true)}
+                  className="whitespace-nowrap flex items-center gap-1.5 transition-colors"
+                  style={{
+                    height: 32, padding: "0 12px",
+                    background: "linear-gradient(135deg, #4F46E5, #7C3AED)", color: "#fff", borderRadius: 8,
+                    fontWeight: 600, fontSize: 12, border: "none",
+                    cursor: "pointer",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                >
+                  <Zap size={13} strokeWidth={2} /> Modo Foco
+                  {focusLeads.length > 0 && (
+                    <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: 6, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
+                      {focusLeads.length}
+                    </span>
+                  )}
+                </button>
+              )}
+
               {/* Novo Lead */}
               {canAdd && activeTab === "kanban" && (
                 <button
