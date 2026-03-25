@@ -540,42 +540,63 @@ export function siteImovelToMapPin(imovel: SiteImovel, bounds?: BuscaFilters["bo
  */
 export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]> {
   const bounds = filters.bounds;
-  const pins: MapPin[] = [];
-  const seenIds = new Set<string>();
-  const perPage = 250;
-  const maxPages = bounds ? 12 : 8;
+  const limit = bounds ? 2000 : 1500;
 
-  for (let page = 1; page <= maxPages; page += 1) {
-    const { data, error } = await supabase.functions.invoke("typesense-search", {
-      body: {
-        q: filters.q || "*",
-        per_page: perPage,
-        page,
-        filter_by: buildFilterBy(filters),
-        sort_by: buildSortBy(filters.ordem, filters.contrato),
-      },
-    });
+  let query = supabase
+    .from("properties")
+    .select("id,codigo,slug,tipo,bairro,cidade,valor_venda,valor_locacao,dormitorios,area_privativa,latitude,longitude,titulo,fotos")
+    .eq("ativo", true);
 
-    if (error || !data?.data?.length) {
-      if (page === 1) return [];
-      break;
-    }
+  // Apply same filters as fetchSiteImoveis
+  const cidades = filters.cidades?.length ? filters.cidades : filters.cidade ? [filters.cidade] : CIDADES_PERMITIDAS;
+  if (cidades.length === 1) query = query.eq("cidade", cidades[0]);
+  else if (cidades.length > 1) query = query.in("cidade", cidades);
 
-    for (const doc of data.data) {
-      const mapped = mapDoc(doc);
-      if (!mapped.id || seenIds.has(mapped.id)) continue;
-      const pin = siteImovelToMapPin(mapped, bounds);
-      if (!pin) continue;
-      seenIds.add(mapped.id);
-      pins.push(pin);
-    }
+  const contrato = filters.contrato || "venda";
+  if (contrato === "locacao") query = query.gt("valor_locacao", 0);
+  else query = query.gt("valor_venda", 0);
 
-    if (!bounds && pins.length >= 1500) break;
-    if (bounds && pins.length >= 500) break;
-    const totalFound = data.found ?? data.total ?? 0;
-    if (totalFound <= page * perPage) break;
+  if (filters.tipo) {
+    const tipos = filters.tipo.split(",").map(s => s.trim()).filter(Boolean);
+    if (tipos.length === 1) query = query.eq("tipo", tipos[0]);
+    else if (tipos.length > 1) query = query.in("tipo", tipos);
   }
 
+  const bairros = filters.bairros?.length ? filters.bairros : filters.bairro ? filters.bairro.split(",").map(s => s.trim()).filter(Boolean) : [];
+  if (bairros.length === 1) query = query.ilike("bairro", `%${bairros[0]}%`);
+  else if (bairros.length > 1) query = query.or(bairros.map(b => `bairro.ilike.%${b}%`).join(","));
+
+  if (filters.quartos) query = query.gte("dormitorios", filters.quartos);
+  if (filters.vagas) query = query.gte("vagas", filters.vagas);
+
+  const priceField = contrato === "locacao" ? "valor_locacao" : "valor_venda";
+  if (filters.precoMin) query = query.gte(priceField, filters.precoMin);
+  if (filters.precoMax) query = query.lte(priceField, filters.precoMax);
+
+  if (filters.areaMin) query = query.gte("area_privativa", filters.areaMin);
+  if (filters.areaMax) query = query.lte("area_privativa", filters.areaMax);
+
+  if (bounds) {
+    query = query
+      .gte("latitude", bounds.lat_min).lte("latitude", bounds.lat_max)
+      .gte("longitude", bounds.lng_min).lte("longitude", bounds.lng_max);
+  }
+
+  if (filters.q) {
+    query = query.or(`titulo.ilike.%${filters.q}%,bairro.ilike.%${filters.q}%,codigo.ilike.%${filters.q}%`);
+  }
+
+  query = query.not("latitude", "is", null).not("longitude", "is", null).limit(limit);
+
+  const { data, error } = await query;
+  if (error || !data?.length) return [];
+
+  const pins: MapPin[] = [];
+  for (const doc of data) {
+    const mapped = mapDoc(doc);
+    const pin = siteImovelToMapPin(mapped, bounds);
+    if (pin) pins.push(pin);
+  }
   return pins;
 }
 
