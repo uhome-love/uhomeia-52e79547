@@ -408,22 +408,22 @@ export function useImoveisSearch({
     setShowSuggestions(false);
     if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    skipNextDebounce.current = true;
     setCampanhaAtiva(false);
     setUhomeOnly(false);
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        prevFilterKey.current = JSON.stringify({
-          search: filters.search, contrato: filters.contrato, tipo: filters.tipo,
-          bairro: filters.bairro, dormitorios: filters.dormitorios, suitesFilter: filters.suitesFilter,
-          vagas: filters.vagas, areaRange: filters.areaRange, valorRange: filters.valorRange,
-          somenteObras: filters.somenteObras, sortBy: filters.sortBy,
-          uhomeOnly: false, campanhaAtiva: false,
-        });
+    // Force immediate fetch after state settles on next render
+    skipNextDebounce.current = false;
+    // Use a microtask to let React process the state updates first,
+    // then invalidate prevFilterKey so the debounce effect fires immediately
+    Promise.resolve().then(() => {
+      // Reset prevFilterKey so the effect sees a change and triggers fetch
+      prevFilterKey.current = "__force__";
+      // Also clear the debounce and fetch directly with latest filters
+      if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
+      filterDebounceRef.current = setTimeout(() => {
         fetchRef.current(1);
-      }, 0);
+      }, 50);
     });
-  }, [filters, setCampanhaAtiva, setUhomeOnly]);
+  }, [setCampanhaAtiva, setUhomeOnly]);
 
   // ── Suggestion click ──
   const handleSuggestionClick = useCallback((suggestion: Suggestion) => {
