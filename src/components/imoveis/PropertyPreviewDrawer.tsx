@@ -230,8 +230,16 @@ export default function PropertyPreviewDrawer({
     setLightboxOpen(true);
   };
 
+  const propertyUrl = codigo
+    ? (() => {
+        const slug = gerarSlugUhome({ tipo, quartos: dorms ?? 0, bairro: loc.bairro, codigo });
+        return slugRef
+          ? `https://uhome.com.br/c/${slugRef}/imovel/${slug}`
+          : `https://uhome.com.br/imovel/${slug}`;
+      })()
+    : "";
+
   const copyData = () => {
-    const propUrl = codigo ? `https://uhomesales.com/imovel/${codigo}` : "";
     const text = [
       titulo, getPreco(item),
       `${[loc.endereco, loc.bairro, loc.cidade].filter(Boolean).join(" · ")}`,
@@ -239,14 +247,12 @@ export default function PropertyPreviewDrawer({
       area ? `${area} m²` : "",
       vagasVal ? `${vagasVal} vaga${vagasVal > 1 ? "s" : ""}` : "",
       codigo ? `Cód. ${codigo}` : "",
-      propUrl,
+      propertyUrl,
     ].filter(Boolean).join(" · ");
     navigator.clipboard.writeText(text);
     toast.success("Dados copiados!");
   };
 
-  const PUBLIC_DOMAIN = "https://uhomesales.com";
-  const propertyUrl = codigo ? `${PUBLIC_DOMAIN}/imovel/${codigo}` : "";
   const whatsappText = encodeURIComponent(
     [titulo, loc.bairro, getPreco(item), propertyUrl].filter(Boolean).join(" - ")
   );
