@@ -46,7 +46,7 @@ const badgeClasses: Record<BadgeStyle, string> = {
   exclusivo: "bg-black/80 text-white font-semibold shadow-sm",
 };
 
-const PUBLIC_DOMAIN = "https://uhome.com.br";
+// slug-based URL is now generated via shareUrlUhome
 
 export const SitePropertyCard = React.memo(function SitePropertyCard({
   imovel, index, highlighted, isFavorite, onToggleFavorite,
