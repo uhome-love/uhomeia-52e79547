@@ -94,6 +94,20 @@ const PipelineCard = memo(function PipelineCard({
   const [negocioCriado, setNegocioCriado] = useState(false);
   const [hadPreviousNegocio, setHadPreviousNegocio] = useState(false);
 
+  // Check if lead had a previous cancelled negocio (regressed lead)
+  useEffect(() => {
+    if ((lead as any).negocio_id || negocioCriado) return;
+    supabase
+      .from("negocios")
+      .select("id")
+      .eq("pipeline_lead_id", lead.id)
+      .eq("status", "perdido")
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) setHadPreviousNegocio(true);
+      });
+  }, [lead.id, (lead as any).negocio_id, negocioCriado]);
+
   const displayEmpreendimento = deduplicateEmpreendimento(lead.empreendimento || (lead as any).origem_detalhe || "");
   const status = useMemo(() => getCardStatus(lead, proximaTarefa || null), [(lead as any).ultima_acao_at, lead.stage_changed_at, proximaTarefa?.tipo, proximaTarefa?.vence_em, proximaTarefa?.hora_vencimento]);
 
