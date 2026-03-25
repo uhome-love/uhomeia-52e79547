@@ -6,7 +6,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Heart, Share2, MessageCircle, Copy, Link2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { type SiteImovel, fotoPrincipal, formatPreco } from "@/services/siteImoveis";
+import { type SiteImovel, fotoPrincipal, formatPreco, shareUrlUhome } from "@/services/siteImoveis";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
