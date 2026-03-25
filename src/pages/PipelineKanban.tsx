@@ -82,7 +82,11 @@ export default function PipelineKanban() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [bulkActionOpen, setBulkActionOpen] = useState(false);
+  const [focusModeOpen, setFocusModeOpen] = useState(false);
 
+  // Focus mode leads count
+  const { leads: focusLeads, reload: reloadFocusLeads } = useFocusLeads(authUser?.id ?? null, "leads");
+  useEffect(() => { if (authUser?.id && !pipeline.loading) reloadFocusLeads(); }, [authUser?.id, pipeline.loading]);
   const toggleLeadSelection = useCallback((leadId: string) => {
     setSelectedLeads(prev => {
       const next = new Set(prev);
