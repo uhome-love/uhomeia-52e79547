@@ -140,9 +140,9 @@ export async function fetchImoveis(filters: ImoveisFilters): Promise<ImoveisResu
     query = query.contains("features", { diferenciais: filters.diferenciais });
   }
 
-  // Texto livre
+  // Texto livre (inclui busca por código)
   if (filters.q) {
-    query = query.or(`titulo.ilike.%${filters.q}%,bairro.ilike.%${filters.q}%,tipo.ilike.%${filters.q}%`);
+    query = query.or(`titulo.ilike.%${filters.q}%,bairro.ilike.%${filters.q}%,tipo.ilike.%${filters.q}%,codigo.ilike.%${filters.q}%,empreendimento.ilike.%${filters.q}%`);
   }
 
   // Código
