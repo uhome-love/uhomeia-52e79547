@@ -483,7 +483,7 @@ export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]
     query = query.or(`titulo.ilike.%${filters.q}%,bairro.ilike.%${filters.q}%,codigo.ilike.%${filters.q}%`);
   }
 
-  query = query.not("latitude", "is", null).not("longitude", "is", null).limit(limit);
+  query = query.limit(limit);
 
   const { data, error } = await query;
   if (error || !data?.length) return [];
