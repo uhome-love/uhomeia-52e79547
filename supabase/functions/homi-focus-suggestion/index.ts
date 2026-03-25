@@ -4,7 +4,7 @@
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
-import { requireApiKey, callAI } from "../_shared/ai-helpers.ts";
+import { requireApiKey, callAIRaw } from "../_shared/ai-helpers.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors();
@@ -26,19 +26,21 @@ serve(async (req) => {
       : "Nenhuma tarefa registrada";
 
     const systemPrompt = `Você é a HOMI, assistente de vendas da Uhome Imóveis em Porto Alegre.
-Sua função é analisar o HISTÓRICO REAL do lead e sugerir:
-1. Uma mensagem de follow up personalizada baseada no que já aconteceu
-2. Um insight estratégico de abordagem baseado no comportamento e contexto real
+Sua função é analisar o contexto completo do lead e sugerir:
+1. Uma mensagem de follow up personalizada
+2. Um insight estratégico de abordagem
 
 REGRAS:
-- Use os dados reais do histórico para personalizar — cite interações anteriores
+- Use TODOS os dados disponíveis para personalizar (origem, empreendimento, etapa, tempo parado, histórico)
 - A mensagem deve ser pronta para envio via WhatsApp
 - Tom informal mas profissional, máximo 3 frases
-- Finalize com uma pergunta aberta relacionada ao contexto real
-- O insight deve ser uma análise prática do momento do lead (2-3 frases)
-- Se houve ligações sem sucesso, sugira outro canal
-- Se o lead demonstrou interesse em algo específico, retome esse ponto
-- NUNCA dê respostas genéricas como "tente uma abordagem empática"`;
+- Finalize com uma pergunta aberta relacionada ao interesse do lead
+- O insight deve ser uma análise prática e específica do momento do lead (2-3 frases)
+- Se o lead veio de Facebook Ads, mencione o empreendimento de interesse na mensagem
+- Se há histórico de ligações sem sucesso, sugira WhatsApp como canal
+- Se o lead está há muito tempo na mesma etapa, o insight deve abordar isso
+- Se não há histórico, use a origem e interesse para criar uma primeira abordagem forte
+- NUNCA dê respostas genéricas — sempre cite dados concretos do lead (nome do empreendimento, origem, tempo parado)`;
 
     const userPrompt = `Lead: ${lead.name}
 Etapa atual: ${lead.stage || "Não definida"}
@@ -55,7 +57,7 @@ ${historicoTexto}
 TAREFAS:
 ${tarefasTexto}`;
 
-    const content = await callAI(apiKey, [
+    const raw: any = await callAIRaw(apiKey, [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ], {
@@ -79,28 +81,33 @@ ${tarefasTexto}`;
       toolChoice: { type: "function", function: { name: "focus_suggestion" } },
     });
 
-    // Parse tool call result
+    // Extract from tool_calls or content
     let result = { mensagem: "", insight: "" };
-    try {
-      const parsed = JSON.parse(content);
-      // Handle both direct JSON and tool_calls format
-      if (parsed.mensagem) {
-        result = parsed;
-      } else if (parsed.tool_calls?.[0]?.function?.arguments) {
-        result = JSON.parse(parsed.tool_calls[0].function.arguments);
-      }
-    } catch {
-      // If tool calling worked, content might be the arguments directly
+    const message = raw?.choices?.[0]?.message;
+
+    if (message?.tool_calls?.[0]?.function?.arguments) {
       try {
-        result = JSON.parse(content);
+        result = JSON.parse(message.tool_calls[0].function.arguments);
       } catch {
-        result = { mensagem: content, insight: "Tente uma abordagem empática e direta." };
+        console.error("Failed to parse tool_calls arguments");
       }
+    } else if (message?.content) {
+      try {
+        const parsed = JSON.parse(message.content);
+        if (parsed.mensagem) result = parsed;
+      } catch {
+        result = { mensagem: message.content, insight: "Analise o contexto do lead antes de abordar." };
+      }
+    }
+
+    // Fallback: if still empty, generate without tool calling
+    if (!result.mensagem && !result.insight) {
+      console.error("Empty result from AI, raw:", JSON.stringify(raw?.choices?.[0]?.message));
+      result = { mensagem: "", insight: "Verifique o histórico do lead antes de abordar." };
     }
 
     return jsonResponse(result);
   } catch (err) {
-    // If it's already a Response (from handleAIError), return it
     if (err instanceof Response) return err;
     console.error("homi-focus-suggestion error:", err);
     return errorResponse(err instanceof Error ? err.message : "Unknown error");
