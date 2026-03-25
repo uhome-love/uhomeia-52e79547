@@ -280,7 +280,7 @@ export default function ImoveisPage() {
   const hasSearchFilters = !!(
     filters.tipo || filters.bairro || filters.precoMin || filters.precoMax ||
     filters.areaMin || filters.areaMax || filters.quartos || filters.vagas ||
-    filters.banheiros || filters.q || (filters.cidade && filters.cidade !== "Porto Alegre")
+    filters.banheiros || filters.q || filters.codigo || (filters.cidade && filters.cidade !== "Porto Alegre")
   );
 
   const advancedFilterCount = [filters.banheiros > 0, filters.vagas > 0, !!filters.codigo].filter(Boolean).length;
