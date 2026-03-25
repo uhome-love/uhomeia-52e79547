@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
           max_tentativas: 5,
           cooldown_dias: 7,
           total_leads: 0,
+          criado_por: "00000000-0000-0000-0000-000000000000",
         })
         .select("id, total_leads")
         .single();
