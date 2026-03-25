@@ -313,6 +313,7 @@ export default function ImoveisPage() {
     banheiros: filters.banheiros || undefined,
     vagas: filters.vagas || undefined,
     q: filters.q || undefined,
+    codigo: filters.codigo || undefined,
     ordem: filters.ordem,
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
