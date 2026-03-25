@@ -288,11 +288,10 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     }
   }, [stages, leads, onMoveLead]);
 
-  // Filter stages: hide "Convertido" from corretores (only visible to gerente/CEO)
+  // "Negócio Criado" (convertido) is now visible to ALL users (corretores included)
   const visibleStages = useMemo(() => {
-    if (isGestor || isAdmin) return stages;
-    return stages.filter(s => s.tipo !== "convertido");
-  }, [stages, isGestor, isAdmin]);
+    return stages;
+  }, [stages]);
 
   const leadsByStage = useMemo(() => {
     // Dedup leads by ID before distributing to columns (definitivo)
@@ -695,7 +694,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
               }}
             >
               {emoji && <span style={{ fontSize: 12 }}>{emoji}</span>}
-              <span>{stage.nome}</span>
+              <span>{stage.tipo === "convertido" ? "Negócio Criado" : stage.nome}</span>
               <span style={{ fontWeight: 700, color: "#4F46E5", marginLeft: 2 }}>
                 {stageLeads.length}
               </span>
@@ -752,6 +751,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
               "Visita Realizada": { emojiBg: "#F0FDF4", badgeBg: "#F0FDF4", badgeColor: "#059669", gradient: "linear-gradient(90deg, #10B981, #34D399)" },
               "Descarte": { emojiBg: "#FEF2F2", badgeBg: "#FEF2F2", badgeColor: "#DC2626", gradient: "linear-gradient(90deg, #EF4444, #FCA5A5)" },
               "Convertido": { emojiBg: "#F5F3FF", badgeBg: "#F5F3FF", badgeColor: "#7C3AED", gradient: "linear-gradient(90deg, #8B5CF6, #C084FC)" },
+              "Negócio Criado": { emojiBg: "#F5F3FF", badgeBg: "#F5F3FF", badgeColor: "#7C3AED", gradient: "linear-gradient(90deg, #8B5CF6, #C084FC)" },
             };
             const theme = STAGE_THEMES[stage.nome] || { emojiBg: "#F1F5F9", badgeBg: "#F1F5F9", badgeColor: "#64748B", gradient: "linear-gradient(90deg, #94A3B8, #CBD5E1)" };
             const emoji = PIPELINE_STAGE_EMOJIS[stage.nome] || "📍";
@@ -800,7 +800,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                       {emoji}
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a", flex: 1 }}>
-                      {stage.nome}
+                      {stage.tipo === "convertido" ? "Negócio Criado" : stage.nome}
                     </span>
                     <span style={{
                       fontSize: 13, fontWeight: 700, color: "#4F46E5",
