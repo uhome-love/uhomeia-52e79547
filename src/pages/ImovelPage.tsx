@@ -16,6 +16,8 @@ import {
   MessageCircle, ArrowLeft, Link2, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { gerarSlugUhome } from "@/services/siteImoveis";
+import { useBrokerSlug } from "@/hooks/useBrokerSlug";
 import { cn } from "@/lib/utils";
 import {
   getPropertyPreviewImages, getPropertyThumbImages,
