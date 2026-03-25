@@ -288,11 +288,10 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
     }
   }, [stages, leads, onMoveLead]);
 
-  // Filter stages: hide "Convertido" from corretores (only visible to gerente/CEO)
+  // "Negócio Criado" (convertido) is now visible to ALL users (corretores included)
   const visibleStages = useMemo(() => {
-    if (isGestor || isAdmin) return stages;
-    return stages.filter(s => s.tipo !== "convertido");
-  }, [stages, isGestor, isAdmin]);
+    return stages;
+  }, [stages]);
 
   const leadsByStage = useMemo(() => {
     // Dedup leads by ID before distributing to columns (definitivo)
