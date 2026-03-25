@@ -250,7 +250,7 @@ export default function ImoveisPage() {
 
             {/* Search input */}
             {searchMode === "normal" ? (
-              <div className="relative flex-1 max-w-[280px]">
+              <div className="relative flex-1 max-w-[280px] z-50">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#a1a1aa]" strokeWidth={1.5} />
                 <input
                   ref={searchInputRef}
