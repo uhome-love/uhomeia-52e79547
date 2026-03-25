@@ -621,7 +621,7 @@ export default function ImoveisPage() {
             {/* More filters */}
             <FilterChip
               label="Mais filtros"
-              active={!!(suitesFilter && suitesFilter !== "all") || !!(vagas && vagas !== "all") || (areaRange[0] > 0 || areaRange[1] < 500) || somenteObras}
+              active={!!(suitesFilter && suitesFilter !== "all") || !!(vagas && vagas !== "all") || (areaRange[0] > 0 || areaRange[1] < 500) || somenteObras || !!codigoBusca}
             >
               <div className="w-64 space-y-4">
                 <div className="space-y-2">
