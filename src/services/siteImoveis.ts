@@ -512,7 +512,7 @@ export async function fetchImovelBySlug(slug: string): Promise<SiteImovel | null
     .from("properties")
     .select("*")
     .eq("ativo", true)
-    .or(`codigo.eq.${slug},slug.eq.${slug}`)
+    .eq("codigo", slug)
     .limit(1)
     .maybeSingle();
 
