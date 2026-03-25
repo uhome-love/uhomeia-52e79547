@@ -202,10 +202,14 @@ Deno.serve(async (req) => {
     // ── Map known Meta form IDs to human-readable names ──
     const META_FORM_ID_MAP: Record<string, string> = {
       "960687922961852": "Seen Três Figueiras (Imagem)",
+      "968777322384911": "Seen Três Figueiras (Imagem)",
       "1162388785694311": "Casa Bastian (Imagem)",
       "1193321542872133": "Shift (Video Gabriel)",
       "1407341861064013": "Open Bosque (Video Lucas)",
+      "1176432314301412": "Open Bosque (Video Gabrielle)",
       "1593024068412518": "Melnick Day Alto Padrão (Video Gabrielle)",
+      "1626788291996359": "Lake Eyre (Imagem)",
+      "1435408764647078": "Lake Eyre (Video)",
       "1800577237319392": "Shift (Imagem)",
       "1877406309585794": "Melnick Day Médio Padrão (Video Bruno)",
       "2055662701942686": "Lake Eyre (Video Lucas)",
@@ -214,6 +218,7 @@ Deno.serve(async (req) => {
       "897551219671969": "Las Casas (Imagem)",
       "900345566146636": "High Garden Iguatemi",
       "945021998283301": "High Garden Iguatemi (Imagem)",
+      "945250778357878": "Casa Bastian (Video)",
       "921991273926020": "Orygem (Vídeo Gabrielle)",
       "924855113517986": "Las Casas (Video Gabrielle)",
       "966583865699014": "Orygem (Vídeo Lucas)",
