@@ -97,7 +97,7 @@ export const SitePropertyCard = React.memo(function SitePropertyCard({
     onHover?.(null);
   }, [onHover]);
 
-  const shareUrl = shareUrlUhome(imovel);
+  const shareUrl = shareUrlUhome(imovel, slugRef);
 
   const copyForWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
