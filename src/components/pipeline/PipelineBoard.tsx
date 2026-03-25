@@ -3,7 +3,7 @@ import type { PipelineStage, PipelineLead, PipelineSegmento } from "@/hooks/useP
 import PipelineCard from "./PipelineCard";
 import PipelineCardHover from "./PipelineCardHover";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, AlignLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlignLeft, Trash2, Loader2 } from "lucide-react";
 import { differenceInHours, differenceInMinutes } from "date-fns";
 import { PIPELINE_STAGE_EMOJIS, PIPELINE_STAGE_COLORS, PIPELINE_STAGE_BG } from "@/lib/celebrations";
 import { toast } from "sonner";
@@ -226,6 +226,24 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
   const [activeIndex, setActiveIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Sweep descartados state
+  const [isSweeping, setIsSweeping] = useState(false);
+  const handleSweepDescartados = useCallback(async () => {
+    if (isSweeping) return;
+    setIsSweeping(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sweep-descartados");
+      if (error) throw error;
+      toast.success(data?.message || "Sweep concluído!");
+      window.dispatchEvent(new CustomEvent("pipeline-reload"));
+    } catch (err) {
+      console.error("Sweep error:", err);
+      toast.error("Erro ao limpar descartados.");
+    } finally {
+      setIsSweeping(false);
+    }
+  }, [isSweeping]);
 
   // Stage transition popup state
   const [transitionPopup, setTransitionPopup] = useState<{ lead: PipelineLead; targetStage: PipelineStage } | null>(null);
@@ -474,41 +492,59 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
       // ─── Optimistic UI: move lead immediately in the UI ───
       onMoveLead(lead.id, result.targetStageId, result.observacao);
 
-      // ─── Descarte: insert into Oferta Ativa ───
+      // ─── Descarte: insert into "Leads Descartados" OA list and DELETE from pipeline ───
       try {
         const empreendimento = extra.empreendimento || lead.empreendimento || "";
+        const LISTA_NOME = "Leads Descartados";
 
-        // Auto-match OA list by empreendimento
-        let listaId = extra.listaId || null;
-        if (!listaId && empreendimento) {
-          const { data: listas } = await supabase
+        // Find or create the central "Leads Descartados" list
+        let { data: lista } = await supabase
+          .from("oferta_ativa_listas")
+          .select("id, total_leads")
+          .eq("nome", LISTA_NOME)
+          .maybeSingle() as any;
+
+        if (!lista) {
+          const { data: userData } = await (supabase.auth as any).getUser();
+          const { data: newLista } = await supabase
             .from("oferta_ativa_listas")
-            .select("id, empreendimento")
-            .in("status", ["ativa", "liberada"]) as any;
-          if (listas?.length) {
-            const match = listas.find((l: any) => l.empreendimento?.toLowerCase() === empreendimento.toLowerCase());
-            if (match) listaId = match.id;
-          }
+            .insert({
+              nome: LISTA_NOME,
+              empreendimento: "Diversos",
+              campanha: "Descartados Pipeline",
+              origem: "sistema",
+              status: "ativa",
+              max_tentativas: 5,
+              cooldown_dias: 7,
+              total_leads: 0,
+              criado_por: userData?.user?.id || null,
+            } as any)
+            .select("id, total_leads")
+            .single();
+          lista = newLista;
         }
 
-        // Insert into Oferta Ativa if we found a list
-        if (listaId) {
+        if (lista) {
           await supabase.from("oferta_ativa_leads").insert({
-            lista_id: listaId,
+            lista_id: lista.id,
             nome: lead.nome,
             telefone: lead.telefone || "",
             email: lead.email || "",
             empreendimento,
             status: "na_fila",
             observacoes: result.observacao || null,
+            motivo_descarte: extra.motivo ? extra.motivo.replace(/_/g, " ") : (result.observacao || "Descarte"),
             corretor_id: lead.corretor_id || null,
           } as any);
-          toast.success("📋 Lead enviado para Oferta Ativa!");
-        } else {
-          toast.warning("⚠️ Nenhuma lista de Oferta Ativa encontrada para este empreendimento.");
+
+          // Update total
+          await supabase
+            .from("oferta_ativa_listas")
+            .update({ total_leads: (lista.total_leads || 0) + 1 } as any)
+            .eq("id", lista.id);
         }
 
-        // Save history record before deleting
+        // Save history record
         const { data: userData } = await (supabase.auth as any).getUser();
         await supabase.from("pipeline_historico").insert({
           pipeline_lead_id: lead.id,
@@ -528,18 +564,11 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
           created_by: userData?.user?.id || "00000000-0000-0000-0000-000000000000",
         });
 
-        // Set motivo_descarte (stage_id already updated by onMoveLead above)
-        const { error: moveError } = await supabase
-          .from("pipeline_leads")
-          .update({
-            motivo_descarte: extra.motivo ? extra.motivo.replace(/_/g, " ") : (result.observacao || "Descarte"),
-          })
-          .eq("id", lead.id);
+        // DELETE lead from pipeline_leads (no longer keeps in descarte column)
+        // Archive lead from pipeline (set arquivado = true instead of deleting)
+        await supabase.from("pipeline_leads").update({ arquivado: true } as any).eq("id", lead.id);
 
-        if (moveError) {
-          console.error("Error setting motivo_descarte:", moveError);
-        }
-        toast.success("🗑️ Lead movido para Descarte" + (listaId ? " e enviado para Oferta Ativa!" : "."));
+        toast.success("🗑️ Lead descartado e enviado para Oferta Ativa!");
       } catch (err) {
         console.error("Error in descarte flow:", err);
         toast.error("Erro no processo de descarte.");
@@ -807,6 +836,17 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                     }}>
                       {stageLeads.length}
                     </span>
+                    {stage.tipo === "descarte" && stageLeads.length > 0 && (isGestor || isAdmin) && (
+                      <button
+                        onClick={handleSweepDescartados}
+                        disabled={isSweeping}
+                        title="Limpar descartados → Oferta Ativa"
+                        className="ml-1 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                        style={{ fontSize: 11 }}
+                      >
+                        {isSweeping ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
                   </div>
 
                   {/* Progress bar — unified #4F46E5 */}

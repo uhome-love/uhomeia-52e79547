@@ -1,0 +1,1 @@
+ALTER TABLE pipeline_leads ADD COLUMN IF NOT EXISTS arquivado boolean NOT NULL DEFAULT false;
