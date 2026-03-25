@@ -124,15 +124,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 6. Delete leads from pipeline_leads
+    // 6. Archive leads from pipeline_leads (set arquivado = true)
     const leadIds = leads.map((l: any) => l.id);
     for (let i = 0; i < leadIds.length; i += 500) {
       const batch = leadIds.slice(i, i + 500);
-      const { error: delErr } = await supabase
+      const { error: archErr } = await supabase
         .from("pipeline_leads")
-        .delete()
+        .update({ arquivado: true })
         .in("id", batch);
-      if (delErr) console.error("Delete batch error:", delErr);
+      if (archErr) console.error("Archive batch error:", archErr);
     }
 
     // 7. Update total_leads count
