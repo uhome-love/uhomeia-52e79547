@@ -835,6 +835,17 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                     }}>
                       {stageLeads.length}
                     </span>
+                    {stage.tipo === "descarte" && stageLeads.length > 0 && (isGestor || isAdmin) && (
+                      <button
+                        onClick={handleSweepDescartados}
+                        disabled={isSweeping}
+                        title="Limpar descartados → Oferta Ativa"
+                        className="ml-1 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                        style={{ fontSize: 11 }}
+                      >
+                        {isSweeping ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
                   </div>
 
                   {/* Progress bar — unified #4F46E5 */}
