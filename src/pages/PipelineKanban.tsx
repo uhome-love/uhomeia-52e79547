@@ -651,7 +651,7 @@ export default function PipelineKanban() {
               </div>
 
               {/* Modo Foco */}
-              {isCorretor && activeTab === "kanban" && (
+              {activeTab === "kanban" && (
                 <button
                   onClick={() => setFocusModeOpen(true)}
                   className="whitespace-nowrap flex items-center gap-1.5 transition-colors"
