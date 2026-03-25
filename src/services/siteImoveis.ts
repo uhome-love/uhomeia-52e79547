@@ -204,9 +204,10 @@ export async function fetchSiteImoveis(filters: BuscaFilters = {}): Promise<{ da
     .eq("ativo", true);
 
   // Cidade
-  const cidades = filters.cidades?.length ? filters.cidades : filters.cidade ? [filters.cidade] : CIDADES_PERMITIDAS;
+  const cidades = filters.cidades?.length ? filters.cidades : filters.cidade ? [filters.cidade] : [];
   if (cidades.length === 1) query = query.eq("cidade", cidades[0]);
   else if (cidades.length > 1) query = query.in("cidade", cidades);
+  // When no city filter, show all cities
 
   // Contrato / preço
   const contrato = filters.contrato || "venda";
@@ -441,11 +442,11 @@ export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]
 
   let query = supabase
     .from("properties")
-    .select("id,codigo,slug,tipo,bairro,cidade,valor_venda,valor_locacao,dormitorios,area_privativa,latitude,longitude,titulo,fotos")
+    .select("id,codigo,tipo,bairro,cidade,valor_venda,valor_locacao,dormitorios,area_privativa,latitude,longitude,titulo,fotos")
     .eq("ativo", true);
 
   // Apply same filters as fetchSiteImoveis
-  const cidades = filters.cidades?.length ? filters.cidades : filters.cidade ? [filters.cidade] : CIDADES_PERMITIDAS;
+  const cidades = filters.cidades?.length ? filters.cidades : filters.cidade ? [filters.cidade] : [];
   if (cidades.length === 1) query = query.eq("cidade", cidades[0]);
   else if (cidades.length > 1) query = query.in("cidade", cidades);
 
@@ -483,7 +484,7 @@ export async function fetchMapPins(filters: BuscaFilters = {}): Promise<MapPin[]
     query = query.or(`titulo.ilike.%${filters.q}%,bairro.ilike.%${filters.q}%,codigo.ilike.%${filters.q}%`);
   }
 
-  query = query.not("latitude", "is", null).not("longitude", "is", null).limit(limit);
+  query = query.limit(limit);
 
   const { data, error } = await query;
   if (error || !data?.length) return [];
@@ -511,7 +512,7 @@ export async function fetchImovelBySlug(slug: string): Promise<SiteImovel | null
     .from("properties")
     .select("*")
     .eq("ativo", true)
-    .or(`codigo.eq.${slug},slug.eq.${slug}`)
+    .eq("codigo", slug)
     .limit(1)
     .maybeSingle();
 
