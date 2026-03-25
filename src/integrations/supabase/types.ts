@@ -5340,6 +5340,7 @@ export type Database = {
           aceite_status: string
           aceito_em: string | null
           anuncio: string | null
+          arquivado: boolean
           bairro_regiao: string | null
           campanha: string | null
           campanha_id: string | null
@@ -5406,6 +5407,7 @@ export type Database = {
           aceite_status?: string
           aceito_em?: string | null
           anuncio?: string | null
+          arquivado?: boolean
           bairro_regiao?: string | null
           campanha?: string | null
           campanha_id?: string | null
@@ -5472,6 +5474,7 @@ export type Database = {
           aceite_status?: string
           aceito_em?: string | null
           anuncio?: string | null
+          arquivado?: boolean
           bairro_regiao?: string | null
           campanha?: string | null
           campanha_id?: string | null
