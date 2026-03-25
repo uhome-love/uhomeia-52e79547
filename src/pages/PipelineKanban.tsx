@@ -17,7 +17,7 @@ const OpportunityRadar = lazy(() => import("@/components/pipeline/OpportunityRad
 const MelnickCampaignAnalytics = lazy(() => import("@/components/pipeline/MelnickCampaignAnalytics"));
 const PipelineManagerActions = lazy(() => import("@/components/pipeline/PipelineManagerActions"));
 const PipelineTeamVisitas = lazy(() => import("@/components/pipeline/PipelineTeamVisitas"));
-import { CheckSquare, Square, Send, X } from "lucide-react";
+import { CheckSquare, Square, Send, X, Zap } from "lucide-react";
 import PipelineAdvancedFilters, {
   EMPTY_FILTERS,
   applyFilters,
@@ -37,6 +37,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { getLeadStatusFilter, isTaskHigherPriority, type LeadClientStatus, type ProximaTarefa } from "@/components/pipeline/CardStatusLine";
+import FocusModeModal from "@/components/pipeline/FocusModeModal";
+import { useFocusLeads } from "@/hooks/useFocusLeads";
 
 // Campaign tag definitions
 const CAMPAIGN_TAGS = [
@@ -80,7 +82,11 @@ export default function PipelineKanban() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [bulkActionOpen, setBulkActionOpen] = useState(false);
+  const [focusModeOpen, setFocusModeOpen] = useState(false);
 
+  // Focus mode leads count
+  const { leads: focusLeads, reload: reloadFocusLeads } = useFocusLeads(authUser?.id ?? null, "leads");
+  useEffect(() => { if (authUser?.id && !pipeline.loading) reloadFocusLeads(); }, [authUser?.id, pipeline.loading]);
   const toggleLeadSelection = useCallback((leadId: string) => {
     setSelectedLeads(prev => {
       const next = new Set(prev);
@@ -644,6 +650,28 @@ export default function PipelineKanban() {
                 )}
               </div>
 
+              {/* Modo Foco */}
+              {isCorretor && activeTab === "kanban" && (
+                <button
+                  onClick={() => setFocusModeOpen(true)}
+                  className="whitespace-nowrap flex items-center gap-1.5 transition-colors"
+                  style={{
+                    height: 32, padding: "0 12px",
+                    background: "linear-gradient(135deg, #4F46E5, #7C3AED)", color: "#fff", borderRadius: 8,
+                    fontWeight: 600, fontSize: 12, border: "none",
+                    cursor: "pointer",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                >
+                  <Zap size={13} strokeWidth={2} /> Modo Foco
+                  {focusLeads.length > 0 && (
+                    <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: 6, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
+                      {focusLeads.length}
+                    </span>
+                  )}
+                </button>
+              )}
+
               {/* Novo Lead */}
               {canAdd && activeTab === "kanban" && (
                 <button
@@ -1088,6 +1116,12 @@ export default function PipelineKanban() {
           </button>
         </div>
       )}
+
+      <FocusModeModal
+        open={focusModeOpen}
+        onClose={() => { setFocusModeOpen(false); pipeline.reload(); }}
+        pipelineTipo="leads"
+      />
     </div>
     </ErrorBoundary>
   );

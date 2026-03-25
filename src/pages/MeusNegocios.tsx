@@ -12,6 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, RefreshCw, Briefcase, X, SlidersHorizontal, LayoutGrid, ChevronLeft, ChevronRight, TrendingUp, Clock, MessageCircle, Plus, Phone, MessageSquare, Zap, MoreVertical, ArrowRight, Handshake, Repeat2, XCircle } from "lucide-react";
+import FocusModeModal from "@/components/pipeline/FocusModeModal";
+import { useFocusLeads } from "@/hooks/useFocusLeads";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -538,6 +540,9 @@ export default function MeusNegocios() {
   const { onNegocioAssinado } = useLeadProgression();
   const { user } = useAuth();
   const { isGestor, isAdmin } = useUserRole();
+  const [focusModeOpen, setFocusModeOpen] = useState(false);
+  const { leads: focusLeadsNegocios, reload: reloadFocusNegocios } = useFocusLeads(user?.id ?? null, "negocios");
+  useEffect(() => { if (user?.id && !loading) reloadFocusNegocios(); }, [user?.id, loading]);
   const { paradoMap } = useLeadsParados(negocios.map(n => ({
     id: n.id,
     ultima_acao_at: n.fase_changed_at || n.updated_at,
@@ -860,6 +865,20 @@ export default function MeusNegocios() {
             <RefreshCw size={13} strokeWidth={1.5} className={refreshing ? "animate-spin" : ""} />
           </button>
 
+          {/* Modo Foco */}
+          <button
+            onClick={() => setFocusModeOpen(true)}
+            className="h-[32px] px-3 flex items-center gap-1.5 text-[12px] font-semibold text-white rounded-[8px]"
+            style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}
+          >
+            <Zap size={13} strokeWidth={2} /> Foco
+            {focusLeadsNegocios.length > 0 && (
+              <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: 6, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
+                {focusLeadsNegocios.length}
+              </span>
+            )}
+          </button>
+
           {/* New */}
           <button
             onClick={() => setAddNegocioOpen(true)}
@@ -1057,6 +1076,11 @@ export default function MeusNegocios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <FocusModeModal
+        open={focusModeOpen}
+        onClose={() => { setFocusModeOpen(false); reload(); }}
+        pipelineTipo="negocios"
+      />
     </div>
   );
 }
