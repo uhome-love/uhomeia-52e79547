@@ -44,7 +44,7 @@ export default function ImoveisPage() {
   const { profile: leadProfile } = useLeadPropertyProfile(leadId);
 
   // ── Dynamic facets ──
-  const { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets, cidadeFacets, fetchBairrosByCidade } = useTypesenseFacets();
+  const { bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, statusImovelFacets, cidadeFacets, fetchBairrosByCidade } = usePostgRESTFacets();
 
   // ── Filters ──
   const filters = useImoveisFilters(bairroFacets, tipoFacets, construtoraFacets, empreendimentoFacets, cidadeFacets, fetchBairrosByCidade);
