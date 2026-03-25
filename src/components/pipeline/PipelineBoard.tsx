@@ -694,7 +694,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
               }}
             >
               {emoji && <span style={{ fontSize: 12 }}>{emoji}</span>}
-              <span>{stage.nome}</span>
+              <span>{stage.tipo === "convertido" ? "Negócio Criado" : stage.nome}</span>
               <span style={{ fontWeight: 700, color: "#4F46E5", marginLeft: 2 }}>
                 {stageLeads.length}
               </span>
