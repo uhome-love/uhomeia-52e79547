@@ -800,7 +800,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                       {emoji}
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a", flex: 1 }}>
-                      {stage.nome}
+                      {stage.tipo === "convertido" ? "Negócio Criado" : stage.nome}
                     </span>
                     <span style={{
                       fontSize: 13, fontWeight: 700, color: "#4F46E5",
