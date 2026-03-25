@@ -865,6 +865,20 @@ export default function MeusNegocios() {
             <RefreshCw size={13} strokeWidth={1.5} className={refreshing ? "animate-spin" : ""} />
           </button>
 
+          {/* Modo Foco */}
+          <button
+            onClick={() => setFocusModeOpen(true)}
+            className="h-[32px] px-3 flex items-center gap-1.5 text-[12px] font-semibold text-white rounded-[8px]"
+            style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}
+          >
+            <Zap size={13} strokeWidth={2} /> Foco
+            {focusLeadsNegocios.length > 0 && (
+              <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: 6, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
+                {focusLeadsNegocios.length}
+              </span>
+            )}
+          </button>
+
           {/* New */}
           <button
             onClick={() => setAddNegocioOpen(true)}
