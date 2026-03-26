@@ -83,8 +83,8 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
       supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, pontos").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs),
       // Visitas — corretor_id = user_id (confirmed from DB)
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", start).lte("data_visita", end),
-      // Negócios — corretor_id = profiles.id
-      supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final").in("corretor_id", teamProfileIds).not("fase", "in", '("perdido","cancelado","distrato")'),
+      // Negócios — corretor_id = profiles.id — fetch ALL active + period lost for counting
+      supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final, data_assinatura, created_at, fase_changed_at").in("corretor_id", teamProfileIds),
       // Follow-ups — responsavel_id = user_id ✅
       supabase.from("pipeline_tarefas").select("responsavel_id").in("responsavel_id", teamUserIds).gte("concluida_em", startTs).lte("concluida_em", endTs),
       // Roleta — corretor_id = user_id ✅
