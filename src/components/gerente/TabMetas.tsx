@@ -105,11 +105,11 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
       // Presenças
       supabase.from("checkpoint_diario").select("corretor_id, presenca").in("corretor_id", teamProfileIds).gte("data", mesInicio).lte("data", mesFim).in("presenca", ["presente", "meio_periodo"]),
       // Leads Novos (roleta aceitos no mês)
-      supabase.from("distribuicao_historico").select("corretor_id").in("corretor_id", teamUserIds).eq("acao", "aceito").gte("created_at", startTs).lte("created_at", endTs),
+      supabase.from("distribuicao_historico").select("corretor_id").in("corretor_id", teamUserIds).eq("acao", "aceito").gte("created_at", startTs).lte("created_at", endTs).limit(5000),
       // Pipeline Ativo (snapshot atual — não arquivados)
-      supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", false),
+      supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", false).limit(5000),
       // Descartados no mês (arquivado = true com updated_at no mês)
-      supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", true).gte("updated_at", startTs).lte("updated_at", endTs),
+      supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", true).gte("updated_at", startTs).lte("updated_at", endTs).limit(5000),
       // Parcerias ativas onde alguém do time é parceiro ou principal
       supabase.from("pipeline_parcerias").select("pipeline_lead_id, corretor_principal_id, corretor_parceiro_id, divisao_principal, divisao_parceiro").eq("status", "ativa"),
     ]);
