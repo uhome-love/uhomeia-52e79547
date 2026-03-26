@@ -221,9 +221,10 @@ Deno.serve(async (req) => {
       if (authUserIds.length === 0) {
         return jsonResponse({ success: false, reason: "no_corretores_na_roleta", dispatched: 0 });
       }
+      // Fetch today's leads WITH empreendimento for per-segment balancing
       const { data: todayLeads } = await supabase
         .from("pipeline_leads")
-        .select("corretor_id, distribuido_em")
+        .select("corretor_id, distribuido_em, empreendimento")
         .in("corretor_id", authUserIds)
         .gte("distribuido_em", todayStart)
         .in("aceite_status", ["aceito", "pendente"]);
@@ -240,11 +241,20 @@ Deno.serve(async (req) => {
         totalAtivosCount.set(l.corretor_id, (totalAtivosCount.get(l.corretor_id) || 0) + 1);
       }
 
-      const leadsCount = new Map<string, number>();
+      // Per-segment lead count: Map<"authUserId::segmentoId", number>
+      const leadsCountBySegment = new Map<string, number>();
+      // Global count as fallback for leads without segment
+      const leadsCountGlobal = new Map<string, number>();
       const lastReceived = new Map<string, string>();
-      for (const uid of authUserIds) leadsCount.set(uid, 0);
+      for (const uid of authUserIds) leadsCountGlobal.set(uid, 0);
       for (const l of todayLeads || []) {
-        leadsCount.set(l.corretor_id, (leadsCount.get(l.corretor_id) || 0) + 1);
+        leadsCountGlobal.set(l.corretor_id, (leadsCountGlobal.get(l.corretor_id) || 0) + 1);
+        // Resolve segment for this lead's empreendimento
+        const seg = await resolveSegmento(supabase, l.empreendimento);
+        if (seg) {
+          const key = `${l.corretor_id}::${seg}`;
+          leadsCountBySegment.set(key, (leadsCountBySegment.get(key) || 0) + 1);
+        }
         const prev = lastReceived.get(l.corretor_id);
         if (!prev || l.distribuido_em > prev) lastReceived.set(l.corretor_id, l.distribuido_em);
       }
