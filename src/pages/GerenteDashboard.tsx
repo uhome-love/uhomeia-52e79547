@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import LeadsDistribuidosPanel from "@/components/distribuicao/LeadsDistribuidosPanel";
+import GlobalDateFilterBar from "@/components/GlobalDateFilterBar";
 import TabAgora from "@/components/gerente/TabAgora";
 import TabProducao from "@/components/gerente/TabProducao";
 import TabPipeline from "@/components/gerente/TabPipeline";
