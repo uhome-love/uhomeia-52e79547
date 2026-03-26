@@ -138,6 +138,10 @@ Deno.serve(async (req) => {
       } else {
         // Create new pipeline lead
         const telefoneNorm = leadTelefone.replace(/\D/g, '').slice(-11)
+        const obsParts = [`[Site uhome.com.br] ${tipo}${imovelTitulo ? ` - ${imovelTitulo}` : ''}`]
+        if (imovelCodigo) obsParts.push(`Cód. Imóvel: ${imovelCodigo}`)
+        if (imovelUrl) obsParts.push(`Link: ${imovelUrl}`)
+
         const insertData: Record<string, unknown> = {
           nome: leadNome,
           telefone: leadTelefone,
@@ -151,7 +155,9 @@ Deno.serve(async (req) => {
           stage_id: stageId,
           stage_changed_at: new Date().toISOString(),
           empreendimento: imovelTitulo,
-          observacoes: `[Site uhome.com.br] ${tipo}${imovelTitulo ? ` - ${imovelTitulo}` : ''}`,
+          imovel_codigo: imovelCodigo,
+          imovel_url: imovelUrl,
+          observacoes: obsParts.join(' | '),
         }
 
         if (corretorId) {
