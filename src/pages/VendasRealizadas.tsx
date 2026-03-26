@@ -124,17 +124,43 @@ export default function VendasRealizadas() {
       if (!isAdmin && !isGestor && profileId) {
         query = query.eq("corretor_id", profileId);
       } else if (isGestor && !isAdmin) {
-        // Gestor: get team member profile IDs
+        // Gestor: get team member profile IDs AND partnership deals
         const { data: teamMembers } = await supabase.from("team_members").select("user_id").eq("gerente_id", user!.id);
-        if (teamMembers && teamMembers.length > 0) {
-          const tmUserIds = teamMembers.map(tm => tm.user_id);
-          const { data: teamProfiles } = await supabase.from("profiles").select("id").in("user_id", tmUserIds);
-          const teamProfileIds = (teamProfiles || []).map(p => p.id);
-          if (profileId) teamProfileIds.push(profileId);
-          if (teamProfileIds.length > 0) {
-            query = query.in("corretor_id", teamProfileIds);
-          }
+        const tmUserIds = (teamMembers || []).map(tm => tm.user_id).filter(Boolean) as string[];
+        const allTeamAuthIds = [...tmUserIds];
+        if (user?.id && !allTeamAuthIds.includes(user.id)) allTeamAuthIds.push(user.id);
+
+        const { data: teamProfiles } = await supabase.from("profiles").select("id").in("user_id", allTeamAuthIds);
+        const teamProfileIds = (teamProfiles || []).map(p => p.id);
+        if (profileId && !teamProfileIds.includes(profileId)) teamProfileIds.push(profileId);
+
+        // Also find deals where a team member is a PARTNER (not primary corretor)
+        // via v_kpi_negocios which has one row per partner
+        const { data: partnerDeals } = await supabase.from("v_kpi_negocios")
+          .select("id")
+          .in("auth_user_id", allTeamAuthIds)
+          .in("fase", ["assinado", "vendido"])
+          .gte("data_assinatura", dateRange.start)
+          .lte("data_assinatura", dateRange.end)
+          .eq("is_parceria", true);
+        const partnerDealIds = (partnerDeals || []).map(d => d.id as string);
+
+        if (teamProfileIds.length > 0) {
+          query = query.in("corretor_id", teamProfileIds);
         }
+
+        // Fetch partnership deals separately (they may have a different corretor_id)
+        let partnerRows: VendaRow[] = [];
+        if (partnerDealIds.length > 0) {
+          const { data: extraDeals } = await supabase.from("negocios")
+            .select("id, nome_cliente, empreendimento, unidade, vgv_final, vgv_estimado, data_assinatura, corretor_id, gerente_id, fase, created_at, pipeline_lead_id")
+            .in("id", partnerDealIds)
+            .in("fase", ["assinado", "vendido"]);
+          partnerRows = (extraDeals || []) as VendaRow[];
+        }
+
+        // We'll merge partner rows after the main query
+        (query as any).__partnerRows = partnerRows;
       }
 
       const { data: vendas } = await query;
