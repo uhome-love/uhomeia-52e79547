@@ -33,6 +33,8 @@ interface GreetingBarProps {
   onRefresh?: () => void;
   /** Hora exibida no botão de refresh — se omitido usa hora atual */
   refreshTime?: string;
+  /** Hide the date filter dropdown (default: true) */
+  showFilter?: boolean;
   className?: string;
 }
 
