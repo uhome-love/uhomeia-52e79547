@@ -362,7 +362,7 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
                     <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.negocios, media.negocios) : ""}`}>{r.negocios}</td>
                     <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.propostas, media.propostas) : ""}`}>{r.propostas}</td>
                     <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.assinados, media.assinados) : ""}`}>{r.assinados}</td>
-                    <td className={`${tdBase} bg-purple-50/20 border-r border-border/30 ${media ? cellColor(r.vgv, media.vgv) : ""}`}>{formatBRLCompact(r.vgv)}</td>
+                    <td className={`${tdBase} bg-purple-50/20 border-r border-border/30 ${media ? cellColor(r.vgv, media.vgv) : ""}`}>{formatBRLCompact(r.vgv)}{r.has_parceria && <span className="text-muted-foreground italic text-[9px] ml-0.5">(p)</span>}</td>
                     {/* Pontos */}
                     <td className={`${tdBase} font-black ${media ? cellColor(r.pontos, media.pontos) : ""}`}>{r.pontos}</td>
                   </tr>
