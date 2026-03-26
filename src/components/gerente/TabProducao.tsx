@@ -227,7 +227,7 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
 
   return (
     <div className="space-y-4">
-      <GlobalDateFilterBar />
+      
 
       <Card className="border-border/60 overflow-hidden">
         <CardContent className="p-0">
