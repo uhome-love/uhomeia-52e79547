@@ -34,6 +34,7 @@ interface CorretorContrib {
   negocios: number;
   assinados: number;
   vgv: number;
+  has_parceria: boolean;
 }
 
 interface Props {
@@ -92,13 +93,13 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
     const startTs = `${mesInicio}T00:00:00-03:00`;
     const endTs = `${mesFim}T23:59:59.999-03:00`;
 
-    const [r1, r2, r3, r4, r5, r6, r7, r8] = await Promise.all([
+    const [r1, r2, r3, r4, r5, r6, r7, r8, r9] = await Promise.all([
       // Ligações + resultado
       supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs),
       // Visitas
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", mesInicio).lte("data_visita", mesFim),
-      // Negócios (all for created_at + assinatura)
-      supabase.from("negocios").select("id, vgv_estimado, vgv_final, corretor_id, fase, created_at, data_assinatura").in("corretor_id", teamProfileIds),
+      // Negócios (all for created_at + assinatura) — include lead_id for partnership lookup
+      supabase.from("negocios").select("id, vgv_estimado, vgv_final, corretor_id, fase, created_at, data_assinatura, lead_id").in("corretor_id", teamProfileIds),
       // Saved metas
       supabase.from("ceo_metas_mensais").select("*").eq("gerente_id", user.id).eq("mes", mesAtual).maybeSingle(),
       // Presenças
@@ -109,6 +110,8 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
       supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", false),
       // Descartados no mês (arquivado = true com updated_at no mês)
       supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", true).gte("updated_at", startTs).lte("updated_at", endTs),
+      // Parcerias ativas do time
+      supabase.from("pipeline_parcerias").select("pipeline_lead_id, corretor_principal_id, corretor_parceiro_id, divisao_principal, divisao_parceiro").eq("status", "ativa"),
     ]);
 
     const tentativas = r1.data || [];
@@ -119,16 +122,44 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
     const leadsNovosArr = r6.data || [];
     const pipelineAtivoArr = r7.data || [];
     const descartadosArr = r8.data || [];
+    const parceriasArr = r9.data || [];
+
+    // Build partnership map: pipeline_lead_id → { principal_id, parceiro_id, div_principal, div_parceiro }
+    const parceriaByLead: Record<string, { principal_id: string; parceiro_id: string; div_principal: number; div_parceiro: number }> = {};
+    (parceriasArr || []).forEach((p: any) => {
+      parceriaByLead[p.pipeline_lead_id] = {
+        principal_id: p.corretor_principal_id,
+        parceiro_id: p.corretor_parceiro_id,
+        div_principal: p.divisao_principal || 50,
+        div_parceiro: p.divisao_parceiro || 50,
+      };
+    });
+
+    // Helper to compute proportional VGV for a negocio
+    const getVgvProporcional = (n: any, profileId: string): number => {
+      const vgvBruto = Number(n.vgv_final || n.vgv_estimado || 0);
+      if (!n.lead_id) return vgvBruto;
+      const parc = parceriaByLead[n.lead_id];
+      if (!parc) return vgvBruto;
+      if (profileId === parc.principal_id) return vgvBruto * (parc.div_principal / 100);
+      if (profileId === parc.parceiro_id) return vgvBruto * (parc.div_parceiro / 100);
+      return vgvBruto;
+    };
+
+    // Helper to check if negocio has partnership
+    const hasParceria = (n: any): boolean => {
+      return !!n.lead_id && !!parceriaByLead[n.lead_id];
+    };
 
     const ligR = tentativas.length;
     const vmR = visitas.filter(v => v.status !== "cancelada").length;
     const vrR = visitas.filter(v => v.status === "realizada").length;
 
-    // VGV total for metas = assinados no mês
+    // VGV total for metas = assinados no mês (with partnership splits)
     const negociosAssinMes = negociosAll.filter(n =>
       ["assinado", "vendido"].includes(n.fase) && n.data_assinatura && n.data_assinatura >= mesInicio && n.data_assinatura <= mesFim
     );
-    const vgvReal = negociosAssinMes.reduce((s, n) => s + Number(n.vgv_final || n.vgv_estimado || 0), 0);
+    const vgvReal = negociosAssinMes.reduce((s, n) => s + getVgvProporcional(n, n.corretor_id), 0);
 
     setMetas({
       ligacoes_meta: metasSalvas?.meta_ligacoes || 680,
@@ -144,7 +175,7 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
     // Per-corretor contribution
     const contribMap: Record<string, CorretorContrib> = {};
     teamUserIds.forEach(uid => {
-      contribMap[uid] = { user_id: uid, nome: teamNameMap[uid] || "Corretor", presencas: 0, ligacoes: 0, aproveitados: 0, leads_novos: 0, pipeline_ativo: 0, descartados: 0, visitas_marcadas: 0, visitas_realizadas: 0, negocios: 0, assinados: 0, vgv: 0 };
+      contribMap[uid] = { user_id: uid, nome: teamNameMap[uid] || "Corretor", presencas: 0, ligacoes: 0, aproveitados: 0, leads_novos: 0, pipeline_ativo: 0, descartados: 0, visitas_marcadas: 0, visitas_realizadas: 0, negocios: 0, assinados: 0, vgv: 0, has_parceria: false };
     });
 
     // Ligações + Aproveitados
@@ -192,7 +223,8 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
       // Assinados + VGV
       if (["assinado", "vendido"].includes(n.fase) && n.data_assinatura && n.data_assinatura >= mesInicio && n.data_assinatura <= mesFim) {
         contribMap[uid].assinados++;
-        contribMap[uid].vgv += Number(n.vgv_final || n.vgv_estimado || 0);
+        contribMap[uid].vgv += getVgvProporcional(n, n.corretor_id);
+        if (hasParceria(n)) contribMap[uid].has_parceria = true;
       }
     });
 
@@ -380,7 +412,7 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
                           <td className="py-1.5 px-2 text-center text-[10px] text-muted-foreground">{pct(c.visitas_realizadas, totalVr)}%</td>
                           <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.negocios, avgNeg)}`}>{c.negocios}</td>
                           <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.assinados, avgAssin)}`}>{c.assinados}</td>
-                          <td className={`py-1.5 px-2 text-center text-xs font-bold ${cellColor(c.vgv, avgVgv)}`}>{fmtR(c.vgv)}</td>
+                          <td className={`py-1.5 px-2 text-center text-xs font-bold ${cellColor(c.vgv, avgVgv)}`}>{fmtR(c.vgv)}{c.has_parceria && <span className="text-[9px] italic text-muted-foreground ml-0.5">(parceria)</span>}</td>
                           <td className="py-1.5 px-2 text-center text-[10px] text-muted-foreground">{pct(c.vgv, totalVgv)}%</td>
                         </tr>
                       ))}
