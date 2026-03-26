@@ -81,8 +81,8 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
     const [r1, r2, r3, r4, r5, r6, r7] = await Promise.all([
       // Oferta ativa — corretor_id = user_id ✅
       supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, pontos").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs),
-      // Visitas — corretor_id = profiles.id
-      supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamProfileIds).gte("data_visita", start).lte("data_visita", end),
+      // Visitas — corretor_id = user_id (confirmed from DB)
+      supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", start).lte("data_visita", end),
       // Negócios — corretor_id = profiles.id
       supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final").in("corretor_id", teamProfileIds).not("fase", "in", '("perdido","cancelado","distrato")'),
       // Follow-ups — responsavel_id = user_id ✅
