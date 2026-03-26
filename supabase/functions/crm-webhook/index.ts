@@ -103,10 +103,45 @@ Deno.serve(async (req) => {
     const leadNome = record.nome || 'Lead do site'
     const leadTelefone = record.telefone || ''
     const leadEmail = record.email || null
-    const imovelTitulo = record.imovel_titulo || record.imovel_interesse || null
     const origemComponente = record.origem_componente || null
     const imovelCodigo = record.imovel_codigo || null
-    const imovelUrl = record.imovel_url || (imovelCodigo ? `https://uhome.com.br/imovel/${imovelCodigo}` : null)
+
+    // ── Resolve real property data from DB if code exists ──
+    let imovelTitulo = record.imovel_titulo || record.imovel_interesse || null
+    let imovelUrl: string | null = record.imovel_url || null
+
+    if (imovelCodigo && !imovelUrl) {
+      const { data: imovelData } = await supabase
+        .from('properties')
+        .select('codigo, titulo, tipo, dormitorios, bairro')
+        .eq('codigo', imovelCodigo)
+        .limit(1)
+        .maybeSingle()
+
+      if (imovelData) {
+        // Build slug: {tipo}-{n}-quartos-{bairro}-{codigo}
+        const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        const tipoSlug = slugify(imovelData.tipo || 'imovel')
+        const quartos = imovelData.dormitorios ?? 0
+        const bairroSlug = slugify(imovelData.bairro || 'porto-alegre')
+        const codigoSlug = slugify(imovelData.codigo)
+        const slug = quartos > 0
+          ? `${tipoSlug}-${quartos}-quartos-${bairroSlug}-${codigoSlug}`
+          : `${tipoSlug}-para-venda-${bairroSlug}-${codigoSlug}`
+        imovelUrl = `https://uhome.com.br/imovel/${slug}`
+        if (!imovelTitulo && imovelData.titulo) {
+          imovelTitulo = imovelData.titulo
+        }
+        console.log(`[crm-webhook] Resolved imovel: ${imovelCodigo} → ${imovelUrl}`)
+      } else {
+        console.warn(`[crm-webhook] Imóvel código ${imovelCodigo} not found in DB, no URL generated`)
+      }
+    }
+
+    // If no property info at all, mark as general lead
+    if (!imovelTitulo && !imovelCodigo) {
+      imovelTitulo = 'Lead Geral (sem imóvel específico)'
+    }
 
     if (tipo === 'lead' || tipo === 'agendamento' || tipo === 'captacao') {
       // ── Dedup by phone ──
