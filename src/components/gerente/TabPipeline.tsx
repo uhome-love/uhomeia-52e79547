@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Building2, Briefcase, CalendarDays } from "lucide-react";
+import { ArrowRight, Building2, Briefcase, CalendarDays, Zap, TrendingDown, FileCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatBRLCompact } from "@/lib/utils";
-import type { FunnelStage, VisitaHoje, NegocioAcao } from "@/hooks/useGerenteDashboard";
+import type { FunnelStage, VisitaHoje } from "@/hooks/useGerenteDashboard";
 
 interface NegPorFase {
   id: string;
@@ -13,20 +13,41 @@ interface NegPorFase {
   vgv: number;
   fase: string;
   corretor_nome: string;
+  fase_changed_at?: string;
+}
+
+interface PipelineVelocity {
+  advanced: number;
+  lostCount: number;
+  lostVgv: number;
+  contractCount: number;
+  nextSigning: string | null;
 }
 
 interface Props {
   funnel: FunnelStage[];
   negociosPorFase: { proposta: NegPorFase[]; negociacao: NegPorFase[]; documentacao: NegPorFase[] };
   agendaHoje: VisitaHoje[];
+  pipelineVelocity: PipelineVelocity;
 }
 
 const statusIcons: Record<string, string> = { marcada: "🟡", confirmada: "🟢", realizada: "✅", no_show: "🔴", reagendada: "🔄", cancelada: "⬛" };
 
-export default function TabPipeline({ funnel, negociosPorFase, agendaHoje }: Props) {
+function computeFaseAnalytics(items: NegPorFase[]) {
+  if (items.length === 0) return { avgDays: 0, riskCount: 0 };
+  const now = Date.now();
+  const days = items.map(n => {
+    if (!n.fase_changed_at) return 0;
+    return Math.max(0, Math.floor((now - new Date(n.fase_changed_at).getTime()) / 86400000));
+  });
+  const avgDays = Math.round(days.reduce((s, d) => s + d, 0) / days.length);
+  const riskCount = days.filter(d => d >= 7).length;
+  return { avgDays, riskCount };
+}
+
+export default function TabPipeline({ funnel, negociosPorFase, agendaHoje, pipelineVelocity }: Props) {
   const navigate = useNavigate();
 
-  // Compute VGV by fase
   const faseData = [
     { key: "proposta", label: "Proposta", items: negociosPorFase.proposta, color: "bg-amber-500", textColor: "text-amber-600" },
     { key: "negociacao", label: "Negociação", items: negociosPorFase.negociacao, color: "bg-orange-500", textColor: "text-orange-600" },
@@ -75,7 +96,7 @@ export default function TabPipeline({ funnel, negociosPorFase, agendaHoje }: Pro
         </Card>
       )}
 
-      {/* Funil de Negócios por fase */}
+      {/* Funil de Negócios por fase — enriched */}
       <Card className="border-border/60">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
@@ -91,6 +112,7 @@ export default function TabPipeline({ funnel, negociosPorFase, agendaHoje }: Pro
             {faseData.map(fase => {
               const totalVgv = fase.items.reduce((s, n) => s + n.vgv, 0);
               const corretores = [...new Set(fase.items.map(n => n.corretor_nome))];
+              const { avgDays, riskCount } = computeFaseAnalytics(fase.items);
               return (
                 <div key={fase.key} className="rounded-xl border border-border/40 p-4">
                   <div className="flex items-center justify-between mb-3">
@@ -101,6 +123,21 @@ export default function TabPipeline({ funnel, negociosPorFase, agendaHoje }: Pro
                     <Badge variant="outline" className={`text-[10px] ${fase.textColor}`}>{fase.items.length}</Badge>
                   </div>
                   <p className={`text-lg font-black ${fase.textColor} mb-2`}>{formatBRLCompact(totalVgv)}</p>
+
+                  {/* Analytics row */}
+                  {fase.items.length > 0 && (
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-[10px] text-muted-foreground">
+                        ⏱ Média <span className={`font-bold ${avgDays >= 7 ? "text-destructive" : "text-foreground"}`}>{avgDays}d</span> nesta fase
+                      </span>
+                      {riskCount > 0 && (
+                        <span className="text-[10px] text-destructive font-semibold">
+                          ⚠️ {riskCount} parado{riskCount > 1 ? "s" : ""} há +7d
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {corretores.length > 0 ? (
                     <p className="text-[10px] text-muted-foreground">{corretores.slice(0, 4).map(c => c?.split(" ")[0]).join(", ")}{corretores.length > 4 ? ` +${corretores.length - 4}` : ""}</p>
                   ) : (
@@ -108,12 +145,16 @@ export default function TabPipeline({ funnel, negociosPorFase, agendaHoje }: Pro
                   )}
                   {fase.items.length > 0 && (
                     <div className="mt-2 space-y-1 max-h-[120px] overflow-y-auto">
-                      {fase.items.slice(0, 3).map(n => (
-                        <div key={n.id} className="flex items-center justify-between text-[10px] p-1.5 rounded bg-accent/30">
-                          <span className="truncate flex-1 text-foreground font-medium">{n.nome_cliente}</span>
-                          <span className="text-emerald-600 font-bold ml-2">{formatBRLCompact(n.vgv)}</span>
-                        </div>
-                      ))}
+                      {fase.items.slice(0, 3).map(n => {
+                        const dias = n.fase_changed_at ? Math.floor((Date.now() - new Date(n.fase_changed_at).getTime()) / 86400000) : 0;
+                        return (
+                          <div key={n.id} className="flex items-center justify-between text-[10px] p-1.5 rounded bg-accent/30">
+                            <span className="truncate flex-1 text-foreground font-medium">{n.nome_cliente}</span>
+                            {dias >= 7 && <span className="text-destructive font-bold mx-1">{dias}d</span>}
+                            <span className="text-emerald-600 font-bold ml-2">{formatBRLCompact(n.vgv)}</span>
+                          </div>
+                        );
+                      })}
                       {fase.items.length > 3 && (
                         <button className="text-[10px] text-primary hover:underline w-full text-center" onClick={() => navigate("/pipeline-negocios")}>
                           +{fase.items.length - 3} mais
@@ -124,6 +165,65 @@ export default function TabPipeline({ funnel, negociosPorFase, agendaHoje }: Pro
                 </div>
               );
             })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ⚡ Velocidade do Pipeline */}
+      <Card className="border-border/60">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Zap className="h-4 w-4 text-amber-500" />
+            <h2 className="text-sm font-bold text-foreground">Velocidade do Pipeline</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Avançaram esta semana */}
+            <div className="rounded-xl border border-border/40 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <ArrowRight className="h-4 w-4 text-emerald-500" />
+                <span className="text-[11px] font-semibold text-muted-foreground">Avançaram esta semana</span>
+              </div>
+              <p className={`text-3xl font-black ${pipelineVelocity.advanced > 0 ? "text-emerald-600" : "text-muted-foreground"}`}>
+                {pipelineVelocity.advanced}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">negócios mudaram de fase</p>
+            </div>
+
+            {/* Perdidos este mês */}
+            <div className="rounded-xl border border-border/40 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <TrendingDown className="h-4 w-4 text-destructive" />
+                <span className="text-[11px] font-semibold text-muted-foreground">Perdidos este mês</span>
+              </div>
+              <p className={`text-3xl font-black ${pipelineVelocity.lostCount > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                {pipelineVelocity.lostCount}
+              </p>
+              {pipelineVelocity.lostVgv > 0 && (
+                <p className="text-xs text-destructive font-bold mt-1">{formatBRLCompact(pipelineVelocity.lostVgv)} perdido</p>
+              )}
+              {pipelineVelocity.lostCount === 0 && (
+                <p className="text-[10px] text-muted-foreground mt-1">nenhum perdido</p>
+              )}
+            </div>
+
+            {/* Em contrato */}
+            <div className="rounded-xl border border-border/40 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <FileCheck className="h-4 w-4 text-purple-500" />
+                <span className="text-[11px] font-semibold text-muted-foreground">Em contrato c/ assinatura</span>
+              </div>
+              <p className={`text-3xl font-black ${pipelineVelocity.contractCount > 0 ? "text-purple-600" : "text-muted-foreground"}`}>
+                {pipelineVelocity.contractCount}
+              </p>
+              {pipelineVelocity.nextSigning && (
+                <p className="text-[10px] text-purple-600 font-semibold mt-1">
+                  Próxima: {new Date(pipelineVelocity.nextSigning + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                </p>
+              )}
+              {!pipelineVelocity.nextSigning && pipelineVelocity.contractCount === 0 && (
+                <p className="text-[10px] text-muted-foreground mt-1">nenhum em contrato</p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

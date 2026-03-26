@@ -83,7 +83,7 @@ export default function GerenteDashboard() {
 
   const {
     user, profile, teamUserIds, teamNameMap, kpis: k, kpisLoading,
-    funnel, negociosPorFase, agendaHoje, startTs, endTs,
+    funnel, negociosPorFase, pipelineVelocity, agendaHoje, startTs, endTs,
   } = useGerenteDashboard(period);
 
   const today = todayBRT();
