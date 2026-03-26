@@ -380,7 +380,7 @@ export default function TabAgora({ teamUserIds, teamNameMap }: Props) {
                     <p className="text-[11px] font-semibold text-foreground/60 uppercase tracking-wider">Pipeline</p>
                     <div className="flex items-center justify-between">
                       <span className="text-foreground/60">Leads Roleta</span>
-                      <span className="font-bold text-sm text-primary">{c.leads_recebidos_hoje}</span>
+                      <span className={`font-bold text-sm ${c.leads_recebidos_hoje > 0 ? "text-blue-600" : "text-muted-foreground"}`}>{c.leads_recebidos_hoje}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-foreground/60">Follow-ups</span>
