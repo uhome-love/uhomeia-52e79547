@@ -396,7 +396,14 @@ export default function TabAgora({ teamUserIds, teamNameMap }: Props) {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-foreground/60">Visitas</span>
-                      <span className="font-bold text-sm text-foreground">{c.visitas_marcadas}<span className="text-foreground/60 font-normal">/{c.visitas_realizadas}</span></span>
+                      <span className="font-bold text-sm">
+                        <span className="text-blue-600">{c.visitas_marcadas}</span>
+                        <span className="text-foreground/40 font-normal">M</span>
+                        <span className="text-foreground/30 mx-0.5">·</span>
+                        {c.visitas_realizadas > 0 && <span className="text-emerald-600">✓</span>}
+                        <span className="text-emerald-600">{c.visitas_realizadas}</span>
+                        <span className="text-foreground/40 font-normal">R</span>
+                      </span>
                     </div>
                   </div>
                 </div>
