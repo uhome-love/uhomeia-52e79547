@@ -64,7 +64,7 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", start).lte("data_visita", end),
       supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final").eq("gerente_id", profileId).not("fase", "in", '("perdido","cancelado","distrato")'),
       // Follow-ups: count tasks completed in the period
-      supabase.from("lead_tasks").select("corretor_id").in("corretor_id", teamUserIds).eq("completed", true).gte("completed_at", startTs).lte("completed_at", endTs),
+      supabase.from("lead_tasks").select("user_id").in("user_id", teamUserIds).eq("status", "concluida").gte("concluida_em", startTs).lte("concluida_em", endTs),
       supabase.from("profiles").select("user_id, nome").in("user_id", teamUserIds),
     ]);
 
