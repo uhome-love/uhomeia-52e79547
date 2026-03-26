@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import LeadsDistribuidosPanel from "@/components/distribuicao/LeadsDistribuidosPanel";
+import GlobalDateFilterBar from "@/components/GlobalDateFilterBar";
 import TabAgora from "@/components/gerente/TabAgora";
 import TabProducao from "@/components/gerente/TabProducao";
 import TabPipeline from "@/components/gerente/TabPipeline";
@@ -244,6 +245,7 @@ export default function GerenteDashboard() {
         avatarUrl={avatarSrc}
         onRefresh={() => window.location.reload()}
         refreshTime={lastUpdate}
+        showFilter={false}
       />
 
       {teamUserIds.length === 0 && !kpisLoading && (
@@ -348,13 +350,16 @@ export default function GerenteDashboard() {
       </motion.div>
 
       {/* 4 Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="w-full grid grid-cols-4 h-10">
-          <TabsTrigger value="agora" className="text-xs font-semibold">Agora</TabsTrigger>
-          <TabsTrigger value="producao" className="text-xs font-semibold">Produção</TabsTrigger>
-          <TabsTrigger value="pipeline" className="text-xs font-semibold">Pipeline</TabsTrigger>
-          <TabsTrigger value="metas" className="text-xs font-semibold">Metas</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-2">
+        <div className="flex items-center gap-3">
+          <TabsList className="flex-1 grid grid-cols-4 h-10">
+            <TabsTrigger value="agora" className="text-xs font-semibold">Agora</TabsTrigger>
+            <TabsTrigger value="producao" className="text-xs font-semibold">Produção</TabsTrigger>
+            <TabsTrigger value="pipeline" className="text-xs font-semibold">Pipeline</TabsTrigger>
+            <TabsTrigger value="metas" className="text-xs font-semibold">Metas</TabsTrigger>
+          </TabsList>
+          <GlobalDateFilterBar />
+        </div>
 
         <TabsContent value="agora">
           <TabAgora teamUserIds={teamUserIds} teamNameMap={teamNameMap} />

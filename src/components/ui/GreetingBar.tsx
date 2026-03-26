@@ -33,6 +33,8 @@ interface GreetingBarProps {
   onRefresh?: () => void;
   /** Hora exibida no botão de refresh — se omitido usa hora atual */
   refreshTime?: string;
+  /** Hide the date filter dropdown (default: true) */
+  showFilter?: boolean;
   className?: string;
 }
 
@@ -110,6 +112,7 @@ export function GreetingBar({
   onFilterChange,
   onRefresh,
   refreshTime,
+  showFilter = true,
   className,
 }: GreetingBarProps) {
   const [internalFilter, setInternalFilter] = useState<DateFilter>("hoje");
@@ -200,6 +203,7 @@ export function GreetingBar({
       </div>
 
       {/* Filtro dropdown */}
+      {showFilter && (
       <div className="relative z-10 flex-shrink-0" ref={dropdownRef}>
         <button
           onClick={() => setDropdownOpen((v) => !v)}
@@ -286,6 +290,7 @@ export function GreetingBar({
           </div>
         )}
       </div>
+      )}
 
       {/* Refresh */}
       <button
