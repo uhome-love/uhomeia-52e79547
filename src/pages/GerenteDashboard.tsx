@@ -363,7 +363,7 @@ export default function GerenteDashboard() {
           <TabProducao teamUserIds={teamUserIds} teamNameMap={teamNameMap} profileId={sheetProfileId} />
         </TabsContent>
         <TabsContent value="pipeline">
-          <TabPipeline funnel={funnel} negociosPorFase={negociosPorFase} agendaHoje={agendaHoje} />
+          <TabPipeline funnel={funnel} negociosPorFase={negociosPorFase} agendaHoje={agendaHoje} pipelineVelocity={pipelineVelocity} />
         </TabsContent>
         <TabsContent value="metas">
           <TabMetas teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
