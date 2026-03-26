@@ -114,6 +114,8 @@ export default function VendasRealizadas() {
         profileId = p?.id || null;
       }
 
+      let extraPartnerRows: VendaRow[] = [];
+
       let query = supabase.from("negocios")
         .select("id, nome_cliente, empreendimento, unidade, vgv_final, vgv_estimado, data_assinatura, corretor_id, gerente_id, fase, created_at, pipeline_lead_id")
         .in("fase", ["assinado", "vendido"])
@@ -124,21 +126,54 @@ export default function VendasRealizadas() {
       if (!isAdmin && !isGestor && profileId) {
         query = query.eq("corretor_id", profileId);
       } else if (isGestor && !isAdmin) {
-        // Gestor: get team member profile IDs
+        // Gestor: get team member profile IDs AND partnership deals
         const { data: teamMembers } = await supabase.from("team_members").select("user_id").eq("gerente_id", user!.id);
-        if (teamMembers && teamMembers.length > 0) {
-          const tmUserIds = teamMembers.map(tm => tm.user_id);
-          const { data: teamProfiles } = await supabase.from("profiles").select("id").in("user_id", tmUserIds);
-          const teamProfileIds = (teamProfiles || []).map(p => p.id);
-          if (profileId) teamProfileIds.push(profileId);
-          if (teamProfileIds.length > 0) {
-            query = query.in("corretor_id", teamProfileIds);
-          }
+        const tmUserIds = (teamMembers || []).map(tm => tm.user_id).filter(Boolean) as string[];
+        const allTeamAuthIds = [...tmUserIds];
+        if (user?.id && !allTeamAuthIds.includes(user.id)) allTeamAuthIds.push(user.id);
+
+        const { data: teamProfiles } = await supabase.from("profiles").select("id").in("user_id", allTeamAuthIds);
+        const teamProfileIds = (teamProfiles || []).map(p => p.id);
+        if (profileId && !teamProfileIds.includes(profileId)) teamProfileIds.push(profileId);
+
+        // Also find deals where a team member is a PARTNER (not primary corretor)
+        const { data: partnerDeals } = await supabase.from("v_kpi_negocios")
+          .select("id")
+          .in("auth_user_id", allTeamAuthIds)
+          .in("fase", ["assinado", "vendido"])
+          .gte("data_assinatura", dateRange.start)
+          .lte("data_assinatura", dateRange.end)
+          .eq("is_parceria", true);
+        const partnerDealIds = (partnerDeals || []).map(d => d.id as string);
+
+        if (teamProfileIds.length > 0) {
+          query = query.in("corretor_id", teamProfileIds);
+        }
+
+        // Fetch partnership deals separately (they may have a different corretor_id)
+        if (partnerDealIds.length > 0) {
+          const { data: extraDeals } = await supabase.from("negocios")
+            .select("id, nome_cliente, empreendimento, unidade, vgv_final, vgv_estimado, data_assinatura, corretor_id, gerente_id, fase, created_at, pipeline_lead_id")
+            .in("id", partnerDealIds)
+            .in("fase", ["assinado", "vendido"]);
+          extraPartnerRows = (extraDeals || []) as VendaRow[];
         }
       }
 
       const { data: vendas } = await query;
-      const rows = (vendas || []) as VendaRow[];
+      let rows = (vendas || []) as VendaRow[];
+
+      // Merge partnership deals (deduplicate by id)
+      if (extraPartnerRows.length > 0) {
+        const existingIds = new Set(rows.map(r => r.id));
+        for (const pr of extraPartnerRows) {
+          if (!existingIds.has(pr.id)) {
+            rows.push(pr);
+            existingIds.add(pr.id);
+          }
+        }
+        rows.sort((a, b) => (b.data_assinatura || "").localeCompare(a.data_assinatura || ""));
+      }
 
       // Detect partnerships from v_kpi_negocios (official source of truth)
       const dealIds = rows.map(v => v.id);
