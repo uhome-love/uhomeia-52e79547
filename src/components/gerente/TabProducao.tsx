@@ -81,8 +81,8 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
     const [r1, r2, r3, r4, r5, r6, r7] = await Promise.all([
       // Oferta ativa — corretor_id = user_id ✅
       supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, pontos").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs),
-      // Visitas — corretor_id = profiles.id
-      supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamProfileIds).gte("data_visita", start).lte("data_visita", end),
+      // Visitas — corretor_id = user_id (confirmed from DB)
+      supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", start).lte("data_visita", end),
       // Negócios — corretor_id = profiles.id
       supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final").in("corretor_id", teamProfileIds).not("fase", "in", '("perdido","cancelado","distrato")'),
       // Follow-ups — responsavel_id = user_id ✅
@@ -122,13 +122,11 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
       if (t.resultado === "com_interesse") stats[t.corretor_id].aproveitados++;
     });
 
-    // Visitas use profile_id → resolve to user_id
+    // Visitas — corretor_id = user_id (no mapping needed)
     visitas.forEach(v => {
-      if (!v.corretor_id) return;
-      const uid = profileToUser[v.corretor_id];
-      if (!uid || !stats[uid]) return;
-      if (v.status !== "cancelada") stats[uid].visitas_marcadas++;
-      if (v.status === "realizada") stats[uid].visitas_realizadas++;
+      if (!v.corretor_id || !stats[v.corretor_id]) return;
+      if (v.status !== "cancelada") stats[v.corretor_id].visitas_marcadas++;
+      if (v.status === "realizada") stats[v.corretor_id].visitas_realizadas++;
     });
 
     // Negócios use profile_id → resolve to user_id
