@@ -87,26 +87,42 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
     });
     const teamProfileIds = (teamProfiles || []).map(p => p.id).filter(Boolean);
 
-    const [r1, r2, r3, r4] = await Promise.all([
-      // Ligações — corretor_id = user_id
-      supabase.from("oferta_ativa_tentativas").select("corretor_id").in("corretor_id", teamUserIds).gte("created_at", `${mesInicio}T00:00:00-03:00`).lte("created_at", `${mesFim}T23:59:59.999-03:00`),
-      // Visitas — corretor_id = user_id
+    const startTs = `${mesInicio}T00:00:00-03:00`;
+    const endTs = `${mesFim}T23:59:59.999-03:00`;
+
+    const [r1, r2, r3, r4, r5, r6, r7] = await Promise.all([
+      // Ligações + resultado
+      supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs),
+      // Visitas
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", mesInicio).lte("data_visita", mesFim),
-      // Negócios — corretor_id = profiles.id, filter by data_assinatura in month
-      supabase.from("negocios").select("id, vgv_estimado, vgv_final, corretor_id").in("corretor_id", teamProfileIds).in("fase", ["assinado", "vendido"]).gte("data_assinatura", mesInicio).lte("data_assinatura", mesFim),
+      // Negócios (all for created_at + assinatura)
+      supabase.from("negocios").select("id, vgv_estimado, vgv_final, corretor_id, fase, created_at, data_assinatura").in("corretor_id", teamProfileIds),
       // Saved metas
       supabase.from("ceo_metas_mensais").select("*").eq("gerente_id", user.id).eq("mes", mesAtual).maybeSingle(),
+      // Presenças
+      supabase.from("checkpoint_diario").select("corretor_id, presenca").in("corretor_id", teamProfileIds).gte("data", mesInicio).lte("data", mesFim).in("presenca", ["presente", "meio_periodo"]),
+      // Leads Roleta
+      supabase.from("distribuicao_historico").select("corretor_id").in("corretor_id", teamUserIds).eq("acao", "aceito").gte("created_at", startTs).lte("created_at", endTs),
+      // Negócios for created_at filter (already in r3, we'll filter in JS)
+      Promise.resolve(null),
     ]);
 
     const tentativas = r1.data || [];
     const visitas = r2.data || [];
-    const negociosArr = r3.data || [];
+    const negociosAll = r3.data || [];
     const metasSalvas = r4.data as any;
+    const presencasArr = r5.data || [];
+    const roletaArr = r6.data || [];
 
     const ligR = tentativas.length;
     const vmR = visitas.filter(v => v.status !== "cancelada").length;
     const vrR = visitas.filter(v => v.status === "realizada").length;
-    const vgvReal = negociosArr.reduce((s, n) => s + Number(n.vgv_final || n.vgv_estimado || 0), 0);
+
+    // VGV total for metas = assinados no mês
+    const negociosAssinMes = negociosAll.filter(n =>
+      ["assinado", "vendido"].includes(n.fase) && n.data_assinatura && n.data_assinatura >= mesInicio && n.data_assinatura <= mesFim
+    );
+    const vgvReal = negociosAssinMes.reduce((s, n) => s + Number(n.vgv_final || n.vgv_estimado || 0), 0);
 
     setMetas({
       ligacoes_meta: metasSalvas?.meta_ligacoes || 680,
@@ -122,23 +138,48 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
     // Per-corretor contribution
     const contribMap: Record<string, CorretorContrib> = {};
     teamUserIds.forEach(uid => {
-      contribMap[uid] = { user_id: uid, nome: teamNameMap[uid] || "Corretor", ligacoes: 0, visitas_marcadas: 0, visitas_realizadas: 0, vgv: 0 };
+      contribMap[uid] = { user_id: uid, nome: teamNameMap[uid] || "Corretor", presencas: 0, ligacoes: 0, aproveitados: 0, roleta: 0, visitas_marcadas: 0, visitas_realizadas: 0, negocios: 0, assinados: 0, vgv: 0 };
     });
-    tentativas.forEach(t => { if (contribMap[t.corretor_id]) contribMap[t.corretor_id].ligacoes++; });
+
+    // Ligações + Aproveitados
+    tentativas.forEach(t => {
+      if (!contribMap[t.corretor_id]) return;
+      contribMap[t.corretor_id].ligacoes++;
+      if (t.resultado === "com_interesse") contribMap[t.corretor_id].aproveitados++;
+    });
+
+    // Visitas
     visitas.forEach(v => {
-      if (v.corretor_id && contribMap[v.corretor_id]) {
-        if (v.status !== "cancelada") contribMap[v.corretor_id].visitas_marcadas++;
-        if (v.status === "realizada") contribMap[v.corretor_id].visitas_realizadas++;
-      }
+      if (!v.corretor_id || !contribMap[v.corretor_id]) return;
+      if (v.status !== "cancelada") contribMap[v.corretor_id].visitas_marcadas++;
+      if (v.status === "realizada") contribMap[v.corretor_id].visitas_realizadas++;
     });
-    // Negócios use profile_id → resolve to user_id
-    negociosArr.forEach(n => {
+
+    // Presenças (corretor_id = profile_id)
+    presencasArr.forEach(p => {
+      const uid = profileToUser[p.corretor_id];
+      if (uid && contribMap[uid]) contribMap[uid].presencas++;
+    });
+
+    // Leads Roleta (corretor_id = user_id)
+    roletaArr.forEach(r => {
+      if (contribMap[r.corretor_id]) contribMap[r.corretor_id].roleta++;
+    });
+
+    // Negócios (corretor_id = profile_id)
+    negociosAll.forEach(n => {
       if (!n.corretor_id) return;
       const uid = profileToUser[n.corretor_id];
-      if (uid && contribMap[uid]) {
+      if (!uid || !contribMap[uid]) return;
+      // Negócios criados no mês
+      if (n.created_at && n.created_at >= startTs && n.created_at <= endTs) contribMap[uid].negocios++;
+      // Assinados + VGV
+      if (["assinado", "vendido"].includes(n.fase) && n.data_assinatura && n.data_assinatura >= mesInicio && n.data_assinatura <= mesFim) {
+        contribMap[uid].assinados++;
         contribMap[uid].vgv += Number(n.vgv_final || n.vgv_estimado || 0);
       }
     });
+
     setContrib(Object.values(contribMap).sort((a, b) => b.ligacoes - a.ligacoes));
     setLoading(false);
   }, [user, teamUserIds, teamNameMap, mesAtual, mesInicio, mesFim]);
