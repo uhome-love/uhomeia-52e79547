@@ -92,13 +92,13 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
     const startTs = `${mesInicio}T00:00:00-03:00`;
     const endTs = `${mesFim}T23:59:59.999-03:00`;
 
-    const [r1, r2, r3, r4, r5, r6, r7, r8] = await Promise.all([
+    const [r1, r2, r3, r4, r5, r6, r7, r8, r9] = await Promise.all([
       // Ligações + resultado
       supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs),
       // Visitas
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", mesInicio).lte("data_visita", mesFim),
-      // Negócios (all for created_at + assinatura)
-      supabase.from("negocios").select("id, vgv_estimado, vgv_final, corretor_id, fase, created_at, data_assinatura").in("corretor_id", teamProfileIds),
+      // Negócios (all for created_at + assinatura) — include lead_id for partnership lookup
+      supabase.from("negocios").select("id, vgv_estimado, vgv_final, corretor_id, fase, created_at, data_assinatura, lead_id").in("corretor_id", teamProfileIds),
       // Saved metas
       supabase.from("ceo_metas_mensais").select("*").eq("gerente_id", user.id).eq("mes", mesAtual).maybeSingle(),
       // Presenças
@@ -109,6 +109,8 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
       supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", false),
       // Descartados no mês (arquivado = true com updated_at no mês)
       supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", true).gte("updated_at", startTs).lte("updated_at", endTs),
+      // Parcerias ativas do time
+      supabase.from("pipeline_parcerias").select("pipeline_lead_id, corretor_principal_id, corretor_parceiro_id, divisao_principal, divisao_parceiro").eq("status", "ativa"),
     ]);
 
     const tentativas = r1.data || [];
