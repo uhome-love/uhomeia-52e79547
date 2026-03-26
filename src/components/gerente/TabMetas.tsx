@@ -223,7 +223,8 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
       // Assinados + VGV
       if (["assinado", "vendido"].includes(n.fase) && n.data_assinatura && n.data_assinatura >= mesInicio && n.data_assinatura <= mesFim) {
         contribMap[uid].assinados++;
-        contribMap[uid].vgv += Number(n.vgv_final || n.vgv_estimado || 0);
+        contribMap[uid].vgv += getVgvProporcional(n, n.corretor_id);
+        if (hasParceria(n)) contribMap[uid].has_parceria = true;
       }
     });
 
