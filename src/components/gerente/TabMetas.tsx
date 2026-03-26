@@ -121,16 +121,44 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
     const leadsNovosArr = r6.data || [];
     const pipelineAtivoArr = r7.data || [];
     const descartadosArr = r8.data || [];
+    const parceriasArr = r9.data || [];
+
+    // Build partnership map: pipeline_lead_id → { principal_id, parceiro_id, div_principal, div_parceiro }
+    const parceriaByLead: Record<string, { principal_id: string; parceiro_id: string; div_principal: number; div_parceiro: number }> = {};
+    (parceriasArr || []).forEach((p: any) => {
+      parceriaByLead[p.pipeline_lead_id] = {
+        principal_id: p.corretor_principal_id,
+        parceiro_id: p.corretor_parceiro_id,
+        div_principal: p.divisao_principal || 50,
+        div_parceiro: p.divisao_parceiro || 50,
+      };
+    });
+
+    // Helper to compute proportional VGV for a negocio
+    const getVgvProporcional = (n: any, profileId: string): number => {
+      const vgvBruto = Number(n.vgv_final || n.vgv_estimado || 0);
+      if (!n.lead_id) return vgvBruto;
+      const parc = parceriaByLead[n.lead_id];
+      if (!parc) return vgvBruto;
+      if (profileId === parc.principal_id) return vgvBruto * (parc.div_principal / 100);
+      if (profileId === parc.parceiro_id) return vgvBruto * (parc.div_parceiro / 100);
+      return vgvBruto;
+    };
+
+    // Helper to check if negocio has partnership
+    const hasParceria = (n: any): boolean => {
+      return !!n.lead_id && !!parceriaByLead[n.lead_id];
+    };
 
     const ligR = tentativas.length;
     const vmR = visitas.filter(v => v.status !== "cancelada").length;
     const vrR = visitas.filter(v => v.status === "realizada").length;
 
-    // VGV total for metas = assinados no mês
+    // VGV total for metas = assinados no mês (with partnership splits)
     const negociosAssinMes = negociosAll.filter(n =>
       ["assinado", "vendido"].includes(n.fase) && n.data_assinatura && n.data_assinatura >= mesInicio && n.data_assinatura <= mesFim
     );
-    const vgvReal = negociosAssinMes.reduce((s, n) => s + Number(n.vgv_final || n.vgv_estimado || 0), 0);
+    const vgvReal = negociosAssinMes.reduce((s, n) => s + getVgvProporcional(n, n.corretor_id), 0);
 
     setMetas({
       ligacoes_meta: metasSalvas?.meta_ligacoes || 680,
