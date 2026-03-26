@@ -292,38 +292,91 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
+                {/* Group headers */}
+                <tr className="border-b border-border/30">
+                  <th className="py-1 px-2" />
+                  <th className="py-1 px-2" />
+                  <th colSpan={4} className="py-1 px-2 text-center text-[10px] font-bold text-blue-600 bg-blue-50/60 dark:bg-blue-950/30">Oferta Ativa</th>
+                  <th colSpan={4} className="py-1 px-2 text-center text-[10px] font-bold text-amber-600 bg-amber-50/60 dark:bg-amber-950/30">Visitas</th>
+                  <th colSpan={4} className="py-1 px-2 text-center text-[10px] font-bold text-purple-600 bg-purple-50/60 dark:bg-purple-950/30">Negócios</th>
+                </tr>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">Corretor</th>
-                  <th className="text-center py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">Ligações</th>
-                  <th className="text-center py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">% Lig</th>
-                  <th className="text-center py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">Vis Marc</th>
-                  <th className="text-center py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">% V.Marc</th>
-                  <th className="text-center py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">Vis Real</th>
-                  <th className="text-center py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">% V.Real</th>
-                  <th className="text-center py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">VGV</th>
-                  <th className="text-center py-2.5 px-3 text-[11px] text-muted-foreground font-semibold">% VGV</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold w-6">#</th>
+                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-semibold">Corretor</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-blue-50/30 dark:bg-blue-950/20">Pres</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-blue-50/30 dark:bg-blue-950/20">Lig</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-blue-50/30 dark:bg-blue-950/20">Aprov</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-blue-50/30 dark:bg-blue-950/20">Roleta</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-amber-50/30 dark:bg-amber-950/20">V.Marc</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-amber-50/30 dark:bg-amber-950/20">%</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-amber-50/30 dark:bg-amber-950/20">V.Real</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-amber-50/30 dark:bg-amber-950/20">%</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-purple-50/30 dark:bg-purple-950/20">Negóc</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-purple-50/30 dark:bg-purple-950/20">Assin</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-purple-50/30 dark:bg-purple-950/20">VGV</th>
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-semibold bg-purple-50/30 dark:bg-purple-950/20">%</th>
                 </tr>
               </thead>
               <tbody>
-                {contrib.map(c => {
-                  const totalLig = metas.ligacoes_realizado || 1;
-                  const totalVm = metas.visitas_marcadas_realizado || 1;
-                  const totalVr = metas.visitas_realizadas_realizado || 1;
-                  const totalVgv = metas.vgv_realizado || 1;
+                {(() => {
+                  const n = contrib.length || 1;
+                  const avgLig = contrib.reduce((s, c) => s + c.ligacoes, 0) / n;
+                  const avgAprov = contrib.reduce((s, c) => s + c.aproveitados, 0) / n;
+                  const avgRoleta = contrib.reduce((s, c) => s + c.roleta, 0) / n;
+                  const avgVm = contrib.reduce((s, c) => s + c.visitas_marcadas, 0) / n;
+                  const avgVr = contrib.reduce((s, c) => s + c.visitas_realizadas, 0) / n;
+                  const avgNeg = contrib.reduce((s, c) => s + c.negocios, 0) / n;
+                  const avgAssin = contrib.reduce((s, c) => s + c.assinados, 0) / n;
+                  const avgVgv = contrib.reduce((s, c) => s + c.vgv, 0) / n;
+                  const avgPres = contrib.reduce((s, c) => s + c.presencas, 0) / n;
+                  const totalLig = contrib.reduce((s, c) => s + c.ligacoes, 0) || 1;
+                  const totalVm = contrib.reduce((s, c) => s + c.visitas_marcadas, 0) || 1;
+                  const totalVr = contrib.reduce((s, c) => s + c.visitas_realizadas, 0) || 1;
+                  const totalVgv = contrib.reduce((s, c) => s + c.vgv, 0) || 1;
+
+                  const cellColor = (val: number, avg: number) =>
+                    val === 0 ? "text-destructive" : val > avg ? "text-emerald-600 font-semibold" : "";
+
                   return (
-                    <tr key={c.user_id} className="border-b border-border/20 hover:bg-accent/30">
-                      <td className="py-2 px-3 text-xs font-semibold text-foreground">{c.nome.split(" ").slice(0, 2).join(" ")}</td>
-                      <td className="py-2 px-3 text-center text-xs">{c.ligacoes}</td>
-                      <td className="py-2 px-3 text-center text-xs text-muted-foreground">{pct(c.ligacoes, totalLig)}%</td>
-                      <td className="py-2 px-3 text-center text-xs">{c.visitas_marcadas}</td>
-                      <td className="py-2 px-3 text-center text-xs text-muted-foreground">{pct(c.visitas_marcadas, totalVm)}%</td>
-                      <td className="py-2 px-3 text-center text-xs">{c.visitas_realizadas}</td>
-                      <td className="py-2 px-3 text-center text-xs text-muted-foreground">{pct(c.visitas_realizadas, totalVr)}%</td>
-                      <td className="py-2 px-3 text-center text-xs font-bold text-emerald-600">{fmtR(c.vgv)}</td>
-                      <td className="py-2 px-3 text-center text-xs text-muted-foreground">{pct(c.vgv, totalVgv)}%</td>
-                    </tr>
+                    <>
+                      {contrib.map((c, i) => (
+                        <tr key={c.user_id} className="border-b border-border/20 hover:bg-accent/30">
+                          <td className="py-1.5 px-2 text-center text-[10px] text-muted-foreground">{i + 1}</td>
+                          <td className="py-1.5 px-2 text-xs font-semibold text-foreground whitespace-nowrap">{c.nome.split(" ").slice(0, 2).join(" ")}</td>
+                          <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.presencas, avgPres)}`}>{c.presencas}</td>
+                          <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.ligacoes, avgLig)}`}>{c.ligacoes}</td>
+                          <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.aproveitados, avgAprov)}`}>{c.aproveitados}</td>
+                          <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.roleta, avgRoleta)}`}>{c.roleta}</td>
+                          <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.visitas_marcadas, avgVm)}`}>{c.visitas_marcadas}</td>
+                          <td className="py-1.5 px-2 text-center text-[10px] text-muted-foreground">{pct(c.visitas_marcadas, totalVm)}%</td>
+                          <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.visitas_realizadas, avgVr)}`}>{c.visitas_realizadas}</td>
+                          <td className="py-1.5 px-2 text-center text-[10px] text-muted-foreground">{pct(c.visitas_realizadas, totalVr)}%</td>
+                          <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.negocios, avgNeg)}`}>{c.negocios}</td>
+                          <td className={`py-1.5 px-2 text-center text-xs ${cellColor(c.assinados, avgAssin)}`}>{c.assinados}</td>
+                          <td className={`py-1.5 px-2 text-center text-xs font-bold ${cellColor(c.vgv, avgVgv)}`}>{fmtR(c.vgv)}</td>
+                          <td className="py-1.5 px-2 text-center text-[10px] text-muted-foreground">{pct(c.vgv, totalVgv)}%</td>
+                        </tr>
+                      ))}
+                      {/* Total do time */}
+                      <tr className="bg-blue-50/50 dark:bg-blue-950/20 border-t border-border font-bold">
+                        <td className="py-2 px-2" />
+                        <td className="py-2 px-2 text-xs text-blue-700 dark:text-blue-400">Total do time</td>
+                        <td className="py-2 px-2 text-center text-xs">{contrib.reduce((s, c) => s + c.presencas, 0)}</td>
+                        <td className="py-2 px-2 text-center text-xs">{contrib.reduce((s, c) => s + c.ligacoes, 0)}</td>
+                        <td className="py-2 px-2 text-center text-xs">{contrib.reduce((s, c) => s + c.aproveitados, 0)}</td>
+                        <td className="py-2 px-2 text-center text-xs">{contrib.reduce((s, c) => s + c.roleta, 0)}</td>
+                        <td className="py-2 px-2 text-center text-xs">{contrib.reduce((s, c) => s + c.visitas_marcadas, 0)}</td>
+                        <td className="py-2 px-2 text-center text-[10px] text-muted-foreground">—</td>
+                        <td className="py-2 px-2 text-center text-xs">{contrib.reduce((s, c) => s + c.visitas_realizadas, 0)}</td>
+                        <td className="py-2 px-2 text-center text-[10px] text-muted-foreground">—</td>
+                        <td className="py-2 px-2 text-center text-xs">{contrib.reduce((s, c) => s + c.negocios, 0)}</td>
+                        <td className="py-2 px-2 text-center text-xs">{contrib.reduce((s, c) => s + c.assinados, 0)}</td>
+                        <td className="py-2 px-2 text-center text-xs font-bold text-emerald-600">{fmtR(contrib.reduce((s, c) => s + c.vgv, 0))}</td>
+                        <td className="py-2 px-2 text-center text-[10px] text-muted-foreground">—</td>
+                      </tr>
+                    </>
                   );
-                })}
+                })()}
               </tbody>
             </table>
           </div>
