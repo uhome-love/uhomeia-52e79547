@@ -14,12 +14,15 @@ interface CorretorProd {
   ligacoes: number;
   aproveitados: number;
   taxa: number;
-  oa_tentativas: number;
+  roleta: number;
+  descartados: number;
+  followups: number;
+  atualizados: number;
   visitas_marcadas: number;
   visitas_realizadas: number;
-  followups: number;
+  negocios: number;
   propostas: number;
-  vendas: number;
+  assinados: number;
   vgv: number;
   pontos: number;
 }
@@ -59,35 +62,46 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
     if (!user || teamUserIds.length === 0 || !profileId) return;
     setLoading(true);
 
-    const [r1, r2, r3, r4, r5] = await Promise.all([
+    const [r1, r2, r3, r4, r5, r6, r7] = await Promise.all([
+      // Oferta ativa
       supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, pontos").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs),
+      // Visitas
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", start).lte("data_visita", end),
+      // Negócios
       supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final").eq("gerente_id", profileId).not("fase", "in", '("perdido","cancelado","distrato")'),
-      // Follow-ups: count pipeline_tarefas completed in the period (responsavel_id = auth user_id)
+      // Follow-ups (tarefas concluídas)
       supabase.from("pipeline_tarefas").select("responsavel_id").in("responsavel_id", teamUserIds).gte("concluida_em", startTs).lte("concluida_em", endTs),
-      supabase.from("profiles").select("user_id, nome").in("user_id", teamUserIds),
+      // Roleta (leads recebidos)
+      supabase.from("distribuicao_historico").select("corretor_id").in("corretor_id", teamUserIds).eq("acao", "aceito").gte("created_at", startTs).lte("created_at", endTs),
+      // Descartados
+      supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("status", "descartado").gte("updated_at", startTs).lte("updated_at", endTs),
+      // Leads atualizados hoje
+      supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).gte("ultima_acao_at", startTs).lte("ultima_acao_at", endTs),
     ]);
 
     const tentativas = r1.data || [];
     const visitas = r2.data || [];
     const negocios = r3.data || [];
     const followups = r4.data || [];
+    const roleta = r5.data || [];
+    const descartados = r6.data || [];
+    const atualizados = r7.data || [];
 
     const stats: Record<string, CorretorProd> = {};
     teamUserIds.forEach(uid => {
       stats[uid] = {
         user_id: uid,
         nome: teamNameMap[uid] || "Corretor",
-        ligacoes: 0, aproveitados: 0, taxa: 0, oa_tentativas: 0,
+        ligacoes: 0, aproveitados: 0, taxa: 0,
+        roleta: 0, descartados: 0, followups: 0, atualizados: 0,
         visitas_marcadas: 0, visitas_realizadas: 0,
-        followups: 0, propostas: 0, vendas: 0, vgv: 0, pontos: 0,
+        negocios: 0, propostas: 0, assinados: 0, vgv: 0, pontos: 0,
       };
     });
 
     tentativas.forEach(t => {
       if (!stats[t.corretor_id]) return;
       stats[t.corretor_id].ligacoes++;
-      stats[t.corretor_id].oa_tentativas++;
       stats[t.corretor_id].pontos += t.pontos || 0;
       if (t.resultado === "com_interesse") stats[t.corretor_id].aproveitados++;
     });
@@ -100,9 +114,10 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
 
     negocios.forEach(n => {
       if (!n.corretor_id || !stats[n.corretor_id]) return;
+      stats[n.corretor_id].negocios++;
       if (n.fase === "proposta") stats[n.corretor_id].propostas++;
       if (n.fase === "assinado" || n.fase === "vendido") {
-        stats[n.corretor_id].vendas++;
+        stats[n.corretor_id].assinados++;
         stats[n.corretor_id].vgv += Number(n.vgv_final || n.vgv_estimado || 0);
       }
     });
@@ -111,6 +126,21 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
       const uid = (f as any).responsavel_id;
       if (!uid || !stats[uid]) return;
       stats[uid].followups++;
+    });
+
+    roleta.forEach(r => {
+      if (!r.corretor_id || !stats[r.corretor_id]) return;
+      stats[r.corretor_id].roleta++;
+    });
+
+    descartados.forEach(d => {
+      if (!d.corretor_id || !stats[d.corretor_id]) return;
+      stats[d.corretor_id].descartados++;
+    });
+
+    atualizados.forEach(a => {
+      if (!a.corretor_id || !stats[a.corretor_id]) return;
+      stats[a.corretor_id].atualizados++;
     });
 
     Object.values(stats).forEach(s => {
@@ -124,28 +154,21 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Auto-refresh
   useEffect(() => {
     const interval = setInterval(loadData, 60000);
     return () => clearInterval(interval);
   }, [loadData]);
 
-  // Média do time
   const media = useMemo(() => {
     if (rows.length === 0) return null;
     const n = rows.length;
+    const avg = (key: keyof CorretorProd) => Math.round(rows.reduce((s, r) => s + (r[key] as number), 0) / n);
     return {
-      ligacoes: Math.round(rows.reduce((s, r) => s + r.ligacoes, 0) / n),
-      aproveitados: Math.round(rows.reduce((s, r) => s + r.aproveitados, 0) / n),
-      taxa: Math.round(rows.reduce((s, r) => s + r.taxa, 0) / n),
-      oa_tentativas: Math.round(rows.reduce((s, r) => s + r.oa_tentativas, 0) / n),
-      visitas_marcadas: Math.round(rows.reduce((s, r) => s + r.visitas_marcadas, 0) / n),
-      visitas_realizadas: Math.round(rows.reduce((s, r) => s + r.visitas_realizadas, 0) / n),
-      followups: Math.round(rows.reduce((s, r) => s + r.followups, 0) / n),
-      propostas: Math.round(rows.reduce((s, r) => s + r.propostas, 0) / n),
-      vendas: Math.round(rows.reduce((s, r) => s + r.vendas, 0) / n),
-      vgv: Math.round(rows.reduce((s, r) => s + r.vgv, 0) / n),
-      pontos: Math.round(rows.reduce((s, r) => s + r.pontos, 0) / n),
+      ligacoes: avg("ligacoes"), aproveitados: avg("aproveitados"), taxa: avg("taxa"),
+      roleta: avg("roleta"), descartados: avg("descartados"), followups: avg("followups"), atualizados: avg("atualizados"),
+      visitas_marcadas: avg("visitas_marcadas"), visitas_realizadas: avg("visitas_realizadas"),
+      negocios: avg("negocios"), propostas: avg("propostas"), assinados: avg("assinados"),
+      vgv: avg("vgv"), pontos: avg("pontos"),
     };
   }, [rows]);
 
@@ -160,6 +183,9 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
+  const thBase = "py-2 px-2 text-center text-[11px] font-semibold whitespace-nowrap";
+  const tdBase = "py-2 px-2 text-center text-xs";
+
   return (
     <div className="space-y-4">
       <GlobalDateFilterBar />
@@ -167,57 +193,93 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
       <Card className="border-border/60 overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left py-3 px-3 text-[11px] text-muted-foreground font-semibold">#</th>
-                  <th className="text-left py-3 px-3 text-[11px] text-muted-foreground font-semibold">Corretor</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">Lig</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">Aprov</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">Taxa</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">OA Tent</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">V.Marc</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">V.Real</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">Follow</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">Prop</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">Vendas</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">VGV</th>
-                  <th className="text-center py-3 px-3 text-[11px] text-muted-foreground font-semibold">Pts</th>
+                {/* Group header row */}
+                <tr className="border-b border-border">
+                  <th className="bg-muted/30" colSpan={2} />
+                  <th colSpan={3} className="py-1.5 px-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border-r border-border">
+                    Oferta Ativa
+                  </th>
+                  <th colSpan={4} className="py-1.5 px-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border-r border-border">
+                    Pipeline de Leads
+                  </th>
+                  <th colSpan={2} className="py-1.5 px-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border-r border-border">
+                    Visitas
+                  </th>
+                  <th colSpan={4} className="py-1.5 px-1 text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border-r border-border">
+                    Pipeline Negócios
+                  </th>
+                  <th className="bg-muted/30" />
+                </tr>
+                {/* Column header row */}
+                <tr className="border-b border-border bg-muted/20">
+                  <th className={`${thBase} text-left text-muted-foreground`}>#</th>
+                  <th className={`${thBase} text-left text-muted-foreground`}>Corretor</th>
+                  {/* Oferta Ativa */}
+                  <th className={`${thBase} text-blue-600 bg-blue-50/50`}>Lig</th>
+                  <th className={`${thBase} text-blue-600 bg-blue-50/50`}>Aprov</th>
+                  <th className={`${thBase} text-blue-600 bg-blue-50/50 border-r border-border`}>Taxa</th>
+                  {/* Pipeline Leads */}
+                  <th className={`${thBase} text-emerald-600 bg-emerald-50/50`}>Roleta</th>
+                  <th className={`${thBase} text-emerald-600 bg-emerald-50/50`}>Descart.</th>
+                  <th className={`${thBase} text-emerald-600 bg-emerald-50/50`}>Follow</th>
+                  <th className={`${thBase} text-emerald-600 bg-emerald-50/50 border-r border-border`}>Atualiz.</th>
+                  {/* Visitas */}
+                  <th className={`${thBase} text-amber-600 bg-amber-50/50`}>V.Marc</th>
+                  <th className={`${thBase} text-amber-600 bg-amber-50/50 border-r border-border`}>V.Real</th>
+                  {/* Pipeline Negócios */}
+                  <th className={`${thBase} text-purple-600 bg-purple-50/50`}>Negóc.</th>
+                  <th className={`${thBase} text-purple-600 bg-purple-50/50`}>Prop.</th>
+                  <th className={`${thBase} text-purple-600 bg-purple-50/50`}>Assin.</th>
+                  <th className={`${thBase} text-purple-600 bg-purple-50/50 border-r border-border`}>VGV</th>
+                  {/* Pontos */}
+                  <th className={`${thBase} text-foreground font-black`}>Pts</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={r.user_id} className="border-b border-border/20 hover:bg-accent/30 transition-colors">
-                    <td className="py-2.5 px-3 text-xs font-bold text-muted-foreground">{i + 1}</td>
-                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground">{r.nome.split(" ").slice(0, 2).join(" ")}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.ligacoes, media.ligacoes) : ""}`}>{r.ligacoes}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.aproveitados, media.aproveitados) : ""}`}>{r.aproveitados}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.taxa, media.taxa) : ""}`}>{r.taxa}%</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.oa_tentativas, media.oa_tentativas) : ""}`}>{r.oa_tentativas}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.visitas_marcadas, media.visitas_marcadas) : ""}`}>{r.visitas_marcadas}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.visitas_realizadas, media.visitas_realizadas) : ""}`}>{r.visitas_realizadas}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.followups, media.followups) : ""}`}>{r.followups}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.propostas, media.propostas) : ""}`}>{r.propostas}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.vendas, media.vendas) : ""}`}>{r.vendas}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs ${media ? cellColor(r.vgv, media.vgv) : ""}`}>{formatBRLCompact(r.vgv)}</td>
-                    <td className={`py-2.5 px-3 text-center text-xs font-black ${media ? cellColor(r.pontos, media.pontos) : ""}`}>{r.pontos}</td>
+                    <td className="py-2 px-2 text-xs font-bold text-muted-foreground">{i + 1}</td>
+                    <td className="py-2 px-2 text-xs font-semibold text-foreground whitespace-nowrap">{r.nome.split(" ").slice(0, 2).join(" ")}</td>
+                    {/* Oferta Ativa */}
+                    <td className={`${tdBase} bg-blue-50/20 ${media ? cellColor(r.ligacoes, media.ligacoes) : ""}`}>{r.ligacoes}</td>
+                    <td className={`${tdBase} bg-blue-50/20 ${media ? cellColor(r.aproveitados, media.aproveitados) : ""}`}>{r.aproveitados}</td>
+                    <td className={`${tdBase} bg-blue-50/20 border-r border-border/30 ${media ? cellColor(r.taxa, media.taxa) : ""}`}>{r.taxa}%</td>
+                    {/* Pipeline Leads */}
+                    <td className={`${tdBase} bg-emerald-50/20 ${media ? cellColor(r.roleta, media.roleta) : ""}`}>{r.roleta}</td>
+                    <td className={`${tdBase} bg-emerald-50/20 ${media ? cellColor(r.descartados, media.descartados) : ""}`}>{r.descartados}</td>
+                    <td className={`${tdBase} bg-emerald-50/20 ${media ? cellColor(r.followups, media.followups) : ""}`}>{r.followups}</td>
+                    <td className={`${tdBase} bg-emerald-50/20 border-r border-border/30 ${media ? cellColor(r.atualizados, media.atualizados) : ""}`}>{r.atualizados}</td>
+                    {/* Visitas */}
+                    <td className={`${tdBase} bg-amber-50/20 ${media ? cellColor(r.visitas_marcadas, media.visitas_marcadas) : ""}`}>{r.visitas_marcadas}</td>
+                    <td className={`${tdBase} bg-amber-50/20 border-r border-border/30 ${media ? cellColor(r.visitas_realizadas, media.visitas_realizadas) : ""}`}>{r.visitas_realizadas}</td>
+                    {/* Pipeline Negócios */}
+                    <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.negocios, media.negocios) : ""}`}>{r.negocios}</td>
+                    <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.propostas, media.propostas) : ""}`}>{r.propostas}</td>
+                    <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.assinados, media.assinados) : ""}`}>{r.assinados}</td>
+                    <td className={`${tdBase} bg-purple-50/20 border-r border-border/30 ${media ? cellColor(r.vgv, media.vgv) : ""}`}>{formatBRLCompact(r.vgv)}</td>
+                    {/* Pontos */}
+                    <td className={`${tdBase} font-black ${media ? cellColor(r.pontos, media.pontos) : ""}`}>{r.pontos}</td>
                   </tr>
                 ))}
-                {/* Média do time */}
                 {media && (
                   <tr className="bg-muted/50 border-t-2 border-primary/20">
-                    <td className="py-2.5 px-3 text-xs font-bold text-primary" colSpan={2}>Média do time</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.ligacoes}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.aproveitados}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.taxa}%</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.oa_tentativas}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.visitas_marcadas}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.visitas_realizadas}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.followups}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.propostas}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{media.vendas}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-bold text-primary">{formatBRLCompact(media.vgv)}</td>
-                    <td className="py-2.5 px-3 text-center text-xs font-black text-primary">{media.pontos}</td>
+                    <td className="py-2 px-2 text-xs font-bold text-primary" colSpan={2}>Média do time</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{media.ligacoes}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{media.aproveitados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30 border-r border-border/30">{media.taxa}%</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.roleta}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.descartados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.followups}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30 border-r border-border/30">{media.atualizados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30">{media.visitas_marcadas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30 border-r border-border/30">{media.visitas_realizadas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.negocios}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.propostas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.assinados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30 border-r border-border/30">{formatBRLCompact(media.vgv)}</td>
+                    <td className="py-2 px-2 text-center text-xs font-black text-primary">{media.pontos}</td>
                   </tr>
                 )}
               </tbody>
