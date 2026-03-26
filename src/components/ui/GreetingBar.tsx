@@ -203,6 +203,7 @@ export function GreetingBar({
       </div>
 
       {/* Filtro dropdown */}
+      {showFilter && (
       <div className="relative z-10 flex-shrink-0" ref={dropdownRef}>
         <button
           onClick={() => setDropdownOpen((v) => !v)}
@@ -289,6 +290,7 @@ export function GreetingBar({
           </div>
         )}
       </div>
+      )}
 
       {/* Refresh */}
       <button
