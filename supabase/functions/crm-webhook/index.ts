@@ -103,8 +103,10 @@ Deno.serve(async (req) => {
     const leadNome = record.nome || 'Lead do site'
     const leadTelefone = record.telefone || ''
     const leadEmail = record.email || null
-    const imovelTitulo = record.imovel_titulo || null
+    const imovelTitulo = record.imovel_titulo || record.imovel_interesse || null
     const origemComponente = record.origem_componente || null
+    const imovelCodigo = record.imovel_codigo || null
+    const imovelUrl = record.imovel_url || (imovelCodigo ? `https://uhome.com.br/imovel/${imovelCodigo}` : null)
 
     if (tipo === 'lead' || tipo === 'agendamento' || tipo === 'captacao') {
       // ── Dedup by phone ──
