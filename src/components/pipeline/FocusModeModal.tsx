@@ -41,7 +41,7 @@ const QUICK_MESSAGES = [
   { label: "Condições especiais", text: (name: string, interest: string) => `Oi ${name}! Temos condições especiais para o ${interest || "empreendimento"} essa semana. Quer que eu te mande os detalhes? 😊` },
 ];
 
-type CriteriaType = "overdue_tasks" | "no_tasks" | "stagnant" | "all";
+type CriteriaType = FocusCriteria;
 
 const CRITERIA_OPTIONS: { value: CriteriaType; label: string; description: string; icon: React.ReactNode; color: string }[] = [
   { value: "all", label: "Todos", description: "Todos os leads que precisam de atenção", icon: <Target className="w-5 h-5" />, color: "#4F46E5" },
