@@ -112,6 +112,7 @@ export function GreetingBar({
   onFilterChange,
   onRefresh,
   refreshTime,
+  showFilter = true,
   className,
 }: GreetingBarProps) {
   const [internalFilter, setInternalFilter] = useState<DateFilter>("hoje");
