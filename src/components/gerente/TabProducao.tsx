@@ -179,12 +179,13 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
     return () => clearInterval(interval);
   }, [loadData]);
 
-  const totais = useMemo(() => {
-    if (rows.length === 0) return null;
+  const { totais, media } = useMemo(() => {
+    if (rows.length === 0) return { totais: null, media: null };
+    const n = rows.length;
     const sum = (key: keyof CorretorProd) => rows.reduce((s, r) => s + (r[key] as number), 0);
     const totalLig = sum("ligacoes");
     const totalAprov = sum("aproveitados");
-    return {
+    const t = {
       ligacoes: totalLig, aproveitados: totalAprov,
       taxa: totalLig > 0 ? Math.round((totalAprov / totalLig) * 100) : 0,
       roleta: sum("roleta"), descartados: sum("descartados"), followups: sum("followups"), atualizados: sum("atualizados"),
@@ -192,6 +193,15 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
       negocios: sum("negocios"), propostas: sum("propostas"), assinados: sum("assinados"),
       vgv: sum("vgv"), pontos: sum("pontos"),
     };
+    const avg = (v: number) => Math.round(v / n);
+    const m = {
+      ligacoes: avg(t.ligacoes), aproveitados: avg(t.aproveitados), taxa: avg(t.taxa),
+      roleta: avg(t.roleta), descartados: avg(t.descartados), followups: avg(t.followups), atualizados: avg(t.atualizados),
+      visitas_marcadas: avg(t.visitas_marcadas), visitas_realizadas: avg(t.visitas_realizadas),
+      negocios: avg(t.negocios), propostas: avg(t.propostas), assinados: avg(t.assinados),
+      vgv: avg(t.vgv), pontos: avg(t.pontos),
+    };
+    return { totais: t, media: m };
   }, [rows]);
 
   const cellColor = (val: number, avg: number) => {
