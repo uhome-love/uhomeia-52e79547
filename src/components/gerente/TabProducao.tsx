@@ -265,43 +265,43 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
                     <td className="py-2 px-2 text-xs font-bold text-muted-foreground">{i + 1}</td>
                     <td className="py-2 px-2 text-xs font-semibold text-foreground whitespace-nowrap">{r.nome.split(" ").slice(0, 2).join(" ")}</td>
                     {/* Oferta Ativa */}
-                    <td className={`${tdBase} bg-blue-50/20 ${media ? cellColor(r.ligacoes, media.ligacoes) : ""}`}>{r.ligacoes}</td>
-                    <td className={`${tdBase} bg-blue-50/20 ${media ? cellColor(r.aproveitados, media.aproveitados) : ""}`}>{r.aproveitados}</td>
-                    <td className={`${tdBase} bg-blue-50/20 border-r border-border/30 ${media ? cellColor(r.taxa, media.taxa) : ""}`}>{r.taxa}%</td>
+                    <td className={`${tdBase} bg-blue-50/20 ${totais ? cellColor(r.ligacoes, totais.ligacoes) : ""}`}>{r.ligacoes}</td>
+                    <td className={`${tdBase} bg-blue-50/20 ${totais ? cellColor(r.aproveitados, totais.aproveitados) : ""}`}>{r.aproveitados}</td>
+                    <td className={`${tdBase} bg-blue-50/20 border-r border-border/30 ${totais ? cellColor(r.taxa, totais.taxa) : ""}`}>{r.taxa}%</td>
                     {/* Pipeline Leads */}
-                    <td className={`${tdBase} bg-emerald-50/20 ${media ? cellColor(r.roleta, media.roleta) : ""}`}>{r.roleta}</td>
-                    <td className={`${tdBase} bg-emerald-50/20 ${media ? cellColor(r.descartados, media.descartados) : ""}`}>{r.descartados}</td>
-                    <td className={`${tdBase} bg-emerald-50/20 ${media ? cellColor(r.followups, media.followups) : ""}`}>{r.followups}</td>
-                    <td className={`${tdBase} bg-emerald-50/20 border-r border-border/30 ${media ? cellColor(r.atualizados, media.atualizados) : ""}`}>{r.atualizados}</td>
+                    <td className={`${tdBase} bg-emerald-50/20 ${totais ? cellColor(r.roleta, totais.roleta) : ""}`}>{r.roleta}</td>
+                    <td className={`${tdBase} bg-emerald-50/20 ${totais ? cellColor(r.descartados, totais.descartados) : ""}`}>{r.descartados}</td>
+                    <td className={`${tdBase} bg-emerald-50/20 ${totais ? cellColor(r.followups, totais.followups) : ""}`}>{r.followups}</td>
+                    <td className={`${tdBase} bg-emerald-50/20 border-r border-border/30 ${totais ? cellColor(r.atualizados, totais.atualizados) : ""}`}>{r.atualizados}</td>
                     {/* Visitas */}
-                    <td className={`${tdBase} bg-amber-50/20 ${media ? cellColor(r.visitas_marcadas, media.visitas_marcadas) : ""}`}>{r.visitas_marcadas}</td>
-                    <td className={`${tdBase} bg-amber-50/20 border-r border-border/30 ${media ? cellColor(r.visitas_realizadas, media.visitas_realizadas) : ""}`}>{r.visitas_realizadas}</td>
+                    <td className={`${tdBase} bg-amber-50/20 ${totais ? cellColor(r.visitas_marcadas, totais.visitas_marcadas) : ""}`}>{r.visitas_marcadas}</td>
+                    <td className={`${tdBase} bg-amber-50/20 border-r border-border/30 ${totais ? cellColor(r.visitas_realizadas, totais.visitas_realizadas) : ""}`}>{r.visitas_realizadas}</td>
                     {/* Pipeline Negócios */}
-                    <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.negocios, media.negocios) : ""}`}>{r.negocios}</td>
-                    <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.propostas, media.propostas) : ""}`}>{r.propostas}</td>
-                    <td className={`${tdBase} bg-purple-50/20 ${media ? cellColor(r.assinados, media.assinados) : ""}`}>{r.assinados}</td>
-                    <td className={`${tdBase} bg-purple-50/20 border-r border-border/30 ${media ? cellColor(r.vgv, media.vgv) : ""}`}>{formatBRLCompact(r.vgv)}</td>
+                    <td className={`${tdBase} bg-purple-50/20 ${totais ? cellColor(r.negocios, totais.negocios) : ""}`}>{r.negocios}</td>
+                    <td className={`${tdBase} bg-purple-50/20 ${totais ? cellColor(r.propostas, totais.propostas) : ""}`}>{r.propostas}</td>
+                    <td className={`${tdBase} bg-purple-50/20 ${totais ? cellColor(r.assinados, totais.assinados) : ""}`}>{r.assinados}</td>
+                    <td className={`${tdBase} bg-purple-50/20 border-r border-border/30 ${totais ? cellColor(r.vgv, totais.vgv) : ""}`}>{formatBRLCompact(r.vgv)}</td>
                     {/* Pontos */}
-                    <td className={`${tdBase} font-black ${media ? cellColor(r.pontos, media.pontos) : ""}`}>{r.pontos}</td>
+                    <td className={`${tdBase} font-black ${totais ? cellColor(r.pontos, totais.pontos) : ""}`}>{r.pontos}</td>
                   </tr>
                 ))}
-                {media && (
+                {totais && (
                   <tr className="bg-muted/50 border-t-2 border-primary/20">
-                    <td className="py-2 px-2 text-xs font-bold text-primary" colSpan={2}>Média do time</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{media.ligacoes}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{media.aproveitados}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30 border-r border-border/30">{media.taxa}%</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.roleta}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.descartados}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.followups}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30 border-r border-border/30">{media.atualizados}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30">{media.visitas_marcadas}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30 border-r border-border/30">{media.visitas_realizadas}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.negocios}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.propostas}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.assinados}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30 border-r border-border/30">{formatBRLCompact(media.vgv)}</td>
-                    <td className="py-2 px-2 text-center text-xs font-black text-primary">{media.pontos}</td>
+                    <td className="py-2 px-2 text-xs font-bold text-primary" colSpan={2}>Total do time</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{totais.ligacoes}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{totais.aproveitados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30 border-r border-border/30">{totais.taxa}%</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{totais.roleta}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{totais.descartados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{totais.followups}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30 border-r border-border/30">{totais.atualizados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30">{totais.visitas_marcadas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30 border-r border-border/30">{totais.visitas_realizadas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{totais.negocios}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{totais.propostas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{totais.assinados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30 border-r border-border/30">{formatBRLCompact(totais.vgv)}</td>
+                    <td className="py-2 px-2 text-center text-xs font-black text-primary">{totais.pontos}</td>
                   </tr>
                 )}
               </tbody>
