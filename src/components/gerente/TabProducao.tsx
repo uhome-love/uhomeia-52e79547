@@ -179,17 +179,29 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
     return () => clearInterval(interval);
   }, [loadData]);
 
-  const media = useMemo(() => {
-    if (rows.length === 0) return null;
+  const { totais, media } = useMemo(() => {
+    if (rows.length === 0) return { totais: null, media: null };
     const n = rows.length;
-    const avg = (key: keyof CorretorProd) => Math.round(rows.reduce((s, r) => s + (r[key] as number), 0) / n);
-    return {
-      ligacoes: avg("ligacoes"), aproveitados: avg("aproveitados"), taxa: avg("taxa"),
-      roleta: avg("roleta"), descartados: avg("descartados"), followups: avg("followups"), atualizados: avg("atualizados"),
-      visitas_marcadas: avg("visitas_marcadas"), visitas_realizadas: avg("visitas_realizadas"),
-      negocios: avg("negocios"), propostas: avg("propostas"), assinados: avg("assinados"),
-      vgv: avg("vgv"), pontos: avg("pontos"),
+    const sum = (key: keyof CorretorProd) => rows.reduce((s, r) => s + (r[key] as number), 0);
+    const totalLig = sum("ligacoes");
+    const totalAprov = sum("aproveitados");
+    const t = {
+      ligacoes: totalLig, aproveitados: totalAprov,
+      taxa: totalLig > 0 ? Math.round((totalAprov / totalLig) * 100) : 0,
+      roleta: sum("roleta"), descartados: sum("descartados"), followups: sum("followups"), atualizados: sum("atualizados"),
+      visitas_marcadas: sum("visitas_marcadas"), visitas_realizadas: sum("visitas_realizadas"),
+      negocios: sum("negocios"), propostas: sum("propostas"), assinados: sum("assinados"),
+      vgv: sum("vgv"), pontos: sum("pontos"),
     };
+    const avg = (v: number) => Math.round(v / n);
+    const m = {
+      ligacoes: avg(t.ligacoes), aproveitados: avg(t.aproveitados), taxa: avg(t.taxa),
+      roleta: avg(t.roleta), descartados: avg(t.descartados), followups: avg(t.followups), atualizados: avg(t.atualizados),
+      visitas_marcadas: avg(t.visitas_marcadas), visitas_realizadas: avg(t.visitas_realizadas),
+      negocios: avg(t.negocios), propostas: avg(t.propostas), assinados: avg(t.assinados),
+      vgv: avg(t.vgv), pontos: avg(t.pontos),
+    };
+    return { totais: t, media: m };
   }, [rows]);
 
   const cellColor = (val: number, avg: number) => {
@@ -283,23 +295,23 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
                     <td className={`${tdBase} font-black ${media ? cellColor(r.pontos, media.pontos) : ""}`}>{r.pontos}</td>
                   </tr>
                 ))}
-                {media && (
+                {totais && (
                   <tr className="bg-muted/50 border-t-2 border-primary/20">
-                    <td className="py-2 px-2 text-xs font-bold text-primary" colSpan={2}>Média do time</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{media.ligacoes}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{media.aproveitados}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30 border-r border-border/30">{media.taxa}%</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.roleta}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.descartados}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{media.followups}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30 border-r border-border/30">{media.atualizados}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30">{media.visitas_marcadas}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30 border-r border-border/30">{media.visitas_realizadas}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.negocios}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.propostas}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{media.assinados}</td>
-                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30 border-r border-border/30">{formatBRLCompact(media.vgv)}</td>
-                    <td className="py-2 px-2 text-center text-xs font-black text-primary">{media.pontos}</td>
+                    <td className="py-2 px-2 text-xs font-bold text-primary" colSpan={2}>Total do time</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{totais.ligacoes}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30">{totais.aproveitados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-blue-50/30 border-r border-border/30">{totais.taxa}%</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{totais.roleta}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{totais.descartados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30">{totais.followups}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-emerald-50/30 border-r border-border/30">{totais.atualizados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30">{totais.visitas_marcadas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-amber-50/30 border-r border-border/30">{totais.visitas_realizadas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{totais.negocios}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{totais.propostas}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30">{totais.assinados}</td>
+                    <td className="py-2 px-2 text-center text-xs font-bold text-primary bg-purple-50/30 border-r border-border/30">{formatBRLCompact(totais.vgv)}</td>
+                    <td className="py-2 px-2 text-center text-xs font-black text-primary">{totais.pontos}</td>
                   </tr>
                 )}
               </tbody>
