@@ -244,6 +244,7 @@ export default function GerenteDashboard() {
         avatarUrl={avatarSrc}
         onRefresh={() => window.location.reload()}
         refreshTime={lastUpdate}
+        showFilter={false}
       />
 
       {teamUserIds.length === 0 && !kpisLoading && (
