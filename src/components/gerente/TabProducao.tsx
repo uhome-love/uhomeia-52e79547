@@ -83,8 +83,8 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
       supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, pontos").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs),
       // Visitas — corretor_id = user_id (confirmed from DB)
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", start).lte("data_visita", end),
-      // Negócios — corretor_id = profiles.id
-      supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final").in("corretor_id", teamProfileIds).not("fase", "in", '("perdido","cancelado","distrato")'),
+      // Negócios — corretor_id = profiles.id — fetch ALL active + period lost for counting
+      supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final, data_assinatura, created_at, fase_changed_at").in("corretor_id", teamProfileIds),
       // Follow-ups — responsavel_id = user_id ✅
       supabase.from("pipeline_tarefas").select("responsavel_id").in("responsavel_id", teamUserIds).gte("concluida_em", startTs).lte("concluida_em", endTs),
       // Roleta — corretor_id = user_id ✅
@@ -129,14 +129,22 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
       if (v.status === "realizada") stats[v.corretor_id].visitas_realizadas++;
     });
 
-    // Negócios use profile_id → resolve to user_id
+    // Negócios — period-filtered metrics
     negocios.forEach(n => {
       if (!n.corretor_id) return;
       const uid = profileToUser[n.corretor_id];
       if (!uid || !stats[uid]) return;
-      stats[uid].negocios++;
-      if (n.fase === "proposta") stats[uid].propostas++;
-      if (n.fase === "assinado" || n.fase === "vendido") {
+
+      // Negóc. = created in period
+      if (n.created_at && n.created_at >= startTs && n.created_at <= endTs) {
+        stats[uid].negocios++;
+      }
+      // Prop. = fase_changed_at in period AND currently proposta
+      if (n.fase === "proposta" && n.fase_changed_at && n.fase_changed_at >= startTs && n.fase_changed_at <= endTs) {
+        stats[uid].propostas++;
+      }
+      // Assin. = data_assinatura in period AND fase assinado/vendido
+      if ((n.fase === "assinado" || n.fase === "vendido") && n.data_assinatura && n.data_assinatura >= start && n.data_assinatura <= end) {
         stats[uid].assinados++;
         stats[uid].vgv += Number(n.vgv_final || n.vgv_estimado || 0);
       }
