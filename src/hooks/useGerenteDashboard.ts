@@ -571,6 +571,7 @@ export function useGerenteDashboard(period: Period) {
     negociosAcao: negociosAcao || [],
     negociosQuentes: negociosQuentes || [],
     negociosPorFase: negociosPorFase || { proposta: [], negociacao: [], documentacao: [] },
+    pipelineVelocity: pipelineVelocity || { advanced: 0, lostCount: 0, lostVgv: 0, contractCount: 0, nextSigning: null },
     agendaHoje: agendaHoje || [],
     oaResumo: oaResumo || { leadsDisponiveis: 0, tentativasHoje: 0, aproveitados: 0, taxa: 0, corretoresAtivos: 0, corretoresParados: 0, tempoMedioMinutos: 0, taxaPorCorretor: [] },
     alertasOp,
