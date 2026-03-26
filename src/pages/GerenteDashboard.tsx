@@ -83,7 +83,7 @@ export default function GerenteDashboard() {
 
   const {
     user, profile, teamUserIds, teamNameMap, kpis: k, kpisLoading,
-    funnel, negociosPorFase, agendaHoje, startTs, endTs,
+    funnel, negociosPorFase, pipelineVelocity, agendaHoje, startTs, endTs,
   } = useGerenteDashboard(period);
 
   const today = todayBRT();
@@ -363,7 +363,7 @@ export default function GerenteDashboard() {
           <TabProducao teamUserIds={teamUserIds} teamNameMap={teamNameMap} profileId={sheetProfileId} />
         </TabsContent>
         <TabsContent value="pipeline">
-          <TabPipeline funnel={funnel} negociosPorFase={negociosPorFase} agendaHoje={agendaHoje} />
+          <TabPipeline funnel={funnel} negociosPorFase={negociosPorFase} agendaHoje={agendaHoje} pipelineVelocity={pipelineVelocity} />
         </TabsContent>
         <TabsContent value="metas">
           <TabMetas teamUserIds={teamUserIds} teamNameMap={teamNameMap} />
