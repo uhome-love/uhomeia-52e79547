@@ -108,8 +108,9 @@ export default function TabProducao({ teamUserIds, teamNameMap, profileId }: Pro
     });
 
     followups.forEach(f => {
-      if (!f.user_id || !stats[f.user_id]) return;
-      stats[f.user_id].followups++;
+      const uid = (f as any).responsavel_id;
+      if (!uid || !stats[uid]) return;
+      stats[uid].followups++;
     });
 
     Object.values(stats).forEach(s => {
