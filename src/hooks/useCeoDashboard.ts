@@ -417,11 +417,11 @@ export function useCeoDashboard(period: DashPeriod, customRange?: { start: strin
       const { startUtc: startTs, endUtc: endTs } = brtRangeToUTC(range);
 
       const [{ count: leadsCount }, { count: leadsOACount }, { count: visitasCriadasCount }, { count: novoInteresseCount }, { count: enviadosRoletaCount }, { data: roletaRows }, { data: goals }] = await Promise.all([
-        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs).not("origem", "ilike", "%oferta%ativa%"),
-        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs).ilike("origem", "%oferta%ativa%"),
-        supabase.from("visitas").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs).neq("status", "cancelada"),
-        supabase.from("campaign_clicks").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs).eq("lead_action", "updated"),
-        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lte("created_at", endTs).not("corretor_id", "is", null).not("origem", "ilike", "%oferta%ativa%"),
+        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lt("created_at", endTs).not("origem", "ilike", "%oferta%ativa%"),
+        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lt("created_at", endTs).ilike("origem", "%oferta%ativa%"),
+        supabase.from("visitas").select("id", { count: "exact", head: true }).gte("created_at", startTs).lt("created_at", endTs).neq("status", "cancelada"),
+        supabase.from("campaign_clicks").select("id", { count: "exact", head: true }).gte("created_at", startTs).lt("created_at", endTs).eq("lead_action", "updated"),
+        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).gte("created_at", startTs).lt("created_at", endTs).not("corretor_id", "is", null).not("origem", "ilike", "%oferta%ativa%"),
         supabase.from("roleta_credenciamentos").select("corretor_id").eq("data", hoje).in("status", ["aprovado", "saiu"]),
         supabase.from("corretor_daily_goals").select("meta_ligacoes, meta_aproveitados, meta_visitas_marcadas").eq("data", hoje),
       ]);
