@@ -901,6 +901,19 @@ export default function MeusNegocios() {
 
         {showFilters && (
           <div className="flex items-center gap-2 flex-wrap p-3 mt-2 rounded-xl border border-[#e8e8f0] dark:border-white/10 animate-fade-in bg-white dark:bg-[rgba(255,255,255,0.04)]">
+            {isAdmin && gerenteList.length > 0 && (
+              <Select value={filterGerente} onValueChange={(v) => { setFilterGerente(v); setFilterCorretor("all"); }}>
+                <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs border-[#e8e8f0] dark:border-white/10 text-[#0a0a0a] dark:text-white/70 bg-[#f7f7fb] dark:bg-[rgba(255,255,255,0.06)]">
+                  <SelectValue placeholder="Gerente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos gerentes</SelectItem>
+                  {gerenteList.map(g => (
+                    <SelectItem key={g.id} value={g.id}>{g.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Select value={filterCorretor} onValueChange={setFilterCorretor}>
               <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs border-[#e8e8f0] dark:border-white/10 text-[#0a0a0a] dark:text-white/70 bg-[#f7f7fb] dark:bg-[rgba(255,255,255,0.06)]">
                 <SelectValue placeholder="Corretor" />
@@ -912,6 +925,24 @@ export default function MeusNegocios() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        )}
+
+        {/* Active filter badges */}
+        {(filterGerente !== "all" || filterCorretor !== "all") && (
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            {filterGerente !== "all" && (
+              <Badge variant="secondary" className="text-[11px] gap-1 cursor-pointer hover:bg-destructive/10" onClick={() => { setFilterGerente("all"); setFilterCorretor("all"); }}>
+                Gerente: {gerenteList.find(g => g.id === filterGerente)?.nome}
+                <X size={10} />
+              </Badge>
+            )}
+            {filterCorretor !== "all" && (
+              <Badge variant="secondary" className="text-[11px] gap-1 cursor-pointer hover:bg-destructive/10" onClick={() => setFilterCorretor("all")}>
+                Corretor: {corretorNomes[filterCorretor]}
+                <X size={10} />
+              </Badge>
+            )}
           </div>
         )}
 
