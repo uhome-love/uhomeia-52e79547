@@ -95,9 +95,30 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
     const startTs = `${mesInicio}T00:00:00-03:00`;
     const endTs = `${mesFim}T23:59:59.999-03:00`;
 
-    const [r1, r2, r3, r4, r5, r6, r7, r8, r9] = await Promise.all([
-      // Ligações + resultado
-      supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs).limit(10000),
+    // Fetch ligações with pagination to avoid 1000 row limit
+    const fetchAllTentativas = async () => {
+      const all: { corretor_id: string; resultado: string }[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data } = await supabase
+          .from("oferta_ativa_tentativas")
+          .select("corretor_id, resultado")
+          .in("corretor_id", teamUserIds)
+          .gte("created_at", startTs)
+          .lte("created_at", endTs)
+          .range(from, from + pageSize - 1);
+        const rows = data || [];
+        all.push(...rows);
+        hasMore = rows.length === pageSize;
+        from += pageSize;
+      }
+      return all;
+    };
+
+    const [tentativas, r2, r3, r4, r5, r6, r7, r8, r9] = await Promise.all([
+      fetchAllTentativas(),
       // Visitas
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", mesInicio).lte("data_visita", mesFim),
       // Negócios (all for created_at + assinatura) — include lead_id for partnership lookup
@@ -116,10 +137,7 @@ export default function TabMetas({ teamUserIds, teamNameMap }: Props) {
       supabase.from("pipeline_parcerias").select("pipeline_lead_id, corretor_principal_id, corretor_parceiro_id, divisao_principal, divisao_parceiro").eq("status", "ativa"),
     ]);
 
-    const tentativas = r1.data || [];
     console.log("[TabMetas] tentativas retornadas:", tentativas.length);
-    console.log("[TabMetas] sample:", tentativas.slice(0, 3));
-    console.log("[TabMetas] teamUserIds usados no filtro:", teamUserIds);
     const visitas = r2.data || [];
     const negociosAll = r3.data || [];
     const metasSalvas = r4.data as any;
