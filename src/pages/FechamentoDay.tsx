@@ -221,7 +221,7 @@ export default function FechamentoDay() {
   };
 
   const totalGeral = totais.gabrielle + totais.bruno + totais.gabriel;
-  const algumaBateu = Object.values(totais).some((t) => t >= META_VISITAS);
+  const metaGeralAtingida = totalGeral >= META_VISITAS;
 
   // Ranking individual
   const [ranking, setRanking] = useState([]);
