@@ -27,6 +27,10 @@ export interface ImoveisFilters {
   q: string;
   bounds: MapBounds | null;
   codigo: string;
+  statusImovel: string;
+  condominioNome: string;
+  financiavel: boolean;
+  mobiliado: boolean;
 }
 
 interface ImoveisSearchState {
