@@ -656,10 +656,39 @@ export default function AgendaVisitas() {
         )}
       </div>
 
+      {/* ═══════ DIALOGS ═══════ */}
+      <VisitaTypeSelector
+        open={showTypeSelector}
+        onClose={() => setShowTypeSelector(false)}
+        onSelectImovel={() => { setShowTypeSelector(false); setShowForm(true); }}
+        onSelectReuniao={() => { setShowTypeSelector(false); setShowReuniaoForm(true); }}
+      />
+
+      {showForm && (
+        <VisitaForm open={showForm} onClose={() => setShowForm(false)} onSubmit={createVisita} />
+      )}
+
+      {showReuniaoForm && (
+        <ReuniaoNegocioForm open={showReuniaoForm} onClose={() => setShowReuniaoForm(false)} onSubmit={createVisita} />
+      )}
+
+      {editingVisita && (
+        <VisitaForm open={!!editingVisita} onClose={() => setEditingVisita(null)} onSubmit={handleEditSubmit} initialData={editingVisita} mode="edit" />
+      )}
+
+      {resultadoVisita && (
+        <VisitaResultadoDialog open={!!resultadoVisita} onClose={() => setResultadoVisita(null)} onSubmit={handleResultadoSubmit} nomeCliente={resultadoVisita.nome_cliente} />
+      )}
+
+      <VisitasCobrancaDialog
+        open={showCobranca}
+        onOpenChange={setShowCobranca}
+        pendingVisitas={pendingVisitas}
+        pendingByCorretor={pendingByCorretor}
+      />
     </div>
   );
 }
-        {/* Status pills */}
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setStatusFilter("all")}
