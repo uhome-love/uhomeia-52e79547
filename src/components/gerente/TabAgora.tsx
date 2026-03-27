@@ -100,20 +100,25 @@ export default function TabAgora({ teamUserIds, teamNameMap }: Props) {
     });
     const tmIds = members.map(m => m.id);
 
-    const [r2, r3, r5, r6, r7, r8, r9, r10, rCheckpoint, rLeadsRecebidos] = await Promise.all([
+    const [r2, r3, r5, r6, r8, rLeadsAll, rFollowupLeads, rCheckpoint, rLeadsRecebidos, rTarefasAtrasadas, rTarefasExistentes] = await Promise.all([
       supabase.from("profiles").select("user_id, avatar_url").in("user_id", teamUserIds),
       supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado").in("corretor_id", teamUserIds).gte("created_at", todayStart).lte("created_at", todayEnd),
       supabase.from("corretor_disponibilidade").select("user_id, status, na_roleta, updated_at").in("user_id", teamUserIds),
+      // Visitas do dia — buscar todas para separar marcadas vs realizadas
       supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).eq("data_visita", today),
-      supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).lt("updated_at", new Date(Date.now() - 48 * 3600 * 1000).toISOString()),
       supabase.from("corretor_daily_goals").select("corretor_id, meta_ligacoes").in("corretor_id", teamUserIds).eq("data", today),
-      supabase.from("pipeline_tarefas").select("responsavel_id").in("responsavel_id", teamUserIds).gte("concluida_em", todayStart).lte("concluida_em", todayEnd),
-      supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).gte("ultima_acao_at", todayStart).lte("ultima_acao_at", todayEnd),
+      // Todos os leads ativos do time (para desatualizados)
+      supabase.from("pipeline_leads").select("id, corretor_id").in("corretor_id", teamUserIds).eq("arquivado", false),
+      // Follow-ups = leads únicos tocados hoje (ultima_acao_at = hoje)
+      supabase.from("pipeline_leads").select("id, corretor_id").in("corretor_id", teamUserIds).gte("ultima_acao_at", todayStart).lte("ultima_acao_at", todayEnd),
       tmIds.length > 0
         ? supabase.from("checkpoints").select("id").eq("gerente_id", user.id).eq("data", today).maybeSingle()
         : Promise.resolve({ data: null }),
-      // Leads recebidos hoje (distribuicao_historico, acao = aceito)
       supabase.from("distribuicao_historico").select("corretor_id").in("corretor_id", teamUserIds).eq("acao", "aceito").gte("created_at", todayStart).lte("created_at", todayEnd),
+      // Tarefas atrasadas (pendente + data_vencimento < hoje)
+      supabase.from("pipeline_tarefas").select("pipeline_lead_id").in("responsavel_id", teamUserIds).eq("status", "pendente").lt("data_vencimento", today),
+      // Todas as tarefas existentes (para identificar leads sem tarefa)
+      supabase.from("pipeline_tarefas").select("pipeline_lead_id").in("responsavel_id", teamUserIds),
     ]);
 
     let presencaMap: Record<string, string> = {};
@@ -144,30 +149,47 @@ export default function TabAgora({ teamUserIds, teamNameMap }: Props) {
     const disps: Record<string, any> = {};
     (r5.data || []).forEach((d: any) => { disps[d.user_id] = d; });
 
+    // 1. Visitas: marcadas = (marcada|confirmada|reagendada), realizadas = (realizada)
     const vmCount: Record<string, number> = {};
     const vrCount: Record<string, number> = {};
+    const visitasMarcadasStatuses = new Set(["marcada", "confirmada", "reagendada"]);
     (r6.data || []).forEach((v: any) => {
-      vmCount[v.corretor_id] = (vmCount[v.corretor_id] || 0) + 1;
+      if (visitasMarcadasStatuses.has(v.status)) vmCount[v.corretor_id] = (vmCount[v.corretor_id] || 0) + 1;
       if (v.status === "realizada") vrCount[v.corretor_id] = (vrCount[v.corretor_id] || 0) + 1;
     });
 
+    // 2. Desatualizados: leads sem tarefa OU com tarefa atrasada
+    const allLeads = rLeadsAll.data || [];
+    const idsComTarefa = new Set((rTarefasExistentes.data || []).map((t: any) => t.pipeline_lead_id).filter(Boolean));
+    const idsAtrasados = new Set((rTarefasAtrasadas.data || []).map((t: any) => t.pipeline_lead_id).filter(Boolean));
     const desatCount: Record<string, number> = {};
-    (r7.data || []).forEach((l: any) => { desatCount[l.corretor_id] = (desatCount[l.corretor_id] || 0) + 1; });
+    allLeads.forEach((l: any) => {
+      if (!idsComTarefa.has(l.id) || idsAtrasados.has(l.id)) {
+        desatCount[l.corretor_id] = (desatCount[l.corretor_id] || 0) + 1;
+      }
+    });
 
     const goals: Record<string, any> = {};
     (r8.data || []).forEach((g: any) => { goals[g.corretor_id] = g; });
 
+    // 3. Follow-ups = leads únicos tocados hoje (1 por cliente)
     const followupsCount: Record<string, number> = {};
-    (r9.data || []).forEach((t: any) => { if (t.responsavel_id) followupsCount[t.responsavel_id] = (followupsCount[t.responsavel_id] || 0) + 1; });
+    const followupSeen: Record<string, Set<string>> = {};
+    (rFollowupLeads.data || []).forEach((l: any) => {
+      if (!l.corretor_id) return;
+      if (!followupSeen[l.corretor_id]) followupSeen[l.corretor_id] = new Set();
+      followupSeen[l.corretor_id].add(l.id);
+    });
+    Object.entries(followupSeen).forEach(([uid, ids]) => { followupsCount[uid] = ids.size; });
 
-    const leadsAtualCount: Record<string, number> = {};
-    (r10.data || []).forEach((l: any) => { if (l.corretor_id) leadsAtualCount[l.corretor_id] = (leadsAtualCount[l.corretor_id] || 0) + 1; });
+    // Atualizados = mesma base de follow-ups (leads únicos tocados hoje)
+    const leadsAtualCount: Record<string, number> = { ...followupsCount };
 
     const leadsRecebidosCount: Record<string, number> = {};
     (rLeadsRecebidos.data || []).forEach((l: any) => { if (l.corretor_id) leadsRecebidosCount[l.corretor_id] = (leadsRecebidosCount[l.corretor_id] || 0) + 1; });
 
-    const total48h = Object.values(desatCount).reduce((s, v) => s + v, 0);
-    setLeadsSemContato48h(total48h);
+    const totalDesat = Object.values(desatCount).reduce((s, v) => s + v, 0);
+    setLeadsSemContato48h(totalDesat);
 
     const cards: CorretorAgora[] = members
       .filter((m: any) => m.user_id && teamUserIds.includes(m.user_id))
