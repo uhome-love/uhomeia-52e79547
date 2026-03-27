@@ -28,9 +28,13 @@ export interface ImoveisFilters {
   bounds: MapBounds | null;
   codigo: string;
   statusImovel: string;
+  statusImovelList: string[];
   condominioNome: string;
   financiavel: boolean;
   mobiliado: boolean;
+  comodidades: string[];
+  entregaAnoMin: number;
+  entregaAnoMax: number;
 }
 
 interface ImoveisSearchState {
@@ -56,9 +60,13 @@ const defaultFilters: ImoveisFilters = {
   bounds: null,
   codigo: "",
   statusImovel: "",
+  statusImovelList: [],
   condominioNome: "",
   financiavel: false,
   mobiliado: false,
+  comodidades: [],
+  entregaAnoMin: 0,
+  entregaAnoMax: 0,
 };
 
 export const useImoveisSearchStore = create<ImoveisSearchState>((set) => ({
@@ -84,9 +92,13 @@ export function filtersFromParams(params: URLSearchParams): Partial<ImoveisFilte
   if (params.get("q")) f.q = params.get("q")!;
   if (params.get("codigo")) f.codigo = params.get("codigo")!;
   if (params.get("status_imovel")) f.statusImovel = params.get("status_imovel")!;
+  if (params.get("status_list")) f.statusImovelList = params.get("status_list")!.split(",").filter(Boolean);
   if (params.get("condominio")) f.condominioNome = params.get("condominio")!;
   if (params.get("financiavel") === "1") f.financiavel = true;
   if (params.get("mobiliado") === "1") f.mobiliado = true;
+  if (params.get("comodidades")) f.comodidades = params.get("comodidades")!.split(",").filter(Boolean);
+  if (params.get("entrega_min")) f.entregaAnoMin = Number(params.get("entrega_min"));
+  if (params.get("entrega_max")) f.entregaAnoMax = Number(params.get("entrega_max"));
   return f;
 }
 
@@ -106,8 +118,12 @@ export function filtersToParams(filters: ImoveisFilters): URLSearchParams {
   if (filters.q) p.set("q", filters.q);
   if (filters.codigo) p.set("codigo", filters.codigo);
   if (filters.statusImovel) p.set("status_imovel", filters.statusImovel);
+  if (filters.statusImovelList?.length) p.set("status_list", filters.statusImovelList.join(","));
   if (filters.condominioNome) p.set("condominio", filters.condominioNome);
   if (filters.financiavel) p.set("financiavel", "1");
   if (filters.mobiliado) p.set("mobiliado", "1");
+  if (filters.comodidades?.length) p.set("comodidades", filters.comodidades.join(","));
+  if (filters.entregaAnoMin) p.set("entrega_min", String(filters.entregaAnoMin));
+  if (filters.entregaAnoMax) p.set("entrega_max", String(filters.entregaAnoMax));
   return p;
 }

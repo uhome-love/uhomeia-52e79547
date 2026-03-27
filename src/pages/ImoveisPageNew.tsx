@@ -281,10 +281,15 @@ export default function ImoveisPage() {
     filters.tipo || filters.bairro || filters.precoMin || filters.precoMax ||
     filters.areaMin || filters.areaMax || filters.quartos || filters.vagas ||
     filters.banheiros || filters.q || filters.codigo || (filters.cidade && filters.cidade !== "Porto Alegre") ||
-    filters.statusImovel || filters.condominioNome || filters.financiavel || filters.mobiliado
+    filters.statusImovel || filters.statusImovelList?.length || filters.condominioNome || filters.financiavel || filters.mobiliado ||
+    filters.comodidades?.length || filters.entregaAnoMin || filters.entregaAnoMax
   );
 
-  const advancedFilterCount = [filters.banheiros > 0, filters.vagas > 0, !!filters.codigo, !!filters.condominioNome, filters.financiavel, filters.mobiliado].filter(Boolean).length;
+  const advancedFilterCount = [
+    filters.banheiros > 0, filters.vagas > 0, !!filters.codigo, !!filters.condominioNome,
+    filters.financiavel, filters.mobiliado, (filters.comodidades?.length || 0) > 0,
+    filters.entregaAnoMin > 0, filters.entregaAnoMax > 0,
+  ].filter(Boolean).length;
 
   const addBairro = useCallback((nome: string) => {
     const next = [...bairrosSelecionados, nome];
@@ -320,9 +325,13 @@ export default function ImoveisPage() {
     offset: page * PAGE_SIZE,
     bounds: activeBounds,
     statusImovel: filters.statusImovel || undefined,
+    statusImovelList: filters.statusImovelList?.length ? filters.statusImovelList : undefined,
     condominioNome: filters.condominioNome || undefined,
     financiavel: filters.financiavel || undefined,
     mobiliado: filters.mobiliado || undefined,
+    comodidades: filters.comodidades?.length ? filters.comodidades : undefined,
+    entregaAnoMin: filters.entregaAnoMin || undefined,
+    entregaAnoMax: filters.entregaAnoMax || undefined,
   }), [filters, bairrosSelecionados, page, activeBounds]);
 
   const debouncedQueryFilters = useDebounce(
@@ -467,7 +476,7 @@ export default function ImoveisPage() {
   useEffect(() => {
     setPage(0);
     setAllImoveis([]);
-  }, [filters.tipo, filters.bairro, filters.cidade, filters.precoMin, filters.precoMax, filters.quartos, filters.vagas, filters.ordem, filters.q, filters.statusImovel, filters.condominioNome, filters.financiavel, filters.mobiliado, activeBounds]);
+  }, [filters.tipo, filters.bairro, filters.cidade, filters.precoMin, filters.precoMax, filters.quartos, filters.vagas, filters.ordem, filters.q, filters.statusImovel, filters.statusImovelList, filters.condominioNome, filters.financiavel, filters.mobiliado, filters.comodidades, filters.entregaAnoMin, filters.entregaAnoMax, activeBounds]);
 
   // Clear bounds
   const clearBounds = useCallback(() => {
@@ -723,16 +732,54 @@ export default function ImoveisPage() {
             ))}
           </FilterPill>
 
-          {/* Status do Imóvel */}
+          {/* Status do Imóvel — multi-select */}
           <FilterPill
             label="Status"
-            value={filters.statusImovel || undefined}
-            active={!!filters.statusImovel}
-            onClear={() => { setFilter("statusImovel", ""); setPage(0); setAllImoveis([]); }}
+            value={filters.statusImovelList?.length ? (filters.statusImovelList.length === 1 ? filters.statusImovelList[0] : `${filters.statusImovelList.length} status`) : undefined}
+            active={!!(filters.statusImovelList?.length)}
+            onClear={() => { setFilter("statusImovelList", []); setFilter("entregaAnoMin", 0); setFilter("entregaAnoMax", 0); setPage(0); setAllImoveis([]); }}
           >
-            {["Usado", "Novo", "Em construção", "Na planta"].map(s => (
-              <PillOption key={s} selected={filters.statusImovel === s} onClick={() => { setFilter("statusImovel", filters.statusImovel === s ? "" : s); setPage(0); setAllImoveis([]); }}>{s}</PillOption>
-            ))}
+            {["Usado", "Novo", "Em construção", "Na planta"].map(s => {
+              const selected = filters.statusImovelList?.includes(s);
+              return (
+                <PillOption key={s} selected={!!selected} onClick={() => {
+                  const current = filters.statusImovelList || [];
+                  const next = selected ? current.filter(v => v !== s) : [...current, s];
+                  setFilter("statusImovelList", next);
+                  // Clear entrega if no construction statuses
+                  if (!next.includes("Em construção") && !next.includes("Na planta")) {
+                    setFilter("entregaAnoMin", 0);
+                    setFilter("entregaAnoMax", 0);
+                  }
+                  setPage(0); setAllImoveis([]);
+                }}>{s}</PillOption>
+              );
+            })}
+            {/* Entrega range — only when Em construção or Na planta is selected */}
+            {(filters.statusImovelList?.includes("Em construção") || filters.statusImovelList?.includes("Na planta")) && (
+              <div className="mt-2 border-t border-border pt-3 px-1">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Previsão de entrega</p>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={filters.entregaAnoMin || ""}
+                    onChange={(e) => { setFilter("entregaAnoMin", Number(e.target.value) || 0); setPage(0); setAllImoveis([]); }}
+                    className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-[13px] text-foreground outline-none focus:border-primary"
+                  >
+                    <option value="">A partir de</option>
+                    {[2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031].map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                  <span className="text-xs text-muted-foreground">–</span>
+                  <select
+                    value={filters.entregaAnoMax || ""}
+                    onChange={(e) => { setFilter("entregaAnoMax", Number(e.target.value) || 0); setPage(0); setAllImoveis([]); }}
+                    className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-[13px] text-foreground outline-none focus:border-primary"
+                  >
+                    <option value="">Até</option>
+                    {[2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031].map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
           </FilterPill>
 
 
@@ -818,7 +865,7 @@ export default function ImoveisPage() {
                 )}
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-72 p-4 space-y-4">
+            <PopoverContent align="start" className="w-80 max-h-[70vh] overflow-y-auto p-4 space-y-4">
               <p className="text-sm font-semibold text-foreground">Filtros avançados</p>
 
               {/* Banheiros */}
@@ -856,6 +903,32 @@ export default function ImoveisPage() {
                       )}
                     >{n}+</button>
                   ))}
+                </div>
+              </div>
+
+              {/* Comodidades */}
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Comodidades</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {["Piscina", "Churrasqueira", "Sacada", "Elevador", "Pet friendly", "Móveis planejados", "Ar condicionado", "Vista panorâmica", "Espaço gourmet", "Dep. empregada", "Lareira", "Terraço"].map(c => {
+                    const selected = filters.comodidades?.includes(c);
+                    return (
+                      <label key={c} className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!selected}
+                          onChange={() => {
+                            const current = filters.comodidades || [];
+                            const next = selected ? current.filter(v => v !== c) : [...current, c];
+                            setFilter("comodidades", next);
+                            setPage(0); setAllImoveis([]);
+                          }}
+                          className="h-3.5 w-3.5 rounded border-border text-primary accent-primary"
+                        />
+                        <span className="text-[12px] text-foreground">{c}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -906,9 +979,9 @@ export default function ImoveisPage() {
               </div>
 
               {/* Limpar avançados */}
-              {(filters.banheiros > 0 || filters.vagas > 0 || !!filters.codigo || !!filters.condominioNome || filters.financiavel || filters.mobiliado) && (
+              {(filters.banheiros > 0 || filters.vagas > 0 || !!filters.codigo || !!filters.condominioNome || filters.financiavel || filters.mobiliado || (filters.comodidades?.length || 0) > 0) && (
                 <button
-                  onClick={() => { setFilter("banheiros", 0); setFilter("vagas", 0); setFilter("codigo", ""); setFilter("condominioNome", ""); setFilter("financiavel", false); setFilter("mobiliado", false); setPage(0); setAllImoveis([]); }}
+                  onClick={() => { setFilter("banheiros", 0); setFilter("vagas", 0); setFilter("codigo", ""); setFilter("condominioNome", ""); setFilter("financiavel", false); setFilter("mobiliado", false); setFilter("comodidades", []); setPage(0); setAllImoveis([]); }}
                   className="text-xs text-muted-foreground hover:text-foreground underline"
                 >
                   Limpar filtros avançados
