@@ -18,7 +18,6 @@ import ReuniaoNegocioForm from "@/components/visitas/ReuniaoNegocioForm";
 import VisitaResultadoDialog, { type ResultadoVisita } from "@/components/visitas/VisitaResultadoDialog";
 import VisitasCobrancaDialog from "@/components/visitas/VisitasCobrancaDialog";
 import { toast } from "sonner";
-import { toast } from "sonner";
 
 /* ═══════ Period helpers ═══════ */
 type Period = "hoje" | "semana" | "proxima-semana" | "mes";
