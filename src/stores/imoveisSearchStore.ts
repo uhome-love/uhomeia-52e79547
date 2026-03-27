@@ -118,8 +118,12 @@ export function filtersToParams(filters: ImoveisFilters): URLSearchParams {
   if (filters.q) p.set("q", filters.q);
   if (filters.codigo) p.set("codigo", filters.codigo);
   if (filters.statusImovel) p.set("status_imovel", filters.statusImovel);
+  if (filters.statusImovelList?.length) p.set("status_list", filters.statusImovelList.join(","));
   if (filters.condominioNome) p.set("condominio", filters.condominioNome);
   if (filters.financiavel) p.set("financiavel", "1");
   if (filters.mobiliado) p.set("mobiliado", "1");
+  if (filters.comodidades?.length) p.set("comodidades", filters.comodidades.join(","));
+  if (filters.entregaAnoMin) p.set("entrega_min", String(filters.entregaAnoMin));
+  if (filters.entregaAnoMax) p.set("entrega_max", String(filters.entregaAnoMax));
   return p;
 }
