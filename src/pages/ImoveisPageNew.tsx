@@ -325,9 +325,13 @@ export default function ImoveisPage() {
     offset: page * PAGE_SIZE,
     bounds: activeBounds,
     statusImovel: filters.statusImovel || undefined,
+    statusImovelList: filters.statusImovelList?.length ? filters.statusImovelList : undefined,
     condominioNome: filters.condominioNome || undefined,
     financiavel: filters.financiavel || undefined,
     mobiliado: filters.mobiliado || undefined,
+    comodidades: filters.comodidades?.length ? filters.comodidades : undefined,
+    entregaAnoMin: filters.entregaAnoMin || undefined,
+    entregaAnoMax: filters.entregaAnoMax || undefined,
   }), [filters, bairrosSelecionados, page, activeBounds]);
 
   const debouncedQueryFilters = useDebounce(
