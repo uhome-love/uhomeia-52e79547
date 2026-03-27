@@ -125,6 +125,7 @@ const PrivacidadePage = lazyRetry(() => import("./pages/PrivacidadePage"));
 const WhatsAppCampaignDispatcher = lazyRetry(() => import("./pages/WhatsAppCampaignDispatcherPage"));
 const EmailMarketingPage = lazyRetry(() => import("./pages/EmailMarketingPage"));
 const DisparadorLigacoesIA = lazyRetry(() => import("./pages/DisparadorLigacoesIA"));
+const FechamentoDay = lazyRetry(() => import("./pages/FechamentoDay"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -186,7 +187,8 @@ const App = () => (
               <Route path="/wa" element={<Suspense fallback={<PageLoader />}><WhatsAppLanding /></Suspense>} />
               <Route path="/wa/*" element={<Suspense fallback={<PageLoader />}><WhatsAppLanding /></Suspense>} />
              <Route path="/import-brevo-contacts" element={<Suspense fallback={<PageLoader />}><ImportBrevoContacts /></Suspense>} />
-             <Route path="/privacidade" element={<Suspense fallback={<PageLoader />}><PrivacidadePage /></Suspense>} />
+              <Route path="/privacidade" element={<Suspense fallback={<PageLoader />}><PrivacidadePage /></Suspense>} />
+              <Route path="/fechamento-day" element={<Suspense fallback={<PageLoader />}><FechamentoDay /></Suspense>} />
             {/* Acessível a todos os autenticados */}
             <Route path="/" element={<ProtectedPage><ErrorBoundary module="home-dashboard"><HomeDashboard /></ErrorBoundary></ProtectedPage>} />
 
