@@ -347,11 +347,10 @@ export default function AgendaVisitas() {
     let list = rawVisitas.filter(v => ((v as any).tipo || "lead") === "lead");
     if (showOnlyMine && user) {
       list = list.filter(v => v.corretor_id === user.id);
-    } else if (!isAdmin && !isGestor && user) {
-      list = list.filter(v => v.corretor_id === user.id);
     }
+    // When "Time" mode is active, show all visits (RLS already scopes visibility)
     return list;
-  }, [rawVisitas, showOnlyMine, user, isAdmin, isGestor]);
+  }, [rawVisitas, showOnlyMine, user]);
 
   // Apply search + KPI filter
   const filtered = useMemo(() => {
