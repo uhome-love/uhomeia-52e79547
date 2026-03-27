@@ -118,7 +118,6 @@ export default function TabAgora({ teamUserIds, teamNameMap }: Props) {
       // Follow-ups = tarefas concluídas hoje
       supabase.from("pipeline_tarefas").select("responsavel_id").in("responsavel_id", teamUserIds).gte("concluida_em", todayStart).lte("concluida_em", todayEnd),
     ]);
-    ]);
 
     let presencaMap: Record<string, string> = {};
     if (rCheckpoint.data?.id && tmIds.length > 0) {
