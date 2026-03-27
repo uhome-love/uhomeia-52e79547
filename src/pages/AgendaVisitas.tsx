@@ -175,7 +175,7 @@ function VisitaCompactCard({
       {/* Client name */}
       <span className={cn(
         "text-[12px] font-semibold truncate min-w-0",
-        isDone ? "text-[#a1a1aa] line-through" : "text-[#0a0a0a] dark:text-[#fafafa]"
+        isDone && visita.status !== "realizada" ? "text-[#a1a1aa] line-through" : isDone ? "text-[#a1a1aa]" : "text-[#0a0a0a] dark:text-[#fafafa]"
       )}>
         {visita.nome_cliente}
       </span>
