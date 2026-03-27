@@ -218,8 +218,8 @@ export default function FechamentoDay() {
         const { data: visitas, error: vErr } = await supabase
           .from("visitas")
           .select("corretor_id")
-          .gte("data_visita", inicioHoje)
-          .lte("data_visita", fimHoje);
+          .gte("created_at", inicioHoje)
+          .lte("created_at", fimHoje);
         if (vErr || !visitas) return;
 
         // Contar por corretor_id (user_id)
