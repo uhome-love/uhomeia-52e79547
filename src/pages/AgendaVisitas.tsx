@@ -313,6 +313,8 @@ export default function AgendaVisitas() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
   const [kpiFilter, setKpiFilter] = useState<string | null>(searchParams.get("status") || null);
   const [scrollToDay, setScrollToDay] = useState<string | null>(null);
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
   // Dialogs
   const [showTypeSelector, setShowTypeSelector] = useState(false);
@@ -323,7 +325,7 @@ export default function AgendaVisitas() {
   const [showCobranca, setShowCobranca] = useState(false);
 
   // Data
-  const dateRange = useMemo(() => getDateRange(period), [period]);
+  const dateRange = useMemo(() => getDateRange(period, customFrom, customTo), [period, customFrom, customTo]);
   const { visitas: rawVisitas, isLoading, createVisita, updateVisita, updateStatus, deleteVisita } = useVisitas({
     startDate: dateRange.from,
     endDate: dateRange.to,
