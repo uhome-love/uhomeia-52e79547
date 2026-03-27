@@ -87,8 +87,17 @@ function mapPropertyRow(row: any): any {
   const fotos = row.fotos || [];
   const fotosFull = row.fotos_full || fotos;
 
+  // Generate canonical slug for share URLs (properties table has no slug column)
+  const slug = row.slug || gerarSlugUhome({
+    tipo: row.tipo || "imovel",
+    quartos: row.dormitorios != null ? Number(row.dormitorios) : null,
+    bairro: row.bairro || "",
+    codigo: row.codigo || "",
+  });
+
   return {
     ...row,
+    slug,
     // Compatibility aliases used by PropertyCards / imovelHelpers
     titulo_anuncio: row.titulo,
     empreendimento_nome: row.empreendimento,
