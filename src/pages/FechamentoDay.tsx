@@ -216,10 +216,13 @@ export default function FechamentoDay() {
   useEffect(() => {
     async function buscarRanking() {
       try {
+        const inicioHoje = `${hoje}T00:00:00`;
+        const fimHoje = `${hoje}T23:59:59`;
         const { data: visitas, error: vErr } = await supabase
           .from("visitas")
           .select("corretor_id")
-          .eq("data_visita", hoje);
+          .gte("created_at", inicioHoje)
+          .lte("created_at", fimHoje);
         if (vErr || !visitas) return;
 
         const contagemPorUser = {};
