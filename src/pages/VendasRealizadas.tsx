@@ -125,6 +125,23 @@ export default function VendasRealizadas() {
 
       if (!isAdmin && !isGestor && profileId) {
         query = query.eq("corretor_id", profileId);
+
+        // Also find deals where this corretor is a PARTNER
+        const { data: partnerDeals } = await supabase.from("v_kpi_negocios")
+          .select("id")
+          .eq("auth_user_id", user!.id)
+          .in("fase", ["assinado", "vendido"])
+          .gte("data_assinatura", dateRange.start)
+          .lte("data_assinatura", dateRange.end)
+          .eq("is_parceria", true);
+        const partnerDealIds = (partnerDeals || []).map(d => d.id as string);
+        if (partnerDealIds.length > 0) {
+          const { data: extraDeals } = await supabase.from("negocios")
+            .select("id, nome_cliente, empreendimento, unidade, vgv_final, vgv_estimado, data_assinatura, corretor_id, gerente_id, fase, created_at, pipeline_lead_id")
+            .in("id", partnerDealIds)
+            .in("fase", ["assinado", "vendido"]);
+          extraPartnerRows = (extraDeals || []) as VendaRow[];
+        }
       } else if (isGestor && !isAdmin) {
         // Gestor: get team member profile IDs AND partnership deals
         const { data: teamMembers } = await supabase.from("team_members").select("user_id").eq("gerente_id", user!.id);
