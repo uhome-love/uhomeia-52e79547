@@ -281,10 +281,15 @@ export default function ImoveisPage() {
     filters.tipo || filters.bairro || filters.precoMin || filters.precoMax ||
     filters.areaMin || filters.areaMax || filters.quartos || filters.vagas ||
     filters.banheiros || filters.q || filters.codigo || (filters.cidade && filters.cidade !== "Porto Alegre") ||
-    filters.statusImovel || filters.condominioNome || filters.financiavel || filters.mobiliado
+    filters.statusImovel || filters.statusImovelList?.length || filters.condominioNome || filters.financiavel || filters.mobiliado ||
+    filters.comodidades?.length || filters.entregaAnoMin || filters.entregaAnoMax
   );
 
-  const advancedFilterCount = [filters.banheiros > 0, filters.vagas > 0, !!filters.codigo, !!filters.condominioNome, filters.financiavel, filters.mobiliado].filter(Boolean).length;
+  const advancedFilterCount = [
+    filters.banheiros > 0, filters.vagas > 0, !!filters.codigo, !!filters.condominioNome,
+    filters.financiavel, filters.mobiliado, (filters.comodidades?.length || 0) > 0,
+    filters.entregaAnoMin > 0, filters.entregaAnoMax > 0,
+  ].filter(Boolean).length;
 
   const addBairro = useCallback((nome: string) => {
     const next = [...bairrosSelecionados, nome];
