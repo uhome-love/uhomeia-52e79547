@@ -424,180 +424,195 @@ export default function FechamentoDay() {
           )}
         </div>
 
-        {/* Cards das equipes */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 14,
-          padding: "14px 24px",
-          flex: 1,
-          minHeight: 0,
-        }}>
-          {ordemEquipes.map((equipe, posGlobal) => {
-            const total = totais[equipe.id];
-            const metaBatida = total >= META_VISITAS;
-            const isFlash = flashEquipe === equipe.id;
-            const isFloat = floatEquipe === equipe.id;
-            const isLider = equipe.id === liderEquipe && total > 0;
-            const ultima = ultimaVisita[equipe.id];
+        {/* Main content: Cards + Feed lateral */}
+        <div style={{ display: "flex", gap: 14, padding: "14px 24px", flex: 1, minHeight: 0, overflow: "hidden" }}>
 
-            return (
-              <div
-                key={equipe.id}
-                className={[
-                  isFlash ? "card-pulse" : "",
-                  isLider ? "glow-leader" : "",
-                  metaBatida ? "festa-card" : "",
-                ].filter(Boolean).join(" ")}
-                style={{
-                  "--glow-color": `${equipe.cor}66`,
-                  "--glow-color-strong": `${equipe.cor}cc`,
-                  background: metaBatida
-                    ? `linear-gradient(135deg, ${equipe.cor}33, #0d0d20, ${equipe.cor}22)`
-                    : isFlash
-                    ? `${equipe.cor}22`
-                    : "#0d0d20",
-                  border: `2px solid ${isFlash ? equipe.cor : metaBatida ? equipe.cor + "88" : equipe.corBorda + "44"}`,
-                  borderRadius: 16,
-                  padding: "16px 20px",
-                  transition: "all 0.3s",
-                  position: "relative",
-                  overflow: "hidden",
-                  boxShadow: isFlash
-                    ? `0 0 50px ${equipe.cor}88, inset 0 0 30px ${equipe.cor}22`
-                    : metaBatida
-                    ? `0 0 30px ${equipe.cor}44`
-                    : "none",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                }}
-              >
-                {/* Position badge */}
-                <div style={{ position: "absolute", top: 8, right: 10, fontSize: 22, opacity: posGlobal === 0 ? 1 : 0.5 }}>
-                  {posGlobal === 0 ? "🥇" : posGlobal === 1 ? "🥈" : "🥉"}
-                </div>
-
-                {/* +1 float animation */}
-                {isFloat && (
-                  <div className="float-up" style={{
-                    position: "absolute",
-                    top: "30%",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    fontSize: 32,
-                    fontWeight: 900,
-                    color: equipe.cor,
-                    zIndex: 5,
-                    textShadow: `0 0 20px ${equipe.cor}`,
-                  }}>
-                    +1 🎯
-                  </div>
-                )}
-
-                {/* Team name */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 24 }}>{equipe.emoji}</span>
-                  <h2 style={{
-                    fontSize: "clamp(16px, 2.5vw, 24px)",
-                    letterSpacing: 2,
-                    textTransform: "uppercase",
-                    margin: "0 0 2px",
-                    color: equipe.cor,
-                  }}>{equipe.nome}</h2>
-                </div>
-
-                {/* Count */}
-                <div style={{
-                  fontSize: "clamp(56px, 9vw, 88px)",
-                  fontWeight: 900,
-                  color: equipe.cor,
-                  lineHeight: 1,
-                  letterSpacing: -2,
-                  textShadow: `0 0 40px ${equipe.cor}66`,
-                  margin: "4px 0",
-                }}>{total}</div>
-
-                {/* Melhoria 5: última visita */}
-                <div style={{
-                  fontSize: 10,
-                  letterSpacing: 2,
-                  color: "#ffffff55",
-                  textTransform: "uppercase",
-                  fontFamily: "monospace",
-                  marginBottom: 6,
-                  minHeight: 14,
-                }}>
-                  {ultima ? `Última: ${ultima.nome} às ${ultima.hora}` : "visitas marcadas hoje"}
-                </div>
-
-                {/* Progress bar per team */}
-                <ProgressBar valor={total} meta={META_VISITAS} cor={equipe.cor} />
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 10, color: "#ffffff44", fontFamily: "monospace", letterSpacing: 1 }}>
-                  <span>META: {META_VISITAS}</span>
-                  <span>{metaBatida ? "✅ CONCLUÍDA" : `FALTAM: ${META_VISITAS - total}`}</span>
-                </div>
-
-                {/* Melhoria 8: Meta batida festa */}
-                {metaBatida && (
-                  <div style={{
-                    textAlign: "center",
-                    marginTop: 8,
-                    fontSize: "clamp(14px, 2vw, 20px)",
-                    letterSpacing: 3,
-                    color: equipe.cor,
-                    animation: "metaPulse 1.5s infinite",
-                    fontWeight: 900,
-                  }}>
-                    🏆 META BATIDA!
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Ranking individual */}
-        {ranking.length > 0 && (
-          <div style={{ padding: "4px 24px 6px", flexShrink: 0 }}>
+          {/* Left: Cards + Ranking (3/4) */}
+          <div style={{ flex: 3, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
+            {/* Cards das equipes */}
             <div style={{
-              fontSize: "clamp(12px, 1.8vw, 16px)",
-              letterSpacing: 4,
-              textTransform: "uppercase",
-              color: "#ffffff77",
-              marginBottom: 6,
-              textAlign: "center",
-            }}>🏅 Top 3 corretores</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-              {ranking.map((c, i) => (
-                <div key={c.nome} style={{
-                  background: i === 0 ? "#1a1400" : i === 1 ? "#0d0d14" : "#0a100a",
-                  border: `1px solid ${i === 0 ? "#F59E0B44" : i === 1 ? "#9CA3AF44" : "#16A34A44"}`,
-                  borderRadius: 10,
-                  padding: "8px 6px",
-                  textAlign: "center",
-                }}>
-                  <div style={{ fontSize: 22 }}>{medalhas[i]}</div>
-                  <div style={{
-                    fontSize: "clamp(20px, 3vw, 32px)",
-                    fontWeight: 900,
-                    color: i === 0 ? "#F59E0B" : i === 1 ? "#9CA3AF" : "#16A34A",
-                    lineHeight: 1,
-                  }}>{c.count}</div>
-                  <div style={{
-                    fontSize: "clamp(9px, 1.1vw, 12px)",
-                    color: "#ffffffcc",
-                    marginTop: 2,
-                    fontFamily: "monospace",
-                    letterSpacing: 1,
-                    wordBreak: "break-word",
-                  }}>{c.nome}</div>
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 14,
+              flex: 1,
+              minHeight: 0,
+            }}>
+              {ordemEquipes.map((equipe, posGlobal) => {
+                const total = totais[equipe.id];
+                const metaBatida = total >= META_VISITAS;
+                const isFlash = flashEquipe === equipe.id;
+                const isFloat = floatEquipe === equipe.id;
+                const isLider = equipe.id === liderEquipe && total > 0;
+                const ultima = ultimaVisita[equipe.id];
+
+                return (
+                  <div
+                    key={equipe.id}
+                    className={[
+                      isFlash ? "card-pulse" : "",
+                      isLider ? "glow-leader" : "",
+                      metaBatida ? "festa-card" : "",
+                    ].filter(Boolean).join(" ")}
+                    style={{
+                      "--glow-color": `${equipe.cor}66`,
+                      "--glow-color-strong": `${equipe.cor}cc`,
+                      background: metaBatida
+                        ? `linear-gradient(135deg, ${equipe.cor}33, #0d0d20, ${equipe.cor}22)`
+                        : isFlash
+                        ? `${equipe.cor}22`
+                        : "#0d0d20",
+                      border: `2px solid ${isFlash ? equipe.cor : metaBatida ? equipe.cor + "88" : equipe.corBorda + "44"}`,
+                      borderRadius: 16,
+                      padding: "16px 20px",
+                      transition: "all 0.3s",
+                      position: "relative",
+                      overflow: "hidden",
+                      boxShadow: isFlash
+                        ? `0 0 50px ${equipe.cor}88, inset 0 0 30px ${equipe.cor}22`
+                        : metaBatida
+                        ? `0 0 30px ${equipe.cor}44`
+                        : "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <div style={{ position: "absolute", top: 8, right: 10, fontSize: 22, opacity: posGlobal === 0 ? 1 : 0.5 }}>
+                      {posGlobal === 0 ? "🥇" : posGlobal === 1 ? "🥈" : "🥉"}
+                    </div>
+                    {isFloat && (
+                      <div className="float-up" style={{
+                        position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)",
+                        fontSize: 32, fontWeight: 900, color: equipe.cor, zIndex: 5,
+                        textShadow: `0 0 20px ${equipe.cor}`,
+                      }}>+1 🎯</div>
+                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 24 }}>{equipe.emoji}</span>
+                      <h2 style={{ fontSize: "clamp(16px, 2.5vw, 24px)", letterSpacing: 2, textTransform: "uppercase", margin: "0 0 2px", color: equipe.cor }}>{equipe.nome}</h2>
+                    </div>
+                    <div style={{ fontSize: "clamp(56px, 9vw, 88px)", fontWeight: 900, color: equipe.cor, lineHeight: 1, letterSpacing: -2, textShadow: `0 0 40px ${equipe.cor}66`, margin: "4px 0" }}>{total}</div>
+                    <div style={{ fontSize: 10, letterSpacing: 2, color: "#ffffff55", textTransform: "uppercase", fontFamily: "monospace", marginBottom: 6, minHeight: 14 }}>
+                      {ultima ? `Última: ${ultima.nome} às ${ultima.hora}` : "visitas marcadas hoje"}
+                    </div>
+                    <ProgressBar valor={total} meta={META_VISITAS} cor={equipe.cor} />
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 10, color: "#ffffff44", fontFamily: "monospace", letterSpacing: 1 }}>
+                      <span>META: {META_VISITAS}</span>
+                      <span>{metaBatida ? "✅ CONCLUÍDA" : `FALTAM: ${META_VISITAS - total}`}</span>
+                    </div>
+                    {metaBatida && (
+                      <div style={{ textAlign: "center", marginTop: 8, fontSize: "clamp(14px, 2vw, 20px)", letterSpacing: 3, color: equipe.cor, animation: "metaPulse 1.5s infinite", fontWeight: 900 }}>
+                        🏆 META BATIDA!
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Ranking individual */}
+            {ranking.length > 0 && (
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ fontSize: "clamp(12px, 1.8vw, 16px)", letterSpacing: 4, textTransform: "uppercase", color: "#ffffff77", marginBottom: 6, textAlign: "center" }}>🏅 Top 3 corretores</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                  {ranking.map((c, i) => (
+                    <div key={c.nome} style={{
+                      background: i === 0 ? "#1a1400" : i === 1 ? "#0d0d14" : "#0a100a",
+                      border: `1px solid ${i === 0 ? "#F59E0B44" : i === 1 ? "#9CA3AF44" : "#16A34A44"}`,
+                      borderRadius: 10, padding: "8px 6px", textAlign: "center",
+                    }}>
+                      <div style={{ fontSize: 22 }}>{medalhas[i]}</div>
+                      <div style={{ fontSize: "clamp(20px, 3vw, 32px)", fontWeight: 900, color: i === 0 ? "#F59E0B" : i === 1 ? "#9CA3AF" : "#16A34A", lineHeight: 1 }}>{c.count}</div>
+                      <div style={{ fontSize: "clamp(9px, 1.1vw, 12px)", color: "#ffffffcc", marginTop: 2, fontFamily: "monospace", letterSpacing: 1, wordBreak: "break-word" }}>{c.nome}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Feed lateral (1/4) */}
+          <div style={{
+            flex: 1,
+            background: "#0a0a18",
+            border: "1px solid #ffffff14",
+            borderRadius: 12,
+            padding: 16,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            minHeight: 0,
+          }}>
+            <div style={{
+              fontSize: "clamp(12px, 1.5vw, 16px)",
+              letterSpacing: 3,
+              textTransform: "uppercase",
+              color: "#F59E0B",
+              marginBottom: 12,
+              textAlign: "center",
+              fontWeight: 900,
+              flexShrink: 0,
+            }}>⚡ ÚLTIMAS VISITAS</div>
+
+            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", gap: 6 }}>
+              {ultimasVisitas.length === 0 ? (
+                <div style={{ color: "#ffffff33", fontSize: 11, fontFamily: "monospace", textAlign: "center", marginTop: 20 }}>
+                  Nenhuma visita hoje ainda
+                </div>
+              ) : (
+                ultimasVisitas.map((v, i) => {
+                  const corBolinha = v.equipe === "gabrielle" ? "#9333EA" : v.equipe === "bruno" ? "#2563EB" : v.equipe === "gabriel" ? "#16A34A" : "#666";
+                  return (
+                    <div
+                      key={`${v.nome}-${v.hora}-${i}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 10px",
+                        background: i === 0 ? "#ffffff08" : "transparent",
+                        borderRadius: 8,
+                        border: i === 0 ? "1px solid #ffffff14" : "1px solid transparent",
+                        animation: i === 0 ? "slideDown 0.4s ease-out" : "none",
+                        transition: "all 0.3s",
+                      }}
+                    >
+                      {/* Bolinha da equipe */}
+                      <div style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: corBolinha,
+                        boxShadow: `0 0 8px ${corBolinha}88`,
+                        flexShrink: 0,
+                      }} />
+                      {/* Nome */}
+                      <div style={{
+                        flex: 1,
+                        fontSize: "clamp(10px, 1.2vw, 13px)",
+                        color: "#ffffffcc",
+                        fontFamily: "monospace",
+                        letterSpacing: 0.5,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}>{v.nome}</div>
+                      {/* Hora */}
+                      <div style={{
+                        fontSize: "clamp(9px, 1vw, 12px)",
+                        color: "#ffffff55",
+                        fontFamily: "monospace",
+                        fontWeight: 700,
+                        letterSpacing: 1,
+                        flexShrink: 0,
+                      }}>{v.hora}</div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Footer */}
         <div style={{
