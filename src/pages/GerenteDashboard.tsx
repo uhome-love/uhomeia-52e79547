@@ -239,7 +239,7 @@ export default function GerenteDashboard() {
   };
 
   return (
-    <div className="px-4 md:px-6 pt-0 pb-4 space-y-3 max-w-7xl mx-auto">
+    <div className="px-0 sm:px-4 md:px-6 pt-0 pb-4 space-y-3 max-w-7xl mx-auto">
       <GreetingBar
         name={profile?.nome || "Gerente"}
         avatarUrl={avatarSrc}
@@ -351,14 +351,16 @@ export default function GerenteDashboard() {
 
       {/* 4 Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-2">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <TabsList className="flex-1 grid grid-cols-4 h-10">
             <TabsTrigger value="agora" className="text-xs font-semibold">Agora</TabsTrigger>
             <TabsTrigger value="producao" className="text-xs font-semibold">Produção</TabsTrigger>
             <TabsTrigger value="pipeline" className="text-xs font-semibold">Pipeline</TabsTrigger>
             <TabsTrigger value="metas" className="text-xs font-semibold">Metas</TabsTrigger>
           </TabsList>
-          <GlobalDateFilterBar />
+          <div className="shrink-0">
+            <GlobalDateFilterBar />
+          </div>
         </div>
 
         <TabsContent value="agora">
@@ -539,7 +541,7 @@ export default function GerenteDashboard() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => navigate("/homi-gerente")}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
+        className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
         title="HOMI Gerente"
       >
         <Bot className="h-6 w-6" />
