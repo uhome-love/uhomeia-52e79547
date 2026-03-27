@@ -216,10 +216,18 @@ function mapDoc(doc: any): SiteImovel {
   const fotos: string[] = doc.fotos?.length ? doc.fotos : doc.foto_principal ? [doc.foto_principal] : [];
   const fotosFull: string[] = doc.fotos_full?.length ? doc.fotos_full : fotos;
   const coords = extractCoordinates(doc);
+  const codigo = doc.codigo || doc.id || "";
+  // Build slug: prefer DB slug, then generate canonical format
+  const slug = doc.slug || gerarSlugUhome({
+    tipo: doc.tipo || "imovel",
+    quartos: doc.dormitorios != null ? Number(doc.dormitorios) : null,
+    bairro: doc.bairro || "",
+    codigo,
+  });
   return {
-    id: doc.id || doc.codigo || "",
-    slug: doc.slug || doc.codigo || "",
-    codigo: doc.codigo || doc.id || "",
+    id: doc.id || codigo,
+    slug,
+    codigo,
     tipo: doc.tipo || "",
     finalidade: doc.finalidade || "venda",
     status: doc.status || "",
