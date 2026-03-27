@@ -6165,6 +6165,7 @@ export type Database = {
           cidade: string | null
           codigo: string
           comissao_percentual: number | null
+          condominio_nome: string | null
           construtora: string | null
           contrato: string | null
           created_at: string | null
@@ -6172,10 +6173,13 @@ export type Database = {
           dormitorios: number | null
           empreendimento: string | null
           endereco: string | null
+          entrega_ano: number | null
+          entrega_mes: number | null
           estado: string | null
           estoque_status: string | null
           features: Json | null
           finalidade: string[] | null
+          financiavel: boolean | null
           fotos: string[] | null
           fotos_full: string[] | null
           id: string
@@ -6188,11 +6192,13 @@ export type Database = {
           jetimob_raw: Json | null
           latitude: number | null
           longitude: number | null
+          mobiliado: boolean | null
           numero: string | null
           peso_comercial: number | null
           posicao_solar: string | null
           regiao: string | null
           situacao: string | null
+          status_imovel: string | null
           suites: number | null
           sync_hash: string | null
           synced_at: string | null
@@ -6221,6 +6227,7 @@ export type Database = {
           cidade?: string | null
           codigo: string
           comissao_percentual?: number | null
+          condominio_nome?: string | null
           construtora?: string | null
           contrato?: string | null
           created_at?: string | null
@@ -6228,10 +6235,13 @@ export type Database = {
           dormitorios?: number | null
           empreendimento?: string | null
           endereco?: string | null
+          entrega_ano?: number | null
+          entrega_mes?: number | null
           estado?: string | null
           estoque_status?: string | null
           features?: Json | null
           finalidade?: string[] | null
+          financiavel?: boolean | null
           fotos?: string[] | null
           fotos_full?: string[] | null
           id?: string
@@ -6244,11 +6254,13 @@ export type Database = {
           jetimob_raw?: Json | null
           latitude?: number | null
           longitude?: number | null
+          mobiliado?: boolean | null
           numero?: string | null
           peso_comercial?: number | null
           posicao_solar?: string | null
           regiao?: string | null
           situacao?: string | null
+          status_imovel?: string | null
           suites?: number | null
           sync_hash?: string | null
           synced_at?: string | null
@@ -6277,6 +6289,7 @@ export type Database = {
           cidade?: string | null
           codigo?: string
           comissao_percentual?: number | null
+          condominio_nome?: string | null
           construtora?: string | null
           contrato?: string | null
           created_at?: string | null
@@ -6284,10 +6297,13 @@ export type Database = {
           dormitorios?: number | null
           empreendimento?: string | null
           endereco?: string | null
+          entrega_ano?: number | null
+          entrega_mes?: number | null
           estado?: string | null
           estoque_status?: string | null
           features?: Json | null
           finalidade?: string[] | null
+          financiavel?: boolean | null
           fotos?: string[] | null
           fotos_full?: string[] | null
           id?: string
@@ -6300,11 +6316,13 @@ export type Database = {
           jetimob_raw?: Json | null
           latitude?: number | null
           longitude?: number | null
+          mobiliado?: boolean | null
           numero?: string | null
           peso_comercial?: number | null
           posicao_solar?: string | null
           regiao?: string | null
           situacao?: string | null
+          status_imovel?: string | null
           suites?: number | null
           sync_hash?: string | null
           synced_at?: string | null
