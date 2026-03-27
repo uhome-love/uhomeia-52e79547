@@ -57,6 +57,7 @@ const PERIOD_OPTIONS: { key: Period; label: string }[] = [
   { key: "semana", label: "Semana" },
   { key: "proxima-semana", label: "Próxima semana" },
   { key: "mes", label: "Mês" },
+  { key: "personalizado", label: "Personalizado" },
 ];
 
 const STATUS_PILL_COLORS: Record<string, string> = {
