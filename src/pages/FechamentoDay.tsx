@@ -115,20 +115,23 @@ export default function FechamentoDay() {
   async function carregar() {
     try {
       // Busca gestores para mapear corretores por equipe
-      const gestoresData = await supabaseFetch(
-        `profiles?select=id,nome,cargo,gestor_id,user_id&cargo=in.(corretor,gestor)&order=nome`
-      );
+      const { data: gestoresData, error: gErr } = await supabase
+        .from("profiles")
+        .select("id,nome,cargo,gestor_id,user_id")
+        .in("cargo", ["corretor", "gestor"])
+        .order("nome");
+      if (gErr) throw gErr;
 
       // Monta mapa: gestor nome -> [user_ids dos corretores]
       const gestorMap = {};
       const gestorNomes = {};
-      gestoresData.forEach((p) => {
+      (gestoresData || []).forEach((p) => {
         if (p.cargo === "gestor") {
           gestorNomes[p.id] = p.nome;
           gestorMap[p.id] = [];
         }
       });
-      gestoresData.forEach((p) => {
+      (gestoresData || []).forEach((p) => {
         if (p.cargo === "corretor" && p.gestor_id && gestorMap[p.gestor_id] !== undefined) {
           gestorMap[p.gestor_id].push(p.user_id);
         }
@@ -154,11 +157,14 @@ export default function FechamentoDay() {
           novosDados[key] = [];
           continue;
         }
-        const idsStr = userIds.map((id) => `"${id}"`).join(",");
-        const visitas = await supabaseFetch(
-          `visitas?select=id,corretor_id,data_visita,status&corretor_id=in.(${idsStr})&data_visita=gte.${inicioHoje}&data_visita=lte.${fimHoje}`
-        );
-        novosDados[key] = visitas;
+        const { data: visitas, error: vErr } = await supabase
+          .from("visitas")
+          .select("id,corretor_id,data_visita,status")
+          .in("corretor_id", userIds)
+          .gte("data_visita", inicioHoje)
+          .lte("data_visita", fimHoje);
+        if (vErr) throw vErr;
+        novosDados[key] = visitas || [];
       }
 
       // Detecta nova visita (flash)
