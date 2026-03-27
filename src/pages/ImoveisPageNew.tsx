@@ -284,7 +284,7 @@ export default function ImoveisPage() {
     filters.statusImovel || filters.condominioNome || filters.financiavel || filters.mobiliado
   );
 
-  const advancedFilterCount = [filters.banheiros > 0, filters.vagas > 0, !!filters.codigo].filter(Boolean).length;
+  const advancedFilterCount = [filters.banheiros > 0, filters.vagas > 0, !!filters.codigo, !!filters.condominioNome, filters.financiavel, filters.mobiliado].filter(Boolean).length;
 
   const addBairro = useCallback((nome: string) => {
     const next = [...bairrosSelecionados, nome];
