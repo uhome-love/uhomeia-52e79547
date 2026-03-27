@@ -171,18 +171,17 @@ export default function TabAgora({ teamUserIds, teamNameMap }: Props) {
     const goals: Record<string, any> = {};
     (r8.data || []).forEach((g: any) => { goals[g.corretor_id] = g; });
 
-    // 3. Follow-ups = leads únicos tocados hoje (1 por cliente)
+    // 3. Follow-ups = tarefas concluídas hoje
     const followupsCount: Record<string, number> = {};
-    const followupSeen: Record<string, Set<string>> = {};
-    (rFollowupLeads.data || []).forEach((l: any) => {
-      if (!l.corretor_id) return;
-      if (!followupSeen[l.corretor_id]) followupSeen[l.corretor_id] = new Set();
-      followupSeen[l.corretor_id].add(l.id);
+    (rTarefasConcluidas.data || []).forEach((t: any) => {
+      if (t.responsavel_id) followupsCount[t.responsavel_id] = (followupsCount[t.responsavel_id] || 0) + 1;
     });
-    Object.entries(followupSeen).forEach(([uid, ids]) => { followupsCount[uid] = ids.size; });
 
-    // Atualizados = mesma base de follow-ups (leads únicos tocados hoje)
-    const leadsAtualCount: Record<string, number> = { ...followupsCount };
+    // Atualizados = leads únicos com ultima_acao_at hoje
+    const leadsAtualCount: Record<string, number> = {};
+    (rFollowupLeads.data || []).forEach((l: any) => {
+      if (l.corretor_id) leadsAtualCount[l.corretor_id] = (leadsAtualCount[l.corretor_id] || 0) + 1;
+    });
 
     const leadsRecebidosCount: Record<string, number> = {};
     (rLeadsRecebidos.data || []).forEach((l: any) => { if (l.corretor_id) leadsRecebidosCount[l.corretor_id] = (leadsRecebidosCount[l.corretor_id] || 0) + 1; });
