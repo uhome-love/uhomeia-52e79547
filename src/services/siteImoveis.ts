@@ -351,7 +351,9 @@ export async function fetchSiteImoveis(filters: BuscaFilters = {}): Promise<{ da
   // 416 = Range Not Satisfiable (offset beyond total rows) — return empty gracefully
   if (error) {
     if (error.code === "PGRST103" || error.message?.includes("Requested range not satisfiable")) {
-      return { data: [], count: count ?? 0, search_time_ms: Date.now() - startTime };
+      // Preserve the requested offset as a hint that we've reached the end
+      // Return offset as count so hasMore = (items.length >= offset) stays false
+      return { data: [], count: offset, search_time_ms: Date.now() - startTime };
     }
     throw new Error(error.message || "Search failed");
   }
