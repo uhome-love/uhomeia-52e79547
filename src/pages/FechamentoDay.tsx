@@ -154,6 +154,9 @@ export default function FechamentoDay() {
         }
       });
 
+      const inicioHoje = `${hoje}T00:00:00`;
+      const fimHoje = `${hoje}T23:59:59`;
+
       const novosDados = {};
       for (const [key, userIds] of Object.entries(equipeIds)) {
         if (userIds.length === 0) {
@@ -162,9 +165,10 @@ export default function FechamentoDay() {
         }
         const { data: visitas, error: vErr } = await supabase
           .from("visitas")
-          .select("id,corretor_id,data_visita,status")
+          .select("id,corretor_id,created_at,status")
           .in("corretor_id", userIds)
-          .eq("data_visita", hoje);
+          .gte("created_at", inicioHoje)
+          .lte("created_at", fimHoje);
         if (vErr) throw vErr;
         novosDados[key] = visitas || [];
       }
@@ -212,10 +216,13 @@ export default function FechamentoDay() {
   useEffect(() => {
     async function buscarRanking() {
       try {
+        const inicioHoje = `${hoje}T00:00:00`;
+        const fimHoje = `${hoje}T23:59:59`;
         const { data: visitas, error: vErr } = await supabase
           .from("visitas")
           .select("corretor_id")
-          .eq("data_visita", hoje);
+          .gte("created_at", inicioHoje)
+          .lte("created_at", fimHoje);
         if (vErr || !visitas) return;
 
         const contagemPorUser = {};
