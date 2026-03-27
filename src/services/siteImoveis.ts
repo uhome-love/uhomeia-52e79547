@@ -82,9 +82,13 @@ export interface BuscaFilters {
   construtora?: string[];
   empreendimento?: string[];
   statusImovel?: string;
+  statusImovelList?: string[];
   condominioNome?: string;
   financiavel?: boolean;
   mobiliado?: boolean;
+  comodidades?: string[];
+  entregaAnoMin?: number;
+  entregaAnoMax?: number;
 }
 
 const PROPERTY_MAP_SELECT = "id,codigo,tipo,bairro,cidade,valor_venda,valor_locacao,dormitorios,banheiros,vagas,area_privativa,latitude,longitude,titulo,fotos,empreendimento,construtora,situacao";
