@@ -149,30 +149,47 @@ export default function TabAgora({ teamUserIds, teamNameMap }: Props) {
     const disps: Record<string, any> = {};
     (r5.data || []).forEach((d: any) => { disps[d.user_id] = d; });
 
+    // 1. Visitas: marcadas = (marcada|confirmada|reagendada), realizadas = (realizada)
     const vmCount: Record<string, number> = {};
     const vrCount: Record<string, number> = {};
+    const visitasMarcadasStatuses = new Set(["marcada", "confirmada", "reagendada"]);
     (r6.data || []).forEach((v: any) => {
-      vmCount[v.corretor_id] = (vmCount[v.corretor_id] || 0) + 1;
+      if (visitasMarcadasStatuses.has(v.status)) vmCount[v.corretor_id] = (vmCount[v.corretor_id] || 0) + 1;
       if (v.status === "realizada") vrCount[v.corretor_id] = (vrCount[v.corretor_id] || 0) + 1;
     });
 
+    // 2. Desatualizados: leads sem tarefa OU com tarefa atrasada
+    const allLeads = rLeadsAll.data || [];
+    const idsComTarefa = new Set((rTarefasExistentes.data || []).map((t: any) => t.pipeline_lead_id).filter(Boolean));
+    const idsAtrasados = new Set((rTarefasAtrasadas.data || []).map((t: any) => t.pipeline_lead_id).filter(Boolean));
     const desatCount: Record<string, number> = {};
-    (r7.data || []).forEach((l: any) => { desatCount[l.corretor_id] = (desatCount[l.corretor_id] || 0) + 1; });
+    allLeads.forEach((l: any) => {
+      if (!idsComTarefa.has(l.id) || idsAtrasados.has(l.id)) {
+        desatCount[l.corretor_id] = (desatCount[l.corretor_id] || 0) + 1;
+      }
+    });
 
     const goals: Record<string, any> = {};
     (r8.data || []).forEach((g: any) => { goals[g.corretor_id] = g; });
 
+    // 3. Follow-ups = leads únicos tocados hoje (1 por cliente)
     const followupsCount: Record<string, number> = {};
-    (r9.data || []).forEach((t: any) => { if (t.responsavel_id) followupsCount[t.responsavel_id] = (followupsCount[t.responsavel_id] || 0) + 1; });
+    const followupSeen: Record<string, Set<string>> = {};
+    (rFollowupLeads.data || []).forEach((l: any) => {
+      if (!l.corretor_id) return;
+      if (!followupSeen[l.corretor_id]) followupSeen[l.corretor_id] = new Set();
+      followupSeen[l.corretor_id].add(l.id);
+    });
+    Object.entries(followupSeen).forEach(([uid, ids]) => { followupsCount[uid] = ids.size; });
 
-    const leadsAtualCount: Record<string, number> = {};
-    (r10.data || []).forEach((l: any) => { if (l.corretor_id) leadsAtualCount[l.corretor_id] = (leadsAtualCount[l.corretor_id] || 0) + 1; });
+    // Atualizados = mesma base de follow-ups (leads únicos tocados hoje)
+    const leadsAtualCount: Record<string, number> = { ...followupsCount };
 
     const leadsRecebidosCount: Record<string, number> = {};
     (rLeadsRecebidos.data || []).forEach((l: any) => { if (l.corretor_id) leadsRecebidosCount[l.corretor_id] = (leadsRecebidosCount[l.corretor_id] || 0) + 1; });
 
-    const total48h = Object.values(desatCount).reduce((s, v) => s + v, 0);
-    setLeadsSemContato48h(total48h);
+    const totalDesat = Object.values(desatCount).reduce((s, v) => s + v, 0);
+    setLeadsSemContato48h(totalDesat);
 
     const cards: CorretorAgora[] = members
       .filter((m: any) => m.user_id && teamUserIds.includes(m.user_id))
