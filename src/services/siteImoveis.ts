@@ -287,10 +287,22 @@ function applyPropertyFilters(
   if (filters.situacao?.length) nextQuery = nextQuery.in("situacao", filters.situacao);
 
   // New indexed filters
-  if (filters.statusImovel) nextQuery = nextQuery.eq("status_imovel", filters.statusImovel);
+  if (filters.statusImovelList?.length) {
+    if (filters.statusImovelList.length === 1) nextQuery = nextQuery.eq("status_imovel", filters.statusImovelList[0]);
+    else nextQuery = nextQuery.in("status_imovel", filters.statusImovelList);
+  } else if (filters.statusImovel) {
+    nextQuery = nextQuery.eq("status_imovel", filters.statusImovel);
+  }
   if (filters.condominioNome) nextQuery = nextQuery.ilike("condominio_nome", `%${filters.condominioNome}%`);
   if (filters.financiavel) nextQuery = nextQuery.eq("financiavel", true);
   if (filters.mobiliado) nextQuery = nextQuery.eq("mobiliado", true);
+  if (filters.comodidades?.length) {
+    for (const c of filters.comodidades) {
+      nextQuery = nextQuery.contains("comodidades", [c]);
+    }
+  }
+  if (filters.entregaAnoMin) nextQuery = nextQuery.gte("entrega_ano", filters.entregaAnoMin);
+  if (filters.entregaAnoMax) nextQuery = nextQuery.lte("entrega_ano", filters.entregaAnoMax);
 
   if (filters.bounds) {
     nextQuery = nextQuery

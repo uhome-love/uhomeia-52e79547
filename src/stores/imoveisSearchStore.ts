@@ -60,9 +60,13 @@ const defaultFilters: ImoveisFilters = {
   bounds: null,
   codigo: "",
   statusImovel: "",
+  statusImovelList: [],
   condominioNome: "",
   financiavel: false,
   mobiliado: false,
+  comodidades: [],
+  entregaAnoMin: 0,
+  entregaAnoMax: 0,
 };
 
 export const useImoveisSearchStore = create<ImoveisSearchState>((set) => ({
