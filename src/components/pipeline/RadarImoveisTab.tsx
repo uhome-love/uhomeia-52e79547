@@ -730,10 +730,11 @@ Responda SOMENTE com o JSON, sem markdown.`;
     });
     scored.sort((a, b) => b.score - a.score);
 
-    // Deduplicate
+    // Deduplicate by codigo
     const seen = new Set<string>();
     const deduped = scored.filter(item => {
-      const key = normalize(item.nome || `${item.id}`);
+      if (item.score <= 0) return false; // Hide 0% matches
+      const key = item.codigo || normalize(item.nome || `${item.id}`);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
