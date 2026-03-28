@@ -554,6 +554,12 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
   "observacoes_ia": "resumo curto das preferências extraídas"
 }
 
+IMPORTANTE: Se o lead veio de um empreendimento específico, infira o tipo do imóvel baseado no nome:
+- "Orygem" = casa em condomínio, bairro Teresópolis, Porto Alegre, valor 800k-1M
+- Empreendimentos com "Casa", "Villa", "Village", "Park", "Garden" (isolado) geralmente = casa
+- Empreendimentos com "Tower", "Heights", "Residencial", "Open", "GO", "Supreme" geralmente = apartamento
+Se não conseguir inferir com certeza, deixe tipos: [] (busca todos os tipos).
+
 Dados do lead "${leadNome}":
 ${contextParts.join("\n")}
 
