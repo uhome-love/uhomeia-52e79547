@@ -265,8 +265,23 @@ Deno.serve(async (req) => {
         const telNorm = telefone?.replace(/\D/g, '') || ''
         const conditions: string[] = []
         if (email) conditions.push(`email.eq.${email}`)
-        if (telefone) conditions.push(`telefone.eq.${telefone}`)
-        if (telNorm && telNorm !== telefone) conditions.push(`telefone.eq.${telNorm}`)
+        if (telefone) {
+          // Mesma lógica de variantes com/sem DDI
+          const telVariants = new Set<string>([telefone])
+          if (telNorm) {
+            telVariants.add(telNorm)
+            if (telNorm.startsWith('55') && telNorm.length >= 12) {
+              telVariants.add(telNorm.slice(2))
+              telVariants.add(`+${telNorm}`)
+            } else if (telNorm.length >= 10 && telNorm.length <= 11) {
+              telVariants.add(`55${telNorm}`)
+              telVariants.add(`+55${telNorm}`)
+            }
+          }
+          for (const v of telVariants) {
+            conditions.push(`telefone.eq.${v}`)
+          }
+        }
 
         if (conditions.length > 0) {
           const { data } = await supabase
