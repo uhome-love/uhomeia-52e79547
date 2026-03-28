@@ -409,7 +409,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
   const [selectedResults, setSelectedResults] = useState<Set<number>>(new Set());
   const [showAllResults, setShowAllResults] = useState(false);
   const [aiExpanding, setAiExpanding] = useState(false);
-  const [useMeDay, setUseMeDay] = useState(true);
+  const [useMeDay, setUseMeDay] = useState(false);
   const [useTypesense, setUseTypesense] = useState(true);
   const [activeObjecoes, setActiveObjecoes] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
