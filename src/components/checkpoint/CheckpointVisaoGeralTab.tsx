@@ -131,7 +131,7 @@ export default function CheckpointVisaoGeralTab({ teamUserIds, teamNameMap }: Pr
     const newAlerts: Alert[] = [];
 
     const semLigacao = teamUserIds.filter(uid => (oa[uid]?.ligacoes || 0) === 0);
-    if (semLigacao.length > 0 && dateStr === format(new Date(), "yyyy-MM-dd")) {
+    if (semLigacao.length > 0 && dateStr === new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" })) {
       newAlerts.push({ id: "sem-ligacao", type: "warning", icon: "📵", message: `${semLigacao.map(uid => teamNameMap[uid]).join(", ")} ainda não fizeram ligações hoje`, action: { label: "Ver OA", route: "/oferta-ativa" } });
     }
     if (leadsSemContatoList.length > 0) {
