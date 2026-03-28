@@ -7566,26 +7566,38 @@ export type Database = {
       }
       typesense_sync_state: {
         Row: {
+          finished_at: string | null
           id: string
           last_indexed_at: string | null
           next_page: number | null
+          started_at: string | null
           status: string | null
+          total_errors: number
+          total_indexed: number
           total_pages: number | null
           updated_at: string | null
         }
         Insert: {
+          finished_at?: string | null
           id?: string
           last_indexed_at?: string | null
           next_page?: number | null
+          started_at?: string | null
           status?: string | null
+          total_errors?: number
+          total_indexed?: number
           total_pages?: number | null
           updated_at?: string | null
         }
         Update: {
+          finished_at?: string | null
           id?: string
           last_indexed_at?: string | null
           next_page?: number | null
+          started_at?: string | null
           status?: string | null
+          total_errors?: number
+          total_indexed?: number
           total_pages?: number | null
           updated_at?: string | null
         }
