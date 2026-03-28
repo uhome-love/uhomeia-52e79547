@@ -264,12 +264,22 @@ function scoreProperty(
     else if (nf === "obras" && (ns.includes("obra") || ns.includes("lancamento"))) { score += 5; justificativas.push("🏗️ Em obras/Lançamento"); }
   }
 
-  // ── Empreendimento match bonus (10 pts) ──
-  if (leadEmp && imovel.empreendimento) {
-    maxPossible += 10;
-    if (normalize(imovel.empreendimento).includes(normalize(leadEmp)) || normalize(imovel.nome || "").includes(normalize(leadEmp))) {
-      score += 10;
+  // ── Empreendimento match bonus (20 pts) ──
+  if (leadEmp && (imovel.empreendimento || imovel.nome)) {
+    maxPossible += 20;
+    const nEmp = normalize(leadEmp);
+    const nImovelEmp = normalize(imovel.empreendimento || "");
+    const nImovelNome = normalize(imovel.nome || "");
+    if (nImovelEmp.includes(nEmp) || nImovelNome.includes(nEmp) || nEmp.includes(nImovelEmp)) {
+      score += 20;
       justificativas.push("⭐ Mesmo empreendimento de interesse");
+    } else {
+      // Check condominio_nome similarity via partial match
+      const nCond = normalize((imovel as any).condominio_nome || "");
+      if (nCond && (nCond.includes(nEmp) || nEmp.includes(nCond))) {
+        score += 20;
+        justificativas.push("⭐ Mesmo condomínio de interesse");
+      }
     }
   }
 
