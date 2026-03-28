@@ -7,10 +7,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function normalize(s: string): string {
-  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-}
-
 const COLLECTION_NAME = "imoveis";
 
 const SCHEMA = {
@@ -46,7 +42,6 @@ const SCHEMA = {
     { name: "valor_condominio", type: "float" as const, optional: true as const },
     { name: "is_uhome", type: "bool" as const, optional: true as const, facet: true as const },
     { name: "data_atualizacao", type: "int64" as const },
-    // Geo fields for map
     { name: "latitude", type: "float" as const, optional: true as const },
     { name: "longitude", type: "float" as const, optional: true as const },
   ],
@@ -74,16 +69,8 @@ async function typesenseFetch(host: string, apiKey: string, path: string, option
 function normalizeImages(imovel: any): { thumbs: string[]; full: string[] } {
   const thumbs: string[] = [];
   const full: string[] = [];
-
-  if (imovel.foto_principal) {
-    thumbs.push(imovel.foto_principal);
-    full.push(imovel.foto_principal);
-  }
-  if (imovel.foto_destaque && imovel.foto_destaque !== imovel.foto_principal) {
-    thumbs.push(imovel.foto_destaque);
-    full.push(imovel.foto_destaque);
-  }
-
+  if (imovel.foto_principal) { thumbs.push(imovel.foto_principal); full.push(imovel.foto_principal); }
+  if (imovel.foto_destaque && imovel.foto_destaque !== imovel.foto_principal) { thumbs.push(imovel.foto_destaque); full.push(imovel.foto_destaque); }
   const imgFieldNames = ["imagens", "fotos", "galeria", "photos", "images"];
   for (const fieldName of imgFieldNames) {
     const arr = imovel[fieldName];
@@ -93,9 +80,7 @@ function normalizeImages(imovel: any): { thumbs: string[]; full: string[] } {
           if (!thumbs.includes(item)) thumbs.push(item);
           if (!full.includes(item)) full.push(item);
         } else if (item && typeof item === "object") {
-          // Thumb: prefer link_thumb > link
           const thumb = item.link_thumb || item.link || item.url || item.arquivo || "";
-          // Full: prefer link_large > link > link_medio > link_thumb
           const fullUrl = item.link_large || item.link || item.link_medio || item.link_thumb || item.url || item.arquivo || "";
           if (thumb && !thumbs.includes(thumb)) thumbs.push(thumb);
           if (fullUrl && !full.includes(fullUrl)) full.push(fullUrl);
@@ -111,8 +96,6 @@ function mapImovelToDocument(item: any): Record<string, any> {
   const { thumbs, full } = normalizeImages(item);
   const situacao = String(item.situacao || item.status || item.fase || "").toLowerCase();
   const emObras = situacao.includes("obra") || situacao.includes("constru") || situacao.includes("planta") || situacao.includes("lancamento");
-
-  // Extract coordinates
   const lat = Number(item.latitude || item.lat || item.endereco_latitude || item.endereco?.latitude || 0);
   const lng = Number(item.longitude || item.lng || item.lon || item.endereco_longitude || item.endereco?.longitude || 0);
   const hasCoords = lat !== 0 && lng !== 0 && !isNaN(lat) && !isNaN(lng) && lat >= -35 && lat <= 5 && lng >= -75 && lng <= -30;
@@ -151,13 +134,15 @@ function mapImovelToDocument(item: any): Record<string, any> {
     data_atualizacao: Date.now(),
   };
 
-  if (hasCoords) {
-    doc.latitude = lat;
-    doc.longitude = lng;
-    doc.location = [lat, lng];
-  }
-
+  if (hasCoords) { doc.latitude = lat; doc.longitude = lng; doc.location = [lat, lng]; }
   return doc;
+}
+
+function getSupabaseAdmin() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
 }
 
 serve(async (req) => {
@@ -192,10 +177,10 @@ serve(async (req) => {
 
     const body = await req.json();
     const { action } = body;
+    const db = getSupabaseAdmin();
 
     // ═══ CREATE COLLECTION ═══
     if (action === "create_collection") {
-      // Drop if exists
       await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, `/collections/${COLLECTION_NAME}`, { method: "DELETE" }).catch(() => {});
       const result = await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, "/collections", {
         method: "POST",
@@ -206,77 +191,169 @@ serve(async (req) => {
       });
     }
 
-    // ═══ FULL REINDEX ═══
-    if (action === "reindex") {
+    // ═══ START REINDEX (non-blocking — resets state, cron does the work) ═══
+    if (action === "start_reindex") {
+      // First, ensure the collection exists (create if not)
+      const collCheck = await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, `/collections/${COLLECTION_NAME}`);
+      if (collCheck.status === 404) {
+        await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, "/collections", {
+          method: "POST",
+          body: JSON.stringify(SCHEMA),
+        });
+      }
+
+      // Estimate total pages from Jetimob
       const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
       if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY not configured");
 
-      // Fetch all items from Jetimob
-      console.time("jetimob-fetch-for-reindex");
-      const batchSize = body.batchSize || 500;
-      const maxPages = body.maxPages || 60;
-      let allItems: any[] = [];
-      for (let page = 1; page <= maxPages; page++) {
-        const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${page}&pageSize=${batchSize}`;
-        const response = await fetch(url, { headers: { Accept: "application/json" } });
-        if (!response.ok) break;
-        const raw = await response.json();
-        const items = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.result) ? raw.result : Array.isArray(raw) ? raw : [];
-        if (!items.length) break;
-        allItems = allItems.concat(items);
-        const rawTotal = raw?.total || raw?.totalResults || 0;
-        if (items.length < batchSize || (rawTotal > 0 && allItems.length >= rawTotal)) break;
-      }
-      console.timeEnd("jetimob-fetch-for-reindex");
-      console.log(`Fetched ${allItems.length} items from Jetimob`);
+      const probeUrl = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=1&pageSize=1`;
+      const probeResp = await fetch(probeUrl, { headers: { Accept: "application/json" } });
+      const probeData = await probeResp.json();
+      const totalItems = probeData?.total || probeData?.totalResults || 25000;
+      const pageSize = 500;
+      const totalPages = Math.ceil(totalItems / pageSize);
 
-      // Drop and recreate collection
-      await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, `/collections/${COLLECTION_NAME}`, { method: "DELETE" }).catch(() => {});
-      await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, "/collections", {
-        method: "POST",
-        body: JSON.stringify(SCHEMA),
-      });
+      // Reset sync state
+      await db.from("typesense_sync_state").update({
+        status: "running",
+        next_page: 1,
+        total_pages: totalPages,
+        total_indexed: 0,
+        total_errors: 0,
+        started_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        finished_at: null,
+        last_indexed_at: null,
+      }).eq("id", "default");
 
-      // Batch import using JSONL
-      const BATCH_SIZE = 200;
-      let indexed = 0;
-      let errors = 0;
-      for (let i = 0; i < allItems.length; i += BATCH_SIZE) {
-        const batch = allItems.slice(i, i + BATCH_SIZE);
-        const docs = batch.map(mapImovelToDocument);
-        const jsonl = docs.map(d => JSON.stringify(d)).join("\n");
-
-        const resp = await fetch(`https://${TYPESENSE_HOST}/collections/${COLLECTION_NAME}/documents/import?action=upsert`, {
-          method: "POST",
-          headers: {
-            "X-TYPESENSE-API-KEY": TYPESENSE_ADMIN_API_KEY,
-            "Content-Type": "text/plain",
-          },
-          body: jsonl,
-        });
-        const resultText = await resp.text();
-        const results = resultText.split("\n").filter(Boolean).map(l => JSON.parse(l));
-        indexed += results.filter(r => r.success).length;
-        errors += results.filter(r => !r.success).length;
-      }
-
-      console.log(`Typesense reindex: ${indexed} indexed, ${errors} errors out of ${allItems.length} total`);
+      console.log(`[typesense-admin] Reindex started: ${totalItems} items, ${totalPages} pages`);
 
       return new Response(JSON.stringify({
         success: true,
-        total_fetched: allItems.length,
-        indexed,
-        errors,
+        message: "Reindex iniciado em background",
+        total_items: totalItems,
+        total_pages: totalPages,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ═══ INDEX BATCH (upsert without dropping) ═══
-    if (action === "index_batch") {
+    // ═══ PROCESS NEXT BATCH (called by pg_cron) ═══
+    if (action === "process_next_batch") {
+      // Read current state
+      const { data: state, error: stateErr } = await db
+        .from("typesense_sync_state")
+        .select("*")
+        .eq("id", "default")
+        .single();
+
+      if (stateErr || !state) {
+        return new Response(JSON.stringify({ success: false, error: "No sync state found" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (state.status !== "running") {
+        return new Response(JSON.stringify({ success: true, skipped: true, status: state.status }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const currentPage = state.next_page || 1;
+      const pageSize = 500;
+
+      // Fetch from Jetimob
       const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
       if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY not configured");
 
+      const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${currentPage}&pageSize=${pageSize}`;
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error(`Jetimob fetch failed: ${response.status}`);
+      const raw = await response.json();
+      const items = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.result) ? raw.result : Array.isArray(raw) ? raw : [];
+
+      let indexed = 0;
+      let errors = 0;
+
+      if (items.length > 0) {
+        const docs = items.map(mapImovelToDocument);
+        const jsonl = docs.map(d => JSON.stringify(d)).join("\n");
+        const resp = await fetch(`https://${TYPESENSE_HOST}/collections/${COLLECTION_NAME}/documents/import?action=upsert`, {
+          method: "POST",
+          headers: { "X-TYPESENSE-API-KEY": TYPESENSE_ADMIN_API_KEY, "Content-Type": "text/plain" },
+          body: jsonl,
+        });
+        const resultText = await resp.text();
+        const results = resultText.split("\n").filter(Boolean).map(l => JSON.parse(l));
+        indexed = results.filter(r => r.success).length;
+        errors = results.filter(r => !r.success).length;
+      }
+
+      const hasMore = items.length >= pageSize;
+      const newTotalIndexed = (state.total_indexed || 0) + indexed;
+      const newTotalErrors = (state.total_errors || 0) + errors;
+      const now = new Date().toISOString();
+
+      if (hasMore) {
+        await db.from("typesense_sync_state").update({
+          next_page: currentPage + 1,
+          total_indexed: newTotalIndexed,
+          total_errors: newTotalErrors,
+          last_indexed_at: now,
+          updated_at: now,
+        }).eq("id", "default");
+      } else {
+        await db.from("typesense_sync_state").update({
+          status: "complete",
+          next_page: currentPage,
+          total_indexed: newTotalIndexed,
+          total_errors: newTotalErrors,
+          last_indexed_at: now,
+          updated_at: now,
+          finished_at: now,
+        }).eq("id", "default");
+      }
+
+      console.log(`[typesense-admin] Batch page=${currentPage}: ${indexed} indexed, ${errors} errors, hasMore=${hasMore}`);
+
+      return new Response(JSON.stringify({
+        success: true,
+        page: currentPage,
+        indexed,
+        errors,
+        total_indexed: newTotalIndexed,
+        total_errors: newTotalErrors,
+        hasMore,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ═══ GET PROGRESS ═══
+    if (action === "progress") {
+      const { data: state } = await db
+        .from("typesense_sync_state")
+        .select("*")
+        .eq("id", "default")
+        .single();
+
+      return new Response(JSON.stringify({ success: true, ...state }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ═══ COLLECTION STATS ═══
+    if (action === "stats") {
+      const result = await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, `/collections/${COLLECTION_NAME}`);
+      return new Response(JSON.stringify({ success: true, stats: result.data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ═══ LEGACY: index_batch (kept for backward compat) ═══
+    if (action === "index_batch") {
+      const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
+      if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY not configured");
       const pageNum = body.page || 1;
       const pageSize = body.pageSize || 200;
       const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${pageNum}&pageSize=${pageSize}`;
@@ -285,13 +362,11 @@ serve(async (req) => {
       const raw = await response.json();
       const items = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.result) ? raw.result : Array.isArray(raw) ? raw : [];
       const total = raw?.total || raw?.totalResults || 0;
-
       if (items.length === 0) {
         return new Response(JSON.stringify({ success: true, indexed: 0, page: pageNum, total, done: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
       const docs = items.map(mapImovelToDocument);
       const jsonl = docs.map(d => JSON.stringify(d)).join("\n");
       const resp = await fetch(`https://${TYPESENSE_HOST}/collections/${COLLECTION_NAME}/documents/import?action=upsert`, {
@@ -304,16 +379,7 @@ serve(async (req) => {
       const indexed = results.filter(r => r.success).length;
       const errors = results.filter(r => !r.success).length;
       const hasMore = items.length >= pageSize;
-
       return new Response(JSON.stringify({ success: true, indexed, errors, page: pageNum, total, hasMore }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ═══ COLLECTION STATS ═══
-    if (action === "stats") {
-      const result = await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, `/collections/${COLLECTION_NAME}`);
-      return new Response(JSON.stringify({ success: true, stats: result.data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
