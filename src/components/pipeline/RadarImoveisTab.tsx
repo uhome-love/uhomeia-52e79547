@@ -996,6 +996,13 @@ Responda SOMENTE com o JSON, sem markdown.`;
 
         {/* ════════ TAB: RADAR (Match) ════════ */}
         <TabsContent value="radar" className="mt-3 space-y-3">
+          {/* ── Empty profile warning ── */}
+          {!profileForm.tipos.length && !profileForm.bairros.length && !profileForm.valor_max && (
+            <div className="flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/30 px-3 py-2 text-xs text-yellow-800 dark:text-yellow-200">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              Perfil incompleto — clique em <strong>"IA Analisar Perfil"</strong> para gerar automaticamente ou preencha os filtros manualmente.
+            </div>
+          )}
           {/* ── Perfil inline + IA ── */}
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="p-3 space-y-2.5">
