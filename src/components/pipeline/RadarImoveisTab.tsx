@@ -656,7 +656,17 @@ Responda SOMENTE com o JSON, sem markdown.`;
 
     const leadEmp = leadData?.empreendimento || "";
     const scored = allResults.map(item => {
-      const { score, justificativas } = scoreProperty(scoringProfile, item, activeObjecoes, leadEmp, discardedCodes as Set<string>);
+      let { score, justificativas } = scoreProperty(scoringProfile, item, activeObjecoes, leadEmp, discardedCodes as Set<string>);
+      // Boost from site browsing history
+      const code = getPropertyCode(item);
+      if (siteInsights?.viewedCodes.has(code)) {
+        score = Math.min(99, score + 8);
+        justificativas = [...justificativas, "👁️ Visualizado no site"];
+      }
+      if (siteInsights?.favCodes.has(code)) {
+        score = Math.min(99, score + 12);
+        justificativas = [...justificativas, "❤️ Favoritado no site"];
+      }
       return { ...item, score, justificativas };
     });
     scored.sort((a, b) => b.score - a.score);
