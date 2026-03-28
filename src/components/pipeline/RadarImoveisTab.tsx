@@ -695,7 +695,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
       } catch {}
       toast.success(`${deduped.length} imóveis analisados!`);
     }
-  }, [useMeDay, useTypesense, scoringProfile, activeObjecoes, searchTypesense, handleSaveProfile, leadData?.empreendimento, discardedCodes, saveSearch]);
+  }, [useMeDay, useTypesense, scoringProfile, activeObjecoes, searchTypesense, handleSaveProfile, leadData?.empreendimento, discardedCodes, saveSearch, siteInsights]);
 
   // AI expand
   const handleAIExpand = useCallback(async () => {
