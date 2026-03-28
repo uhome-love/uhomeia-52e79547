@@ -150,7 +150,7 @@ serve(async (req) => {
       contextBlock = `\n\n=== DADOS DO CONTEXTO ATUAL ===\n${typeof context === "string" ? context : JSON.stringify(context, null, 2)}`;
     }
 
-    const systemPrompt = `${UHOME_IDENTITY}\n${roleFormat}\n\n${moduleContext}${contextBlock}`;
+    const systemPrompt = `${UHOME_IDENTITY}\n${roleFormat}\n\n${moduleContext}\n\n${EMPREENDIMENTO_MAP}${contextBlock}`;
 
     const allMessages = [
       { role: "system", content: systemPrompt },
