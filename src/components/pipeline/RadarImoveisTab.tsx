@@ -1183,14 +1183,27 @@ Responda SOMENTE com o JSON, sem markdown.`;
 
               {/* Actions */}
               {results.length > 0 && (
-                <div className="flex gap-2 pt-2">
-                  <Button size="sm" className="flex-1 gap-1.5" onClick={sendWhatsApp}>
-                    <Send className="h-3.5 w-3.5" />
-                    Enviar WhatsApp
+                <div className="space-y-2 pt-2">
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1 gap-1.5" onClick={sendWhatsApp}>
+                      <Send className="h-3.5 w-3.5" />
+                      Enviar WhatsApp
+                      {selectedResults.size > 0 && ` (${selectedResults.size})`}
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={copyMessage}>
+                      <Copy className="h-3.5 w-3.5" /> Copiar
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="w-full gap-1.5 bg-gradient-to-r from-violet-500/10 to-primary/10 hover:from-violet-500/20 hover:to-primary/20 border border-violet-500/20 text-violet-700 dark:text-violet-300"
+                    onClick={handleCreateVitrine}
+                    disabled={creatingVitrine}
+                  >
+                    {creatingVitrine ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                    Criar Vitrine Personalizada
                     {selectedResults.size > 0 && ` (${selectedResults.size})`}
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-1.5" onClick={copyMessage}>
-                    <Copy className="h-3.5 w-3.5" /> Copiar
                   </Button>
                 </div>
               )}
