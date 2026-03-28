@@ -426,11 +426,45 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
   const [showObjecoes, setShowObjecoes] = useState(false);
   const [bairroSearch, setBairroSearch] = useState("");
   const [newRejeicao, setNewRejeicao] = useState("");
+  const [bairroSuggestions, setBairroSuggestions] = useState<string[]>([]);
+  const [showBairroDropdown, setShowBairroDropdown] = useState(false);
+  const bairroInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toggleBairro = (b: string) => setProfileForm(prev => ({ ...prev, bairros: prev.bairros.includes(b) ? prev.bairros.filter(x => x !== b) : [...prev.bairros, b] }));
   const toggleTipologia = (t: string) => setProfileForm(prev => ({ ...prev, tipos: prev.tipos.includes(t) ? prev.tipos.filter(x => x !== t) : [...prev.tipos, t] }));
   const filteredBairros = BAIRROS_POA.filter(b => !bairroSearch || normalize(b).includes(normalize(bairroSearch)));
   const toggleObjecao = (key: string) => setActiveObjecoes(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+
+  // Bairro autocomplete from DB
+  useEffect(() => {
+    if (bairroSearch.length < 3) { setBairroSuggestions([]); setShowBairroDropdown(false); return; }
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("properties")
+        .select("bairro")
+        .ilike("bairro", `%${bairroSearch}%`)
+        .eq("ativo", true)
+        .limit(20);
+      const unique = [...new Set((data || []).map((d: any) => d.bairro).filter(Boolean))]
+        .filter(b => !profileForm.bairros.includes(b))
+        .slice(0, 10);
+      setBairroSuggestions(unique);
+      setShowBairroDropdown(unique.length > 0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [bairroSearch, profileForm.bairros]);
+
+  // Debounced auto-search when filters change
+  const hasSearchedOnce = useRef(false);
+  useEffect(() => {
+    if (!hasSearchedOnce.current) return; // Don't auto-search before first manual search
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      handleSearch(false);
+    }, 800);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [profileForm.valor_min, profileForm.valor_max, profileForm.area_min, profileForm.dormitorios_min, profileForm.tipos, profileForm.bairros]);
 
   // Build scoring profile
   const scoringProfile: ScoringProfile = useMemo(() => ({
