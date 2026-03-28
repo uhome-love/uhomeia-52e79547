@@ -747,7 +747,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
       console.error("[Match] Supabase fallback exception:", err);
       return [];
     }
-  }, [profileForm]);
+  }, [profileForm, leadData]);
 
   const searchTypesense = useCallback(async (): Promise<ImovelResult[]> => {
     try {
