@@ -1324,7 +1324,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
           {searched && !loading && (() => {
             const relevantResults = results.filter(r => r.score > 0);
             const top5 = relevantResults.slice(0, 5);
-            const rest = relevantResults.slice(5);
+            const rest = relevantResults.slice(5, 20);
             const noResults = relevantResults.length === 0;
 
             return (
