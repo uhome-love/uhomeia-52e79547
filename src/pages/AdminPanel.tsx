@@ -53,6 +53,9 @@ export default function AdminPanel() {
   const [dialogConnected, setDialogConnected] = useState<boolean | null>(null);
   const [savingKey, setSavingKey] = useState(false);
 
+  // Typesense reindex
+  const [reindexing, setReindexing] = useState(false);
+  const [reindexResult, setReindexResult] = useState<any>(null);
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     const { data: profiles } = await supabase.from("profiles").select("user_id, nome, email, jetimob_user_id");
