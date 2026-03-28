@@ -942,15 +942,15 @@ Responda SOMENTE com o JSON, sem markdown.`;
           <LeadMatchesWidget leadId={leadId} leadNome={leadNome} leadTelefone={leadTelefone} />
         </TabsContent>
 
-        {/* ════════ TAB: RADAR ════════ */}
+        {/* ════════ TAB: RADAR (Match) ════════ */}
         <TabsContent value="radar" className="mt-3 space-y-3">
-          {/* AI Auto-Fill + Site Insights */}
+          {/* ── Perfil inline + IA ── */}
           <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="p-3 space-y-2">
+            <CardContent className="p-3 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Wand2 className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold text-foreground">Match Inteligente</span>
+                  <span className="text-xs font-bold text-foreground">Perfil de Busca</span>
                 </div>
                 <Button
                   size="sm"
@@ -960,27 +960,51 @@ Responda SOMENTE com o JSON, sem markdown.`;
                   disabled={aiAnalyzing}
                 >
                   {aiAnalyzing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
-                  🧠 IA Analisar Perfil
+                  IA Analisar Perfil
                 </Button>
               </div>
+
+              {/* Profile chips — always visible */}
+              <div className="flex flex-wrap gap-1.5">
+                {leadData?.empreendimento && (
+                  <Badge variant="secondary" className="text-[10px] gap-1"><Building2 className="h-2.5 w-2.5" /> {leadData.empreendimento}</Badge>
+                )}
+                {profileForm.tipos.length > 0 && profileForm.tipos[0] !== "apartamento" && (
+                  <Badge variant="secondary" className="text-[10px] gap-1"><Home className="h-2.5 w-2.5" /> {profileForm.tipos.join(", ")}</Badge>
+                )}
+                {profileForm.tipos.includes("apartamento") && profileForm.tipos.length === 1 && (
+                  <Badge variant="secondary" className="text-[10px] gap-1"><Building2 className="h-2.5 w-2.5" /> Apartamento</Badge>
+                )}
+                {profileForm.bairros.length > 0 && (
+                  <Badge variant="outline" className="text-[10px] gap-1 border-primary/20"><MapPin className="h-2.5 w-2.5" /> {profileForm.bairros.join(", ")}</Badge>
+                )}
+                {(profileForm.valor_min || profileForm.valor_max) && (
+                  <Badge variant="outline" className="text-[10px] gap-1 border-primary/20">
+                    <DollarSign className="h-2.5 w-2.5" />
+                    {profileForm.valor_min ? fmtPrice(parseFloat(profileForm.valor_min)) : "R$ 0"} — {profileForm.valor_max ? fmtPrice(parseFloat(profileForm.valor_max)) : "∞"}
+                  </Badge>
+                )}
+                {profileForm.dormitorios_min && (
+                  <Badge variant="outline" className="text-[10px] gap-1 border-primary/20"><Bed className="h-2.5 w-2.5" /> {profileForm.dormitorios_min}+ dorms</Badge>
+                )}
+                {(profileForm.area_min || profileForm.area_max) && (
+                  <Badge variant="outline" className="text-[10px] gap-1 border-primary/20">
+                    <Maximize2 className="h-2.5 w-2.5" />
+                    {profileForm.area_min || "0"}–{profileForm.area_max || "∞"}m²
+                  </Badge>
+                )}
+                {savedProfile && <Badge className="text-[10px] gap-1 bg-emerald-100 text-emerald-700 border-emerald-200"><Check className="h-2.5 w-2.5" /> Salvo</Badge>}
+              </div>
+
+              {/* Site insights */}
               {siteInsights && siteInsights.totalViews > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1 border-t border-primary/10">
+                <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-primary/10">
                   <Badge variant="outline" className="text-[9px] gap-1 border-primary/20">
-                    <Eye className="h-2.5 w-2.5" /> {siteInsights.totalViews} visualizados no site
+                    <Eye className="h-2.5 w-2.5" /> {siteInsights.totalViews} no site
                   </Badge>
                   {siteInsights.favCodes.size > 0 && (
-                    <Badge variant="outline" className="text-[9px] gap-1 border-red-200 text-red-600">
+                    <Badge variant="outline" className="text-[9px] gap-1 border-destructive/20 text-destructive">
                       <Heart className="h-2.5 w-2.5" /> {siteInsights.favCodes.size} favoritados
-                    </Badge>
-                  )}
-                  {siteInsights.topBairros.length > 0 && (
-                    <Badge variant="outline" className="text-[9px] gap-1 border-primary/20">
-                      <MapPin className="h-2.5 w-2.5" /> {siteInsights.topBairros.join(", ")}
-                    </Badge>
-                  )}
-                  {siteInsights.avgPreco && (
-                    <Badge variant="outline" className="text-[9px] gap-1 border-primary/20">
-                      <DollarSign className="h-2.5 w-2.5" /> Média: {fmtPrice(siteInsights.avgPreco)}
                     </Badge>
                   )}
                 </div>
@@ -988,18 +1012,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
             </CardContent>
           </Card>
 
-          {/* Context badges */}
-          {(leadData?.empreendimento || leadData?.valor_estimado) && (
-            <div className="flex flex-wrap gap-1.5">
-              {leadData?.empreendimento && <Badge variant="secondary" className="text-[10px] gap-1"><Building2 className="h-2.5 w-2.5" /> {leadData.empreendimento}</Badge>}
-              {leadData?.valor_estimado && <Badge variant="outline" className="text-[10px] gap-1"><DollarSign className="h-2.5 w-2.5" /> {fmtPrice(leadData.valor_estimado)}</Badge>}
-              {savedProfile && <Badge className="text-[10px] gap-1 bg-emerald-100 text-emerald-700 border-emerald-200"><Check className="h-2.5 w-2.5" /> Perfil salvo</Badge>}
-              {favoriteCodes.size > 0 && <Badge variant="outline" className="text-[10px] gap-1"><Heart className="h-2.5 w-2.5 text-red-500" /> {favoriteCodes.size} favoritos</Badge>}
-              {sentCodes.size > 0 && <Badge variant="outline" className="text-[10px] gap-1"><Send className="h-2.5 w-2.5 text-blue-500" /> {sentCodes.size} enviados</Badge>}
-            </div>
-          )}
-
-          {/* Objeções */}
+          {/* ── Objeções (collapsible) ── */}
           <Card className="border-amber-200/50 bg-amber-50/30 dark:bg-amber-950/10">
             <CardContent className="p-3">
               <button className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 w-full" onClick={() => setShowObjecoes(!showObjecoes)}>
@@ -1019,10 +1032,10 @@ Responda SOMENTE com o JSON, sem markdown.`;
             </CardContent>
           </Card>
 
-          {/* Quick filters */}
+          {/* ── Filtros rápidos (collapsible) ── */}
           <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 w-full justify-start" onClick={() => setShowFilters(!showFilters)}>
             {showFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            {showFilters ? "Ocultar filtros rápidos" : "Ajustar filtros rápidos"}
+            {showFilters ? "Ocultar filtros" : "Ajustar filtros rápidos"}
           </Button>
 
           {showFilters && (
@@ -1052,13 +1065,10 @@ Responda SOMENTE com o JSON, sem markdown.`;
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[11px] text-muted-foreground">Tipologia</Label>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {[{ value: "apartamento", label: "🏢 Apto" }, { value: "casa", label: "🏡 Casa" }, { value: "terreno", label: "🏞️ Terreno" }].map(t => (
-                        <button key={t.value} onClick={() => toggleTipologia(t.value)} className={`text-[10px] px-2 py-1 rounded-md border transition-colors ${profileForm.tipos.includes(t.value) ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 text-muted-foreground border-border hover:border-primary/30"}`}>
-                          {t.label}
-                        </button>
-                      ))}
+                    <Label className="text-[11px] text-muted-foreground">Área (m²)</Label>
+                    <div className="flex gap-1">
+                      <Input type="number" className="h-9 text-sm" placeholder="Mín" value={profileForm.area_min} onChange={(e) => setProfileForm(p => ({ ...p, area_min: e.target.value }))} />
+                      <Input type="number" className="h-9 text-sm" placeholder="Máx" value={profileForm.area_max} onChange={(e) => setProfileForm(p => ({ ...p, area_max: e.target.value }))} />
                     </div>
                   </div>
                   <div>
@@ -1071,6 +1081,16 @@ Responda SOMENTE com o JSON, sem markdown.`;
                         <SelectItem value="obras">Em obras</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Tipologia</Label>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {[{ value: "apartamento", label: "Apto" }, { value: "casa", label: "Casa" }, { value: "terreno", label: "Terreno" }].map(t => (
+                      <button key={t.value} onClick={() => toggleTipologia(t.value)} className={`text-[10px] px-2 py-1 rounded-md border transition-colors ${profileForm.tipos.includes(t.value) ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 text-muted-foreground border-border hover:border-primary/30"}`}>
+                        {t.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <div>
@@ -1099,147 +1119,214 @@ Responda SOMENTE com o JSON, sem markdown.`;
             </Card>
           )}
 
-          {/* Search button */}
+          {/* ── Search button ── */}
           <div className="flex gap-2">
             <Button className="flex-1 gap-2" onClick={() => { handleSearch(false); setShowFilters(false); }} disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              {searched ? "Atualizar Match" : "🎯 Buscar Match"}
+              {searched ? "Atualizar Match" : "Buscar Match"}
             </Button>
-            <Button variant="outline" className="gap-1.5 border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:hover:bg-purple-950" onClick={handleAIExpand} disabled={aiExpanding || loading}>
+            <Button variant="outline" className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10" onClick={handleAIExpand} disabled={aiExpanding || loading}>
               {aiExpanding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
               IA+
             </Button>
           </div>
 
-          {/* Results */}
-          {searched && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5" />
-                  {results.length > 0 ? `${results.length} imóveis sugeridos` : "Nenhum resultado"}
-                </h5>
-                {selectedResults.size > 0 && <Badge variant="secondary" className="text-[10px]">{selectedResults.size} selecionado(s)</Badge>}
-              </div>
-
-              {results.length === 0 && !loading && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Building2 className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Nenhum imóvel encontrado.</p>
-                  <p className="text-xs mt-1">Ajuste os filtros ou use a busca com IA.</p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                {results.map((item, idx) => {
-                  const code = getPropertyCode(item);
-                  const isFav = favoriteCodes.has(code);
-                  const isSent = sentCodes.has(code);
-                  const isDiscarded = discardedCodes.has(code);
-                  return (
-                    <Card key={idx} className={`overflow-hidden transition-all duration-150 ${selectedResults.has(idx) ? "ring-2 ring-primary border-primary" : isDiscarded ? "opacity-50 border-border/30" : "border-border/50 hover:border-primary/30"}`}>
-                      <div className="flex">
-                        {item.imagem && (
-                          <div className="w-20 h-20 shrink-0 overflow-hidden bg-muted cursor-pointer" onClick={() => toggleSelect(idx)}>
-                            <img src={item.imagem} alt="" className="w-full h-full object-cover" loading="lazy" />
-                          </div>
-                        )}
-                        <CardContent className="p-2.5 flex-1 min-w-0" onClick={() => toggleSelect(idx)}>
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-xs font-bold text-foreground truncate">{item.nome || "Imóvel"}</p>
-                                {item.source === "meday" && <Badge className="text-[8px] py-0 px-1 bg-amber-100 text-amber-700 border-amber-200">MeDay</Badge>}
-                                {isSent && <Badge className="text-[8px] py-0 px-1 bg-blue-100 text-blue-700 border-blue-200">Enviado</Badge>}
-                              </div>
-                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                                <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{item.bairro}</span>
-                                {item.dorms > 0 && <span><Bed className="h-2.5 w-2.5 inline" /> {item.dorms}</span>}
-                                {item.vagas && item.vagas > 0 && <span><Car className="h-2.5 w-2.5 inline" /> {item.vagas}</span>}
-                                {item.metragens && <span>{item.metragens}</span>}
-                                {!item.metragens && item.metragem && item.metragem > 0 && <span>{item.metragem}m²</span>}
-                              </div>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${item.score >= 80 ? "bg-emerald-100 text-emerald-700" : item.score >= 60 ? "bg-amber-100 text-amber-700" : item.score >= 40 ? "bg-orange-100 text-orange-600" : "bg-muted text-muted-foreground"}`}>
-                                {item.score}%
-                              </div>
-                            </div>
-                          </div>
-                          {item.preco > 0 && <p className="text-xs font-bold text-emerald-600 mt-0.5">R$ {item.preco.toLocaleString("pt-BR")}</p>}
-                          {item.justificativas.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {item.justificativas.slice(0, 2).map((j, i) => (
-                                <span key={i} className="text-[9px] text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded">{j}</span>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                        {/* Action buttons */}
-                        <div className="flex flex-col items-center justify-center gap-1 pr-2">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button onClick={(e) => handleFavorite(item, e)} className={`p-1 rounded-md transition-colors ${isFav ? "text-red-500 bg-red-50" : "text-muted-foreground hover:text-red-500 hover:bg-red-50"}`}>
-                                <Heart className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left" className="text-xs">{isFav ? "Remover favorito" : "Favoritar"}</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button onClick={(e) => handleDiscard(item, e)} className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
-                                <ThumbsDown className="h-3.5 w-3.5" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left" className="text-xs">Descartar</TooltipContent>
-                          </Tooltip>
-                          {selectedResults.has(idx) ? (
-                            <Check className="h-3.5 w-3.5 text-primary" />
-                          ) : (
-                            <div className="h-3.5 w-3.5 rounded border border-border" />
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-
-              {/* Actions */}
-              {results.length > 0 && (
-                <div className="space-y-2 pt-2">
-                  <div className="flex gap-2">
-                    <Button size="sm" className="flex-1 gap-1.5" onClick={sendWhatsApp}>
-                      <Send className="h-3.5 w-3.5" />
-                      Enviar WhatsApp
-                      {selectedResults.size > 0 && ` (${selectedResults.size})`}
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-1.5" onClick={copyMessage}>
-                      <Copy className="h-3.5 w-3.5" /> Copiar
-                    </Button>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="w-full gap-1.5 bg-gradient-to-r from-violet-500/10 to-primary/10 hover:from-violet-500/20 hover:to-primary/20 border border-violet-500/20 text-violet-700 dark:text-violet-300"
-                    onClick={handleCreateVitrine}
-                    disabled={creatingVitrine}
-                  >
-                    {creatingVitrine ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
-                    Criar Vitrine Personalizada
-                    {selectedResults.size > 0 && ` (${selectedResults.size})`}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {loading && !searched && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
+          {/* ── Loading state ── */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-3">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm">Analisando perfil e buscando imóveis...</p>
             </div>
           )}
+
+          {/* ── Results ── */}
+          {searched && !loading && (() => {
+            const relevantResults = results.filter(r => r.score > 0);
+            const top5 = relevantResults.slice(0, 5);
+            const rest = relevantResults.slice(5);
+            const noResults = relevantResults.length === 0;
+
+            return (
+              <div className="space-y-3">
+                {/* Vitrine CTA — top of results */}
+                {top5.length > 0 && (
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Star className="h-3.5 w-3.5 text-primary" />
+                      TOP {Math.min(5, relevantResults.length)} para {leadNome.split(" ")[0]}
+                    </h5>
+                    <div className="flex items-center gap-1.5">
+                      {selectedResults.size > 0 && <Badge variant="secondary" className="text-[10px]">{selectedResults.size} selecionado(s)</Badge>}
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">{relevantResults.length} total</Badge>
+                    </div>
+                  </div>
+                )}
+
+                {noResults && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Building2 className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm font-medium">Nenhum imóvel compatível encontrado</p>
+                    <p className="text-xs mt-1">Ajuste os filtros do perfil ou use IA+ para expandir a busca.</p>
+                  </div>
+                )}
+
+                {/* TOP 5 cards — bigger, more visual */}
+                <div className="space-y-2">
+                  {top5.map((item, idx) => {
+                    const code = getPropertyCode(item);
+                    const isFav = favoriteCodes.has(code);
+                    const isSent = sentCodes.has(code);
+                    const isDiscarded = discardedCodes.has(code);
+                    return (
+                      <Card key={idx} className={`overflow-hidden transition-all duration-150 ${selectedResults.has(idx) ? "ring-2 ring-primary border-primary shadow-sm" : isDiscarded ? "opacity-40" : "border-border/50 hover:border-primary/30"}`}>
+                        <div className="flex">
+                          {item.imagem && (
+                            <div className="w-24 h-24 shrink-0 overflow-hidden bg-muted cursor-pointer" onClick={() => toggleSelect(idx)}>
+                              <img src={item.imagem} alt="" className="w-full h-full object-cover" loading="lazy" />
+                            </div>
+                          )}
+                          <CardContent className="p-2.5 flex-1 min-w-0 cursor-pointer" onClick={() => toggleSelect(idx)}>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs font-bold text-foreground truncate">{item.nome || "Imóvel"}</p>
+                                  {item.source === "meday" && <Badge className="text-[8px] py-0 px-1 bg-amber-100 text-amber-700 border-amber-200">MeDay</Badge>}
+                                  {isSent && <Badge className="text-[8px] py-0 px-1 bg-blue-100 text-blue-700 border-blue-200">Enviado</Badge>}
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                                  <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{item.bairro}</span>
+                                  {item.dorms > 0 && <span><Bed className="h-2.5 w-2.5 inline" /> {item.dorms}</span>}
+                                  {item.vagas && item.vagas > 0 && <span><Car className="h-2.5 w-2.5 inline" /> {item.vagas}</span>}
+                                  {item.metragens && <span>{item.metragens}</span>}
+                                  {!item.metragens && item.metragem && item.metragem > 0 && <span>{item.metragem}m²</span>}
+                                </div>
+                              </div>
+                              <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${item.score >= 80 ? "bg-emerald-100 text-emerald-700" : item.score >= 60 ? "bg-amber-100 text-amber-700" : item.score >= 40 ? "bg-orange-100 text-orange-600" : "bg-muted text-muted-foreground"}`}>
+                                {item.score}%
+                              </div>
+                            </div>
+                            {item.preco > 0 && <p className="text-xs font-bold text-emerald-600 mt-0.5">R$ {item.preco.toLocaleString("pt-BR")}</p>}
+                            {item.justificativas.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {item.justificativas.slice(0, 3).map((j, i) => (
+                                  <span key={i} className="text-[9px] text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded">{j}</span>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                          <div className="flex flex-col items-center justify-center gap-1 pr-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button onClick={(e) => handleFavorite(item, e)} className={`p-1 rounded-md transition-colors ${isFav ? "text-red-500 bg-red-50" : "text-muted-foreground hover:text-red-500 hover:bg-red-50"}`}>
+                                  <Heart className={`h-3.5 w-3.5 ${isFav ? "fill-current" : ""}`} />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="text-xs">{isFav ? "Remover favorito" : "Favoritar"}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button onClick={(e) => handleDiscard(item, e)} className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                                  <ThumbsDown className="h-3.5 w-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="text-xs">Descartar</TooltipContent>
+                            </Tooltip>
+                            {selectedResults.has(idx) ? (
+                              <Check className="h-3.5 w-3.5 text-primary" />
+                            ) : (
+                              <div className="h-3.5 w-3.5 rounded border border-border" />
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                {/* ── CTAs — Vitrine + WhatsApp ── */}
+                {top5.length > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <Button
+                      size="sm"
+                      className="w-full gap-1.5 bg-gradient-to-r from-violet-600 to-primary hover:from-violet-700 hover:to-primary/90 text-white"
+                      onClick={handleCreateVitrine}
+                      disabled={creatingVitrine}
+                    >
+                      {creatingVitrine ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                      Criar Vitrine Personalizada
+                      {selectedResults.size > 0 ? ` (${selectedResults.size})` : ` (Top ${top5.length})`}
+                    </Button>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={sendWhatsApp}>
+                        <Send className="h-3.5 w-3.5" /> WhatsApp
+                      </Button>
+                      <Button size="sm" variant="ghost" className="gap-1.5" onClick={copyMessage}>
+                        <Copy className="h-3.5 w-3.5" /> Copiar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Ver mais (expandable) ── */}
+                {rest.length > 0 && (
+                  <div className="pt-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowAllResults(!showAllResults)}
+                    >
+                      {showAllResults ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      {showAllResults ? "Ocultar" : `Ver mais ${rest.length} resultado(s)`}
+                    </Button>
+
+                    {showAllResults && (
+                      <div className="space-y-1.5 mt-2">
+                        {rest.map((item, restIdx) => {
+                          const idx = restIdx + 5;
+                          const code = getPropertyCode(item);
+                          const isFav = favoriteCodes.has(code);
+                          const isSent = sentCodes.has(code);
+                          const isDiscarded = discardedCodes.has(code);
+                          return (
+                            <Card key={idx} className={`overflow-hidden transition-all duration-150 ${selectedResults.has(idx) ? "ring-2 ring-primary border-primary" : isDiscarded ? "opacity-40" : "border-border/30 hover:border-primary/20"}`}>
+                              <div className="flex">
+                                {item.imagem && (
+                                  <div className="w-16 h-16 shrink-0 overflow-hidden bg-muted cursor-pointer" onClick={() => toggleSelect(idx)}>
+                                    <img src={item.imagem} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                  </div>
+                                )}
+                                <CardContent className="p-2 flex-1 min-w-0 cursor-pointer" onClick={() => toggleSelect(idx)}>
+                                  <div className="flex items-center justify-between gap-1">
+                                    <p className="text-[11px] font-semibold text-foreground truncate">{item.nome || "Imóvel"}</p>
+                                    <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${item.score >= 60 ? "bg-amber-100 text-amber-700" : "bg-muted text-muted-foreground"}`}>
+                                      {item.score}%
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+                                    <span>{item.bairro}</span>
+                                    {item.dorms > 0 && <span>{item.dorms}d</span>}
+                                    {item.metragem && item.metragem > 0 && <span>{item.metragem}m²</span>}
+                                    {item.preco > 0 && <span className="text-emerald-600 font-semibold">{fmtPrice(item.preco)}</span>}
+                                  </div>
+                                </CardContent>
+                                <div className="flex items-center gap-1 pr-2">
+                                  <button onClick={(e) => handleFavorite(item, e)} className={`p-1 rounded-md transition-colors ${isFav ? "text-red-500" : "text-muted-foreground hover:text-red-500"}`}>
+                                    <Heart className={`h-3 w-3 ${isFav ? "fill-current" : ""}`} />
+                                  </button>
+                                  {selectedResults.has(idx) ? <Check className="h-3 w-3 text-primary" /> : <div className="h-3 w-3 rounded border border-border" />}
+                                </div>
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </TabsContent>
 
         {/* ════════ TAB: PERFIL ════════ */}
