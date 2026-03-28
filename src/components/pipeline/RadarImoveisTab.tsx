@@ -857,12 +857,16 @@ Responda SOMENTE com o JSON, sem markdown.`;
           created_by: user.id,
           titulo,
           mensagem_corretor: mensagem,
+          mensagem,
           imovel_ids: imovelCodigos,
+          imovel_codigos: imovelCodigos,
           lead_nome: leadNome,
           lead_telefone: leadTelefone || null,
           tipo: "property_selection",
           dados_custom: dadosCustom,
           slug: slugRef || null,
+          corretor_slug: slugRef || null,
+          corretor_id: user.id,
         })
         .select("id")
         .single();
