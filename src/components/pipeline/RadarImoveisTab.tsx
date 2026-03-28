@@ -842,6 +842,50 @@ Responda SOMENTE com o JSON, sem markdown.`;
 
         {/* ════════ TAB: RADAR ════════ */}
         <TabsContent value="radar" className="mt-3 space-y-3">
+          {/* AI Auto-Fill + Site Insights */}
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wand2 className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-bold text-foreground">Match Inteligente</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-[10px] gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+                  onClick={handleAIAnalyze}
+                  disabled={aiAnalyzing}
+                >
+                  {aiAnalyzing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
+                  🧠 IA Analisar Perfil
+                </Button>
+              </div>
+              {siteInsights && siteInsights.totalViews > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1 border-t border-primary/10">
+                  <Badge variant="outline" className="text-[9px] gap-1 border-primary/20">
+                    <Eye className="h-2.5 w-2.5" /> {siteInsights.totalViews} visualizados no site
+                  </Badge>
+                  {siteInsights.favCodes.size > 0 && (
+                    <Badge variant="outline" className="text-[9px] gap-1 border-red-200 text-red-600">
+                      <Heart className="h-2.5 w-2.5" /> {siteInsights.favCodes.size} favoritados
+                    </Badge>
+                  )}
+                  {siteInsights.topBairros.length > 0 && (
+                    <Badge variant="outline" className="text-[9px] gap-1 border-primary/20">
+                      <MapPin className="h-2.5 w-2.5" /> {siteInsights.topBairros.join(", ")}
+                    </Badge>
+                  )}
+                  {siteInsights.avgPreco && (
+                    <Badge variant="outline" className="text-[9px] gap-1 border-primary/20">
+                      <DollarSign className="h-2.5 w-2.5" /> Média: {fmtPrice(siteInsights.avgPreco)}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Context badges */}
           {(leadData?.empreendimento || leadData?.valor_estimado) && (
             <div className="flex flex-wrap gap-1.5">
