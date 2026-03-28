@@ -28,7 +28,7 @@ function getDateRange(p: EmpPeriod): { from: string; to: string } {
     const d = new Date(brt);
     const dow = d.getDay();
     d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
-    return { from: d.toISOString().slice(0, 10), to: today };
+    return { from: d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }), to: today };
   }
   if (p === "mes") {
     return { from: `${today.slice(0, 7)}-01`, to: today };
