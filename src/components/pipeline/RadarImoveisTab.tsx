@@ -174,35 +174,40 @@ function scoreProperty(
   const justificativas: string[] = [];
   const code = getPropertyCode(imovel);
 
-  // Discarded → penalty
   if (discardedCodes?.has(code)) {
     return { score: 0, justificativas: ["❌ Descartado anteriormente"] };
   }
 
-  // ── Valor (25 pts) ──
+  // Track how many criteria were actually evaluated (only count if filter is set)
+  let maxPossible = 0;
+
+  // ── Valor (25 pts) — only score if filter is set ──
   if ((profile.valor_min || profile.valor_max) && imovel.preco > 0) {
+    maxPossible += 25;
     const aboveMin = !profile.valor_min || imovel.preco >= profile.valor_min;
     const belowMax = !profile.valor_max || imovel.preco <= profile.valor_max;
     if (aboveMin && belowMax) {
       score += 25;
       justificativas.push("💰 Dentro da faixa de valor");
     } else if (!profile.valor_max || imovel.preco <= profile.valor_max * 1.15) {
-      score += 12;
+      score += 10;
       justificativas.push("💰 Próximo da faixa (até 15% acima)");
     }
-  } else score += 12;
+  }
 
-  // ── Bairro (20 pts) ──
+  // ── Bairro (25 pts) — only score if filter is set ──
   if (profile.bairros.length > 0 && imovel.bairro) {
+    maxPossible += 25;
     const nb = normalize(imovel.bairro);
     if (profile.bairros.some(b => nb.includes(normalize(b)) || normalize(b).includes(nb))) {
-      score += 20;
+      score += 25;
       justificativas.push(`📍 ${imovel.bairro} — região de interesse`);
     }
-  } else score += 10;
+  }
 
-  // ── Dormitórios (15 pts) ──
+  // ── Dormitórios (15 pts) — only score if filter is set ──
   if (profile.dormitorios_min && imovel.dorms > 0) {
+    maxPossible += 15;
     if (imovel.dorms >= profile.dormitorios_min) {
       score += 15;
       justificativas.push(`🛏️ ${imovel.dorms} dorms — atende`);
@@ -210,48 +215,58 @@ function scoreProperty(
       score += 7;
       justificativas.push(`🛏️ ${imovel.dorms} dorms — próximo`);
     }
-  } else score += 7;
+  }
 
-  // ── Tipologia (10 pts) ──
+  // ── Tipologia (15 pts) — only score if filter is set ──
   if (profile.tipos.length > 0 && imovel.tipo) {
+    maxPossible += 15;
     if (profile.tipos.some(t => normalize(imovel.tipo || "").includes(normalize(t)))) {
-      score += 10;
+      score += 15;
       justificativas.push("✅ Tipologia compatível");
     }
-  } else score += 5;
+  }
+
+  // ── Área (10 pts) — only score if filter is set ──
+  if ((profile.area_min || profile.area_max) && imovel.metragem && imovel.metragem > 0) {
+    maxPossible += 10;
+    const inMin = !profile.area_min || imovel.metragem >= profile.area_min * 0.9;
+    const inMax = !profile.area_max || imovel.metragem <= profile.area_max * 1.1;
+    if (inMin && inMax) {
+      score += 10;
+      justificativas.push(`📐 ${imovel.metragem}m² — dentro da faixa`);
+    }
+  }
 
   // ── Suítes (5 pts) ──
   if (profile.suites_min && (imovel.suites || 0) >= profile.suites_min) {
+    maxPossible += 5;
     score += 5;
     justificativas.push(`🛁 ${imovel.suites} suíte(s)`);
-  } else if (!profile.suites_min) score += 2;
+  } else if (profile.suites_min) {
+    maxPossible += 5;
+  }
 
   // ── Vagas (5 pts) ──
   if (profile.vagas_min && (imovel.vagas || 0) >= profile.vagas_min) {
+    maxPossible += 5;
     score += 5;
     justificativas.push(`🚗 ${imovel.vagas} vaga(s)`);
-  } else if (!profile.vagas_min) score += 2;
-
-  // ── Área (5 pts) ──
-  if (imovel.metragem && imovel.metragem > 0) {
-    const inMin = !profile.area_min || imovel.metragem >= profile.area_min;
-    const inMax = !profile.area_max || imovel.metragem <= profile.area_max;
-    if (inMin && inMax) {
-      score += 5;
-      justificativas.push(`📐 ${imovel.metragem}m² — dentro da faixa`);
-    }
-  } else score += 2;
+  } else if (profile.vagas_min) {
+    maxPossible += 5;
+  }
 
   // ── Status (5 pts) ──
   if (profile.status_imovel && imovel.status) {
+    maxPossible += 5;
     const ns = normalize(imovel.status);
     const nf = normalize(profile.status_imovel);
     if (nf === "pronto" && ns.includes("pronto")) { score += 5; justificativas.push("🏠 Pronto para morar"); }
     else if (nf === "obras" && (ns.includes("obra") || ns.includes("lancamento"))) { score += 5; justificativas.push("🏗️ Em obras/Lançamento"); }
-  } else score += 2;
+  }
 
   // ── Empreendimento match bonus (10 pts) ──
   if (leadEmp && imovel.empreendimento) {
+    maxPossible += 10;
     if (normalize(imovel.empreendimento).includes(normalize(leadEmp)) || normalize(imovel.nome || "").includes(normalize(leadEmp))) {
       score += 10;
       justificativas.push("⭐ Mesmo empreendimento de interesse");
@@ -262,12 +277,12 @@ function scoreProperty(
   for (const rej of profile.rejeicoes) {
     const nRej = normalize(rej);
     if (normalize(imovel.bairro).includes(nRej) || normalize(imovel.nome || "").includes(nRej)) {
-      score -= 15;
+      score -= 20;
       justificativas.push(`⚠️ Rejeição: ${rej}`);
     }
   }
 
-  // ── Objeções ──
+  // ── Objeções bonuses ──
   for (const obj of objecoes) {
     switch (obj) {
       case "caro":
@@ -293,7 +308,11 @@ function scoreProperty(
     }
   }
 
-  return { score: Math.min(Math.max(Math.round((score / 105) * 100), 0), 99), justificativas };
+  // Calculate percentage based on actual max possible (not a fixed denominator)
+  // If no criteria were set, return 0
+  if (maxPossible === 0) return { score: 0, justificativas: ["⚙️ Configure o perfil para ver matches"] };
+  const pct = Math.min(Math.max(Math.round((score / maxPossible) * 100), 0), 99);
+  return { score: pct, justificativas };
 }
 
 /* ═══════════════════════════════════════════
