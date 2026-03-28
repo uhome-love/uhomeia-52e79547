@@ -264,12 +264,22 @@ function scoreProperty(
     else if (nf === "obras" && (ns.includes("obra") || ns.includes("lancamento"))) { score += 5; justificativas.push("🏗️ Em obras/Lançamento"); }
   }
 
-  // ── Empreendimento match bonus (10 pts) ──
-  if (leadEmp && imovel.empreendimento) {
-    maxPossible += 10;
-    if (normalize(imovel.empreendimento).includes(normalize(leadEmp)) || normalize(imovel.nome || "").includes(normalize(leadEmp))) {
-      score += 10;
+  // ── Empreendimento match bonus (20 pts) ──
+  if (leadEmp && (imovel.empreendimento || imovel.nome)) {
+    maxPossible += 20;
+    const nEmp = normalize(leadEmp);
+    const nImovelEmp = normalize(imovel.empreendimento || "");
+    const nImovelNome = normalize(imovel.nome || "");
+    if (nImovelEmp.includes(nEmp) || nImovelNome.includes(nEmp) || nEmp.includes(nImovelEmp)) {
+      score += 20;
       justificativas.push("⭐ Mesmo empreendimento de interesse");
+    } else {
+      // Check condominio_nome similarity via partial match
+      const nCond = normalize((imovel as any).condominio_nome || "");
+      if (nCond && (nCond.includes(nEmp) || nEmp.includes(nCond))) {
+        score += 20;
+        justificativas.push("⭐ Mesmo condomínio de interesse");
+      }
     }
   }
 
@@ -369,7 +379,7 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
         valor_min: savedProfile.valor_min ? String(savedProfile.valor_min) : "",
         valor_max: savedProfile.valor_max ? String(savedProfile.valor_max) : "",
         bairros: savedProfile.bairros || [],
-        tipos: savedProfile.tipos || ["apartamento"],
+        tipos: savedProfile.tipos || [],
         dormitorios_min: savedProfile.dormitorios_min ? String(savedProfile.dormitorios_min) : "",
         suites_min: savedProfile.suites_min ? String(savedProfile.suites_min) : "",
         vagas_min: savedProfile.vagas_min ? String(savedProfile.vagas_min) : "",
@@ -544,6 +554,12 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
   "observacoes_ia": "resumo curto das preferências extraídas"
 }
 
+IMPORTANTE: Se o lead veio de um empreendimento específico, infira o tipo do imóvel baseado no nome:
+- "Orygem" = casa em condomínio, bairro Teresópolis, Porto Alegre, valor 800k-1M
+- Empreendimentos com "Casa", "Villa", "Village", "Park", "Garden" (isolado) geralmente = casa
+- Empreendimentos com "Tower", "Heights", "Residencial", "Open", "GO", "Supreme" geralmente = apartamento
+Se não conseguir inferir com certeza, deixe tipos: [] (busca todos os tipos).
+
 Dados do lead "${leadNome}":
 ${contextParts.join("\n")}
 
@@ -710,7 +726,9 @@ Responda SOMENTE com o JSON, sem markdown.`;
     setSelectedResults(new Set());
 
     let allResults: ImovelResult[] = [];
-    if (useMeDay) allResults.push(...MEDAY_CATALOG.map(item => ({ ...item, justificativas: [] })));
+    // Only include MeDay catalog if profile doesn't exclusively want "casa" or "terreno"
+    const incluirMeDay = useMeDay && (!profileForm.tipos.length || profileForm.tipos.includes("apartamento"));
+    if (incluirMeDay) allResults.push(...MEDAY_CATALOG.map(item => ({ ...item, justificativas: [] })));
     if (useTypesense) allResults.push(...(await searchTypesense()));
 
     const leadEmp = leadData?.empreendimento || "";
@@ -978,6 +996,13 @@ Responda SOMENTE com o JSON, sem markdown.`;
 
         {/* ════════ TAB: RADAR (Match) ════════ */}
         <TabsContent value="radar" className="mt-3 space-y-3">
+          {/* ── Empty profile warning ── */}
+          {!profileForm.tipos.length && !profileForm.bairros.length && !profileForm.valor_max && (
+            <div className="flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/30 px-3 py-2 text-xs text-yellow-800 dark:text-yellow-200">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              Perfil incompleto — clique em <strong>"IA Analisar Perfil"</strong> para gerar automaticamente ou preencha os filtros manualmente.
+            </div>
+          )}
           {/* ── Perfil inline + IA ── */}
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="p-3 space-y-2.5">
