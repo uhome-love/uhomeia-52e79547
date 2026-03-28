@@ -77,11 +77,21 @@ Quando o lead vem de um empreendimento listado abaixo, SEMPRE preencher o bairro
 - "Orygem" → bairro: "Teresópolis", tipo: "casa", bairros_proximos: ["Cristal", "Medianeira", "Glória"], ticket: R$800k-1M, dorms: 3-4
 - "Open Bosque" → bairro: "Jardim Carvalho", tipo: "apartamento", bairros_proximos: ["Passo da Areia", "Jardim Lindóia"]
 - "Casa Tua" / "Las Casas" → bairro: "Teresópolis", tipo: "casa", bairros_proximos: ["Cristal", "Medianeira"]
-- "Alto Lindóia" → bairro: "Lindóia", tipo: "apartamento", bairros_proximos: ["Jardim Lindóia", "São João"]
-- "Shift" / "Vanguard" → bairro: "Petrópolis", tipo: "apartamento", bairros_proximos: ["Bela Vista", "Bom Fim"]
+- "Vértice - Las Casas" → bairro: "Santa Fé", tipo: "casa", bairros_proximos: ["Teresópolis", "Cristal"]
+- "Alto Lindóia" / "Alto Lindoia" → bairro: "Lindóia", tipo: "apartamento", bairros_proximos: ["Jardim Lindóia", "São João"]
+- "Shift" / "Shift - Vanguard" / "Vanguard" → bairro: "Petrópolis", tipo: "apartamento", bairros_proximos: ["Bela Vista", "Bom Fim"]
 - "Flight" → bairro: "Três Figueiras", tipo: "apartamento", bairros_proximos: ["Chácara das Pedras", "Boa Vista"]
 - "Duetto Morana" → bairro: "Morada de Santa Fé", tipo: "apartamento", bairros_proximos: ["Agronomia", "Lomba do Pinheiro"]
-- "Meday" / "MeDay" → tipo: "casa", bairro: variado (empreendimento Melnick)
+- "Lake Eyre" → bairro: "Cristal", tipo: "apartamento", bairros_proximos: ["Teresópolis", "Medianeira", "Santa Tereza"]
+- "High Garden Iguatemi" → bairro: "Boa Vista", tipo: "apartamento", bairros_proximos: ["Passo da Areia", "Jardim Lindóia", "Cristo Redentor"]
+- "Seen Três Figueiras" → bairro: "Três Figueiras", tipo: "apartamento", bairros_proximos: ["Chácara das Pedras", "Boa Vista", "Petrópolis"]
+- "Square Garden" → bairro: "Santa Cecília", tipo: "apartamento", bairros_proximos: ["Santana", "Boa Vista"]
+- "Ora" → bairro: "Centro Histórico", tipo: "apartamento", bairros_proximos: ["Cidade Baixa", "Bom Fim", "Praia de Belas"]
+- "Monjardin" → bairro: "Três Figueiras", tipo: "apartamento", bairros_proximos: ["Chácara das Pedras", "Boa Vista"]
+- "Boa Vista Country Club" → bairro: "Boa Vista", tipo: "casa", bairros_proximos: ["Três Figueiras", "Chácara das Pedras"]
+- "Casa Bastian" → bairro: "Teresópolis", tipo: "casa", bairros_proximos: ["Cristal", "Medianeira", "Santa Fé"]
+- "Melnick Day 2026" / "Meday" / "MeDay" → tipo: "casa", bairro: variado (empreendimento Melnick)
+- "Avulso - ImovelWeb" → sem mapeamento fixo, inferir do imóvel específico
 - "Village" / "Villa" → tipo: "casa"
 - "Tower" / "Torres" → tipo: "apartamento"
 
@@ -89,7 +99,8 @@ REGRAS:
 1. Se o empreendimento de origem está na lista acima, OBRIGATORIAMENTE preencher bairros com [bairro_principal, ...bairros_proximos]
 2. Se o empreendimento tem ticket conhecido, usar como valor_min/valor_max
 3. Se o empreendimento não está na lista, inferir tipo pelo nome (Village/Casa → casa, Tower/Alto → apartamento)
-4. NUNCA deixar bairros vazio se o empreendimento está mapeado acima`;
+4. NUNCA deixar bairros vazio se o empreendimento está mapeado acima
+5. "Avulso - ImovelWeb" = lead orgânico, não forçar bairro — deixar vazio para o corretor preencher`;
 
 const MODULE_CONTEXTS: Record<string, string> = {
   recovery: `MÓDULO ATIVO: Recuperação de Leads
