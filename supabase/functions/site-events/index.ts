@@ -164,10 +164,10 @@ async function criarAlertaCorretor(
   // Notificação padrão do CRM
   await supabase.from('notifications').insert({
     user_id: corretorId,
-    title: titulo,
-    body: corpo,
-    type: 'radar_intencao',
-    read: false,
+    titulo,
+    mensagem: corpo,
+    tipo: 'radar_intencao',
+    lida: false,
   }).then(({ error }) => {
     if (error) console.warn('[radar] notifications warn:', error.message)
   })
