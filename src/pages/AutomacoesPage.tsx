@@ -130,6 +130,9 @@ export default function AutomacoesPage() {
       {/* Sequence Templates */}
       <SequenceTemplates onCreated={loadAutomations} />
 
+      {/* Nurturing Dashboard — CEO control */}
+      <NurturingDashboard />
+
       {automations.length === 0 ? (
         <Card className="p-12 text-center">
           <Zap className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
