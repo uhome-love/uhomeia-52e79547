@@ -59,6 +59,9 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
 
   const handleSubmit = async () => {
     if (!form.nome_cliente.trim() || !user) return;
+    if (!form.empreendimento.trim()) { toast.error("Empreendimento/Imóvel é obrigatório"); return; }
+    const vgvNum = form.vgv_estimado ? parseFloat(form.vgv_estimado.replace(/[^\d.,]/g, "").replace(",", ".")) : 0;
+    if (!vgvNum || vgvNum <= 0) { toast.error("VGV é obrigatório e deve ser maior que zero"); return; }
     setLoading(true);
 
     try {
@@ -129,10 +132,10 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
           </div>
 
           <div>
-            <Label className="text-xs font-semibold mb-1 block">Empreendimento</Label>
+            <Label className="text-xs font-semibold mb-1 block">Empreendimento / Imóvel *</Label>
             {empreendimentos.length > 0 ? (
               <Select value={form.empreendimento} onValueChange={v => set("empreendimento", v)}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectTrigger className={`h-9 text-sm ${!form.empreendimento ? "border-amber-400" : ""}`}><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   {empreendimentos.map(e => (
                     <SelectItem key={e} value={e}>{e}</SelectItem>
@@ -140,7 +143,7 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
                 </SelectContent>
               </Select>
             ) : (
-              <Input value={form.empreendimento} onChange={e => set("empreendimento", e.target.value)} placeholder="Nome do empreendimento" className="h-9 text-sm" />
+              <Input value={form.empreendimento} onChange={e => set("empreendimento", e.target.value)} placeholder="Nome do empreendimento" className={`h-9 text-sm ${!form.empreendimento ? "border-amber-400" : ""}`} />
             )}
           </div>
 
@@ -171,8 +174,8 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
           </div>
 
           <div>
-            <Label className="text-xs font-semibold mb-1 block">VGV Estimado</Label>
-            <Input value={form.vgv_estimado} onChange={e => set("vgv_estimado", e.target.value)} placeholder="R$ 500.000" className="h-9 text-sm" />
+            <Label className="text-xs font-semibold mb-1 block">VGV Estimado *</Label>
+            <Input value={form.vgv_estimado} onChange={e => set("vgv_estimado", e.target.value)} placeholder="R$ 500.000" className={`h-9 text-sm ${!form.vgv_estimado ? "border-amber-400" : ""}`} />
           </div>
 
           <div>

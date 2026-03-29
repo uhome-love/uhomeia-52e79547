@@ -71,9 +71,13 @@ export function useNegocios() {
       .order("updated_at", { ascending: false })
       .limit(500);
 
-    if (!isAdmin && !isGestor && profileId) {
-      // Corretor sees only their own negocios
-      query = query.eq("corretor_id", profileId);
+    if (!isAdmin && !isGestor) {
+      // Corretor sees only their own negocios — check both profile.id and auth user.id
+      // because some negocios may have corretor_id = auth.users.id instead of profiles.id
+      const possibleIds = [profileId, user.id].filter(Boolean) as string[];
+      if (possibleIds.length > 0) {
+        query = query.in("corretor_id", possibleIds);
+      }
     } else if (isGestor && !isAdmin) {
       // Gestor: get team member profile IDs, then filter by corretor_id
       // This avoids relying on gerente_id which may be incorrect on some negocios
