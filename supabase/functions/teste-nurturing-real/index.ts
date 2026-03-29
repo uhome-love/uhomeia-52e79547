@@ -13,8 +13,8 @@ const supabaseSite = createClient(SITE_SUPABASE_URL, SITE_SUPABASE_ANON);
 Deno.serve(async () => {
   try {
     // ── 1. Dados do lead de teste ──
-    const leadNome = "Lucas";
-    const leadTelefone = "5551992597097";
+    const leadNome = "Gabrielle";
+    const leadTelefone = "5551986446389";
     const bairros = ["Petrópolis", "Moinhos de Vento", "Bela Vista"];
     const tipos = ["apartamento"];
     const valorMin = 400000;
