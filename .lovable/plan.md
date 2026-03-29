@@ -1,56 +1,42 @@
 
 
-## Integrar Playbooks Elite por Empreendimento + Origem do Lead
+## Atualizar Playbook Las Casas com Versão Elite Baseada no Produto Real
 
 ### O que muda
 
-Substituir os 4 playbooks genéricos atuais (linhas 80-98 do `homi-assistant/index.ts`) pelos playbooks completos com: posicionamento real, perfil, psicologia, abordagem, scripts de abertura/exploração/condução, erro crítico e frase de fechamento.
+Substituir o playbook genérico atual do Las Casas (linhas 80-89 do `homi-assistant/index.ts`) — que tem apenas 10 linhas — pelo playbook completo baseado no PDF real do produto, com diferenciais concretos, gatilhos mentais, estratégia avançada e scripts específicos.
 
-### Mudanças
+### Mudança
 
-#### 1. `supabase/functions/homi-assistant/index.ts` — System prompt
+**Arquivo: `supabase/functions/homi-assistant/index.ts`**
 
-**Substituir seção "PLAYBOOKS POR EMPREENDIMENTO (FALLBACK)" (linhas 75-98)** pelo conteúdo completo:
+Substituir linhas 80-89 pelo playbook expandido contendo:
 
-**Playbooks por produto:**
-- **Las Casas**: Upgrade de vida, emoção > razão, nunca começar com preço, "Esse aqui é bem diferente do padrão de apartamento..."
-- **Connect João Wallig**: Investimento/liquidez, Cyrela, "Esse aqui não é tanto sobre morar, é mais uma decisão inteligente..."
-- **Shift**: Porta de entrada investimento, jovem, primeiro investimento, "Esse aqui é muito usado por quem quer começar a investir..."
-- **Orygem**: Produto mais qualificado, cliente exigente, "Esse aqui já é um nível acima do padrão comum..."
-- **Open Bosque** e **Melnick Day**: Mantêm o conteúdo atual
+- **Posicionamento real**: "Não é loteamento — é bairro planejado com lifestyle"
+- **Diferenciais do produto**: Região Ecoville/Zona Norte, vias arborizadas, Praça Edu Las Casas, segurança 24h, controle de acessos, terrenos em condomínio fechado
+- **Perfil e psicologia**: Compra emocional (família), justifica com razão (valorização), quer se imaginar vivendo
+- **Erros comuns dos corretores**: Vender como lote, falar metragem/preço, não criar imagem mental, mandar tabela direto
+- **Scripts específicos**:
+  - Abertura: "Esse aqui não é só terreno… é um bairro planejado pra quem quer viver diferente"
+  - Conexão: "Normalmente quem olha ele já tá buscando mais espaço e qualidade de vida, faz sentido contigo?"
+  - Valor: "Tu não depende só da tua casa… o entorno inteiro já entrega isso"
+  - Visualização: "Imagina chegar em casa e ter praça, segurança e espaço pra família tudo no mesmo lugar"
+  - Ligação: "Vi teu interesse no Las Casas e te liguei porque ele não é um loteamento comum…"
+  - Qualificação: "Tu tá mais buscando casa ou ainda avaliando terreno?"
+  - Condução visita: "Esse tipo de projeto só faz sentido quando tu vê o bairro funcionando"
+  - Fechamento: "Esse aqui costuma virar chave quando a pessoa pisa lá dentro"
+- **Frases de alto impacto**: 5 frases prontas para a IA variar
+- **Gatilhos mentais**: Segurança (família), Espaço (liberdade), Valorização (razão), Exclusividade
+- **Frase crítica**: "Esse produto não é pra quem quer só preço — é pra quem quer qualidade de vida"
 
-**Nova seção "PLAYBOOKS POR ORIGEM DO LEAD":**
-- **Lead ImovelWeb (Portal)**: Lead frio, comparando vários, abrir leque, "Tenho opções melhores dependendo do que tu busca"
-- **Lead Imóvel Usado (Avulso)**: Cliente racional, virar consultor, vender orientação
-- **Lead Site Uhome**: Mais quente, curadoria, assumir controle
-
-**Nova seção "SCRIPTS DE LIGAÇÃO POR CENÁRIO" (substituir os genéricos linhas 146-153):**
-- Lead frio portal, qualificação, investidor, moradia, visita, pós-visita — todos com scripts específicos do documento
-
-**Nova seção "REGRAS AVANÇADAS (NÍVEL ELITE)":**
-- Nunca vender imóvel → vender decisão
-- Quem pergunta controla a conversa
-- Visita é o fechamento parcial
-- Lead confuso precisa de direção
-- Lead frio precisa de curiosidade
-
-**Adicionar "FRASES DE ALTA PERFORMANCE"** como referência para a IA variar nas respostas.
-
-**Atualizar seção PERSONALIDADE** com objetivo final elite: conduz (não reage), orienta (não vende), direciona (não insiste), desperta interesse (não empurra).
-
-#### 2. `src/components/pipeline/StageCoachBar.tsx` — Scripts nos cards
-
-Atualizar as mensagens prontas para incluir variações baseadas no playbook elite. Por exemplo, na etapa "sem_contato", adicionar uma versão "Portal" para leads ImovelWeb:
-- "Fala {{nome}}! Vi teu interesse nesse imóvel — ele ainda tá disponível sim 👀"
-
-Na etapa de qualificação, incluir variação investidor vs moradia:
-- Investidor: "Tu tá pensando mais em renda ou valorização?"
-- Moradia: "O que mais pesa pra ti hoje: espaço, localização ou valor?"
-
-### Arquivos alterados
+### Arquivo alterado
 
 | Arquivo | Mudança |
 |---|---|
-| `supabase/functions/homi-assistant/index.ts` | Playbooks elite completos (Las Casas, Connect JW, Shift, Orygem) + playbooks por origem + scripts por cenário + regras elite + frases de alta performance |
-| `src/components/pipeline/StageCoachBar.tsx` | Mensagens adicionais por origem (portal, avulso, site) e por perfil (investidor, moradia) |
+| `supabase/functions/homi-assistant/index.ts` | Substituir playbook Las Casas (linhas 80-89) pelo playbook elite completo baseado no produto real |
+
+### O que NÃO muda
+- Demais playbooks (Connect JW, Shift, Orygem, Open Bosque, Melnick Day)
+- StageCoachBar (já usa templates genéricos que funcionam)
+- Nenhuma outra edge function
 
