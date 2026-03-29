@@ -748,6 +748,23 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
         onMove={onMove}
         onReload={leadData.reload}
       />
+
+      <CallFocusOverlay
+        isOpen={isCallOpen}
+        onClose={() => setIsCallOpen(false)}
+        lead={{
+          id: lead.id,
+          nome: lead.nome,
+          telefone: lead.telefone,
+          empreendimento: lead.empreendimento,
+          stage_id: lead.stage_id,
+        }}
+        stageTipo={currentStage?.tipo}
+        leadOrigem={(lead as any).origem}
+        tarefas={leadData.tarefas}
+        availableStages={stages.map(s => ({ id: s.id, tipo: s.tipo, nome: s.nome }))}
+        onRefresh={leadData.reload}
+      />
     </Sheet>
   );
 }
