@@ -1,44 +1,43 @@
 
 
-## Refinamento Visual dos Botões do Card
+## Prompt 1 — WhatsAppFocusFlow + Prompt 2 — Tarefa registra atividade
 
-Olhando o screenshot com olhar crítico: os botões estão funcionais mas com alguns problemas de acabamento:
+### Resumo
 
-1. **Ligar** com fundo `#EEEDFE` está lavado — parece um botão desabilitado, não um CTA primário
-2. **Alinhamento vertical** entre os 4 botões não está perfeito — o Ligar tem `margin: 4px` que desalinha
-3. **Peso visual** desigual — Ligar tem fundo mas os outros são fantasma, criando desequilíbrio
-4. O emoji 💬 do WhatsApp pode renderizar com tamanho diferente dependendo do OS
+Criar modal de WhatsApp em 2 fases (enviar mensagem → confirmar + tarefa) e adicionar registro de atividade ao salvar tarefa rápida.
 
-### Proposta — design mais limpo e equilibrado
+### Arquivos
 
-Todos os 4 botões no mesmo plano visual (sem fundo destacado), diferenciados apenas por **cor do texto/ícone**:
+**1. Novo: `src/components/pipeline/WhatsAppFocusFlow.tsx`**
 
-```text
-┌─────────────────────────────────────────────┐
-│  📞 Ligar  │  📋 Tarefa  │  💬 WhatsApp │ ··· │
-│  #4F46E5   │  #64748b    │  #16a34a     │ #9ca │
-└─────────────────────────────────────────────┘
-```
+Modal compacto (mesmo padrão do CallFocusOverlay — fixed backdrop + container branco centralizado, max-width 480px, border-radius 16px).
 
-- **Ligar**: texto/ícone `#4F46E5` (roxo primário), sem fundo. Hover: `background: #EEEDFE`
-- **Tarefa**: texto/ícone `#64748b` (cinza médio). Hover: `background: hsl(var(--muted))`  
-- **WhatsApp**: texto/ícone `#16a34a` (verde). Hover: `background: #EAF3DE`
-- **···**: texto `#9ca3af`. Hover: `background: hsl(var(--muted))`
+- **Fase 1**: Header com iniciais/nome/telefone/badge da etapa. Lista de mensagens filtradas por `stageTipo` (reutiliza o mesmo mapeamento do StageCoachBar — copia as `messages` por tipo de etapa). Cada mensagem mostra título + preview 2 linhas + botões "Copiar" e "Abrir WhatsApp" (`wa.me/{phone}?text=...`). Ao clicar em qualquer um dos dois:
+  - Insere em `pipeline_atividades` `{ pipeline_lead_id, tipo: 'whatsapp', titulo: 'WhatsApp enviado', created_by }`
+  - Atualiza `pipeline_leads.ultima_acao_at = now()`
+  - Avança para Fase 2
+- **Fase 2**: Chip verde "WhatsApp enviado ✓". Textarea observação (opcional). Seção "Próxima tarefa" com chips tipo (WhatsApp default / Ligar / Follow-up), input date (default amanhã), input time (default 10:00). Footer: "Salvar e fechar" (insere `pipeline_tarefas` + `onRefresh()` + fecha) e "Fechar sem tarefa" (fecha direto).
 
-### Detalhes técnicos
+Props: `isOpen, onClose, lead: { id, nome, telefone, empreendimento, stage_id }, stageTipo, onRefresh`
 
-**CardActionBar.tsx** — 3 mudanças:
-1. Remover `background: "#EEEDFE"`, `borderRadius`, `margin` do botão Ligar — fica `background: "transparent"`, hover muda para `#EEEDFE`
-2. Padronizar `padding: "8px 4px"` e `minHeight: 36` em todos
-3. Manter separadores verticais entre botões
+**2. Editar: `src/components/pipeline/PipelineCard.tsx`**
+- Adicionar `useState` para `isWhatsAppFlowOpen`
+- `handleWhatsApp` → `setIsWhatsAppFlowOpen(true)` (remove abertura do `WhatsAppTemplatesDialog`)
+- Renderizar `<WhatsAppFocusFlow>` no bloco de dialogs, passando lead/stage/onRefresh
 
-**CardQuickTaskPopover.tsx** — 1 mudança:
-1. Atualizar cor do botão Tarefa de `#1a1a1a` para `#64748b` para harmonizar
+**3. Editar: `src/components/pipeline/CardQuickTaskPopover.tsx`**
+- Após o insert em `pipeline_tarefas` (linha 59-70), adicionar:
+  ```ts
+  await supabase.from("pipeline_atividades").insert({
+    pipeline_lead_id: leadId,
+    tipo: "tarefa",
+    titulo: `Tarefa criada: ${TIPO_LABELS[type]} — ${obs}`,
+    created_by: user.id,
+  });
+  ```
+- Adicionar update de `ultima_acao_at` no mesmo trecho (já atualiza `updated_at` mas não `ultima_acao_at`)
 
-### Resultado
-Botões visualmente equilibrados, limpos, com identidade cromática clara por função. Sem fundos que competem com o conteúdo do card.
-
-### Arquivos alterados
-- `src/components/pipeline/CardActionBar.tsx`
-- `src/components/pipeline/CardQuickTaskPopover.tsx`
+### O que NÃO muda
+- CallFocusOverlay, StageCoachBar, QuickActionMenu, hooks, migrations
+- Visual do popup de tarefa rápida (apenas adiciona operações no banco)
 
