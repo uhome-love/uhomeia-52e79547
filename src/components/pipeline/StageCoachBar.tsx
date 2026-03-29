@@ -70,11 +70,15 @@ export default function StageCoachBar({
               body: `Fala {{nome}}, tudo bem? Vi que tu pediu info do {{empreendimento}} e resolvi te mandar uma msg rápido — posso te explicar melhor?`,
             },
             {
+              title: "📱 Lead Portal (ImovelWeb)",
+              body: `Fala {{nome}}! Vi teu interesse nesse imóvel — ele ainda tá disponível sim 👀 Mas me diz, tu tá procurando algo nesse estilo ou foi mais pelo valor?`,
+            },
+            {
               title: "Apresentação consultiva",
               body: `Oi {{nome}}! 😊 Me chamo [seu nome], da UHome. Vi teu interesse em {{empreendimento}} e queria te mostrar algo que faz sentido pro teu momento. Posso te contar mais?`,
             },
             {
-              title: "Reativação criativa",
+              title: "Reativação criativa [Curiosidade]",
               body: `{{nome}}, sei que a rotina é corrida! Mas não queria que tu perdesse as condições especiais de {{empreendimento}}. Qual o melhor horário pra gente trocar uma ideia rápida? 📞`,
             },
           ],
@@ -92,6 +96,10 @@ export default function StageCoachBar({
             {
               title: "🎯 Versão direta",
               body: `{{nome}}, queria entender melhor teu momento pra te mostrar algo que realmente faça sentido. Tu tá buscando pra morar ou investir?`,
+            },
+            {
+              title: "🏠 Lead Avulso (Usado)",
+              body: `{{nome}}, esse imóvel é interessante dentro da proposta dele… mas depende muito do que tu busca. Dependendo do teu objetivo, consigo te mostrar opções melhores 😊`,
             },
             {
               title: "Perguntas estratégicas",
@@ -118,8 +126,12 @@ export default function StageCoachBar({
               body: `{{nome}}, hoje tu tá mais olhando ou já pensando em fechar algo? Pergunto pra saber como te ajudar melhor 😊`,
             },
             {
-              title: "Apresentação personalizada",
-              body: `{{nome}}, separei opções que combinam com o que tu busca em {{empreendimento}}! 🏠 Vou te enviar uma vitrine personalizada. Qualquer dúvida, tô aqui!`,
+              title: "💰 Qualificação Investidor",
+              body: `{{nome}}, tu tá pensando mais em renda ou valorização? Pergunto porque tenho opções diferentes pra cada objetivo 📊`,
+            },
+            {
+              title: "🏠 Qualificação Moradia",
+              body: `{{nome}}, o que mais pesa pra ti hoje: espaço, localização ou valor? Assim consigo filtrar o que faz mais sentido 😊`,
             },
             {
               title: "Perfil detalhado [Consultivo]",
