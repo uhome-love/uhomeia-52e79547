@@ -101,7 +101,7 @@ export default function FocusModeModal({ open, onClose, pipelineTipo = "leads" }
       setStagesLoading(true);
       const { data } = await supabase
         .from("pipeline_stages")
-        .select("id, nome")
+        .select("id, nome, tipo")
         .eq("pipeline_tipo", pipelineTipo)
         .order("ordem", { ascending: true });
       setStages(data || []);
