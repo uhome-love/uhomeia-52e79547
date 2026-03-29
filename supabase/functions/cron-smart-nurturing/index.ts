@@ -117,7 +117,7 @@ async function buscarLeadsParados(): Promise<LeadComPerfil[]> {
   const { data: stagesElegiveis } = await supabase
     .from("pipeline_stages")
     .select("id")
-    .in("tipo", ["qualificacao", "novo", "contactado"]);
+    .in("tipo", ["qualificacao", "novo_lead", "contato_inicial", "sem_contato"]);
 
   const stageIdsElegiveis = new Set(
     (stagesElegiveis || []).map((s: any) => s.id)
