@@ -361,6 +361,20 @@ Deno.serve(async (req) => {
         totalAtivosCount.set(chosen.authUserId, (totalAtivosCount.get(chosen.authUserId) || 0) + 1);
         lastReceived.set(chosen.authUserId, now.toISOString());
 
+        // FIX Bug 2: Sync roleta_fila so UI shows correct numbers
+        if (segmentoId) {
+          const todayStr = getTodayDateStr();
+          supabase.from("roleta_fila")
+            .update({ leads_recebidos: supabase.rpc ? undefined : undefined })
+            .then(() => {});
+          // Increment all janela rows for this corretor+segmento (matches SQL RPC behavior)
+          supabase.rpc("increment_roleta_fila", {
+            p_corretor_profile_id: chosen.corretorId,
+            p_segmento_id: segmentoId,
+            p_data: todayStr,
+          }).then((r: any) => { if (r?.error) console.warn("roleta_fila sync:", r.error.message); });
+        }
+
         await supabase.from("roleta_distribuicoes").insert({
           lead_id: lead.id,
           corretor_id: chosen.corretorId,
