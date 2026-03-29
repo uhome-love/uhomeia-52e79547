@@ -149,8 +149,8 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    if (!TYPESENSE_HOST || !TYPESENSE_ADMIN_API_KEY || !JETIMOB_API_KEY) {
-      throw new Error("Missing credentials");
+    if (!TYPESENSE_HOST || !TYPESENSE_ADMIN_API_KEY) {
+      throw new Error("Missing Typesense credentials");
     }
 
     const sb = createClient(supabaseUrl, serviceRoleKey);
@@ -196,21 +196,28 @@ serve(async (req) => {
 
     const page = state.next_page;
     const pageSize = 500;
+    const offset = (page - 1) * pageSize;
 
-    console.log(`Syncing page ${page}...`);
+    console.log(`Syncing page ${page} from DB (offset ${offset})...`);
 
-    // Fetch from Jetimob
-    const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${page}&pageSize=${pageSize}`;
-    const response = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!response.ok) throw new Error(`Jetimob ${response.status}`);
-    const raw = await response.json();
-    const items = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.result) ? raw.result : Array.isArray(raw) ? raw : [];
+    // Fetch from properties table
+    const { data: rows, error: fetchErr } = await sb
+      .from("properties")
+      .select("codigo, titulo, descricao, tipo, contrato, situacao, status_imovel, endereco, numero, bairro, cidade, latitude, longitude, dormitorios, suites, banheiros, vagas, area_privativa, area_total, valor_venda, valor_locacao, valor_condominio, empreendimento, condominio_nome, construtora, is_uhome, is_destaque, fotos, fotos_full, entrega_ano, entrega_mes")
+      .eq("ativo", true)
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (fetchErr) throw new Error(`DB fetch failed: ${fetchErr.message}`);
+
+    const items = rows || [];
 
     if (items.length === 0) {
       await sb.from("typesense_sync_state").update({
         status: "complete",
         last_indexed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        finished_at: new Date().toISOString(),
       }).eq("id", "default");
 
       console.log("Sync complete - no more items");
@@ -219,9 +226,56 @@ serve(async (req) => {
       });
     }
 
-    // ── Index to Typesense ──
-    const docs = items.map(mapImovelToDocument);
-    const jsonl = docs.map(d => JSON.stringify(d)).join("\n");
+    // ── Map properties rows to Typesense documents ──
+    const docs = items.map((row: any) => {
+      const codigo = String(row.codigo || "");
+      const situacao = String(row.situacao || row.status_imovel || "").toLowerCase();
+      const emObras = situacao.includes("obra") || situacao.includes("constru") || situacao.includes("planta") || situacao.includes("lancamento");
+      const thumbs: string[] = Array.isArray(row.fotos) ? row.fotos : [];
+      const fullPhotos: string[] = Array.isArray(row.fotos_full) ? row.fotos_full : thumbs;
+      const lat = Number(row.latitude || 0);
+      const lng = Number(row.longitude || 0);
+      const hasCoords = lat !== 0 && lng !== 0 && !isNaN(lat) && !isNaN(lng) && lat >= -35 && lat <= 5 && lng >= -75 && lng <= -30;
+
+      const doc: Record<string, any> = {
+        id: codigo || `auto_${Math.random().toString(36).slice(2)}`,
+        codigo,
+        titulo: row.titulo || "",
+        descricao_resumida: (row.descricao || "").slice(0, 500),
+        bairro: row.bairro || "",
+        cidade: row.cidade || "Porto Alegre",
+        endereco: [row.endereco || "", row.numero || ""].filter(Boolean).join(", "),
+        empreendimento: row.empreendimento || row.condominio_nome || "",
+        construtora: row.construtora || "",
+        tipo: (row.tipo || "").toLowerCase(),
+        categoria: "",
+        contrato: row.contrato || "venda",
+        valor_venda: Number(row.valor_venda || 0) || 0,
+        valor_locacao: Number(row.valor_locacao || 0) || 0,
+        area_privativa: Number(row.area_privativa || 0) || 0,
+        area_total: Number(row.area_total || 0) || 0,
+        dormitorios: Number(row.dormitorios || 0) || 0,
+        suites: Number(row.suites || 0) || 0,
+        banheiros: Number(row.banheiros || 0) || 0,
+        vagas: Number(row.vagas || 0) || 0,
+        status: row.status_imovel || "",
+        situacao: situacao,
+        foto_principal: thumbs[0] || "",
+        fotos: thumbs.slice(0, 15),
+        fotos_full: fullPhotos.slice(0, 15),
+        destaque: !!row.is_destaque,
+        em_obras: emObras,
+        previsao_entrega: row.entrega_ano ? `${row.entrega_ano}${row.entrega_mes ? '-' + String(row.entrega_mes).padStart(2, '0') : ''}` : "",
+        valor_condominio: Number(row.valor_condominio || 0) || 0,
+        is_uhome: !!row.is_uhome || String(codigo).toLowerCase().includes("-uh"),
+        data_atualizacao: Date.now(),
+      };
+
+      if (hasCoords) { doc.latitude = lat; doc.longitude = lng; doc.location = [lat, lng]; }
+      return doc;
+    });
+
+    const jsonl = docs.map((d: any) => JSON.stringify(d)).join("\n");
     const resp = await fetch(`https://${TYPESENSE_HOST}/collections/${COLLECTION_NAME}/documents/import?action=upsert`, {
       method: "POST",
       headers: { "X-TYPESENSE-API-KEY": TYPESENSE_ADMIN_API_KEY, "Content-Type": "text/plain" },
