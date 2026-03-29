@@ -174,8 +174,8 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
           </div>
 
           <div>
-            <Label className="text-xs font-semibold mb-1 block">VGV Estimado</Label>
-            <Input value={form.vgv_estimado} onChange={e => set("vgv_estimado", e.target.value)} placeholder="R$ 500.000" className="h-9 text-sm" />
+            <Label className="text-xs font-semibold mb-1 block">VGV Estimado *</Label>
+            <Input value={form.vgv_estimado} onChange={e => set("vgv_estimado", e.target.value)} placeholder="R$ 500.000" className={`h-9 text-sm ${!form.vgv_estimado ? "border-amber-400" : ""}`} />
           </div>
 
           <div>
