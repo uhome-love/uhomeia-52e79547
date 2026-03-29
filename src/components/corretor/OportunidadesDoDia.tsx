@@ -1,8 +1,6 @@
 // =============================================================================
-// Componente: OportunidadesDoDia (v2)
-// Propósito: Nova home do corretor — mantém os elementos de identidade
-// (saudação personalizada, frase motivacional, credenciamento da roleta,
-// botão de status online/offline) e adiciona o painel de Oportunidades do Dia.
+// Componente: OportunidadesDoDia (v3)
+// Home do corretor — saudação, status, credenciamento roleta, oportunidades.
 // =============================================================================
 
 import { useEffect, useState } from "react";
@@ -24,10 +22,13 @@ import {
   RefreshCw,
   Wifi,
   WifiOff,
+  AlertTriangle,
+  ListTodo,
+  Target,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Frases motivacionais (rotação diária baseada no dia do mês)
+// Frases motivacionais (rotação diária)
 // ---------------------------------------------------------------------------
 const FRASES_MOTIVACIONAIS = [
   "Cada ligação é uma oportunidade. Não deixe nenhuma escapar.",
@@ -76,19 +77,19 @@ interface Oportunidade {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers visuais de temperatura
+// Helpers visuais
 // ---------------------------------------------------------------------------
 const TEMPERATURA_CONFIG = {
-  urgente: { cor: "bg-red-500",    texto: "URGENTE", icone: "🚨" },
-  quente:  { cor: "bg-orange-500", texto: "QUENTE",  icone: "🔥" },
-  morno:   { cor: "bg-yellow-500", texto: "MORNO",   icone: "🌡️" },
-  frio:    { cor: "bg-blue-400",   texto: "FRIO",    icone: "❄️" },
+  urgente: { cor: "bg-red-500", texto: "URGENTE", icone: "🚨" },
+  quente: { cor: "bg-orange-500", texto: "QUENTE", icone: "🔥" },
+  morno: { cor: "bg-yellow-500", texto: "MORNO", icone: "🌡️" },
+  frio: { cor: "bg-blue-400", texto: "FRIO", icone: "❄️" },
 };
 
 const TIPO_CONFIG = {
-  radar_intencao:    { icone: <Flame className="w-5 h-5 text-orange-500" />,      label: "Radar de Intenção" },
-  nurturing_resposta:{ icone: <MessageSquare className="w-5 h-5 text-blue-500" />, label: "Vitrine Enviada" },
-  tarefa_atrasada:   { icone: <Clock className="w-5 h-5 text-red-500" />,          label: "Tarefa Atrasada" },
+  radar_intencao: { icone: <Flame className="w-5 h-5 text-orange-500" />, label: "Radar de Intenção" },
+  nurturing_resposta: { icone: <MessageSquare className="w-5 h-5 text-blue-500" />, label: "Vitrine Enviada" },
+  tarefa_atrasada: { icone: <Clock className="w-5 h-5 text-red-500" />, label: "Tarefa Atrasada" },
 };
 
 // ---------------------------------------------------------------------------
@@ -101,26 +102,26 @@ function useHomeCorretor() {
   const [naRoleta, setNaRoleta] = useState(false);
   const [oportunidades, setOportunidades] = useState<Oportunidade[]>([]);
   const [podeFazerRoleta, setPodeFazerRoleta] = useState(true);
-  const [tarefasAtrasadas, setTarefasAtrasadas] = useState(0);
+  const [leadsDesatualizados, setLeadsDesatualizados] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [roletaUpdating, setRoletaUpdating] = useState(false);
 
   const carregar = async () => {
     if (!user) return;
     setLoading(true);
 
     try {
-      // Perfil do corretor
+      // Perfil
       const { data: perfil } = await supabase
         .from("profiles")
         .select("nome")
         .eq("user_id", user.id)
         .single();
 
-      if (perfil) {
-        setNomeCorretor(perfil.nome || "Corretor");
-      }
+      if (perfil) setNomeCorretor(perfil.nome || "Corretor");
 
-      // Status online/offline e roleta (tabela corretor_disponibilidade)
+      // Disponibilidade
       const { data: disponibilidade } = await supabase
         .from("corretor_disponibilidade")
         .select("status, na_roleta")
@@ -132,27 +133,23 @@ function useHomeCorretor() {
         setNaRoleta(disponibilidade.na_roleta ?? false);
       }
 
-      // Oportunidades do dia (função criada na migration)
+      // Oportunidades
       const { data: ops, error: opsError } = await supabase.rpc("get_oportunidades_do_dia", {
         p_corretor_id: user.id,
       });
-      if (!opsError) {
-        setOportunidades((ops as Oportunidade[]) || []);
+      if (!opsError && ops) {
+        setOportunidades(ops as Oportunidade[]);
       }
 
-      // Status da roleta (bloqueada ou liberada) via view
-      const { data: statusRoleta } = await supabase
-        .from("v_corretor_roleta_status" as any)
-        .select("pode_entrar_roleta, leads_desatualizados")
-        .eq("corretor_id", user.id)
-        .single();
-
-      if (statusRoleta) {
-        setPodeFazerRoleta((statusRoleta as any).pode_entrar_roleta ?? true);
-        setTarefasAtrasadas((statusRoleta as any).leads_desatualizados ?? 0);
-      }
+      // Leads desatualizados (contagem direta via RPC)
+      const { data: countData } = await supabase.rpc("contar_leads_desatualizados", {
+        p_corretor_id: user.id,
+      });
+      const count = typeof countData === "number" ? countData : 0;
+      setLeadsDesatualizados(count);
+      setPodeFazerRoleta(count <= 10);
     } catch (err) {
-      console.error("Erro ao carregar oportunidades:", err);
+      console.error("Erro ao carregar home do corretor:", err);
     }
 
     setLoading(false);
@@ -166,14 +163,14 @@ function useHomeCorretor() {
 
   return {
     nomeCorretor,
-    statusOnline,
-    setStatusOnline,
-    naRoleta,
-    setNaRoleta,
+    statusOnline, setStatusOnline,
+    naRoleta, setNaRoleta,
     oportunidades,
     podeFazerRoleta,
-    tarefasAtrasadas,
+    leadsDesatualizados,
     loading,
+    statusUpdating, setStatusUpdating,
+    roletaUpdating, setRoletaUpdating,
     recarregar: carregar,
     userId: user?.id,
   };
@@ -185,28 +182,33 @@ function useHomeCorretor() {
 async function alternarStatusOnline(
   userId: string,
   novoStatus: boolean,
-  setStatusOnline: (v: boolean) => void
+  setStatusOnline: (v: boolean) => void,
+  setUpdating: (v: boolean) => void
 ) {
+  setUpdating(true);
   setStatusOnline(novoStatus);
-  const novoStatusStr = novoStatus ? "online" : "offline";
+  const agora = new Date().toISOString();
+
+  const payload: Record<string, unknown> = {
+    user_id: userId,
+    status: novoStatus ? "online" : "offline",
+  };
+  if (novoStatus) {
+    payload.entrada_em = agora;
+  } else {
+    payload.saida_em = agora;
+  }
 
   const { error } = await supabase
     .from("corretor_disponibilidade")
-    .upsert(
-      {
-        user_id: userId,
-        status: novoStatusStr,
-        entrada_em: novoStatus ? new Date().toISOString() : undefined,
-        saida_em: novoStatus ? undefined : new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
+    .upsert(payload as any, { onConflict: "user_id" });
 
+  setUpdating(false);
   if (error) {
     setStatusOnline(!novoStatus);
     toast.error("Erro ao atualizar status. Tente novamente.");
   } else {
-    toast.success(novoStatus ? "✅ Você está online na empresa" : "⏸️ Você está offline");
+    toast.success(novoStatus ? "Você está online na empresa" : "Você está offline");
   }
 }
 
@@ -216,37 +218,39 @@ async function alternarStatusOnline(
 async function alternarRoleta(
   userId: string,
   podeFazerRoleta: boolean,
-  tarefasAtrasadas: number,
+  leadsDesatualizados: number,
   naRoleta: boolean,
-  setNaRoleta: (v: boolean) => void
+  setNaRoleta: (v: boolean) => void,
+  setUpdating: (v: boolean) => void
 ) {
-  // Bloqueia se há tarefas atrasadas e está tentando se credenciar
   if (!naRoleta && !podeFazerRoleta) {
     toast.error(
-      `🔒 Você tem ${tarefasAtrasadas} lead(s) sem tarefa pendente (máx: 10). Crie tarefas no pipeline para se desbloquear.`,
+      `Você tem ${leadsDesatualizados} lead(s) sem tarefa pendente (máx: 10). Crie tarefas no pipeline para se desbloquear.`,
       { duration: 5000 }
     );
     return;
   }
 
+  setUpdating(true);
   const novoStatus = !naRoleta;
   setNaRoleta(novoStatus);
 
   const { error } = await supabase
     .from("corretor_disponibilidade")
     .upsert(
-      { user_id: userId, na_roleta: novoStatus },
+      { user_id: userId, na_roleta: novoStatus } as any,
       { onConflict: "user_id" }
     );
 
+  setUpdating(false);
   if (error) {
     setNaRoleta(!novoStatus);
     toast.error("Erro ao atualizar roleta. Tente novamente.");
   } else {
     toast.success(
       novoStatus
-        ? "🎯 Você está na roleta! Aguarde novos leads."
-        : "⏹️ Você saiu da roleta."
+        ? "Você está na roleta! Aguarde novos leads."
+        : "Você saiu da roleta."
     );
   }
 }
@@ -276,7 +280,7 @@ async function followUpMagico(leadId: string, nomeLead: string) {
   if (error) {
     toast.error("Erro ao gerar vitrine. Tente novamente.");
   } else {
-    toast.success(`✅ Vitrine enviada para ${nomeLead.split(" ")[0]}! Aguarde a resposta.`);
+    toast.success(`Vitrine enviada para ${nomeLead.split(" ")[0]}! Aguarde a resposta.`);
   }
 }
 
@@ -286,14 +290,14 @@ async function followUpMagico(leadId: string, nomeLead: string) {
 export function OportunidadesDoDia() {
   const {
     nomeCorretor,
-    statusOnline,
-    setStatusOnline,
-    naRoleta,
-    setNaRoleta,
+    statusOnline, setStatusOnline,
+    naRoleta, setNaRoleta,
     oportunidades,
     podeFazerRoleta,
-    tarefasAtrasadas,
+    leadsDesatualizados,
     loading,
+    statusUpdating, setStatusUpdating,
+    roletaUpdating, setRoletaUpdating,
     recarregar,
     userId,
   } = useHomeCorretor();
@@ -302,8 +306,8 @@ export function OportunidadesDoDia() {
   const saudacao = getSaudacao();
   const frase = getFraseMotivacional();
 
-  const urgentes  = oportunidades.filter((o) => o.lead_temperatura === "urgente");
-  const quentes   = oportunidades.filter((o) => o.lead_temperatura === "quente");
+  const urgentes = oportunidades.filter((o) => o.lead_temperatura === "urgente");
+  const quentes = oportunidades.filter((o) => o.lead_temperatura === "quente");
   const restantes = oportunidades.filter(
     (o) => o.lead_temperatura !== "urgente" && o.lead_temperatura !== "quente"
   );
@@ -311,27 +315,34 @@ export function OportunidadesDoDia() {
   return (
     <div className="space-y-5 p-4 max-w-2xl mx-auto pb-10">
 
-      {/* ── BLOCO 1: Saudação e Frase Motivacional ── */}
+      {/* ── Saudação ── */}
       <div className="space-y-1 pt-2">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           {saudacao}, {primeiroNome}! 👋
         </h1>
         <p className="text-sm text-muted-foreground italic">"{frase}"</p>
       </div>
 
-      {/* ── BLOCO 2: Status Online + Credenciamento Roleta ── */}
+      {/* ── Status Online + Roleta ── */}
       <div className="grid grid-cols-2 gap-3">
         {/* Status Online */}
-        <Card className={statusOnline ? "border-green-400 bg-green-50" : "border-gray-200"}>
+        <Card
+          className={`transition-colors ${
+            statusOnline
+              ? "border-green-500/50 bg-green-500/10 dark:bg-green-500/10"
+              : "border-border"
+          }`}
+        >
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {statusOnline
-                  ? <Wifi className="w-4 h-4 text-green-600" />
-                  : <WifiOff className="w-4 h-4 text-gray-400" />
-                }
+                {statusOnline ? (
+                  <Wifi className="w-4 h-4 text-green-500" />
+                ) : (
+                  <WifiOff className="w-4 h-4 text-muted-foreground" />
+                )}
                 <div>
-                  <p className="text-xs font-semibold">
+                  <p className="text-xs font-semibold text-foreground">
                     {statusOnline ? "Online" : "Offline"}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -341,66 +352,72 @@ export function OportunidadesDoDia() {
               </div>
               <Switch
                 checked={statusOnline}
+                disabled={statusUpdating}
                 onCheckedChange={(v) =>
-                  userId && alternarStatusOnline(userId, v, setStatusOnline)
+                  userId && alternarStatusOnline(userId, v, setStatusOnline, setStatusUpdating)
                 }
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Credenciamento Roleta */}
+        {/* Roleta */}
         <Card
-          className={
+          className={`transition-colors ${
             naRoleta
-              ? "border-purple-400 bg-purple-50"
+              ? "border-primary/50 bg-primary/10 dark:bg-primary/10"
               : !podeFazerRoleta
-              ? "border-red-300 bg-red-50"
-              : "border-gray-200"
-          }
+              ? "border-destructive/50 bg-destructive/10 dark:bg-destructive/10"
+              : "border-border"
+          }`}
         >
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold flex items-center gap-1">
-                  🎯 Roleta
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+                  <Target className="w-3.5 h-3.5" />
+                  Roleta
                   {!podeFazerRoleta && !naRoleta && (
-                    <span className="text-red-500 text-xs">🔒</span>
+                    <span className="text-destructive text-xs">🔒</span>
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {naRoleta
                     ? "Aguardando leads"
                     : !podeFazerRoleta
-                    ? `${tarefasAtrasadas} lead(s) sem tarefa`
+                    ? `${leadsDesatualizados} lead(s) sem tarefa`
                     : "Fora da fila"}
                 </p>
               </div>
               <Switch
                 checked={naRoleta}
+                disabled={roletaUpdating}
                 onCheckedChange={() =>
                   userId &&
                   alternarRoleta(
                     userId,
                     podeFazerRoleta,
-                    tarefasAtrasadas,
+                    leadsDesatualizados,
                     naRoleta,
-                    setNaRoleta
+                    setNaRoleta,
+                    setRoletaUpdating
                   )
                 }
               />
             </div>
-            {/* Explicação + botão quando bloqueado */}
+            {/* Bloqueio: explicação + botão */}
             {!podeFazerRoleta && !naRoleta && (
-              <div className="mt-3 pt-3 border-t border-red-200 space-y-2">
-                <p className="text-xs text-red-700 leading-relaxed">
-                  Você tem <strong>{tarefasAtrasadas} lead(s)</strong> no pipeline sem nenhuma tarefa pendente. O máximo permitido é 10. Crie tarefas para seus leads se desbloquearem.
+              <div className="mt-3 pt-3 border-t border-destructive/20 space-y-2">
+                <p className="text-xs text-destructive leading-relaxed">
+                  Você tem <strong>{leadsDesatualizados} lead(s)</strong> sem tarefa pendente (máx: 10). Crie tarefas para se desbloquear.
                 </p>
                 <button
-                  onClick={() => window.location.href = "/pipeline?filtro=sem_tarefa"}
-                  className="w-full text-xs font-medium py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center justify-center gap-1.5"
+                  onClick={() => (window.location.href = "/pipeline?filtro=sem_tarefa")}
+                  className="w-full text-xs font-medium py-2 px-3 rounded-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-colors flex items-center justify-center gap-1.5"
                 >
-                  📋 Ver leads sem tarefa →
+                  <ListTodo className="w-3.5 h-3.5" />
+                  Ver leads sem tarefa
+                  <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
             )}
@@ -408,13 +425,39 @@ export function OportunidadesDoDia() {
         </Card>
       </div>
 
-      {/* ── BLOCO 3: Oportunidades do Dia ── */}
+      {/* ── Alerta de leads desatualizados (mesmo quando pode entrar) ── */}
+      {podeFazerRoleta && leadsDesatualizados > 5 && (
+        <Card className="border-yellow-500/50 bg-yellow-500/10 dark:bg-yellow-500/10">
+          <CardContent className="py-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">
+                  Atenção: {leadsDesatualizados} leads sem tarefa
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Faltam {10 - leadsDesatualizados > 0 ? 10 - leadsDesatualizados : 0} para bloqueio. 
+                  <button
+                    onClick={() => (window.location.href = "/pipeline?filtro=sem_tarefa")}
+                    className="text-primary underline ml-1"
+                  >
+                    Atualizar pipeline
+                  </button>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Oportunidades do Dia ── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-base">
-            ⚡ Oportunidades do Dia
+          <h2 className="font-bold text-base text-foreground flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-yellow-500" />
+            Oportunidades do Dia
             {oportunidades.length > 0 && (
-              <Badge className="ml-2 bg-primary text-white text-xs">
+              <Badge className="ml-1 bg-primary text-primary-foreground text-xs">
                 {oportunidades.length}
               </Badge>
             )}
@@ -430,10 +473,9 @@ export function OportunidadesDoDia() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Urgentes */}
             {urgentes.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-bold text-red-600 uppercase tracking-wide">
+                <p className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wide">
                   🚨 Urgente — Aja agora
                 </p>
                 {urgentes.map((op) => (
@@ -442,10 +484,9 @@ export function OportunidadesDoDia() {
               </div>
             )}
 
-            {/* Quentes */}
             {quentes.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-bold text-orange-600 uppercase tracking-wide">
+                <p className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide">
                   🔥 Leads Quentes
                 </p>
                 {quentes.map((op) => (
@@ -454,7 +495,6 @@ export function OportunidadesDoDia() {
               </div>
             )}
 
-            {/* Outros */}
             {restantes.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -466,15 +506,37 @@ export function OportunidadesDoDia() {
               </div>
             )}
 
-            {/* Vazio */}
+            {/* Estado vazio — ações úteis */}
             {oportunidades.length === 0 && (
-              <Card className="border-green-300 bg-green-50">
-                <CardContent className="pt-6 pb-6 text-center space-y-2">
+              <Card className="border-green-500/30 bg-green-500/5 dark:bg-green-500/5">
+                <CardContent className="pt-6 pb-6 text-center space-y-3">
                   <Trophy className="w-10 h-10 text-yellow-500 mx-auto" />
-                  <p className="font-bold">Você está em dia! 🏆</p>
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma ação pendente. Credencia-se na roleta e aguarde novos leads.
-                  </p>
+                  <div>
+                    <p className="font-bold text-foreground">Você está em dia!</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Nenhuma ação pendente. Credencia-se na roleta e aguarde novos leads.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs"
+                      onClick={() => (window.location.href = "/pipeline")}
+                    >
+                      <ListTodo className="w-3.5 h-3.5 mr-1" />
+                      Abrir Pipeline
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs"
+                      onClick={() => (window.location.href = "/oferta-ativa")}
+                    >
+                      <Phone className="w-3.5 h-3.5 mr-1" />
+                      Oferta Ativa
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -486,7 +548,7 @@ export function OportunidadesDoDia() {
 }
 
 // ---------------------------------------------------------------------------
-// Sub-componente: Card de cada oportunidade
+// Sub-componente: Card de oportunidade
 // ---------------------------------------------------------------------------
 function CardOportunidade({ op }: { op: Oportunidade }) {
   const temp = TEMPERATURA_CONFIG[op.lead_temperatura] ?? TEMPERATURA_CONFIG.frio;
@@ -499,7 +561,9 @@ function CardOportunidade({ op }: { op: Oportunidade }) {
           <div className="flex-1 space-y-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               {tipo.icone}
-              <span className="font-semibold text-sm truncate">{op.lead_nome}</span>
+              <span className="font-semibold text-sm text-foreground truncate">
+                {op.lead_nome}
+              </span>
               <Badge className={`${temp.cor} text-white text-xs shrink-0`}>
                 {temp.icone} {temp.texto}
               </Badge>
