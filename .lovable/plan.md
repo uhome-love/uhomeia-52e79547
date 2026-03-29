@@ -1,62 +1,56 @@
 
 
-## Integrar Base de Conhecimento Elite no Sistema HOMI
+## Integrar Playbooks Elite por Empreendimento + Origem do Lead
 
-### O que já existe vs o que falta
+### O que muda
 
-| Conceito da Base | Já existe? | Onde? |
-|---|---|---|
-| Prompts por etapa (sem contato, qualificação, visita, pós-visita) | ✅ Parcial | `homi-assistant` system prompt |
-| Scripts de ligação por etapa | ✅ Genérico | Falta os scripts ESPECÍFICOS da base |
-| Playbooks por empreendimento (Open Bosque, Orygem, Casa Tua, Melnick Day) | ❌ | Apenas DB enterprise-knowledge (campos livres) |
-| Lead Scoring comportamental (respondeu +10, engajou +20, etc.) | ❌ | Existe score de perfil, não comportamental |
-| Detecção de erros do corretor | ❌ | Não existe |
-| Follow-up avançado (curiosidade, prova social, humor, oportunidade) | ✅ Parcial | Falta tipificação |
-| Gatilhos mentais (escassez, urgência, prova social) | ✅ | Já no system prompt |
-| Output padrão (análise + 3 msgs + follow-ups + alerta erro) | ✅ Parcial | Formato existe, falta alerta de erro |
-| Fluxo automação CEO (5min, 10min, 1d, 3d, 7d) | ✅ | Implementado no `cron-nurturing-sequencer` |
+Substituir os 4 playbooks genéricos atuais (linhas 80-98 do `homi-assistant/index.ts`) pelos playbooks completos com: posicionamento real, perfil, psicologia, abordagem, scripts de abertura/exploração/condução, erro crítico e frase de fechamento.
 
 ### Mudanças
 
-#### 1. Enriquecer `homi-assistant/index.ts` system prompt
+#### 1. `supabase/functions/homi-assistant/index.ts` — System prompt
 
-Adicionar ao prompt do corretor:
+**Substituir seção "PLAYBOOKS POR EMPREENDIMENTO (FALLBACK)" (linhas 75-98)** pelo conteúdo completo:
 
-- **Playbooks por empreendimento**: Seção com perfil + abordagem + mensagem modelo para Open Bosque, Orygem, Casa Tua, Melnick Day (e os existentes do DB continuam prioritários)
-- **Detecção de erros**: Instruir a IA a identificar e alertar quando detectar pressão precoce, falta de resposta do corretor, ou mensagem robótica. Adicionar seção `## ⚠️ Alerta` ao formato de saída
-- **Tipos de follow-up**: Adicionar ao prompt as 4 categorias (curiosidade, prova social, oportunidade, humor leve) para que a IA varie estrategicamente
-- **Scoring comportamental como referência**: Incluir a tabela de pontos (respondeu +10, engajou +20, etc.) para que a IA use na análise da situação — não substitui o `leadScoring.ts` do frontend, complementa
+**Playbooks por produto:**
+- **Las Casas**: Upgrade de vida, emoção > razão, nunca começar com preço, "Esse aqui é bem diferente do padrão de apartamento..."
+- **Connect João Wallig**: Investimento/liquidez, Cyrela, "Esse aqui não é tanto sobre morar, é mais uma decisão inteligente..."
+- **Shift**: Porta de entrada investimento, jovem, primeiro investimento, "Esse aqui é muito usado por quem quer começar a investir..."
+- **Orygem**: Produto mais qualificado, cliente exigente, "Esse aqui já é um nível acima do padrão comum..."
+- **Open Bosque** e **Melnick Day**: Mantêm o conteúdo atual
 
-#### 2. Atualizar `StageCoachBar.tsx` com scripts da base
+**Nova seção "PLAYBOOKS POR ORIGEM DO LEAD":**
+- **Lead ImovelWeb (Portal)**: Lead frio, comparando vários, abrir leque, "Tenho opções melhores dependendo do que tu busca"
+- **Lead Imóvel Usado (Avulso)**: Cliente racional, virar consultor, vender orientação
+- **Lead Site Uhome**: Mais quente, curadoria, assumir controle
 
-Substituir mensagens genéricas pelos scripts ESPECÍFICOS do documento:
+**Nova seção "SCRIPTS DE LIGAÇÃO POR CENÁRIO" (substituir os genéricos linhas 146-153):**
+- Lead frio portal, qualificação, investidor, moradia, visita, pós-visita — todos com scripts específicos do documento
 
-- **Sem Contato**: "Fala {{nome}}, tudo bem? Vi que tu pediu info do {{empreendimento}} e resolvi te ligar rápido..."
-- **Contato Iniciado**: "Queria entender melhor teu momento pra te mostrar algo que realmente faça sentido."
-- **Qualificação**: "Hoje tu tá mais olhando ou já pensando em fechar algo?"
-- **Visita**: "Faz muito mais sentido ver isso pessoalmente — tenho dois horários livres, qual encaixa melhor pra ti?"
-- **Pós Visita**: "O que pesou mais pra ti na visita?"
+**Nova seção "REGRAS AVANÇADAS (NÍVEL ELITE)":**
+- Nunca vender imóvel → vender decisão
+- Quem pergunta controla a conversa
+- Visita é o fechamento parcial
+- Lead confuso precisa de direção
+- Lead frio precisa de curiosidade
 
-Manter as mensagens WhatsApp atuais como "Versão formal" e adicionar as da base como "Versão direta".
+**Adicionar "FRASES DE ALTA PERFORMANCE"** como referência para a IA variar nas respostas.
 
-#### 3. Adicionar formato de output completo ao `homi-assistant`
+**Atualizar seção PERSONALIDADE** com objetivo final elite: conduz (não reage), orienta (não vende), direciona (não insiste), desperta interesse (não empurra).
 
-Incluir no formato obrigatório:
-```
-## ⚠️ Alerta de Abordagem (se aplicável)
-(Se detectar erro do corretor: pressão precoce, mensagem robótica, 
-falta de follow-up — alertar aqui com correção sugerida)
-```
+#### 2. `src/components/pipeline/StageCoachBar.tsx` — Scripts nos cards
+
+Atualizar as mensagens prontas para incluir variações baseadas no playbook elite. Por exemplo, na etapa "sem_contato", adicionar uma versão "Portal" para leads ImovelWeb:
+- "Fala {{nome}}! Vi teu interesse nesse imóvel — ele ainda tá disponível sim 👀"
+
+Na etapa de qualificação, incluir variação investidor vs moradia:
+- Investidor: "Tu tá pensando mais em renda ou valorização?"
+- Moradia: "O que mais pesa pra ti hoje: espaço, localização ou valor?"
 
 ### Arquivos alterados
 
 | Arquivo | Mudança |
 |---|---|
-| `supabase/functions/homi-assistant/index.ts` | Playbooks por empreendimento, detecção de erros, tipos de follow-up, scoring comportamental como referência |
-| `src/components/pipeline/StageCoachBar.tsx` | Scripts específicos da base elite + versões alternativas |
-
-### O que NÃO muda
-- `leadScoring.ts` (score de perfil continua como está — o comportamental é referência para a IA)
-- Edge functions de automação (já implementadas)
-- Enterprise knowledge do DB (continua prioritário sobre fallback)
+| `supabase/functions/homi-assistant/index.ts` | Playbooks elite completos (Las Casas, Connect JW, Shift, Orygem) + playbooks por origem + scripts por cenário + regras elite + frases de alta performance |
+| `src/components/pipeline/StageCoachBar.tsx` | Mensagens adicionais por origem (portal, avulso, site) e por perfil (investidor, moradia) |
 
