@@ -72,6 +72,7 @@ const Conquistas = lazyRetry(() => import("./pages/Conquistas"));
 const Onboarding = lazyRetry(() => import("./pages/Onboarding"));
 const MarketplaceScripts = lazyRetry(() => import("./pages/MarketplaceScripts"));
 const CorretorCall = lazyRetry(() => import("./pages/CorretorCall"));
+const CorretorProgresso = lazyRetry(() => import("./pages/CorretorProgresso"));
 const AceiteLeads = lazyRetry(() => import("./pages/AceiteLeads"));
 
 // Backoffice pages
