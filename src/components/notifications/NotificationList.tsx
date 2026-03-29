@@ -13,6 +13,9 @@ const TIPO_LABELS: Record<string, string> = {
   lead_parado: "Lead Parado",
   lead_alto_valor: "Alto Valor",
   fila_ceo: "Fila CEO",
+  lead_urgente: "Urgente",
+  lead_ultimo_alerta: "Último Alerta",
+  automacao: "Automação",
   visitas: "Visitas",
   visita_agendada: "Visita",
   visita_confirmada: "Visita",
@@ -30,12 +33,11 @@ const TIPO_LABELS: Record<string, string> = {
   corretor_ajuda: "Ajuda",
   zero_ligacoes: "Alerta",
   alertas: "Alertas",
-  lead_urgente: "Urgente",
-  lead_ultimo_alerta: "Último Alerta",
-  automacao: "Automação",
+  radar_intencao: "Radar de Intenção",
 };
 
 const TIPO_CONFIG: Record<string, { emoji: string; borderColor: string; bgUnread: string }> = {
+  radar_intencao: { emoji: "🚨", borderColor: "#EA580C", bgUnread: "#FFF3E6" },
   leads: { emoji: "⚡", borderColor: "#3B82F6", bgUnread: "#EFF6FF" },
   lead_roleta: { emoji: "⚡", borderColor: "#3B82F6", bgUnread: "#EFF6FF" },
   lead_timeout: { emoji: "⚠️", borderColor: "#EF4444", bgUnread: "#FEF2F2" },
@@ -76,6 +78,13 @@ function getNotificationRoute(n: Notification): string | null {
   const d = n.dados || {};
   const tipo = n.tipo;
   const categoria = n.categoria;
+
+  // Radar de Intenção → deep-link to lead profile
+  if (tipo === "radar_intencao" || categoria === "radar") {
+    const leadId = d.pipeline_lead_id || d.lead_id;
+    if (leadId) return `/pipeline-leads?lead=${leadId}`;
+    return "/pipeline-leads";
+  }
 
   // Lead notifications → pipeline with lead context
   if (["leads", "lead", "lead_roleta", "lead_urgente", "lead_ultimo_alerta", "lead_sem_contato", "lead_parado", "lead_alto_valor"].includes(tipo)) {
@@ -201,14 +210,15 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
         const route = getNotificationRoute(n);
         const isClickable = !!route;
         const { leadName, detail } = getContextDetails(n);
+        const isRadar = n.tipo === "radar_intencao";
 
         return (
           <div
             key={n.id}
-            className={`flex gap-3 px-4 py-3.5 group transition-colors ${isClickable ? "cursor-pointer" : ""}`}
+            className={`flex gap-3 px-4 py-3.5 group transition-colors ${isClickable ? "cursor-pointer" : ""} ${isRadar && !n.lida ? "ring-1 ring-orange-300" : ""}`}
             style={{
-              borderLeft: `3px solid ${!n.lida ? config.borderColor : "transparent"}`,
-              background: !n.lida ? config.bgUnread : "#fff",
+              borderLeft: `4px solid ${isRadar ? "#EA580C" : (!n.lida ? config.borderColor : "transparent")}`,
+              background: isRadar && !n.lida ? "linear-gradient(90deg, #FFF7ED 0%, #FEF3C7 100%)" : (!n.lida ? config.bgUnread : "#fff"),
               borderBottom: "1px solid rgba(0,0,0,0.04)",
             }}
             onClick={() => handleClick(n)}
@@ -223,9 +233,9 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
                 <p
                   className="leading-tight"
                   style={{
-                    fontSize: 13,
-                    fontWeight: !n.lida ? 600 : 500,
-                    color: !n.lida ? "#1F2937" : "#6B7280",
+                    fontSize: isRadar ? 14 : 13,
+                    fontWeight: isRadar ? 700 : (!n.lida ? 600 : 500),
+                    color: isRadar && !n.lida ? "#9A3412" : (!n.lida ? "#1F2937" : "#6B7280"),
                   }}
                 >
                   {!n.lida && (
