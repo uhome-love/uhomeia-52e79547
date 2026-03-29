@@ -372,7 +372,7 @@ export function OportunidadesDoDia() {
                   {naRoleta
                     ? "Aguardando leads"
                     : !podeFazerRoleta
-                    ? `${tarefasAtrasadas} tarefa(s) atrasada(s)`
+                    ? `${tarefasAtrasadas} lead(s) sem tarefa`
                     : "Fora da fila"}
                 </p>
               </div>
