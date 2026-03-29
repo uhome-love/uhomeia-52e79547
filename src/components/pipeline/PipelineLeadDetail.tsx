@@ -363,11 +363,9 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
           {/* Row 3: Actions bar — horizontal scroll on mobile */}
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1">
             {lead.telefone && (
-              <a href={`tel:${lead.telefone}`} className="shrink-0">
-                <Button variant="outline" size="sm" className="h-9 text-xs gap-1 rounded-lg px-2.5 whitespace-nowrap">
-                  <Phone className="h-3.5 w-3.5" /> Ligar
-                </Button>
-              </a>
+              <Button variant="outline" size="sm" className="shrink-0 h-9 text-xs gap-1 rounded-lg px-2.5 whitespace-nowrap" onClick={() => setIsCallOpen(true)}>
+                <Phone className="h-3.5 w-3.5" /> Ligar
+              </Button>
             )}
             {lead.telefone && (
               <Button variant="outline" size="sm" className="shrink-0 h-9 text-xs gap-1 rounded-lg px-2.5 whitespace-nowrap border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950" onClick={() => setWhatsappTemplatesOpen(true)}>
