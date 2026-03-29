@@ -133,7 +133,7 @@ export default function LeadMatchesWidget({ leadId, leadNome, leadTelefone }: Pr
       )}
 
       {/* Match cards */}
-      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+      <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-1">
         {filtered.map(m => {
           const p = m.property;
           if (!p) return null;
@@ -144,80 +144,66 @@ export default function LeadMatchesWidget({ leadId, leadNome, leadTelefone }: Pr
             <div
               key={m.id}
               className={cn(
-                "border rounded-lg p-2.5 space-y-1.5 transition-all",
+                "border rounded-lg overflow-hidden max-h-[200px] transition-all flex flex-col",
                 m.status === "descartado" && "opacity-40",
                 m.status === "favorito" && "border-amber-500/30 bg-amber-500/5",
               )}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <Badge variant="outline" className={cn("text-[9px] font-bold px-1.5 py-0", badge.cls)}>
-                      {badge.label}
-                    </Badge>
-                    {statusIcon && <statusIcon.icon className={cn("h-3 w-3", statusIcon.cls)} />}
-                  </div>
-                  <p className="text-xs font-semibold text-foreground mt-1 truncate">
-                    {p.titulo || p.empreendimento || `Cód. ${p.codigo}`}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    📍 {p.bairro} · {p.dormitorios}d{p.suites ? `/${p.suites}s` : ""} · {p.vagas}v
-                    {p.area_privativa ? ` · ${p.area_privativa}m²` : ""}
-                  </p>
-                </div>
-                {p.fotos?.[0] && (
-                  <img src={p.fotos[0]} alt="" className="h-12 w-16 rounded object-cover shrink-0" />
-                )}
-              </div>
-
-              {p.valor_venda && (
-                <p className="text-xs font-bold text-primary">{formatCurrency(Number(p.valor_venda))}</p>
+              {p.fotos?.[0] && (
+                <img src={p.fotos[0]} alt="" className="h-[100px] w-full object-cover shrink-0" />
               )}
-
-              {/* Score breakdown */}
-              <div className="flex flex-wrap gap-1">
-                {Object.entries(m.score_breakdown || {}).map(([key, val]) => (
-                  <span key={key} className="text-[8px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                    {key}: {val as any}pts
-                  </span>
-                ))}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 pt-1">
-                <Button
-                  size="sm"
-                  variant={m.status === "favorito" ? "default" : "ghost"}
-                  className="h-6 text-[9px] px-2 gap-1"
-                  onClick={() => updateMatchStatus({ matchId: m.id, status: m.status === "favorito" ? "novo" : "favorito" })}
-                >
-                  <Star className={cn("h-3 w-3", m.status === "favorito" && "fill-current")} />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 text-[9px] px-2 gap-1 text-emerald-600"
-                  onClick={() => handleCopyWhatsApp(m)}
-                  title="Copiar para WhatsApp"
-                >
-                  <Send className="h-3 w-3" /> WhatsApp
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 text-[9px] px-2 gap-1"
-                  onClick={() => window.open(`/imovel/${p.codigo}`, "_blank")}
-                >
-                  <ExternalLink className="h-3 w-3" /> Ver
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 text-[9px] px-2 gap-1 text-destructive"
-                  onClick={() => updateMatchStatus({ matchId: m.id, status: "descartado" })}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+              <div className="p-2 flex flex-col gap-1 flex-1 min-h-0">
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className={cn("text-[10px] font-bold px-1.5 py-0.5", badge.cls)}>
+                    {badge.label}
+                  </Badge>
+                  {statusIcon && <statusIcon.icon className={cn("h-3 w-3", statusIcon.cls)} />}
+                </div>
+                <p className="text-xs font-medium text-foreground truncate">
+                  {p.titulo || p.empreendimento || `Cód. ${p.codigo}`}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {p.bairro} · {p.dormitorios}d{p.suites ? `/${p.suites}s` : ""} · {p.vagas}v
+                  {p.area_privativa ? ` · ${p.area_privativa}m²` : ""}
+                </p>
+                {p.valor_venda && (
+                  <p className="text-xs font-medium text-[#4F46E5]">{formatCurrency(Number(p.valor_venda))}</p>
+                )}
+                <div className="flex items-center gap-1 mt-auto">
+                  <Button
+                    size="sm"
+                    variant={m.status === "favorito" ? "default" : "ghost"}
+                    className="h-6 text-[11px] px-2 py-1 gap-1"
+                    onClick={() => updateMatchStatus({ matchId: m.id, status: m.status === "favorito" ? "novo" : "favorito" })}
+                  >
+                    <Star className={cn("h-3 w-3", m.status === "favorito" && "fill-current")} />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-[11px] px-2 py-1 gap-1 text-emerald-600"
+                    onClick={() => handleCopyWhatsApp(m)}
+                    title="Copiar para WhatsApp"
+                  >
+                    <Send className="h-3 w-3" /> WA
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-[11px] px-2 py-1 gap-1"
+                    onClick={() => window.open(`/imovel/${p.codigo}`, "_blank")}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-[11px] px-2 py-1 gap-1 text-destructive"
+                    onClick={() => updateMatchStatus({ matchId: m.id, status: "descartado" })}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           );

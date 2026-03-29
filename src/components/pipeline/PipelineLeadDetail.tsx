@@ -656,7 +656,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setHomiOpen(false); setHomiInitialPrompt(undefined); }}>✕</Button>
             </div>
             <ScrollArea className="flex-1">
-              <div className="p-3">
+              <div className="p-3 [&_p]:break-words [&_p]:text-[13px] [&_p]:leading-[1.65] [&_pre]:whitespace-pre-wrap">
                 <HomiLeadAssistant
                   leadId={lead.id}
                   leadNome={lead.nome}

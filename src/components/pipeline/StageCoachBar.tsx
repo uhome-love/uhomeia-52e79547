@@ -317,9 +317,9 @@ export default function StageCoachBar({
       )}
 
       {/* Line 1 */}
-      <div className="flex items-center gap-2 w-full">
-        <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-        <p className="flex-1 min-w-0">
+      <div className="flex items-center gap-2 w-full flex-nowrap overflow-hidden">
+        <span className={`inline-block w-[6px] h-[6px] rounded-full shrink-0 ${dotColor}`} />
+        <p className="flex-1 min-w-0 truncate">
           <span className="font-medium text-foreground text-xs">{config.diagnostic}</span>
           {sequenceInfo && (
             <span className="text-muted-foreground text-xs ml-2">
