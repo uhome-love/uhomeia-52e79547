@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { X, Copy, ExternalLink, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -208,7 +209,7 @@ export default function WhatsAppFocusFlow({ isOpen, onClose, lead, stageTipo, on
     negociacao: "Negociação", proposta: "Proposta",
   };
 
-  return (
+  return createPortal(
     <div
       style={{
         position: "fixed", inset: 0, zIndex: 9999,
@@ -414,6 +415,7 @@ export default function WhatsAppFocusFlow({ isOpen, onClose, lead, stageTipo, on
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
