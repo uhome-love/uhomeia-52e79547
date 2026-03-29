@@ -628,6 +628,23 @@ async function distributeSingleLead(
     return { success: false, reason: "update_failed", error: error.message };
   }
 
+  // FIX Bug 2: Sync roleta_fila for single lead distribution
+  if (segmentoId) {
+    supabase.rpc("increment_roleta_fila", {
+      p_corretor_profile_id: chosen.corretorId,
+      p_segmento_id: segmentoId,
+      p_data: getTodayDateStr(),
+    }).then((r: any) => { if (r?.error) console.warn("roleta_fila sync:", r.error.message); });
+  }
+
+  // Log in distribuicao_historico for fair counting
+  await supabase.from("distribuicao_historico").insert({
+    pipeline_lead_id: leadId,
+    corretor_id: chosen.authUserId,
+    segmento_id: segmentoId ? undefined : undefined, // pipeline_segmentos FK
+    acao: "distribuido",
+  }).then(r => { if (r.error) console.warn("distribuicao_historico insert:", r.error.message); });
+
   const distRes = await supabase.from("roleta_distribuicoes").insert({
     lead_id: leadId,
     corretor_id: chosen.corretorId,
