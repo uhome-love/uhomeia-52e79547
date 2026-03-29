@@ -266,8 +266,8 @@ export default function StageCoachBar({
           diagnostic: "Lead em negociação — foco em fechar o negócio!",
           color: "border-red-500/30 bg-red-50/50 dark:bg-red-950/20",
           actions: [
-            { label: "Follow-up proposta", icon: Phone, homiPrompt: "Gere script de follow-up da proposta para este lead em negociação. Formato: script Corretor/Cliente curto." },
-            { label: "Quebrar objeção", icon: MessageSquare, homiPrompt: "O lead recebeu proposta mas não fechou. Gere 2 mensagens WhatsApp curtas para quebrar objeções e fechar o negócio." },
+            { label: "Follow-up proposta", icon: Phone, homiPrompt: "Gere script de follow-up da proposta para este lead em negociação. Formato: apenas script Corretor/Cliente curto. IMPORTANTE: Retorne SOMENTE o script de ligação no formato Corretor/Cliente. Nada mais. Sem análise, sem WhatsApp, sem recomendações." },
+            { label: "Quebrar objeção", icon: MessageSquare, homiPrompt: "O lead recebeu proposta mas não fechou. Formato: apenas 2 mensagens WhatsApp curtas para quebrar objeções e fechar o negócio. IMPORTANTE: Retorne SOMENTE as mensagens de WhatsApp prontas para copiar. Nada mais. Sem análise, sem script, sem recomendações." },
           ],
           messages: [
             {
