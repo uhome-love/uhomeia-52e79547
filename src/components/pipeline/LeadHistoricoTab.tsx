@@ -46,6 +46,7 @@ interface Props {
   onToggleFixar: (id: string, fixada: boolean) => Promise<void>;
   onAddTarefa: (data: Partial<PipelineTarefa>) => Promise<void>;
   onReload: () => void;
+  onNextAction?: () => void;
 }
 
 const ATIVIDADE_TIPOS: Record<string, { label: string; icon: any }> = {
