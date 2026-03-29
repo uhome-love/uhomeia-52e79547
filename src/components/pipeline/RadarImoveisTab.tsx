@@ -744,8 +744,8 @@ Responda SOMENTE com o JSON, sem markdown.`;
   // ── Typesense search with broadening fallback ──
   const buildTypesenseFilters = useCallback((broaden = false): string => {
     const filterParts: string[] = ["valor_venda:>0"];
-    if (profileForm.bairros.length === 1) filterParts.push(`bairro:=${profileForm.bairros[0]}`);
-    else if (profileForm.bairros.length > 1) filterParts.push(`bairro:[${profileForm.bairros.join(",")}]`);
+    if (profileForm.bairros.length === 1) filterParts.push(`bairro:=\`${profileForm.bairros[0]}\``);
+    else if (profileForm.bairros.length > 1) filterParts.push(`bairro:[\`${profileForm.bairros.join("`,`")}\`]`);
     if (profileForm.valor_min) filterParts.push(`valor_venda:>=${parseFloat(profileForm.valor_min) * (broaden ? 0.7 : 0.85)}`);
     if (profileForm.valor_max) filterParts.push(`valor_venda:<=${parseFloat(profileForm.valor_max) * (broaden ? 1.4 : 1.2)}`);
     if (!broaden && profileForm.dormitorios_min) {
