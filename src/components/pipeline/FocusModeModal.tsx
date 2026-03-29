@@ -444,10 +444,10 @@ export default function FocusModeModal({ open, onClose, pipelineTipo = "leads" }
         </div>
 
         {/* BODY */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto flex flex-col">
           {configPhase ? (
             /* ═══ CONFIG SCREEN ═══ */
-            <div className="flex flex-col items-center justify-center min-h-full px-4 py-8">
+            <div className="flex flex-col items-center justify-center min-h-full px-4 py-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
