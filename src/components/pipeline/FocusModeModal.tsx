@@ -383,6 +383,7 @@ export default function FocusModeModal({ open, onClose, pipelineTipo = "leads" }
     }
   }, [currentLead, corretorId, discardReason, discardObs, stages, goToNext]);
 
+  const progressPercent = leads.length > 0 ? ((currentIndex + 1) / leads.length) * 100 : 0;
 
   if (!open) return null;
 
