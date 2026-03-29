@@ -23,7 +23,7 @@ export default function LevelProgressBar({ points, compact = false }: Props) {
     );
   }
 
-  const isImmersive = !compact;
+  
 
   return (
     <div className="space-y-2">
@@ -34,26 +34,17 @@ export default function LevelProgressBar({ points, compact = false }: Props) {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span
-                style={isImmersive ? { fontSize: 22, color: "#fff" } : undefined}
-                className={isImmersive ? "font-black" : "text-lg font-display font-extrabold text-foreground"}
-              >
+              <span className="text-[22px] font-black text-foreground">
                 {points} pts
               </span>
               <Badge
                 variant="outline"
-                className={`font-semibold ${level.color}`}
-                style={isImmersive ? {
-                  fontSize: 12,
-                  background: "rgba(34,197,94,0.15)",
-                  color: "#86efac",
-                  border: "1px solid rgba(34,197,94,0.4)",
-                } : { fontSize: 10 }}
+                className={`text-xs font-semibold ${level.color}`}
               >
                 {level.emoji} {level.label}
               </Badge>
             </div>
-            <p style={isImmersive ? { fontSize: 14, color: "rgba(255,255,255,0.8)" } : { fontSize: 10 }} className={isImmersive ? "" : "text-muted-foreground"}>
+            <p className="text-sm text-muted-foreground">
               {next ? `${pointsToNext} pts para ${next.emoji} ${next.label}` : "Nível máximo alcançado!"}
             </p>
           </div>
@@ -61,8 +52,7 @@ export default function LevelProgressBar({ points, compact = false }: Props) {
       </div>
       <div className="relative">
         <div
-          className="h-2.5 w-full rounded-full overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.1)" }}
+          className="h-2.5 w-full rounded-full overflow-hidden bg-muted"
         >
           <motion.div
             className="h-full rounded-full"
