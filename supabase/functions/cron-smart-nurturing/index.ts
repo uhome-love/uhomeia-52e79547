@@ -261,7 +261,7 @@ async function criarVitrine(
   const imovelIds = imoveis.map((i) => i.id);
   const imovelCodigos = imoveis.map((i) => i.codigo);
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseSite
     .from("vitrines")
     .insert({
       created_by: lead.corretor_id,           // obrigatório
