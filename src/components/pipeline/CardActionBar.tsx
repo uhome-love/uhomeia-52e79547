@@ -70,8 +70,8 @@ export default function CardActionBar({
         {/* Mensagem */}
         <button
           onClick={onWhatsApp}
-          style={{ ...btnBase, color: "#4F46E5" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#EEF2FF"; }}
+          style={{ ...btnBase, color: "#16a34a" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#EAF3DE"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
           <MessageCircle style={{ width: 12, height: 12 }} />
