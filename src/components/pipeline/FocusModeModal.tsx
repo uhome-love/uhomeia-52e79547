@@ -212,6 +212,11 @@ export default function FocusModeModal({ open, onClose, pipelineTipo = "leads" }
     setActivityRegistered(false);
     setTaskCreated(false);
     setPhoneCopied(false);
+    setShowAdvanceStage(false);
+    setAdvanceStageId("");
+    setShowDiscard(false);
+    setDiscardReason("");
+    setDiscardObs("");
   }, []);
 
   const goToNext = useCallback(() => {
