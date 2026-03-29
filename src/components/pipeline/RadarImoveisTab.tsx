@@ -458,6 +458,19 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
         })(),
         status_imovel: currentProfile.radar_status_imovel || "qualquer",
       }));
+    } else if (leadData?.empreendimento) {
+      // Auto-fill from empreendimento inference when no saved profile exists
+      const inferred = inferFromEmpreendimento(leadData.empreendimento);
+      if (inferred) {
+        setProfileForm(prev => ({
+          ...prev,
+          bairros: prev.bairros.length > 0 ? prev.bairros : inferred.bairros,
+          tipos: prev.tipos.length > 0 ? prev.tipos : inferred.tipos,
+          valor_min: prev.valor_min || String(inferred.valor_min),
+          valor_max: prev.valor_max || String(inferred.valor_max),
+        }));
+        console.log("[Match] Auto-inferred profile from empreendimento:", leadData.empreendimento, inferred);
+      }
     }
   }, [savedProfile, currentProfile, leadData?.valor_estimado]);
 
