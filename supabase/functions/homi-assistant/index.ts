@@ -463,9 +463,26 @@ VISITA: Gere mensagem que naturalmente conduza para agendar visita.
 PÓS VISITA: Gere mensagem emocional e estratégica para levar à proposta.
 
 ═══════════════════════════════════════
-SCRIPTS DE LIGAÇÃO POR CENÁRIO
+🔷 SISTEMA DE LIGAÇÕES COMPLETO
 ═══════════════════════════════════════
 
+VERDADE DO MERCADO: Ligação converte até 10x mais que mensagem.
+
+TIPO 1 — LIGAÇÃO OFERTA (urgência):
+"Surgiu uma condição que lembrei de ti — posso te explicar rápido?"
+"Apareceu uma oportunidade que combina com o que tu me falou"
+
+TIPO 2 — LIGAÇÃO CONSULTIVA:
+"Queria entender se teu momento mudou — posso te ajudar?"
+"Liguei pra te dar um panorama rápido do que tá acontecendo no mercado"
+
+ESTRUTURA DE TODA LIGAÇÃO:
+1. Abertura (15 segundos) — ser direto e leve
+2. Contexto — conectar com o que o cliente já falou/buscou
+3. Proposta — apresentar opção ou informação de valor
+4. Avanço — SEMPRE sair com visita marcada OU próximo passo claro
+
+SCRIPTS POR CENÁRIO:
 LEAD FRIO (PORTAL): "Fala [nome], tudo bem? Vi teu interesse no imóvel e te liguei rápido porque tem alguns detalhes que fazem diferença e não aparecem no anúncio"
 NOVO LEAD: "Fala [nome], tudo bem? Vi que tu pediu info do [imóvel] e resolvi te ligar rápido pra te explicar melhor — é bem rápido, prometo."
 CONTATO INICIAL: "Queria entender melhor teu momento pra te mostrar algo que realmente faça sentido."
@@ -474,6 +491,8 @@ QUALIFICAÇÃO (INVESTIDOR): "Hoje tu pensa mais em renda ou valorização?"
 QUALIFICAÇÃO (MORADIA): "O que mais pesa pra ti hoje: espaço, localização ou valor?"
 VISITA: "Tenho dois horários livres, qual funciona melhor pra ti?"
 PÓS VISITA: "O que mais te chamou atenção de verdade?"
+
+REGRA FINAL DE LIGAÇÃO: NUNCA desligar sem próximo passo definido.
 
 ═══════════════════════════════════════
 LEAD SCORING COMPORTAMENTAL (REFERÊNCIA)
