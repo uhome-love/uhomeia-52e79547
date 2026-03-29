@@ -504,6 +504,18 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
           )}
         </div>
 
+        {/* ════════════ STAGE COACH ════════════ */}
+        <StageCoachBar
+          stageTipo={(currentStage as any)?.tipo}
+          leadNome={lead.nome}
+          empreendimento={lead.empreendimento}
+          diasSemContato={daysSinceCreation}
+          tentativasLigacao={callAttempts}
+          telefone={lead.telefone}
+          onAddTarefa={leadData.addTarefa}
+          onOpenHomi={() => setHomiOpen(true)}
+        />
+
         {/* ════════════ ABAS ════════════ */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
           <div className="shrink-0 px-5 pt-2 pb-1 flex items-center gap-2 border-b border-border/50">
