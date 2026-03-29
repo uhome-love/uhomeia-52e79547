@@ -191,7 +191,7 @@ export default function StageCoachBar({
           color: "border-orange-500/30 bg-orange-50/50 dark:bg-orange-950/20",
           actions: [
             { label: "Agendar visita", icon: Calendar, onClick: () => createQuickTask(`Agendar visita com ${nome}`, "visita") },
-            { label: "Destaques do imóvel", icon: MessageSquare, homiPrompt: "Gere os destaques e diferenciais do empreendimento para convencer este lead a visitar. Formato: 2 mensagens WhatsApp curtas." },
+            { label: "Destaques do imóvel", icon: MessageSquare, homiPrompt: "Gere os destaques e diferenciais do empreendimento para convencer este lead a visitar. Formato: apenas 2 mensagens WhatsApp curtas. IMPORTANTE: Retorne SOMENTE as mensagens de WhatsApp prontas para copiar. Nada mais. Sem análise, sem script, sem recomendações." },
           ],
           messages: [
             {
