@@ -817,7 +817,7 @@ export default function FocusModeModal({ open, onClose, pipelineTipo = "leads" }
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {stages.filter(s => s.id !== currentLead?.stage_id_raw && s.tipo !== "descarte").map(s => (
+                          {stages.filter(s => s.id !== currentLead?.stage_id && s.tipo !== "descarte").map(s => (
                             <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                           ))}
                         </SelectContent>
