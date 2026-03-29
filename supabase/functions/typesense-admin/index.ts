@@ -248,9 +248,9 @@ serve(async (req) => {
       });
     }
 
-    // ═══ START REINDEX (non-blocking — resets state, cron does the work) ═══
+    // ═══ START REINDEX (from properties table — no Jetimob dependency) ═══
     if (action === "start_reindex") {
-      // First, ensure the collection exists (create if not)
+      // Ensure the collection exists
       const collCheck = await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, `/collections/${COLLECTION_NAME}`);
       if (collCheck.status === 404) {
         await typesenseFetch(TYPESENSE_HOST, TYPESENSE_ADMIN_API_KEY, "/collections", {
@@ -258,6 +258,41 @@ serve(async (req) => {
           body: JSON.stringify(SCHEMA),
         });
       }
+
+      // Count active properties in the database
+      const { count, error: countErr } = await db
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("ativo", true);
+
+      const totalItems = count || 0;
+      const pageSize = 500;
+      const totalPages = Math.ceil(totalItems / pageSize);
+
+      // Reset sync state
+      await db.from("typesense_sync_state").update({
+        status: "running",
+        next_page: 1,
+        total_pages: totalPages,
+        total_indexed: 0,
+        total_errors: 0,
+        started_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        finished_at: null,
+        last_indexed_at: null,
+      }).eq("id", "default");
+
+      console.log(`[typesense-admin] Reindex started from DB: ${totalItems} properties, ${totalPages} pages`);
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: "Reindex iniciado em background (fonte: banco de dados)",
+        total_items: totalItems,
+        total_pages: totalPages,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
       // Estimate total pages from Jetimob
       const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
