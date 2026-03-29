@@ -294,45 +294,8 @@ serve(async (req) => {
       });
     }
 
-      // Estimate total pages from Jetimob
-      const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
-      if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY not configured");
-
-      const probeUrl = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=1&pageSize=1`;
-      const probeResp = await fetch(probeUrl, { headers: { Accept: "application/json" } });
-      const probeData = await probeResp.json();
-      const totalItems = probeData?.total || probeData?.totalResults || 25000;
-      const pageSize = 500;
-      const totalPages = Math.ceil(totalItems / pageSize);
-
-      // Reset sync state
-      await db.from("typesense_sync_state").update({
-        status: "running",
-        next_page: 1,
-        total_pages: totalPages,
-        total_indexed: 0,
-        total_errors: 0,
-        started_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        finished_at: null,
-        last_indexed_at: null,
-      }).eq("id", "default");
-
-      console.log(`[typesense-admin] Reindex started: ${totalItems} items, ${totalPages} pages`);
-
-      return new Response(JSON.stringify({
-        success: true,
-        message: "Reindex iniciado em background",
-        total_items: totalItems,
-        total_pages: totalPages,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ═══ PROCESS NEXT BATCH (called by pg_cron) ═══
+    // ═══ PROCESS NEXT BATCH (called by pg_cron — reads from properties table) ═══
     if (action === "process_next_batch") {
-      // Read current state
       const { data: state, error: stateErr } = await db
         .from("typesense_sync_state")
         .select("*")
@@ -353,22 +316,24 @@ serve(async (req) => {
 
       const currentPage = state.next_page || 1;
       const pageSize = 500;
+      const offset = (currentPage - 1) * pageSize;
 
-      // Fetch from Jetimob
-      const JETIMOB_API_KEY = Deno.env.get("JETIMOB_API_KEY");
-      if (!JETIMOB_API_KEY) throw new Error("JETIMOB_API_KEY not configured");
+      // Fetch from properties table (ordered by id for stable pagination)
+      const { data: rows, error: fetchErr } = await db
+        .from("properties")
+        .select("codigo, titulo, descricao, tipo, contrato, situacao, status_imovel, endereco, numero, bairro, cidade, latitude, longitude, dormitorios, suites, banheiros, vagas, area_privativa, area_total, valor_venda, valor_locacao, valor_condominio, empreendimento, condominio_nome, construtora, is_uhome, is_destaque, fotos, fotos_full, entrega_ano, entrega_mes")
+        .eq("ativo", true)
+        .order("id", { ascending: true })
+        .range(offset, offset + pageSize - 1);
 
-      const url = `https://api.jetimob.com/webservice/${JETIMOB_API_KEY}/imoveis/todos?v=6&page=${currentPage}&pageSize=${pageSize}`;
-      const response = await fetch(url, { headers: { Accept: "application/json" } });
-      if (!response.ok) throw new Error(`Jetimob fetch failed: ${response.status}`);
-      const raw = await response.json();
-      const items = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.result) ? raw.result : Array.isArray(raw) ? raw : [];
+      if (fetchErr) throw new Error(`DB fetch failed: ${fetchErr.message}`);
 
+      const items = rows || [];
       let indexed = 0;
       let errors = 0;
 
       if (items.length > 0) {
-        const docs = items.map(mapImovelToDocument);
+        const docs = items.map(mapPropertyToDocument);
         const jsonl = docs.map(d => JSON.stringify(d)).join("\n");
         const resp = await fetch(`https://${TYPESENSE_HOST}/collections/${COLLECTION_NAME}/documents/import?action=upsert`, {
           method: "POST",
@@ -406,7 +371,7 @@ serve(async (req) => {
         }).eq("id", "default");
       }
 
-      console.log(`[typesense-admin] Batch page=${currentPage}: ${indexed} indexed, ${errors} errors, hasMore=${hasMore}`);
+      console.log(`[typesense-admin] Batch page=${currentPage}: ${indexed} indexed, ${errors} errors, hasMore=${hasMore} (source: DB)`);
 
       return new Response(JSON.stringify({
         success: true,
