@@ -140,20 +140,7 @@ const PipelineCard = memo(function PipelineCard({
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!lead.telefone) return;
-    window.open(`tel:${lead.telefone}`, "_self");
-    if (user) {
-      supabase.from("pipeline_atividades").insert({
-        pipeline_lead_id: lead.id, tipo: "ligacao", titulo: "Ligação realizada", created_by: user.id,
-      }).then(() => {});
-      supabase.from("pipeline_leads").update({
-        ultima_acao_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-      } as any).eq("id", lead.id).then(() => {});
-      if (stage?.tipo === "novo_lead" && onMoveLead) {
-        const contatoStage = stages.find(s => s.tipo === "atendimento" || s.nome.toLowerCase().includes("contato"));
-        if (contatoStage) onMoveLead(lead.id, contatoStage.id);
-      }
-    }
-    toast.success("📞 Ligação registrada");
+    setIsCallOpen(true);
   };
 
   const handleWhatsApp = (e: React.MouseEvent) => {
