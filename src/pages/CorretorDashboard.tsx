@@ -171,7 +171,7 @@ export default function CorretorDashboard() {
   // Data hooks
   const { progress, goals, saveGoals } = useCorretorProgress();
   const motivation = useDailyMotivation();
-  const { missoes, missaoGeral, radarLeads, radarLoading, ranking, rankingLoading, userId } = useMissoesLeads();
+  const { missoes, missaoGeral, ranking, rankingLoading, userId } = useMissoesLeads();
   const { followUps, followUpsLoading, visitasHoje, visitasLoading, funil, funilLoading, totalLeads, evolucao, evolucaoLoading } = useCorretorHomeData();
   const { newlyUnlocked, dismissCelebration, unlocked } = useConquistas();
 
