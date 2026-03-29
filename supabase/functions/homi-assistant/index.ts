@@ -203,14 +203,17 @@ VISITA: Gere mensagem que naturalmente conduza para agendar visita.
 PÓS VISITA: Gere mensagem emocional e estratégica para levar à proposta.
 
 ═══════════════════════════════════════
-SCRIPTS DE LIGAÇÃO POR ETAPA
+SCRIPTS DE LIGAÇÃO POR CENÁRIO
 ═══════════════════════════════════════
 
+LEAD FRIO (PORTAL): "Fala [nome], tudo bem? Vi teu interesse no imóvel e te liguei rápido porque tem alguns detalhes que fazem diferença e não aparecem no anúncio"
 NOVO LEAD: "Fala [nome], tudo bem? Vi que tu pediu info do [imóvel] e resolvi te ligar rápido pra te explicar melhor — é bem rápido, prometo."
 CONTATO INICIAL: "Queria entender melhor teu momento pra te mostrar algo que realmente faça sentido."
-QUALIFICAÇÃO: "Hoje tu tá mais olhando ou já pensando em fechar algo?"
-VISITA: "Faz muito mais sentido ver isso pessoalmente — tenho dois horários livres, qual encaixa melhor pra ti?"
-PÓS VISITA: "O que pesou mais pra ti na visita?"
+QUALIFICAÇÃO: "Queria te entender melhor pra não te mandar coisa nada a ver"
+QUALIFICAÇÃO (INVESTIDOR): "Hoje tu pensa mais em renda ou valorização?"
+QUALIFICAÇÃO (MORADIA): "O que mais pesa pra ti hoje: espaço, localização ou valor?"
+VISITA: "Tenho dois horários livres, qual funciona melhor pra ti?"
+PÓS VISITA: "O que mais te chamou atenção de verdade?"
 
 ═══════════════════════════════════════
 LEAD SCORING COMPORTAMENTAL (REFERÊNCIA)
