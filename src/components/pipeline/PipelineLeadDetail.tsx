@@ -266,26 +266,32 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               </PopoverContent>
             </Popover>
 
-            <span className={`flex items-center gap-0.5 text-xs font-medium shrink-0 ${temperatureInfo.color}`}>
-              <TempIcon className="h-3 w-3" />
-              {temperatureInfo.label}
-            </span>
-
-            {lead.oportunidade_score != null && (() => {
-              const s = lead.oportunidade_score!;
-              const level = getScoreTemperature(s);
-              const cls = s >= 81 ? "text-red-500 font-black" : s >= 61 ? "text-orange-500 font-bold" : s >= 31 ? "text-amber-500 font-semibold" : "text-blue-500 font-semibold";
-              const emoji = s >= 81 ? "💎" : s >= 61 ? "⚡" : s >= 31 ? "🔥" : "🧊";
+            {(() => {
+              const isAtualizado = nextTask !== null;
+              const diasSemContato = noContactAlert
+                ? Math.floor(differenceInHoursSafe(new Date(), new Date((lead as any).ultima_acao_at || lead.created_at)) / 24)
+                : 0;
+              const motivosDesat: string[] = [];
+              if (!nextTask) motivosDesat.push('sem tarefa futura');
+              if (noContactAlert === 'critical') motivosDesat.push(`${diasSemContato}d sem contato`);
+              else if (noContactAlert === 'warning') motivosDesat.push(`${diasSemContato}d sem contato`);
               return (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={`text-xs shrink-0 cursor-help ${cls}`}>{emoji} {s}</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[240px]">
-                    <p className="font-semibold text-xs">{level.emoji} {level.label} ({level.range})</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{level.description}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <>
+                  {isAtualizado ? (
+                    <span className="flex items-center gap-1 text-xs font-medium text-success-700 bg-success-50 px-2 py-0.5 rounded-full shrink-0">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Atualizado
+                    </span>
+                  ) : (
+                    <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${noContactAlert === 'critical' ? 'text-danger-700 bg-danger-50' : 'text-warning-700 bg-warning-50'}`}>
+                      <AlertTriangle className="h-3 w-3" />
+                      Desatualizado
+                    </span>
+                  )}
+                  {!isAtualizado && motivosDesat.length > 0 && (
+                    <span className="text-[10px] text-muted-foreground shrink-0">{motivosDesat.join(' · ')}</span>
+                  )}
+                </>
               );
             })()}
 
