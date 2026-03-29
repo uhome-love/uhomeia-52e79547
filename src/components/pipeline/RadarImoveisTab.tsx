@@ -851,21 +851,26 @@ Responda SOMENTE com o JSON, sem markdown.`;
 
   const searchTypesense = useCallback(async (): Promise<ImovelResult[]> => {
     try {
+      // Use empreendimento name as q for relevance when available, otherwise "*"
+      const smartQ = leadData?.empreendimento && !profileForm.bairros.length && !profileForm.valor_max
+        ? leadData.empreendimento.replace(/\s+JW$/i, "").replace(/\s+João\s+Wallig$/i, "").trim()
+        : "*";
+
       // 1. Strict search
       const strictFilter = buildTypesenseFilters(false);
-      const result = await typesenseSearch({ q: "*", page: 1, per_page: 48, filter_by: strictFilter, sort_by: "data_atualizacao:desc" });
+      const result = await typesenseSearch({ q: smartQ, page: 1, per_page: 48, filter_by: strictFilter, sort_by: smartQ !== "*" ? "_text_match:desc,data_atualizacao:desc" : "data_atualizacao:desc" });
       if (result && result.data.length >= 3) return parseTypesenseResults(result.data);
 
       // 2. Broadened search (relax price, remove dorms/status/area)
       const broadFilter = buildTypesenseFilters(true);
-      const broadResult = await typesenseSearch({ q: "*", page: 1, per_page: 48, filter_by: broadFilter, sort_by: "data_atualizacao:desc" });
+      const broadResult = await typesenseSearch({ q: smartQ, page: 1, per_page: 48, filter_by: broadFilter, sort_by: smartQ !== "*" ? "_text_match:desc,data_atualizacao:desc" : "data_atualizacao:desc" });
       const items = parseTypesenseResults(broadResult?.data || []);
 
       // 3. If still empty AND we have bairro, search just by bairro + price
       if (items.length === 0 && profileForm.bairros.length > 0) {
         const minimalParts = ["valor_venda:>0"];
-        if (profileForm.bairros.length === 1) minimalParts.push(`bairro:=${profileForm.bairros[0]}`);
-        else minimalParts.push(`bairro:[${profileForm.bairros.join(",")}]`);
+        if (profileForm.bairros.length === 1) minimalParts.push(`bairro:=\`${profileForm.bairros[0]}\``);
+        else minimalParts.push(`bairro:[\`${profileForm.bairros.join("`,`")}\`]`);
         const minResult = await typesenseSearch({ q: "*", page: 1, per_page: 48, filter_by: minimalParts.join(" && "), sort_by: "data_atualizacao:desc" });
         return parseTypesenseResults(minResult?.data || []);
       }
