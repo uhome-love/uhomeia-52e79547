@@ -7,7 +7,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Phone, MessageCircle, Trophy, CheckCircle, Zap, Bot,
-  CalendarCheck, Wifi, WifiOff, Target, AlertTriangle, ListTodo,
+  WifiOff, Target, ListTodo,
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
