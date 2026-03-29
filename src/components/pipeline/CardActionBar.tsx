@@ -87,7 +87,7 @@ export default function CardActionBar({
               onClick={(e) => e.stopPropagation()}
               style={{
                 ...btnBase,
-                flex: "none", width: 40, color: "#64748B",
+                flex: "none", width: 40, color: "#888780",
                 borderRadius: "0 0 13px 0",
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f5f5"; }}
