@@ -715,6 +715,17 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
         leadId={lead.id}
         corretorNome={user?.user_metadata?.nome || ""}
       />
+
+      <NextActionModal
+        open={nextActionOpen}
+        onOpenChange={setNextActionOpen}
+        leadId={lead.id}
+        leadNome={lead.nome}
+        stages={stages}
+        currentStageId={lead.stage_id}
+        onMove={onMove}
+        onReload={leadData.reload}
+      />
     </Sheet>
   );
 }
