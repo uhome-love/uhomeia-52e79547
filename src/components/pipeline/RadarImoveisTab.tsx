@@ -127,6 +127,47 @@ const MEDAY_CATALOG: ImovelResult[] = [
 ];
 
 /* ═══════════════════════════════════════════
+   EMPREENDIMENTO INFERENCE MAP
+   ═══════════════════════════════════════════ */
+
+const EMPREENDIMENTO_INFER: Record<string, { bairros: string[]; tipos: string[]; valor_min: number; valor_max: number }> = {
+  "orygem": { bairros: ["Teresópolis"], tipos: ["casa"], valor_min: 800000, valor_max: 1200000 },
+  "connect": { bairros: ["Passo d'Areia"], tipos: ["apartamento"], valor_min: 300000, valor_max: 600000 },
+  "connect jw": { bairros: ["Passo d'Areia"], tipos: ["apartamento"], valor_min: 300000, valor_max: 600000 },
+  "high garden": { bairros: ["Rio Branco", "Boa Vista"], tipos: ["apartamento"], valor_min: 1200000, valor_max: 2500000 },
+  "high garden rio branco": { bairros: ["Rio Branco"], tipos: ["apartamento"], valor_min: 1400000, valor_max: 2000000 },
+  "high garden iguatemi": { bairros: ["Boa Vista"], tipos: ["apartamento"], valor_min: 1000000, valor_max: 1500000 },
+  "seen": { bairros: ["Três Figueiras", "Menino Deus"], tipos: ["apartamento"], valor_min: 1200000, valor_max: 2000000 },
+  "seen tres figueiras": { bairros: ["Três Figueiras"], tipos: ["apartamento"], valor_min: 1400000, valor_max: 2000000 },
+  "seen menino deus": { bairros: ["Menino Deus"], tipos: ["apartamento"], valor_min: 1100000, valor_max: 1600000 },
+  "casa bastian": { bairros: ["Três Figueiras"], tipos: ["casa"], valor_min: 3000000, valor_max: 6000000 },
+  "casa moinhos": { bairros: ["Moinhos de Vento"], tipos: ["apartamento"], valor_min: 4000000, valor_max: 8000000 },
+  "monjardin": { bairros: ["Petrópolis"], tipos: ["apartamento"], valor_min: 800000, valor_max: 1500000 },
+  "lake eyre": { bairros: ["Cristal"], tipos: ["apartamento"], valor_min: 600000, valor_max: 1200000 },
+  "open major": { bairros: ["Marechal Rondon"], tipos: ["apartamento"], valor_min: 200000, valor_max: 350000 },
+  "open alto ipiranga": { bairros: ["Jardim Carvalho"], tipos: ["apartamento"], valor_min: 200000, valor_max: 350000 },
+  "open bosque": { bairros: ["Passo d'Areia"], tipos: ["apartamento"], valor_min: 200000, valor_max: 350000 },
+  "go cidade baixa": { bairros: ["Cidade Baixa"], tipos: ["apartamento"], valor_min: 250000, valor_max: 450000 },
+  "go rio branco": { bairros: ["Rio Branco"], tipos: ["apartamento"], valor_min: 350000, valor_max: 550000 },
+  "nilo square": { bairros: ["Boa Vista"], tipos: ["apartamento"], valor_min: 2000000, valor_max: 3500000 },
+  "arte country": { bairros: ["Bela Vista"], tipos: ["apartamento"], valor_min: 3000000, valor_max: 5000000 },
+  "supreme": { bairros: ["Jardim do Salso"], tipos: ["apartamento"], valor_min: 400000, valor_max: 600000 },
+  "grand park": { bairros: ["São Sebastião"], tipos: ["apartamento"], valor_min: 400000, valor_max: 600000 },
+};
+
+/**
+ * Try to infer profile from lead's empreendimento name
+ */
+function inferFromEmpreendimento(emp: string): { bairros: string[]; tipos: string[]; valor_min: number; valor_max: number } | null {
+  const nEmp = normalize(emp);
+  // Try exact match first, then partial
+  for (const [key, val] of Object.entries(EMPREENDIMENTO_INFER)) {
+    if (nEmp.includes(normalize(key)) || normalize(key).includes(nEmp)) return val;
+  }
+  return null;
+}
+
+/* ═══════════════════════════════════════════
    HELPERS
    ═══════════════════════════════════════════ */
 
@@ -320,8 +361,15 @@ function scoreProperty(
   }
 
   // Calculate percentage based on actual max possible (not a fixed denominator)
-  // If no criteria were set, return 0
-  if (maxPossible === 0) return { score: 0, justificativas: ["⚙️ Configure o perfil para ver matches"] };
+  // If no criteria were set but we have an empreendimento match, give a base score
+  if (maxPossible === 0) {
+    // If we got bonus points from empreendimento or objeções, normalize them
+    if (score > 0) {
+      const pct = Math.min(Math.max(score, 30), 99);
+      return { score: pct, justificativas };
+    }
+    return { score: 15, justificativas: ["⚙️ Perfil incompleto — use IA Perfil"] };
+  }
   const pct = Math.min(Math.max(Math.round((score / maxPossible) * 100), 0), 99);
   return { score: pct, justificativas };
 }
@@ -410,6 +458,19 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
         })(),
         status_imovel: currentProfile.radar_status_imovel || "qualquer",
       }));
+    } else if (leadData?.empreendimento) {
+      // Auto-fill from empreendimento inference when no saved profile exists
+      const inferred = inferFromEmpreendimento(leadData.empreendimento);
+      if (inferred) {
+        setProfileForm(prev => ({
+          ...prev,
+          bairros: prev.bairros.length > 0 ? prev.bairros : inferred.bairros,
+          tipos: prev.tipos.length > 0 ? prev.tipos : inferred.tipos,
+          valor_min: prev.valor_min || String(inferred.valor_min),
+          valor_max: prev.valor_max || String(inferred.valor_max),
+        }));
+        console.log("[Match] Auto-inferred profile from empreendimento:", leadData.empreendimento, inferred);
+      }
     }
   }, [savedProfile, currentProfile, leadData?.valor_estimado]);
 
@@ -683,8 +744,8 @@ Responda SOMENTE com o JSON, sem markdown.`;
   // ── Typesense search with broadening fallback ──
   const buildTypesenseFilters = useCallback((broaden = false): string => {
     const filterParts: string[] = ["valor_venda:>0"];
-    if (profileForm.bairros.length === 1) filterParts.push(`bairro:=${profileForm.bairros[0]}`);
-    else if (profileForm.bairros.length > 1) filterParts.push(`bairro:[${profileForm.bairros.join(",")}]`);
+    if (profileForm.bairros.length === 1) filterParts.push(`bairro:=\`${profileForm.bairros[0]}\``);
+    else if (profileForm.bairros.length > 1) filterParts.push(`bairro:[\`${profileForm.bairros.join("`,`")}\`]`);
     if (profileForm.valor_min) filterParts.push(`valor_venda:>=${parseFloat(profileForm.valor_min) * (broaden ? 0.7 : 0.85)}`);
     if (profileForm.valor_max) filterParts.push(`valor_venda:<=${parseFloat(profileForm.valor_max) * (broaden ? 1.4 : 1.2)}`);
     if (!broaden && profileForm.dormitorios_min) {
@@ -790,21 +851,26 @@ Responda SOMENTE com o JSON, sem markdown.`;
 
   const searchTypesense = useCallback(async (): Promise<ImovelResult[]> => {
     try {
+      // Use empreendimento name as q for relevance when available, otherwise "*"
+      const smartQ = leadData?.empreendimento && !profileForm.bairros.length && !profileForm.valor_max
+        ? leadData.empreendimento.replace(/\s+JW$/i, "").replace(/\s+João\s+Wallig$/i, "").trim()
+        : "*";
+
       // 1. Strict search
       const strictFilter = buildTypesenseFilters(false);
-      const result = await typesenseSearch({ q: "*", page: 1, per_page: 48, filter_by: strictFilter, sort_by: "data_atualizacao:desc" });
+      const result = await typesenseSearch({ q: smartQ, page: 1, per_page: 48, filter_by: strictFilter, sort_by: smartQ !== "*" ? "_text_match:desc,data_atualizacao:desc" : "data_atualizacao:desc" });
       if (result && result.data.length >= 3) return parseTypesenseResults(result.data);
 
       // 2. Broadened search (relax price, remove dorms/status/area)
       const broadFilter = buildTypesenseFilters(true);
-      const broadResult = await typesenseSearch({ q: "*", page: 1, per_page: 48, filter_by: broadFilter, sort_by: "data_atualizacao:desc" });
+      const broadResult = await typesenseSearch({ q: smartQ, page: 1, per_page: 48, filter_by: broadFilter, sort_by: smartQ !== "*" ? "_text_match:desc,data_atualizacao:desc" : "data_atualizacao:desc" });
       const items = parseTypesenseResults(broadResult?.data || []);
 
       // 3. If still empty AND we have bairro, search just by bairro + price
       if (items.length === 0 && profileForm.bairros.length > 0) {
         const minimalParts = ["valor_venda:>0"];
-        if (profileForm.bairros.length === 1) minimalParts.push(`bairro:=${profileForm.bairros[0]}`);
-        else minimalParts.push(`bairro:[${profileForm.bairros.join(",")}]`);
+        if (profileForm.bairros.length === 1) minimalParts.push(`bairro:=\`${profileForm.bairros[0]}\``);
+        else minimalParts.push(`bairro:[\`${profileForm.bairros.join("`,`")}\`]`);
         const minResult = await typesenseSearch({ q: "*", page: 1, per_page: 48, filter_by: minimalParts.join(" && "), sort_by: "data_atualizacao:desc" });
         return parseTypesenseResults(minResult?.data || []);
       }
@@ -818,7 +884,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
       console.error("Typesense radar search error:", err);
       return [];
     }
-  }, [typesenseSearch, buildTypesenseFilters, profileForm.bairros]);
+  }, [typesenseSearch, buildTypesenseFilters, profileForm.bairros, profileForm.valor_max, leadData?.empreendimento]);
 
   // ── Main search ──
   const handleSearch = useCallback(async (silent = false) => {
@@ -862,7 +928,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
     // Deduplicate by codigo
     const seen = new Set<string>();
     const deduped = scored.filter(item => {
-      if (item.score <= 0) return false; // Hide 0% matches
+      if (item.score <= 0 && item.justificativas.some(j => j.includes("Descartado"))) return false; // Only hide explicitly discarded
       const key = item.codigo || normalize(item.nome || `${item.id}`);
       if (seen.has(key)) return false;
       seen.add(key);
@@ -1251,7 +1317,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
             </Card>
           )}
 
-          {/* ── Search button ── */}
+          {/* ── Search button + Vitrine ── */}
           <div className="flex gap-2">
             <Button className="flex-1 gap-2 h-9" onClick={() => { hasSearchedOnce.current = true; handleSearch(false); }} disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -1261,6 +1327,17 @@ Responda SOMENTE com o JSON, sem markdown.`;
               {aiExpanding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
               IA+
             </Button>
+            {searched && results.length > 0 && (
+              <Button
+                size="sm"
+                className="gap-1.5 h-9 bg-gradient-to-r from-violet-600 to-primary hover:from-violet-700 hover:to-primary/90 text-white"
+                onClick={handleCreateVitrine}
+                disabled={creatingVitrine}
+              >
+                {creatingVitrine ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                Vitrine{selectedResults.size > 0 ? ` (${selectedResults.size})` : ""}
+              </Button>
+            )}
           </div>
 
           {/* ── Loading ── */}
