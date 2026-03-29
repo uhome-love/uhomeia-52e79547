@@ -132,10 +132,10 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
           </div>
 
           <div>
-            <Label className="text-xs font-semibold mb-1 block">Empreendimento</Label>
+            <Label className="text-xs font-semibold mb-1 block">Empreendimento / Imóvel *</Label>
             {empreendimentos.length > 0 ? (
               <Select value={form.empreendimento} onValueChange={v => set("empreendimento", v)}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectTrigger className={`h-9 text-sm ${!form.empreendimento ? "border-amber-400" : ""}`}><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   {empreendimentos.map(e => (
                     <SelectItem key={e} value={e}>{e}</SelectItem>
@@ -143,7 +143,7 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
                 </SelectContent>
               </Select>
             ) : (
-              <Input value={form.empreendimento} onChange={e => set("empreendimento", e.target.value)} placeholder="Nome do empreendimento" className="h-9 text-sm" />
+              <Input value={form.empreendimento} onChange={e => set("empreendimento", e.target.value)} placeholder="Nome do empreendimento" className={`h-9 text-sm ${!form.empreendimento ? "border-amber-400" : ""}`} />
             )}
           </div>
 
