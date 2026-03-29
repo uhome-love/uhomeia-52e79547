@@ -808,10 +808,89 @@ export default function FocusModeModal({ open, onClose, pipelineTipo = "leads" }
                     </TabsContent>
                   </Tabs>
 
-                  {/* Advance button */}
+                  {/* Stage advance inline */}
+                  {showAdvanceStage && (
+                    <div className="mt-3 rounded-xl p-3 space-y-2" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                      <p className="text-xs font-semibold text-emerald-400">Avançar para qual etapa?</p>
+                      <Select value={advanceStageId} onValueChange={setAdvanceStageId}>
+                        <SelectTrigger className="h-8 text-xs border-0" style={{ background: "rgba(255,255,255,0.06)", color: "#e2e8f0" }}>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stages.filter(s => s.id !== currentLead?.stage_id_raw && s.tipo !== "descarte").map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 h-8 text-xs gap-1" style={{ background: "#10b981" }} disabled={!advanceStageId || saving} onClick={handleAdvanceStage}>
+                          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRightCircle className="w-3 h-3" />} Confirmar
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-8 text-xs text-gray-400 hover:text-white hover:bg-white/5" onClick={() => setShowAdvanceStage(false)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Discard inline */}
+                  {showDiscard && (
+                    <div className="mt-3 rounded-xl p-3 space-y-2" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                      <p className="text-xs font-semibold text-red-400">Motivo do descarte</p>
+                      <Select value={discardReason} onValueChange={setDiscardReason}>
+                        <SelectTrigger className="h-8 text-xs border-0" style={{ background: "rgba(255,255,255,0.06)", color: "#e2e8f0" }}>
+                          <SelectValue placeholder="Selecione o motivo..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DISCARD_REASONS.map(r => (
+                            <SelectItem key={r} value={r}>{r}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {discardReason === "Outro" && (
+                        <Input
+                          value={discardObs}
+                          onChange={(e) => setDiscardObs(e.target.value)}
+                          placeholder="Descreva..."
+                          className="h-8 text-xs border-0"
+                          style={{ background: "rgba(255,255,255,0.05)", color: "#e2e8f0" }}
+                        />
+                      )}
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 h-8 text-xs gap-1 bg-destructive hover:bg-destructive/90" disabled={!discardReason || saving} onClick={handleDiscardLead}>
+                          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />} Descartar
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-8 text-xs text-gray-400 hover:text-white hover:bg-white/5" onClick={() => setShowDiscard(false)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action buttons row */}
+                  {!showAdvanceStage && !showDiscard && (
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => { setShowAdvanceStage(true); setShowDiscard(false); }}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-[11px] py-2 rounded-lg transition-colors"
+                        style={{ background: "rgba(16,185,129,0.1)", color: "#34d399", border: "1px solid rgba(16,185,129,0.2)" }}
+                      >
+                        <ArrowRightCircle className="w-3.5 h-3.5" /> Avançar Etapa
+                      </button>
+                      <button
+                        onClick={() => { setShowDiscard(true); setShowAdvanceStage(false); }}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-[11px] py-2 rounded-lg transition-colors"
+                        style={{ background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Descartar Lead
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Advance to next lead button */}
                   <button
                     onClick={goToNext}
-                    className="w-full mt-4 flex items-center justify-center gap-1.5 text-xs py-2.5 rounded-lg transition-colors"
+                    className="w-full mt-3 flex items-center justify-center gap-1.5 text-xs py-2.5 rounded-lg transition-colors"
                     style={{
                       background: (activityRegistered || taskCreated) ? "linear-gradient(135deg, #4F46E5, #7C3AED)" : "transparent",
                       color: (activityRegistered || taskCreated) ? "#fff" : "#6b7280",
