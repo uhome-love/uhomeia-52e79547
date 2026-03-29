@@ -210,14 +210,15 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
         const route = getNotificationRoute(n);
         const isClickable = !!route;
         const { leadName, detail } = getContextDetails(n);
+        const isRadar = n.tipo === "radar_intencao";
 
         return (
           <div
             key={n.id}
-            className={`flex gap-3 px-4 py-3.5 group transition-colors ${isClickable ? "cursor-pointer" : ""}`}
+            className={`flex gap-3 px-4 py-3.5 group transition-colors ${isClickable ? "cursor-pointer" : ""} ${isRadar && !n.lida ? "ring-1 ring-orange-300" : ""}`}
             style={{
-              borderLeft: `3px solid ${!n.lida ? config.borderColor : "transparent"}`,
-              background: !n.lida ? config.bgUnread : "#fff",
+              borderLeft: `4px solid ${isRadar ? "#EA580C" : (!n.lida ? config.borderColor : "transparent")}`,
+              background: isRadar && !n.lida ? "linear-gradient(90deg, #FFF7ED 0%, #FEF3C7 100%)" : (!n.lida ? config.bgUnread : "#fff"),
               borderBottom: "1px solid rgba(0,0,0,0.04)",
             }}
             onClick={() => handleClick(n)}
