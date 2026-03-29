@@ -928,7 +928,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
     // Deduplicate by codigo
     const seen = new Set<string>();
     const deduped = scored.filter(item => {
-      if (item.score <= 0) return false; // Hide 0% matches
+      if (item.score <= 0 && item.justificativas.some(j => j.includes("Descartado"))) return false; // Only hide explicitly discarded
       const key = item.codigo || normalize(item.nome || `${item.id}`);
       if (seen.has(key)) return false;
       seen.add(key);
