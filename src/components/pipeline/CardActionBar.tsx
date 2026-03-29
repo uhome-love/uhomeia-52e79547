@@ -30,10 +30,10 @@ export default function CardActionBar({
     display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
     padding: "6px 4px", cursor: "pointer",
     background: "transparent", border: "none",
-    fontSize: 10, fontWeight: 500,
+    fontSize: 11, fontWeight: 600,
     fontFamily: "'Plus Jakarta Sans', sans-serif",
-    transition: "background 0.15s ease",
-    flex: 1, minWidth: 0,
+    transition: "background 0.15s ease, opacity 0.15s ease",
+    flex: 1, minWidth: 0, minHeight: 36,
   };
 
   const divider: React.CSSProperties = {
@@ -44,15 +44,15 @@ export default function CardActionBar({
     <div data-actions-area>
       <div style={{
         display: "flex", alignItems: "stretch",
-        borderTop: "0.5px solid var(--border)",
+        borderTop: "1px solid var(--border)",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}>
         {/* Ligar */}
         <button
           onClick={onCall}
-          style={{ ...btnBase, background: "#EAF3DE", color: "#27500A", borderRadius: "0 0 0 13px" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#DCE9CC"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "#EAF3DE"; }}
+          style={{ ...btnBase, background: "#4F46E5", color: "#ffffff", borderRadius: "0 0 0 13px" }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
         >
           <Phone style={{ width: 12, height: 12 }} />
           <span>Ligar</span>
