@@ -361,8 +361,15 @@ function scoreProperty(
   }
 
   // Calculate percentage based on actual max possible (not a fixed denominator)
-  // If no criteria were set, return 0
-  if (maxPossible === 0) return { score: 0, justificativas: ["⚙️ Configure o perfil para ver matches"] };
+  // If no criteria were set but we have an empreendimento match, give a base score
+  if (maxPossible === 0) {
+    // If we got bonus points from empreendimento or objeções, normalize them
+    if (score > 0) {
+      const pct = Math.min(Math.max(score, 30), 99);
+      return { score: pct, justificativas };
+    }
+    return { score: 15, justificativas: ["⚙️ Perfil incompleto — use IA Perfil"] };
+  }
   const pct = Math.min(Math.max(Math.round((score / maxPossible) * 100), 0), 99);
   return { score: pct, justificativas };
 }
