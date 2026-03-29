@@ -66,12 +66,16 @@ export default function StageCoachBar({
           ],
           messages: [
             {
-              title: "Apresentação inicial",
-              body: `Olá {{nome}}, tudo bem? 😊\n\nMe chamo [seu nome] e faço parte da equipe da UHome. Vi que você demonstrou interesse em {{empreendimento}}!\n\nPosso te ajudar com mais informações sobre o empreendimento, valores e condições especiais? 🏠`,
+              title: "🎯 Versão direta",
+              body: `Fala {{nome}}, tudo bem? Vi que tu pediu info do {{empreendimento}} e resolvi te mandar uma msg rápido — posso te explicar melhor?`,
             },
             {
-              title: "Follow-up sem resposta",
-              body: `Oi {{nome}}! Tentei contato anteriormente sobre {{empreendimento}}. Sei que a rotina é corrida, mas não queria que você perdesse as condições especiais que temos!\n\nQual o melhor horário para conversarmos? 📞`,
+              title: "Apresentação consultiva",
+              body: `Oi {{nome}}! 😊 Me chamo [seu nome], da UHome. Vi teu interesse em {{empreendimento}} e queria te mostrar algo que faz sentido pro teu momento. Posso te contar mais?`,
+            },
+            {
+              title: "Reativação criativa",
+              body: `{{nome}}, sei que a rotina é corrida! Mas não queria que tu perdesse as condições especiais de {{empreendimento}}. Qual o melhor horário pra gente trocar uma ideia rápida? 📞`,
             },
           ],
         };
@@ -86,12 +90,16 @@ export default function StageCoachBar({
           ],
           messages: [
             {
-              title: "Perguntas iniciais",
-              body: `{{nome}}, que bom que conseguimos conversar! 😊\n\nPra te ajudar melhor, me conta:\n\n1️⃣ O imóvel seria para moradia ou investimento?\n2️⃣ Qual região você prefere?\n3️⃣ Tem ideia de orçamento?\n4️⃣ Precisa de financiamento?\n\nCom essas infos consigo filtrar as melhores opções pra você!`,
+              title: "🎯 Versão direta",
+              body: `{{nome}}, queria entender melhor teu momento pra te mostrar algo que realmente faça sentido. Tu tá buscando pra morar ou investir?`,
             },
             {
-              title: "Follow-up conexão",
-              body: `Oi {{nome}}! Tudo certo? 😊\n\nEstou separando algumas opções que combinam com o que conversamos. Tem alguma preferência adicional que gostaria de me passar?\n\nFico à disposição! 🏡`,
+              title: "Perguntas estratégicas",
+              body: `{{nome}}, que bom que conseguimos conversar! 😊 Me conta: o imóvel seria pra moradia ou investimento? E qual região tu prefere? Com essas infos consigo filtrar as melhores opções!`,
+            },
+            {
+              title: "Follow-up conexão [Curiosidade]",
+              body: `Oi {{nome}}! Separei umas opções que combinam com o que conversamos. Tem uma em especial que acho que tu vai gostar — posso te mandar? 😊`,
             },
           ],
         };
@@ -106,12 +114,16 @@ export default function StageCoachBar({
           ],
           messages: [
             {
-              title: "Apresentação de imóveis",
-              body: `{{nome}}, separei algumas opções que combinam com o que você busca em {{empreendimento}}! 🏠✨\n\nVou te enviar uma vitrine personalizada com os imóveis que mais fazem sentido pro seu perfil.\n\nQualquer dúvida, estou aqui! 😊`,
+              title: "🎯 Versão direta",
+              body: `{{nome}}, hoje tu tá mais olhando ou já pensando em fechar algo? Pergunto pra saber como te ajudar melhor 😊`,
             },
             {
-              title: "Perguntas de perfil detalhado",
-              body: `{{nome}}, pra acertar em cheio na recomendação:\n\n🏠 Prefere apartamento ou casa?\n📐 Metragem ideal?\n🛏️ Quantos quartos precisa?\n🚗 Precisa de vaga de garagem?\n🐕 Tem pets?\n\nAssim consigo encontrar o match perfeito! 🎯`,
+              title: "Apresentação personalizada",
+              body: `{{nome}}, separei opções que combinam com o que tu busca em {{empreendimento}}! 🏠 Vou te enviar uma vitrine personalizada. Qualquer dúvida, tô aqui!`,
+            },
+            {
+              title: "Perfil detalhado [Consultivo]",
+              body: `{{nome}}, pra acertar em cheio: prefere apto ou casa? Quantos quartos? Precisa de vaga? Assim encontro o match perfeito pro teu perfil 🎯`,
             },
           ],
         };
@@ -126,12 +138,16 @@ export default function StageCoachBar({
           ],
           messages: [
             {
-              title: "Convite para visita",
-              body: `{{nome}}, tenho uma ótima notícia! 🎉\n\nAs unidades que combinam com o que você busca em {{empreendimento}} estão disponíveis para visita!\n\nQue tal conhecer pessoalmente? Posso agendar para esta semana:\n📅 Qual dia e horário ficaria melhor pra você?\n\nVai ser incrível te mostrar tudo ao vivo! 🏠✨`,
+              title: "🎯 Versão direta",
+              body: `{{nome}}, faz muito mais sentido ver isso pessoalmente — tenho dois horários livres, qual encaixa melhor pra ti?`,
             },
             {
-              title: "Destaques do empreendimento",
-              body: `{{nome}}, olha só os diferenciais de {{empreendimento}}:\n\n✅ Localização privilegiada\n✅ Acabamento premium\n✅ Área de lazer completa\n✅ Condições especiais de lançamento\n\nVale muito a pena conhecer pessoalmente! Vamos agendar? 📍`,
+              title: "Convite com urgência [Oportunidade]",
+              body: `{{nome}}, as unidades de {{empreendimento}} que combinam contigo estão disponíveis pra visita! Fica melhor pra ti durante a semana ou no sábado? 📅`,
+            },
+            {
+              title: "Destaques [Prova Social]",
+              body: `{{nome}}, vários clientes que visitaram {{empreendimento}} ficaram surpresos com o espaço ao vivo. Vale muito ver pessoalmente — quando fica bom pra ti? 🏠`,
             },
           ],
         };
@@ -147,11 +163,15 @@ export default function StageCoachBar({
           messages: [
             {
               title: "Lembrete D-1",
-              body: `{{nome}}, lembrando da nossa visita amanhã em {{empreendimento}}! 🏠\n\n📍 Endereço: [endereço]\n⏰ Horário: [horário]\n\nEstou te esperando! Se precisar reagendar, me avise com antecedência. 😊`,
+              body: `{{nome}}, lembrando da nossa visita amanhã em {{empreendimento}}! 📍 Te espero lá. Se precisar reagendar, me avise! 😊`,
             },
             {
               title: "Confirmação no dia",
-              body: `Bom dia, {{nome}}! 😊\n\nTudo pronto para nossa visita hoje em {{empreendimento}}!\n\nNos vemos em breve! Se tiver alguma dúvida no caminho, me chama. 📍🏡`,
+              body: `Bom dia, {{nome}}! Tudo pronto pra nossa visita hoje em {{empreendimento}}! Nos vemos em breve 🏡`,
+            },
+            {
+              title: "Reforço de importância [Escassez]",
+              body: `{{nome}}, separei as melhores unidades pra te mostrar amanhã. Algumas delas têm poucas disponíveis — vai ser ótimo ver ao vivo! 😊`,
             },
           ],
         };
@@ -166,12 +186,16 @@ export default function StageCoachBar({
           ],
           messages: [
             {
-              title: "Agradecimento pós-visita",
-              body: `{{nome}}, foi um prazer te receber na visita de {{empreendimento}}! 🏠😊\n\nO que achou do empreendimento? Alguma unidade chamou mais a sua atenção?\n\nPosso preparar uma simulação personalizada pra você analisar com calma. Me diz! 📊`,
+              title: "🎯 Versão direta",
+              body: `{{nome}}, o que pesou mais pra ti na visita? Quero te mandar uma simulação certeira 😊`,
             },
             {
-              title: "Envio de simulação",
-              body: `{{nome}}, preparei a simulação que conversamos! 📊\n\nSegue as condições para {{empreendimento}}:\n\n💰 Entrada: [valor]\n📅 Parcelas: [valor]\n🏦 Financiamento: [condições]\n\nO que acha? Posso detalhar melhor qualquer ponto! 😊`,
+              title: "Agradecimento + proposta",
+              body: `{{nome}}, foi um prazer te receber em {{empreendimento}}! 🏠 Preparei uma simulação personalizada — posso te enviar pra analisar com calma?`,
+            },
+            {
+              title: "Follow-up emocional [Oportunidade]",
+              body: `{{nome}}, imagina tu morando ali, com toda aquela estrutura no dia a dia... Preparei as condições especiais — posso te mostrar? 😊`,
             },
           ],
         };
@@ -188,11 +212,15 @@ export default function StageCoachBar({
           messages: [
             {
               title: "Follow-up proposta",
-              body: `{{nome}}, tudo bem? 😊\n\nConseguiu analisar a proposta que enviei de {{empreendimento}}?\n\nEstou à disposição para tirar qualquer dúvida ou ajustar as condições. Vamos encontrar o melhor caminho juntos! 🤝`,
+              body: `{{nome}}, conseguiu analisar a proposta de {{empreendimento}}? Tô aqui pra tirar qualquer dúvida ou ajustar as condições 🤝`,
             },
             {
-              title: "Senso de urgência",
-              body: `{{nome}}, passando pra te avisar que as condições especiais de {{empreendimento}} estão chegando ao fim! ⏳\n\nAs unidades mais procuradas estão sendo reservadas rapidamente. Não quero que você perca essa oportunidade!\n\nVamos fechar? 🏠🔑`,
+              title: "Urgência [Escassez]",
+              body: `{{nome}}, as condições especiais de {{empreendimento}} estão chegando ao fim! As unidades mais procuradas tão sendo reservadas. Vamos fechar? 🏠🔑`,
+            },
+            {
+              title: "Condições especiais [Oportunidade]",
+              body: `{{nome}}, consegui uma condição diferenciada pra ti em {{empreendimento}}. Posso te explicar? Acho que vai fazer sentido 😊`,
             },
           ],
         };
