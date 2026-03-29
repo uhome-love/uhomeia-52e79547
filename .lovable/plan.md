@@ -1,36 +1,17 @@
 
 
-## Leads Descartados → Lista Mensal Automática
+## Executar Sweep de Leads Descartados → Lista de Março
 
-### Problema
-Hoje, todos os leads descartados vão para uma única lista fixa chamada "Leads Descartados". O usuário quer que sejam encaminhados para uma lista mensal (ex: "Leads não aproveitados - Março 2026").
+### O que fazer
 
-### Solução
+Invocar a Edge Function `sweep-descartados` que já existe e já usa o nome dinâmico mensal (`"Leads não aproveitados - Março 2026"`). Ela vai:
 
-Alterar a lógica de descarte em **2 arquivos** para usar nome de lista dinâmico baseado no mês/ano atual:
+1. Buscar todos os leads com `stage_id` = descarte e `arquivado = false`
+2. Criar (ou encontrar) a lista "Leads não aproveitados - Março 2026" na Oferta Ativa
+3. Inserir os leads na lista (ignorando duplicados por telefone)
+4. Marcar os leads como `arquivado = true` no pipeline
 
-**1. `src/components/pipeline/PipelineBoard.tsx`** (linhas 498-525)
-- Trocar `const LISTA_NOME = "Leads Descartados"` por nome dinâmico:
-  ```text
-  "Leads não aproveitados - Março 2026"
-  ```
-- Usar `new Date()` para gerar o nome com mês em português e ano
-- O resto da lógica (find or create list) já funciona — se a lista do mês não existe, cria automaticamente
+### Como executar
 
-**2. `supabase/functions/sweep-descartados/index.ts`** (linhas 34-60)
-- Mesma mudança: trocar nome fixo por nome dinâmico mensal
-- A lógica de find-or-create já existente cuida do resto
-
-### Lógica do nome dinâmico
-```text
-const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const now = new Date();
-const LISTA_NOME = `Leads não aproveitados - ${meses[now.getMonth()]} ${now.getFullYear()}`;
-```
-
-### Resultado
-- Cada mês gera automaticamente uma lista nova na Oferta Ativa
-- Listas anteriores permanecem intactas para consulta
-- Zero migration SQL necessária
+Uma única chamada à edge function via `supabase--curl_edge_functions` com método POST para `sweep-descartados`. Nenhuma alteração de código necessária — a função já está pronta com a lógica mensal implementada na última mudança.
 
