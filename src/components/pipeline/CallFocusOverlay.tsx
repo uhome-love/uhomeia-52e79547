@@ -210,7 +210,7 @@ export function CallFocusOverlay({ isOpen, onClose, lead, stageTipo, leadOrigem,
   ];
 
   return (
-    <div className="absolute inset-0 z-50 bg-background flex flex-col h-full">
+    <div className="absolute inset-0 z-[9999] bg-background flex flex-col h-full">
       {/* HEADER */}
       <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-border/50">
         <div className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: "#EEEDFE", color: "#534AB7" }}>
