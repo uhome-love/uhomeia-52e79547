@@ -1,38 +1,50 @@
 
 
-## Mudanças Cirúrgicas em PipelineLeadDetail.tsx
+## Ajustes Visuais — 4 Correções Cirúrgicas
 
-### Resumo
+### 1. CallFocusOverlay — z-index (CallFocusOverlay.tsx, linha 213)
+- Trocar `z-50` por `z-[9999]` no container principal
+- O overlay já está dentro do Sheet, o z-50 é insuficiente pois o SheetContent tem z-50 nativo do shadcn
 
-Remover badges de temperatura e score do header, substituir por chip de status "Atualizado/Desatualizado" baseado nas variáveis já existentes.
+### 2. StageCoachBar — 3 fixes visuais (StageCoachBar.tsx)
+**Linha 320** — Adicionar `flex-nowrap overflow-hidden` ao container da linha 1
+**Linha 322** — Texto diagnóstico: adicionar `truncate` ao `<p>`, garantir `min-w-0` já está
+**Linha 321** — Bolinha: trocar `w-1.5 h-1.5` por `w-[6px] h-[6px]` para garantir 6px exatos
+**Linha 341** — Botões de ação: já têm `shrink-0`, OK
 
-### Mudanças
+### 3. HOMI Side Panel — largura (PipelineLeadDetail.tsx, linha 651)
+Atualmente:
+- Modo direto: `sm:w-[35%]`
+- Modo exploratório: `sm:w-[45%]`
 
-**1. Remover TEMPERATURA_MAP (linhas 63-67)**
-Deletar o objeto `const TEMPERATURA_MAP = {...}`.
+Trocar para:
+- Modo direto: `sm:w-[42%] sm:min-w-[380px] sm:max-w-[520px]`
+- Modo exploratório: `sm:w-[45%] sm:min-w-[420px] sm:max-w-[520px]`
 
-**2. Remover badge de temperatura (linhas 273-276)**
-Deletar o `<span>` que renderiza `TempIcon` e `temperatureInfo.label`.
+Dentro do ScrollArea (linha 659, `<div className="p-3">`), adicionar `[&_p]:break-words [&_p]:text-[13px] [&_p]:leading-[1.65] [&_pre]:whitespace-pre-wrap` para legibilidade dos resultados.
 
-**3. Remover badge de score (linhas 278-294)**
-Deletar o bloco IIFE que renderiza emoji + score + tooltip.
+### 4. LeadMatchesWidget — grid 2 colunas (LeadMatchesWidget.tsx)
+**Linha 136**: Trocar `space-y-2` por `grid grid-cols-2 gap-2`
+**Cada card** (linhas 144-207):
+- Mudar layout para vertical (imagem em cima 100px height, conteúdo embaixo)
+- `max-h-[200px] overflow-hidden`
+- Nome: `text-xs font-medium` (já é xs, trocar semibold → medium)
+- Preço: `text-xs font-medium text-[#4F46E5]`
+- Detalhes: `text-[11px] text-muted-foreground`
+- Badge score: `text-[10px] px-1.5 py-0.5`
+- Botões: `text-[11px] px-2 py-1`
+- Remover score breakdown chips para caber no card compacto
 
-**4. Adicionar chip de status no lugar (após o stage pill, onde estava o badge de temperatura)**
-
-Lógica computada inline no JSX:
-- `isAtualizado = nextTask !== null`
-- `diasSemContato` calculado via `differenceInHoursSafe` (já importado)
-- Array `motivosDesat` montado condicionalmente
-- Chip verde "✓ Atualizado" ou chip vermelho/amarelo "⚠ Desatualizado" com motivos abaixo
-
-Todas as variáveis necessárias (`nextTask`, `noContactAlert`, `lead.ultima_acao_at`, `differenceInHoursSafe`, `CheckCircle2`, `AlertTriangle`) já estão disponíveis no escopo.
-
-### Arquivo único alterado
-`src/components/pipeline/PipelineLeadDetail.tsx`
+### Arquivos alterados
+| Arquivo | Mudança |
+|---|---|
+| `CallFocusOverlay.tsx` | z-[9999] |
+| `StageCoachBar.tsx` | flex-nowrap, truncate, bolinha 6px |
+| `PipelineLeadDetail.tsx` | Largura HOMI + text styles |
+| `LeadMatchesWidget.tsx` | Grid 2 colunas, cards compactos |
 
 ### O que NÃO muda
-- Hooks, queries, useEffects
-- Alerta inline `noContactAlert` nas linhas 458-481
-- Banco de dados (sem migrations)
+- Nenhuma lógica, callback, query, hook ou edge function
+- Nenhuma prop ou estado
 - Nenhum outro arquivo
 
