@@ -143,13 +143,13 @@ function useHomeCorretor() {
       // Status da roleta (bloqueada ou liberada) via view
       const { data: statusRoleta } = await supabase
         .from("v_corretor_roleta_status" as any)
-        .select("pode_entrar_roleta, tarefas_atrasadas")
+        .select("pode_entrar_roleta, leads_desatualizados")
         .eq("corretor_id", user.id)
         .single();
 
       if (statusRoleta) {
         setPodeFazerRoleta((statusRoleta as any).pode_entrar_roleta ?? true);
-        setTarefasAtrasadas((statusRoleta as any).tarefas_atrasadas ?? 0);
+        setTarefasAtrasadas((statusRoleta as any).leads_desatualizados ?? 0);
       }
     } catch (err) {
       console.error("Erro ao carregar oportunidades:", err);
