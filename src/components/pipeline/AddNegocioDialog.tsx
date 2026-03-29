@@ -59,6 +59,9 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
 
   const handleSubmit = async () => {
     if (!form.nome_cliente.trim() || !user) return;
+    if (!form.empreendimento.trim()) { toast.error("Empreendimento/Imóvel é obrigatório"); return; }
+    const vgvNum = form.vgv_estimado ? parseFloat(form.vgv_estimado.replace(/[^\d.,]/g, "").replace(",", ".")) : 0;
+    if (!vgvNum || vgvNum <= 0) { toast.error("VGV é obrigatório e deve ser maior que zero"); return; }
     setLoading(true);
 
     try {
