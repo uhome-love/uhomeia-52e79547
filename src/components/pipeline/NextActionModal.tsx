@@ -141,8 +141,6 @@ export default function NextActionModal({ open, onOpenChange, leadId, leadNome, 
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        {/* Hide the default close button */}
-        <style>{`.NextActionModal [data-radix-collection-item] { display: none !important; }`}</style>
         <DialogHeader>
           <DialogTitle className="text-base flex items-center gap-2">
             ⚡ Ação registrada! Qual o próximo passo com este lead?
