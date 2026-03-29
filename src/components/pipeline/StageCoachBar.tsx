@@ -162,8 +162,8 @@ export default function StageCoachBar({
           diagnostic: "Lead em qualificação — entenda o perfil e apresente opções",
           color: "border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20",
           actions: [
-            { label: "Enviar vitrine IA", icon: Sparkles, homiPrompt: "Gere uma vitrine personalizada com até 3 imóveis que fazem sentido para o perfil deste lead. Formato: 2 mensagens WhatsApp curtas." },
-            { label: "Completar perfil", icon: CheckCircle2, homiPrompt: "Quais informações faltam para qualificar este lead? Gere perguntas curtas para completar o perfil via WhatsApp." },
+            { label: "Enviar vitrine IA", icon: Sparkles, homiPrompt: "Gere uma vitrine personalizada com até 3 imóveis que fazem sentido para o perfil deste lead. Formato: apenas 2 mensagens WhatsApp curtas. IMPORTANTE: Retorne SOMENTE as mensagens de WhatsApp prontas para copiar. Nada mais. Sem análise, sem script, sem recomendações." },
+            { label: "Completar perfil", icon: CheckCircle2, homiPrompt: "Quais informações faltam para qualificar este lead? Gere perguntas curtas para completar o perfil via WhatsApp. Formato: apenas mensagens WhatsApp. IMPORTANTE: Retorne SOMENTE as mensagens prontas para copiar. Nada mais." },
           ],
           messages: [
             {
