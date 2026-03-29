@@ -75,6 +75,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [homiOpen, setHomiOpen] = useState(false);
+  const [homiInitialPrompt, setHomiInitialPrompt] = useState<string | undefined>();
   const [empreendimentoSearch, setEmpreendimentoSearch] = useState("");
   const [empreendimentoOpen, setEmpreendimentoOpen] = useState(false);
   const [savingEmpreendimento, setSavingEmpreendimento] = useState(false);
@@ -513,7 +514,11 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
           tentativasLigacao={callAttempts}
           telefone={lead.telefone}
           onAddTarefa={leadData.addTarefa}
-          onOpenHomi={() => setHomiOpen(true)}
+          onOpenHomi={(prompt?: string) => {
+            setHomiOpen(true);
+            setHomiInitialPrompt(prompt);
+          }}
+          origem={lead.origem}
         />
 
         {/* ════════════ ABAS ════════════ */}
@@ -667,6 +672,8 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   proximaAcao={lead.proxima_acao}
                   valorEstimado={lead.valor_estimado}
                   oportunidadeScore={lead.oportunidade_score}
+                  initialPrompt={homiInitialPrompt}
+                  onClearInitialPrompt={() => setHomiInitialPrompt(undefined)}
                 />
               </div>
             </ScrollArea>

@@ -27,6 +27,8 @@ interface Props {
   proximaAcao?: string | null;
   valorEstimado?: number | null;
   oportunidadeScore?: number;
+  initialPrompt?: string;
+  onClearInitialPrompt?: () => void;
 }
 
 interface LeadHistory {
@@ -50,7 +52,8 @@ type SmartAction = {
 
 export default function HomiLeadAssistant({
   leadId, leadNome, leadTelefone, leadEmail, empreendimento, etapa, temperatura,
-  observacoes, origem, origemDetalhe, createdAt, updatedAt, proximaAcao, valorEstimado, oportunidadeScore
+  observacoes, origem, origemDetalhe, createdAt, updatedAt, proximaAcao, valorEstimado, oportunidadeScore,
+  initialPrompt, onClearInitialPrompt
 }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -94,6 +97,15 @@ export default function HomiLeadAssistant({
     };
     fetchHistory();
   }, [leadId]);
+
+  // Auto-execute when initialPrompt is provided from StageCoachBar
+  useEffect(() => {
+    if (initialPrompt && !loading && !loadingHistory && history) {
+      handleAction("custom", initialPrompt);
+      onClearInitialPrompt?.();
+    }
+  }, [initialPrompt, loadingHistory]);
+
 
   // Briefing
   const briefing = useMemo(() => {
@@ -491,28 +503,67 @@ ${histCtx}
       {/* Result */}
       {result && (
         <div className="space-y-2">
-          <div className="bg-background rounded-lg border border-border p-3 text-xs prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown>{result}</ReactMarkdown>
-          </div>
+          {/* Parse result into sections by ## headers */}
+          {(() => {
+            const sections = result.split(/^## /m).filter(Boolean).map(s => {
+              const nl = s.indexOf("\n");
+              return { title: s.slice(0, nl).trim(), body: s.slice(nl + 1).trim() };
+            });
+            if (sections.length <= 1) {
+              // Single block - show as before
+              return (
+                <div className="bg-background rounded-lg border border-border p-3 text-xs prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown>{result}</ReactMarkdown>
+                </div>
+              );
+            }
+            return sections.map((sec, i) => {
+              const isWhatsApp = /💬|🔄|whatsapp|mensagem/i.test(sec.title);
+              const isScript = /📞|script|ligação/i.test(sec.title);
+              return (
+                <div key={i} className="bg-background rounded-lg border border-border/60 p-2.5">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-bold">{sec.title}</span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 text-[10px] gap-1 px-1.5"
+                        onClick={() => {
+                          navigator.clipboard.writeText(sec.body);
+                          toast.success("Seção copiada!");
+                        }}
+                      >
+                        📋 Copiar
+                      </Button>
+                      {isWhatsApp && leadTelefone && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 text-[10px] gap-1 px-1.5 text-emerald-600"
+                          onClick={() => {
+                            navigator.clipboard.writeText(sec.body);
+                            const phone = (leadTelefone || "").replace(/\D/g, "");
+                            const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
+                            window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(sec.body)}`, "_blank");
+                          }}
+                        >
+                          📱 WhatsApp
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground prose prose-sm max-w-none dark:prose-invert leading-relaxed">
+                    <ReactMarkdown>{sec.body}</ReactMarkdown>
+                  </div>
+                </div>
+              );
+            });
+          })()}
           <div className="flex gap-1.5">
             <Button variant="outline" size="sm" className="h-6 text-[10px] flex-1" onClick={handleCopy}>
-              📋 Copiar
+              📋 Copiar tudo
             </Button>
-            {leadTelefone && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 text-[10px] flex-1 text-emerald-600 border-emerald-300"
-                onClick={() => {
-                  handleCopy();
-                  const phone = (leadTelefone || "").replace(/\D/g, "");
-                  const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
-                  window.open(`https://wa.me/${fullPhone}`, "_blank");
-                }}
-              >
-                📱 Copiar + WhatsApp
-              </Button>
-            )}
             <Button variant="outline" size="sm" className="h-6 text-[10px] flex-1" onClick={() => { setResult(""); setActiveAction(null); setCustomPrompt(""); setObjecao(""); setClientSaid(""); }}>
               Nova consulta
             </Button>

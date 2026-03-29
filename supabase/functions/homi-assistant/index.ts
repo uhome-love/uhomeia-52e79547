@@ -640,25 +640,27 @@ Você é o cérebro comercial da Uhome.
 Seu objetivo final: criar corretores consultivos, rápidos, persuasivos e focados em VISITA.
 
 ═══════════════════════════════════════
-FORMATO DA RESPOSTA (OBRIGATÓRIO — SEGUIR À RISCA)
+FORMATO DA RESPOSTA (CONDICIONAL POR TIPO DE AÇÃO)
 ═══════════════════════════════════════
 
-ATENÇÃO: Você DEVE começar sua resposta SEMPRE com "## 🧠 Análise da Situação". NÃO escreva NADA antes deste header. Cada seção DEVE começar com ##.
+IMPORTANTE: O formato depende do tipo de ação solicitada. Escolha o formato correto:
 
-## 🧠 Análise da Situação
-(MÁXIMO 2 frases. Direto ao ponto. O que está acontecendo, temperatura estimada do lead, e melhor abordagem.)
+### FORMATO WHATSAPP (usar quando a ação envolve mensagem WhatsApp, primeiro contato, reengajamento, responder cliente)
+Use APENAS este formato — NÃO adicione script de ligação, alerta ou próxima ação:
 
 ## 💬 Mensagem WhatsApp
-(MÁXIMO 3 LINHAS CURTAS. Exemplo de tamanho ideal:
-"Entendo sua preocupação! O Casa Bastian tem um conceito diferente — moradia urbana com localização premium no Menino Deus.
-Que tal conhecer pessoalmente? Fica melhor pra você durante a semana ou fim de semana? 😊"
-NÃO ULTRAPASSE 3 LINHAS. Sem parágrafos longos. Termina com pergunta.)
+(MÁXIMO 3 LINHAS CURTAS. Termina com pergunta. Natural e direto.)
 
 ## 🔄 Versão Alternativa
-(MÁXIMO 3 LINHAS CURTAS com tom ou ângulo diferente. Indique o tipo: [Curiosidade], [Prova Social], [Oportunidade] ou [Humor Leve].)
+(MÁXIMO 3 LINHAS CURTAS com tom diferente. Indique: [Curiosidade], [Prova Social], [Oportunidade] ou [Humor Leve].)
+
+## 💡 Qual usar
+(1 frase explicando quando usar cada versão.)
+
+### FORMATO LIGAÇÃO (usar quando a ação é script de ligação)
+Use APENAS este formato:
 
 ## 📞 Script de Ligação
-(OBRIGATÓRIO usar este formato com LINHA EM BRANCO entre cada fala:
 
 **Corretor:** "fala de abertura"
 
@@ -670,13 +672,44 @@ NÃO ULTRAPASSE 3 LINHAS. Sem parágrafos longos. Termina com pergunta.)
 
 **Corretor:** "convite para visita"
 
-MÁXIMO 5-6 trocas. Cada fala do corretor em NO MÁXIMO 2 linhas.)
+MÁXIMO 5-6 trocas. Cada fala do corretor em NO MÁXIMO 2 linhas.
+
+## 💡 Dicas
+(2-3 bullet points curtos sobre tom e timing.)
+
+### FORMATO OBJEÇÃO (usar quando a ação é quebrar objeção)
+Use APENAS este formato:
+
+## 🧠 Análise da Objeção
+(1-2 frases: o que o cliente realmente quer dizer.)
+
+## 💬 Resposta Sugerida
+(MÁXIMO 3 linhas. Natural e empática.)
+
+## 🔄 Versão Alternativa
+(MÁXIMO 3 linhas com ângulo diferente.)
+
+### FORMATO COMPLETO (usar APENAS para análise consultiva, preparar proposta, vitrine, perguntas abertas da IA)
+
+## 🧠 Análise da Situação
+(MÁXIMO 2 frases.)
+
+## 💬 Mensagem WhatsApp
+(MÁXIMO 3 LINHAS CURTAS. Termina com pergunta.)
+
+## 🔄 Versão Alternativa
+(MÁXIMO 3 LINHAS CURTAS.)
+
+## 📞 Script de Ligação
+(Formato Corretor/Cliente. MÁXIMO 5-6 trocas.)
 
 ## ⚠️ Alerta de Abordagem
-(Se detectar QUALQUER erro do corretor — pressão precoce, mensagem robótica, falta de follow-up, dar preço direto, desistir cedo — alertar aqui com a correção sugerida. Se não houver erro, escreva: "✅ Abordagem adequada para o momento.")
+(Erro detectado ou "✅ Abordagem adequada para o momento.")
 
 ## 🎯 Próxima Ação
-(3-4 bullet points curtos com ações concretas. Use • para cada item.)`;
+(3-4 bullet points curtos.)
+
+REGRA: Escolha o formato baseado na ação. NUNCA use formato completo quando o corretor quer apenas uma mensagem WhatsApp.`;
 
     // Inject lead_context (v2 full history) into all prompts
     const leadCtx = lead_context ? `\n\n═══ CONTEXTO COMPLETO DO LEAD ═══\n${lead_context}\n═══════════════════════════════` : "";
@@ -768,6 +801,21 @@ Situação: ${situacao}
 Objetivo: ${objetivo}${contextoCliente}
 
 Ajude o corretor com a melhor estratégia para esta situação.`;
+    }
+
+    // Add format hint based on action type
+    const whatsappActions = ["responder_whatsapp", "primeiro_contato", "whatsapp_intro", "whatsapp_reengajamento", "responder_cliente", "whatsapp_pos_visita", "mensagem", "followup", "reengajamento", "followup_proposta", "criar_followup"];
+    const ligacaoActions = ["script_ligacao", "script_reativacao", "ligacao_proposta"];
+    const objecaoActions = ["quebrar_objecao"];
+    
+    if (whatsappActions.includes(acao)) {
+      userPrompt += "\n\n⚠️ FORMATO OBRIGATÓRIO: Use FORMATO WHATSAPP (apenas 2 mensagens curtas + qual usar). NÃO inclua script de ligação, alerta ou próxima ação.";
+    } else if (ligacaoActions.includes(acao)) {
+      userPrompt += "\n\n⚠️ FORMATO OBRIGATÓRIO: Use FORMATO LIGAÇÃO (apenas script Corretor/Cliente + dicas). NÃO inclua mensagens WhatsApp.";
+    } else if (objecaoActions.includes(acao)) {
+      userPrompt += "\n\n⚠️ FORMATO OBRIGATÓRIO: Use FORMATO OBJEÇÃO (análise + resposta sugerida + alternativa). NÃO inclua script de ligação.";
+    } else {
+      userPrompt += "\n\n⚠️ FORMATO OBRIGATÓRIO: Use FORMATO COMPLETO.";
     }
 
     // Append full lead context to prompt for v2 contextual responses
