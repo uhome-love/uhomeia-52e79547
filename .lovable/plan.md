@@ -1,88 +1,62 @@
 
 
-## Duas Camadas Separadas: Automações (CEO) + Sistema Proativo (Corretor)
+## Integrar Base de Conhecimento Elite no Sistema HOMI
 
-### Esclarecimento de Conceitos
+### O que já existe vs o que falta
 
-| Conceito | Quem controla | O que faz |
+| Conceito da Base | Já existe? | Onde? |
 |---|---|---|
-| **Automações** | CEO (admin only) | Dispara WhatsApp/email em massa por etapa, para TODOS os leads automaticamente. Ex: todo lead em "Sem Contato" há 2 dias recebe mensagem. Sistema roda sozinho. |
-| **Sistema Proativo (StageCoach)** | Corretor (individual) | Ao abrir um lead, mostra sugestões de ação, mensagens prontas, scripts adaptados à etapa. O corretor decide o que usar. É um assistente, não uma automação. |
+| Prompts por etapa (sem contato, qualificação, visita, pós-visita) | ✅ Parcial | `homi-assistant` system prompt |
+| Scripts de ligação por etapa | ✅ Genérico | Falta os scripts ESPECÍFICOS da base |
+| Playbooks por empreendimento (Open Bosque, Orygem, Casa Tua, Melnick Day) | ❌ | Apenas DB enterprise-knowledge (campos livres) |
+| Lead Scoring comportamental (respondeu +10, engajou +20, etc.) | ❌ | Existe score de perfil, não comportamental |
+| Detecção de erros do corretor | ❌ | Não existe |
+| Follow-up avançado (curiosidade, prova social, humor, oportunidade) | ✅ Parcial | Falta tipificação |
+| Gatilhos mentais (escassez, urgência, prova social) | ✅ | Já no system prompt |
+| Output padrão (análise + 3 msgs + follow-ups + alerta erro) | ✅ Parcial | Formato existe, falta alerta de erro |
+| Fluxo automação CEO (5min, 10min, 1d, 3d, 7d) | ✅ | Implementado no `cron-nurturing-sequencer` |
 
-### Implementação — Fase 1: Sistema Proativo (StageCoachBar)
+### Mudanças
 
-**Novo: `src/components/pipeline/StageCoachBar.tsx`**
+#### 1. Enriquecer `homi-assistant/index.ts` system prompt
 
-Componente inserido entre o header (Row 5) e as Tabs (linha 507) do `PipelineLeadDetail.tsx`. Recebe `currentStage.tipo`, dados do lead e callbacks.
+Adicionar ao prompt do corretor:
 
-Comportamento por etapa:
+- **Playbooks por empreendimento**: Seção com perfil + abordagem + mensagem modelo para Open Bosque, Orygem, Casa Tua, Melnick Day (e os existentes do DB continuam prioritários)
+- **Detecção de erros**: Instruir a IA a identificar e alertar quando detectar pressão precoce, falta de resposta do corretor, ou mensagem robótica. Adicionar seção `## ⚠️ Alerta` ao formato de saída
+- **Tipos de follow-up**: Adicionar ao prompt as 4 categorias (curiosidade, prova social, oportunidade, humor leve) para que a IA varie estrategicamente
+- **Scoring comportamental como referência**: Incluir a tabela de pontos (respondeu +10, engajou +20, etc.) para que a IA use na análise da situação — não substitui o `leadScoring.ts` do frontend, complementa
 
-- **Sem Contato**: Diagnóstico "Lead há X dias sem contato" + botões "Script de ligação", "WhatsApp apresentação", mensagem pronta de boas-vindas
-- **Contato Iniciado**: "Conexão iniciada" + "Perguntas iniciais", "Follow-up conexão", mensagem de primeiro contato
-- **Qualificação**: "Hora de entender o perfil" + "Gerar Vitrine IA", "Perguntas de perfil", mensagem com perguntas de qualificação
-- **Possível Visita**: "Lead aquecido" + "Follow-up visita", "Destaques do imóvel", mensagem para agendar
-- **Visita Marcada**: "Confirmar visita" + "Lembrete ao cliente", "Reforçar importância"
-- **Visita Realizada**: "Momento crucial" + "Agradecer visita", "Enviar simulação"
-- **Negociação**: "Lead quente" + "Follow-up proposta", "Condições especiais"
+#### 2. Atualizar `StageCoachBar.tsx` com scripts da base
 
-Cada ação: copiar mensagem pronta (com `{{nome}}`, `{{empreendimento}}`), criar tarefa com 1 clique, ou chamar HOMI para personalizar.
+Substituir mensagens genéricas pelos scripts ESPECÍFICOS do documento:
 
-Visual: barra compacta com fundo sutil, ícone de lâmpada, 1 linha de diagnóstico + 2-3 botões de ação + mensagem expansível.
+- **Sem Contato**: "Fala {{nome}}, tudo bem? Vi que tu pediu info do {{empreendimento}} e resolvi te ligar rápido..."
+- **Contato Iniciado**: "Queria entender melhor teu momento pra te mostrar algo que realmente faça sentido."
+- **Qualificação**: "Hoje tu tá mais olhando ou já pensando em fechar algo?"
+- **Visita**: "Faz muito mais sentido ver isso pessoalmente — tenho dois horários livres, qual encaixa melhor pra ti?"
+- **Pós Visita**: "O que pesou mais pra ti na visita?"
 
-**Alteração: `src/components/pipeline/PipelineLeadDetail.tsx`**
-- Importar e inserir `<StageCoachBar>` entre Row 5 e as Tabs (linha ~506)
-- Passar: `stageTipo`, `leadNome`, `empreendimento`, `diasSemContato`, `tentativasLigacao`, `addTarefa`, `reload`
+Manter as mensagens WhatsApp atuais como "Versão formal" e adicionar as da base como "Versão direta".
 
-### Implementação — Fase 2: Automações em Massa (CEO only)
+#### 3. Adicionar formato de output completo ao `homi-assistant`
 
-**Alteração: `src/App.tsx`**
-- Restringir rota `/automacoes` de `["gestor", "admin"]` para `["admin"]` only
-
-**Migração SQL: tabela `lead_nurturing_sequences`**
+Incluir no formato obrigatório:
 ```
-id, pipeline_lead_id, stage_tipo, step_key, canal, 
-template_name, scheduled_at, sent_at, status, 
-error_message, created_at
+## ⚠️ Alerta de Abordagem (se aplicável)
+(Se detectar erro do corretor: pressão precoce, mensagem robótica, 
+falta de follow-up — alertar aqui com correção sugerida)
 ```
-- Índice único em `(pipeline_lead_id, step_key)` para evitar duplicidade
-- RLS: acesso apenas via service_role (edge functions)
-
-**Trigger SQL: auto-criação de sequência na mudança de etapa**
-- Quando `pipeline_leads.stage_id` muda, cancelar steps pendentes da etapa anterior e inserir os novos steps da nova etapa com `scheduled_at` calculado (D0, D2, D5, etc.)
-
-**Nova Edge Function: `cron-nurturing-sequencer/index.ts`**
-- Roda a cada 30 min via pg_cron
-- Busca `lead_nurturing_sequences` onde `scheduled_at <= now()` e `status = 'pendente'`
-- Dispara WhatsApp via Meta API usando templates aprovados
-- **Obrigatório**: Insere registro em `pipeline_atividades` para CADA disparo:
-  ```
-  tipo: "nurturing_sequencia"
-  titulo: "📨 Follow-up automático: [nome do step]"
-  pipeline_lead_id: [id]
-  status: "concluida"
-  ```
-- O corretor vê toda interação automática na timeline do lead
-
-**Alteração: `src/pages/AutomacoesPage.tsx`**
-- Nova seção "Sequências de Nutrição" com:
-  - Dashboard: leads ativos por etapa, disparos últimas 24h
-  - Toggle global para pausar/ativar todas as sequências
-  - Log centralizado de todos os disparos
 
 ### Arquivos alterados
 
 | Arquivo | Mudança |
 |---|---|
-| `src/components/pipeline/StageCoachBar.tsx` | **NOVO** — coach proativo por etapa para corretor |
-| `src/components/pipeline/PipelineLeadDetail.tsx` | Inserir StageCoachBar entre header e tabs |
-| `src/App.tsx` | Restringir `/automacoes` para `["admin"]` |
-| `src/pages/AutomacoesPage.tsx` | Seção "Sequências de Nutrição" (dashboard CEO) |
-| `supabase/functions/cron-nurturing-sequencer/index.ts` | **NOVO** — processador de sequências com log em `pipeline_atividades` |
-| Migração SQL | Tabela `lead_nurturing_sequences` + trigger de mudança de etapa |
+| `supabase/functions/homi-assistant/index.ts` | Playbooks por empreendimento, detecção de erros, tipos de follow-up, scoring comportamental como referência |
+| `src/components/pipeline/StageCoachBar.tsx` | Scripts específicos da base elite + versões alternativas |
 
-### Garantias
-- Corretor vê o coach + histórico de interações automáticas, mas NÃO controla automações
-- CEO controla tudo em `/automacoes` (somente admin)
-- 100% das interações automáticas ficam no histórico do lead
-- Nenhuma edge function existente é alterada
+### O que NÃO muda
+- `leadScoring.ts` (score de perfil continua como está — o comportamental é referência para a IA)
+- Edge functions de automação (já implementadas)
+- Enterprise knowledge do DB (continua prioritário sobre fallback)
 
