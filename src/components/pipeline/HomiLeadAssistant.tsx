@@ -52,7 +52,8 @@ type SmartAction = {
 
 export default function HomiLeadAssistant({
   leadId, leadNome, leadTelefone, leadEmail, empreendimento, etapa, temperatura,
-  observacoes, origem, origemDetalhe, createdAt, updatedAt, proximaAcao, valorEstimado, oportunidadeScore
+  observacoes, origem, origemDetalhe, createdAt, updatedAt, proximaAcao, valorEstimado, oportunidadeScore,
+  initialPrompt, onClearInitialPrompt
 }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
