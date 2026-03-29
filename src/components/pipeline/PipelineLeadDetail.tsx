@@ -514,7 +514,11 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
           tentativasLigacao={callAttempts}
           telefone={lead.telefone}
           onAddTarefa={leadData.addTarefa}
-          onOpenHomi={() => setHomiOpen(true)}
+          onOpenHomi={(prompt?: string) => {
+            setHomiOpen(true);
+            setHomiInitialPrompt(prompt);
+          }}
+          origem={lead.origem}
         />
 
         {/* ════════════ ABAS ════════════ */}
