@@ -126,8 +126,12 @@ export default function StageCoachBar({
               body: `{{nome}}, hoje tu tá mais olhando ou já pensando em fechar algo? Pergunto pra saber como te ajudar melhor 😊`,
             },
             {
-              title: "Apresentação personalizada",
-              body: `{{nome}}, separei opções que combinam com o que tu busca em {{empreendimento}}! 🏠 Vou te enviar uma vitrine personalizada. Qualquer dúvida, tô aqui!`,
+              title: "💰 Qualificação Investidor",
+              body: `{{nome}}, tu tá pensando mais em renda ou valorização? Pergunto porque tenho opções diferentes pra cada objetivo 📊`,
+            },
+            {
+              title: "🏠 Qualificação Moradia",
+              body: `{{nome}}, o que mais pesa pra ti hoje: espaço, localização ou valor? Assim consigo filtrar o que faz mais sentido 😊`,
             },
             {
               title: "Perfil detalhado [Consultivo]",
