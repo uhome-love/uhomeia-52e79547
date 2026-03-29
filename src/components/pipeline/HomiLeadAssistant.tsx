@@ -59,6 +59,7 @@ export default function HomiLeadAssistant({
   const [customPrompt, setCustomPrompt] = useState("");
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [objecao, setObjecao] = useState("");
+  const [clientSaid, setClientSaid] = useState("");
   const [history, setHistory] = useState<LeadHistory | null>(null);
 
   // Fetch lead history on mount
