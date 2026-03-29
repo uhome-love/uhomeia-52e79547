@@ -41,6 +41,7 @@ import NextActionModal from "./NextActionModal";
 import EmpreendimentoCombobox from "@/components/ui/empreendimento-combobox";
 import RadarImoveisTab from "./RadarImoveisTab";
 import LeadImoveisIndicadosTab from "./LeadImoveisIndicadosTab";
+import StageCoachBar from "./StageCoachBar";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
