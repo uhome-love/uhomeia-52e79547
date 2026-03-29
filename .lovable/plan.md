@@ -1,33 +1,44 @@
 
 
-## Converter CallFocusOverlay para Modal Compacto
+## Refinamento Visual dos Botões do Card
 
-### Mudança única — linha 213
+Olhando o screenshot com olhar crítico: os botões estão funcionais mas com alguns problemas de acabamento:
 
-Trocar o wrapper externo (linha 213) e o fechamento (linha 453) para usar backdrop + modal centralizado. O conteúdo interno (header, progress, body, footer) permanece idêntico.
+1. **Ligar** com fundo `#EEEDFE` está lavado — parece um botão desabilitado, não um CTA primário
+2. **Alinhamento vertical** entre os 4 botões não está perfeito — o Ligar tem `margin: 4px` que desalinha
+3. **Peso visual** desigual — Ligar tem fundo mas os outros são fantasma, criando desequilíbrio
+4. O emoji 💬 do WhatsApp pode renderizar com tamanho diferente dependendo do OS
 
-**Linha 213** — substituir:
-```tsx
-<div className="absolute inset-0 z-[9999] bg-background flex flex-col h-full">
-```
-por dois divs aninhados:
-```tsx
-<div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-  <div style={{ background: 'var(--background)', borderRadius: '16px', width: '100%', maxWidth: '560px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
-```
+### Proposta — design mais limpo e equilibrado
 
-**Linha 261** — body div: manter `flex-1 overflow-y-auto` (já está correto)
+Todos os 4 botões no mesmo plano visual (sem fundo destacado), diferenciados apenas por **cor do texto/ícone**:
 
-**Linha 399** — footer div: adicionar `shrink-0` → `border-t border-border/50 px-5 py-3 space-y-2 shrink-0`
-
-**Linha 453** — fechar os dois divs:
-```tsx
-    </div>
-  </div>
+```text
+┌─────────────────────────────────────────────┐
+│  📞 Ligar  │  📋 Tarefa  │  💬 WhatsApp │ ··· │
+│  #4F46E5   │  #64748b    │  #16a34a     │ #9ca │
+└─────────────────────────────────────────────┘
 ```
 
-### Resumo
-- 3 pontos de edição no arquivo (linhas 213, 399, 453)
-- Zero mudanças de lógica, fases, scripts ou banco
-- Nenhum outro arquivo alterado
+- **Ligar**: texto/ícone `#4F46E5` (roxo primário), sem fundo. Hover: `background: #EEEDFE`
+- **Tarefa**: texto/ícone `#64748b` (cinza médio). Hover: `background: hsl(var(--muted))`  
+- **WhatsApp**: texto/ícone `#16a34a` (verde). Hover: `background: #EAF3DE`
+- **···**: texto `#9ca3af`. Hover: `background: hsl(var(--muted))`
+
+### Detalhes técnicos
+
+**CardActionBar.tsx** — 3 mudanças:
+1. Remover `background: "#EEEDFE"`, `borderRadius`, `margin` do botão Ligar — fica `background: "transparent"`, hover muda para `#EEEDFE`
+2. Padronizar `padding: "8px 4px"` e `minHeight: 36` em todos
+3. Manter separadores verticais entre botões
+
+**CardQuickTaskPopover.tsx** — 1 mudança:
+1. Atualizar cor do botão Tarefa de `#1a1a1a` para `#64748b` para harmonizar
+
+### Resultado
+Botões visualmente equilibrados, limpos, com identidade cromática clara por função. Sem fundos que competem com o conteúdo do card.
+
+### Arquivos alterados
+- `src/components/pipeline/CardActionBar.tsx`
+- `src/components/pipeline/CardQuickTaskPopover.tsx`
 
