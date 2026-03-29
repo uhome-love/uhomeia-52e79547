@@ -98,6 +98,15 @@ export default function HomiLeadAssistant({
     fetchHistory();
   }, [leadId]);
 
+  // Auto-execute when initialPrompt is provided from StageCoachBar
+  useEffect(() => {
+    if (initialPrompt && !loading && !loadingHistory && history) {
+      handleAction("custom", initialPrompt);
+      onClearInitialPrompt?.();
+    }
+  }, [initialPrompt, loadingHistory]);
+
+
   // Briefing
   const briefing = useMemo(() => {
     if (!history) return null;
