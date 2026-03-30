@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
-import { useElegibilidadeRoleta } from "@/hooks/useElegibilidadeRoleta";
+
 import { useCorretorProgress } from "@/hooks/useCorretorProgress";
 import { useDailyMotivation } from "@/hooks/useCorretorDailyStats";
 import { useMissoesLeads } from "@/hooks/useMissoesLeads";
