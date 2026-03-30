@@ -42,6 +42,8 @@ export default function StageCoachBar({
   onOpenHomi,
   sequenceInfo,
   origem,
+  nextTask,
+  noContactAlert,
 }: StageCoachBarProps) {
   const [expanded, setExpanded] = useState(false);
   const nome = leadNome?.split(" ")[0] || "cliente";
