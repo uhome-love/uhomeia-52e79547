@@ -260,10 +260,11 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
               <Button
                 variant="outline"
                 className="w-full gap-2"
+                disabled={isAIAnalyzing}
                 onClick={onIAPerfil}
               >
                 <Sparkles className="h-4 w-4" />
-                🤖 IA Perfil
+                {isAIAnalyzing ? "Analisando..." : "🤖 IA Perfil"}
               </Button>
               <p className="text-xs text-muted-foreground text-center">Última busca: --</p>
             </div>
