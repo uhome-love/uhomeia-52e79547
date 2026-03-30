@@ -273,7 +273,7 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
                       style={{ width: 7, height: 7, background: config.borderColor, verticalAlign: "middle" }}
                     />
                   )}
-                  {n.titulo}
+                  {displayTitle}
                   {n.agrupamento_count > 1 && (
                     <span
                       className="ml-1.5"
