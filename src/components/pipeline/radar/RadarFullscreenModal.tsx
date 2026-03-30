@@ -167,7 +167,7 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
 
           {/* Coluna direita — Imóveis */}
           <div className="flex-1 p-4 overflow-y-auto">
-            <p className="text-sm text-muted-foreground">Imóveis compatíveis (em breve)</p>
+            <p className="text-sm text-muted-foreground">{matches.length} imóveis encontrados</p>
           </div>
         </div>
 
