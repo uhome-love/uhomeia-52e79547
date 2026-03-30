@@ -23,6 +23,9 @@ export interface ElegibilidadeRoleta {
   faltam_para_bloquear: number;
   tem_visita_hoje: boolean;
   leads_para_atualizar: LeadDesatualizado[];
+  descartes_mes: number;
+  bloqueado_descarte: boolean;
+  limite_descartes: number;
 }
 
 export function useElegibilidadeRoleta() {
