@@ -543,7 +543,6 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               <TabsTrigger value="homi" className="text-xs h-6 data-[state=active]:shadow-sm gap-1">
                 ⚡ HOMI
               </TabsTrigger>
-              </TabsTrigger>
             </TabsList>
           </div>
 
