@@ -13,6 +13,8 @@ interface StageCoachBarProps {
   onOpenHomi?: (prompt?: string) => void;
   sequenceInfo?: { total: number; enviados: number } | null;
   origem?: string | null;
+  nextTask?: { titulo?: string; descricao?: string; vence_em?: string } | null;
+  noContactAlert?: "critical" | "warning" | null;
 }
 
 interface StageMessage {
@@ -40,6 +42,8 @@ export default function StageCoachBar({
   onOpenHomi,
   sequenceInfo,
   origem,
+  nextTask,
+  noContactAlert,
 }: StageCoachBarProps) {
   const [expanded, setExpanded] = useState(false);
   const nome = leadNome?.split(" ")[0] || "cliente";
