@@ -1093,6 +1093,26 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           <span className="text-neutral-500">
             Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> · ROUND {sessionLeadsServed + 1} · {lead.empreendimento}
           </span>
+          {/* Empreendimento filter for campaign mode */}
+          {isCampaign && campaignEmpreendimentos.length > 1 && (
+            <div className="flex items-center gap-1.5 ml-2">
+              <Filter className="h-3 w-3 text-blue-400" />
+              <select
+                value={empFilter}
+                onChange={(e) => {
+                  setEmpFilter(e.target.value);
+                  // Will trigger re-fetch since campaignListaIds changes
+                }}
+                className="h-6 px-2 rounded text-[11px] font-medium bg-transparent text-blue-300 border border-blue-500/30 outline-none cursor-pointer hover:border-blue-400/60 transition-colors"
+                style={{ appearance: "auto" }}
+              >
+                <option value="todos" style={{ background: "#1C2128", color: "#93C5FD" }}>Todos empreendimentos</option>
+                {campaignEmpreendimentos.map(emp => (
+                  <option key={emp} value={emp} style={{ background: "#1C2128", color: "#93C5FD" }}>{emp}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-emerald-400/70">🔒 Reservado</span>
