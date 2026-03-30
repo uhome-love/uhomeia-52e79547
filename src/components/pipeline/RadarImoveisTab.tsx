@@ -399,6 +399,22 @@ export default function RadarImoveisTab({ leadId, leadNome, leadTelefone, leadDa
   } = useLeadPropertySearch(leadId);
   const { data: siteEvents } = useLeadImoveisEvents(leadId);
 
+  // ── Histórico radar (vitrine/match/envio) ──
+  const { data: radarHistory = [] } = useQuery({
+    queryKey: ["radar-history", leadId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pipeline_atividades")
+        .select("id, titulo, tipo, created_at")
+        .eq("pipeline_lead_id", leadId)
+        .in("tipo", ["vitrine", "match", "envio_imovel", "radar"])
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    enabled: !!leadId,
+  });
+
   // ── Tab state ──
   const [subTab, setSubTab] = useState<"radar" | "matches" | "perfil" | "historico">("radar");
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
