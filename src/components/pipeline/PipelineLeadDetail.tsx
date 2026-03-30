@@ -669,7 +669,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
 
                 {/* Campo o que o cliente disse */}
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--muted-foreground)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>
                     O que o cliente disse?
                   </div>
                   <textarea
