@@ -1238,10 +1238,11 @@ Responda SOMENTE com o JSON, sem markdown.`;
               created_by: user.id,
             }).then(() => {}).catch(() => {});
 
-            toast.success("Vitrine criada! ✨", { description: vitrineUrl, duration: 6000 });
             console.log("[RadarImoveisTab] vitrineUrl gerada:", vitrineUrl);
+            // Don't reset creatingVitrine until after returning the URL
+            const urlToReturn = vitrineUrl;
             setCreatingVitrine(false);
-            return vitrineUrl;
+            return urlToReturn;
           } catch (err: any) {
             console.error("Erro ao criar vitrine:", err);
             toast.error("Erro ao criar vitrine");

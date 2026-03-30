@@ -116,6 +116,7 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
   const [form, setForm] = useState<RadarProfileData>(profile);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [vitrineUrl, setVitrineUrl] = useState<string | null>(null);
+  const vitrineUrlRef = useRef<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [discarded, setDiscarded] = useState<Set<number>>(new Set());
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
@@ -125,7 +126,7 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
   const bairroInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) { setForm(profile); setSelected(new Set()); setVitrineUrl(null); }
+    if (open) { setForm(profile); setSelected(new Set()); setVitrineUrl(null); vitrineUrlRef.current = null; }
   }, [open, profile]);
 
   const updateField = <K extends keyof RadarProfileData>(key: K, value: RadarProfileData[K]) => {
@@ -534,70 +535,75 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
         <div className="p-4 border-t border-border flex justify-between items-center shrink-0 gap-3">
           <span className="text-sm text-muted-foreground">{selected.size} selecionado{selected.size !== 1 ? "s" : ""}</span>
           
-          {vitrineUrl && (
-            <div className="flex items-center gap-2 flex-1 justify-center">
-              <div className="flex items-center gap-1.5 bg-muted rounded-md px-3 py-1.5 max-w-lg">
-                <span className="text-xs text-muted-foreground truncate">{vitrineUrl}</span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6 shrink-0"
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(vitrineUrl);
-                    setCopied(true);
-                    toast.success("Link copiado!");
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  title="Copiar link"
-                >
-                  {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6 shrink-0"
-                  onClick={() => window.open(vitrineUrl, "_blank")}
-                  title="Abrir no navegador"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-                {leadTelefone && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 shrink-0 text-emerald-600 hover:text-emerald-700"
-                    onClick={() => {
-                      const phone = leadTelefone.replace(/\D/g, "");
-                      const msg = `Olá ${leadNome}! 😊\n\nPreparei uma seleção especial de imóveis para você:\n\n🔗 ${vitrineUrl}\n\nDá uma olhada e me conta o que achou! 🏠`;
-                      window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, "_blank");
-                    }}
-                    title="Enviar via WhatsApp"
-                  >
-                    <MessageSquare className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            </div>
+          {(vitrineUrl || vitrineUrlRef.current) && (
+            (() => {
+              const displayUrl = vitrineUrl || vitrineUrlRef.current!;
+              return (
+                <div className="flex items-center gap-2 flex-1 justify-center">
+                  <div className="flex items-center gap-1.5 bg-muted rounded-md px-3 py-1.5 max-w-lg">
+                    <span className="text-xs text-muted-foreground truncate">{displayUrl}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 shrink-0"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(displayUrl);
+                        setCopied(true);
+                        toast.success("Link copiado!");
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      title="Copiar link"
+                    >
+                      {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() => window.open(displayUrl, "_blank")}
+                      title="Abrir no navegador"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                    {leadTelefone && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 shrink-0 text-emerald-600 hover:text-emerald-700"
+                        onClick={() => {
+                          const phone = leadTelefone.replace(/\D/g, "");
+                          const msg = `Olá ${leadNome}! 😊\n\nPreparei uma seleção especial de imóveis para você:\n\n🔗 ${displayUrl}\n\nDá uma olhada e me conta o que achou! 🏠`;
+                          window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, "_blank");
+                        }}
+                        title="Enviar via WhatsApp"
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()
           )}
 
           <Button
             disabled={selected.size === 0 || isCreatingVitrine}
             className="bg-emerald-600 text-white hover:bg-emerald-700"
-            onClick={() => {
+            onClick={async () => {
               const selectedArr = Array.from(selected);
-              onCriarVitrine?.(selectedArr)
-                ?.then((url) => {
-                  console.log("[Radar] onCriarVitrine retornou:", url);
-                  if (url && typeof url === "string") {
-                    setVitrineUrl(url);
-                    navigator.clipboard.writeText(url).catch(() => {});
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 3000);
-                  }
-                })
-                .catch((err) => {
-                  console.error("[Radar] Erro no onCriarVitrine:", err);
-                });
+              try {
+                const url = await onCriarVitrine?.(selectedArr);
+                console.log("[Radar] onCriarVitrine retornou:", url);
+                if (url && typeof url === "string") {
+                  vitrineUrlRef.current = url;
+                  setVitrineUrl(url);
+                  navigator.clipboard.writeText(url).catch(() => {});
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 3000);
+                }
+              } catch (err) {
+                console.error("[Radar] Erro no onCriarVitrine:", err);
+              }
             }}
           >
             {isCreatingVitrine ? "Criando..." : "Criar Vitrine"}
