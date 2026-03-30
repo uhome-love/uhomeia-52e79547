@@ -27,6 +27,7 @@ import { useCorretorHomeData } from "@/hooks/useCorretorHomeData";
 import { useConquistas } from "@/hooks/useConquistas";
 
 import OportunidadesLista from "@/components/corretor/OportunidadesLista";
+import RoletaStatusBar from "@/components/corretor/RoletaStatusBar";
 import DailyProgressCard from "@/components/corretor/DailyProgressCard";
 import MissoesDeHoje from "@/components/corretor/MissoesDeHoje";
 import RankingGestaoLeads from "@/components/corretor/RankingGestaoLeads";
