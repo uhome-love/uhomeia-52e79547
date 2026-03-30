@@ -18,6 +18,7 @@ interface CardActionBarProps {
   onOpenTransfer: () => void;
   onOpenPartner: () => void;
   onMarkLost: () => void;
+  onInactivate: () => void;
   onMoveStage: (e: React.MouseEvent, stageId: string) => void;
 }
 
