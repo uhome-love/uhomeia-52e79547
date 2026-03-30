@@ -199,10 +199,11 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
     const isConcluida = tarefa.status === "concluida";
     const horaRaw = (tarefa as any).hora_vencimento;
     const timeLabel = horaRaw ? horaRaw.slice(0, 5) : "";
-    const dateLabel = tarefa.vence_em
-      ? isToday(parseDateBRT(tarefa.vence_em)) ? (timeLabel ? `Hoje às ${timeLabel}` : "Hoje")
-      : isTomorrow(parseDateBRT(tarefa.vence_em)) ? (timeLabel ? `Amanhã às ${timeLabel}` : "Amanhã")
-      : format(parseDateBRT(tarefa.vence_em), "dd/MM", { locale: ptBR }) + (timeLabel ? ` às ${timeLabel}` : "")
+    const venceDate = tarefa.vence_em ? parseDateBRT(tarefa.vence_em) : null;
+    const dateLabel = venceDate
+      ? isToday(venceDate) ? (timeLabel ? `Hoje às ${timeLabel}` : "Hoje")
+      : isTomorrow(venceDate) ? (timeLabel ? `Amanhã às ${timeLabel}` : "Amanhã")
+      : format(venceDate, "dd/MM", { locale: ptBR }) + (timeLabel ? ` às ${timeLabel}` : "")
       : "Sem data";
 
     return (
