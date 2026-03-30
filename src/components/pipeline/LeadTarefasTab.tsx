@@ -197,12 +197,13 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
   const renderTarefa = (tarefa: PipelineTarefa) => {
     const isOverdue = tarefa.status === "pendente" && tarefa.vence_em && isBefore(parseDateBRT(tarefa.vence_em), today);
     const isConcluida = tarefa.status === "concluida";
+    const horaRaw = (tarefa as any).hora_vencimento;
+    const timeLabel = horaRaw ? horaRaw.slice(0, 5) : "";
     const dateLabel = tarefa.vence_em
-      ? isToday(parseDateBRT(tarefa.vence_em)) ? "Hoje"
-      : isTomorrow(parseDateBRT(tarefa.vence_em)) ? "Amanhã"
-      : format(parseDateBRT(tarefa.vence_em), "dd/MM", { locale: ptBR })
+      ? isToday(parseDateBRT(tarefa.vence_em)) ? (timeLabel ? `Hoje às ${timeLabel}` : "Hoje")
+      : isTomorrow(parseDateBRT(tarefa.vence_em)) ? (timeLabel ? `Amanhã às ${timeLabel}` : "Amanhã")
+      : format(parseDateBRT(tarefa.vence_em), "dd/MM", { locale: ptBR }) + (timeLabel ? ` às ${timeLabel}` : "")
       : "Sem data";
-    const timeLabel = (tarefa as any).hora_vencimento ? ` ${(tarefa as any).hora_vencimento.slice(0, 5)}` : "";
 
     return (
       <div key={tarefa.id} className={`p-3 rounded-xl border transition-colors ${
