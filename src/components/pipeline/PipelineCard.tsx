@@ -462,6 +462,13 @@ const PipelineCard = memo(function PipelineCard({
         />
       )}
 
+  const handleInactivate = async () => {
+    if (!user) return;
+    const confirma = confirm("Deseja inativar este lead? Ele será arquivado e não aparecerá mais no pipeline.");
+    if (!confirma) return;
+    await supabase.from("pipeline_leads").update({ arquivado: true } as any).eq("id", lead.id);
+    toast.info("Lead inativado com sucesso");
+  };
 
       {/* Card Footer — 3 equal buttons */}
       <CardActionBar
