@@ -25,7 +25,7 @@ interface CardActionBarProps {
 export default function CardActionBar({
   leadId, leadNome, leadTelefone, stageId, stages, canTransfer,
   onCall, onWhatsApp, onOpenDetail, onScheduleVisit, onOpenComunicacao,
-  onOpenTransfer, onOpenPartner, onMarkLost, onMoveStage,
+  onOpenTransfer, onOpenPartner, onMarkLost, onInactivate, onMoveStage,
 }: CardActionBarProps) {
   const btnBase: React.CSSProperties = {
     display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
