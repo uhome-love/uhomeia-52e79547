@@ -634,6 +634,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
             </TabsContent>
 
             <TabsContent value="homi" className="p-0">
+              {/* v2 - homi tab styling */}
               <div className="p-4 flex flex-col gap-4">
                 {/* Briefing compacto */}
                 <div style={{ background: 'var(--muted)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid #4F46E5', marginBottom: 16 }}>
