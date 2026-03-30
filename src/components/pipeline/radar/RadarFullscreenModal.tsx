@@ -282,57 +282,106 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
           <div className="flex-1 p-4 overflow-y-auto">
             {matches.length > 0 ? (
               <>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-lg text-foreground">Imóveis Compatíveis</h3>
-                  <span className="bg-muted text-muted-foreground text-xs font-semibold px-2 py-1 rounded-full">
-                    {matches.length}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {matches.map((item, idx) => {
-                    const foto = item.imagem || item.foto_principal_url || (item.fotos && item.fotos[0]) || null;
-                    const nome = item.nome || item.titulo || item.empreendimento || "Imóvel";
-                    const preco = item.preco ? formatBRL(item.preco) : "—";
-                    const infoParts = [
-                      item.dorms ? `${item.dorms} quartos` : null,
-                      item.vagas ? `${item.vagas} vagas` : null,
-                      item.metragem ? `${item.metragem} m²` : (item.metragens || null),
-                    ].filter(Boolean);
-
-                    const isSelected = selected.has(idx);
-                    const toggleSelect = () => setSelected(prev => {
-                      const next = new Set(prev);
-                      if (next.has(idx)) next.delete(idx); else next.add(idx);
-                      return next;
-                    });
-
-                    return (
-                      <div
-                        key={item.codigo || item.id || idx}
-                        className={`border rounded-lg overflow-hidden bg-card cursor-pointer transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
-                        onClick={toggleSelect}
-                      >
-                        {foto ? (
-                          <img src={foto} alt={nome} className="h-40 w-full object-cover" loading="lazy" />
-                        ) : (
-                          <div className="h-40 w-full bg-muted flex items-center justify-center">
-                            <Home className="h-8 w-8 text-muted-foreground/40" />
-                          </div>
-                        )}
-                        <div className="p-3">
-                          <p className="font-semibold text-sm truncate text-foreground">{nome}</p>
-                          <p className="text-xs text-muted-foreground">{item.bairro || "—"}</p>
-                          <p className="text-base font-bold text-[#4F46E5] mt-1">{preco}</p>
-                        </div>
-                        {infoParts.length > 0 && (
-                          <div className="px-3 pb-3">
-                            <p className="text-xs text-muted-foreground">{infoParts.join(" · ")}</p>
-                          </div>
-                        )}
+                {(() => {
+                  const visibleMatches = matches.map((item, idx) => ({ item, idx })).filter(({ idx }) => !discarded.has(idx));
+                  return (
+                    <>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-semibold text-lg text-foreground">Imóveis Compatíveis</h3>
+                        <span className="bg-muted text-muted-foreground text-xs font-semibold px-2 py-1 rounded-full">
+                          {visibleMatches.length}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {visibleMatches.map(({ item, idx }) => {
+                          const foto = item.imagem || item.foto_principal_url || item.foto_principal || (item.fotos && item.fotos[0]) || null;
+                          const nome = item.nome || item.titulo || item.empreendimento || "Imóvel";
+                          const preco = item.preco ? formatBRL(item.preco) : "—";
+                          const infoParts = [
+                            item.dorms ? `${item.dorms} quartos` : null,
+                            item.vagas ? `${item.vagas} vagas` : null,
+                            item.metragem ? `${item.metragem} m²` : (item.metragens || null),
+                          ].filter(Boolean);
+
+                          const isSelected = selected.has(idx);
+                          const toggleSelect = () => setSelected(prev => {
+                            const next = new Set(prev);
+                            if (next.has(idx)) next.delete(idx); else next.add(idx);
+                            return next;
+                          });
+
+                          const slug = item.slug || item.codigo || item.id;
+                          const siteUrl = `https://uhome.com.br/imovel/${slug}`;
+
+                          return (
+                            <div
+                              key={item.codigo || item.id || idx}
+                              className={`border rounded-lg overflow-hidden bg-card transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                            >
+                              {/* Foto com overlay de ações */}
+                              <div className="relative group">
+                                {foto ? (
+                                  <img
+                                    src={foto}
+                                    alt={nome}
+                                    className="h-40 w-full object-cover cursor-pointer"
+                                    loading="lazy"
+                                    onClick={() => setPreviewFoto(foto)}
+                                  />
+                                ) : (
+                                  <div className="h-40 w-full bg-muted flex items-center justify-center">
+                                    <Home className="h-8 w-8 text-muted-foreground/40" />
+                                  </div>
+                                )}
+                                {/* Botão descartar */}
+                                <button
+                                  className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
+                                  onClick={(e) => { e.stopPropagation(); setDiscarded(prev => new Set(prev).add(idx)); setSelected(prev => { const n = new Set(prev); n.delete(idx); return n; }); }}
+                                  title="Descartar imóvel"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                                {/* Checkbox seleção */}
+                                <button
+                                  className={`absolute top-2 left-2 w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary text-primary-foreground" : "bg-white/80 border-border text-transparent hover:border-primary"}`}
+                                  onClick={(e) => { e.stopPropagation(); toggleSelect(); }}
+                                >
+                                  {isSelected && <Check className="h-3.5 w-3.5" />}
+                                </button>
+                              </div>
+
+                              {/* Corpo */}
+                              <div className="p-3 cursor-pointer" onClick={toggleSelect}>
+                                <p className="font-semibold text-sm truncate text-foreground">{nome}</p>
+                                <p className="text-xs text-muted-foreground">{item.bairro || "—"}</p>
+                                <p className="text-base font-bold text-primary mt-1">{preco}</p>
+                              </div>
+                              {infoParts.length > 0 && (
+                                <div className="px-3 pb-2">
+                                  <p className="text-xs text-muted-foreground">{infoParts.join(" · ")}</p>
+                                </div>
+                              )}
+
+                              {/* Footer do card */}
+                              <div className="px-3 pb-3">
+                                <a
+                                  href={siteUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  Ver no site
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                })()}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center gap-3">
@@ -341,6 +390,15 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
               </div>
             )}
           </div>
+
+          {/* Dialog preview de foto */}
+          <Dialog open={!!previewFoto} onOpenChange={() => setPreviewFoto(null)}>
+            <DialogContent className="max-w-3xl p-2 bg-black/90 border-none">
+              {previewFoto && (
+                <img src={previewFoto} alt="Preview" className="w-full h-auto max-h-[80vh] object-contain rounded" />
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Footer */}
