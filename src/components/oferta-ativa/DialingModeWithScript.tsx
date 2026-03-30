@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Zap, ChevronDown, LogOut, SkipForward, Clock, ChevronRight, AlertTriangle, Sparkles, ArrowLeft } from "lucide-react";
+import { Loader2, Phone, MessageCircle, Mail, Copy, User, Building2, Calendar, History, CheckCircle, Zap, ChevronDown, LogOut, SkipForward, Clock, ChevronRight, AlertTriangle, Sparkles, ArrowLeft, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { useCorretorProgress } from "@/hooks/useCorretorProgress";
 import { useAuth } from "@/hooks/useAuth";
@@ -60,12 +60,30 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const isCampaign = lista.id.startsWith("campaign_");
   
   // Get campaign lista IDs from sessionStorage if campaign mode
-  const campaignListaIds = useMemo(() => {
+  const allCampaignListaIds = useMemo(() => {
     if (!isCampaign) return [];
     try {
       return JSON.parse(sessionStorage.getItem("campaign_lista_ids") || "[]") as string[];
     } catch { return []; }
   }, [isCampaign]);
+
+  // Get empreendimento → lista_ids mapping for campaign filtering
+  const campaignEmpMap = useMemo<Record<string, string[]>>(() => {
+    if (!isCampaign) return {};
+    try {
+      return JSON.parse(sessionStorage.getItem("campaign_emp_map") || "{}");
+    } catch { return {}; }
+  }, [isCampaign]);
+
+  const campaignEmpreendimentos = useMemo(() => Object.keys(campaignEmpMap).sort(), [campaignEmpMap]);
+  const [empFilter, setEmpFilter] = useState<string>("todos");
+
+  // Filter lista IDs based on selected empreendimento
+  const campaignListaIds = useMemo(() => {
+    if (!isCampaign) return [];
+    if (empFilter === "todos") return allCampaignListaIds;
+    return campaignEmpMap[empFilter] || allCampaignListaIds;
+  }, [isCampaign, empFilter, allCampaignListaIds, campaignEmpMap]);
   
   // Always call all hooks (React rules), but only use the active one
   const serverQueue = useOAServerQueue((!isCustom && !isCampaign) ? lista.id : "__noop__");
@@ -169,12 +187,25 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   }, []);
 
   const hasFetchedRef = useRef(false);
+  const prevEmpFilterRef = useRef(empFilter);
   useEffect(() => {
     if (!hasFetchedRef.current) {
       hasFetchedRef.current = true;
       fetchNext();
     }
   }, [fetchNext]);
+
+  // Re-fetch when empreendimento filter changes in campaign mode
+  useEffect(() => {
+    if (isCampaign && hasFetchedRef.current && prevEmpFilterRef.current !== empFilter) {
+      prevEmpFilterRef.current = empFilter;
+      // Unlock current lead before fetching from filtered queue
+      if (lead) {
+        unlockLead(lead.id);
+      }
+      fetchNext();
+    }
+  }, [empFilter, isCampaign, fetchNext, lead, unlockLead]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1075,6 +1106,26 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           <span className="text-neutral-500">
             Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> · ROUND {sessionLeadsServed + 1} · {lead.empreendimento}
           </span>
+          {/* Empreendimento filter for campaign mode */}
+          {isCampaign && campaignEmpreendimentos.length > 1 && (
+            <div className="flex items-center gap-1.5 ml-2">
+              <Filter className="h-3 w-3 text-blue-400" />
+              <select
+                value={empFilter}
+                onChange={(e) => {
+                  setEmpFilter(e.target.value);
+                  // Will trigger re-fetch since campaignListaIds changes
+                }}
+                className="h-6 px-2 rounded text-[11px] font-medium bg-transparent text-blue-300 border border-blue-500/30 outline-none cursor-pointer hover:border-blue-400/60 transition-colors"
+                style={{ appearance: "auto" }}
+              >
+                <option value="todos" style={{ background: "#1C2128", color: "#93C5FD" }}>Todos empreendimentos</option>
+                {campaignEmpreendimentos.map(emp => (
+                  <option key={emp} value={emp} style={{ background: "#1C2128", color: "#93C5FD" }}>{emp}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-emerald-400/70">🔒 Reservado</span>
