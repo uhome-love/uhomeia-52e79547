@@ -79,6 +79,8 @@ interface TimelineItem {
   date: string;
   icon: any;
   color: string;
+  sourceType?: "atividade" | "historico" | "tarefa" | "imovel_event" | "system";
+  sourceId?: string;
 }
 
 const IMOVEL_EVENT_META: Record<string, { label: string; icon: any; color: string }> = {
