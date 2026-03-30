@@ -60,12 +60,30 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const isCampaign = lista.id.startsWith("campaign_");
   
   // Get campaign lista IDs from sessionStorage if campaign mode
-  const campaignListaIds = useMemo(() => {
+  const allCampaignListaIds = useMemo(() => {
     if (!isCampaign) return [];
     try {
       return JSON.parse(sessionStorage.getItem("campaign_lista_ids") || "[]") as string[];
     } catch { return []; }
   }, [isCampaign]);
+
+  // Get empreendimento → lista_ids mapping for campaign filtering
+  const campaignEmpMap = useMemo<Record<string, string[]>>(() => {
+    if (!isCampaign) return {};
+    try {
+      return JSON.parse(sessionStorage.getItem("campaign_emp_map") || "{}");
+    } catch { return {}; }
+  }, [isCampaign]);
+
+  const campaignEmpreendimentos = useMemo(() => Object.keys(campaignEmpMap).sort(), [campaignEmpMap]);
+  const [empFilter, setEmpFilter] = useState<string>("todos");
+
+  // Filter lista IDs based on selected empreendimento
+  const campaignListaIds = useMemo(() => {
+    if (!isCampaign) return [];
+    if (empFilter === "todos") return allCampaignListaIds;
+    return campaignEmpMap[empFilter] || allCampaignListaIds;
+  }, [isCampaign, empFilter, allCampaignListaIds, campaignEmpMap]);
   
   // Always call all hooks (React rules), but only use the active one
   const serverQueue = useOAServerQueue((!isCustom && !isCampaign) ? lista.id : "__noop__");
