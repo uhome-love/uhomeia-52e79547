@@ -157,7 +157,7 @@ export function StatusElegibilidadeRoleta() {
 
         {/* Alerta de descartes excessivos */}
         {elegibilidade.bloqueado_descarte && (
-          <div className="mx-4 mt-3 rounded-lg px-3 py-2.5 bg-destructive/10 border border-destructive/20">
+          <div className="mt-3 rounded-lg px-3 py-2.5 bg-destructive/10 border border-destructive/20">
             <div className="flex items-start gap-2">
               <Trash2 className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
               <div>
