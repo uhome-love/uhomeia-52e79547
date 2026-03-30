@@ -8547,6 +8547,7 @@ export type Database = {
         }
         Returns: number
       }
+      check_descartes_excessivos: { Args: never; Returns: undefined }
       check_phone_duplicate: {
         Args: { p_telefone: string }
         Returns: {
