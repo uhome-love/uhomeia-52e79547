@@ -33,6 +33,7 @@ interface RadarFullscreenModalProps {
   onClose: () => void;
   leadNome: string;
   profile: RadarProfileData;
+  isSearching?: boolean;
   matches: any[];
   onUpdateMatch?: (editedProfile: RadarProfileData) => void;
   onIAPerfil?: () => void;
@@ -85,7 +86,7 @@ const MOMENTO_OPTIONS = [
   { value: "pesquisando", label: "Pesquisando" },
 ];
 
-export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, onUpdateMatch, onIAPerfil }: RadarFullscreenModalProps) {
+export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, isSearching, onUpdateMatch, onIAPerfil }: RadarFullscreenModalProps) {
   const [form, setForm] = useState<RadarProfileData>(profile);
 
   useEffect(() => {
@@ -249,10 +250,11 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
             <div className="space-y-2 mt-4">
               <Button
                 className="w-full gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white"
+                disabled={isSearching}
                 onClick={() => onUpdateMatch?.(form)}
               >
                 <Search className="h-4 w-4" />
-                🔍 Atualizar Match
+                {isSearching ? "Buscando..." : "🔍 Atualizar Match"}
               </Button>
               <Button
                 variant="outline"
