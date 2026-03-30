@@ -1245,11 +1245,9 @@ Responda SOMENTE com o JSON, sem markdown.`;
           : "Nenhum imóvel buscado ainda"}
       </p>
 
-            {profileForm.tipos.length > 0 && (
-              <button onClick={() => setShowFilters(f => !f)} className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors flex items-center gap-1">
-                <Home className="h-2.5 w-2.5" /> {profileForm.tipos.join(", ")}
-              </button>
-            )}
+    </div>
+  );
+}
             {profileForm.bairros.length > 0 && (
               <button onClick={() => setShowFilters(f => !f)} className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors flex items-center gap-1">
                 <MapPin className="h-2.5 w-2.5" /> {profileForm.bairros.join(", ")}
