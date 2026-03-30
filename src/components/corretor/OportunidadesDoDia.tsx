@@ -449,7 +449,7 @@ export function OportunidadesDoDia() {
                 <p className="text-xs text-muted-foreground">
                   Faltam {10 - leadsDesatualizados > 0 ? 10 - leadsDesatualizados : 0} para bloqueio. 
                   <button
-                    onClick={() => (window.location.href = "/pipeline?filtro=sem_tarefa")}
+                    onClick={() => navigate("/pipeline-leads?filtro=sem_tarefa")}
                     className="text-primary underline ml-1"
                   >
                     Atualizar pipeline
