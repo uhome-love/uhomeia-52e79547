@@ -10,7 +10,7 @@
  * calls the edge function when a crawler is detected.
  */
 
-const PUBLIC_DOMAIN = "https://uhomesales.com";
+const PUBLIC_DOMAIN = "https://uhome.com.br";
 
 /**
  * Returns the official public URL for a vitrine.
