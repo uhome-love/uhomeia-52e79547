@@ -1079,24 +1079,6 @@ Responda SOMENTE com o JSON, sem markdown.`;
     try {
       const imovelCodigos = items.map(item => getPropertyCode(item));
 
-      // Build dados_custom with property details for the vitrine page
-      const dadosCustom = items.map(item => ({
-        nome: item.nome || item.empreendimento || "Imóvel",
-        empreendimento: item.empreendimento || item.nome || "",
-        bairro: item.bairro,
-        preco: item.preco,
-        dorms: item.dorms,
-        vagas: item.vagas || 0,
-        suites: item.suites || 0,
-        metragens: item.metragens || (item.metragem ? `${item.metragem}m²` : ""),
-        imagem: item.imagem || "",
-        imagens: item.imagem ? [item.imagem] : [],
-        codigo: getPropertyCode(item),
-        score: item.score,
-        justificativas: item.justificativas,
-        source: item.source,
-      }));
-
       const titulo = `Seleção para ${leadNome}`;
       const mensagem = `Olá ${leadNome}! Selecionei ${items.length} imóveis especialmente para você. Confira!`;
 
