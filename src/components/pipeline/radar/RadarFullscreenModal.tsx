@@ -89,11 +89,12 @@ const MOMENTO_OPTIONS = [
   { value: "pesquisando", label: "Pesquisando" },
 ];
 
-export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, isSearching, onUpdateMatch, onIAPerfil, isAIAnalyzing }: RadarFullscreenModalProps) {
+export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, isSearching, onUpdateMatch, onIAPerfil, isAIAnalyzing, onCriarVitrine, isCreatingVitrine }: RadarFullscreenModalProps) {
   const [form, setForm] = useState<RadarProfileData>(profile);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    if (open) setForm(profile);
+    if (open) { setForm(profile); setSelected(new Set()); }
   }, [open, profile]);
 
   const updateField = <K extends keyof RadarProfileData>(key: K, value: RadarProfileData[K]) => {
