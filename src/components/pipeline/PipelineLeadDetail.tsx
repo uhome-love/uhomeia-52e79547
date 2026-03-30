@@ -545,13 +545,6 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               </TabsTrigger>
               </TabsTrigger>
             </TabsList>
-            <Button
-              size="sm"
-              className="h-8 text-xs px-3 gap-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md shrink-0"
-              onClick={() => setHomiOpen(!homiOpen)}
-            >
-              <Bot className="h-3.5 w-3.5" /> HOMI
-            </Button>
           </div>
 
           <ScrollArea className="flex-1 min-h-0">
