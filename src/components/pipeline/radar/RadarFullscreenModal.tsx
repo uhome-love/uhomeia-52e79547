@@ -38,6 +38,8 @@ interface RadarFullscreenModalProps {
   onUpdateMatch?: (editedProfile: RadarProfileData) => void;
   onIAPerfil?: () => void;
   isAIAnalyzing?: boolean;
+  onCriarVitrine?: (selectedIndexes: number[]) => void;
+  isCreatingVitrine?: boolean;
 }
 
 function EditableField({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
@@ -87,11 +89,12 @@ const MOMENTO_OPTIONS = [
   { value: "pesquisando", label: "Pesquisando" },
 ];
 
-export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, isSearching, onUpdateMatch, onIAPerfil, isAIAnalyzing }: RadarFullscreenModalProps) {
+export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, isSearching, onUpdateMatch, onIAPerfil, isAIAnalyzing, onCriarVitrine, isCreatingVitrine }: RadarFullscreenModalProps) {
   const [form, setForm] = useState<RadarProfileData>(profile);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    if (open) setForm(profile);
+    if (open) { setForm(profile); setSelected(new Set()); }
   }, [open, profile]);
 
   const updateField = <K extends keyof RadarProfileData>(key: K, value: RadarProfileData[K]) => {
@@ -291,8 +294,19 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
                       item.metragem ? `${item.metragem} m²` : (item.metragens || null),
                     ].filter(Boolean);
 
+                    const isSelected = selected.has(idx);
+                    const toggleSelect = () => setSelected(prev => {
+                      const next = new Set(prev);
+                      if (next.has(idx)) next.delete(idx); else next.add(idx);
+                      return next;
+                    });
+
                     return (
-                      <div key={item.codigo || item.id || idx} className="border border-border rounded-lg overflow-hidden bg-card">
+                      <div
+                        key={item.codigo || item.id || idx}
+                        className={`border rounded-lg overflow-hidden bg-card cursor-pointer transition-colors ${isSelected ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                        onClick={toggleSelect}
+                      >
                         {foto ? (
                           <img src={foto} alt={nome} className="h-40 w-full object-cover" loading="lazy" />
                         ) : (
@@ -326,9 +340,13 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
 
         {/* Footer */}
         <div className="p-4 border-t border-border flex justify-between items-center shrink-0">
-          <span className="text-sm text-muted-foreground">0 selecionados</span>
-          <Button disabled className="bg-emerald-600 text-white hover:bg-emerald-700">
-            Criar Vitrine
+          <span className="text-sm text-muted-foreground">{selected.size} selecionado{selected.size !== 1 ? "s" : ""}</span>
+          <Button
+            disabled={selected.size === 0 || isCreatingVitrine}
+            className="bg-emerald-600 text-white hover:bg-emerald-700"
+            onClick={() => onCriarVitrine?.(Array.from(selected))}
+          >
+            {isCreatingVitrine ? "Criando..." : "Criar Vitrine"}
           </Button>
         </div>
       </DialogContent>

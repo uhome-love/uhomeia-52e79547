@@ -1176,6 +1176,38 @@ Responda SOMENTE com o JSON, sem markdown.`;
         }}
         onIAPerfil={handleAIAnalyze}
         isAIAnalyzing={aiAnalyzing}
+        isCreatingVitrine={creatingVitrine}
+        onCriarVitrine={async (selectedIndexes) => {
+          if (!user?.id) { toast.error("Você precisa estar logado"); return; }
+          const items = selectedIndexes.map(i => results[i]).filter(Boolean);
+          if (items.length === 0) { toast.error("Selecione ao menos 1 imóvel"); return; }
+          setCreatingVitrine(true);
+          try {
+            const imovelCodigos = items.map(item => getPropertyCode(item));
+            const titulo = `Seleção para ${leadNome}`;
+            const mensagem = `Olá ${leadNome}! Selecionei ${items.length} imóveis especialmente para você. Confira!`;
+            const { data: vitrine, error } = await supabaseSite
+              .from("vitrines")
+              .insert({ titulo, mensagem, imovel_codigos: imovelCodigos, lead_nome: leadNome, lead_telefone: leadTelefone || null, tipo: "property_selection", corretor_slug: slugRef || null })
+              .select("id")
+              .single();
+            if (error) throw error;
+            const vitrineUrl = getVitrinePublicUrl(vitrine.id);
+            handleMarkSent(items);
+            await navigator.clipboard.writeText(vitrineUrl);
+            if (leadTelefone) {
+              const phone = leadTelefone.replace(/\D/g, "");
+              const msg = `Olá ${leadNome}! 😊\n\nPreparei uma seleção especial de ${items.length} imóveis para você:\n\n🔗 ${vitrineUrl}\n\nDá uma olhada e me conta o que achou! 🏠`;
+              window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, "_blank");
+            }
+            toast.success("Vitrine criada! Link copiado ✨", { description: vitrineUrl, duration: 6000 });
+          } catch (err: any) {
+            console.error("Erro ao criar vitrine:", err);
+            toast.error("Erro ao criar vitrine");
+          } finally {
+            setCreatingVitrine(false);
+          }
+        }}
       />
       {/* ── SUB-TABS ── */}
       <Tabs value={subTab} onValueChange={(v) => setSubTab(v as any)}>
