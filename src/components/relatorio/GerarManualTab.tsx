@@ -114,34 +114,52 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
   const { data: periodData, isLoading: loadingPeriod } = useQuery({
     queryKey: ["period-data-1on1", corretorUserId, corretorNome, dataInicio, dataFim],
     queryFn: async (): Promise<PeriodData> => {
-      if (!corretorUserId) return { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, leadsAtivos: 0, leadsAproveitados: 0, negociosAtivos: 0, vgvAndamento: 0 };
+      const empty: PeriodData = { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, visitasNoShow: 0, leadsAtivos: 0, leadsAproveitados: 0, leadsNovos: 0, followUpsConcluidos: 0, leadsDesatualizados: 0, negociosAtivos: 0, propostas: 0, vendas: 0, perdidos: 0, vgvGerado: 0, vgvAssinado: 0, vgvAndamento: 0, pontosGestao: 0 };
+      if (!corretorUserId) return empty;
 
       const dayStart = `${dataInicio}T00:00:00-03:00`;
       const dayEnd = `${dataFim}T23:59:59.999-03:00`;
 
-      // Parallel queries
-      const [tentativasRes, visitasRes, negociosRes] = await Promise.all([
+      // Parallel queries - comprehensive
+      const [tentativasRes, visitasRes, negociosRes, leadsNovosRes, tarefasRes, gestaoRes] = await Promise.all([
         supabase.from("oferta_ativa_tentativas").select("id, resultado").eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd),
         supabase.from("visitas").select("id, status").eq("corretor_id", corretorUserId).gte("data_visita", dataInicio).lte("data_visita", dataFim),
-        supabase.from("negocios").select("id, vgv_estimado").eq("corretor_id", corretorUserId).neq("fase", "perdido"),
+        supabase.from("negocios").select("id, fase, vgv_estimado, data_assinatura").eq("corretor_id", corretorUserId),
+        supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd) as any,
+        supabase.from("pipeline_tarefas" as any).select("id, status").eq("corretor_id", corretorUserId).eq("status", "concluida").gte("concluida_em", dayStart).lte("concluida_em", dayEnd),
+        supabase.from("v_kpi_gestao_leads" as any).select("pontos").eq("auth_user_id", corretorUserId).gte("data", dataInicio).lte("data", dataFim),
       ]);
 
       const tentativas = tentativasRes.data || [];
       const visitas = visitasRes.data || [];
       const negocios = negociosRes.data || [];
+      const tarefas = tarefasRes.data || [];
+      const gestaoRows = gestaoRes.data || [];
 
       const ligacoes = tentativas.length;
       const aproveitados = tentativas.filter(t => t.resultado === "com_interesse").length;
       const visitasMarcadas = visitas.length;
       const visitasRealizadas = visitas.filter(v => v.status === "realizada").length;
-      const vgvAndamento = negocios.reduce((sum, n) => sum + (Number(n.vgv_estimado) || 0), 0);
+      const visitasNoShow = visitas.filter(v => v.status === "no_show").length;
 
-      // Leads ativos
+      // Deal metrics
+      const negociosAtivos = negocios.filter(n => !["perdido", "vendido"].includes(n.fase)).length;
+      const propostas = negocios.filter(n => n.fase === "proposta").length;
+      const vendas = negocios.filter(n => n.fase === "vendido" && n.data_assinatura && n.data_assinatura >= dataInicio && n.data_assinatura <= dataFim).length;
+      const perdidos = negocios.filter(n => n.fase === "perdido").length;
+      const vgvAndamento = negocios.filter(n => !["perdido", "vendido"].includes(n.fase)).reduce((s, n) => s + (Number(n.vgv_estimado) || 0), 0);
+      const vgvGerado = negocios.filter(n => n.fase !== "perdido").reduce((s, n) => s + (Number(n.vgv_estimado) || 0), 0);
+      const vgvAssinado = negocios.filter(n => n.fase === "vendido" && n.data_assinatura && n.data_assinatura >= dataInicio && n.data_assinatura <= dataFim).reduce((s, n) => s + (Number(n.vgv_estimado) || 0), 0);
+
+      // Lead management
       const { count: leadsAtivos } = await (supabase
         .from("pipeline_leads")
         .select("id", { count: "exact", head: true }) as any)
         .eq("corretor_id", corretorUserId)
         .neq("status", "arquivado");
+
+      const pontosGestao = gestaoRows.reduce((s: number, r: any) => s + (Number(r.pontos) || 0), 0);
+      const followUpsConcluidos = tarefas.length;
 
       return {
         ligacoes,
@@ -149,10 +167,20 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
         taxaAproveitamento: ligacoes > 0 ? Math.round((aproveitados / ligacoes) * 100) : 0,
         visitasMarcadas,
         visitasRealizadas,
+        visitasNoShow,
         leadsAtivos: leadsAtivos || 0,
         leadsAproveitados: aproveitados,
-        negociosAtivos: negocios.length,
+        leadsNovos: leadsNovosRes.count || 0,
+        followUpsConcluidos,
+        leadsDesatualizados: 0,
+        negociosAtivos,
+        propostas,
+        vendas,
+        perdidos,
+        vgvGerado,
+        vgvAssinado,
         vgvAndamento,
+        pontosGestao,
       };
     },
     enabled: !!corretorUserId && !!dataInicio && !!dataFim,
