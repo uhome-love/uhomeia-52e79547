@@ -37,6 +37,7 @@ interface RadarFullscreenModalProps {
   matches: any[];
   onUpdateMatch?: (editedProfile: RadarProfileData) => void;
   onIAPerfil?: () => void;
+  isAIAnalyzing?: boolean;
 }
 
 function EditableField({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
@@ -86,7 +87,7 @@ const MOMENTO_OPTIONS = [
   { value: "pesquisando", label: "Pesquisando" },
 ];
 
-export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, isSearching, onUpdateMatch, onIAPerfil }: RadarFullscreenModalProps) {
+export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, isSearching, onUpdateMatch, onIAPerfil, isAIAnalyzing }: RadarFullscreenModalProps) {
   const [form, setForm] = useState<RadarProfileData>(profile);
 
   useEffect(() => {
@@ -259,10 +260,11 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
               <Button
                 variant="outline"
                 className="w-full gap-2"
+                disabled={isAIAnalyzing}
                 onClick={onIAPerfil}
               >
                 <Sparkles className="h-4 w-4" />
-                🤖 IA Perfil
+                {isAIAnalyzing ? "Analisando..." : "🤖 IA Perfil"}
               </Button>
               <p className="text-xs text-muted-foreground text-center">Última busca: --</p>
             </div>
