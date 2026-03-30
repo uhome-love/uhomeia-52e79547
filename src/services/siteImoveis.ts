@@ -116,11 +116,28 @@ function slugify(text: string): string {
  *
  * IMPORTANT: When a pre-built slug from the site DB is available,
  * prefer passing it directly instead of regenerating. */
+/** Normalizes compound property types to their base form for URL slugs.
+ * E.g. "Casa de Condomínio" → "casa", "Apartamento Duplex" → "apartamento" */
+function normalizeTipoSlug(tipo: string): string {
+  const t = tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  if (t.startsWith("casa")) return "casa";
+  if (t.startsWith("apartamento")) return "apartamento";
+  if (t.startsWith("terreno")) return "terreno";
+  if (t.startsWith("sala") || t.startsWith("comercial")) return "comercial";
+  if (t.startsWith("cobertura")) return "cobertura";
+  if (t.startsWith("loja")) return "loja";
+  if (t.startsWith("galpao") || t.startsWith("galp")) return "galpao";
+  if (t.startsWith("flat") || t.startsWith("loft")) return "flat";
+  if (t.startsWith("sobrado")) return "sobrado";
+  if (t.startsWith("kitnet") || t.startsWith("studio") || t.startsWith("estudio")) return "kitnet";
+  return slugify(tipo || "imovel");
+}
+
 export function gerarSlugUhome(imovel: { tipo: string; quartos: number | null; bairro: string; codigo: string; slug?: string | null }): string {
   // If the site DB slug is available, use it directly — it's the canonical source of truth
   if (imovel.slug) return imovel.slug;
 
-  const tipo = slugify(imovel.tipo || "imovel");
+  const tipo = normalizeTipoSlug(imovel.tipo || "imovel");
   const quartos = imovel.quartos ?? 0;
   const bairro = slugify(imovel.bairro || "");
   const codigo = imovel.codigo || "";
