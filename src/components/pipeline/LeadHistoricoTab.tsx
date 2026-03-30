@@ -4,9 +4,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Plus, Pin, PinOff, Send, StickyNote, ArrowRight, CheckCircle2,
   PhoneCall, MessageSquare, Video, MapPin, FileText, Clock, ClipboardList,
-  Building2, Share2, Search as SearchIcon
+  Building2, Share2, Search as SearchIcon, Trash2
 } from "lucide-react";
 import { formatDateSafe, parseDateTimeSafe } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
@@ -69,6 +79,8 @@ interface TimelineItem {
   date: string;
   icon: any;
   color: string;
+  sourceType?: "atividade" | "historico" | "tarefa" | "imovel_event" | "system";
+  sourceId?: string;
 }
 
 const IMOVEL_EVENT_META: Record<string, { label: string; icon: any; color: string }> = {
@@ -125,12 +137,13 @@ function buildTimeline(historico: PipelineHistorico[], atividades: PipelineAtivi
       date: h.created_at,
       icon: ArrowRight,
       color: "bg-primary/10 text-primary",
+      sourceType: "historico",
+      sourceId: h.id,
     });
   }
 
   for (const a of atividades) {
     const info = ATIVIDADE_TIPOS[a.tipo];
-    // For 'entrada' activities, show the full descricao (contains origin details like ImovelWeb info)
     const isEntrada = a.tipo === "entrada";
     const desc = isEntrada && a.descricao
       ? a.descricao
@@ -141,12 +154,14 @@ function buildTimeline(historico: PipelineHistorico[], atividades: PipelineAtivi
       date: a.created_at,
       icon: info?.icon || PhoneCall,
       color: isEntrada ? "bg-emerald-100 text-emerald-600" : (a.status === "concluida" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"),
+      sourceType: "atividade",
+      sourceId: a.id,
     });
   }
 
   for (const t of tarefas) {
     if (t.status === "concluida" && t.concluida_em) {
-      items.push({ title: `✅ ${t.titulo}`, date: t.concluida_em, icon: CheckCircle2, color: "bg-green-100 text-green-600" });
+      items.push({ title: `✅ ${t.titulo}`, date: t.concluida_em, icon: CheckCircle2, color: "bg-green-100 text-green-600", sourceType: "tarefa", sourceId: t.id });
     }
   }
 
@@ -170,10 +185,10 @@ function buildTimeline(historico: PipelineHistorico[], atividades: PipelineAtivi
   }
 
   if (lead.aceito_em) {
-    items.push({ title: "✅ Lead aceito", date: lead.aceito_em, icon: CheckCircle2, color: "bg-emerald-100 text-emerald-600" });
+    items.push({ title: "✅ Lead aceito", date: lead.aceito_em, icon: CheckCircle2, color: "bg-emerald-100 text-emerald-600", sourceType: "system" });
   }
   if (lead.distribuido_em) {
-    items.push({ title: "🔄 Lead distribuído", date: lead.distribuido_em, icon: ArrowRight, color: "bg-blue-100 text-blue-600" });
+    items.push({ title: "🔄 Lead distribuído", date: lead.distribuido_em, icon: ArrowRight, color: "bg-blue-100 text-blue-600", sourceType: "system" });
   }
 
   items.sort((a, b) => (parseDateTimeSafe(b.date)?.getTime() ?? 0) - (parseDateTimeSafe(a.date)?.getTime() ?? 0));
@@ -188,6 +203,8 @@ export default function LeadHistoricoTab({ leadId, lead, stages, atividades, ano
   const [followUp, setFollowUp] = useState<"none" | "amanha" | "custom">("none");
   const [followUpDate, setFollowUpDate] = useState("");
   const [newNota, setNewNota] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<TimelineItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: imovelEvents } = useLeadImoveisEvents(leadId);
 
@@ -241,6 +258,31 @@ export default function LeadHistoricoTab({ leadId, lead, stages, atividades, ano
     if (!newNota.trim()) return;
     await onAddAnotacao(newNota.trim());
     setNewNota("");
+  };
+
+  const handleDeleteItem = async () => {
+    if (!deleteTarget?.sourceId || !deleteTarget.sourceType) return;
+    setDeleting(true);
+    try {
+      const table = deleteTarget.sourceType === "atividade"
+        ? "pipeline_atividades"
+        : deleteTarget.sourceType === "historico"
+          ? "pipeline_historico"
+          : deleteTarget.sourceType === "tarefa"
+            ? "pipeline_tarefas"
+            : null;
+      if (!table) { toast.error("Este item não pode ser removido"); return; }
+      const { error } = await supabase.from(table).delete().eq("id", deleteTarget.sourceId);
+      if (error) throw error;
+      toast.success("Registro removido do histórico");
+      onReload();
+    } catch (err) {
+      console.error("Erro ao deletar:", err);
+      toast.error("Erro ao remover registro");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -350,14 +392,29 @@ export default function LeadHistoricoTab({ leadId, lead, stages, atividades, ano
         <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
         <div className="space-y-0">
           {timeline.slice(0, 15).map((item, i) => (
-            <div key={i} className="relative flex gap-4 pb-4">
+            <div key={i} className="relative flex gap-4 pb-4 group/timeline">
               <div className={`relative z-10 h-7 w-7 rounded-full flex items-center justify-center shrink-0 ${item.color}`}>
                 <item.icon className="h-3.5 w-3.5" />
               </div>
-              <div className="pt-0.5">
-                <p className="text-sm font-medium text-foreground">{item.title}</p>
-                {item.description && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{item.description}</p>}
-                <p className="text-xs text-muted-foreground/60">{formatDateSafe(item.date, "dd/MM 'às' HH:mm", { locale: ptBR, fallback: "Data inválida" })}</p>
+              <div className="pt-0.5 flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">{item.title}</p>
+                    {item.description && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{item.description}</p>}
+                    <p className="text-xs text-muted-foreground/60">{formatDateSafe(item.date, "dd/MM 'às' HH:mm", { locale: ptBR, fallback: "Data inválida" })}</p>
+                  </div>
+                  {item.sourceId && item.sourceType !== "system" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 opacity-0 group-hover/timeline:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                      onClick={() => setDeleteTarget(item)}
+                      title="Remover registro"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -390,6 +447,30 @@ export default function LeadHistoricoTab({ leadId, lead, stages, atividades, ano
           </div>
         ))}
       </div>
+
+      {/* Confirmação de exclusão */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover registro do histórico?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium">{deleteTarget?.title}</span>
+              <br />
+              Esta ação não pode ser desfeita. O registro será permanentemente removido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteItem}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Removendo..." : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
