@@ -87,10 +87,14 @@ function getNotificationRoute(n: Notification): string | null {
   }
 
   // Lead notifications → pipeline with lead context
-  if (["leads", "lead", "lead_roleta", "lead_urgente", "lead_ultimo_alerta", "lead_sem_contato", "lead_parado", "lead_alto_valor"].includes(tipo)) {
+  if (["leads", "lead", "lead_roleta", "lead_urgente", "lead_ultimo_alerta", "lead_sem_contato", "lead_parado", "lead_alto_valor", "alertas"].includes(tipo)) {
     const leadId = d.pipeline_lead_id || d.lead_id;
     if (leadId) return `/pipeline-leads?lead=${leadId}`;
-    return "/pipeline-leads";
+    if (tipo === "alertas" && !["lead_parado", "lead_sem_contato", "lead_sem_atendimento"].includes(categoria || "")) {
+      // Non-lead alert types fall through to other routing
+    } else {
+      return "/pipeline-leads";
+    }
   }
   if (tipo === "fila_ceo" || categoria === "fila_ceo") return "/pipeline-leads";
 
@@ -222,7 +226,7 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
         let actionLabel = "Ver →";
         if (["visitas", "visita_agendada", "visita_confirmada", "visita_noshow"].includes(n.tipo) || n.categoria?.startsWith("visita")) {
           actionLabel = "Ver visita →";
-        } else if (["leads", "lead", "lead_roleta", "lead_sem_contato", "lead_parado", "lead_alto_valor", "lead_urgente", "lead_ultimo_alerta", "radar_intencao", "automacao", "sequencias"].includes(n.tipo)) {
+        } else if (["leads", "lead", "lead_roleta", "lead_sem_contato", "lead_parado", "lead_alto_valor", "lead_urgente", "lead_ultimo_alerta", "radar_intencao", "automacao", "sequencias", "alertas"].includes(n.tipo)) {
           actionLabel = "Ver lead →";
         } else if (["propostas", "proposta_assinada", "vendas", "negocio_fechado"].includes(n.tipo)) {
           actionLabel = "Ver negócio →";
