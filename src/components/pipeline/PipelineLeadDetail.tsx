@@ -815,6 +815,13 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
         availableStages={stages.map(s => ({ id: s.id, tipo: s.tipo, nome: s.nome }))}
         onRefresh={leadData.reload}
       />
+      <WhatsAppFocusFlow
+        isOpen={isWhatsAppFlowOpen}
+        onClose={() => setIsWhatsAppFlowOpen(false)}
+        lead={{ id: lead.id, nome: lead.nome, telefone: lead.telefone, empreendimento: lead.empreendimento, stage_id: lead.stage_id }}
+        stageTipo={currentStage?.tipo}
+        onRefresh={leadData.reload}
+      />
     </Sheet>
   );
 }
