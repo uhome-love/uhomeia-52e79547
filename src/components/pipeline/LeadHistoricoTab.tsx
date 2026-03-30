@@ -203,6 +203,8 @@ export default function LeadHistoricoTab({ leadId, lead, stages, atividades, ano
   const [followUp, setFollowUp] = useState<"none" | "amanha" | "custom">("none");
   const [followUpDate, setFollowUpDate] = useState("");
   const [newNota, setNewNota] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<TimelineItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: imovelEvents } = useLeadImoveisEvents(leadId);
 
