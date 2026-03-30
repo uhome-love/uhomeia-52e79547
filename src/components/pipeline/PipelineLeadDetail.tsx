@@ -366,7 +366,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               </Button>
             )}
             {lead.telefone && (
-              <Button variant="outline" size="sm" className="shrink-0 h-9 text-xs gap-1 rounded-lg px-2.5 whitespace-nowrap border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950" onClick={() => setWhatsappTemplatesOpen(true)}>
+              <Button variant="outline" size="sm" className="shrink-0 h-9 text-xs gap-1 rounded-lg px-2.5 whitespace-nowrap border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950" onClick={() => setIsWhatsAppFlowOpen(true)}>
                 <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
               </Button>
             )}
