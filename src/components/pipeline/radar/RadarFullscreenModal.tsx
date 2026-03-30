@@ -13,6 +13,7 @@ import {
 import { X, Search, Sparkles, Home, MapPin, DollarSign, Bed, Car, Ruler, Copy, ExternalLink, Check, MessageSquare, Save } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/utils";
+import { gerarSlugUhome } from "@/services/siteImoveis";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface RadarProfileData {
@@ -432,7 +433,13 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
                             return next;
                           });
 
-                          const slug = item.slug || item.codigo || item.id;
+                          const slug = gerarSlugUhome({
+                            tipo: item.tipo || "imovel",
+                            quartos: item.dorms ? Number(item.dorms) : null,
+                            bairro: item.bairro || "",
+                            codigo: String(item.codigo || item.id || ""),
+                            slug: item.slug || null,
+                          });
                           const siteUrl = `https://uhome.com.br/imovel/${slug}`;
 
                           return (
@@ -577,8 +584,13 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
             disabled={selected.size === 0 || isCreatingVitrine}
             className="bg-emerald-600 text-white hover:bg-emerald-700"
             onClick={async () => {
-              const url = await onCriarVitrine?.(Array.from(selected));
-              if (url) setVitrineUrl(url);
+              try {
+                const url = await onCriarVitrine?.(Array.from(selected));
+                console.log("[Radar] onCriarVitrine retornou:", url);
+                if (url && typeof url === "string") setVitrineUrl(url);
+              } catch (err) {
+                console.error("[Radar] Erro no onCriarVitrine:", err);
+              }
             }}
           >
             {isCreatingVitrine ? "Criando..." : "Criar Vitrine"}
