@@ -1,5 +1,14 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { X, Search, Sparkles, Home, MapPin, DollarSign, Bed, Car, Ruler } from "lucide-react";
 import { formatBRL } from "@/lib/utils";
 
@@ -25,45 +34,66 @@ interface RadarFullscreenModalProps {
   leadNome: string;
   profile: RadarProfileData;
   matches: any[];
-  onUpdateMatch?: () => void;
+  onUpdateMatch?: (editedProfile: RadarProfileData) => void;
   onIAPerfil?: () => void;
 }
 
-function ProfileField({ label, icon, value }: { label: string; icon: React.ReactNode; value: string | null | undefined }) {
-  const display = value?.trim() || null;
+function EditableField({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="bg-muted/50 rounded-lg p-3 mb-3">
-      <div className="flex items-center gap-1.5 mb-1">
+      <div className="flex items-center gap-1.5 mb-1.5">
         {icon}
         <span className="text-xs text-muted-foreground uppercase font-semibold tracking-wide">{label}</span>
       </div>
-      {display ? (
-        <p className="text-sm font-medium text-foreground">{display}</p>
-      ) : (
-        <p className="text-sm italic text-muted-foreground">Não informado</p>
-      )}
+      {children}
     </div>
   );
 }
 
-function formatPriceRange(min: string, max: string): string | null {
-  const vMin = min ? Number(min) : 0;
-  const vMax = max ? Number(max) : 0;
-  if (!vMin && !vMax) return null;
-  if (vMin && vMax) return `${formatBRL(vMin)} — ${formatBRL(vMax)}`;
-  if (vMin) return `A partir de ${formatBRL(vMin)}`;
-  return `Até ${formatBRL(vMax)}`;
-}
+const TIPO_OPTIONS = [
+  { value: "apartamento", label: "Apartamento" },
+  { value: "casa", label: "Casa" },
+  { value: "terreno", label: "Terreno" },
+  { value: "comercial", label: "Comercial" },
+  { value: "cobertura", label: "Cobertura" },
+];
+
+const DORM_OPTIONS = [
+  { value: "1", label: "1" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+  { value: "4", label: "4+" },
+];
+
+const VAGAS_OPTIONS = [
+  { value: "1", label: "1" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3+" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "qualquer", label: "Qualquer" },
+  { value: "pronto", label: "Pronto p/ morar" },
+  { value: "obras", label: "Em obras / Lançamento" },
+];
+
+const MOMENTO_OPTIONS = [
+  { value: "imediato", label: "Imediato" },
+  { value: "3_meses", label: "3 meses" },
+  { value: "6_meses", label: "6 meses" },
+  { value: "1_ano", label: "1 ano" },
+  { value: "pesquisando", label: "Pesquisando" },
+];
 
 export default function RadarFullscreenModal({ open, onClose, leadNome, profile, matches, onUpdateMatch, onIAPerfil }: RadarFullscreenModalProps) {
-  const priceRange = formatPriceRange(profile.valor_min, profile.valor_max);
+  const [form, setForm] = useState<RadarProfileData>(profile);
 
-  const MOMENTO_LABELS: Record<string, string> = {
-    imediato: "Imediato", "3_meses": "3 meses", "6_meses": "6 meses", "1_ano": "1 ano", pesquisando: "Pesquisando",
-  };
+  useEffect(() => {
+    if (open) setForm(profile);
+  }, [open, profile]);
 
-  const STATUS_LABELS: Record<string, string> = {
-    qualquer: "Qualquer", pronto: "Pronto p/ morar", obras: "Em obras / Lançamento",
+  const updateField = <K extends keyof RadarProfileData>(key: K, value: RadarProfileData[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -79,76 +109,147 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, profile,
 
         {/* Body — 2 colunas */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Coluna esquerda — Perfil */}
+          {/* Coluna esquerda — Perfil editável */}
           <div className="w-[320px] min-w-[320px] border-r border-border p-4 overflow-y-auto">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Perfil do Lead</h3>
 
-            <ProfileField
-              label="Tipo de imóvel"
-              icon={<Home className="h-3.5 w-3.5 text-muted-foreground" />}
-              value={profile.tipos.length > 0 ? profile.tipos.join(", ") : null}
-            />
+            <EditableField label="Tipo de imóvel" icon={<Home className="h-3.5 w-3.5 text-muted-foreground" />}>
+              <Select
+                value={form.tipos[0] || ""}
+                onValueChange={(v) => updateField("tipos", [v])}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPO_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </EditableField>
 
-            <ProfileField
-              label="Bairros de interesse"
-              icon={<MapPin className="h-3.5 w-3.5 text-muted-foreground" />}
-              value={profile.bairros.length > 0 ? profile.bairros.join(", ") : null}
-            />
-
-            <ProfileField
-              label="Faixa de preço"
-              icon={<DollarSign className="h-3.5 w-3.5 text-muted-foreground" />}
-              value={priceRange}
-            />
-
-            <ProfileField
-              label="Dormitórios"
-              icon={<Bed className="h-3.5 w-3.5 text-muted-foreground" />}
-              value={profile.dormitorios_min ? `${profile.dormitorios_min}+ dorms${profile.suites_min ? `, ${profile.suites_min}+ suítes` : ""}` : null}
-            />
-
-            <ProfileField
-              label="Vagas"
-              icon={<Car className="h-3.5 w-3.5 text-muted-foreground" />}
-              value={profile.vagas_min ? `${profile.vagas_min}+ vagas` : null}
-            />
-
-            <ProfileField
-              label="Metragem"
-              icon={<Ruler className="h-3.5 w-3.5 text-muted-foreground" />}
-              value={
-                (profile.area_min || profile.area_max)
-                  ? `${profile.area_min || "?"}–${profile.area_max || "?"} m²`
-                  : null
-              }
-            />
-
-            {profile.empreendimento && (
-              <ProfileField
-                label="Empreendimento"
-                icon={<Home className="h-3.5 w-3.5 text-muted-foreground" />}
-                value={profile.empreendimento}
+            <EditableField label="Bairros de interesse" icon={<MapPin className="h-3.5 w-3.5 text-muted-foreground" />}>
+              <Input
+                className="h-8 text-sm"
+                placeholder="Ex: Moema, Vila Mariana"
+                value={form.bairros.join(", ")}
+                onChange={(e) => updateField("bairros", e.target.value.split(",").map((b) => b.trim()).filter(Boolean))}
               />
+            </EditableField>
+
+            <EditableField label="Faixa de preço" icon={<DollarSign className="h-3.5 w-3.5 text-muted-foreground" />}>
+              <div className="flex gap-2">
+                <Input
+                  className="h-8 text-sm flex-1"
+                  type="number"
+                  placeholder="Mín"
+                  value={form.valor_min}
+                  onChange={(e) => updateField("valor_min", e.target.value)}
+                />
+                <Input
+                  className="h-8 text-sm flex-1"
+                  type="number"
+                  placeholder="Máx"
+                  value={form.valor_max}
+                  onChange={(e) => updateField("valor_max", e.target.value)}
+                />
+              </div>
+            </EditableField>
+
+            <EditableField label="Dormitórios" icon={<Bed className="h-3.5 w-3.5 text-muted-foreground" />}>
+              <Select
+                value={form.dormitorios_min || ""}
+                onValueChange={(v) => updateField("dormitorios_min", v)}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {DORM_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </EditableField>
+
+            <EditableField label="Vagas" icon={<Car className="h-3.5 w-3.5 text-muted-foreground" />}>
+              <Select
+                value={form.vagas_min || ""}
+                onValueChange={(v) => updateField("vagas_min", v)}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {VAGAS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </EditableField>
+
+            <EditableField label="Metragem (m²)" icon={<Ruler className="h-3.5 w-3.5 text-muted-foreground" />}>
+              <div className="flex gap-2">
+                <Input
+                  className="h-8 text-sm flex-1"
+                  type="number"
+                  placeholder="Mín"
+                  value={form.area_min}
+                  onChange={(e) => updateField("area_min", e.target.value)}
+                />
+                <Input
+                  className="h-8 text-sm flex-1"
+                  type="number"
+                  placeholder="Máx"
+                  value={form.area_max}
+                  onChange={(e) => updateField("area_max", e.target.value)}
+                />
+              </div>
+            </EditableField>
+
+            {form.empreendimento && (
+              <EditableField label="Empreendimento" icon={<Home className="h-3.5 w-3.5 text-muted-foreground" />}>
+                <p className="text-sm font-medium text-foreground">{form.empreendimento}</p>
+              </EditableField>
             )}
 
-            <ProfileField
-              label="Status do imóvel"
-              icon={<Home className="h-3.5 w-3.5 text-muted-foreground" />}
-              value={STATUS_LABELS[profile.status_imovel] || profile.status_imovel}
-            />
+            <EditableField label="Status do imóvel" icon={<Home className="h-3.5 w-3.5 text-muted-foreground" />}>
+              <Select
+                value={form.status_imovel || "qualquer"}
+                onValueChange={(v) => updateField("status_imovel", v)}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </EditableField>
 
-            {profile.momento_compra && (
-              <ProfileField
-                label="Momento de compra"
-                icon={<Home className="h-3.5 w-3.5 text-muted-foreground" />}
-                value={MOMENTO_LABELS[profile.momento_compra] || profile.momento_compra}
-              />
-            )}
+            <EditableField label="Momento de compra" icon={<Home className="h-3.5 w-3.5 text-muted-foreground" />}>
+              <Select
+                value={form.momento_compra || ""}
+                onValueChange={(v) => updateField("momento_compra", v)}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOMENTO_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </EditableField>
 
             <div className="space-y-2 mt-4">
               <Button
                 className="w-full gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white"
-                onClick={onUpdateMatch}
+                onClick={() => onUpdateMatch?.(form)}
               >
                 <Search className="h-4 w-4" />
                 🔍 Atualizar Match
