@@ -88,13 +88,13 @@ export default function NewLeadBanner() {
         if (newRow?.aceite_status !== "pendente") return;
         if (dismissedRef.current.has(newRow.id)) return;
 
-        const lead: BannerLead = {
+         const lead: BannerLead = {
           id: newRow.id,
           nome: newRow.nome || "Novo Lead",
           telefone: newRow.telefone,
           empreendimento: newRow.empreendimento,
           origem: newRow.origem,
-          created_at: newRow.created_at || new Date().toISOString(),
+          created_at: newRow.roleta_distribuido_em || newRow.updated_at || new Date().toISOString(),
         };
 
         setBanners(prev => {
