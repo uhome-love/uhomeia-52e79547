@@ -108,6 +108,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [partnerOpen, setPartnerOpen] = useState(false);
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [whatsappTemplatesOpen, setWhatsappTemplatesOpen] = useState(false);
+  const [isWhatsAppFlowOpen, setIsWhatsAppFlowOpen] = useState(false);
   const [showNovaTarefa, setShowNovaTarefa] = useState(false);
   const [inativarOpen, setInativarOpen] = useState(false);
   const [inativarMotivo, setInativarMotivo] = useState("");
