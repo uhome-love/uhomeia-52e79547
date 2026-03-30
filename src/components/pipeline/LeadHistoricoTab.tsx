@@ -260,6 +260,31 @@ export default function LeadHistoricoTab({ leadId, lead, stages, atividades, ano
     setNewNota("");
   };
 
+  const handleDeleteItem = async () => {
+    if (!deleteTarget?.sourceId || !deleteTarget.sourceType) return;
+    setDeleting(true);
+    try {
+      const table = deleteTarget.sourceType === "atividade"
+        ? "pipeline_atividades"
+        : deleteTarget.sourceType === "historico"
+          ? "pipeline_historico"
+          : deleteTarget.sourceType === "tarefa"
+            ? "pipeline_tarefas"
+            : null;
+      if (!table) { toast.error("Este item não pode ser removido"); return; }
+      const { error } = await supabase.from(table).delete().eq("id", deleteTarget.sourceId);
+      if (error) throw error;
+      toast.success("Registro removido do histórico");
+      onReload();
+    } catch (err) {
+      console.error("Erro ao deletar:", err);
+      toast.error("Erro ao remover registro");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <div className="px-6 pb-8 space-y-5 mt-0">
       {/* Header */}
