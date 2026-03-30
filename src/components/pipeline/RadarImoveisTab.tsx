@@ -1145,8 +1145,9 @@ Responda SOMENTE com o JSON, sem markdown.`;
 
       if (leadTelefone) {
         const phone = leadTelefone.replace(/\D/g, "");
+        const finalPhone = phone.startsWith("55") ? phone : `55${phone}`;
         const msg = `Olá ${leadNome}! 😊\n\nPreparei uma seleção especial de ${items.length} imóveis para você:\n\n🔗 ${vitrineUrl}\n\nDá uma olhada e me conta o que achou! 🏠`;
-        window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, "_blank");
+        window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(msg)}`, "_blank");
       }
 
       toast.success("Vitrine criada! Link copiado ✨", { description: vitrineUrl, duration: 6000 });
