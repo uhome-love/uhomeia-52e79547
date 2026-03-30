@@ -1239,10 +1239,10 @@ Responda SOMENTE com o JSON, sem markdown.`;
             }).then(() => {}).catch(() => {});
 
             console.log("[RadarImoveisTab] vitrineUrl gerada:", vitrineUrl);
-            // Return URL first, then reset loading state after a tick
-            // so the modal's .then() callback can capture the URL before re-render
-            setTimeout(() => setCreatingVitrine(false), 100);
-            return vitrineUrl;
+            // Don't reset creatingVitrine until after returning the URL
+            const urlToReturn = vitrineUrl;
+            setCreatingVitrine(false);
+            return urlToReturn;
           } catch (err: any) {
             console.error("Erro ao criar vitrine:", err);
             toast.error("Erro ao criar vitrine");
