@@ -1,4 +1,4 @@
-import { Phone, ClipboardList, MessageCircle, MoreHorizontal, Calendar, Send, ArrowRightLeft, Handshake, ArrowRight, Trash2 } from "lucide-react";
+import { Phone, ClipboardList, MessageCircle, MoreHorizontal, Calendar, Send, ArrowRightLeft, Handshake, ArrowRight, Trash2, UserX } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { PipelineStage } from "@/hooks/usePipeline";
 import CardQuickTaskPopover from "./CardQuickTaskPopover";
@@ -18,13 +18,14 @@ interface CardActionBarProps {
   onOpenTransfer: () => void;
   onOpenPartner: () => void;
   onMarkLost: () => void;
+  onInactivate: () => void;
   onMoveStage: (e: React.MouseEvent, stageId: string) => void;
 }
 
 export default function CardActionBar({
   leadId, leadNome, leadTelefone, stageId, stages, canTransfer,
   onCall, onWhatsApp, onOpenDetail, onScheduleVisit, onOpenComunicacao,
-  onOpenTransfer, onOpenPartner, onMarkLost, onMoveStage,
+  onOpenTransfer, onOpenPartner, onMarkLost, onInactivate, onMoveStage,
 }: CardActionBarProps) {
   const btnBase: React.CSSProperties = {
     display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
@@ -111,6 +112,9 @@ export default function CardActionBar({
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onMarkLost(); }}>
               <Trash2 className="h-3.5 w-3.5 mr-2" /> Descartar lead
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-amber-600" onClick={(e) => { e.stopPropagation(); onInactivate(); }}>
+              <UserX className="h-3.5 w-3.5 mr-2" /> Inativar lead
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
