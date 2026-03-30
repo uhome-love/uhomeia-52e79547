@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Sparkles, Download, Phone, ThumbsUp, CalendarDays, Eye, Users, DollarSign, TrendingUp, Briefcase, Bot, CheckCircle } from "lucide-react";
+import { Loader2, Sparkles, Download, Phone, ThumbsUp, CalendarDays, Eye, Users, DollarSign, TrendingUp, Briefcase, Bot, CheckCircle, Target, AlertTriangle, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
