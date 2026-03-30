@@ -202,7 +202,9 @@ async function verificarNurturingRecente(leadId: string): Promise<boolean> {
 async function buscarImoveisTypesense(
   perfil: LeadComPerfil["perfil"]
 ): Promise<Imovel[]> {
-  if (!perfil) return [];
+  if (!perfil) {
+    perfil = { bairros: null, regioes: null, tipos: null, valor_min: null, valor_max: null, dormitorios_min: null, suites_min: null, vagas_min: null, area_min: null, area_max: null };
+  }
 
   const filtros: string[] = [];
   // CORRIGIDO: campo de preço é valor_venda no Typesense
