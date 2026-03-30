@@ -674,7 +674,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   </div>
                   <textarea
                     placeholder="Cole aqui a mensagem do cliente para a IA gerar uma resposta personalizada..."
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-sans)', resize: 'none', background: 'var(--muted)', color: 'var(--foreground)', lineHeight: 1.5 }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid var(--border)', fontSize: 13, fontFamily: 'inherit', resize: 'none', background: 'var(--background)', color: 'var(--foreground)', lineHeight: 1.5, marginBottom: 10 }}
                     rows={3}
                     id="homi-client-message"
                   />
