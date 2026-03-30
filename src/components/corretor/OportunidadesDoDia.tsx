@@ -533,7 +533,7 @@ export function OportunidadesDoDia() {
                       variant="outline"
                       size="sm"
                       className="flex-1 text-xs"
-                      onClick={() => (window.location.href = "/pipeline")}
+                      onClick={() => navigate("/pipeline-leads")}
                     >
                       <ListTodo className="w-3.5 h-3.5 mr-1" />
                       Abrir Pipeline
