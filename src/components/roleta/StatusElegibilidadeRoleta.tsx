@@ -178,7 +178,6 @@ export function StatusElegibilidadeRoleta() {
             </span>
           </div>
         )}
-        </div>
 
         {/* Regra noturna */}
         {proximaRoleta.tipo === "noturna" && (
