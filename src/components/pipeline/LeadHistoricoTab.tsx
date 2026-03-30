@@ -26,13 +26,6 @@ import { toast } from "sonner";
 import type { PipelineAtividade, PipelineAnotacao, PipelineTarefa, PipelineHistorico } from "@/hooks/usePipelineLeadData";
 import type { PipelineStage, PipelineLead } from "@/hooks/usePipeline";
 import { useLeadImoveisEvents, type LeadImovelEvent } from "@/hooks/useLeadImoveisEvents";
-import { ptBR } from "date-fns/locale";
-import { todayBRT, dateToBRT } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import type { PipelineAtividade, PipelineAnotacao, PipelineTarefa, PipelineHistorico } from "@/hooks/usePipelineLeadData";
-import type { PipelineStage, PipelineLead } from "@/hooks/usePipeline";
-import { useLeadImoveisEvents, type LeadImovelEvent } from "@/hooks/useLeadImoveisEvents";
 
 const ATIVIDADE_BUTTONS = [
   { value: "ligacao", label: "Ligou", emoji: "📞" },
