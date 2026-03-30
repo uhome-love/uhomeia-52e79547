@@ -55,7 +55,12 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
   const [tipo, setTipo] = useState("follow_up");
   const [customTipo, setCustomTipo] = useState("");
   const [venceEm, setVenceEm] = useState("");
-  const [horaVencimento, setHoraVencimento] = useState("");
+  const [horaVencimento, setHoraVencimento] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30);
+    now.setMinutes(Math.round(now.getMinutes() / 15) * 15);
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  });
   const [obs, setObs] = useState("");
   const [showConcluidas, setShowConcluidas] = useState(false);
   const [adiarId, setAdiarId] = useState<string | null>(null);
@@ -199,10 +204,11 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
     const isConcluida = tarefa.status === "concluida";
     const horaRaw = (tarefa as any).hora_vencimento;
     const timeLabel = horaRaw ? horaRaw.slice(0, 5) : "";
-    const dateLabel = tarefa.vence_em
-      ? isToday(parseDateBRT(tarefa.vence_em)) ? (timeLabel ? `Hoje às ${timeLabel}` : "Hoje")
-      : isTomorrow(parseDateBRT(tarefa.vence_em)) ? (timeLabel ? `Amanhã às ${timeLabel}` : "Amanhã")
-      : format(parseDateBRT(tarefa.vence_em), "dd/MM", { locale: ptBR }) + (timeLabel ? ` às ${timeLabel}` : "")
+    const venceDate = tarefa.vence_em ? parseDateBRT(tarefa.vence_em) : null;
+    const dateLabel = venceDate
+      ? isToday(venceDate) ? (timeLabel ? `Hoje às ${timeLabel}` : "Hoje")
+      : isTomorrow(venceDate) ? (timeLabel ? `Amanhã às ${timeLabel}` : "Amanhã")
+      : format(venceDate, "dd/MM", { locale: ptBR }) + (timeLabel ? ` às ${timeLabel}` : "")
       : "Sem data";
 
     return (
