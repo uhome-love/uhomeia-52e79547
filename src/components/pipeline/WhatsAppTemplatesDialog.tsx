@@ -14,6 +14,7 @@ interface Props {
   leadEmpreendimento: string | null;
   leadId: string;
   corretorNome?: string;
+  stageTipo?: string;
 }
 
 function getWhatsAppUrl(phone: string) {
