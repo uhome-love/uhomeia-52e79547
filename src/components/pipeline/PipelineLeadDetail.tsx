@@ -684,7 +684,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                       setHomiOpen(true);
                       setHomiInitialPrompt('O cliente disse: "' + msg + '". Gere uma resposta personalizada para ' + lead.nome + ' sobre ' + ((lead as any).empreendimento || 'o empreendimento') + '. IMPORTANTE: Retorne SOMENTE a resposta pronta para copiar.');
                     }}
-                    style={{ marginTop: 8, padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: '#4F46E5', color: '#fff', border: 'none', cursor: 'pointer', width: '100%' }}
+                    style={{ padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600, background: '#4F46E5', color: '#fff', border: 'none', cursor: 'pointer', width: '100%' }}
                   >
                     Gerar resposta com IA
                   </button>
