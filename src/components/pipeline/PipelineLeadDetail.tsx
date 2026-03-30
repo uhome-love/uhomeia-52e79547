@@ -638,7 +638,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 {/* Briefing compacto */}
                 <div style={{ background: 'var(--muted)', borderRadius: 8, padding: '10px 14px' }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>
-                    {lead.nome} · {stageTipo} · {diasSemContato}d sem contato
+                    {lead.nome} · {currentStage?.nome || 'N/A'} · {daysSinceCreation}d sem contato
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
                     {(lead as any).origem} · {(lead as any).empreendimento}
