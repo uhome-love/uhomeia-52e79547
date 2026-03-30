@@ -311,6 +311,7 @@ export function OportunidadesDoDia() {
     recarregar,
     userId,
   } = useHomeCorretor();
+  const navigate = useNavigate();
 
   const primeiroNome = nomeCorretor.split(" ")[0];
   const saudacao = getSaudacao();
