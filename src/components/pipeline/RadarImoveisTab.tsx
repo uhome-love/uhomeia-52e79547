@@ -1209,29 +1209,41 @@ Responda SOMENTE com o JSON, sem markdown.`;
           }
         }}
       />
-      {/* ── SUB-TABS ── */}
-      <Tabs value={subTab} onValueChange={(v) => setSubTab(v as any)}>
-        <TabsList className="h-8 bg-muted/50 w-full">
-          <TabsTrigger value="radar" className="text-xs h-6 flex-1 gap-1">
-            <Radar className="h-3 w-3" /> Match
-          </TabsTrigger>
-          <TabsTrigger value="matches" className="text-xs h-6 flex-1 gap-1">
-            <Sparkles className="h-3 w-3" /> Matches
-          </TabsTrigger>
-          <TabsTrigger value="perfil" className="text-xs h-6 flex-1 gap-1">
-            <Home className="h-3 w-3" /> Perfil
-            {savedProfile && <span className="text-[8px] text-emerald-500">●</span>}
-          </TabsTrigger>
-          <TabsTrigger value="historico" className="text-xs h-6 flex-1 gap-1">
-            <History className="h-3 w-3" /> Histórico
-            {searchHistory.length > 0 && <Badge variant="secondary" className="h-3.5 text-[8px] px-1">{searchHistory.length}</Badge>}
-          </TabsTrigger>
-        </TabsList>
 
-        {/* ════════ TAB: MATCHES ════════ */}
-        <TabsContent value="matches" className="mt-3">
-          <LeadMatchesWidget leadId={leadId} leadNome={leadNome} leadTelefone={leadTelefone} />
-        </TabsContent>
+      {/* ── Resumo do perfil — pills somente leitura ── */}
+      <div className="flex items-center gap-1.5 flex-wrap mt-2">
+        {profileForm.tipos.length > 0 && (
+          <span className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+            <Home className="h-2.5 w-2.5" /> {profileForm.tipos.join(", ")}
+          </span>
+        )}
+        {profileForm.bairros.length > 0 && (
+          <span className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+            <MapPin className="h-2.5 w-2.5" /> {profileForm.bairros.join(", ")}
+          </span>
+        )}
+        {(profileForm.valor_min || profileForm.valor_max) && (
+          <span className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+            <DollarSign className="h-2.5 w-2.5" />
+            {profileForm.valor_min ? fmtPrice(parseFloat(profileForm.valor_min)) : "0"} – {profileForm.valor_max ? fmtPrice(parseFloat(profileForm.valor_max)) : "∞"}
+          </span>
+        )}
+        {profileForm.dormitorios_min && (
+          <span className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+            <Bed className="h-2.5 w-2.5" /> {profileForm.dormitorios_min}+ dorms
+          </span>
+        )}
+        {leadData?.empreendimento && (
+          <Badge variant="secondary" className="text-[9px] gap-1"><Building2 className="h-2.5 w-2.5" /> {leadData.empreendimento}</Badge>
+        )}
+      </div>
+
+      {/* ── Contagem de resultados ── */}
+      <p className="text-sm text-muted-foreground mt-3">
+        {results.length > 0
+          ? `${results.length} imóveis compatíveis`
+          : "Nenhum imóvel buscado ainda"}
+      </p>
 
         <TabsContent value="radar" className="mt-2 space-y-2">
           {/* ── Perfil em 1 linha — pills clicáveis ── */}
