@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Copy, ExternalLink, Sparkles, Loader2 } from "lucide-react";
+import { MessageCircle, Copy, ExternalLink, Sparkles, Loader2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ interface Props {
   leadEmpreendimento: string | null;
   leadId: string;
   corretorNome?: string;
+  stageTipo?: string;
 }
 
 function getWhatsAppUrl(phone: string) {
@@ -69,9 +70,24 @@ const TEMPLATES = [
   },
 ];
 
-export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, leadTelefone, leadEmpreendimento, leadId, corretorNome }: Props) {
+export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, leadTelefone, leadEmpreendimento, leadId, corretorNome, stageTipo }: Props) {
   const { user } = useAuth();
   const [generating, setGenerating] = useState(false);
+  const [showOthers, setShowOthers] = useState(false);
+
+  const templatesPorEtapa: Record<string, string[]> = {
+    sem_contato: ['primeiro_contato', 'nao_atendeu'],
+    contato_iniciado: ['follow_up', 'nao_atendeu'],
+    qualificacao: ['follow_up', 'convite_visita'],
+    possivel_visita: ['convite_visita', 'follow_up'],
+    visita_marcada: ['convite_visita', 'follow_up'],
+    visita_realizada: ['envio_proposta', 'follow_up'],
+    negociacao: ['envio_proposta', 'follow_up'],
+  };
+
+  const filteredIds = stageTipo ? templatesPorEtapa[stageTipo] || null : null;
+  const primaryTemplates = filteredIds ? TEMPLATES.filter(t => filteredIds.includes(t.id)) : TEMPLATES;
+  const secondaryTemplates = filteredIds ? TEMPLATES.filter(t => !filteredIds.includes(t.id)) : [];
 
   const replaceVars = (template: string) => {
     return template
@@ -178,8 +194,8 @@ export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, 
 
           <div className="h-px bg-border my-2" />
 
-          {/* Templates */}
-          {TEMPLATES.map((t) => (
+          {/* Templates filtrados por etapa */}
+          {primaryTemplates.map((t) => (
             <button
               key={t.id}
               className="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors group"
@@ -193,6 +209,33 @@ export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, 
               <Copy className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 shrink-0" />
             </button>
           ))}
+
+          {/* Outros templates (colapsável) */}
+          {secondaryTemplates.length > 0 && (
+            <>
+              <button
+                className="w-full text-left text-[11px] text-muted-foreground font-medium px-3 py-1.5 hover:text-foreground transition-colors flex items-center gap-1"
+                onClick={() => setShowOthers(!showOthers)}
+              >
+                <ChevronDown className={`h-3 w-3 transition-transform ${showOthers ? 'rotate-180' : ''}`} />
+                Outros templates ({secondaryTemplates.length})
+              </button>
+              {showOthers && secondaryTemplates.map((t) => (
+                <button
+                  key={t.id}
+                  className="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors group opacity-80"
+                  onClick={() => handleSelectTemplate(t.template)}
+                >
+                  <span className="text-lg shrink-0 mt-0.5">{t.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">{t.label}</p>
+                    <p className="text-[11px] text-muted-foreground line-clamp-2">{replaceVars(t.template)}</p>
+                  </div>
+                  <Copy className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 shrink-0" />
+                </button>
+              ))}
+            </>
+          )}
 
           <div className="h-px bg-border my-2" />
 
