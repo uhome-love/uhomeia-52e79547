@@ -38,6 +38,8 @@ interface RadarFullscreenModalProps {
   onUpdateMatch?: (editedProfile: RadarProfileData) => void;
   onIAPerfil?: () => void;
   isAIAnalyzing?: boolean;
+  onCriarVitrine?: (selectedIndexes: number[]) => void;
+  isCreatingVitrine?: boolean;
 }
 
 function EditableField({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
