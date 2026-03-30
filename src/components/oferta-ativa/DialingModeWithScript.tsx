@@ -187,12 +187,25 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   }, []);
 
   const hasFetchedRef = useRef(false);
+  const prevEmpFilterRef = useRef(empFilter);
   useEffect(() => {
     if (!hasFetchedRef.current) {
       hasFetchedRef.current = true;
       fetchNext();
     }
   }, [fetchNext]);
+
+  // Re-fetch when empreendimento filter changes in campaign mode
+  useEffect(() => {
+    if (isCampaign && hasFetchedRef.current && prevEmpFilterRef.current !== empFilter) {
+      prevEmpFilterRef.current = empFilter;
+      // Unlock current lead before fetching from filtered queue
+      if (lead) {
+        unlockLead(lead.id);
+      }
+      fetchNext();
+    }
+  }, [empFilter, isCampaign, fetchNext, lead, unlockLead]);
 
   useEffect(() => {
     const interval = setInterval(() => {
