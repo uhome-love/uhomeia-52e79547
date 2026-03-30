@@ -244,7 +244,7 @@ export function StatusElegibilidadeRoleta() {
           )}
 
           <button
-            onClick={() => (window.location.href = "/pipeline?filtro=sem_tarefa")}
+            onClick={() => navigate("/pipeline-leads?filtro=sem_tarefa")}
             className="mt-3 w-full rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium py-2 transition-colors"
           >
             Ir para o pipeline e atualizar leads →
