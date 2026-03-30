@@ -429,7 +429,7 @@ export function CallFocusOverlay({ isOpen, onClose, lead, stageTipo, leadOrigem,
 
         {fase === 2 && (
           <div className="flex gap-2">
-            <button onClick={onClose} className="px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted transition-colors">
+            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); onClose(); }} className="px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted transition-colors">
               Fechar sem salvar
             </button>
             <div className="flex-1" />
