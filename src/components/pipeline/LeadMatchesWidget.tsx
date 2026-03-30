@@ -202,7 +202,7 @@ export default function LeadMatchesWidget({ leadId, leadNome, leadTelefone }: Pr
                   {p.bairro} · {p.dormitorios}d{p.suites ? `/${p.suites}s` : ""} · {p.vagas}v
                   {p.area_privativa ? ` · ${p.area_privativa}m²` : ""}
                 </p>
-                {m.motivos?.includes("mesmo_empreendimento") && (
+                {(m as any).motivos?.includes("mesmo_empreendimento") && (
                   <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", alignSelf: "flex-start" }}>
                     Mesmo empreendimento
                   </span>
