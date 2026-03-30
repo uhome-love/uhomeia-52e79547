@@ -584,8 +584,13 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
             disabled={selected.size === 0 || isCreatingVitrine}
             className="bg-emerald-600 text-white hover:bg-emerald-700"
             onClick={async () => {
-              const url = await onCriarVitrine?.(Array.from(selected));
-              if (url) setVitrineUrl(url);
+              try {
+                const url = await onCriarVitrine?.(Array.from(selected));
+                console.log("[Radar] onCriarVitrine retornou:", url);
+                if (url && typeof url === "string") setVitrineUrl(url);
+              } catch (err) {
+                console.error("[Radar] Erro no onCriarVitrine:", err);
+              }
             }}
           >
             {isCreatingVitrine ? "Criando..." : "Criar Vitrine"}
