@@ -38,6 +38,7 @@ function getCorBarra(desatualizados: number, limite: number): string {
 export function StatusElegibilidadeRoleta() {
   const { elegibilidade, carregando } = useElegibilidadeRoleta();
   const [expandido, setExpandido] = useState(false);
+  const navigate = useNavigate();
   const proximaRoleta = getProximaRoleta();
 
   if (carregando) {
