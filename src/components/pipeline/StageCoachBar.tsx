@@ -300,113 +300,26 @@ export default function StageCoachBar({
       : "bg-[#B4B2A9]";
 
   return (
-    <div className="bg-muted border-b py-2 px-6 flex flex-col">
-      {/* Alert banner for stalled leads */}
-      {config.alert && (
-        <div className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 mb-2 text-[11px] font-medium ${
-          config.alert.severity === "danger"
-            ? "bg-destructive/10 text-destructive border border-destructive/20"
-            : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20"
-        }`}>
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          {config.alert.text}
-        </div>
-      )}
-
-      {/* Line 1 */}
-      <div className="flex items-center gap-2 w-full flex-nowrap overflow-hidden">
-        <span className={`inline-block w-[6px] h-[6px] rounded-full shrink-0 ${dotColor}`} />
-        <p className="flex-1 min-w-0 truncate">
-          <span className="font-medium text-foreground text-xs">{config.diagnostic}</span>
-          {sequenceInfo && (
-            <span className="text-muted-foreground text-xs ml-2">
-              · Dia {Math.min(sequenceInfo.enviados + 1, sequenceInfo.total)}/{sequenceInfo.total}
-            </span>
-          )}
-          {followUpDay && followUpDay <= 5 && (
-            <span className="text-muted-foreground text-xs ml-1.5">
-              {followUpDay === 1 && "· 📩 Msg simples"}
-              {followUpDay === 2 && "· 🖼️ Imagem/Áudio"}
-              {followUpDay === 3 && "· 🎥 Vídeo"}
-              {followUpDay === 4 && "· ⚡ Urgência"}
-              {followUpDay === 5 && "· 👋 Encerramento"}
-            </span>
-          )}
-        </p>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {config.actions.map((action, i) => (
-            <button
-              key={i}
-              className="text-[11px] font-medium px-2.5 py-1 rounded-md border border-border bg-background text-muted-foreground hover:bg-muted transition-colors inline-flex items-center gap-1"
-              onClick={action.onClick || (action.homiPrompt ? () => triggerHomi(action.homiPrompt!) : undefined)}
-            >
-              <action.icon className="h-3 w-3" />
-              {action.label}
-            </button>
-          ))}
-          {onOpenHomi && (
-            <button
-              className="text-[11px] font-medium px-2.5 py-1 rounded-md border border-border bg-background text-muted-foreground hover:bg-muted transition-colors inline-flex items-center gap-1"
-              onClick={() => onOpenHomi()}
-            >
-              <Sparkles className="h-3 w-3" />
-              HOMI
-            </button>
-          )}
-        </div>
-
-        {/* Expand trigger */}
-        <Collapsible open={expanded} onOpenChange={setExpanded}>
-          <CollapsibleTrigger asChild>
-            <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-1">
-              {expanded ? "▴ Ocultar" : `▾ ${filteredMessages.length} mensagens`}
-            </button>
-          </CollapsibleTrigger>
-        </Collapsible>
-      </div>
-
-      {/* Line 2 — expanded messages */}
-      <Collapsible open={expanded} onOpenChange={setExpanded}>
-        <CollapsibleContent className="border-t border-border pt-2 mt-2 flex flex-col gap-2">
-          {filteredMessages.map((msg, i) => (
-            <div key={i} className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-foreground">{msg.title}</span>
-                {i === 0 && (
-                  <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: '#EEEDFE', color: '#534AB7' }}>
-                    Recomendada
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
-                {msg.body
-                  .replace(/\{\{nome\}\}/g, nome)
-                  .replace(/\{\{empreendimento\}\}/g, emp)}
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  className="text-[10px] px-2 py-1 rounded border border-border bg-muted inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => copyMessage(msg.body)}
-                >
-                  <Copy className="h-3 w-3" />
-                  Copiar
-                </button>
-                {telefone && (
-                  <button
-                    className="text-[10px] px-2 py-1 rounded border border-border bg-muted inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => openWhatsApp(msg.body)}
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    WhatsApp
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </CollapsibleContent>
-      </Collapsible>
+    <div className="bg-muted flex items-center gap-2" style={{ padding: '6px 24px', borderBottom: '0.5px solid var(--border)' }}>
+      <span className={`inline-block w-[6px] h-[6px] rounded-full shrink-0 ${dotColor}`} />
+      <p className="flex-1 min-w-0 truncate text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">{config.diagnostic}</span>
+        {sequenceInfo && (
+          <span className="ml-2">
+            · Dia {Math.min(sequenceInfo.enviados + 1, sequenceInfo.total)}/{sequenceInfo.total}
+          </span>
+        )}
+        {followUpDay && followUpDay <= 5 && (
+          <span className="ml-1.5">
+            {followUpDay === 1 && "· 📩 Msg simples"}
+            {followUpDay === 2 && "· 🖼️ Imagem/Áudio"}
+            {followUpDay === 3 && "· 🎥 Vídeo"}
+            {followUpDay === 4 && "· ⚡ Urgência"}
+            {followUpDay === 5 && "· 👋 Encerramento"}
+          </span>
+        )}
+        {origem && <span className="ml-1.5">· {origem}</span>}
+      </p>
     </div>
   );
 }
