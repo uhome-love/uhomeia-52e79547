@@ -134,10 +134,15 @@ const PipelineCard = memo(function PipelineCard({
   }, [lead.stage_changed_at]);
 
   const daysBadge = useMemo(() => {
-    if (daysInStage <= 2) return { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" };
-    if (daysInStage <= 5) return { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" };
-    return { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" };
-  }, [daysInStage]);
+    const slaLimits: Record<string, number> = {
+      sem_contato: 1, contato_iniciado: 2, qualificacao: 7,
+      possivel_visita: 10, visita_marcada: 14, visita_realizada: 1, negociacao: 5,
+    };
+    const limite = slaLimits[stage?.tipo || ""] || 7;
+    if (daysInStage > limite) return { bg: "#FCEBEB", color: "#A32D2D", border: "#F5C6C6" };
+    if (daysInStage > limite * 0.7) return { bg: "#FAEEDA", color: "#854F0B", border: "#F3DDB0" };
+    return { bg: "#F1EFE8", color: "#5F5E5A", border: "#E2E0D8" };
+  }, [daysInStage, stage?.tipo]);
 
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -282,7 +287,7 @@ const PipelineCard = memo(function PipelineCard({
       <div style={{ height: 3, background: stripeGradient }} />
 
       {/* Body */}
-      <div className="pipeline-card-body" style={{ padding: "13px 14px 8px", display: "flex", flexDirection: "column" }}>
+      <div className="pipeline-card-body" style={{ padding: "13px 14px 8px", display: "flex", flexDirection: "column", gap: 0 }}>
         {/* ROW 1: Name + tags + days badge */}
         <div className="flex items-center justify-between gap-1.5" style={{ marginBottom: 6 }}>
           <span style={{
