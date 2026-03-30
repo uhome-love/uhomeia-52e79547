@@ -1157,6 +1157,7 @@ Responda SOMENTE com o JSON, sem markdown.`;
         onClose={() => setRadarOpen(false)}
         leadNome={leadNome}
         leadTelefone={leadTelefone}
+        leadId={leadId}
         profile={{
           tipos: profileForm.tipos,
           bairros: profileForm.bairros,
@@ -1212,6 +1213,18 @@ Responda SOMENTE com o JSON, sem markdown.`;
             if (error) throw error;
             const vitrineUrl = getVitrinePublicUrl(vitrine.id);
             handleMarkSent(items);
+
+            // Log vitrine creation as activity
+            try {
+              await supabase.from("pipeline_atividades").insert({
+                pipeline_lead_id: leadId,
+                tipo: "vitrine",
+                titulo: `Vitrine criada (${items.length} imóveis)`,
+                descricao: `Link: ${vitrineUrl}\nImóveis: ${imovelCodigos.join(", ")}`,
+                created_by: user.id,
+              });
+            } catch {}
+
             toast.success("Vitrine criada! ✨", { description: vitrineUrl, duration: 6000 });
             return vitrineUrl;
           } catch (err: any) {
