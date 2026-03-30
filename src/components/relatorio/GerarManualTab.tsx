@@ -225,21 +225,37 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
     setGenerating(true);
     setReport(null);
 
-    const pd = periodData || { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, leadsAtivos: 0, leadsAproveitados: 0, negociosAtivos: 0, vgvAndamento: 0 };
+    const pd = periodData || { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, visitasNoShow: 0, leadsAtivos: 0, leadsAproveitados: 0, leadsNovos: 0, followUpsConcluidos: 0, leadsDesatualizados: 0, negociosAtivos: 0, propostas: 0, vendas: 0, perdidos: 0, vgvGerado: 0, vgvAssinado: 0, vgvAndamento: 0, pontosGestao: 0 };
     const metricas = {
+      // Oferta Ativa
       ligacoes: pd.ligacoes,
       aproveitados: pd.aproveitados,
       taxa_aproveitamento: pd.taxaAproveitamento,
+      // Visitas
       visitas_marcadas: pd.visitasMarcadas,
       visitas_realizadas: pd.visitasRealizadas,
+      visitas_no_show: pd.visitasNoShow,
+      // Gestão de Leads
       leads_ativos: pd.leadsAtivos,
-      leads_aproveitados: pd.leadsAproveitados,
+      leads_novos_periodo: pd.leadsNovos,
+      follow_ups_concluidos: pd.followUpsConcluidos,
+      pontos_gestao: pd.pontosGestao,
+      // Negócios
       negocios_ativos: pd.negociosAtivos,
+      propostas: pd.propostas,
+      vendas: pd.vendas,
+      perdidos: pd.perdidos,
       vgv_em_andamento: pd.vgvAndamento,
+      vgv_gerado: pd.vgvGerado,
+      vgv_assinado: pd.vgvAssinado,
     };
     const taxasConversao = {
+      ligacoes_para_aproveitados: pd.taxaAproveitamento,
       ligacoes_para_visitas_marcadas: pd.ligacoes > 0 ? Math.round((pd.visitasMarcadas / pd.ligacoes) * 100) : 0,
       visitas_marcadas_para_realizadas: pd.visitasMarcadas > 0 ? Math.round((pd.visitasRealizadas / pd.visitasMarcadas) * 100) : 0,
+      visitas_para_propostas: pd.visitasRealizadas > 0 ? Math.round((pd.propostas / pd.visitasRealizadas) * 100) : 0,
+      propostas_para_vendas: pd.propostas > 0 ? Math.round((pd.vendas / pd.propostas) * 100) : 0,
+      taxa_no_show: pd.visitasMarcadas > 0 ? Math.round((pd.visitasNoShow / pd.visitasMarcadas) * 100) : 0,
     };
     const scorePerformance = Math.min(100, Math.round(
       (pd.aproveitados * 2) +
