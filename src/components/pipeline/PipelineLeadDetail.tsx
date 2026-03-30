@@ -228,10 +228,12 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   // Has no contact alert
   const noContactAlert = useMemo(() => {
     if (nextTask) return null;
-    const lastContact = (lead as any).ultima_acao_at;
+    // Check most recent activity date too
+    const lastActivityDate = leadData.atividades.length > 0 ? leadData.atividades[0]?.created_at : null;
+    const lastContact = (lead as any).ultima_acao_at || lastActivityDate;
     const hoursSince = differenceInHoursSafe(lastContact) ?? 999;
-    if (leadData.atividades.length === 0 || hoursSince > 24) {
-      return hoursSince > 48 ? "critical" : "warning";
+    if (leadData.atividades.length === 0 || hoursSince > 48) {
+      return hoursSince > 96 ? "critical" : "warning";
     }
     return null;
   }, [nextTask, leadData.atividades, lead]);
