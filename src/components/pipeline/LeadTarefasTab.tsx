@@ -55,7 +55,12 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
   const [tipo, setTipo] = useState("follow_up");
   const [customTipo, setCustomTipo] = useState("");
   const [venceEm, setVenceEm] = useState("");
-  const [horaVencimento, setHoraVencimento] = useState("");
+  const [horaVencimento, setHoraVencimento] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30);
+    now.setMinutes(Math.round(now.getMinutes() / 15) * 15);
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  });
   const [obs, setObs] = useState("");
   const [showConcluidas, setShowConcluidas] = useState(false);
   const [adiarId, setAdiarId] = useState<string | null>(null);
