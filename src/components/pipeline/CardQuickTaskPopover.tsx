@@ -107,7 +107,7 @@ export default function CardQuickTaskPopover({ leadId, leadNome }: CardQuickTask
           onClick={(e) => { e.stopPropagation(); setOpen(true); }}
           style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
-            padding: "6px 4px", cursor: "pointer",
+            padding: "8px 4px", cursor: "pointer",
             background: "transparent", border: "none",
             fontSize: 11, fontWeight: 600, color: "#64748b",
             fontFamily: "'Plus Jakarta Sans', sans-serif",
