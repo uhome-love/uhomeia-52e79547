@@ -260,7 +260,7 @@ export default function WhatsAppFocusFlow({ isOpen, onClose, lead, stageTipo, on
               )}
             </div>
           </div>
-          <button onClick={handleClose} style={{
+          <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleClose(); }} style={{
             width: 32, height: 32, borderRadius: 8, border: "none",
             background: "transparent", cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
