@@ -53,7 +53,9 @@ export function StatusElegibilidadeRoleta() {
   const elegívelProxima =
     proximaRoleta.tipo === "noturna"
       ? elegibilidade.pode_roleta_noturna
-      : elegibilidade.pode_roleta_manha;
+      : proximaRoleta.tipo === "tarde"
+        ? elegibilidade.pode_roleta_tarde
+        : elegibilidade.pode_roleta_manha;
 
   const pctBarra = getBarraProgresso(elegibilidade.leads_desatualizados, elegibilidade.limite_bloqueio);
   const corBarra = getCorBarra(elegibilidade.leads_desatualizados, elegibilidade.limite_bloqueio);
