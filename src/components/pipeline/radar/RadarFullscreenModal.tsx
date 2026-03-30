@@ -584,21 +584,21 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
           <Button
             disabled={selected.size === 0 || isCreatingVitrine}
             className="bg-emerald-600 text-white hover:bg-emerald-700"
-            onClick={() => {
+            onClick={async () => {
               const selectedArr = Array.from(selected);
-              onCriarVitrine?.(selectedArr)
-                ?.then((url) => {
-                  console.log("[Radar] onCriarVitrine retornou:", url);
-                  if (url && typeof url === "string") {
-                    setVitrineUrl(url);
-                    navigator.clipboard.writeText(url).catch(() => {});
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 3000);
-                  }
-                })
-                .catch((err) => {
-                  console.error("[Radar] Erro no onCriarVitrine:", err);
-                });
+              try {
+                const url = await onCriarVitrine?.(selectedArr);
+                console.log("[Radar] onCriarVitrine retornou:", url);
+                if (url && typeof url === "string") {
+                  vitrineUrlRef.current = url;
+                  setVitrineUrl(url);
+                  navigator.clipboard.writeText(url).catch(() => {});
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 3000);
+                }
+              } catch (err) {
+                console.error("[Radar] Erro no onCriarVitrine:", err);
+              }
             }}
           >
             {isCreatingVitrine ? "Criando..." : "Criar Vitrine"}
