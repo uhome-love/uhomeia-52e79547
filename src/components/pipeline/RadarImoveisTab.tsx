@@ -1176,6 +1176,18 @@ Responda SOMENTE com o JSON, sem markdown.`;
         }}
         onIAPerfil={handleAIAnalyze}
         isAIAnalyzing={aiAnalyzing}
+        isCreatingVitrine={creatingVitrine}
+        onCriarVitrine={(selectedIndexes) => {
+          const items = selectedIndexes.map(i => results[i]).filter(Boolean);
+          if (items.length === 0) return;
+          // Temporarily override selectedItems for the vitrine creation
+          const prevSelected = selectedResults;
+          setSelectedResults(new Set(selectedIndexes));
+          setTimeout(() => {
+            handleCreateVitrine();
+            setSelectedResults(prevSelected);
+          }, 0);
+        }}
       />
       {/* ── SUB-TABS ── */}
       <Tabs value={subTab} onValueChange={(v) => setSubTab(v as any)}>
