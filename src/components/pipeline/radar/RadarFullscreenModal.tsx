@@ -33,6 +33,7 @@ interface RadarFullscreenModalProps {
   onClose: () => void;
   leadNome: string;
   profile: RadarProfileData;
+  isSearching?: boolean;
   matches: any[];
   onUpdateMatch?: (editedProfile: RadarProfileData) => void;
   onIAPerfil?: () => void;
