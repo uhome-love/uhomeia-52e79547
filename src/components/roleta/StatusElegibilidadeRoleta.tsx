@@ -130,7 +130,7 @@ export function StatusElegibilidadeRoleta() {
               style={{ width: `${pctBarra}%` }}
             />
           </div>
-          {!elegívelProxima && (
+          {!elegívelProxima && !elegibilidade.bloqueado_descarte && (
             <div className="mt-2 space-y-2">
               <p className="text-xs text-destructive">
                 Você precisa atualizar pelo menos{" "}
@@ -151,6 +151,33 @@ export function StatusElegibilidadeRoleta() {
               ⚠️ Atenção: faltam apenas {elegibilidade.faltam_para_bloquear} lead(s) para você ser bloqueado.
             </p>
           )}
+        </div>
+
+        {/* Alerta de descartes excessivos */}
+        {elegibilidade.bloqueado_descarte && (
+          <div className="mx-4 mt-3 rounded-lg px-3 py-2.5 bg-destructive/10 border border-destructive/20">
+            <div className="flex items-start gap-2">
+              <Trash2 className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-destructive">
+                  🚫 Bloqueado por excesso de descartes
+                </p>
+                <p className="text-xs text-destructive/80 mt-1">
+                  Você descartou <strong>{elegibilidade.descartes_mes}</strong> leads este mês (limite: {elegibilidade.limite_descartes}).
+                  Sua participação na roleta está suspensa até análise da gestão.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        {!elegibilidade.bloqueado_descarte && elegibilidade.descartes_mes >= 40 && (
+          <div className="mx-4 mt-3 rounded-lg px-3 py-2 text-xs flex items-center gap-2 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400">
+            <Trash2 className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>
+              ⚠️ Atenção: você já descartou {elegibilidade.descartes_mes} leads este mês. Ao atingir {elegibilidade.limite_descartes}, será bloqueado da roleta.
+            </span>
+          </div>
+        )}
         </div>
 
         {/* Regra noturna */}
