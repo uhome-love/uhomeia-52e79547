@@ -783,6 +783,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
         leadEmpreendimento={lead.empreendimento}
         leadId={lead.id}
         corretorNome={user?.user_metadata?.nome || ""}
+        stageTipo={currentStage?.tipo}
       />
 
       <NextActionModal
