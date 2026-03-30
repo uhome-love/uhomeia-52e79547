@@ -24,6 +24,7 @@ interface RadarFullscreenModalProps {
   onClose: () => void;
   leadNome: string;
   profile: RadarProfileData;
+  matches: any[];
   onUpdateMatch?: () => void;
   onIAPerfil?: () => void;
 }
