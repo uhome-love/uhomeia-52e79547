@@ -126,7 +126,7 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
   const bairroInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) { setForm(profile); setSelected(new Set()); setVitrineUrl(null); }
+    if (open) { setForm(profile); setSelected(new Set()); setVitrineUrl(null); vitrineUrlRef.current = null; }
   }, [open, profile]);
 
   const updateField = <K extends keyof RadarProfileData>(key: K, value: RadarProfileData[K]) => {
