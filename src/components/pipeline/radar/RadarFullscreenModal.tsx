@@ -116,6 +116,7 @@ export default function RadarFullscreenModal({ open, onClose, leadNome, leadTele
   const [form, setForm] = useState<RadarProfileData>(profile);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [vitrineUrl, setVitrineUrl] = useState<string | null>(null);
+  const vitrineUrlRef = useRef<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [discarded, setDiscarded] = useState<Set<number>>(new Set());
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
