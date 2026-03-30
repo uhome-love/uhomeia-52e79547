@@ -141,7 +141,7 @@ export function StatusElegibilidadeRoleta() {
                 <strong>{elegibilidade.leads_desatualizados - 10} lead(s)</strong> para se desbloquear.
               </p>
               <button
-                onClick={() => (window.location.href = "/pipeline?filtro=sem_tarefa")}
+                onClick={() => navigate("/pipeline-leads?filtro=sem_tarefa")}
                 className="w-full text-xs font-medium py-2 px-3 rounded-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-colors flex items-center justify-center gap-1.5"
               >
                 <ListTodo className="w-3.5 h-3.5" />
