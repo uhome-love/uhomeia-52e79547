@@ -225,9 +225,18 @@ export default function NotificationList({ notifications, onMarkAsRead, onDelete
         // Enrich old generic titles with lead name from dados/message
         let displayTitle = n.titulo;
         if (displayTitle?.includes("Seu lead precisa de atenção")) {
-          const name = d.lead_nome || leadName;
+          let name = d.lead_nome || leadName;
+          let stage = etapa;
+          // Parse from message: "NomeLead está na etapa "EtapaName" há X dias"
+          if (!name && n.mensagem) {
+            const msgMatch = n.mensagem.match(/^(.+?)\s+está na etapa\s+"([^"]+)"/);
+            if (msgMatch) {
+              name = msgMatch[1];
+              if (!stage) stage = msgMatch[2];
+            }
+          }
           if (name) {
-            displayTitle = `⏰ ${name}${etapa ? ` — ${etapa}` : ""} precisa de atenção`;
+            displayTitle = `⏰ ${name}${stage ? ` — ${stage}` : ""} precisa de atenção`;
           }
         }
 
