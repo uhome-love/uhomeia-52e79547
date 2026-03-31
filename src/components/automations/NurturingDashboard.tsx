@@ -277,9 +277,22 @@ export default function NurturingDashboard() {
       .gt("cliques", 0)
       .gte("created_at", thirtyDaysAgo);
 
-    const { data: voiceLogs } = await supabase
+    // Use count queries for voice to avoid truncation
+    const { count: vozTotal } = await supabase
       .from("voice_call_logs")
-      .select("status, resultado")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", thirtyDaysAgo);
+
+    const { count: vozAtendidas } = await supabase
+      .from("voice_call_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "atendida")
+      .gte("created_at", thirtyDaysAgo);
+
+    const { count: vozInteressados } = await supabase
+      .from("voice_call_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("resultado", "interessado")
       .gte("created_at", thirtyDaysAgo);
 
     // ── Count leads with open 24h window ──
