@@ -326,7 +326,9 @@ function applyPropertyFilters(
   } else if (filters.statusImovel) {
     nextQuery = nextQuery.eq("status_imovel", filters.statusImovel);
   }
-  if (filters.condominioNome) nextQuery = nextQuery.ilike("condominio_nome", `%${filters.condominioNome}%`);
+  if (filters.condominioNome) {
+    nextQuery = nextQuery.or(`condominio_nome.ilike.%${filters.condominioNome}%,empreendimento.ilike.%${filters.condominioNome}%,codigo.ilike.%${filters.condominioNome}%`);
+  }
   if (filters.financiavel) nextQuery = nextQuery.eq("financiavel", true);
   if (filters.mobiliado) nextQuery = nextQuery.eq("mobiliado", true);
   if (filters.comodidades?.length) {
