@@ -393,6 +393,7 @@ export default function NurturingDashboard() {
           )}
         </TabsContent>
 
+        <TabsContent value="reativacao" className="space-y-4 mt-4">
           {/* Reactivation KPIs */}
           <div className="grid grid-cols-2 gap-3">
             <Card className="p-4">
