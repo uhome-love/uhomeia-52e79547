@@ -527,6 +527,24 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
               </div>
             </div>
 
+            {/* Period Data Cards inside report */}
+            {periodData && (
+              <div className="px-5 pt-5 pb-0">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Dados do Período</h3>
+                <div className="grid grid-cols-5 gap-2">
+                  {dataCards.map(dc => (
+                    <div key={dc.label} className={`rounded-lg p-2.5 ${dc.bg} border border-border/30`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <dc.icon className={`h-3.5 w-3.5 ${dc.color}`} />
+                        <span className="text-[10px] text-muted-foreground truncate">{dc.label}</span>
+                      </div>
+                      <p className={`text-sm font-bold ${dc.color}`}>{dc.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="p-5 space-y-5">
               {/* Resumo */}
               <div>
