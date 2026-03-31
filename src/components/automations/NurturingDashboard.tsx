@@ -70,6 +70,7 @@ const STATUS_ICONS: Record<string, { icon: any; color: string }> = {
   pendente: { icon: Clock, color: "text-amber-500" },
   erro: { icon: AlertCircle, color: "text-red-500" },
   cancelado: { icon: Pause, color: "text-muted-foreground" },
+  pausado: { icon: Pause, color: "text-blue-500" },
 };
 
 // ── Main Component ──
