@@ -174,12 +174,23 @@ export default function NurturingDashboard() {
   };
 
   const loadStats = async () => {
-    const { data: allSeqs } = await supabase
-      .from("lead_nurturing_sequences")
-      .select("stage_tipo, status")
-      .neq("status", "cancelado");
+    // Paginate to avoid 1000-row truncation
+    let allSeqs: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data } = await supabase
+        .from("lead_nurturing_sequences")
+        .select("stage_tipo, status")
+        .neq("status", "cancelado")
+        .range(from, from + pageSize - 1);
+      if (!data || data.length === 0) break;
+      allSeqs = allSeqs.concat(data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
 
-    if (allSeqs) {
+    if (allSeqs.length > 0) {
       const grouped: Record<string, StageStats> = {};
       for (const s of allSeqs as any[]) {
         if (!grouped[s.stage_tipo]) {
