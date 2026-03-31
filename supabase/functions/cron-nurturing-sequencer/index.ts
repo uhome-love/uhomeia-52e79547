@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
       let sendSuccess = false;
       let errorMsg = "";
 
-      if (whatsappToken && whatsappPhoneId && step.template_name) {
+      if (whatsappToken && whatsappPhoneId) {
         try {
           let phone = lead.telefone.replace(/\D/g, "");
           if (!phone.startsWith("55")) phone = "55" + phone;
@@ -285,29 +285,40 @@ Deno.serve(async (req) => {
           const nome = lead.nome?.split(" ")[0] || "Cliente";
           const emp = lead.empreendimento || "nosso empreendimento";
 
-          const waResponse = await fetch(
-            `https://graph.facebook.com/v21.0/${whatsappPhoneId}/messages`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${whatsappToken}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                messaging_product: "whatsapp",
-                to: phone,
-                type: "template",
-                template: {
-                  name: step.template_name,
-                  language: { code: "pt_BR" },
-                  components: [
-                    {
-                      type: "body",
-                      parameters: [
-                        { type: "text", text: nome },
-                        { type: "text", text: emp },
-                      ],
-                    },
+          // ── Check 24h conversation window ──
+          const windowOpen = lead.conversation_window_until && new Date(lead.conversation_window_until) > new Date();
+
+          let waPayload: Record<string, any>;
+
+          if (windowOpen && step.mensagem) {
+            // Free-text message within 24h window
+            const freeText = (step.mensagem || "")
+              .replace(/\{\{nome\}\}/g, nome)
+              .replace(/\{\{empreendimento\}\}/g, emp);
+            waPayload = {
+              messaging_product: "whatsapp",
+              to: phone,
+              type: "text",
+              text: { body: freeText || `Olá ${nome}, estamos com novidades sobre ${emp}! Posso te ajudar?` },
+            };
+            console.log(`📨 Sending free-text (24h window) to ${phone}`);
+          } else if (step.template_name) {
+            // Template message (outside window or no free text)
+            waPayload = {
+              messaging_product: "whatsapp",
+              to: phone,
+              type: "template",
+              template: {
+                name: step.template_name,
+                language: { code: "pt_BR" },
+                components: [
+                  {
+                    type: "body",
+                    parameters: [
+                      { type: "text", text: nome },
+                      { type: "text", text: emp },
+                    ],
+                  },
                   ],
                 },
               }),
