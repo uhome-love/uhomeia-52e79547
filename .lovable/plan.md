@@ -1,67 +1,79 @@
 
 
-# Central de Nutrição — Página Unificada
+# Central de Nutrição — Fazer Funcionar 100%
 
-## Situação Atual
+## Diagnóstico: O Que Está Quebrado/Faltando
 
-A nutrição está fragmentada em 4 lugares diferentes:
-- `/automacoes` → Automações + SequenceTemplates + NurturingDashboard (misturado)
-- `/campanhas-voz` → Campanhas de voz IA (página separada)
-- `/disparador-ligacoes-ia` → Discagem IA individual (página separada)
-- `/email-marketing` → Email marketing (página separada)
+Após análise completa do código, identifiquei **6 gaps críticos** que impedem o sistema de funcionar:
 
-O CEO precisa navegar entre 4 rotas para ter visão completa da nutrição.
+### Gap 1: Nenhum cron job agenda os motores de nutrição
+As Edge Functions `cron-nurturing-sequencer` e `reactivate-cold-leads` existem mas **nenhum cron job as invoca**. Elas nunca executam automaticamente.
 
-## Solução
+### Gap 2: Webhooks não alimentam o orquestrador
+O `nurturing-orchestrator` existe mas **nenhum webhook o chama**. O `whatsapp-webhook`, `mailgun-webhook` e `site-events` não enviam eventos para o orquestrador. O scoring de leads nunca é atualizado.
 
-Criar uma **página unificada `/central-nutricao`** com 5 abas organizadas:
+### Gap 3: O `elevenlabs-webhook` não atualiza `voice_call_logs`
+Quando uma ligação termina, o webhook processa e registra em `ai_calls`, mas não atualiza `voice_call_logs` nem `voice_campaigns` com resultados (atendidas, interessados, etc).
 
-```text
-┌──────────────────────────────────────────────────────┐
-│  Central de Nutrição                                 │
-│  Orquestração multicanal inteligente                 │
-├──────┬──────────┬──────────┬──────────┬──────────────┤
-│ Visão│ Sequên-  │ Campanhas│ Disparo  │ Automações   │
-│ Geral│ cias     │ de Voz   │ Email    │              │
-└──────┴──────────┴──────────┴──────────┴──────────────┘
-```
+### Gap 4: Templates WhatsApp podem não existir na Meta
+Os templates referenciados (`reativacao_vitrine`, `ultima_chance`, `condicoes_especiais`) precisam existir na Meta Business Manager. Se não existirem, os disparos falham silenciosamente.
 
-### Aba 1 — Visão Geral (Dashboard de Performance)
-- KPIs consolidados: leads em nutrição, score médio, hot leads, taxa de resposta
-- Performance por canal (WhatsApp / Email / Voz) com métricas lado a lado
-- Hot leads (score ≥ 15) com ação rápida
-- Reativação: tentados vs reativados (30d)
-- Últimos disparos (log unificado de todos os canais)
-- Botão pausar/retomar global
+### Gap 5: E-mail pode não estar configurado
+O sequencer usa Mailgun mas não há validação visual de que Mailgun está configurado. Emails falham sem feedback ao CEO.
 
-### Aba 2 — Sequências
-- Conteúdo do `SequenceTemplates` (templates de cadência)
-- Stats por etapa do funil (sem_contato, qualificação, reativação)
-- Ativar/desativar sequências
+### Gap 6: Dashboard mostra dados mas não tem ações operacionais
+Falta: botão para executar manualmente o sequencer, botão para rodar reativação agora, status dos crons, e indicadores de saúde (secrets configurados, templates válidos).
 
-### Aba 3 — Campanhas de Voz
-- Conteúdo completo do `CampanhasVozPage` (criar, monitorar, histórico)
-- Integrado na mesma página sem navegação extra
+---
 
-### Aba 4 — Email Marketing
-- Conteúdo do `EmailMarketingPage` movido para componente reutilizável
-- Campanhas de email, templates, histórico
+## Plano de Implementação (5 Blocos)
 
-### Aba 5 — Automações
-- Conteúdo das automações custom (wizard, lista, logs)
-- Manter possibilidade de criar automações personalizadas
+### Bloco 1 — Agendar Cron Jobs (Fundação)
 
-## Implementação Técnica
+Criar migration SQL com `cron.schedule` para:
+- `cron-nurturing-sequencer`: a cada 15 minutos (processa steps pendentes)
+- `reactivate-cold-leads`: domingo 01:00 UTC (22:00 BRT) semanalmente
 
-1. **Criar `src/pages/CentralNutricaoPage.tsx`** — Página principal com Tabs e lazy loading de cada aba
+### Bloco 2 — Conectar Webhooks ao Orquestrador
 
-2. **Refatorar componentes existentes** — Extrair o conteúdo interno de `AutomacoesPage`, `CampanhasVozPage` e `EmailMarketingPage` em componentes reutilizáveis (ex: `AutomacoesContent`, `CampanhasVozContent`, `EmailMarketingContent`) para renderizar dentro das abas
+Editar 3 Edge Functions para chamar `nurturing-orchestrator` quando eventos relevantes ocorrem:
 
-3. **Criar `src/components/central-nutricao/NutricaoVisaoGeral.tsx`** — Dashboard consolidado que une os dados do `NurturingDashboard` com métricas globais de todos os canais
+- **`whatsapp-webhook`**: Quando msg é lida (`status: read`) → enviar `whatsapp_lido`. Quando lead responde → enviar `whatsapp_respondeu`.
+- **`elevenlabs-webhook`**: Quando ligação termina → enviar `voz_atendida` ou `voz_nao_atendeu` + atualizar `voice_call_logs` e `voice_campaigns` com contadores.
+- **`site-events`**: Quando vitrine é visualizada → enviar `vitrine_visualizada`. Quando imóvel é clicado → enviar `imovel_clicado`.
 
-4. **Atualizar rota em `App.tsx`** — Adicionar `/central-nutricao` protegida para admin
+### Bloco 3 — Dashboard Operacional com Saúde do Sistema
 
-5. **Atualizar Sidebars** — Substituir os 4 links separados por um único "Central de Nutrição" no grupo de Marketing/Automação
+Expandir a aba "Visão Geral" do `NurturingDashboard` com:
+- **Health Check**: Indicadores visuais de secrets configurados (WhatsApp token, Mailgun key, ElevenLabs key)
+- **Botão "Executar Agora"**: Chama `cron-nurturing-sequencer` manualmente
+- **Botão "Reativar Base Agora"**: Chama `reactivate-cold-leads` manualmente
+- **Último cron run**: Mostra timestamp da última execução (via `ops_events`)
+- **Score Leaderboard**: Top 10 leads por score com ação "Ver Lead"
 
-6. **Manter rotas antigas** como redirect para `/central-nutricao` (não quebrar bookmarks)
+### Bloco 4 — IA no Orquestrador: Decisão Inteligente
 
+Atualizar `nurturing-orchestrator` para usar Lovable AI quando o score muda:
+- Quando lead atinge score 30+ → chamar AI para gerar mensagem personalizada de follow-up baseada no histórico
+- Quando lead descartado interagiu → AI analisa contexto e sugere melhor abordagem (WA, email, voz)
+- Registrar sugestão da IA na timeline do lead
+
+### Bloco 5 — Fallback Entre Canais + Validação de Templates
+
+Atualizar `cron-nurturing-sequencer`:
+- Se WhatsApp falha (template inválido/não aprovado) → criar step de email como fallback automático
+- Se email falha (sem email válido) → criar notificação ao corretor
+- Adicionar validação prévia: verificar se `WHATSAPP_ACCESS_TOKEN` e `MAILGUN_API_KEY` existem antes de tentar, com log claro
+
+---
+
+## Resumo de Arquivos
+
+| Ação | Arquivo |
+|------|---------|
+| Migration (cron jobs) | Nova migration SQL |
+| Editar | `supabase/functions/whatsapp-webhook/index.ts` (add orchestrator call) |
+| Editar | `supabase/functions/elevenlabs-webhook/index.ts` (add orchestrator + voice_call_logs) |
+| Editar | `supabase/functions/site-events/index.ts` (add orchestrator call) |
+| Editar | `supabase/functions/nurturing-orchestrator/index.ts` (add AI decision) |
+| Editar | `supabase/functions/cron-nurturing-sequencer/index.ts` (add fall
