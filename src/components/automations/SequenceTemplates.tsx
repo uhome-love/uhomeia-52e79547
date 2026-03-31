@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Play, MessageCircle, Bell, ClipboardList, ArrowRight, Star } from "lucide-react";
+import { Sparkles, Play, MessageCircle, Bell, ClipboardList, ArrowRight, Star, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -136,6 +136,80 @@ const TEMPLATES: SequenceTemplate[] = [
           type: "notify_manager",
           notify_text: "Proposta de {{nome}} sem atualização há 72h — verificar PDN",
         },
+      ],
+    },
+  },
+  // ── Novas Sequências de Reativação ──
+  {
+    id: "sem-contato-agressivo",
+    title: "Sem Contato — Cadência Agressiva",
+    description: "Leads parados em 'Sem Contato' há 48h+ recebem WhatsApp + E-mail com vitrine + último lembrete.",
+    emoji: "🔥",
+    recommended: true,
+    steps: [
+      { delay: "D0 (48h parado)", icon: <MessageCircle className="h-3 w-3 text-green-600" />, text: 'WhatsApp: "Oi {{nome}}, separei imóveis para você!"' },
+      { delay: "D2", icon: <Mail className="h-3 w-3 text-blue-600" />, text: "E-mail: Vitrine personalizada com imóveis" },
+      { delay: "D5", icon: <MessageCircle className="h-3 w-3 text-green-600" />, text: 'WhatsApp: "Última chance! Condições especiais..."' },
+      { delay: "D7", icon: <Bell className="h-3 w-3 text-amber-500" />, text: "Notifica gerente → avaliar descarte" },
+    ],
+    automationPayload: {
+      name: "Sem Contato — Cadência Agressiva",
+      trigger_type: "nurturing_stage",
+      trigger_config: { stage_tipo: "sem_contato", stalled_hours: 48 },
+      conditions: [],
+      actions: [
+        { type: "whatsapp", delay_days: 0, template_name: "reativacao_vitrine", canal: "whatsapp" },
+        { type: "email", delay_days: 2, template_key: "reativacao-vitrine", canal: "email" },
+        { type: "whatsapp", delay_days: 5, template_name: "ultima_chance", canal: "whatsapp" },
+        { type: "notify_manager", delay_days: 7, notify_text: "Lead {{nome}} sem contato há 7 dias — avaliar descarte ou redistribuição" },
+      ],
+    },
+  },
+  {
+    id: "qualificacao-parado",
+    title: "Qualificação Parada — Nutrição",
+    description: "Leads parados em qualificação há 72h+ recebem vitrine, e-mail do site novo e novo match.",
+    emoji: "📊",
+    recommended: true,
+    steps: [
+      { delay: "D0 (72h parado)", icon: <MessageCircle className="h-3 w-3 text-green-600" />, text: "WhatsApp: Vitrine automática (Motor 1)" },
+      { delay: "D3", icon: <Mail className="h-3 w-3 text-blue-600" />, text: 'E-mail: "Conheça nosso site novo" + vitrine' },
+      { delay: "D6", icon: <MessageCircle className="h-3 w-3 text-green-600" />, text: "WhatsApp: Novo match de imóveis" },
+      { delay: "D10", icon: <Bell className="h-3 w-3 text-amber-500" />, text: "Alerta gerente → lead não respondeu" },
+    ],
+    automationPayload: {
+      name: "Qualificação Parada — Nutrição",
+      trigger_type: "nurturing_stage",
+      trigger_config: { stage_tipo: "qualificacao", stalled_hours: 72 },
+      conditions: [],
+      actions: [
+        { type: "whatsapp", delay_days: 0, template_name: "reativacao_vitrine", canal: "whatsapp" },
+        { type: "email", delay_days: 3, template_key: "novidades-mercado", canal: "email" },
+        { type: "whatsapp", delay_days: 6, template_name: "reativacao_vitrine", canal: "whatsapp" },
+        { type: "notify_manager", delay_days: 10, notify_text: "Lead {{nome}} em qualificação sem resposta há 10 dias" },
+      ],
+    },
+  },
+  {
+    id: "reativacao-base-fria",
+    title: "Reativação da Base Fria",
+    description: "Leads descartados recebem e-mail de novidades + WhatsApp. Se interagirem, são redistribuídos na roleta.",
+    emoji: "♻️",
+    recommended: true,
+    steps: [
+      { delay: "D0", icon: <Mail className="h-3 w-3 text-blue-600" />, text: 'E-mail: "Novidades no mercado" + vitrine' },
+      { delay: "D3", icon: <MessageCircle className="h-3 w-3 text-green-600" />, text: 'WhatsApp: "Temos novos imóveis na sua região"' },
+      { delay: "D7", icon: <ArrowRight className="h-3 w-3 text-emerald-500" />, text: "Se clicou → redistribuir na roleta como lead quente" },
+    ],
+    automationPayload: {
+      name: "Reativação da Base Fria",
+      trigger_type: "nurturing_stage",
+      trigger_config: { stage_tipo: "reativacao", stalled_hours: 0 },
+      conditions: [],
+      actions: [
+        { type: "email", delay_days: 0, template_key: "novidades-mercado", canal: "email" },
+        { type: "whatsapp", delay_days: 3, template_name: "reativacao_vitrine", canal: "whatsapp" },
+        { type: "email", delay_days: 7, template_key: "ultimo-lembrete", canal: "email" },
       ],
     },
   },

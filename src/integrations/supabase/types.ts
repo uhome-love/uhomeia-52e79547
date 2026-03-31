@@ -2937,7 +2937,9 @@ export type Database = {
           stage_tipo: string
           status: string
           step_key: string
+          template_key: string | null
           template_name: string | null
+          vitrine_url: string | null
         }
         Insert: {
           canal?: string
@@ -2951,7 +2953,9 @@ export type Database = {
           stage_tipo: string
           status?: string
           step_key: string
+          template_key?: string | null
           template_name?: string | null
+          vitrine_url?: string | null
         }
         Update: {
           canal?: string
@@ -2965,7 +2969,9 @@ export type Database = {
           stage_tipo?: string
           status?: string
           step_key?: string
+          template_key?: string | null
           template_name?: string | null
+          vitrine_url?: string | null
         }
         Relationships: [
           {
