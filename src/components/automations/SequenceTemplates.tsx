@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Play, MessageCircle, Bell, ClipboardList, ArrowRight, Star, Mail } from "lucide-react";
+import { Sparkles, Play, MessageCircle, Bell, ClipboardList, ArrowRight, Star, Mail, Phone, Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
