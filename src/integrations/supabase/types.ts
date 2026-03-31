@@ -2983,6 +2983,68 @@ export type Database = {
           },
         ]
       }
+      lead_nurturing_state: {
+        Row: {
+          canal_ultimo: string | null
+          created_at: string | null
+          id: string
+          lead_score: number | null
+          metadata: Json | null
+          pipeline_lead_id: string
+          proximo_step_at: string | null
+          sequencia_ativa: string
+          status: string | null
+          step_atual: number | null
+          tentativas_contato: number | null
+          tentativas_voz: number | null
+          ultimo_evento: string | null
+          ultimo_evento_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          canal_ultimo?: string | null
+          created_at?: string | null
+          id?: string
+          lead_score?: number | null
+          metadata?: Json | null
+          pipeline_lead_id: string
+          proximo_step_at?: string | null
+          sequencia_ativa?: string
+          status?: string | null
+          step_atual?: number | null
+          tentativas_contato?: number | null
+          tentativas_voz?: number | null
+          ultimo_evento?: string | null
+          ultimo_evento_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          canal_ultimo?: string | null
+          created_at?: string | null
+          id?: string
+          lead_score?: number | null
+          metadata?: Json | null
+          pipeline_lead_id?: string
+          proximo_step_at?: string | null
+          sequencia_ativa?: string
+          status?: string | null
+          step_atual?: number | null
+          tentativas_contato?: number | null
+          tentativas_voz?: number | null
+          ultimo_evento?: string | null
+          ultimo_evento_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_nurturing_state_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: true
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_progressao: {
         Row: {
           auth_user_id: string | null
@@ -7936,6 +7998,123 @@ export type Database = {
           titulo?: string
           updated_at?: string | null
           visualizacoes?: number | null
+        }
+        Relationships: []
+      }
+      voice_call_logs: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          duracao_segundos: number | null
+          id: string
+          pipeline_lead_id: string | null
+          proximo_passo: string | null
+          resultado: string | null
+          resumo_ia: string | null
+          sentimento: string | null
+          status: string | null
+          telefone: string
+          transcricao: string | null
+          twilio_call_sid: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          duracao_segundos?: number | null
+          id?: string
+          pipeline_lead_id?: string | null
+          proximo_passo?: string | null
+          resultado?: string | null
+          resumo_ia?: string | null
+          sentimento?: string | null
+          status?: string | null
+          telefone: string
+          transcricao?: string | null
+          twilio_call_sid?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          duracao_segundos?: number | null
+          id?: string
+          pipeline_lead_id?: string | null
+          proximo_passo?: string | null
+          resultado?: string | null
+          resumo_ia?: string | null
+          sentimento?: string | null
+          status?: string | null
+          telefone?: string
+          transcricao?: string | null
+          twilio_call_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_call_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "voice_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_call_logs_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_campaigns: {
+        Row: {
+          atendidas: number | null
+          completed_at: string | null
+          created_at: string | null
+          criado_por: string
+          id: string
+          interessados: number | null
+          lead_ids: string[]
+          metadata: Json | null
+          nao_atendidas: number | null
+          nome: string
+          pediu_remocao: number | null
+          sem_interesse: number | null
+          status: string | null
+          template: string
+          total: number | null
+        }
+        Insert: {
+          atendidas?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          criado_por: string
+          id?: string
+          interessados?: number | null
+          lead_ids?: string[]
+          metadata?: Json | null
+          nao_atendidas?: number | null
+          nome: string
+          pediu_remocao?: number | null
+          sem_interesse?: number | null
+          status?: string | null
+          template: string
+          total?: number | null
+        }
+        Update: {
+          atendidas?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          criado_por?: string
+          id?: string
+          interessados?: number | null
+          lead_ids?: string[]
+          metadata?: Json | null
+          nao_atendidas?: number | null
+          nome?: string
+          pediu_remocao?: number | null
+          sem_interesse?: number | null
+          status?: string | null
+          template?: string
+          total?: number | null
         }
         Relationships: []
       }

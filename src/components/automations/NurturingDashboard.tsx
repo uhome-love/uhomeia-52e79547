@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Send, Pause, Play, AlertCircle, CheckCircle2, Clock, BarChart3, RefreshCcw, Mail, MessageCircle } from "lucide-react";
+import { Loader2, Send, Pause, Play, AlertCircle, CheckCircle2, Clock, BarChart3, RefreshCcw, Mail, MessageCircle, Phone, TrendingUp, Flame } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,6 +40,21 @@ interface ReactivationStats {
   whatsappErros: number;
 }
 
+interface ChannelPerf {
+  whatsapp: { enviados: number; lidos: number; respondidos: number };
+  email: { enviados: number; abertos: number; clicados: number };
+  voz: { total: number; atendidas: number; interessados: number };
+}
+
+interface HotLead {
+  id: string;
+  pipeline_lead_id: string;
+  lead_score: number;
+  sequencia_ativa: string;
+  ultimo_evento: string;
+  lead_nome?: string;
+}
+
 // ── Constants ──
 const STAGE_LABELS: Record<string, string> = {
   novo: "Novo Lead",
@@ -71,6 +86,12 @@ export default function NurturingDashboard() {
     totalTentados: 0, totalReativados: 0, emailEnviados: 0,
     whatsappEnviados: 0, emailErros: 0, whatsappErros: 0,
   });
+  const [channelPerf, setChannelPerf] = useState<ChannelPerf>({
+    whatsapp: { enviados: 0, lidos: 0, respondidos: 0 },
+    email: { enviados: 0, abertos: 0, clicados: 0 },
+    voz: { total: 0, atendidas: 0, interessados: 0 },
+  });
+  const [hotLeads, setHotLeads] = useState<HotLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [paused, setPaused] = useState(false);
   const [activeTab, setActiveTab] = useState("geral");
@@ -80,7 +101,7 @@ export default function NurturingDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      await Promise.all([loadStats(), loadLogs(), loadReactivation()]);
+      await Promise.all([loadStats(), loadLogs(), loadReactivation(), loadChannelPerf(), loadHotLeads()]);
     } catch (err) {
       console.error("Error loading nurturing data:", err);
     } finally {
@@ -156,6 +177,55 @@ export default function NurturingDashboard() {
     }
   };
 
+  const loadChannelPerf = async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Nurturing sequences by channel
+    const { data: seqs } = await supabase
+      .from("lead_nurturing_sequences")
+      .select("canal, status")
+      .eq("status", "enviado")
+      .gte("created_at", thirtyDaysAgo);
+
+    const waEnviados = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
+    const emailEnviados = (seqs || []).filter((s: any) => s.canal === "email").length;
+
+    // Voice call logs
+    const { data: voiceLogs } = await supabase
+      .from("voice_call_logs")
+      .select("status, resultado")
+      .gte("created_at", thirtyDaysAgo);
+
+    const vozTotal = voiceLogs?.length || 0;
+    const vozAtendidas = (voiceLogs || []).filter((v: any) => v.status === "atendida").length;
+    const vozInteressados = (voiceLogs || []).filter((v: any) => v.resultado === "interessado").length;
+
+    setChannelPerf({
+      whatsapp: { enviados: waEnviados, lidos: 0, respondidos: 0 },
+      email: { enviados: emailEnviados, abertos: 0, clicados: 0 },
+      voz: { total: vozTotal, atendidas: vozAtendidas, interessados: vozInteressados },
+    });
+  };
+
+  const loadHotLeads = async () => {
+    const { data: hot } = await supabase
+      .from("lead_nurturing_state")
+      .select("id, pipeline_lead_id, lead_score, sequencia_ativa, ultimo_evento, pipeline_leads(nome)")
+      .gte("lead_score", 15)
+      .eq("status", "ativo")
+      .order("lead_score", { ascending: false })
+      .limit(10);
+
+    if (hot) {
+      setHotLeads(
+        (hot as any[]).map((h) => ({
+          ...h,
+          lead_nome: h.pipeline_leads?.nome || "Lead",
+        }))
+      );
+    }
+  };
+
   const togglePause = async () => {
     if (!paused) {
       const { error } = await supabase
@@ -206,8 +276,9 @@ export default function NurturingDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 w-full max-w-xs">
+        <TabsList className="grid grid-cols-3 w-full max-w-sm">
           <TabsTrigger value="geral">Geral</TabsTrigger>
+          <TabsTrigger value="canais">Canais</TabsTrigger>
           <TabsTrigger value="reativacao">Reativação</TabsTrigger>
         </TabsList>
 
@@ -252,6 +323,74 @@ export default function NurturingDashboard() {
 
           {/* Recent Logs */}
           <LogsSection logs={recentLogs} />
+        </TabsContent>
+
+        {/* ── Performance por Canal ── */}
+        <TabsContent value="canais" className="space-y-4 mt-4">
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="p-3 text-center">
+              <MessageCircle className="h-5 w-5 mx-auto text-emerald-500 mb-1" />
+              <p className="text-xl font-bold">{channelPerf.whatsapp.enviados}</p>
+              <p className="text-[10px] text-muted-foreground">WhatsApp enviados</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <Mail className="h-5 w-5 mx-auto text-blue-500 mb-1" />
+              <p className="text-xl font-bold">{channelPerf.email.enviados}</p>
+              <p className="text-[10px] text-muted-foreground">Emails enviados</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <Phone className="h-5 w-5 mx-auto text-purple-500 mb-1" />
+              <p className="text-xl font-bold">{channelPerf.voz.total}</p>
+              <p className="text-[10px] text-muted-foreground">Ligações IA</p>
+            </Card>
+          </div>
+
+          {/* Voz details */}
+          {channelPerf.voz.total > 0 && (
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Phone className="h-4 w-4" /> Voz IA (30 dias)
+              </h3>
+              <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                <div>
+                  <p className="text-lg font-bold">{channelPerf.voz.total}</p>
+                  <span className="text-muted-foreground">Total</span>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-emerald-600">{channelPerf.voz.atendidas}</p>
+                  <span className="text-muted-foreground">Atendidas</span>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-amber-600">{channelPerf.voz.interessados}</p>
+                  <span className="text-muted-foreground">Interessados</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Hot Leads */}
+          {hotLeads.length > 0 && (
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Flame className="h-4 w-4 text-orange-500" /> Leads Quentes (score ≥ 15)
+              </h3>
+              <div className="space-y-2">
+                {hotLeads.map((lead) => (
+                  <div key={lead.id} className="flex items-center justify-between text-sm p-2 rounded-md bg-muted/30">
+                    <div>
+                      <p className="font-medium text-xs">{lead.lead_nome}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {lead.sequencia_ativa} · Último: {lead.ultimo_evento}
+                      </p>
+                    </div>
+                    <Badge variant={lead.lead_score >= 30 ? "destructive" : "default"} className="text-xs">
+                      Score {lead.lead_score}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="reativacao" className="space-y-4 mt-4">
