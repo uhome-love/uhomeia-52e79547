@@ -307,9 +307,9 @@ export default function NurturingDashboard() {
       whatsapp: { enviados: waEnviadosNurturing + (waCampTotal || 0), lidos: waLidos || 0, respondidos: waRespondidos || 0 },
       email: { enviados: emailEnviadosNurturing + (emailCampTotal || 0), abertos: emailAbertos || 0, clicados: emailClicados || 0 },
       voz: {
-        total: voiceLogs?.length || 0,
-        atendidas: (voiceLogs || []).filter((v: any) => v.status === "atendida").length,
-        interessados: (voiceLogs || []).filter((v: any) => v.resultado === "interessado").length,
+        total: vozTotal || 0,
+        atendidas: vozAtendidas || 0,
+        interessados: vozInteressados || 0,
       },
     });
   };
