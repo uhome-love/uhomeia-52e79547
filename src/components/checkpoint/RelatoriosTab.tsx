@@ -104,7 +104,7 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
       .gte("created_at", `${inicioStr}T00:00:00`)
       .lte("created_at", `${fimStr}T23:59:59`);
 
-    const [{ data: tent }, { data: vis }, { data: neg }, { data: pipelineLeads }] = await Promise.all([
+    const [tent, { data: vis }, { data: neg }, { data: pipelineLeads }] = await Promise.all([
       tentQuery, visQuery, negQuery, pipelineQuery,
     ]);
 
