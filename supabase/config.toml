@@ -176,3 +176,12 @@ verify_jwt = false
 
 [functions.cron-smart-nurturing]
 verify_jwt = false
+
+[functions.nurturing-orchestrator]
+verify_jwt = false
+
+[functions.voice-campaign-launcher]
+verify_jwt = false
+
+[functions.reactivate-cold-leads]
+verify_jwt = false

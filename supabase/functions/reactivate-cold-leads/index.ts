@@ -170,6 +170,16 @@ async function scheduleSequence(
 
     const scheduledAt = new Date(now.getTime() + step.delay_days * 24 * 60 * 60 * 1000);
 
+    // ── Horário inteligente: ajustar para janela preferencial ──
+    const brtHour = (scheduledAt.getUTCHours() - 3 + 24) % 24;
+    if (step.canal === "whatsapp" && (brtHour < 10 || brtHour > 16)) {
+      // Preferencial WA: 10-11h ou 14-16h BRT → set to 13h UTC (10h BRT)
+      scheduledAt.setUTCHours(13, 0, 0, 0);
+    } else if (step.canal === "email" && (brtHour < 9 || brtHour > 10)) {
+      // Preferencial Email: 9-10h BRT → set to 12h UTC (9h BRT)
+      scheduledAt.setUTCHours(12, 0, 0, 0);
+    }
+
     rows.push({
       pipeline_lead_id: lead.id,
       step_key: step.step_key,
@@ -193,6 +203,19 @@ async function scheduleSequence(
     console.error(`Error scheduling for lead ${lead.id}:`, error);
     return 0;
   }
+
+  // ── Create lead_nurturing_state entry ──
+  await supabase
+    .from("lead_nurturing_state")
+    .upsert({
+      pipeline_lead_id: lead.id,
+      sequencia_ativa: stageTipo,
+      status: "ativo",
+      step_atual: 0,
+      lead_score: 0,
+      proximo_step_at: rows[0]?.scheduled_at || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "pipeline_lead_id" });
 
   return rows.length;
 }
