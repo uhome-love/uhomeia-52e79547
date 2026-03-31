@@ -240,11 +240,6 @@ export default function NurturingDashboard() {
 
   const loadChannelPerf = async () => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: seqs } = await supabase
-      .from("lead_nurturing_sequences")
-      .select("canal, status")
-      .eq("status", "enviado")
-      .gte("created_at", thirtyDaysAgo);
 
     // Count nurturing-only sends using count to avoid 1000-row truncation
     const { count: waEnviadosNurturing } = await supabase
