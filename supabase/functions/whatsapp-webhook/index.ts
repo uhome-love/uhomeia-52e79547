@@ -6,6 +6,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// ── Notify orchestrator for lead scoring ──
+async function notifyOrchestrator(supabaseUrl: string, serviceKey: string, event_type: string, pipeline_lead_id: string, canal: string) {
+  try {
+    await fetch(`${supabaseUrl}/functions/v1/nurturing-orchestrator`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+      body: JSON.stringify({ event_type, pipeline_lead_id, canal }),
+    });
+  } catch (e) {
+    console.error("Orchestrator notify failed:", e);
+  }
+}
+
 Deno.serve(async (req) => {
   // CORS preflight
   if (req.method === "OPTIONS") {
