@@ -174,12 +174,23 @@ export default function NurturingDashboard() {
   };
 
   const loadStats = async () => {
-    const { data: allSeqs } = await supabase
-      .from("lead_nurturing_sequences")
-      .select("stage_tipo, status")
-      .neq("status", "cancelado");
+    // Paginate to avoid 1000-row truncation
+    let allSeqs: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data } = await supabase
+        .from("lead_nurturing_sequences")
+        .select("stage_tipo, status")
+        .neq("status", "cancelado")
+        .range(from, from + pageSize - 1);
+      if (!data || data.length === 0) break;
+      allSeqs = allSeqs.concat(data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
 
-    if (allSeqs) {
+    if (allSeqs.length > 0) {
       const grouped: Record<string, StageStats> = {};
       for (const s of allSeqs as any[]) {
         if (!grouped[s.stage_tipo]) {
@@ -219,26 +230,45 @@ export default function NurturingDashboard() {
       .eq("status", "enviado")
       .gte("created_at", thirtyDaysAgo);
 
-    const waEnviados = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
-    const emailEnviados = (seqs || []).filter((s: any) => s.canal === "email").length;
+    // Count nurturing-only sends (don't double-count with campaign sends)
+    const waEnviadosNurturing = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
+    const emailEnviadosNurturing = (seqs || []).filter((s: any) => s.canal === "email").length;
 
-    // ── Bloco 4: Real WhatsApp read/reply data ──
-    const { data: waSends } = await supabase
+    // ── Real WhatsApp read/reply data from campaigns ──
+    const { count: waCampTotal } = await supabase
       .from("whatsapp_campaign_sends")
-      .select("status_envio")
+      .select("id", { count: "exact", head: true })
       .gte("sent_at", thirtyDaysAgo);
 
-    const waLidos = (waSends || []).filter((s: any) => ["read", "replied"].includes(s.status_envio)).length;
-    const waRespondidos = (waSends || []).filter((s: any) => s.status_envio === "replied").length;
+    const { count: waLidos } = await supabase
+      .from("whatsapp_campaign_sends")
+      .select("id", { count: "exact", head: true })
+      .in("status_envio", ["read", "replied"])
+      .gte("sent_at", thirtyDaysAgo);
 
-    // ── Real email open/click data ──
-    const { data: emailRecipients } = await supabase
+    const { count: waRespondidos } = await supabase
+      .from("whatsapp_campaign_sends")
+      .select("id", { count: "exact", head: true })
+      .eq("status_envio", "replied")
+      .gte("sent_at", thirtyDaysAgo);
+
+    // ── Real email open/click data from campaigns ──
+    const { count: emailCampTotal } = await supabase
       .from("email_campaign_recipients")
-      .select("status, aberturas, cliques")
+      .select("id", { count: "exact", head: true })
       .gte("created_at", thirtyDaysAgo);
 
-    const emailAbertos = (emailRecipients || []).filter((r: any) => (r.aberturas || 0) > 0).length;
-    const emailClicados = (emailRecipients || []).filter((r: any) => (r.cliques || 0) > 0).length;
+    const { count: emailAbertos } = await supabase
+      .from("email_campaign_recipients")
+      .select("id", { count: "exact", head: true })
+      .gt("aberturas", 0)
+      .gte("created_at", thirtyDaysAgo);
+
+    const { count: emailClicados } = await supabase
+      .from("email_campaign_recipients")
+      .select("id", { count: "exact", head: true })
+      .gt("cliques", 0)
+      .gte("created_at", thirtyDaysAgo);
 
     const { data: voiceLogs } = await supabase
       .from("voice_call_logs")
@@ -254,8 +284,8 @@ export default function NurturingDashboard() {
     setWindowOpen24h(windowCount || 0);
 
     setChannelPerf({
-      whatsapp: { enviados: waEnviados + (waSends?.length || 0), lidos: waLidos, respondidos: waRespondidos },
-      email: { enviados: emailEnviados + (emailRecipients?.length || 0), abertos: emailAbertos, clicados: emailClicados },
+      whatsapp: { enviados: waEnviadosNurturing + (waCampTotal || 0), lidos: waLidos || 0, respondidos: waRespondidos || 0 },
+      email: { enviados: emailEnviadosNurturing + (emailCampTotal || 0), abertos: emailAbertos || 0, clicados: emailClicados || 0 },
       voz: {
         total: voiceLogs?.length || 0,
         atendidas: (voiceLogs || []).filter((v: any) => v.status === "atendida").length,
