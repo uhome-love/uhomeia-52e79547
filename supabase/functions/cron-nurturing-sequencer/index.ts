@@ -319,12 +319,31 @@ Deno.serve(async (req) => {
                       { type: "text", text: emp },
                     ],
                   },
-                  ],
-                },
-              }),
+                ],
+              },
+            };
+            console.log(`📨 Sending template ${step.template_name} to ${phone}`);
+          } else {
+            // No template and no window — skip
+            await supabase
+              .from("lead_nurturing_sequences")
+              .update({ status: "erro", error_message: "Sem template e janela 24h fechada" } as any)
+              .eq("id", step.id);
+            errors++;
+            continue;
+          }
+
+          const waResponse = await fetch(
+            `https://graph.facebook.com/v21.0/${whatsappPhoneId}/messages`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${whatsappToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(waPayload),
             }
           );
-
           if (waResponse.ok) {
             sendSuccess = true;
             // Notify orchestrator about WhatsApp sent
