@@ -390,9 +390,9 @@ Deno.serve(async (req) => {
           errorMsg = e.message || "WhatsApp send failed";
           console.error(`WhatsApp exception for step ${step.id}:`, e);
         }
-      } else {
-        sendSuccess = true;
-        errorMsg = "Disparo registrado (WhatsApp não configurado)";
+    } else {
+        sendSuccess = false;
+        errorMsg = "WhatsApp não configurado (WHATSAPP_ACCESS_TOKEN ou WHATSAPP_PHONE_NUMBER_ID ausente)";
       }
 
       await supabase
