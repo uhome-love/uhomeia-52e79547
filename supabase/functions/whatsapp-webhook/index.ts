@@ -252,6 +252,11 @@ Deno.serve(async (req) => {
                   .eq("id", lead.id);
 
                 console.log(`✅ Lead ${lead.id} history updated with reply`);
+
+                // ── Notify orchestrator: lead replied ──
+                const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+                const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+                notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_respondeu", lead.id, "whatsapp");
               }
             }
           }
