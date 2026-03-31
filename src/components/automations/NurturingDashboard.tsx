@@ -230,26 +230,45 @@ export default function NurturingDashboard() {
       .eq("status", "enviado")
       .gte("created_at", thirtyDaysAgo);
 
-    const waEnviados = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
-    const emailEnviados = (seqs || []).filter((s: any) => s.canal === "email").length;
+    // Count nurturing-only sends (don't double-count with campaign sends)
+    const waEnviadosNurturing = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
+    const emailEnviadosNurturing = (seqs || []).filter((s: any) => s.canal === "email").length;
 
-    // ── Bloco 4: Real WhatsApp read/reply data ──
-    const { data: waSends } = await supabase
+    // ── Real WhatsApp read/reply data from campaigns ──
+    const { count: waCampTotal } = await supabase
       .from("whatsapp_campaign_sends")
-      .select("status_envio")
+      .select("id", { count: "exact", head: true })
       .gte("sent_at", thirtyDaysAgo);
 
-    const waLidos = (waSends || []).filter((s: any) => ["read", "replied"].includes(s.status_envio)).length;
-    const waRespondidos = (waSends || []).filter((s: any) => s.status_envio === "replied").length;
+    const { count: waLidos } = await supabase
+      .from("whatsapp_campaign_sends")
+      .select("id", { count: "exact", head: true })
+      .in("status_envio", ["read", "replied"])
+      .gte("sent_at", thirtyDaysAgo);
 
-    // ── Real email open/click data ──
-    const { data: emailRecipients } = await supabase
+    const { count: waRespondidos } = await supabase
+      .from("whatsapp_campaign_sends")
+      .select("id", { count: "exact", head: true })
+      .eq("status_envio", "replied")
+      .gte("sent_at", thirtyDaysAgo);
+
+    // ── Real email open/click data from campaigns ──
+    const { count: emailCampTotal } = await supabase
       .from("email_campaign_recipients")
-      .select("status, aberturas, cliques")
+      .select("id", { count: "exact", head: true })
       .gte("created_at", thirtyDaysAgo);
 
-    const emailAbertos = (emailRecipients || []).filter((r: any) => (r.aberturas || 0) > 0).length;
-    const emailClicados = (emailRecipients || []).filter((r: any) => (r.cliques || 0) > 0).length;
+    const { count: emailAbertos } = await supabase
+      .from("email_campaign_recipients")
+      .select("id", { count: "exact", head: true })
+      .gt("aberturas", 0)
+      .gte("created_at", thirtyDaysAgo);
+
+    const { count: emailClicados } = await supabase
+      .from("email_campaign_recipients")
+      .select("id", { count: "exact", head: true })
+      .gt("cliques", 0)
+      .gte("created_at", thirtyDaysAgo);
 
     const { data: voiceLogs } = await supabase
       .from("voice_call_logs")
