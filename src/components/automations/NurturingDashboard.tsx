@@ -276,8 +276,9 @@ export default function NurturingDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 w-full max-w-xs">
+        <TabsList className="grid grid-cols-3 w-full max-w-sm">
           <TabsTrigger value="geral">Geral</TabsTrigger>
+          <TabsTrigger value="canais">Canais</TabsTrigger>
           <TabsTrigger value="reativacao">Reativação</TabsTrigger>
         </TabsList>
 
