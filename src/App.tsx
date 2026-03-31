@@ -127,6 +127,7 @@ const WhatsAppCampaignDispatcher = lazyRetry(() => import("./pages/WhatsAppCampa
 const EmailMarketingPage = lazyRetry(() => import("./pages/EmailMarketingPage"));
 const DisparadorLigacoesIA = lazyRetry(() => import("./pages/DisparadorLigacoesIA"));
 const CampanhasVoz = lazyRetry(() => import("./pages/CampanhasVozPage"));
+const CentralNutricao = lazyRetry(() => import("./pages/CentralNutricaoPage"));
 const PlacarDoDia = lazyRetry(() => import("./pages/PlacarDoDia"));
 
 const queryClient = new QueryClient({
