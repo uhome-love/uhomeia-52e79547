@@ -76,11 +76,14 @@ export default function RelatoriosTab({ teamUserIds, teamNameMap }: Props) {
     const fimStr = format(hoje, "yyyy-MM-dd");
 
     // Build queries with proper date filters
-    const tentQuery = supabase.from("oferta_ativa_tentativas")
-      .select("corretor_id, resultado")
-      .in("corretor_id", teamUserIds)
-      .gte("created_at", `${inicioStr}T00:00:00`)
-      .lte("created_at", `${fimStr}T23:59:59`);
+    const tentQuery = fetchAllRows<{ corretor_id: string; resultado: string }>((from, to) =>
+      supabase.from("oferta_ativa_tentativas")
+        .select("corretor_id, resultado")
+        .in("corretor_id", teamUserIds)
+        .gte("created_at", `${inicioStr}T00:00:00`)
+        .lte("created_at", `${fimStr}T23:59:59`)
+        .range(from, to)
+    );
 
     const visQuery = supabase.from("visitas")
       .select("corretor_id, status")
