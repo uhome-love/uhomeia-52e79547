@@ -70,6 +70,7 @@ const STATUS_ICONS: Record<string, { icon: any; color: string }> = {
   pendente: { icon: Clock, color: "text-amber-500" },
   erro: { icon: AlertCircle, color: "text-red-500" },
   cancelado: { icon: Pause, color: "text-muted-foreground" },
+  pausado: { icon: Pause, color: "text-blue-500" },
 };
 
 // ── Main Component ──
@@ -94,7 +95,15 @@ export default function NurturingDashboard() {
   const [avgScore, setAvgScore] = useState(0);
   const [windowOpen24h, setWindowOpen24h] = useState(0);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); checkPausedState(); }, []);
+
+  const checkPausedState = async () => {
+    const { count } = await supabase
+      .from("lead_nurturing_sequences")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pausado");
+    setPaused((count || 0) > 0);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -231,15 +240,21 @@ export default function NurturingDashboard() {
 
   const loadChannelPerf = async () => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: seqs } = await supabase
+
+    // Count nurturing-only sends using count to avoid 1000-row truncation
+    const { count: waEnviadosNurturing } = await supabase
       .from("lead_nurturing_sequences")
-      .select("canal, status")
+      .select("id", { count: "exact", head: true })
+      .eq("canal", "whatsapp")
       .eq("status", "enviado")
       .gte("created_at", thirtyDaysAgo);
 
-    // Count nurturing-only sends (don't double-count with campaign sends)
-    const waEnviadosNurturing = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
-    const emailEnviadosNurturing = (seqs || []).filter((s: any) => s.canal === "email").length;
+    const { count: emailEnviadosNurturing } = await supabase
+      .from("lead_nurturing_sequences")
+      .select("id", { count: "exact", head: true })
+      .eq("canal", "email")
+      .eq("status", "enviado")
+      .gte("created_at", thirtyDaysAgo);
 
     // ── Real WhatsApp read/reply data from campaigns ──
     const { count: waCampTotal } = await supabase
@@ -304,8 +319,8 @@ export default function NurturingDashboard() {
     setWindowOpen24h(windowCount || 0);
 
     setChannelPerf({
-      whatsapp: { enviados: waEnviadosNurturing + (waCampTotal || 0), lidos: waLidos || 0, respondidos: waRespondidos || 0 },
-      email: { enviados: emailEnviadosNurturing + (emailCampTotal || 0), abertos: emailAbertos || 0, clicados: emailClicados || 0 },
+      whatsapp: { enviados: (waEnviadosNurturing || 0) + (waCampTotal || 0), lidos: waLidos || 0, respondidos: waRespondidos || 0 },
+      email: { enviados: (emailEnviadosNurturing || 0) + (emailCampTotal || 0), abertos: emailAbertos || 0, clicados: emailClicados || 0 },
       voz: {
         total: vozTotal || 0,
         atendidas: vozAtendidas || 0,
