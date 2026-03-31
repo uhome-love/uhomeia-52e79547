@@ -86,6 +86,60 @@ Deno.serve(async (req) => {
       const lead = (step as any).pipeline_leads;
       const canal = step.canal || "whatsapp";
 
+      // ── Horário inteligente: se fora da janela, reagendar ──
+      if (!isWithinWindow(canal)) {
+        // Reagendar para próximo horário válido (manhã seguinte)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        if (canal === "whatsapp") tomorrow.setUTCHours(11, 0, 0, 0); // 8h BRT
+        else if (canal === "email") tomorrow.setUTCHours(12, 0, 0, 0); // 9h BRT
+        else tomorrow.setUTCHours(12, 0, 0, 0);
+
+        await supabase
+          .from("lead_nurturing_sequences")
+          .update({ scheduled_at: tomorrow.toISOString() } as any)
+          .eq("id", step.id);
+        continue;
+      }
+
+      // ── Check lead_nurturing_state for score-based skipping ──
+      const { data: nurState } = await supabase
+        .from("lead_nurturing_state")
+        .select("lead_score, status")
+        .eq("pipeline_lead_id", lead.id)
+        .single();
+
+      if (nurState) {
+        // Opt-out or already responded → skip
+        if (["opt_out", "respondeu", "converteu"].includes(nurState.status)) {
+          await supabase
+            .from("lead_nurturing_sequences")
+            .update({ status: "cancelado" } as any)
+            .eq("id", step.id);
+          continue;
+        }
+
+        // Score-based channel optimization
+        const score = nurState.lead_score || 0;
+        if (score < 0) {
+          // Negative score = opt-out, cancel everything
+          await supabase
+            .from("lead_nurturing_sequences")
+            .update({ status: "cancelado" } as any)
+            .eq("id", step.id);
+          continue;
+        }
+
+        // Gelado (0-4): skip WhatsApp, only email/voz
+        if (score <= 4 && canal === "whatsapp") {
+          await supabase
+            .from("lead_nurturing_sequences")
+            .update({ status: "cancelado", error_message: "Score baixo — canal WhatsApp pulado" } as any)
+            .eq("id", step.id);
+          continue;
+        }
+      }
+
       // ── CANAL: EMAIL ──
       if (canal === "email") {
         const leadEmail = lead?.email;
