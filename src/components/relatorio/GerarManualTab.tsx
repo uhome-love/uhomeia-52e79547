@@ -125,21 +125,53 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
       const dayEnd = `${dataFim}T23:59:59.999-03:00`;
 
       // Parallel queries - comprehensive
-      const [tentativasRes, visitasRes, negociosRes, leadsNovosRes, tarefasRes, gestaoRes, roletaRes, negociosCriadosRes] = await Promise.all([
-        fetchAllRows<{ id: string; resultado: string }>((from, to) => supabase.from("oferta_ativa_tentativas").select("id, resultado").eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd).range(from, to)).then(data => ({ data, error: null })),
+      // ── Step 1: Get lead IDs owned by this corretor (for follow-ups) ──
+      const corretorLeadIds = await fetchAllRows<{ id: string }>((from, to) =>
+        supabase.from("pipeline_leads").select("id").eq("corretor_id", corretorUserId).range(from, to)
+      );
+      const leadIds = corretorLeadIds.map(l => l.id);
+
+      // ── Step 2: All parallel queries ──
+      const [tentativasRes, visitasRes, negociosRes, leadsNovosRes, gestaoRes, roletaRes, negociosCriadosRes] = await Promise.all([
+        // Ligações (paginated)
+        fetchAllRows<{ id: string; resultado: string }>((from, to) =>
+          supabase.from("oferta_ativa_tentativas").select("id, resultado").eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd).range(from, to)
+        ).then(data => ({ data, error: null })),
+        // Visitas
         supabase.from("visitas").select("id, status").eq("corretor_id", corretorUserId).gte("data_visita", dataInicio).lte("data_visita", dataFim),
-        supabase.from("negocios").select("id, fase, vgv_estimado, data_assinatura").eq("corretor_id", corretorUserId),
+        // Negócios — use auth_user_id (NOT corretor_id which is profiles.id)
+        supabase.from("negocios").select("id, fase, vgv_estimado, vgv_final, data_assinatura").eq("auth_user_id", corretorUserId),
+        // Leads novos no período
         supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd) as any,
-        supabase.from("pipeline_tarefas" as any).select("id, status").eq("corretor_id", corretorUserId).eq("status", "concluida").gte("concluida_em", dayStart).lte("concluida_em", dayEnd),
+        // Gestão de leads (view with auth_user_id)
         supabase.from("v_kpi_gestao_leads" as any).select("pontos").eq("auth_user_id", corretorUserId).gte("data", dataInicio).lte("data", dataFim),
+        // Leads recebidos da roleta
         supabase.from("distribuicao_historico").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).eq("acao", "aceito").gte("created_at", dayStart).lte("created_at", dayEnd) as any,
-        supabase.from("negocios").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd) as any,
+        // Negócios criados no período (auth_user_id)
+        supabase.from("negocios").select("id", { count: "exact", head: true }).eq("auth_user_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd) as any,
       ]);
+
+      // ── Step 3: Follow-ups — pipeline_tarefas has no corretor_id, query by lead IDs ──
+      let followUpsConcluidos = 0;
+      if (leadIds.length > 0) {
+        // Batch in chunks of 200 to avoid URL length limits
+        const chunkSize = 200;
+        for (let i = 0; i < leadIds.length; i += chunkSize) {
+          const chunk = leadIds.slice(i, i + chunkSize);
+          const { count } = await (supabase
+            .from("pipeline_tarefas" as any)
+            .select("id", { count: "exact", head: true })
+            .in("pipeline_lead_id", chunk)
+            .eq("status", "concluida")
+            .gte("concluida_em", dayStart)
+            .lte("concluida_em", dayEnd)) as any;
+          followUpsConcluidos += (count || 0);
+        }
+      }
 
       const tentativas = tentativasRes.data || [];
       const visitas = visitasRes.data || [];
       const negocios = negociosRes.data || [];
-      const tarefas = tarefasRes.data || [];
       const gestaoRows = gestaoRes.data || [];
 
       const ligacoes = tentativas.length;
@@ -148,24 +180,33 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
       const visitasRealizadas = visitas.filter(v => v.status === "realizada").length;
       const visitasNoShow = visitas.filter(v => v.status === "no_show").length;
 
-      // Deal metrics
-      const negociosAtivos = negocios.filter(n => !["perdido", "vendido"].includes(n.fase)).length;
-      const propostas = negocios.filter(n => n.fase === "proposta").length;
-      const vendas = negocios.filter(n => n.fase === "vendido" && n.data_assinatura && n.data_assinatura >= dataInicio && n.data_assinatura <= dataFim).length;
-      const perdidos = negocios.filter(n => n.fase === "perdido").length;
-      const vgvAndamento = negocios.filter(n => !["perdido", "vendido"].includes(n.fase)).reduce((s, n) => s + (Number(n.vgv_estimado) || 0), 0);
-      const vgvGerado = negocios.filter(n => n.fase !== "perdido").reduce((s, n) => s + (Number(n.vgv_estimado) || 0), 0);
-      const vgvAssinado = negocios.filter(n => n.fase === "vendido" && n.data_assinatura && n.data_assinatura >= dataInicio && n.data_assinatura <= dataFim).reduce((s, n) => s + (Number(n.vgv_estimado) || 0), 0);
+      // Deal metrics — use fase and date filters
+      const negociosAtivos = negocios.filter(n => n.fase && !["perdido", "cancelado", "distrato", "vendido", "assinado"].includes(n.fase)).length;
+      const propostas = negocios.filter(n => n.fase && ["proposta", "negociacao", "documentacao"].includes(n.fase)).length;
+      const vendasPeriodo = negocios.filter(n =>
+        n.fase && ["vendido", "assinado"].includes(n.fase) &&
+        n.data_assinatura && n.data_assinatura >= dataInicio && n.data_assinatura <= dataFim
+      );
+      const vendas = vendasPeriodo.length;
+      const perdidos = negocios.filter(n => n.fase && ["perdido", "cancelado", "distrato"].includes(n.fase)).length;
+      const vgvAndamento = negocios
+        .filter(n => n.fase && !["perdido", "cancelado", "distrato", "vendido", "assinado"].includes(n.fase))
+        .reduce((s, n) => s + (Number(n.vgv_estimado) || 0), 0);
+      const vgvGerado = negocios
+        .filter(n => n.fase && !["perdido", "cancelado", "distrato"].includes(n.fase))
+        .reduce((s, n) => s + (Number(n.vgv_estimado) || 0), 0);
+      // VGV Assinado: use vgv_final when available, otherwise vgv_estimado
+      const vgvAssinado = vendasPeriodo
+        .reduce((s, n) => s + (Number(n.vgv_final) || Number(n.vgv_estimado) || 0), 0);
 
-      // Lead management
+      // Lead management — pipeline count
       const { count: leadsAtivos } = await (supabase
         .from("pipeline_leads")
         .select("id", { count: "exact", head: true }) as any)
         .eq("corretor_id", corretorUserId)
-        .neq("status", "arquivado");
+        .not("status", "in", '("arquivado","descarte")');
 
       const pontosGestao = gestaoRows.reduce((s: number, r: any) => s + (Number(r.pontos) || 0), 0);
-      const followUpsConcluidos = tarefas.length;
 
       return {
         ligacoes,
