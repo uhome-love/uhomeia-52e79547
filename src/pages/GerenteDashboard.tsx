@@ -6,6 +6,7 @@ import { useGerenteDashboard, Period, formatCurrency } from "@/hooks/useGerenteD
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 import { motion } from "framer-motion";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
