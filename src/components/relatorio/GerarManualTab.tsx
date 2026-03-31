@@ -117,20 +117,22 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
   const { data: periodData, isLoading: loadingPeriod } = useQuery({
     queryKey: ["period-data-1on1", corretorUserId, corretorNome, dataInicio, dataFim],
     queryFn: async (): Promise<PeriodData> => {
-      const empty: PeriodData = { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, visitasNoShow: 0, leadsAtivos: 0, leadsAproveitados: 0, leadsNovos: 0, followUpsConcluidos: 0, leadsDesatualizados: 0, negociosAtivos: 0, propostas: 0, vendas: 0, perdidos: 0, vgvGerado: 0, vgvAssinado: 0, vgvAndamento: 0, pontosGestao: 0 };
+      const empty: PeriodData = { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, visitasNoShow: 0, leadsAtivos: 0, leadsAproveitados: 0, leadsNovos: 0, leadsRoleta: 0, followUpsConcluidos: 0, leadsDesatualizados: 0, negociosAtivos: 0, negociosCriados: 0, propostas: 0, vendas: 0, perdidos: 0, vgvGerado: 0, vgvAssinado: 0, vgvAndamento: 0, pontosGestao: 0, pipeline: 0 };
       if (!corretorUserId) return empty;
 
       const dayStart = `${dataInicio}T00:00:00-03:00`;
       const dayEnd = `${dataFim}T23:59:59.999-03:00`;
 
       // Parallel queries - comprehensive
-      const [tentativasRes, visitasRes, negociosRes, leadsNovosRes, tarefasRes, gestaoRes] = await Promise.all([
+      const [tentativasRes, visitasRes, negociosRes, leadsNovosRes, tarefasRes, gestaoRes, roletaRes, negociosCriadosRes] = await Promise.all([
         supabase.from("oferta_ativa_tentativas").select("id, resultado").eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd),
         supabase.from("visitas").select("id, status").eq("corretor_id", corretorUserId).gte("data_visita", dataInicio).lte("data_visita", dataFim),
         supabase.from("negocios").select("id, fase, vgv_estimado, data_assinatura").eq("corretor_id", corretorUserId),
         supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd) as any,
         supabase.from("pipeline_tarefas" as any).select("id, status").eq("corretor_id", corretorUserId).eq("status", "concluida").gte("concluida_em", dayStart).lte("concluida_em", dayEnd),
         supabase.from("v_kpi_gestao_leads" as any).select("pontos").eq("auth_user_id", corretorUserId).gte("data", dataInicio).lte("data", dataFim),
+        supabase.from("distribuicao_historico").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).eq("acao", "aceito").gte("created_at", dayStart).lte("created_at", dayEnd) as any,
+        supabase.from("negocios").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd) as any,
       ]);
 
       const tentativas = tentativasRes.data || [];
