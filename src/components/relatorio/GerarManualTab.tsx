@@ -35,9 +35,11 @@ interface PeriodData {
   leadsAtivos: number;
   leadsAproveitados: number;
   leadsNovos: number;
+  leadsRoleta: number;
   followUpsConcluidos: number;
   leadsDesatualizados: number;
   negociosAtivos: number;
+  negociosCriados: number;
   propostas: number;
   vendas: number;
   perdidos: number;
@@ -45,6 +47,7 @@ interface PeriodData {
   vgvAssinado: number;
   vgvAndamento: number;
   pontosGestao: number;
+  pipeline: number;
 }
 
 interface ReportJSON {
@@ -114,20 +117,22 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
   const { data: periodData, isLoading: loadingPeriod } = useQuery({
     queryKey: ["period-data-1on1", corretorUserId, corretorNome, dataInicio, dataFim],
     queryFn: async (): Promise<PeriodData> => {
-      const empty: PeriodData = { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, visitasNoShow: 0, leadsAtivos: 0, leadsAproveitados: 0, leadsNovos: 0, followUpsConcluidos: 0, leadsDesatualizados: 0, negociosAtivos: 0, propostas: 0, vendas: 0, perdidos: 0, vgvGerado: 0, vgvAssinado: 0, vgvAndamento: 0, pontosGestao: 0 };
+      const empty: PeriodData = { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, visitasNoShow: 0, leadsAtivos: 0, leadsAproveitados: 0, leadsNovos: 0, leadsRoleta: 0, followUpsConcluidos: 0, leadsDesatualizados: 0, negociosAtivos: 0, negociosCriados: 0, propostas: 0, vendas: 0, perdidos: 0, vgvGerado: 0, vgvAssinado: 0, vgvAndamento: 0, pontosGestao: 0, pipeline: 0 };
       if (!corretorUserId) return empty;
 
       const dayStart = `${dataInicio}T00:00:00-03:00`;
       const dayEnd = `${dataFim}T23:59:59.999-03:00`;
 
       // Parallel queries - comprehensive
-      const [tentativasRes, visitasRes, negociosRes, leadsNovosRes, tarefasRes, gestaoRes] = await Promise.all([
+      const [tentativasRes, visitasRes, negociosRes, leadsNovosRes, tarefasRes, gestaoRes, roletaRes, negociosCriadosRes] = await Promise.all([
         supabase.from("oferta_ativa_tentativas").select("id, resultado").eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd),
         supabase.from("visitas").select("id, status").eq("corretor_id", corretorUserId).gte("data_visita", dataInicio).lte("data_visita", dataFim),
         supabase.from("negocios").select("id, fase, vgv_estimado, data_assinatura").eq("corretor_id", corretorUserId),
         supabase.from("pipeline_leads").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd) as any,
         supabase.from("pipeline_tarefas" as any).select("id, status").eq("corretor_id", corretorUserId).eq("status", "concluida").gte("concluida_em", dayStart).lte("concluida_em", dayEnd),
         supabase.from("v_kpi_gestao_leads" as any).select("pontos").eq("auth_user_id", corretorUserId).gte("data", dataInicio).lte("data", dataFim),
+        supabase.from("distribuicao_historico").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).eq("acao", "aceito").gte("created_at", dayStart).lte("created_at", dayEnd) as any,
+        supabase.from("negocios").select("id", { count: "exact", head: true }).eq("corretor_id", corretorUserId).gte("created_at", dayStart).lte("created_at", dayEnd) as any,
       ]);
 
       const tentativas = tentativasRes.data || [];
@@ -171,9 +176,11 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
         leadsAtivos: leadsAtivos || 0,
         leadsAproveitados: aproveitados,
         leadsNovos: leadsNovosRes.count || 0,
+        leadsRoleta: roletaRes.count || 0,
         followUpsConcluidos,
         leadsDesatualizados: 0,
         negociosAtivos,
+        negociosCriados: negociosCriadosRes.count || 0,
         propostas,
         vendas,
         perdidos,
@@ -181,6 +188,7 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
         vgvAssinado,
         vgvAndamento,
         pontosGestao,
+        pipeline: leadsAtivos || 0,
       };
     },
     enabled: !!corretorUserId && !!dataInicio && !!dataFim,
@@ -225,12 +233,14 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
     setGenerating(true);
     setReport(null);
 
-    const pd = periodData || { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, visitasNoShow: 0, leadsAtivos: 0, leadsAproveitados: 0, leadsNovos: 0, followUpsConcluidos: 0, leadsDesatualizados: 0, negociosAtivos: 0, propostas: 0, vendas: 0, perdidos: 0, vgvGerado: 0, vgvAssinado: 0, vgvAndamento: 0, pontosGestao: 0 };
+    const pd = periodData || { ligacoes: 0, aproveitados: 0, taxaAproveitamento: 0, visitasMarcadas: 0, visitasRealizadas: 0, visitasNoShow: 0, leadsAtivos: 0, leadsAproveitados: 0, leadsNovos: 0, leadsRoleta: 0, followUpsConcluidos: 0, leadsDesatualizados: 0, negociosAtivos: 0, negociosCriados: 0, propostas: 0, vendas: 0, perdidos: 0, vgvGerado: 0, vgvAssinado: 0, vgvAndamento: 0, pontosGestao: 0, pipeline: 0 };
     const metricas = {
       // Oferta Ativa
       ligacoes: pd.ligacoes,
       aproveitados: pd.aproveitados,
       taxa_aproveitamento: pd.taxaAproveitamento,
+      // Distribuição
+      leads_roleta: pd.leadsRoleta,
       // Visitas
       visitas_marcadas: pd.visitasMarcadas,
       visitas_realizadas: pd.visitasRealizadas,
@@ -240,7 +250,9 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
       leads_novos_periodo: pd.leadsNovos,
       follow_ups_concluidos: pd.followUpsConcluidos,
       pontos_gestao: pd.pontosGestao,
+      pipeline_total: pd.pipeline,
       // Negócios
+      negocios_abertos: pd.negociosCriados,
       negocios_ativos: pd.negociosAtivos,
       propostas: pd.propostas,
       vendas: pd.vendas,
@@ -338,23 +350,23 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
   };
 
   const dataCards = [
-    // Oferta Ativa
+    // Oferta Ativa (matching team report order: Ligações, Aprov., Taxa, Roleta)
     { icon: Phone, label: "Ligações", value: periodData?.ligacoes ?? 0, color: "text-blue-600", bg: "bg-blue-50" },
     { icon: ThumbsUp, label: "Aproveitados", value: `${periodData?.aproveitados ?? 0} (${periodData?.taxaAproveitamento ?? 0}%)`, color: "text-green-600", bg: "bg-green-50" },
-    // Visitas
+    { icon: Users, label: "Leads Roleta", value: periodData?.leadsRoleta ?? 0, color: "text-indigo-600", bg: "bg-indigo-50" },
+    // Visitas (Visitas, Realiz., No Show)
     { icon: CalendarDays, label: "Visitas Marcadas", value: periodData?.visitasMarcadas ?? 0, color: "text-purple-600", bg: "bg-purple-50" },
     { icon: Eye, label: "Visitas Realizadas", value: periodData?.visitasRealizadas ?? 0, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { icon: AlertTriangle, label: "No-Show", value: periodData?.visitasNoShow ?? 0, color: "text-red-600", bg: "bg-red-50" },
-    // Gestão de Leads
-    { icon: Users, label: "Leads Ativos", value: periodData?.leadsAtivos ?? 0, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { icon: TrendingUp, label: "Leads Novos", value: periodData?.leadsNovos ?? 0, color: "text-cyan-600", bg: "bg-cyan-50" },
-    { icon: ClipboardCheck, label: "Follow-ups", value: periodData?.followUpsConcluidos ?? 0, color: "text-teal-600", bg: "bg-teal-50" },
-    { icon: Target, label: "Pts Gestão", value: periodData?.pontosGestao ?? 0, color: "text-orange-600", bg: "bg-orange-50" },
-    // Negócios
-    { icon: Briefcase, label: "Negócios Ativos", value: periodData?.negociosAtivos ?? 0, color: "text-amber-600", bg: "bg-amber-50" },
+    { icon: AlertTriangle, label: "No-Show", value: `${periodData?.visitasNoShow ?? 0}${(periodData?.visitasMarcadas ?? 0) > 0 ? ` (${Math.round(((periodData?.visitasNoShow ?? 0) / (periodData?.visitasMarcadas ?? 1)) * 100)}%)` : ""}`, color: "text-red-600", bg: "bg-red-50" },
+    // Negócios (Negócios, Prop., Vendas, VGV Assin.)
+    { icon: Briefcase, label: "Negócios Abertos", value: periodData?.negociosCriados ?? 0, color: "text-amber-600", bg: "bg-amber-50" },
     { icon: Briefcase, label: "Propostas", value: periodData?.propostas ?? 0, color: "text-violet-600", bg: "bg-violet-50" },
     { icon: CheckCircle, label: "Vendas", value: periodData?.vendas ?? 0, color: "text-green-700", bg: "bg-green-50" },
     { icon: DollarSign, label: "VGV Assinado", value: fmtVgv(periodData?.vgvAssinado ?? 0), color: "text-emerald-700", bg: "bg-emerald-50" },
+    // Pipeline & Gestão
+    { icon: TrendingUp, label: "Pipeline", value: periodData?.pipeline ?? 0, color: "text-cyan-600", bg: "bg-cyan-50" },
+    { icon: ClipboardCheck, label: "Follow-ups", value: periodData?.followUpsConcluidos ?? 0, color: "text-teal-600", bg: "bg-teal-50" },
+    { icon: Target, label: "Pts Gestão", value: periodData?.pontosGestao ?? 0, color: "text-orange-600", bg: "bg-orange-50" },
     { icon: DollarSign, label: "VGV Andamento", value: fmtVgv(periodData?.vgvAndamento ?? 0), color: "text-emerald-600", bg: "bg-emerald-50" },
   ];
 
@@ -394,7 +406,7 @@ export default function GerarManualTab({ team, gerenteNome }: Props) {
               <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dados do Período</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                 {dataCards.map(dc => (
                   <div key={dc.label} className={`rounded-lg p-2.5 ${dc.bg} border border-border/30`}>
                     <div className="flex items-center gap-1.5 mb-1">
