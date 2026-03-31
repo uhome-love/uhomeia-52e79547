@@ -92,6 +92,7 @@ export default function NurturingDashboard() {
   const [activeTab, setActiveTab] = useState("geral");
   const [activeLeads, setActiveLeads] = useState(0);
   const [avgScore, setAvgScore] = useState(0);
+  const [windowOpen24h, setWindowOpen24h] = useState(0);
 
   useEffect(() => { loadData(); }, []);
 
