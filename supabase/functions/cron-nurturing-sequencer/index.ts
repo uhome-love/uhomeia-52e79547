@@ -53,10 +53,10 @@ Deno.serve(async (req) => {
     const whatsappPhoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
     const mailgunApiKey = Deno.env.get("MAILGUN_API_KEY");
 
-    // Fetch pending sequences that are due
+    // Fetch pending sequences that are due — include conversation_window_until
     const { data: pendingSteps, error: fetchError } = await supabase
       .from("lead_nurturing_sequences")
-      .select("*, pipeline_leads!inner(id, nome, telefone, email, empreendimento, corretor_id)")
+      .select("*, pipeline_leads!inner(id, nome, telefone, email, empreendimento, corretor_id, conversation_window_until)")
       .eq("status", "pendente")
       .lte("scheduled_at", new Date().toISOString())
       .order("scheduled_at", { ascending: true })
@@ -130,11 +130,25 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Gelado (0-4): skip WhatsApp, only email/voz
+        // Gelado (0-4): skip WhatsApp, try email fallback instead
         if (score <= 4 && canal === "whatsapp") {
+          // Create an email fallback step if lead has email
+          if (lead.email) {
+            await supabase.from("lead_nurturing_sequences").insert({
+              pipeline_lead_id: lead.id,
+              step_key: step.step_key + "_email_fallback",
+              stage_tipo: step.stage_tipo,
+              canal: "email",
+              template_name: step.template_name,
+              template_key: "reativacao-vitrine",
+              mensagem: step.mensagem,
+              scheduled_at: new Date().toISOString(),
+              status: "pendente",
+            } as any);
+          }
           await supabase
             .from("lead_nurturing_sequences")
-            .update({ status: "cancelado", error_message: "Score baixo — canal WhatsApp pulado" } as any)
+            .update({ status: "cancelado", error_message: "Score baixo — canal WhatsApp pulado, email fallback criado" } as any)
             .eq("id", step.id);
           continue;
         }
@@ -216,7 +230,7 @@ Deno.serve(async (req) => {
               .eq("id", step.id);
             processed++;
             // Notify orchestrator
-            notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_entregue", lead.id, "email");
+            notifyOrchestrator(supabaseUrl, serviceKey, "email_enviado", lead.id, "email");
           } else {
             await supabase
               .from("lead_nurturing_sequences")
@@ -250,7 +264,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // ── CANAL: WHATSAPP (lógica original) ──
+      // ── CANAL: WHATSAPP ──
       if (!lead || !lead.telefone) {
         await supabase
           .from("lead_nurturing_sequences")
@@ -263,13 +277,61 @@ Deno.serve(async (req) => {
       let sendSuccess = false;
       let errorMsg = "";
 
-      if (whatsappToken && whatsappPhoneId && step.template_name) {
+      if (whatsappToken && whatsappPhoneId) {
         try {
           let phone = lead.telefone.replace(/\D/g, "");
           if (!phone.startsWith("55")) phone = "55" + phone;
 
           const nome = lead.nome?.split(" ")[0] || "Cliente";
           const emp = lead.empreendimento || "nosso empreendimento";
+
+          // ── Check 24h conversation window ──
+          const windowOpen = lead.conversation_window_until && new Date(lead.conversation_window_until) > new Date();
+
+          let waPayload: Record<string, any>;
+
+          if (windowOpen && step.mensagem) {
+            // Free-text message within 24h window
+            const freeText = (step.mensagem || "")
+              .replace(/\{\{nome\}\}/g, nome)
+              .replace(/\{\{empreendimento\}\}/g, emp);
+            waPayload = {
+              messaging_product: "whatsapp",
+              to: phone,
+              type: "text",
+              text: { body: freeText || `Olá ${nome}, estamos com novidades sobre ${emp}! Posso te ajudar?` },
+            };
+            console.log(`📨 Sending free-text (24h window) to ${phone}`);
+          } else if (step.template_name) {
+            // Template message (outside window or no free text)
+            waPayload = {
+              messaging_product: "whatsapp",
+              to: phone,
+              type: "template",
+              template: {
+                name: step.template_name,
+                language: { code: "pt_BR" },
+                components: [
+                  {
+                    type: "body",
+                    parameters: [
+                      { type: "text", text: nome },
+                      { type: "text", text: emp },
+                    ],
+                  },
+                ],
+              },
+            };
+            console.log(`📨 Sending template ${step.template_name} to ${phone}`);
+          } else {
+            // No template and no window — skip
+            await supabase
+              .from("lead_nurturing_sequences")
+              .update({ status: "erro", error_message: "Sem template e janela 24h fechada" } as any)
+              .eq("id", step.id);
+            errors++;
+            continue;
+          }
 
           const waResponse = await fetch(
             `https://graph.facebook.com/v21.0/${whatsappPhoneId}/messages`,
@@ -279,27 +341,9 @@ Deno.serve(async (req) => {
                 Authorization: `Bearer ${whatsappToken}`,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({
-                messaging_product: "whatsapp",
-                to: phone,
-                type: "template",
-                template: {
-                  name: step.template_name,
-                  language: { code: "pt_BR" },
-                  components: [
-                    {
-                      type: "body",
-                      parameters: [
-                        { type: "text", text: nome },
-                        { type: "text", text: emp },
-                      ],
-                    },
-                  ],
-                },
-              }),
+              body: JSON.stringify(waPayload),
             }
           );
-
           if (waResponse.ok) {
             sendSuccess = true;
             // Notify orchestrator about WhatsApp sent
@@ -336,7 +380,7 @@ Deno.serve(async (req) => {
                   if (fallbackResult.success) {
                     sendSuccess = true;
                     errorMsg = "WhatsApp falhou, email enviado como fallback";
-                    notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_entregue", lead.id, "email");
+                    notifyOrchestrator(supabaseUrl, serviceKey, "email_enviado", lead.id, "email");
                   }
                 } catch {}
               }

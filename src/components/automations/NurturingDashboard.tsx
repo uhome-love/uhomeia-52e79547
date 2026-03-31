@@ -92,6 +92,7 @@ export default function NurturingDashboard() {
   const [activeTab, setActiveTab] = useState("geral");
   const [activeLeads, setActiveLeads] = useState(0);
   const [avgScore, setAvgScore] = useState(0);
+  const [windowOpen24h, setWindowOpen24h] = useState(0);
 
   useEffect(() => { loadData(); }, []);
 
@@ -198,7 +199,7 @@ export default function NurturingDashboard() {
     const { data: logs } = await supabase
       .from("lead_nurturing_sequences")
       .select("id, step_key, stage_tipo, canal, mensagem, status, sent_at, scheduled_at, pipeline_leads(nome)")
-      .or(`sent_at.gte.${since},scheduled_at.lte.${new Date().toISOString()}`)
+      .gte("scheduled_at", since)
       .neq("status", "cancelado")
       .order("scheduled_at", { ascending: false })
       .limit(50);
@@ -221,14 +222,40 @@ export default function NurturingDashboard() {
     const waEnviados = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
     const emailEnviados = (seqs || []).filter((s: any) => s.canal === "email").length;
 
+    // ── Bloco 4: Real WhatsApp read/reply data ──
+    const { data: waSends } = await supabase
+      .from("whatsapp_campaign_sends")
+      .select("status_envio")
+      .gte("sent_at", thirtyDaysAgo);
+
+    const waLidos = (waSends || []).filter((s: any) => ["read", "replied"].includes(s.status_envio)).length;
+    const waRespondidos = (waSends || []).filter((s: any) => s.status_envio === "replied").length;
+
+    // ── Real email open/click data ──
+    const { data: emailRecipients } = await supabase
+      .from("email_campaign_recipients")
+      .select("status, aberturas, cliques")
+      .gte("created_at", thirtyDaysAgo);
+
+    const emailAbertos = (emailRecipients || []).filter((r: any) => (r.aberturas || 0) > 0).length;
+    const emailClicados = (emailRecipients || []).filter((r: any) => (r.cliques || 0) > 0).length;
+
     const { data: voiceLogs } = await supabase
       .from("voice_call_logs")
       .select("status, resultado")
       .gte("created_at", thirtyDaysAgo);
 
+    // ── Count leads with open 24h window ──
+    const { count: windowCount } = await supabase
+      .from("pipeline_leads")
+      .select("id", { count: "exact", head: true })
+      .gt("conversation_window_until", new Date().toISOString());
+
+    setWindowOpen24h(windowCount || 0);
+
     setChannelPerf({
-      whatsapp: { enviados: waEnviados, lidos: 0, respondidos: 0 },
-      email: { enviados: emailEnviados, abertos: 0, clicados: 0 },
+      whatsapp: { enviados: waEnviados + (waSends?.length || 0), lidos: waLidos, respondidos: waRespondidos },
+      email: { enviados: emailEnviados + (emailRecipients?.length || 0), abertos: emailAbertos, clicados: emailClicados },
       voz: {
         total: voiceLogs?.length || 0,
         atendidas: (voiceLogs || []).filter((v: any) => v.status === "atendida").length,
@@ -267,15 +294,22 @@ export default function NurturingDashboard() {
 
   const togglePause = async () => {
     if (!paused) {
+      // Pause: set status to 'pausado' (reversible) instead of 'cancelado'
       const { error } = await supabase
         .from("lead_nurturing_sequences")
-        .update({ status: "cancelado" } as any)
+        .update({ status: "pausado" } as any)
         .eq("status", "pendente");
       if (error) { toast.error("Erro ao pausar"); return; }
-      toast.success("Todas as sequências pausadas");
+      toast.success("Todas as sequências pausadas (reversível)");
       setPaused(true);
     } else {
-      toast.info("Para retomar, leads precisam mudar de etapa para gerar novos steps");
+      // Resume: set status back to 'pendente'
+      const { error } = await supabase
+        .from("lead_nurturing_sequences")
+        .update({ status: "pendente" } as any)
+        .eq("status", "pausado");
+      if (error) { toast.error("Erro ao retomar"); return; }
+      toast.success("Sequências retomadas");
       setPaused(false);
     }
     loadData();
@@ -399,7 +433,7 @@ export default function NurturingDashboard() {
 
         {/* ── CANAIS ── */}
         <TabsContent value="canais" className="space-y-4 mt-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Card className="p-3 text-center">
               <MessageCircle className="h-5 w-5 mx-auto text-emerald-500 mb-1" />
               <p className="text-xl font-bold">{channelPerf.whatsapp.enviados}</p>
@@ -415,7 +449,60 @@ export default function NurturingDashboard() {
               <p className="text-xl font-bold">{channelPerf.voz.total}</p>
               <p className="text-[10px] text-muted-foreground">Voz IA (30d)</p>
             </Card>
+            <Card className="p-3 text-center border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20">
+              <Zap className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
+              <p className="text-xl font-bold text-emerald-600">{windowOpen24h}</p>
+              <p className="text-[10px] text-muted-foreground">Janela 24h aberta</p>
+            </Card>
           </div>
+
+          {/* WhatsApp Detailed Stats */}
+          <Card className="p-4">
+            <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+              <MessageCircle className="h-4 w-4 text-emerald-500" /> WhatsApp (30 dias)
+            </h3>
+            <div className="grid grid-cols-3 gap-3 text-center text-xs">
+              <div>
+                <p className="text-lg font-bold">{channelPerf.whatsapp.enviados}</p>
+                <span className="text-muted-foreground">Enviados</span>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-blue-600">{channelPerf.whatsapp.lidos}</p>
+                <span className="text-muted-foreground">Lidos</span>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-emerald-600">{channelPerf.whatsapp.respondidos}</p>
+                <span className="text-muted-foreground">Respondidos</span>
+              </div>
+            </div>
+            {channelPerf.whatsapp.enviados > 0 && (
+              <div className="mt-2 pt-2 border-t text-[10px] text-muted-foreground text-center">
+                Taxa leitura: {Math.round((channelPerf.whatsapp.lidos / channelPerf.whatsapp.enviados) * 100)}% · 
+                Taxa resposta: {Math.round((channelPerf.whatsapp.respondidos / channelPerf.whatsapp.enviados) * 100)}%
+              </div>
+            )}
+          </Card>
+
+          {/* Email Detailed Stats */}
+          <Card className="p-4">
+            <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+              <Mail className="h-4 w-4 text-blue-500" /> Email (30 dias)
+            </h3>
+            <div className="grid grid-cols-3 gap-3 text-center text-xs">
+              <div>
+                <p className="text-lg font-bold">{channelPerf.email.enviados}</p>
+                <span className="text-muted-foreground">Enviados</span>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-blue-600">{channelPerf.email.abertos}</p>
+                <span className="text-muted-foreground">Abertos</span>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-emerald-600">{channelPerf.email.clicados}</p>
+                <span className="text-muted-foreground">Clicados</span>
+              </div>
+            </div>
+          </Card>
 
           {channelPerf.voz.total > 0 && (
             <Card className="p-4">

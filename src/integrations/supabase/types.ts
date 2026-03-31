@@ -5467,6 +5467,7 @@ export type Database = {
           campanha_id: string | null
           complexidade_score: number
           conjunto_anuncio: string | null
+          conversation_window_until: string | null
           corretor_id: string | null
           created_at: string
           created_by: string | null
@@ -5539,6 +5540,7 @@ export type Database = {
           campanha_id?: string | null
           complexidade_score?: number
           conjunto_anuncio?: string | null
+          conversation_window_until?: string | null
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -5611,6 +5613,7 @@ export type Database = {
           campanha_id?: string | null
           complexidade_score?: number
           conjunto_anuncio?: string | null
+          conversation_window_until?: string | null
           corretor_id?: string | null
           created_at?: string
           created_by?: string | null
