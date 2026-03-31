@@ -215,6 +215,8 @@ Deno.serve(async (req) => {
               } as any)
               .eq("id", step.id);
             processed++;
+            // Notify orchestrator
+            notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_entregue", lead.id, "email");
           } else {
             await supabase
               .from("lead_nurturing_sequences")
