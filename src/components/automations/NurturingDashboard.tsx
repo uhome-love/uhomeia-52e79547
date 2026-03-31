@@ -40,6 +40,21 @@ interface ReactivationStats {
   whatsappErros: number;
 }
 
+interface ChannelPerf {
+  whatsapp: { enviados: number; lidos: number; respondidos: number };
+  email: { enviados: number; abertos: number; clicados: number };
+  voz: { total: number; atendidas: number; interessados: number };
+}
+
+interface HotLead {
+  id: string;
+  pipeline_lead_id: string;
+  lead_score: number;
+  sequencia_ativa: string;
+  ultimo_evento: string;
+  lead_nome?: string;
+}
+
 // ── Constants ──
 const STAGE_LABELS: Record<string, string> = {
   novo: "Novo Lead",
