@@ -177,6 +177,55 @@ export default function NurturingDashboard() {
     }
   };
 
+  const loadChannelPerf = async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Nurturing sequences by channel
+    const { data: seqs } = await supabase
+      .from("lead_nurturing_sequences")
+      .select("canal, status")
+      .eq("status", "enviado")
+      .gte("created_at", thirtyDaysAgo);
+
+    const waEnviados = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
+    const emailEnviados = (seqs || []).filter((s: any) => s.canal === "email").length;
+
+    // Voice call logs
+    const { data: voiceLogs } = await supabase
+      .from("voice_call_logs")
+      .select("status, resultado")
+      .gte("created_at", thirtyDaysAgo);
+
+    const vozTotal = voiceLogs?.length || 0;
+    const vozAtendidas = (voiceLogs || []).filter((v: any) => v.status === "atendida").length;
+    const vozInteressados = (voiceLogs || []).filter((v: any) => v.resultado === "interessado").length;
+
+    setChannelPerf({
+      whatsapp: { enviados: waEnviados, lidos: 0, respondidos: 0 },
+      email: { enviados: emailEnviados, abertos: 0, clicados: 0 },
+      voz: { total: vozTotal, atendidas: vozAtendidas, interessados: vozInteressados },
+    });
+  };
+
+  const loadHotLeads = async () => {
+    const { data: hot } = await supabase
+      .from("lead_nurturing_state")
+      .select("id, pipeline_lead_id, lead_score, sequencia_ativa, ultimo_evento, pipeline_leads(nome)")
+      .gte("lead_score", 15)
+      .eq("status", "ativo")
+      .order("lead_score", { ascending: false })
+      .limit(10);
+
+    if (hot) {
+      setHotLeads(
+        (hot as any[]).map((h) => ({
+          ...h,
+          lead_nome: h.pipeline_leads?.nome || "Lead",
+        }))
+      );
+    }
+  };
+
   const togglePause = async () => {
     if (!paused) {
       const { error } = await supabase
