@@ -86,6 +86,12 @@ export default function NurturingDashboard() {
     totalTentados: 0, totalReativados: 0, emailEnviados: 0,
     whatsappEnviados: 0, emailErros: 0, whatsappErros: 0,
   });
+  const [channelPerf, setChannelPerf] = useState<ChannelPerf>({
+    whatsapp: { enviados: 0, lidos: 0, respondidos: 0 },
+    email: { enviados: 0, abertos: 0, clicados: 0 },
+    voz: { total: 0, atendidas: 0, interessados: 0 },
+  });
+  const [hotLeads, setHotLeads] = useState<HotLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [paused, setPaused] = useState(false);
   const [activeTab, setActiveTab] = useState("geral");
