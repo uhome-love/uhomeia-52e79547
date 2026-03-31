@@ -246,9 +246,20 @@ export default function NurturingDashboard() {
       .eq("status", "enviado")
       .gte("created_at", thirtyDaysAgo);
 
-    // Count nurturing-only sends (don't double-count with campaign sends)
-    const waEnviadosNurturing = (seqs || []).filter((s: any) => s.canal === "whatsapp").length;
-    const emailEnviadosNurturing = (seqs || []).filter((s: any) => s.canal === "email").length;
+    // Count nurturing-only sends using count to avoid 1000-row truncation
+    const { count: waEnviadosNurturing } = await supabase
+      .from("lead_nurturing_sequences")
+      .select("id", { count: "exact", head: true })
+      .eq("canal", "whatsapp")
+      .eq("status", "enviado")
+      .gte("created_at", thirtyDaysAgo);
+
+    const { count: emailEnviadosNurturing } = await supabase
+      .from("lead_nurturing_sequences")
+      .select("id", { count: "exact", head: true })
+      .eq("canal", "email")
+      .eq("status", "enviado")
+      .gte("created_at", thirtyDaysAgo);
 
     // ── Real WhatsApp read/reply data from campaigns ──
     const { count: waCampTotal } = await supabase
