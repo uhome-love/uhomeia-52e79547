@@ -8824,6 +8824,10 @@ export type Database = {
         Args: { p_pipeline_lead_id: string; p_segmento_id?: string }
         Returns: Json
       }
+      distribute_lead_with_lock: {
+        Args: { p_janela?: string; p_lead_id: string }
+        Returns: Json
+      }
       escalonar_notificacoes_leads: { Args: never; Returns: number }
       fetch_next_lead: {
         Args: {
