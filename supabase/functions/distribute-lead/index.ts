@@ -11,19 +11,29 @@ let cachedMapping: Record<string, string> | null = null;
 let cacheTime = 0;
 const CACHE_TTL = 5 * 60 * 1000;
 
-async function loadEmpreendimentoMapping(supabase: any): Promise<Record<string, string>> {
-  if (cachedMapping && Date.now() - cacheTime < CACHE_TTL) return cachedMapping;
+interface CampanhaMapping {
+  segmentoId: string;
+  ignorarSegmento: boolean;
+}
+
+let cachedMappingV2: Record<string, CampanhaMapping> | null = null;
+
+async function loadEmpreendimentoMapping(supabase: any): Promise<Record<string, CampanhaMapping>> {
+  if (cachedMappingV2 && Date.now() - cacheTime < CACHE_TTL) return cachedMappingV2;
   const { data } = await supabase
     .from("roleta_campanhas")
-    .select("empreendimento, segmento_id")
+    .select("empreendimento, segmento_id, ignorar_segmento")
     .eq("ativo", true);
-  const mapping: Record<string, string> = {};
+  const mapping: Record<string, CampanhaMapping> = {};
   for (const row of data || []) {
     if (row.empreendimento && row.segmento_id) {
-      mapping[row.empreendimento.toLowerCase().trim()] = row.segmento_id;
+      mapping[row.empreendimento.toLowerCase().trim()] = {
+        segmentoId: row.segmento_id,
+        ignorarSegmento: row.ignorar_segmento === true,
+      };
     }
   }
-  cachedMapping = mapping;
+  cachedMappingV2 = mapping;
   cacheTime = Date.now();
   return mapping;
 }
@@ -32,9 +42,16 @@ async function resolveSegmento(supabase: any, empreendimento: string | null): Pr
   if (!empreendimento) return null;
   const mapping = await loadEmpreendimentoMapping(supabase);
   const lower = empreendimento.toLowerCase().trim();
-  if (mapping[lower]) return mapping[lower];
-  for (const [key, segId] of Object.entries(mapping)) {
-    if (lower.includes(key) || key.includes(lower)) return segId;
+  
+  // Check direct match
+  const direct = mapping[lower];
+  if (direct) return direct.ignorarSegmento ? null : direct.segmentoId;
+  
+  // Check partial match
+  for (const [key, entry] of Object.entries(mapping)) {
+    if (lower.includes(key) || key.includes(lower)) {
+      return entry.ignorarSegmento ? null : entry.segmentoId;
+    }
   }
   return null;
 }

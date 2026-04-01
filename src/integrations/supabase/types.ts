@@ -7095,18 +7095,21 @@ export type Database = {
           ativo: boolean | null
           empreendimento: string
           id: string
+          ignorar_segmento: boolean
           segmento_id: string | null
         }
         Insert: {
           ativo?: boolean | null
           empreendimento: string
           id?: string
+          ignorar_segmento?: boolean
           segmento_id?: string | null
         }
         Update: {
           ativo?: boolean | null
           empreendimento?: string
           id?: string
+          ignorar_segmento?: boolean
           segmento_id?: string | null
         }
         Relationships: [
