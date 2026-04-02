@@ -620,15 +620,19 @@ export default function PlacarDoDia() {
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           fontWeight: 700,
-                        }}>{v.corretor}</div>
+                        }}>{v.corretor} → {v.cliente}</div>
                         <div style={{
                           fontSize: 10,
-                          color: "#ffffff66",
+                          color: "#ffffff55",
                           fontFamily: "monospace",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
-                        }}>{v.cliente}</div>
+                        }}>
+                          {v.empreendimento && <span>{v.empreendimento}</span>}
+                          {v.empreendimento && v.dataVisita && <span> · </span>}
+                          {v.dataVisita && <span>📅 {v.dataVisita.split("-").reverse().join("/")}</span>}
+                        </div>
                       </div>
                       <div style={{
                         fontSize: 10,
