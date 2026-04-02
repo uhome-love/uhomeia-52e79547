@@ -252,6 +252,8 @@ export default function PlacarDoDia() {
           return {
             corretor: primeiroNome,
             cliente: v.nome_cliente || "—",
+            empreendimento: v.empreendimento || null,
+            dataVisita: v.data_visita || null,
             hora: new Date(v.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),
             equipe,
           };
