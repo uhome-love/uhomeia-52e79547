@@ -210,7 +210,7 @@ export default function TabAgora({ teamUserIds, teamNameMap }: Props) {
           team_member_id: m.id,
           nome: m.nome,
           avatar_url: profiles[uid]?.avatar_url || null,
-          presenca: presencaMap[uid] || "nao_informado",
+          presenca: presencaMap[uid] || (isOnline ? "presente" : "nao_informado"),
           na_roleta: disp?.na_roleta || false,
           ligacoes_hoje: todayCalls,
           meta_ligacoes: metaLig,
