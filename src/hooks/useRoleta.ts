@@ -68,6 +68,7 @@ export function getCurrentWindowInfo(): {
   proximaTransicao: Date;
   minutosRestantes: number;
 } {
+  const now = new Date();
   const { brt: brtNow, isSunday, isHoliday } = getBrtDateInfo();
   const mins = getMinutesFromMidnight(brtNow.getHours(), brtNow.getMinutes());
 
@@ -75,7 +76,7 @@ export function getCurrentWindowInfo(): {
 
   // Janelas de distribuição:
   // Domingo e feriado: dia todo
-  // Seg-Sáb: Manhã / Tarde / Noturna
+  // Seg-Sáb: manhã, tarde e noturna
 
   const t0730 = parseTime("07:30");
   const t0930_cred = isSaturday ? parseTime("10:30") : parseTime("09:30");

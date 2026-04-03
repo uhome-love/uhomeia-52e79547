@@ -4,16 +4,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Loader2, Rocket, Phone, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { getBrtDateInfo } from "@/hooks/useRoleta";
 
-type Destino = "manha" | "tarde" | "noturna" | "qualquer" | "oferta_ativa" | "descarte";
+type Destino = "manha" | "tarde" | "noturna" | "dia_todo" | "qualquer" | "oferta_ativa" | "descarte";
 
-const DESTINO_OPTIONS: { id: Destino; label: string; emoji: string; group: "roleta" | "oferta" | "descarte" }[] = [
+const DESTINO_OPTIONS: { id: Destino; label: string; emoji: string; group: "roleta" | "oferta" | "descarte"; allDayOnly?: boolean; shiftOnly?: boolean }[] = [
   { id: "descarte", label: "Mover para Descarte", emoji: "🗑️", group: "descarte" },
   { id: "oferta_ativa", label: "Enviar para Oferta Ativa", emoji: "📞", group: "oferta" },
-  { id: "manha", label: "Roleta da Manhã", emoji: "🌅", group: "roleta" },
-  { id: "tarde", label: "Roleta da Tarde", emoji: "☀️", group: "roleta" },
-  { id: "noturna", label: "Roleta Noturna", emoji: "🌙", group: "roleta" },
-  { id: "qualquer", label: "Distribuir agora para qualquer corretor ativo", emoji: "📋", group: "roleta" },
+  { id: "dia_todo", label: "Roleta Dia Todo", emoji: "☀️", group: "roleta", allDayOnly: true },
+  { id: "manha", label: "Roleta da Manhã", emoji: "🌅", group: "roleta", shiftOnly: true },
+  { id: "tarde", label: "Roleta da Tarde", emoji: "☀️", group: "roleta", shiftOnly: true },
+  { id: "noturna", label: "Roleta Noturna", emoji: "🌙", group: "roleta", shiftOnly: true },
+  { id: "qualquer", label: "Distribuir automaticamente", emoji: "📋", group: "roleta" },
 ];
 
 interface Props {
