@@ -4,16 +4,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Loader2, Rocket, Phone, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { getBrtDateInfo } from "@/hooks/useRoleta";
 
-type Destino = "manha" | "tarde" | "noturna" | "qualquer" | "oferta_ativa" | "descarte";
+type Destino = "manha" | "tarde" | "noturna" | "dia_todo" | "qualquer" | "oferta_ativa" | "descarte";
 
-const DESTINO_OPTIONS: { id: Destino; label: string; emoji: string; group: "roleta" | "oferta" | "descarte" }[] = [
+const DESTINO_OPTIONS: { id: Destino; label: string; emoji: string; group: "roleta" | "oferta" | "descarte"; allDayOnly?: boolean; shiftOnly?: boolean }[] = [
   { id: "descarte", label: "Mover para Descarte", emoji: "🗑️", group: "descarte" },
   { id: "oferta_ativa", label: "Enviar para Oferta Ativa", emoji: "📞", group: "oferta" },
-  { id: "manha", label: "Roleta da Manhã", emoji: "🌅", group: "roleta" },
-  { id: "tarde", label: "Roleta da Tarde", emoji: "☀️", group: "roleta" },
-  { id: "noturna", label: "Roleta Noturna", emoji: "🌙", group: "roleta" },
-  { id: "qualquer", label: "Distribuir agora para qualquer corretor ativo", emoji: "📋", group: "roleta" },
+  { id: "dia_todo", label: "Roleta Dia Todo", emoji: "☀️", group: "roleta", allDayOnly: true },
+  { id: "manha", label: "Roleta da Manhã", emoji: "🌅", group: "roleta", shiftOnly: true },
+  { id: "tarde", label: "Roleta da Tarde", emoji: "☀️", group: "roleta", shiftOnly: true },
+  { id: "noturna", label: "Roleta Noturna", emoji: "🌙", group: "roleta", shiftOnly: true },
+  { id: "qualquer", label: "Distribuir automaticamente", emoji: "📋", group: "roleta" },
 ];
 
 interface Props {
@@ -26,6 +28,8 @@ interface Props {
 export default function BulkActionModal({ open, onOpenChange, selectedLeadIds, onComplete }: Props) {
   const [dispatching, setDispatching] = useState(false);
   const [selectedDestino, setSelectedDestino] = useState<Destino>("descarte");
+  const { isSunday, isHoliday } = getBrtDateInfo();
+  const isAllDayRoleta = isSunday || isHoliday;
 
   const isOfertaAtiva = selectedDestino === "oferta_ativa";
   const isDescarte = selectedDestino === "descarte";
@@ -240,14 +244,18 @@ export default function BulkActionModal({ open, onOpenChange, selectedLeadIds, o
 
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-3 mb-1">Roleta de Leads</p>
             <div className="grid grid-cols-1 gap-1.5">
-              {DESTINO_OPTIONS.filter(d => d.group === "roleta").map(j => (
+              {DESTINO_OPTIONS.filter(d => d.group === "roleta").filter(d => {
+                if (d.allDayOnly && !isAllDayRoleta) return false;
+                if (d.shiftOnly && isAllDayRoleta) return false;
+                return true;
+              }).map(j => (
                 <button
                   key={j.id}
                   onClick={() => setSelectedDestino(j.id)}
                   className={`flex items-center gap-2 p-2.5 rounded-lg border text-sm text-left transition-colors ${
                     selectedDestino === j.id
-                      ? "border-purple-500 bg-purple-500/10 text-purple-700 font-medium"
-                      : "border-border hover:border-purple-300 text-foreground"
+                      ? "border-primary bg-primary/10 text-primary font-medium"
+                      : "border-border hover:border-primary/40 text-foreground"
                   }`}
                 >
                   <span>{j.emoji}</span>

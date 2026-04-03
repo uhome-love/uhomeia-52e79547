@@ -6,15 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Rocket, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { getBrtDateInfo } from "@/hooks/useRoleta";
 
-// Empreendimento → Segmento mapping (mirrors edge function)
 const EMPREENDIMENTO_SEGMENTO: Record<string, string> = {
-  // MCMV / Até 500k
   "open bosque": "MCMV / Até 500k",
   "alto lindóia": "MCMV / Até 500k",
   "alto lindoia": "MCMV / Até 500k",
   "melnick day": "MCMV / Até 500k",
-  // Médio-Alto Padrão
   "las casas": "Médio-Alto Padrão",
   "orygem": "Médio-Alto Padrão",
   "me day": "Médio-Alto Padrão",
@@ -23,7 +21,6 @@ const EMPREENDIMENTO_SEGMENTO: Record<string, string> = {
   "melnick day - médio padrão": "Médio-Alto Padrão",
   "terrace": "Médio-Alto Padrão",
   "duetto - morana": "Médio-Alto Padrão",
-  // Altíssimo Padrão
   "lake eyre": "Altíssimo Padrão",
   "seen": "Altíssimo Padrão",
   "seen menino deus": "Altíssimo Padrão",
@@ -36,7 +33,6 @@ const EMPREENDIMENTO_SEGMENTO: Record<string, string> = {
   "melnick day alto padrão": "Altíssimo Padrão",
   "melnick day - alto padrão": "Altíssimo Padrão",
   "melnick day alto padrao": "Altíssimo Padrão",
-  // Investimento
   "alfa": "Investimento",
   "shift": "Investimento",
   "shift - vanguard": "Investimento",
@@ -51,11 +47,12 @@ function resolveSegmentoNome(emp: string | null): string | null {
   if (!emp) return null;
   const lower = emp.toLowerCase().trim();
   if (EMPREENDIMENTO_SEGMENTO[lower]) return EMPREENDIMENTO_SEGMENTO[lower];
-  // Sort keys by length descending to match most specific first
+
   const sortedKeys = Object.keys(EMPREENDIMENTO_SEGMENTO).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
     if (lower.includes(key) || key.includes(lower)) return EMPREENDIMENTO_SEGMENTO[key];
   }
+
   return null;
 }
 
@@ -73,19 +70,19 @@ interface Props {
 
 type Destino = "manha" | "tarde" | "noturna" | "qualquer" | "dia_todo" | "oferta_ativa";
 
-function isSundayBRT(): boolean {
-  const now = new Date();
-  const brtMs = now.getTime() - 3 * 60 * 60 * 1000;
-  const brtDate = new Date(brtMs);
-  return brtDate.getUTCDay() === 0;
-}
-
-const DESTINO_OPTIONS: { id: Destino; label: string; emoji: string; group: "roleta" | "oferta"; sundayOnly?: boolean; weekdayOnly?: boolean }[] = [
-  { id: "dia_todo", label: "Domingo (Dia Todo)", emoji: "☀️", group: "roleta", sundayOnly: true },
-  { id: "manha", label: "Roleta da Manhã", emoji: "🌅", group: "roleta", weekdayOnly: true },
-  { id: "tarde", label: "Roleta da Tarde", emoji: "☀️", group: "roleta", weekdayOnly: true },
-  { id: "noturna", label: "Roleta Noturna", emoji: "🌙", group: "roleta", weekdayOnly: true },
-  { id: "qualquer", label: "Qualquer corretor ativo (na_roleta)", emoji: "📋", group: "roleta" },
+const DESTINO_OPTIONS: {
+  id: Destino;
+  label: string;
+  emoji: string;
+  group: "roleta" | "oferta";
+  allDayOnly?: boolean;
+  shiftOnly?: boolean;
+}[] = [
+  { id: "dia_todo", label: "Dia Todo", emoji: "☀️", group: "roleta", allDayOnly: true },
+  { id: "manha", label: "Roleta da Manhã", emoji: "🌅", group: "roleta", shiftOnly: true },
+  { id: "tarde", label: "Roleta da Tarde", emoji: "☀️", group: "roleta", shiftOnly: true },
+  { id: "noturna", label: "Roleta Noturna", emoji: "🌙", group: "roleta", shiftOnly: true },
+  { id: "qualquer", label: "Balancear automaticamente", emoji: "📋", group: "roleta" },
   { id: "oferta_ativa", label: "Enviar para Oferta Ativa", emoji: "📞", group: "oferta" },
 ];
 
@@ -93,13 +90,20 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
   const [loading, setLoading] = useState(false);
   const [dispatching, setDispatching] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
-  const [selectedDestino, setSelectedDestino] = useState<Destino>(isSundayBRT() ? "dia_todo" : "qualquer");
+  const { isSunday, isHoliday } = getBrtDateInfo();
+  const isAllDayRoleta = isSunday || isHoliday;
+  const [selectedDestino, setSelectedDestino] = useState<Destino>(isAllDayRoleta ? "dia_todo" : "qualquer");
   const [includeUnidentified, setIncludeUnidentified] = useState(true);
+
+  useEffect(() => {
+    setSelectedDestino(isAllDayRoleta ? "dia_todo" : "qualquer");
+  }, [isAllDayRoleta, open]);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    supabase.from("pipeline_leads")
+    supabase
+      .from("pipeline_leads")
       .select("id, nome, empreendimento, telefone, origem, aceite_status")
       .is("corretor_id", null)
       .in("aceite_status", ["pendente_distribuicao", "pendente"])
@@ -146,10 +150,10 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
   const leadsToDispatch = includeUnidentified ? allLeadIds : identifiedLeadIds;
 
   const SEGMENTO_COLORS: Record<string, string> = {
-    "MCMV / Até 500k": "bg-blue-500/10 text-blue-700 border-blue-300",
-    "Médio-Alto Padrão": "bg-emerald-500/10 text-emerald-700 border-emerald-300",
-    "Altíssimo Padrão": "bg-amber-500/10 text-amber-700 border-amber-300",
-    "Investimento": "bg-purple-500/10 text-purple-700 border-purple-300",
+    "MCMV / Até 500k": "bg-primary/10 text-primary border-primary/30",
+    "Médio-Alto Padrão": "bg-accent text-accent-foreground border-border",
+    "Altíssimo Padrão": "bg-secondary text-secondary-foreground border-border",
+    Investimento: "bg-muted text-foreground border-border",
   };
 
   const handleDispatch = async () => {
@@ -157,7 +161,6 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
     setDispatching(true);
 
     try {
-      // Force token refresh to avoid stale/expired JWT
       const { data: refreshData, error: refreshError } = await (supabase.auth as any).refreshSession();
       const session = refreshData?.session;
       if (refreshError || !session?.access_token) {
@@ -167,7 +170,6 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
       }
 
       if (isOfertaAtiva) {
-        // Send to Oferta Ativa
         let dispatched = 0;
         for (const leadId of leadsToDispatch) {
           const { error } = await supabase
@@ -187,7 +189,6 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
 
         toast.success(`✅ ${dispatched} leads enviados para Oferta Ativa!`);
       } else {
-        // Call the new batch distribution
         const { data: result, error } = await supabase.functions.invoke("distribute-lead", {
           body: {
             action: "dispatch_batch",
@@ -202,9 +203,9 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
         } else if (result) {
           const { dispatched = 0, failed = 0 } = result;
           if (dispatched > 0) {
-            toast.success(`✅ ${dispatched} leads distribuídos com balanceamento global!${failed > 0 ? ` (${failed} sem corretor)` : ""}`);
+            toast.success(`✅ ${dispatched} leads distribuídos com balanceamento correto!${failed > 0 ? ` (${failed} sem corretor)` : ""}`);
           } else {
-            toast.error(`❌ Nenhum lead distribuído. Verifique se há corretores credenciados na janela "${selectedDestino}".`);
+            toast.error(`❌ Nenhum lead distribuído. Verifique se há corretores ativos no modo ${selectedDestino}.`);
           }
         }
       }
@@ -224,22 +225,23 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
-            <Rocket className="h-5 w-5 text-purple-600" />
+            <Rocket className="h-5 w-5 text-primary" />
             Disparar Fila CEO
           </DialogTitle>
           <DialogDescription>
-            {leads.length} leads serão distribuídos com balanceamento global (menos leads = prioridade)
+            {leads.length} leads serão distribuídos com balanceamento global.
           </DialogDescription>
         </DialogHeader>
 
         {loading ? (
-          <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
         ) : (
           <div className="space-y-5">
-            {/* Preview */}
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Prévia por segmento</p>
-              {preview.map(p => (
+              {preview.map((p) => (
                 <div key={p.segmento_nome} className={`flex items-center justify-between p-2.5 rounded-lg border ${SEGMENTO_COLORS[p.segmento_nome] || "bg-muted/50 border-border"}`}>
                   <div>
                     <span className="text-sm font-medium">● {p.segmento_nome}</span>
@@ -249,55 +251,55 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
                 </div>
               ))}
               {unidentifiedCount > 0 && (
-                <div className="flex items-center justify-between p-2.5 rounded-lg border border-amber-300 bg-amber-500/10">
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-muted/40">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <span className="text-sm font-medium text-amber-700">Sem segmento</span>
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Sem segmento</span>
                   </div>
                   <Badge variant="secondary" className="font-bold">{unidentifiedCount} leads</Badge>
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground">
-                💡 O sistema distribui para quem tem MENOS leads hoje. Corretor não repete até todos receberem.
+                💡 Em domingo e feriado a roleta usa Dia Todo. De segunda a sábado, usa turnos normais.
               </p>
             </div>
 
-            {/* Destino */}
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Disparar para onde?</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1 mb-1">Roleta</p>
               <div className="grid grid-cols-1 gap-1.5">
-                {DESTINO_OPTIONS.filter(d => d.group === "roleta").filter(d => {
-                  const sunday = isSundayBRT();
-                  if (d.sundayOnly && !sunday) return false;
-                  if (d.weekdayOnly && sunday) return false;
-                  return true;
-                }).map(j => (
-                  <button
-                    key={j.id}
-                    onClick={() => setSelectedDestino(j.id)}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border text-sm text-left transition-colors ${
-                      selectedDestino === j.id
-                        ? "border-purple-500 bg-purple-500/10 text-purple-700 font-medium"
-                        : "border-border hover:border-purple-300 text-foreground"
-                    }`}
-                  >
-                    <span>{j.emoji}</span>
-                    <span>{j.label}</span>
-                  </button>
-                ))}
+                {DESTINO_OPTIONS.filter((d) => d.group === "roleta")
+                  .filter((d) => {
+                    if (d.allDayOnly && !isAllDayRoleta) return false;
+                    if (d.shiftOnly && isAllDayRoleta) return false;
+                    return true;
+                  })
+                  .map((j) => (
+                    <button
+                      key={j.id}
+                      onClick={() => setSelectedDestino(j.id)}
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-sm text-left transition-colors ${
+                        selectedDestino === j.id
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border hover:border-primary/40 text-foreground"
+                      }`}
+                    >
+                      <span>{j.emoji}</span>
+                      <span>{j.label}</span>
+                    </button>
+                  ))}
               </div>
 
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-3 mb-1">Oferta Ativa</p>
               <div className="grid grid-cols-1 gap-1.5">
-                {DESTINO_OPTIONS.filter(d => d.group === "oferta").map(j => (
+                {DESTINO_OPTIONS.filter((d) => d.group === "oferta").map((j) => (
                   <button
                     key={j.id}
                     onClick={() => setSelectedDestino(j.id)}
                     className={`flex items-center gap-2 p-2.5 rounded-lg border text-sm text-left transition-colors ${
                       selectedDestino === j.id
-                        ? "border-orange-500 bg-orange-500/10 text-orange-700 font-medium"
-                        : "border-border hover:border-orange-300 text-foreground"
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border hover:border-primary/40 text-foreground"
                     }`}
                   >
                     <span>{j.emoji}</span>
@@ -307,30 +309,20 @@ export default function FilaCeoDispatchModal({ open, onOpenChange, onDispatched 
               </div>
             </div>
 
-            {/* Include unidentified */}
             {unidentifiedCount > 0 && (
               <div className="flex items-center gap-2">
-                <Checkbox
-                  id="include-unidentified"
-                  checked={includeUnidentified}
-                  onCheckedChange={(v) => setIncludeUnidentified(!!v)}
-                />
+                <Checkbox id="include-unidentified" checked={includeUnidentified} onCheckedChange={(v) => setIncludeUnidentified(!!v)} />
                 <label htmlFor="include-unidentified" className="text-xs text-muted-foreground cursor-pointer">
-                  Incluir leads sem segmento (serão distribuídos para qualquer corretor ativo)
+                  Incluir leads sem segmento
                 </label>
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={dispatching}>
                 Cancelar
               </Button>
-              <Button
-                onClick={handleDispatch}
-                disabled={dispatching || leadsToDispatch.length === 0}
-                className={`gap-2 text-white ${isOfertaAtiva ? "bg-orange-600 hover:bg-orange-700" : "bg-purple-600 hover:bg-purple-700"}`}
-              >
+              <Button onClick={handleDispatch} disabled={dispatching || leadsToDispatch.length === 0} className="gap-2">
                 {dispatching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
                 {isOfertaAtiva ? "Enviar para Oferta Ativa" : `Disparar ${leadsToDispatch.length} leads`}
               </Button>
