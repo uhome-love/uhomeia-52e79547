@@ -8687,14 +8687,16 @@ export type Database = {
       }
     }
     Functions: {
-      aceitar_lead: {
-        Args: {
-          p_corretor_id: string
-          p_lead_id: string
-          p_status_inicial?: string
-        }
-        Returns: Json
-      }
+      aceitar_lead:
+        | { Args: { p_corretor_id: string; p_lead_id: string }; Returns: Json }
+        | {
+            Args: {
+              p_corretor_id: string
+              p_lead_id: string
+              p_status_inicial?: string
+            }
+            Returns: Json
+          }
       aprovar_lead_exclusivo: {
         Args: {
           p_canal: string
