@@ -244,14 +244,18 @@ export default function BulkActionModal({ open, onOpenChange, selectedLeadIds, o
 
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-3 mb-1">Roleta de Leads</p>
             <div className="grid grid-cols-1 gap-1.5">
-              {DESTINO_OPTIONS.filter(d => d.group === "roleta").map(j => (
+              {DESTINO_OPTIONS.filter(d => d.group === "roleta").filter(d => {
+                if (d.allDayOnly && !isAllDayRoleta) return false;
+                if (d.shiftOnly && isAllDayRoleta) return false;
+                return true;
+              }).map(j => (
                 <button
                   key={j.id}
                   onClick={() => setSelectedDestino(j.id)}
                   className={`flex items-center gap-2 p-2.5 rounded-lg border text-sm text-left transition-colors ${
                     selectedDestino === j.id
-                      ? "border-purple-500 bg-purple-500/10 text-purple-700 font-medium"
-                      : "border-border hover:border-purple-300 text-foreground"
+                      ? "border-primary bg-primary/10 text-primary font-medium"
+                      : "border-border hover:border-primary/40 text-foreground"
                   }`}
                 >
                   <span>{j.emoji}</span>
