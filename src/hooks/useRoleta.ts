@@ -660,7 +660,7 @@ export function useRoleta() {
       if (existingCred && existingCred.length > 0) {
         // Already has a credenciamento — add segmento to slot 2 if slot 1 is different
         const cred = existingCred[0];
-        const updateFields: Record<string, unknown> = { status: "aprovado", saiu_em: null };
+        const updateFields: Record<string, unknown> = { status: "pendente", saiu_em: null };
         if (cred.segmento_1_id !== segmentoId && cred.segmento_2_id !== segmentoId) {
           if (!cred.segmento_1_id) updateFields.segmento_1_id = segmentoId;
           else updateFields.segmento_2_id = segmentoId;
