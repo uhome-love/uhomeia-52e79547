@@ -421,7 +421,7 @@ export function useRoleta() {
   // Initial load
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    Promise.all([loadSegmentos(), loadCredenciamentos(), loadFila(), loadDistribuicoes()])
+    loadFeriadosFromDB().then(() => Promise.all([loadSegmentos(), loadCredenciamentos(), loadFila(), loadDistribuicoes()]))
       .finally(() => setLoading(false));
   }, [user, loadSegmentos, loadCredenciamentos, loadFila, loadDistribuicoes]);
 
