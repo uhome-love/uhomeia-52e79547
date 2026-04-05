@@ -7256,7 +7256,7 @@ export type Database = {
           enviado_em: string | null
           expira_em: string | null
           id: string
-          janela: string
+          janela: string | null
           lead_id: string | null
           primeira_interacao_em: string | null
           segmento_id: string | null
@@ -7269,7 +7269,7 @@ export type Database = {
           enviado_em?: string | null
           expira_em?: string | null
           id?: string
-          janela: string
+          janela?: string | null
           lead_id?: string | null
           primeira_interacao_em?: string | null
           segmento_id?: string | null
@@ -7282,7 +7282,7 @@ export type Database = {
           enviado_em?: string | null
           expira_em?: string | null
           id?: string
-          janela?: string
+          janela?: string | null
           lead_id?: string | null
           primeira_interacao_em?: string | null
           segmento_id?: string | null
