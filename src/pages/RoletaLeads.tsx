@@ -314,8 +314,13 @@ function CorretorView() {
     segmentos, meuCredenciamento, fila, loading, submitting,
     credenciar, sairDaRoleta,
   } = useRoleta();
+  const { elegibilidade, carregando: carregandoElegibilidade } = useElegibilidadeRoleta();
   const windowInfo = getCurrentWindowInfo();
-  const [selectedJanela, setSelectedJanela] = useState<string>(windowInfo.credenciamentoJanela || windowInfo.janela);
+  const { isSunday, isHoliday } = getBrtDateInfo();
+  const isDiaEspecial = isSunday || isHoliday;
+  const [selectedJanela, setSelectedJanela] = useState<string>(
+    isDiaEspecial ? "dia_todo" : (windowInfo.credenciamentoJanela || windowInfo.janela)
+  );
   const [seg1, setSeg1] = useState<string>("");
   const [seg2, setSeg2] = useState<string>("");
   
@@ -469,10 +474,10 @@ function CorretorView() {
             <div className="text-4xl">🔒</div>
             <h2 className="text-lg font-bold">Credenciamento fechado</h2>
             <p className="text-sm text-muted-foreground">O credenciamento abre nos seguintes horários:</p>
-            <div className="space-y-1 text-sm text-left max-w-xs mx-auto">
-              <p>🌅 <strong>Manhã</strong>: Aberto 24h</p>
-              <p>☀️ <strong>Tarde</strong>: 12:00 – 13:30</p>
-              <p>🌙 <strong>Noturna</strong>: 18:00 – 20:30</p>
+             <div className="space-y-1 text-sm text-left max-w-xs mx-auto">
+              <p>🌅 <strong>Manhã</strong>: 07:30 – 09:30</p>
+              <p>🌞 <strong>Tarde</strong>: 12:00 – 13:30</p>
+              <p>🌙 <strong>Noturna</strong>: 18:30 – 20:00</p>
             </div>
             <div className="flex items-center justify-center gap-2 pt-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
