@@ -15,6 +15,8 @@ import { ptBR } from "date-fns/locale";
 import RoletagensTab from "@/components/roleta/RoletagensTab";
 import LeadsGeradosTab from "@/components/roleta/LeadsGeradosTab";
 import LeadIntelligenceTab from "@/components/roleta/LeadIntelligenceTab";
+import RoletaMetricasTab from "@/components/roleta/RoletaMetricasTab";
+import RoletaConfigTab from "@/components/roleta/RoletaConfigTab";
 import { PageHeader } from "@/components/ui/PageHeader";
 // ─── Countdown Timer ───
 function CountdownTimer({ target }: { target: Date }) {
@@ -64,10 +66,12 @@ function CeoView() {
         icon={<Target size={18} strokeWidth={1.5} />}
         tabs={[
           { label: "Gestão da roleta", value: "gestao" },
+          { label: "Métricas", value: "metricas" },
           { label: "Leads gerados", value: "leads" },
           { label: "Histórico", value: "roletagens" },
           { label: "Leads perdidos", value: "perdidos" },
           { label: "Inteligência", value: "inteligencia" },
+          { label: "Configurações", value: "config" },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -225,10 +229,12 @@ function CeoView() {
         </div>
       )}
 
+      {activeTab === "metricas" && <RoletaMetricasTab />}
       {activeTab === "leads" && <LeadsGeradosTab />}
       {activeTab === "roletagens" && <RoletagensTab view="roletagens" />}
       {activeTab === "perdidos" && <RoletagensTab view="perdidos" />}
       {activeTab === "inteligencia" && <LeadIntelligenceTab />}
+      {activeTab === "config" && <RoletaConfigTab />}
 
       {/* Modal: Incluir manualmente na roleta */}
       <Dialog open={showIncluirModal} onOpenChange={setShowIncluirModal}>
