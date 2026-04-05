@@ -524,19 +524,25 @@ function CorretorView() {
                 <SelectValue placeholder="Selecione a janela" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="manha">🌅 Manhã (09:30–13:30)</SelectItem>
-                <SelectItem value="tarde">🌞 Tarde (13:30–18:00)</SelectItem>
-                {/* Noturna only available until 20:30 */}
-                {(() => {
-                  const now = new Date();
-                  const mins = now.getHours() * 60 + now.getMinutes();
-                  const past2030 = mins >= 20 * 60 + 30;
-                  return (
-                    <SelectItem value="noturna" disabled={past2030}>
-                      🌙 Noturna (18:00–20:30) {past2030 ? "— encerrado" : ""}
-                    </SelectItem>
-                  );
-                })()}
+                {isDiaEspecial ? (
+                  <SelectItem value="dia_todo">☀️ Dia Todo (08:00–23:30)</SelectItem>
+                ) : (
+                  <>
+                    <SelectItem value="manha">🌅 Manhã (07:30–12:00)</SelectItem>
+                    <SelectItem value="tarde">🌞 Tarde (12:00–18:30)</SelectItem>
+                    {(() => {
+                      const now = new Date();
+                      const brt = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+                      const mins = brt.getHours() * 60 + brt.getMinutes();
+                      const past2000 = mins >= 20 * 60;
+                      return (
+                        <SelectItem value="noturna" disabled={past2000}>
+                          🌙 Noturna (18:30–23:30) {past2000 ? "— encerrado" : ""}
+                        </SelectItem>
+                      );
+                    })()}
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
