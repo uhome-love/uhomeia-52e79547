@@ -86,9 +86,12 @@ Deno.serve(async (req) => {
       let failed = 0;
       const distributionLog: Array<{ leadId: string; corretorId: string; segmento: string }> = [];
 
+      // CEO dispatch forces distribution even if brokers aren't flagged na_roleta
+      const forceDispatch = true;
+
       // Process leads SEQUENTIALLY — each call to the RPC is atomic with advisory lock
       for (const lid of allLeadIds) {
-        const result = await distributeViaRPC(supabase, supabaseUrl, serviceKey, lid, targetJanela, null, L);
+        const result = await distributeViaRPC(supabase, supabaseUrl, serviceKey, lid, targetJanela, null, L, forceDispatch);
         if (result.success) {
           dispatched++;
           distributionLog.push({ leadId: lid, corretorId: result.corretor_id, segmento: result.segmento_id || "sem_segmento" });
