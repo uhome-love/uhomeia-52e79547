@@ -97,7 +97,7 @@ export default function RoletaMetricasTab() {
       const nameMap = new Map((profiles || []).map(p => [p.user_id, p.nome]));
 
       const leadsPorCorretor = [...corretorMap.entries()].map(([uid, stats]) => ({
-        nome: nameMap.get(uid) || "Corretor",
+        nome: (nameMap.get(uid) as string) || "Corretor",
         ...stats,
       })).sort((a, b) => b.leads - a.leads);
 
