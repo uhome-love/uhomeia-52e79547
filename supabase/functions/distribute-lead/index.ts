@@ -140,12 +140,14 @@ Deno.serve(async (req) => {
 async function distributeViaRPC(
   supabase: any, supabaseUrl: string, serviceKey: string,
   leadId: string, janela: string | null, excludeAuthUserId: string | null,
-  L: { info: Function; warn: Function; error: Function }
+  L: { info: Function; warn: Function; error: Function },
+  force: boolean = false
 ): Promise<any> {
   const { data: result, error } = await supabase.rpc("distribuir_lead_atomico", {
     p_lead_id: leadId,
     p_janela: janela,
     p_exclude_auth_user_id: excludeAuthUserId,
+    p_force: force,
   });
 
   if (error) {
