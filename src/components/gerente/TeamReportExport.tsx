@@ -20,10 +20,19 @@ interface Props {
   gerenteNome: string;
 }
 
-type ReportPeriod = "semana" | "mes";
+type ReportPeriod = "semana" | "mes" | "custom";
 
-function getPeriodRange(period: ReportPeriod) {
+function getPeriodRange(period: ReportPeriod, customFrom?: Date, customTo?: Date) {
   const now = new Date();
+  if (period === "custom" && customFrom && customTo) {
+    return {
+      start: format(customFrom, "yyyy-MM-dd"),
+      end: format(customTo, "yyyy-MM-dd"),
+      startTs: `${format(customFrom, "yyyy-MM-dd")}T00:00:00-03:00`,
+      endTs: `${format(customTo, "yyyy-MM-dd")}T23:59:59.999-03:00`,
+      label: `${format(customFrom, "dd/MM/yyyy", { locale: ptBR })} a ${format(customTo, "dd/MM/yyyy", { locale: ptBR })}`,
+    };
+  }
   if (period === "semana") {
     const s = startOfWeek(now, { weekStartsOn: 1 });
     const e = endOfWeek(now, { weekStartsOn: 1 });
@@ -69,13 +78,19 @@ export default function TeamReportExport({ teamUserIds, teamNameMap, gerenteNome
   const [open, setOpen] = useState(false);
   const [period, setPeriod] = useState<ReportPeriod>("semana");
   const [loading, setLoading] = useState(false);
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
 
   const generateReport = useCallback(async () => {
     if (!user || teamUserIds.length === 0) return;
+    if (period === "custom" && (!customFrom || !customTo)) {
+      toast.error("Selecione as datas de início e fim");
+      return;
+    }
     setLoading(true);
 
     try {
-      const { start, end, startTs, endTs, label } = getPeriodRange(period);
+      const { start, end, startTs, endTs, label } = getPeriodRange(period, customFrom, customTo);
 
       // Get profile mappings
       const { data: profiles } = await supabase.from("profiles").select("id, user_id").in("user_id", teamUserIds);
@@ -190,9 +205,36 @@ export default function TeamReportExport({ teamUserIds, teamNameMap, gerenteNome
               <SelectContent>
                 <SelectItem value="semana">Esta semana</SelectItem>
                 <SelectItem value="mes">Este mês</SelectItem>
+                <SelectItem value="custom">Personalizado</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {period === "custom" && (
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("flex-1 justify-start text-left font-normal", !customFrom && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customFrom ? format(customFrom, "dd/MM/yyyy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("flex-1 justify-start text-left font-normal", !customTo && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customTo ? format(customTo, "dd/MM/yyyy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customTo} onSelect={setCustomTo} disabled={(d) => customFrom ? d < customFrom : false} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
           <Button onClick={generateReport} disabled={loading} className="w-full gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
             {loading ? "Gerando..." : "Gerar e Imprimir"}
