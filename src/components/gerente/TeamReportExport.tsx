@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 import { useAuth } from "@/hooks/useAuth";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -102,15 +103,15 @@ export default function TeamReportExport({ teamUserIds, teamNameMap, gerenteNome
       });
       const teamProfileIds = (profiles || []).map(p => p.id);
 
-      // Parallel queries
+      // Parallel queries using paginated fetch to bypass 1000-row limit
       const [r1, r2, r3, r4, r5, r6, r7] = await Promise.all([
-        supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, pontos").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs).limit(10000),
-        supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", start).lte("data_visita", end),
-        supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final, data_assinatura, created_at, fase_changed_at").in("corretor_id", teamProfileIds),
-        supabase.from("pipeline_tarefas").select("responsavel_id").in("responsavel_id", teamUserIds).gte("concluida_em", startTs).lte("concluida_em", endTs),
-        supabase.from("distribuicao_historico").select("corretor_id").in("corretor_id", teamUserIds).eq("acao", "aceito").gte("created_at", startTs).lte("created_at", endTs),
-        supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", true).gte("updated_at", startTs).lte("updated_at", endTs),
-        supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).gte("ultima_acao_at", startTs).lte("ultima_acao_at", endTs),
+        fetchAllRows((from, to) => supabase.from("oferta_ativa_tentativas").select("corretor_id, resultado, pontos").in("corretor_id", teamUserIds).gte("created_at", startTs).lte("created_at", endTs).range(from, to)),
+        fetchAllRows((from, to) => supabase.from("visitas").select("corretor_id, status").in("corretor_id", teamUserIds).gte("data_visita", start).lte("data_visita", end).range(from, to)),
+        fetchAllRows((from, to) => supabase.from("negocios").select("corretor_id, fase, vgv_estimado, vgv_final, data_assinatura, created_at, fase_changed_at").in("corretor_id", teamProfileIds).range(from, to)),
+        fetchAllRows((from, to) => supabase.from("pipeline_tarefas").select("responsavel_id").in("responsavel_id", teamUserIds).gte("concluida_em", startTs).lte("concluida_em", endTs).range(from, to)),
+        fetchAllRows((from, to) => supabase.from("distribuicao_historico").select("corretor_id").in("corretor_id", teamUserIds).eq("acao", "aceito").gte("created_at", startTs).lte("created_at", endTs).range(from, to)),
+        fetchAllRows((from, to) => supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).eq("arquivado", true).gte("updated_at", startTs).lte("updated_at", endTs).range(from, to)),
+        fetchAllRows((from, to) => supabase.from("pipeline_leads").select("corretor_id").in("corretor_id", teamUserIds).gte("ultima_acao_at", startTs).lte("ultima_acao_at", endTs).range(from, to)),
       ]);
 
       // Build stats
