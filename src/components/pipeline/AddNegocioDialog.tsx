@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatCurrencyInput, parseCurrencyToNumber, handleCurrencyChange } from "@/utils/currencyFormat";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +61,7 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
   const handleSubmit = async () => {
     if (!form.nome_cliente.trim() || !user) return;
     if (!form.empreendimento.trim()) { toast.error("Empreendimento/Imóvel é obrigatório"); return; }
-    const vgvNum = form.vgv_estimado ? parseFloat(form.vgv_estimado.replace(/[^\d.,]/g, "").replace(",", ".")) : 0;
+    const vgvNum = parseCurrencyToNumber(form.vgv_estimado);
     if (!vgvNum || vgvNum <= 0) { toast.error("VGV é obrigatório e deve ser maior que zero"); return; }
     setLoading(true);
 
@@ -88,7 +89,7 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
         corretor_id: corretorProfileId,
         gerente_id: gerenteId,
         fase: form.fase,
-        vgv_estimado: form.vgv_estimado ? parseFloat(form.vgv_estimado.replace(/[^\d.,]/g, "").replace(",", ".")) : null,
+        vgv_estimado: parseCurrencyToNumber(form.vgv_estimado) || null,
         observacoes: form.observacoes || null,
         origem: "manual",
         status: "ativo",
@@ -175,7 +176,7 @@ export default function AddNegocioDialog({ open, onOpenChange, onCreated }: Prop
 
           <div>
             <Label className="text-xs font-semibold mb-1 block">VGV Estimado *</Label>
-            <Input value={form.vgv_estimado} onChange={e => set("vgv_estimado", e.target.value)} placeholder="R$ 500.000" className={`h-9 text-sm ${!form.vgv_estimado ? "border-amber-400" : ""}`} />
+            <Input value={formatCurrencyInput(form.vgv_estimado)} onChange={e => set("vgv_estimado", handleCurrencyChange(e.target.value))} placeholder="R$ 500.000,00" inputMode="numeric" className={`h-9 text-sm ${!form.vgv_estimado ? "border-amber-400" : ""}`} />
           </div>
 
           <div>

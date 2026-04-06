@@ -171,7 +171,7 @@ export default function MetasMensaisProgress() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-[10px] text-muted-foreground uppercase">VGV Assinado (R$)</label>
-              <Input type="number" className="h-8 text-xs mt-1" value={editValues.vgv} onChange={(e) => setEditValues(p => ({ ...p, vgv: e.target.value }))} />
+              <Input className="h-8 text-xs mt-1" value={formatCurrencyInput(editValues.vgv)} onChange={(e) => setEditValues(p => ({ ...p, vgv: handleCurrencyChange(e.target.value) }))} inputMode="numeric" />
             </div>
             <div>
               <label className="text-[10px] text-muted-foreground uppercase">Visitas Marcadas</label>

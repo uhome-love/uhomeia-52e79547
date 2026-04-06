@@ -199,7 +199,7 @@ export default function CeoMetasMensais() {
                     <tr key={g.gerente_id} className="border-b border-border hover:bg-muted/10">
                       <td className="px-3 py-2 font-medium">{g.gerente_nome}</td>
                       <td className="px-2 py-2 text-center">
-                        {isEditing ? <Input type="number" value={editValues.vgv} onChange={e => setEditValues(v => ({ ...v, vgv: e.target.value }))} className="h-7 w-24 text-xs mx-auto" /> : `R$ ${g.meta_vgv_assinado.toLocaleString("pt-BR")}`}
+                        {isEditing ? <Input value={formatCurrencyInput(editValues.vgv)} onChange={e => setEditValues(v => ({ ...v, vgv: handleCurrencyChange(e.target.value) }))} inputMode="numeric" className="h-7 w-28 text-xs mx-auto" /> : `R$ ${g.meta_vgv_assinado.toLocaleString("pt-BR")}`}
                       </td>
                       <td className="px-2 py-2 text-center">R$ {g.real_vgv_assinado.toLocaleString("pt-BR")}</td>
                       <td className="px-2 py-2 text-center"><span className={`font-bold ${pVgv >= 80 ? "text-success" : pVgv >= 50 ? "text-warning" : "text-destructive"}`}>{pVgv}%</span></td>

@@ -513,7 +513,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           <div className="space-y-3">
             <div><Label className="text-xs">Empreendimento</Label><Input value={propEmp} onChange={e => setPropEmp(e.target.value)} className="h-8 text-xs" /></div>
             <div><Label className="text-xs">Unidade</Label><Input value={propUni} onChange={e => setPropUni(e.target.value)} className="h-8 text-xs" /></div>
-            <div><Label className="text-xs">VGV (R$)</Label><Input value={propVgv} onChange={e => setPropVgv(e.target.value)} type="number" className="h-8 text-xs" /></div>
+            <div><Label className="text-xs">VGV (R$)</Label><Input value={formatCurrencyInput(propVgv)} onChange={e => setPropVgv(handleCurrencyChange(e.target.value))} inputMode="numeric" className="h-8 text-xs" /></div>
           </div>
           <DialogFooter>
             <Button size="sm" onClick={handlePropostaSubmit} className="text-xs gap-1">📄 Enviar e mover para Proposta</Button>
@@ -530,7 +530,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           <div className="space-y-3">
             <div><Label className="text-xs">Empreendimento</Label><Input value={contEmp} onChange={e => setContEmp(e.target.value)} className="h-8 text-xs" /></div>
             <div><Label className="text-xs">Unidade</Label><Input value={contUni} onChange={e => setContUni(e.target.value)} className="h-8 text-xs" /></div>
-            <div><Label className="text-xs">VGV (R$)</Label><Input value={contVgv} onChange={e => setContVgv(e.target.value)} type="number" className="h-8 text-xs" /></div>
+            <div><Label className="text-xs">VGV (R$)</Label><Input value={formatCurrencyInput(contVgv)} onChange={e => setContVgv(handleCurrencyChange(e.target.value))} inputMode="numeric" className="h-8 text-xs" /></div>
             <div>
               <Label className="text-xs">Tipo de assinatura</Label>
               <Select value={contTipo} onValueChange={setContTipo}>

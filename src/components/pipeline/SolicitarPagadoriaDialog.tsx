@@ -153,7 +153,7 @@ export default function SolicitarPagadoriaDialog({ open, onOpenChange, negocio }
               </div>
               <div>
                 <Label className="text-xs">VGV do Contrato (R$)</Label>
-                <Input value={vgv} onChange={e => setVgv(e.target.value)} type="number" className="h-9 text-sm" />
+                <Input value={formatCurrencyInput(vgv)} onChange={e => setVgv(handleCurrencyChange(e.target.value))} inputMode="numeric" className="h-9 text-sm" />
               </div>
               <div>
                 <Label className="text-xs">% Comissão</Label>

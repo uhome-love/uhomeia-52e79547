@@ -901,10 +901,10 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
                 <div>
                   <Label className="text-xs font-semibold mb-1 block">VGV (R$)</Label>
                   <Input
-                    type="number"
-                    value={imovelVgv}
-                    onChange={e => setImovelVgv(e.target.value)}
-                    placeholder="500000"
+                    value={formatCurrencyInput(imovelVgv)}
+                    onChange={e => setImovelVgv(handleCurrencyChange(e.target.value))}
+                    placeholder="R$ 500.000,00"
+                    inputMode="numeric"
                     className="h-9 text-sm"
                   />
                 </div>
