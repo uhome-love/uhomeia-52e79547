@@ -360,7 +360,8 @@ export default function GerenteDashboard() {
             <TabsTrigger value="pipeline" className="text-xs font-semibold">Pipeline</TabsTrigger>
             <TabsTrigger value="metas" className="text-xs font-semibold">Metas</TabsTrigger>
           </TabsList>
-          <div className="shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <TeamReportExport teamUserIds={teamUserIds} teamNameMap={teamNameMap} gerenteNome={profile?.nome || "Gerente"} />
             <GlobalDateFilterBar />
           </div>
         </div>
