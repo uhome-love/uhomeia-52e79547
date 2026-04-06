@@ -48,6 +48,34 @@ async function fetchImovelFromJetimob(apiKey: string, codigo: string) {
   }
 }
 
+/**
+ * Map a row from the `properties` table to the same shape as fetchImovelFromJetimob output.
+ */
+function mapPropertyRow(row: any) {
+  const fotos = row.fotos_full?.length ? row.fotos_full : (row.fotos || []);
+  return {
+    id: row.id || row.codigo,
+    codigo: row.codigo,
+    titulo: row.titulo || `Imóvel ${row.codigo}`,
+    endereco: row.bairro
+      ? `${row.bairro}${row.cidade ? ` — ${row.cidade}` : ""}`
+      : null,
+    bairro: row.bairro || null,
+    cidade: row.cidade || null,
+    area: row.area_privativa || row.area_total || null,
+    quartos: row.dormitorios || null,
+    suites: row.suites || null,
+    vagas: row.vagas || null,
+    banheiros: row.banheiros || null,
+    valor: row.valor_venda || null,
+    fotos: fotos.slice(0, 10),
+    empreendimento: row.empreendimento || null,
+    descricao: row.titulo || null,
+    lat: row.latitude || null,
+    lng: row.longitude || null,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -163,13 +191,12 @@ Deno.serve(async (req) => {
         };
       }
 
-      // For product_page/anuncio with complete override data and single ID → skip Jetimob
+      // For product_page/anuncio with complete override data and single ID → skip API
       const hasCompleteOverride = !isPropertySelection && landingData && overrideFotos.length >= 3 && landingData.descricao && ids.length === 1;
       
       let imoveis: any[] = [];
 
       if (hasCompleteOverride) {
-        // Build a synthetic imovel from override data — NO Jetimob call needed
         const ov = overrideRows![0];
         imoveis = [{
           id: ids[0] || 1,
@@ -188,15 +215,47 @@ Deno.serve(async (req) => {
           empreendimento: ov.nome || vitrine.titulo,
           descricao: ov.descricao || null,
         }];
-      } else if (JETIMOB_API_KEY && ids.length > 0) {
-        // Fetch ALL imóveis from Jetimob in parallel
-        const results = await Promise.allSettled(
-          ids.map(id => fetchImovelFromJetimob(JETIMOB_API_KEY, String(id)))
-        );
-        for (const r of results) {
-          if (r.status === "fulfilled" && r.value) {
-            imoveis.push(r.value);
+      } else if (ids.length > 0) {
+        // ── PRIMARY: fetch from local `properties` table first ──
+        const { data: dbProperties } = await supabase
+          .from("properties")
+          .select("id, codigo, titulo, bairro, cidade, dormitorios, suites, vagas, banheiros, area_privativa, area_total, valor_venda, fotos, fotos_full, empreendimento, latitude, longitude")
+          .in("codigo", ids)
+          .eq("ativo", true);
+
+        const foundFromDB: any[] = [];
+        const foundCodes = new Set<string>();
+
+        if (dbProperties && dbProperties.length > 0) {
+          for (const row of dbProperties) {
+            foundFromDB.push(mapPropertyRow(row));
+            foundCodes.add(row.codigo);
           }
+        }
+
+        // ── FALLBACK: only call Jetimob for codes NOT found locally ──
+        const missingIds = ids.filter((id: string) => !foundCodes.has(id));
+
+        let jetimobResults: any[] = [];
+        if (JETIMOB_API_KEY && missingIds.length > 0) {
+          const results = await Promise.allSettled(
+            missingIds.map((id: string) => fetchImovelFromJetimob(JETIMOB_API_KEY, String(id)))
+          );
+          for (const r of results) {
+            if (r.status === "fulfilled" && r.value) {
+              jetimobResults.push(r.value);
+            }
+          }
+        }
+
+        // Merge: keep original order from ids array
+        const allMap = new Map<string, any>();
+        for (const item of foundFromDB) allMap.set(String(item.codigo), item);
+        for (const item of jetimobResults) allMap.set(String(item.codigo), item);
+
+        for (const id of ids) {
+          const found = allMap.get(String(id));
+          if (found) imoveis.push(found);
         }
 
         // For single-property vitrines, merge override photos
@@ -221,23 +280,51 @@ Deno.serve(async (req) => {
       const { data: { user } } = await supabase.auth.getUser(token);
       if (!user) return jsonResponse({ error: "Unauthorized" }, 401);
 
-      if (!JETIMOB_API_KEY || !imovel_ids?.length) {
+      if (!imovel_ids?.length) {
         return jsonResponse({ imoveis: [] });
       }
 
+      // Try local DB first
+      const { data: dbProps } = await supabase
+        .from("properties")
+        .select("id, codigo, titulo, area_privativa, area_total, valor_venda, fotos, fotos_full")
+        .in("codigo", imovel_ids.slice(0, 20))
+        .eq("ativo", true);
+
       const imoveis: any[] = [];
-      for (const id of imovel_ids.slice(0, 20)) {
-        const item = await fetchImovelFromJetimob(JETIMOB_API_KEY, String(id));
-        if (item) {
+      const foundCodes = new Set<string>();
+
+      if (dbProps) {
+        for (const row of dbProps) {
+          const fotos = row.fotos_full?.length ? row.fotos_full : (row.fotos || []);
           imoveis.push({
-            id: item.id,
-            titulo: item.titulo,
-            foto_thumb: (item.fotos || [])[0] || null,
-            area: item.area,
-            valor: item.valor,
+            id: row.id || row.codigo,
+            titulo: row.titulo || `Imóvel ${row.codigo}`,
+            foto_thumb: fotos[0] || null,
+            area: row.area_privativa || row.area_total || null,
+            valor: row.valor_venda || null,
           });
+          foundCodes.add(row.codigo);
         }
       }
+
+      // Fallback to Jetimob for missing
+      const missing = imovel_ids.slice(0, 20).filter((id: string) => !foundCodes.has(id));
+      if (JETIMOB_API_KEY && missing.length > 0) {
+        for (const id of missing) {
+          const item = await fetchImovelFromJetimob(JETIMOB_API_KEY, String(id));
+          if (item) {
+            imoveis.push({
+              id: item.id,
+              titulo: item.titulo,
+              foto_thumb: (item.fotos || [])[0] || null,
+              area: item.area,
+              valor: item.valor,
+            });
+          }
+        }
+      }
+
       return jsonResponse({ imoveis });
     }
 
@@ -275,7 +362,6 @@ Deno.serve(async (req) => {
 
         // ── Notify orchestrator for vitrine events ──
         if (["favorite", "whatsapp_click", "schedule_click", "compare_open"].includes(event_type)) {
-          // Try to find the lead via vitrine
           supabase.from("vitrines")
             .select("pipeline_lead_id")
             .eq("id", vitrine_id)
@@ -302,7 +388,6 @@ Deno.serve(async (req) => {
         // Send WhatsApp alert for high-intent events
         const HIGH_INTENT = ["favorite", "whatsapp_click", "schedule_click", "compare_open"];
         if (HIGH_INTENT.includes(event_type)) {
-          // Get vitrine + corretor info for alert
           supabase.from("vitrines")
             .select("titulo, created_by, lead_nome")
             .eq("id", vitrine_id)

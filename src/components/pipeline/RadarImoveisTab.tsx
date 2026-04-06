@@ -20,7 +20,7 @@ import {
   Heart, HeartOff, X, Clock, History, Save, ThumbsDown, Wand2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { supabaseSite } from "@/lib/supabaseSite";
+// supabaseSite removed — vitrines now created on CRM database
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -1120,15 +1120,17 @@ Responda SOMENTE com o JSON, sem markdown.`;
       const titulo = `Seleção para ${leadNome}`;
       const mensagem = `Olá ${leadNome}! Selecionei ${items.length} imóveis especialmente para você. Confira!`;
 
-      const { data: vitrine, error } = await supabaseSite
+      const { data: vitrine, error } = await supabase
         .from("vitrines")
         .insert({
           titulo,
-          mensagem,
-          imovel_codigos: imovelCodigos,
+          mensagem_corretor: mensagem,
+          imovel_ids: imovelCodigos,
           lead_nome: leadNome,
           lead_telefone: leadTelefone || null,
           corretor_slug: slugRef || null,
+          created_by: user.id,
+          tipo: "property_selection",
         })
         .select("id")
         .single();
@@ -1222,9 +1224,18 @@ Responda SOMENTE com o JSON, sem markdown.`;
             const imovelCodigos = items.map(item => getPropertyCode(item));
             const titulo = `Seleção para ${leadNome}`;
             const mensagem = `Olá ${leadNome}! Selecionei ${items.length} imóveis especialmente para você. Confira!`;
-            const { data: vitrine, error } = await supabaseSite
+            const { data: vitrine, error } = await supabase
               .from("vitrines")
-              .insert({ titulo, mensagem, imovel_codigos: imovelCodigos, lead_nome: leadNome, lead_telefone: leadTelefone || null, corretor_slug: slugRef || null })
+              .insert({
+                titulo,
+                mensagem_corretor: mensagem,
+                imovel_ids: imovelCodigos,
+                lead_nome: leadNome,
+                lead_telefone: leadTelefone || null,
+                corretor_slug: slugRef || null,
+                created_by: user.id,
+                tipo: "property_selection",
+              })
               .select("id")
               .single();
             if (error) throw error;
