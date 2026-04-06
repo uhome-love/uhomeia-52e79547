@@ -2,12 +2,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders, handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 
 const VALID_TIPOS = ['lead', 'agendamento', 'captacao', 'whatsapp_click'] as const
+const NOVO_LEAD_STAGE_ID = 'd3843b2f-2fa1-4c31-9129-4eb0ed21f019'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return handleCors()
 
   try {
-    // Validate secret
     const secret = req.headers.get('x-sync-secret')
     const expected = Deno.env.get('SYNC_SECRET')
     if (!secret || secret !== expected) {
@@ -18,95 +18,23 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const { tipo, record } = body
 
-    if (!tipo || !record) {
-      return errorResponse('Missing tipo or record', 400)
-    }
-
-    if (!VALID_TIPOS.includes(tipo)) {
-      return errorResponse(`Invalid tipo: ${tipo}. Expected: ${VALID_TIPOS.join(', ')}`, 400)
-    }
+    if (!tipo || !record) return errorResponse('Missing tipo or record', 400)
+    if (!VALID_TIPOS.includes(tipo)) return errorResponse(`Invalid tipo: ${tipo}`, 400)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // ── Resolve corretor ──
-    let corretorId: string | null = null
-    let corretorNome: string | null = null
-    let corretorEmail: string | null = null
-
-    if (record.corretor_ref_id) {
-      // corretor_ref_id is the CRM profile id directly
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, nome, email')
-        .eq('id', record.corretor_ref_id)
-        .single()
-
-      if (profile) {
-        corretorId = profile.id
-        corretorNome = profile.nome
-        corretorEmail = profile.email
-      }
-    }
-
-    // Fallback: try slug_ref
-    if (!corretorId && record.corretor_slug) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, nome, email')
-        .eq('slug_ref', record.corretor_slug)
-        .single()
-
-      if (profile) {
-        corretorId = profile.id
-        corretorNome = profile.nome
-        corretorEmail = profile.email
-      }
-    }
-
-    // Fallback: corretor de plantão
-    if (!corretorId) {
-      const { data: plantao } = await supabase
-        .from('profiles')
-        .select('id, nome, email')
-        .eq('de_plantao', true)
-        .eq('ativo', true)
-        .limit(1)
-        .single()
-
-      if (plantao) {
-        corretorId = plantao.id
-        corretorNome = plantao.nome
-        corretorEmail = plantao.email
-      }
-    }
-
-    // ── Get first stage (Novo Lead) ──
-    const { data: firstStage } = await supabase
-      .from('pipeline_stages')
-      .select('id')
-      .order('ordem', { ascending: true })
-      .limit(1)
-      .single()
-
-    const stageId = firstStage?.id || null
-
-    // ── Build result based on tipo ──
-    let pipelineLeadId: string | null = null
-    let notifTitulo = ''
-    let notifMensagem = ''
-    let notifTipo = ''
-
-    const origemRef = record.origem_ref || (record.corretor_ref_id ? 'link_corretor' : 'organico')
+    // ── Extract lead data ──
+    const origemRef = record.origem_ref || 'organico'
     const leadNome = record.nome || 'Lead do site'
     const leadTelefone = record.telefone || ''
     const leadEmail = record.email || null
     const origemComponente = record.origem_componente || null
     const imovelCodigo = record.imovel_codigo || null
 
-    // ── Resolve real property data from DB if code exists ──
+    // ── Resolve property data ──
     let imovelTitulo = record.imovel_titulo || record.imovel_interesse || null
     let imovelUrl: string | null = record.imovel_url || null
 
@@ -119,7 +47,6 @@ Deno.serve(async (req) => {
         .maybeSingle()
 
       if (imovelData) {
-        // Build slug: {tipo}-{n}-quartos-{bairro}-{codigo}
         const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
         const tipoSlug = slugify(imovelData.tipo || 'imovel')
         const quartos = imovelData.dormitorios ?? 0
@@ -129,19 +56,18 @@ Deno.serve(async (req) => {
           ? `${tipoSlug}-${quartos}-quartos-${bairroSlug}-${codigoSlug}`
           : `${tipoSlug}-para-venda-${bairroSlug}-${codigoSlug}`
         imovelUrl = `https://uhome.com.br/imovel/${slug}`
-        if (!imovelTitulo && imovelData.titulo) {
-          imovelTitulo = imovelData.titulo
-        }
+        if (!imovelTitulo && imovelData.titulo) imovelTitulo = imovelData.titulo
         console.log(`[crm-webhook] Resolved imovel: ${imovelCodigo} → ${imovelUrl}`)
-      } else {
-        console.warn(`[crm-webhook] Imóvel código ${imovelCodigo} not found in DB, no URL generated`)
       }
     }
 
-    // If no property info at all, mark as general lead
     if (!imovelTitulo && !imovelCodigo) {
       imovelTitulo = 'Lead Geral (sem imóvel específico)'
     }
+
+    let pipelineLeadId: string | null = null
+    let isExisting = false
+    let existingCorretorId: string | null = null
 
     if (tipo === 'lead' || tipo === 'agendamento' || tipo === 'captacao') {
       // ── Dedup by phone ──
@@ -150,7 +76,7 @@ Deno.serve(async (req) => {
         const normalizado = leadTelefone.replace(/\D/g, '').slice(-11)
         const { data } = await supabase
           .from('pipeline_leads')
-          .select('id')
+          .select('id, corretor_id, nome')
           .eq('telefone_normalizado', normalizado)
           .limit(1)
           .maybeSingle()
@@ -158,8 +84,11 @@ Deno.serve(async (req) => {
       }
 
       if (existingLead) {
+        // ── EXISTING LEAD: update and notify current corretor ──
         pipelineLeadId = existingLead.id
-        // Update with new site data
+        isExisting = true
+        existingCorretorId = existingLead.corretor_id
+
         const updateObsParts = [`[Site uhome.com.br] ${tipo} - ${imovelTitulo || 'sem imóvel'} (${new Date().toLocaleDateString('pt-BR')})`]
         if (imovelCodigo) updateObsParts.push(`Cód. Imóvel: ${imovelCodigo}`)
         if (imovelUrl) updateObsParts.push(`Link: ${imovelUrl}`)
@@ -176,8 +105,10 @@ Deno.serve(async (req) => {
             updated_at: new Date().toISOString(),
           })
           .eq('id', existingLead.id)
+
+        console.log(`[crm-webhook] Dedup: lead ${existingLead.id} updated, corretor=${existingCorretorId}`)
       } else {
-        // Create new pipeline lead
+        // ── NEW LEAD: insert WITHOUT corretor, let trigger handle roleta ──
         const telefoneNorm = leadTelefone.replace(/\D/g, '').slice(-11)
         const obsParts = [`[Site uhome.com.br] ${tipo}${imovelTitulo ? ` - ${imovelTitulo}` : ''}`]
         if (imovelCodigo) obsParts.push(`Cód. Imóvel: ${imovelCodigo}`)
@@ -193,25 +124,20 @@ Deno.serve(async (req) => {
           origem_ref: origemRef,
           tipo_acao: tipo,
           dados_site: record,
-          stage_id: stageId,
+          stage_id: NOVO_LEAD_STAGE_ID,
           stage_changed_at: new Date().toISOString(),
           empreendimento: imovelTitulo,
           imovel_codigo: imovelCodigo,
           imovel_url: imovelUrl,
           observacoes: obsParts.join(' | '),
-        }
-
-        if (corretorId) {
-          insertData.corretor_id = corretorId
-          insertData.distribuido_em = new Date().toISOString()
-          insertData.aceite_status = 'aceito'
-          insertData.aceito_em = new Date().toISOString()
+          // NO corretor_id — trigger trg_auto_distribute_new_lead handles roleta
+          aceite_status: 'pendente_distribuicao',
         }
 
         const { data: newLead, error: insertErr } = await supabase
           .from('pipeline_leads')
           .insert(insertData)
-          .select('id')
+          .select('id, corretor_id')
           .single()
 
         if (insertErr) {
@@ -220,9 +146,11 @@ Deno.serve(async (req) => {
         }
 
         pipelineLeadId = newLead.id
+        existingCorretorId = newLead.corretor_id // may be set by trigger
+        console.log(`[crm-webhook] New lead ${newLead.id} → Novo Lead stage, corretor from trigger: ${existingCorretorId || 'fila_ceo'}`)
       }
 
-      // Also insert into leads table with site_lead_id for sync back
+      // Sync to leads table
       if (record.site_lead_id && pipelineLeadId) {
         await supabase
           .from('leads')
@@ -239,34 +167,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Notification config by tipo ──
-    switch (tipo) {
-      case 'lead':
-        notifTipo = 'novo_lead'
-        notifTitulo = `⚡ Novo lead via ${origemRef === 'link_corretor' ? 'seu link' : 'site'}`
-        notifMensagem = `${leadNome}${imovelTitulo ? ` - ${imovelTitulo}` : ''} entrou pelo site uhome.com.br`
-        break
-      case 'agendamento':
-        notifTipo = 'agendamento'
-        notifTitulo = `📅 Visita agendada via ${origemRef === 'link_corretor' ? 'seu link' : 'site'}`
-        notifMensagem = `${leadNome} agendou visita${imovelTitulo ? ` para ${imovelTitulo}` : ''}`
-        break
-      case 'captacao':
-        notifTipo = 'captacao'
-        notifTitulo = `🏠 Nova captação via ${origemRef === 'link_corretor' ? 'seu link' : 'site'}`
-        notifMensagem = `${leadNome} quer anunciar um imóvel pelo site`
-        break
-      case 'whatsapp_click':
-        notifTipo = 'whatsapp_click'
-        notifTitulo = `📱 Clique no WhatsApp via ${origemRef === 'link_corretor' ? 'seu link' : 'site'}`
-        notifMensagem = `${leadNome} clicou no WhatsApp${imovelTitulo ? ` - ${imovelTitulo}` : ''}`
-        break
-    }
+    // ── Build notification ──
+    const tipoLabel = tipo === 'lead' ? 'Novo lead' 
+      : tipo === 'agendamento' ? 'Visita agendada'
+      : tipo === 'captacao' ? 'Nova captação' 
+      : 'Clique no WhatsApp'
 
-    // ── Create notification ──
-    if (corretorId) {
+    const notifTipo = tipo === 'lead' ? 'novo_lead' : tipo
+    const notifTitulo = isExisting
+      ? `🔄 ${tipoLabel} — ${leadNome} (atualização)`
+      : `⚡ ${tipoLabel} via site`
+    const notifMensagem = isExisting
+      ? `${leadNome} interagiu novamente pelo site${imovelTitulo ? ` — ${imovelTitulo}` : ''}`
+      : `${leadNome}${imovelTitulo ? ` — ${imovelTitulo}` : ''} entrou pelo site uhome.com.br`
+
+    // Send notification to the corretor (existing or assigned by trigger)
+    if (existingCorretorId) {
       await supabase.from('notifications').insert({
-        user_id: corretorId,
+        user_id: existingCorretorId,
         tipo: notifTipo,
         categoria: 'leads',
         titulo: notifTitulo,
@@ -279,19 +197,20 @@ Deno.serve(async (req) => {
           tipo_acao: tipo,
           origem_ref: origemRef,
           origem_componente: origemComponente,
+          is_update: isExisting,
         },
         lida: false,
       })
     }
 
-    console.log(`[crm-webhook] tipo=${tipo} corretor=${corretorNome || 'nenhum'} lead=${pipelineLeadId}`)
+    console.log(`[crm-webhook] Done: tipo=${tipo} existing=${isExisting} corretor=${existingCorretorId || 'roleta'} lead=${pipelineLeadId}`)
 
     return jsonResponse({
       ok: true,
       tipo,
       pipeline_lead_id: pipelineLeadId,
-      corretor_id: corretorId,
-      corretor_nome: corretorNome,
+      corretor_id: existingCorretorId,
+      is_existing: isExisting,
     })
   } catch (err) {
     console.error('[crm-webhook] Error:', err)
