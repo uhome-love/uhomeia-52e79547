@@ -123,8 +123,9 @@ Deno.serve(async (req) => {
         existingCorretorId = existingLead.corretor_id
 
         const updateObsParts = [`[Site uhome.com.br] ${tipo} - ${imovelTitulo || 'sem imóvel'} (${new Date().toLocaleDateString('pt-BR')})`]
-        if (imovelCodigo) updateObsParts.push(`Cód. Imóvel: ${imovelCodigo}`)
+        if (imovelCodigo || imovelSlug) updateObsParts.push(`Cód/Slug: ${imovelCodigo || imovelSlug}`)
         if (imovelUrl) updateObsParts.push(`Link: ${imovelUrl}`)
+        if (paginaUrl) updateObsParts.push(`Página: ${paginaUrl}`)
 
         await supabase
           .from('pipeline_leads')
