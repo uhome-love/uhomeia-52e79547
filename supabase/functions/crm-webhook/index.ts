@@ -33,10 +33,37 @@ Deno.serve(async (req) => {
     const leadEmail = record.email || null
     const origemComponente = record.origem_componente || null
     const imovelCodigo = record.imovel_codigo || null
+    const imovelSlug = record.imovel_slug || null
+    const paginaUrl = record.pagina_url || record.origem_pagina || null
 
     // ── Resolve property data ──
     let imovelTitulo = record.imovel_titulo || record.imovel_interesse || null
     let imovelUrl: string | null = record.imovel_url || null
+
+    // Try to resolve from slug (new site payload)
+    if (imovelSlug && !imovelCodigo && !imovelUrl) {
+      // Extract codigo from slug: last segment after last hyphen e.g. "apartamento-2-quartos-bairro-12345" → "12345"
+      const slugParts = imovelSlug.split('-')
+      const possibleCodigo = slugParts[slugParts.length - 1]
+      if (possibleCodigo && /^\d+$/.test(possibleCodigo)) {
+        const { data: imovelData } = await supabase
+          .from('properties')
+          .select('codigo, titulo, tipo, dormitorios, bairro')
+          .eq('codigo', possibleCodigo)
+          .limit(1)
+          .maybeSingle()
+
+        if (imovelData) {
+          imovelUrl = `https://uhome.com.br/imovel/${imovelSlug}`
+          if (!imovelTitulo && imovelData.titulo) imovelTitulo = imovelData.titulo
+          console.log(`[crm-webhook] Resolved from slug: ${imovelSlug} → ${imovelData.titulo}`)
+        }
+      }
+      // If no codigo extracted, just use slug as URL
+      if (!imovelUrl && imovelSlug) {
+        imovelUrl = `https://uhome.com.br/imovel/${imovelSlug}`
+      }
+    }
 
     if (imovelCodigo && !imovelUrl) {
       const { data: imovelData } = await supabase
@@ -61,8 +88,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!imovelTitulo && !imovelCodigo) {
-      imovelTitulo = 'Lead Geral (sem imóvel específico)'
+    // Use pagina_url as fallback context
+    if (!imovelTitulo && !imovelCodigo && !imovelSlug) {
+      if (paginaUrl && paginaUrl.includes('/imovel/')) {
+        imovelTitulo = 'Imóvel do site (ver link)'
+        imovelUrl = paginaUrl
+      } else {
+        imovelTitulo = 'Lead Geral (sem imóvel específico)'
+      }
     }
 
     let pipelineLeadId: string | null = null
@@ -90,8 +123,9 @@ Deno.serve(async (req) => {
         existingCorretorId = existingLead.corretor_id
 
         const updateObsParts = [`[Site uhome.com.br] ${tipo} - ${imovelTitulo || 'sem imóvel'} (${new Date().toLocaleDateString('pt-BR')})`]
-        if (imovelCodigo) updateObsParts.push(`Cód. Imóvel: ${imovelCodigo}`)
+        if (imovelCodigo || imovelSlug) updateObsParts.push(`Cód/Slug: ${imovelCodigo || imovelSlug}`)
         if (imovelUrl) updateObsParts.push(`Link: ${imovelUrl}`)
+        if (paginaUrl) updateObsParts.push(`Página: ${paginaUrl}`)
 
         await supabase
           .from('pipeline_leads')
@@ -111,8 +145,9 @@ Deno.serve(async (req) => {
         // ── NEW LEAD: insert WITHOUT corretor, let trigger handle roleta ──
         const telefoneNorm = leadTelefone.replace(/\D/g, '').slice(-11)
         const obsParts = [`[Site uhome.com.br] ${tipo}${imovelTitulo ? ` - ${imovelTitulo}` : ''}`]
-        if (imovelCodigo) obsParts.push(`Cód. Imóvel: ${imovelCodigo}`)
+        if (imovelCodigo || imovelSlug) obsParts.push(`Cód/Slug: ${imovelCodigo || imovelSlug}`)
         if (imovelUrl) obsParts.push(`Link: ${imovelUrl}`)
+        if (paginaUrl) obsParts.push(`Página: ${paginaUrl}`)
 
         const insertData: Record<string, unknown> = {
           nome: leadNome,
@@ -194,6 +229,8 @@ Deno.serve(async (req) => {
           lead_nome: leadNome,
           lead_telefone: leadTelefone,
           imovel_titulo: imovelTitulo,
+          imovel_url: imovelUrl,
+          pagina_url: paginaUrl,
           tipo_acao: tipo,
           origem_ref: origemRef,
           origem_componente: origemComponente,
