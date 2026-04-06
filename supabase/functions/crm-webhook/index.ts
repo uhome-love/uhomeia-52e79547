@@ -146,14 +146,48 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Use pagina_url as fallback context
-    if (!imovelUrl && !imovelCodigo && !imovelSlug) {
-      if (paginaUrl && paginaUrl.includes('/imovel/')) {
-        imovelTitulo = imovelTitulo || 'Imóvel do site (ver link)'
-        imovelUrl = paginaUrl
+    // ── Fallback: resolve from pagina_url (extract slug/codigo from URL) ──
+    if (!imovelUrl && !imovelCodigo && !imovelSlug && paginaUrl) {
+      const imovelMatch = paginaUrl.match(/\/imovel\/([^?#]+)/)
+      if (imovelMatch) {
+        const urlSlug = imovelMatch[1]
+        const slugParts = urlSlug.split('-')
+        const possibleCodigo = slugParts[slugParts.length - 1]
+        if (possibleCodigo && /^\d+$/.test(possibleCodigo)) {
+          const { data: imovelFromUrl } = await supabase
+            .from('properties')
+            .select('codigo, titulo, tipo, dormitorios, bairro')
+            .eq('codigo', possibleCodigo)
+            .limit(1)
+            .maybeSingle()
+
+          if (imovelFromUrl) {
+            const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+            const tipoSlug = slugify(imovelFromUrl.tipo || 'imovel')
+            const quartos = imovelFromUrl.dormitorios ?? 0
+            const bairroSlug = slugify(imovelFromUrl.bairro || 'porto-alegre')
+            const codigoSlug = slugify(imovelFromUrl.codigo)
+            const slug = quartos > 0
+              ? `${tipoSlug}-${quartos}-quartos-${bairroSlug}-${codigoSlug}`
+              : `${tipoSlug}-para-venda-${bairroSlug}-${codigoSlug}`
+            imovelUrl = `https://uhome.com.br/imovel/${slug}`
+            if (!imovelTitulo && imovelFromUrl.titulo) imovelTitulo = imovelFromUrl.titulo
+            console.log(`[crm-webhook] Resolved from pagina_url: ${possibleCodigo} → ${imovelUrl}`)
+          } else {
+            // Código not found in DB, but keep the URL as-is
+            imovelUrl = paginaUrl
+            imovelTitulo = imovelTitulo || 'Imóvel do site (ver link)'
+          }
+        } else {
+          // No numeric code in slug, use URL directly
+          imovelUrl = paginaUrl
+          imovelTitulo = imovelTitulo || 'Imóvel do site (ver link)'
+        }
       } else if (!imovelTitulo) {
         imovelTitulo = 'Lead Geral (sem imóvel específico)'
       }
+    } else if (!imovelUrl && !imovelCodigo && !imovelSlug && !paginaUrl && !imovelTitulo) {
+      imovelTitulo = 'Lead Geral (sem imóvel específico)'
     }
 
     let pipelineLeadId: string | null = null
