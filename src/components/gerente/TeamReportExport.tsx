@@ -1,14 +1,17 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useDateFilter } from "@/contexts/DateFilterContext";
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatBRLCompact } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, Loader2, Printer } from "lucide-react";
+import { FileDown, Loader2, Printer, CalendarIcon } from "lucide-react";
+
 import { toast } from "sonner";
 
 interface Props {
@@ -17,10 +20,19 @@ interface Props {
   gerenteNome: string;
 }
 
-type ReportPeriod = "semana" | "mes";
+type ReportPeriod = "semana" | "mes" | "custom";
 
-function getPeriodRange(period: ReportPeriod) {
+function getPeriodRange(period: ReportPeriod, customFrom?: Date, customTo?: Date) {
   const now = new Date();
+  if (period === "custom" && customFrom && customTo) {
+    return {
+      start: format(customFrom, "yyyy-MM-dd"),
+      end: format(customTo, "yyyy-MM-dd"),
+      startTs: `${format(customFrom, "yyyy-MM-dd")}T00:00:00-03:00`,
+      endTs: `${format(customTo, "yyyy-MM-dd")}T23:59:59.999-03:00`,
+      label: `${format(customFrom, "dd/MM/yyyy", { locale: ptBR })} a ${format(customTo, "dd/MM/yyyy", { locale: ptBR })}`,
+    };
+  }
   if (period === "semana") {
     const s = startOfWeek(now, { weekStartsOn: 1 });
     const e = endOfWeek(now, { weekStartsOn: 1 });
@@ -66,13 +78,19 @@ export default function TeamReportExport({ teamUserIds, teamNameMap, gerenteNome
   const [open, setOpen] = useState(false);
   const [period, setPeriod] = useState<ReportPeriod>("semana");
   const [loading, setLoading] = useState(false);
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
 
   const generateReport = useCallback(async () => {
     if (!user || teamUserIds.length === 0) return;
+    if (period === "custom" && (!customFrom || !customTo)) {
+      toast.error("Selecione as datas de início e fim");
+      return;
+    }
     setLoading(true);
 
     try {
-      const { start, end, startTs, endTs, label } = getPeriodRange(period);
+      const { start, end, startTs, endTs, label } = getPeriodRange(period, customFrom, customTo);
 
       // Get profile mappings
       const { data: profiles } = await supabase.from("profiles").select("id, user_id").in("user_id", teamUserIds);
@@ -165,7 +183,7 @@ export default function TeamReportExport({ teamUserIds, teamNameMap, gerenteNome
     } finally {
       setLoading(false);
     }
-  }, [user, teamUserIds, teamNameMap, period, gerenteNome]);
+  }, [user, teamUserIds, teamNameMap, period, gerenteNome, customFrom, customTo]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -187,9 +205,36 @@ export default function TeamReportExport({ teamUserIds, teamNameMap, gerenteNome
               <SelectContent>
                 <SelectItem value="semana">Esta semana</SelectItem>
                 <SelectItem value="mes">Este mês</SelectItem>
+                <SelectItem value="custom">Personalizado</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {period === "custom" && (
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("flex-1 justify-start text-left font-normal", !customFrom && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customFrom ? format(customFrom, "dd/MM/yyyy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("flex-1 justify-start text-left font-normal", !customTo && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customTo ? format(customTo, "dd/MM/yyyy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customTo} onSelect={setCustomTo} disabled={(d) => customFrom ? d < customFrom : false} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
           <Button onClick={generateReport} disabled={loading} className="w-full gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
             {loading ? "Gerando..." : "Gerar e Imprimir"}
