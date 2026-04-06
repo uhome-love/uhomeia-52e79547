@@ -105,7 +105,7 @@ export default function CeoMetasMensais() {
     const payload = {
       gerente_id: gerenteId,
       mes,
-      meta_vgv_assinado: Number(editValues.vgv) || 0,
+      meta_vgv_assinado: parseCurrencyToNumber(editValues.vgv) || 0,
       meta_visitas_marcadas: Number(editValues.vmarc) || 0,
       meta_visitas_realizadas: Number(editValues.vreal) || 0,
       updated_at: new Date().toISOString(),

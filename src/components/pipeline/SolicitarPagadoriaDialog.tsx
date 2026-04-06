@@ -72,7 +72,7 @@ export default function SolicitarPagadoriaDialog({ open, onOpenChange, negocio }
         telefone: telefone.trim() || null,
         empreendimento: empreendimento.trim() || null,
         unidade: unidade.trim() || null,
-        vgv_contrato: vgv ? parseFloat(vgv) : null,
+        vgv_contrato: vgv ? parseCurrencyToNumber(vgv) : null,
         percentual_comissao: percentual ? parseFloat(percentual) : null,
         rg_url: rgUrl,
         cpf_url: cpfUrl,

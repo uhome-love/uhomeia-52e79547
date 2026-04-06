@@ -138,11 +138,11 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
     if (!user) return;
     await supabase.from("negocios_atividades").insert({
       negocio_id: negocio.id, tipo: "proposta", titulo: "Proposta enviada",
-      descricao: `Empreendimento: ${propEmp}, Unidade: ${propUni}, VGV: R$ ${propVgv}`, created_by: user.id,
+      descricao: `Empreendimento: ${propEmp}, Unidade: ${propUni}, VGV: ${formatCurrencyInput(propVgv)}`, created_by: user.id,
     } as any);
     await supabase.from("negocios").update({
       empreendimento: propEmp || negocio.empreendimento,
-      vgv_estimado: propVgv ? parseFloat(propVgv) : negocio.vgv_estimado,
+      vgv_estimado: propVgv ? parseCurrencyToNumber(propVgv) : negocio.vgv_estimado,
       updated_at: new Date().toISOString(),
     } as any).eq("id", negocio.id);
     onMoveFase(negocio.id, "proposta");
@@ -154,12 +154,12 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
     if (!user) return;
     await supabase.from("negocios_atividades").insert({
       negocio_id: negocio.id, tipo: "contrato", titulo: "Contrato enviado",
-      descricao: `Emp: ${contEmp}, Uni: ${contUni}, VGV: R$ ${contVgv}, Assinatura: ${contTipo === "digital" ? "Digital" : "Presencial"}`,
+      descricao: `Emp: ${contEmp}, Uni: ${contUni}, VGV: ${formatCurrencyInput(contVgv)}, Assinatura: ${contTipo === "digital" ? "Digital" : "Presencial"}`,
       created_by: user.id,
     } as any);
     await supabase.from("negocios").update({
       empreendimento: contEmp || negocio.empreendimento,
-      vgv_final: contVgv ? parseFloat(contVgv) : negocio.vgv_final,
+      vgv_final: contVgv ? parseCurrencyToNumber(contVgv) : negocio.vgv_final,
       updated_at: new Date().toISOString(),
     } as any).eq("id", negocio.id);
     onMoveFase(negocio.id, "documentacao");
@@ -442,7 +442,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             </div>
             <Button size="sm" className="w-full" onClick={async () => {
               if (!quickVgvId || !quickVgvValue) return;
-              const val = parseInt(quickVgvValue, 10);
+              const val = parseCurrencyToNumber(quickVgvValue);
               if (!val) return;
               await onUpdateNegocio(quickVgvId, { vgv_estimado: val });
               toast.success("VGV atualizado!");

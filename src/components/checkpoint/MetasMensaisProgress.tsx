@@ -126,7 +126,7 @@ export default function MetasMensaisProgress() {
     const payload = {
       gerente_id: user.id,
       mes: mesAtual,
-      meta_vgv_assinado: Number(editValues.vgv) || 0,
+      meta_vgv_assinado: parseCurrencyToNumber(editValues.vgv) || 0,
       meta_visitas_marcadas: Number(editValues.visitasM) || 0,
       meta_visitas_realizadas: Number(editValues.visitasR) || 0,
     };

@@ -481,7 +481,7 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
     try {
       await onUpdate(negocio.id, {
         empreendimento: imovelEmpreendimento || null,
-        vgv_estimado: imovelVgv ? parseFloat(imovelVgv) : null,
+        vgv_estimado: imovelVgv ? parseCurrencyToNumber(imovelVgv) : null,
         observacoes: imovelObs || null,
       } as any);
       // Update unidade via direct call
