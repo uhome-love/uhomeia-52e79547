@@ -1,0 +1,2 @@
+UPDATE pipeline_leads SET observacoes = REPLACE(observacoes, 'floating_whatsapp', 'WhatsApp Site') WHERE observacoes ILIKE '%floating_whatsapp%';
+UPDATE pipeline_leads SET observacoes = REPLACE(observacoes, 'retargeting_popup', 'Retargeting Site') WHERE observacoes ILIKE '%retargeting_popup%';
