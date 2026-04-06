@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { formatCurrencyInput, handleCurrencyChange } from "@/utils/currencyFormat";
+import { formatCurrencyInput, parseCurrencyToNumber, handleCurrencyChange } from "@/utils/currencyFormat";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

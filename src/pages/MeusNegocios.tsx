@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { formatCurrencyInput, handleCurrencyChange } from "@/utils/currencyFormat";
+import { formatCurrencyInput, parseCurrencyToNumber, handleCurrencyChange } from "@/utils/currencyFormat";
 import PeriodBadge from "@/components/PeriodBadge";
 import { formatBRLCompact } from "@/lib/utils";
 import { useNegocios, NEGOCIOS_FASES, type Negocio, type CorretorInfo } from "@/hooks/useNegocios";
