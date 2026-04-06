@@ -27,6 +27,7 @@ import TabAgora from "@/components/gerente/TabAgora";
 import TabProducao from "@/components/gerente/TabProducao";
 import TabPipeline from "@/components/gerente/TabPipeline";
 import TabMetas from "@/components/gerente/TabMetas";
+import TeamReportExport from "@/components/gerente/TeamReportExport";
 
 // ── Animated counter ──
 function AnimatedNumber({ value, duration = 0.6 }: { value: number; duration?: number }) {
