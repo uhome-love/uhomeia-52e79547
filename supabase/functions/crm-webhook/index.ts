@@ -31,7 +31,15 @@ Deno.serve(async (req) => {
     const leadNome = record.nome || 'Lead do site'
     const leadTelefone = record.telefone || ''
     const leadEmail = record.email || null
-    const origemComponente = record.origem_componente || null
+    const origemComponenteRaw = record.origem_componente || null
+    const ORIGEM_LABELS: Record<string, string> = {
+      floating_whatsapp: 'WhatsApp Site',
+      retargeting_popup: 'Retargeting Site',
+      header_cta: 'CTA Site',
+      footer_cta: 'CTA Rodapé',
+      imovel_cta: 'Página do Imóvel',
+    }
+    const origemComponente = origemComponenteRaw ? (ORIGEM_LABELS[origemComponenteRaw] || origemComponenteRaw) : null
     const imovelCodigo = record.imovel_codigo || null
     const imovelSlug = record.imovel_slug || null
     const paginaUrl = record.pagina_url || record.origem_pagina || null
