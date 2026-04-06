@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { formatCurrencyInput, parseCurrencyToNumber } from "@/utils/currencyFormat";
+import { formatCurrencyInput, handleCurrencyChange } from "@/utils/currencyFormat";
 import { usePagadorias } from "@/hooks/useBackofficeData";
 import { usePagadoriaConfig } from "@/hooks/usePagadoriaConfig";
 import { useAuth } from "@/hooks/useAuth";
