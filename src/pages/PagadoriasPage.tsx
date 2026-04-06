@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { formatCurrencyInput, handleCurrencyChange } from "@/utils/currencyFormat";
 import { usePagadorias } from "@/hooks/useBackofficeData";
 import { usePagadoriaConfig } from "@/hooks/usePagadoriaConfig";
 import { useAuth } from "@/hooks/useAuth";
@@ -316,7 +317,7 @@ export default function PagadoriasPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div><Label>Empreendimento</Label><Input value={form.empreendimento} onChange={e => setForm(f => ({ ...f, empreendimento: e.target.value }))} /></div>
                   <div><Label>Unidade</Label><Input value={form.unidade} onChange={e => setForm(f => ({ ...f, unidade: e.target.value }))} /></div>
-                  <div><Label>VGV (R$)</Label><Input type="number" value={form.vgv || ""} onChange={e => setForm(f => ({ ...f, vgv: Number(e.target.value) }))} /></div>
+                  <div><Label>VGV (R$)</Label><Input value={formatCurrencyInput(form.vgv ? String(Math.round(form.vgv * 100)) : "")} onChange={e => { const raw = handleCurrencyChange(e.target.value); setForm(f => ({ ...f, vgv: raw ? parseInt(raw, 10) / 100 : 0 })); }} inputMode="numeric" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Corretor</Label><Input value={form.corretor_nome} onChange={e => setForm(f => ({ ...f, corretor_nome: e.target.value }))} placeholder="Nome do corretor" /></div>

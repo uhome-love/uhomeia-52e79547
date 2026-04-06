@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { formatCurrencyInput, parseCurrencyToNumber, handleCurrencyChange } from "@/utils/currencyFormat";
 import PeriodBadge from "@/components/PeriodBadge";
 import { formatBRLCompact } from "@/lib/utils";
 import { useNegocios, NEGOCIOS_FASES, type Negocio, type CorretorInfo } from "@/hooks/useNegocios";
@@ -137,11 +138,11 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
     if (!user) return;
     await supabase.from("negocios_atividades").insert({
       negocio_id: negocio.id, tipo: "proposta", titulo: "Proposta enviada",
-      descricao: `Empreendimento: ${propEmp}, Unidade: ${propUni}, VGV: R$ ${propVgv}`, created_by: user.id,
+      descricao: `Empreendimento: ${propEmp}, Unidade: ${propUni}, VGV: ${formatCurrencyInput(propVgv)}`, created_by: user.id,
     } as any);
     await supabase.from("negocios").update({
       empreendimento: propEmp || negocio.empreendimento,
-      vgv_estimado: propVgv ? parseFloat(propVgv) : negocio.vgv_estimado,
+      vgv_estimado: propVgv ? parseCurrencyToNumber(propVgv) : negocio.vgv_estimado,
       updated_at: new Date().toISOString(),
     } as any).eq("id", negocio.id);
     onMoveFase(negocio.id, "proposta");
@@ -153,12 +154,12 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
     if (!user) return;
     await supabase.from("negocios_atividades").insert({
       negocio_id: negocio.id, tipo: "contrato", titulo: "Contrato enviado",
-      descricao: `Emp: ${contEmp}, Uni: ${contUni}, VGV: R$ ${contVgv}, Assinatura: ${contTipo === "digital" ? "Digital" : "Presencial"}`,
+      descricao: `Emp: ${contEmp}, Uni: ${contUni}, VGV: ${formatCurrencyInput(contVgv)}, Assinatura: ${contTipo === "digital" ? "Digital" : "Presencial"}`,
       created_by: user.id,
     } as any);
     await supabase.from("negocios").update({
       empreendimento: contEmp || negocio.empreendimento,
-      vgv_final: contVgv ? parseFloat(contVgv) : negocio.vgv_final,
+      vgv_final: contVgv ? parseCurrencyToNumber(contVgv) : negocio.vgv_final,
       updated_at: new Date().toISOString(),
     } as any).eq("id", negocio.id);
     onMoveFase(negocio.id, "documentacao");
@@ -432,16 +433,16 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
             <div>
               <Label className="text-xs">VGV (R$)</Label>
               <Input
-                value={quickVgvValue ? `R$ ${quickVgvValue.replace(/^0+/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}` : ""}
-                onChange={(e) => setQuickVgvValue(e.target.value.replace(/\D/g, ""))}
-                placeholder="R$ 500.000"
+                value={formatCurrencyInput(quickVgvValue)}
+                onChange={(e) => setQuickVgvValue(handleCurrencyChange(e.target.value))}
+                placeholder="R$ 500.000,00"
                 inputMode="numeric"
                 className="h-9"
               />
             </div>
             <Button size="sm" className="w-full" onClick={async () => {
               if (!quickVgvId || !quickVgvValue) return;
-              const val = parseInt(quickVgvValue, 10);
+              const val = parseCurrencyToNumber(quickVgvValue);
               if (!val) return;
               await onUpdateNegocio(quickVgvId, { vgv_estimado: val });
               toast.success("VGV atualizado!");
@@ -513,7 +514,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           <div className="space-y-3">
             <div><Label className="text-xs">Empreendimento</Label><Input value={propEmp} onChange={e => setPropEmp(e.target.value)} className="h-8 text-xs" /></div>
             <div><Label className="text-xs">Unidade</Label><Input value={propUni} onChange={e => setPropUni(e.target.value)} className="h-8 text-xs" /></div>
-            <div><Label className="text-xs">VGV (R$)</Label><Input value={propVgv} onChange={e => setPropVgv(e.target.value)} type="number" className="h-8 text-xs" /></div>
+            <div><Label className="text-xs">VGV (R$)</Label><Input value={formatCurrencyInput(propVgv)} onChange={e => setPropVgv(handleCurrencyChange(e.target.value))} inputMode="numeric" className="h-8 text-xs" /></div>
           </div>
           <DialogFooter>
             <Button size="sm" onClick={handlePropostaSubmit} className="text-xs gap-1">📄 Enviar e mover para Proposta</Button>
@@ -530,7 +531,7 @@ function NegocioCard({ negocio, corretorNome, corretorInfo, showCorretor, parado
           <div className="space-y-3">
             <div><Label className="text-xs">Empreendimento</Label><Input value={contEmp} onChange={e => setContEmp(e.target.value)} className="h-8 text-xs" /></div>
             <div><Label className="text-xs">Unidade</Label><Input value={contUni} onChange={e => setContUni(e.target.value)} className="h-8 text-xs" /></div>
-            <div><Label className="text-xs">VGV (R$)</Label><Input value={contVgv} onChange={e => setContVgv(e.target.value)} type="number" className="h-8 text-xs" /></div>
+            <div><Label className="text-xs">VGV (R$)</Label><Input value={formatCurrencyInput(contVgv)} onChange={e => setContVgv(handleCurrencyChange(e.target.value))} inputMode="numeric" className="h-8 text-xs" /></div>
             <div>
               <Label className="text-xs">Tipo de assinatura</Label>
               <Select value={contTipo} onValueChange={setContTipo}>

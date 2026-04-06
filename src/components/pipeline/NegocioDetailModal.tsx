@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { formatCurrencyInput, parseCurrencyToNumber, handleCurrencyChange } from "@/utils/currencyFormat";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -191,7 +192,7 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
         setFullNeg(n);
         setImovelEmpreendimento(n.empreendimento || "");
         setImovelUnidade(n.unidade || "");
-        setImovelVgv(n.vgv_estimado ? String(n.vgv_estimado) : "");
+        setImovelVgv(n.vgv_estimado ? String(Math.round(n.vgv_estimado * 100)) : "");
         setImovelObs(n.observacoes || "");
       }
       setAtividades((atvsRes.data || []) as NegocioAtividade[]);
@@ -480,7 +481,7 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
     try {
       await onUpdate(negocio.id, {
         empreendimento: imovelEmpreendimento || null,
-        vgv_estimado: imovelVgv ? parseFloat(imovelVgv) : null,
+        vgv_estimado: imovelVgv ? parseCurrencyToNumber(imovelVgv) : null,
         observacoes: imovelObs || null,
       } as any);
       // Update unidade via direct call
@@ -901,10 +902,10 @@ export default function NegocioDetailModal({ open, onOpenChange, negocio, onUpda
                 <div>
                   <Label className="text-xs font-semibold mb-1 block">VGV (R$)</Label>
                   <Input
-                    type="number"
-                    value={imovelVgv}
-                    onChange={e => setImovelVgv(e.target.value)}
-                    placeholder="500000"
+                    value={formatCurrencyInput(imovelVgv)}
+                    onChange={e => setImovelVgv(handleCurrencyChange(e.target.value))}
+                    placeholder="R$ 500.000,00"
+                    inputMode="numeric"
                     className="h-9 text-sm"
                   />
                 </div>

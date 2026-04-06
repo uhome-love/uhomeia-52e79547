@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCurrencyInput, parseCurrencyToNumber, numberToRawCurrency } from "@/utils/currencyFormat";
 import { useComissaoFaixas } from "@/hooks/useBackofficeData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -168,8 +169,8 @@ export default function ComissoesPage() {
           {editFaixa && (
             <div className="space-y-3">
               <div><Label>Nome</Label><Input value={editFaixa.nome} onChange={e => setEditFaixa((f: any) => ({ ...f, nome: e.target.value }))} /></div>
-              <div><Label>VGV Mínimo (R$)</Label><Input type="number" value={editFaixa.vgv_min} onChange={e => setEditFaixa((f: any) => ({ ...f, vgv_min: Number(e.target.value) }))} /></div>
-              <div><Label>VGV Máximo (R$) — vazio = ilimitado</Label><Input type="number" value={editFaixa.vgv_max ?? ""} onChange={e => setEditFaixa((f: any) => ({ ...f, vgv_max: e.target.value ? Number(e.target.value) : null }))} /></div>
+              <div><Label>VGV Mínimo (R$)</Label><Input value={formatCurrencyInput(numberToRawCurrency(editFaixa.vgv_min))} onChange={e => setEditFaixa((f: any) => ({ ...f, vgv_min: parseCurrencyToNumber(e.target.value) }))} inputMode="numeric" /></div>
+              <div><Label>VGV Máximo (R$) — vazio = ilimitado</Label><Input value={editFaixa.vgv_max != null ? formatCurrencyInput(numberToRawCurrency(editFaixa.vgv_max)) : ""} onChange={e => { const v = e.target.value; setEditFaixa((f: any) => ({ ...f, vgv_max: v ? parseCurrencyToNumber(v) : null })); }} inputMode="numeric" /></div>
               <div><Label>Percentual (%)</Label><Input type="number" step="0.5" value={editFaixa.percentual} onChange={e => setEditFaixa((f: any) => ({ ...f, percentual: Number(e.target.value) }))} /></div>
               <div className="flex justify-between">
                 {editFaixa.id && (

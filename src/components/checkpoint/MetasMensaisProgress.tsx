@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { formatCurrencyInput, parseCurrencyToNumber, handleCurrencyChange } from "@/utils/currencyFormat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -96,7 +97,7 @@ export default function MetasMensaisProgress() {
     };
     setData(metaData);
     setEditValues({
-      vgv: String(metaData.metaVgv),
+      vgv: metaData.metaVgv ? String(Math.round(metaData.metaVgv * 100)) : "",
       visitasM: String(metaData.metaVisitasMarcadas),
       visitasR: String(metaData.metaVisitasRealizadas),
     });
@@ -108,7 +109,7 @@ export default function MetasMensaisProgress() {
   const startEdit = () => {
     if (data) {
       setEditValues({
-        vgv: String(data.metaVgv),
+        vgv: data.metaVgv ? String(Math.round(data.metaVgv * 100)) : "",
         visitasM: String(data.metaVisitasMarcadas),
         visitasR: String(data.metaVisitasRealizadas),
       });
@@ -125,7 +126,7 @@ export default function MetasMensaisProgress() {
     const payload = {
       gerente_id: user.id,
       mes: mesAtual,
-      meta_vgv_assinado: Number(editValues.vgv) || 0,
+      meta_vgv_assinado: parseCurrencyToNumber(editValues.vgv) || 0,
       meta_visitas_marcadas: Number(editValues.visitasM) || 0,
       meta_visitas_realizadas: Number(editValues.visitasR) || 0,
     };
@@ -171,7 +172,7 @@ export default function MetasMensaisProgress() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-[10px] text-muted-foreground uppercase">VGV Assinado (R$)</label>
-              <Input type="number" className="h-8 text-xs mt-1" value={editValues.vgv} onChange={(e) => setEditValues(p => ({ ...p, vgv: e.target.value }))} />
+              <Input className="h-8 text-xs mt-1" value={formatCurrencyInput(editValues.vgv)} onChange={(e) => setEditValues(p => ({ ...p, vgv: handleCurrencyChange(e.target.value) }))} inputMode="numeric" />
             </div>
             <div>
               <label className="text-[10px] text-muted-foreground uppercase">Visitas Marcadas</label>
@@ -220,12 +221,21 @@ export default function MetasMensaisProgress() {
           {items.map((item) => (
             <div key={item.editKey}>
               <label className="text-[10px] text-muted-foreground uppercase">{item.label}</label>
-              <Input
-                type="number"
-                className="h-8 text-xs mt-1"
-                value={editValues[item.editKey]}
-                onChange={(e) => setEditValues(p => ({ ...p, [item.editKey]: e.target.value }))}
-              />
+              {item.editKey === "vgv" ? (
+                <Input
+                  className="h-8 text-xs mt-1"
+                  value={formatCurrencyInput(editValues[item.editKey])}
+                  onChange={(e) => setEditValues(p => ({ ...p, [item.editKey]: handleCurrencyChange(e.target.value) }))}
+                  inputMode="numeric"
+                />
+              ) : (
+                <Input
+                  type="number"
+                  className="h-8 text-xs mt-1"
+                  value={editValues[item.editKey]}
+                  onChange={(e) => setEditValues(p => ({ ...p, [item.editKey]: e.target.value }))}
+                />
+              )}
             </div>
           ))}
           <div className="col-span-3 flex gap-2 justify-end">

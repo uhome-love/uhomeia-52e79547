@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCurrencyInput, parseCurrencyToNumber, handleCurrencyChange } from "@/utils/currencyFormat";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +28,7 @@ export default function SolicitarPagadoriaDialog({ open, onOpenChange, negocio }
   const [telefone, setTelefone] = useState(negocio.telefone || "");
   const [empreendimento, setEmpreendimento] = useState(negocio.empreendimento || "");
   const [unidade, setUnidade] = useState("");
-  const [vgv, setVgv] = useState(negocio.vgv_estimado ? String(negocio.vgv_estimado) : "");
+  const [vgv, setVgv] = useState(negocio.vgv_estimado ? String(Math.round(negocio.vgv_estimado * 100)) : "");
   const [percentual, setPercentual] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
@@ -71,7 +72,7 @@ export default function SolicitarPagadoriaDialog({ open, onOpenChange, negocio }
         telefone: telefone.trim() || null,
         empreendimento: empreendimento.trim() || null,
         unidade: unidade.trim() || null,
-        vgv_contrato: vgv ? parseFloat(vgv) : null,
+        vgv_contrato: vgv ? parseCurrencyToNumber(vgv) : null,
         percentual_comissao: percentual ? parseFloat(percentual) : null,
         rg_url: rgUrl,
         cpf_url: cpfUrl,
@@ -153,7 +154,7 @@ export default function SolicitarPagadoriaDialog({ open, onOpenChange, negocio }
               </div>
               <div>
                 <Label className="text-xs">VGV do Contrato (R$)</Label>
-                <Input value={vgv} onChange={e => setVgv(e.target.value)} type="number" className="h-9 text-sm" />
+                <Input value={formatCurrencyInput(vgv)} onChange={e => setVgv(handleCurrencyChange(e.target.value))} inputMode="numeric" className="h-9 text-sm" />
               </div>
               <div>
                 <Label className="text-xs">% Comissão</Label>
