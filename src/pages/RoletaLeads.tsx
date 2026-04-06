@@ -527,21 +527,39 @@ function CorretorView() {
                 {isDiaEspecial ? (
                   <SelectItem value="dia_todo">☀️ Dia Todo (08:00–23:30)</SelectItem>
                 ) : (
-                  <>
-                    <SelectItem value="manha">🌅 Manhã (07:30–12:00)</SelectItem>
-                    <SelectItem value="tarde">🌞 Tarde (12:00–18:30)</SelectItem>
-                    {(() => {
+                  {(() => {
                       const now = new Date();
                       const brt = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
                       const mins = brt.getHours() * 60 + brt.getMinutes();
-                      const past2000 = mins >= 20 * 60;
+                      const t0730 = 7 * 60 + 30;
+                      const t0930 = 9 * 60 + 30;
+                      const t1200 = 12 * 60;
+                      const t1330 = 13 * 60 + 30;
+                      const t1830 = 18 * 60 + 30;
+                      const t2000 = 20 * 60;
+                      
+                      const manhaAberto = mins >= t0730 && mins < t0930;
+                      const manhaEncerrado = mins >= t0930;
+                      const tardeAberto = mins >= t1200 && mins < t1330;
+                      const tardeEncerrado = mins >= t1330;
+                      const noturnaAberto = mins >= t1830 && mins < t2000;
+                      const noturnaEncerrado = mins >= t2000;
+                      const noturnaAindaNaoAbriu = mins < t1830;
+                      
                       return (
-                        <SelectItem value="noturna" disabled={past2000}>
-                          🌙 Noturna (18:30–23:30) {past2000 ? "— encerrado" : ""}
-                        </SelectItem>
+                        <>
+                          <SelectItem value="manha" disabled={!manhaAberto && manhaEncerrado}>
+                            🌅 Manhã (07:30–12:00) {manhaEncerrado && !manhaAberto ? "— encerrado" : ""}
+                          </SelectItem>
+                          <SelectItem value="tarde" disabled={!tardeAberto && (tardeEncerrado || mins < t1200)}>
+                            🌞 Tarde (12:00–18:30) {tardeEncerrado ? "— encerrado" : mins < t1200 ? "— abre às 12:00" : ""}
+                          </SelectItem>
+                          <SelectItem value="noturna" disabled={noturnaEncerrado || noturnaAindaNaoAbriu}>
+                            🌙 Noturna (18:30–23:30) {noturnaEncerrado ? "— encerrado" : noturnaAindaNaoAbriu ? "— abre às 18:30" : ""}
+                          </SelectItem>
+                        </>
                       );
                     })()}
-                  </>
                 )}
               </SelectContent>
             </Select>
