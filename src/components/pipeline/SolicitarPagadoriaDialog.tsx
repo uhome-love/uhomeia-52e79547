@@ -28,7 +28,7 @@ export default function SolicitarPagadoriaDialog({ open, onOpenChange, negocio }
   const [telefone, setTelefone] = useState(negocio.telefone || "");
   const [empreendimento, setEmpreendimento] = useState(negocio.empreendimento || "");
   const [unidade, setUnidade] = useState("");
-  const [vgv, setVgv] = useState(negocio.vgv_estimado ? String(negocio.vgv_estimado) : "");
+  const [vgv, setVgv] = useState(negocio.vgv_estimado ? String(Math.round(negocio.vgv_estimado * 100)) : "");
   const [percentual, setPercentual] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
