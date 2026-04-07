@@ -98,16 +98,20 @@ Deno.serve(async (req) => {
     const body = await req.json();
 
     // ── Auth ──
+    // Accept either webhook secret (for external callers) or anon apikey header (for own landing pages)
     const webhookSecret = Deno.env.get("LANDING_WEBHOOK_SECRET");
-    if (webhookSecret) {
-      const provided = body.secret || req.headers.get("x-webhook-secret") || "";
-      if (provided !== webhookSecret) {
-        L.warn("Auth failed — invalid webhook secret", { source: body.source });
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("ANON_KEY") || "";
+    const providedSecret = body.secret || req.headers.get("x-webhook-secret") || "";
+    const providedApikey = req.headers.get("apikey") || "";
+    const isValidSecret = webhookSecret && providedSecret === webhookSecret;
+    const isValidApikey = anonKey && providedApikey === anonKey;
+
+    if (webhookSecret && !isValidSecret && !isValidApikey) {
+      L.warn("Auth failed — invalid webhook secret or apikey", { source: body.source });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ── Parse fields ──
