@@ -4,6 +4,20 @@ import { corsHeaders, handleCors, jsonResponse, errorResponse } from '../_shared
 const VALID_TIPOS = ['lead', 'agendamento', 'captacao', 'whatsapp_click'] as const
 const NOVO_LEAD_STAGE_ID = 'd3843b2f-2fa1-4c31-9129-4eb0ed21f019'
 
+/**
+ * Extract property codigo from a slug like "apartamento-3-quartos-rio-branco-340340-UP"
+ * Supports pure numeric (340340) and alphanumeric suffixed codes (340340-UP, 67274-TR)
+ */
+function extractCodigoFromSlug(slug: string): string | null {
+  // Try pattern: digits-LETTERS at the end (e.g. "340340-UP")
+  const suffixMatch = slug.match(/(\d+)-([A-Za-z]{1,4})$/)
+  if (suffixMatch) return `${suffixMatch[1]}-${suffixMatch[2].toUpperCase()}`
+  // Try pure numeric at the end (e.g. "340340")
+  const numericMatch = slug.match(/(\d{4,})$/)
+  if (numericMatch) return numericMatch[1]
+  return null
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return handleCors()
 
@@ -64,14 +78,13 @@ Deno.serve(async (req) => {
 
     // Try to resolve from slug (new site payload)
     if (imovelSlug && !imovelCodigo && !imovelUrl) {
-      // Extract codigo from slug: last segment after last hyphen e.g. "apartamento-2-quartos-bairro-12345" → "12345"
-      const slugParts = imovelSlug.split('-')
-      const possibleCodigo = slugParts[slugParts.length - 1]
-      if (possibleCodigo && /^\d+$/.test(possibleCodigo)) {
+      // Extract codigo from slug — supports "340340" or "340340-UP" patterns
+      const codigoFromSlug = extractCodigoFromSlug(imovelSlug)
+      if (codigoFromSlug) {
         const { data: imovelData } = await supabase
           .from('properties')
           .select('codigo, titulo, tipo, dormitorios, bairro')
-          .eq('codigo', possibleCodigo)
+          .eq('codigo', codigoFromSlug)
           .limit(1)
           .maybeSingle()
 
@@ -151,9 +164,8 @@ Deno.serve(async (req) => {
       const imovelMatch = paginaUrl.match(/\/imovel\/([^?#]+)/)
       if (imovelMatch) {
         const urlSlug = imovelMatch[1]
-        const slugParts = urlSlug.split('-')
-        const possibleCodigo = slugParts[slugParts.length - 1]
-        if (possibleCodigo && /^\d+$/.test(possibleCodigo)) {
+        const possibleCodigo = extractCodigoFromSlug(urlSlug)
+        if (possibleCodigo) {
           const { data: imovelFromUrl } = await supabase
             .from('properties')
             .select('codigo, titulo, tipo, dormitorios, bairro')
@@ -174,12 +186,10 @@ Deno.serve(async (req) => {
             if (!imovelTitulo && imovelFromUrl.titulo) imovelTitulo = imovelFromUrl.titulo
             console.log(`[crm-webhook] Resolved from pagina_url: ${possibleCodigo} → ${imovelUrl}`)
           } else {
-            // Código not found in DB, but keep the URL as-is
             imovelUrl = paginaUrl
             imovelTitulo = imovelTitulo || 'Imóvel do site (ver link)'
           }
         } else {
-          // No numeric code in slug, use URL directly
           imovelUrl = paginaUrl
           imovelTitulo = imovelTitulo || 'Imóvel do site (ver link)'
         }
