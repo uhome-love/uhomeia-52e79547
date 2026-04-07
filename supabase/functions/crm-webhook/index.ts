@@ -4,6 +4,20 @@ import { corsHeaders, handleCors, jsonResponse, errorResponse } from '../_shared
 const VALID_TIPOS = ['lead', 'agendamento', 'captacao', 'whatsapp_click'] as const
 const NOVO_LEAD_STAGE_ID = 'd3843b2f-2fa1-4c31-9129-4eb0ed21f019'
 
+/**
+ * Extract property codigo from a slug like "apartamento-3-quartos-rio-branco-340340-UP"
+ * Supports pure numeric (340340) and alphanumeric suffixed codes (340340-UP, 67274-TR)
+ */
+function extractCodigoFromSlug(slug: string): string | null {
+  // Try pattern: digits-LETTERS at the end (e.g. "340340-UP")
+  const suffixMatch = slug.match(/(\d+)-([A-Za-z]{1,4})$/)
+  if (suffixMatch) return `${suffixMatch[1]}-${suffixMatch[2].toUpperCase()}`
+  // Try pure numeric at the end (e.g. "340340")
+  const numericMatch = slug.match(/(\d{4,})$/)
+  if (numericMatch) return numericMatch[1]
+  return null
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return handleCors()
 
