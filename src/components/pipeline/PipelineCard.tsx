@@ -92,8 +92,6 @@ const PipelineCard = memo(function PipelineCard({
   const [transferOpen, setTransferOpen] = useState(false);
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [whatsappTemplatesOpen, setWhatsappTemplatesOpen] = useState(false);
-  const [criandoNegocio, setCriandoNegocio] = useState(false);
-  const [negocioCriado, setNegocioCriado] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [isWhatsAppFlowOpen, setIsWhatsAppFlowOpen] = useState(false);
 
@@ -206,49 +204,6 @@ const PipelineCard = memo(function PipelineCard({
     onClick();
   };
 
-  const handleCreateNegocio = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user || criandoNegocio) return;
-    setCriandoNegocio(true);
-    try {
-      const corretorUserId = lead.corretor_id;
-      const gerenteUserId = lead.gerente_id || user.id;
-      const { data: profileRows } = await supabase
-        .from("profiles")
-        .select("id, user_id")
-        .in("user_id", [corretorUserId, gerenteUserId].filter(Boolean) as string[]);
-      const profileMap = new Map((profileRows || []).map(p => [p.user_id, p.id]));
-
-      const { data: negocio, error } = await supabase
-        .from("negocios")
-        .insert({
-          nome_cliente: lead.nome,
-          pipeline_lead_id: lead.id,
-          corretor_id: corretorUserId ? profileMap.get(corretorUserId) || null : null,
-          gerente_id: profileMap.get(gerenteUserId) || null,
-          empreendimento: lead.empreendimento || null,
-          telefone: lead.telefone || null,
-          fase: "novo_negocio",
-          origem: "visita_realizada",
-          vgv_estimado: lead.valor_estimado || null,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      if (negocio) {
-        await supabase.from("pipeline_leads").update({ negocio_id: negocio.id } as any).eq("id", lead.id);
-        setNegocioCriado(true);
-        toast.success(`🎉 Negócio criado para ${lead.nome}!`, { description: "🎯 Lead movido para Negócio Criado" });
-        const convertidoStage = stages.find(s => s.tipo === "convertido");
-        if (convertidoStage && onMoveLead) onMoveLead(lead.id, convertidoStage.id);
-      }
-    } catch (err: any) {
-      console.error("Erro ao criar negócio:", err);
-      toast.error("Erro ao criar negócio: " + (err?.message || "Erro desconhecido"));
-    } finally {
-      setCriandoNegocio(false);
-    }
-  };
 
   // Origin tag
   const originTag = useMemo(() => {

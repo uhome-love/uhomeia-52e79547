@@ -470,7 +470,7 @@ export function useVisitas(filters?: {
         const visita = visitas.find((v) => v.id === id);
         if (visita?.pipeline_lead_id) {
           toast("✅ Visita realizada!", {
-            description: "Use o botão 'Criar Negócio' no card do Pipeline para iniciar o negócio.",
+            description: "Quando o cliente evoluir, arraste o lead para 'Negócio Criado' no Pipeline.",
             duration: 5000,
           });
         }
