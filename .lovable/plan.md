@@ -1,107 +1,84 @@
 
+Objetivo: corrigir o fluxo de timeout de leads novos para que, ao expirar o aceite, o lead seja redistribuído automaticamente ao próximo corretor elegível da roleta, respeitando segmento quando houver e usando a fila geral quando for lead geral.
 
-# Plano de Correção Completa: Vitrines, Radar e Imóveis
+1. Diagnóstico do que está acontecendo hoje
+- A edge function `supabase/functions/lead-escalation/index.ts` hoje chama `reciclar_leads_expirados()`, mas depois apenas notifica gestão e deixa o lead em `pendente_distribuicao` na Fila do CEO.
+- Isso está explícito no código atual: “NO auto-redistribute — CEO dispatches manually”.
+- O RPC atual `distribuir_lead_atomico` já aceita `p_exclude_auth_user_id`, mas a versão vigente não exclui corretores que já deram `timeout` nesse lead. Então, mesmo religando a redistribuição, há risco de voltar para quem já expirou.
 
-## Diagnóstico dos Problemas
+2. Correção principal do backend
+- Atualizar `reciclar_leads_expirados()` para retornar os leads expirados com contexto suficiente para redistribuição e auditoria, em vez de só retornar um contador.
+- Para cada lead expirado:
+  - registrar `timeout` em `distribuicao_historico`
+  - limpar `corretor_id`, `distribuido_em`, `aceite_expira_em`
+  - manter o lead apto para redistribuição imediata
+- Em seguida, no `lead-escalation`, para cada lead expirado, chamar novamente a distribuição automática.
 
-### PROBLEMA CRITICO 1: Duas bases de dados para vitrines
-O RadarImoveisTab (tab Radar no modal do lead) cria vitrines usando `supabaseSite` (projeto Supabase EXTERNO: `huigglwvvzuwwyqvpmec`), enquanto todo o resto do sistema (VitrinePage, MinhasVitrines, vitrine-public edge function) lê da base de dados do CRM (`hunbxqzhvuemgntklyzb`).
+3. Regra de redistribuição correta
+- Lead com segmento:
+  - redistribuir para o próximo corretor disponível daquele segmento na roleta
+- Lead geral:
+  - redistribuir para o próximo corretor disponível da fila geral/roleta ativa
+- Nunca redistribuir para o mesmo corretor que acabou de expirar
+- Também bloquear corretores que já tiveram `timeout` ou `rejeitado` naquele mesmo lead, evitando loop
 
-**Resultado**: Vitrines criadas pelo Radar nunca aparecem em "Minhas Vitrines", e o link gerado aponta para dados que nao existem na base correta. O link simplesmente nao funciona.
+4. Ajuste no motor atômico da roleta
+- Revisar `public.distribuir_lead_atomico` para restaurar a proteção que existia em versões anteriores:
+  - excluir `p_exclude_auth_user_id`
+  - excluir corretores com histórico `timeout` ou `rejeitado` para o mesmo `pipeline_lead_id`
+- Preservar a lógica atual de round-robin via `roleta_fila.ultima_distribuicao_at`
+- Preservar a regra de leads gerais:
+  - origens gerais, empreendimento vazio ou campanha marcada para ignorar segmento devem distribuir para todos os elegíveis
 
-**Arquivos afetados**: `RadarImoveisTab.tsx` linhas 1123-1159 e 1225-1253 usam `supabaseSite.from("vitrines")` ao inves de `supabase.from("vitrines")`.
+5. Ajuste na edge function `lead-escalation`
+- Trocar o fluxo atual “manda para CEO” por:
+  - recicla lead expirado
+  - tenta redistribuir automaticamente via `distribute-lead`
+  - só cai para `pendente_distribuicao`/Fila do CEO se realmente não houver próximo corretor elegível
+- Manter notificações, mas mudar a mensagem:
+  - se redistribuído com sucesso, notificar corretor novo
+  - se ninguém elegível, aí sim notificar CEO/gerência que foi para fila manual
 
-### PROBLEMA CRITICO 2: Vitrines dependem 100% da API Jetimob
-A edge function `vitrine-public` busca cada imovel via API Jetimob com timeout de 8s. Se a API estiver lenta ou fora, a vitrine fica em branco. A tabela `properties` do CRM ja tem todos os dados necessarios mas nao e usada como fonte primaria.
+6. Observabilidade e segurança operacional
+- Melhorar o log do erro atual `Sem Contato recycle RPC failed` para gravar `error.message`, payload e lead afetado, evitando `[object Object]`
+- Registrar em `ops_events`:
+  - quantidade expirada
+  - quantidade redistribuída
+  - quantidade sem broker elegível
+- Isso facilita ver se a rotação automática voltou a funcionar
 
-### PROBLEMA 3: Radar usa Typesense que pode falhar
-O RadarImoveisTab usa `useTypesenseSearch` como fonte primaria. Quando o Typesense falha, tenta fallback via Supabase direto, mas a logica de fallback pode retornar zero resultados se os filtros nao baterem.
+7. Validação esperada após implementação
+- Caso de timeout de lead novo:
+  - corretor A não aceita
+  - lead vai para corretor B automaticamente
+  - se B também não aceitar, vai para C
+  - se acabar a fila elegível, então entra em `pendente_distribuicao`
+- Caso de lead geral:
+  - segue o próximo da roleta ativa, sem travar em segmento
+- Caso de lead segmentado:
+  - respeita apenas corretores aptos daquele segmento
 
-### PROBLEMA 4: Campos incompativeis entre vitrines
-ImoveisPage cria vitrines com `imovel_ids` (codigos de imovel como "97325-UH"), mas RadarImoveisTab cria com `imovel_codigos` (campo que nao existe na tabela `vitrines` do CRM). Sao campos diferentes em bancos diferentes.
+Se aprovado, eu implementaria principalmente nestes pontos:
+- `supabase/functions/lead-escalation/index.ts`
+- nova migration para `reciclar_leads_expirados()`
+- nova migration para `distribuir_lead_atomico`
 
-### PROBLEMA 5: ImoveisPage — Filtros podem gerar queries vazias
-Quando a busca PostgREST retorna erro, o componente exibe ErrorState mas nao oferece recovery automatico. Filtros complexos combinados podem gerar queries que o Supabase nao processa.
+Detalhes técnicos
+```text
+Fluxo desejado
 
----
-
-## Plano de Correção
-
-### Etapa 1: Unificar criacao de vitrines (CRITICO)
-
-**Arquivo**: `src/components/pipeline/RadarImoveisTab.tsx`
-
-- Remover importacao de `supabaseSite`
-- Substituir todas as chamadas `supabaseSite.from("vitrines").insert(...)` por `supabase.from("vitrines").insert(...)`
-- Ajustar o schema: usar `imovel_ids` (nao `imovel_codigos`), `mensagem_corretor` (nao `mensagem`), `created_by: user.id`, `lead_nome`, `tipo: "property_selection"`
-- Mesmo ajuste na funcao `onCriarVitrine` passada ao RadarFullscreenModal
-
-**Arquivo**: `src/components/pipeline/radar/RadarFullscreenModal.tsx`
-- Nenhuma alteracao necessaria (ja recebe `onCriarVitrine` como prop)
-
-### Etapa 2: vitrine-public — Usar properties como fonte primaria
-
-**Arquivo**: `supabase/functions/vitrine-public/index.ts`
-
-- Antes de chamar Jetimob, tentar buscar os imoveis na tabela `properties` por codigo
-- So chamar Jetimob para codigos que NAO foram encontrados em `properties`
-- Isso elimina a dependencia da API externa e acelera o carregamento
-
+Lead distribuído
+  -> aguardando_aceite (10 min)
+  -> expirou?
+      -> registrar timeout
+      -> limpar vínculo atual
+      -> distribuir novamente
+          -> achou próximo corretor elegível? entrega automática
+          -> não achou? CEO queue
 ```
-// Pseudocodigo
-const { data: dbProperties } = await supabase
-  .from("properties")
-  .select("codigo, titulo, bairro, cidade, dormitorios, suites, vagas, area_privativa, valor_venda, fotos, fotos_full, empreendimento, latitude, longitude")
-  .in("codigo", ids)
-  .eq("ativo", true);
 
-// Mapear os encontrados, so buscar no Jetimob os que faltam
-const foundCodes = new Set(dbProperties.map(p => p.codigo));
-const missingIds = ids.filter(id => !foundCodes.has(id));
-// Jetimob so para missingIds
-```
-
-### Etapa 3: Radar — Tornar busca resiliente
-
-**Arquivo**: `src/components/pipeline/RadarImoveisTab.tsx`
-
-- Na funcao `searchTypesense`: adicionar try/catch robusto com fallback imediato para `searchSupabaseFallback`
-- Na funcao `searchSupabaseFallback`: melhorar a query para nao retornar vazio quando sem filtros (remover filtros restritivos quando nao ha bairro nem empreendimento)
-- Garantir que `handleSearch` sempre retorna ao menos os resultados do catalogo MeDay quando tudo mais falha
-
-### Etapa 4: ImoveisPage — Robustez na busca
-
-**Arquivo**: `src/pages/ImoveisPage.tsx` e `src/hooks/useImoveisSearch.ts`
-
-- Adicionar retry automatico (1 tentativa) quando PostgREST retorna erro
-- Quando ErrorState aparece, incluir botao "Limpar filtros e tentar novamente" que reseta tudo
-- Garantir que filtros combinados nao gerem queries invalidas (validar antes de enviar)
-
-### Etapa 5: Validacao de dados na vitrine
-
-**Arquivo**: `src/pages/VitrinePage.tsx`
-
-- Ja tem sanitizacao robusta e ErrorBoundary com fallback — esta bem implementado
-- Adicionar log quando `imoveis` retorna vazio para diagnostico
-- Adicionar retry automatico apos 3s quando a vitrine carrega com 0 imoveis (pode ser race condition da API)
-
----
-
-## Resumo de Arquivos a Editar
-
-| Arquivo | Acao |
-|---------|------|
-| `src/components/pipeline/RadarImoveisTab.tsx` | Trocar `supabaseSite` por `supabase`, ajustar schema da vitrine, melhorar fallback de busca |
-| `supabase/functions/vitrine-public/index.ts` | Buscar imoveis em `properties` ANTES do Jetimob |
-| `src/hooks/useImoveisSearch.ts` | Adicionar retry automatico e validacao de filtros |
-| `src/pages/ImoveisPage.tsx` | Botao de recovery com reset de filtros |
-| `src/pages/VitrinePage.tsx` | Retry quando 0 imoveis |
-
-## Resultado Esperado
-
-- Vitrines criadas pelo Radar aparecem em "Minhas Vitrines" e abrem corretamente
-- Vitrines carregam instantaneamente via tabela `properties` (sem depender de API externa)
-- Radar sempre retorna resultados mesmo quando Typesense falha
-- Pagina de Imoveis se recupera automaticamente de erros
-- Zero telas em branco ou erros silenciosos
-
+Critérios de aceite
+- Timeout não pode mais jogar direto para CEO quando ainda existir corretor elegível
+- O corretor que deixou expirar não pode receber o mesmo lead de novo nessa rodada
+- Leads gerais devem ignorar segmento
+- Todos os cálculos de janela continuam em `America/Sao_Paulo`
