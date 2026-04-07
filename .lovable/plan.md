@@ -1,39 +1,23 @@
 
 
-# Plano: Etapa "Em Evolução" + Renomear "Convertido" → "Negócio Criado"
-
-## Fluxo atualizado
-
-```text
-... → Visita Realizada → Em Evolução → Negócio Criado (cria negócio automaticamente)
-                              ↑                 ↑
-                    Lead ainda decidindo    Arrasta aqui = cria negócio
-```
+# Plano: Remover botão "Criar Negócio" + Reordenar Descarte para última etapa
 
 ## Mudanças
 
-### 1. Migration SQL
-- Inserir etapa "Em Evolução" (`tipo: em_evolucao`, `ordem: 7`)
-- Renomear etapa "Convertido" para "Negócio Criado" (mantém `tipo: convertido`, `ordem: 9`)
-- Reordenar "Descarte" para `ordem: 8`
+### 1. Remover botão "Criar Negócio" do card
+- **`src/components/pipeline/PipelineCard.tsx`**: Remover o bloco do botão "Criar Negócio" que aparece em "Visita Realizada", junto com a função `handleCreateNegocio` e estados associados (`criandoNegocio`, `negocioCriado`)
+- **`src/hooks/useVisitas.ts`**: Atualizar toast da visita realizada removendo referência ao botão, substituir por "Arraste para 'Negócio Criado' quando estiver pronto"
 
-### 2. Lógica de negócio (`src/hooks/usePipeline.ts`)
-- Remover criação automática de negócio ao mover para "Visita Realizada"
-- Manter criação automática apenas ao mover para etapa tipo `convertido` ("Negócio Criado")
+### 2. Reordenar etapas (migration de dados)
+Ordem final:
+```text
+... → Visita Realizada (6) → Em Evolução (7) → Negócio Criado (8) → Descarte (9)
+```
+- "Negócio Criado" passa para `ordem = 8`
+- "Descarte" passa para `ordem = 9` (última etapa)
 
-### 3. Visual (`src/lib/celebrations.ts`)
-- Adicionar tema/cores para "Em Evolução" (azul/cyan)
-
-### 4. StageCoachBar
-- Adicionar mensagens e ações para a etapa `em_evolucao`
-
-### 5. Relatórios
-- Incluir "Em Evolução" nas métricas do `RelatoriosTab.tsx`
-
-## Arquivos afetados
-- Nova migration SQL
-- `src/hooks/usePipeline.ts`
-- `src/lib/celebrations.ts`
-- `src/components/pipeline/StageCoachBar.tsx`
-- `src/components/checkpoint/RelatoriosTab.tsx`
+### Arquivos afetados
+- `src/components/pipeline/PipelineCard.tsx` — remover botão e lógica associada
+- `src/hooks/useVisitas.ts` — atualizar mensagem toast
+- Update de dados nas ordens das etapas via SQL
 
