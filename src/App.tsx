@@ -192,6 +192,7 @@ const App = () => (
               <Route path="/wa/*" element={<Suspense fallback={<PageLoader />}><WhatsAppLanding /></Suspense>} />
              <Route path="/import-brevo-contacts" element={<Suspense fallback={<PageLoader />}><ImportBrevoContacts /></Suspense>} />
               <Route path="/privacidade" element={<Suspense fallback={<PageLoader />}><PrivacidadePage /></Suspense>} />
+              <Route path="/casatua" element={<Suspense fallback={<PageLoader />}><CasaTuaLanding /></Suspense>} />
               <Route path="/placar-do-dia" element={<Suspense fallback={<PageLoader />}><PlacarDoDia /></Suspense>} />
               <Route path="/fechamento-day" element={<Suspense fallback={<PageLoader />}><PlacarDoDia /></Suspense>} />
             {/* Acessível a todos os autenticados */}
