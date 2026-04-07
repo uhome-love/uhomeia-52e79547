@@ -1,18 +1,18 @@
-const CACHE_VERSION = "uhomesales-v3";
+// Unified Service Worker — auto-invalidates on every deploy
+// No hardcoded cache version; clears ALL caches on activate
+
+let _currentVersion = null;
 
 self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
+  // Delete ALL caches to guarantee fresh content
   e.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names
-          .filter((n) => n !== CACHE_VERSION)
-          .map((n) => caches.delete(n))
-      )
-    ).then(() => clients.claim())
+    caches.keys()
+      .then((names) => Promise.all(names.map((n) => caches.delete(n))))
+      .then(() => clients.claim())
   );
 });
 
@@ -23,8 +23,9 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.startsWith("/~oauth")) return;
   if (url.hostname.includes("supabase")) return;
 
-  // Always fetch fresh for navigation and scripts — never serve stale app
   const dest = e.request.destination;
+
+  // Network-First for documents, scripts, styles — never serve stale app
   if (dest === "document" || dest === "script" || dest === "style" || dest === "worker") {
     e.respondWith(
       fetch(e.request, { cache: "no-store" }).catch(() => caches.match(e.request))
@@ -32,14 +33,14 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Only cache images as offline fallback
+  // Cache images as offline fallback only
   if (dest === "image" && url.origin === self.location.origin) {
     e.respondWith(
       fetch(e.request)
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_VERSION).then((cache) => cache.put(e.request, clone));
+            caches.open("uhomesales-images").then((cache) => cache.put(e.request, clone));
           }
           return response;
         })
@@ -49,7 +50,33 @@ self.addEventListener("fetch", (e) => {
   }
 });
 
-// Push notifications
+// ── Version check: detect new deploys and force update ──
+async function checkForUpdate() {
+  try {
+    const res = await fetch("/version.json?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (_currentVersion === null) {
+      _currentVersion = data.v;
+      return;
+    }
+    if (data.v !== _currentVersion) {
+      _currentVersion = data.v;
+      // New deploy detected — clear caches and reload all clients
+      const names = await caches.keys();
+      await Promise.all(names.map((n) => caches.delete(n)));
+      const allClients = await clients.matchAll({ type: "window" });
+      allClients.forEach((client) => client.navigate(client.url));
+    }
+  } catch {
+    // ignore network errors
+  }
+}
+
+// Check for new version every 3 minutes
+setInterval(checkForUpdate, 3 * 60 * 1000);
+
+// ── Push Notifications ──
 self.addEventListener("push", (e) => {
   if (!e.data) return;
   try {
