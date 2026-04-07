@@ -98,15 +98,23 @@ Deno.serve(async (req) => {
     const body = await req.json();
 
     // ── Auth ──
-    // Accept either webhook secret (for external callers) or anon apikey header (for own landing pages)
+    // Accept: webhook secret, anon apikey header, service role bearer, or known landing sources
     const webhookSecret = Deno.env.get("LANDING_WEBHOOK_SECRET");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("ANON_KEY") || "";
+    const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const providedSecret = body.secret || req.headers.get("x-webhook-secret") || "";
     const providedApikey = req.headers.get("apikey") || "";
+    const authHeader = req.headers.get("authorization") || "";
+    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
     const isValidSecret = webhookSecret && providedSecret === webhookSecret;
     const isValidApikey = anonKey && providedApikey === anonKey;
+    const isValidServiceRole = svcKey && bearerToken === svcKey;
+    // Allow known internal landing page sources without auth (public form submissions)
+    const knownLandingSources = ["landing_casa_tua_abril", "landing_melnick_day", "landing_page"];
+    const sourceValue = (body.source || body.origem || "").toLowerCase();
+    const isKnownLanding = knownLandingSources.some(s => sourceValue.includes(s));
 
-    if (webhookSecret && !isValidSecret && !isValidApikey) {
+    if (webhookSecret && !isValidSecret && !isValidApikey && !isValidServiceRole && !isKnownLanding) {
       L.warn("Auth failed — invalid webhook secret or apikey", { source: body.source });
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
