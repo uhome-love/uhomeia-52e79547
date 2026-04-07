@@ -1,61 +1,97 @@
 
+Diagnóstico confirmado
 
-## Corrigir distribuição: segment ID mismatch entre RPC e roleta_fila
+- O problema não é “falta de corretor na roleta”.
+- Hoje existem corretores aprovados e ativos na roleta da manhã em todos os segmentos usados pelos leads pendentes, inclusive:
+  - Médio-Alto Padrão: 13 entradas ativas
+  - MCMV: 4
+  - Altíssimo Padrão: 4
+  - Investimento: 7
+- O erro recorrente acontece porque o motor atual trata vários cenários diferentes como o mesmo retorno genérico `no_broker_available`.
+- Além disso, alguns leads da Fila CEO já passaram por timeout/rejeição, e a RPC bloqueia redistribuição para qualquer corretor que já tenha tido aquele lead. Quando o pool elegível se esgota, o lead fica preso na fila mesmo com corretores ativos.
+- Há também risco estrutural porque a lógica de elegibilidade está duplicada entre trigger automático e RPC manual.
 
-### Problema raiz
+Plano de correção definitiva
 
-Existem **duas tabelas de segmentos** com os mesmos nomes mas **UUIDs diferentes**:
+1. Centralizar a seleção de corretor em uma única função do banco
+- Criar uma função interna única para montar a lista de elegíveis da roleta.
+- Essa função será usada tanto por:
+  - `trg_auto_distribute_lead`
+  - `distribuir_lead_atomico`
+- Assim eliminamos divergência futura entre distribuição automática e disparo manual do CEO.
 
-```text
-Segmento           pipeline_segmentos ID           roleta_segmentos ID
-─────────────────  ──────────────────────────────  ──────────────────────────────
-Médio-Alto Padrão  c8b24415-3dc1-4f65-aae1-...     d364f084-a63b-4be3-892e-...
-Altíssimo Padrão   5e930c09-634d-40e1-9ccc-...     93ca556c-9a32-4fb8-b1af-...
-MCMV / Até 500k    21180d72-f202-4d29-96cb-...     9948f523-29f4-46a7-bc1b-...
-Investimento       dd96ad01-7e76-40e9-8324-...     409aeddf-077f-473a-97cc-...
-```
+2. Separar corretamente os motivos de falha
+- A RPC deixará de retornar apenas `no_broker_available`.
+- Ela passará a distinguir, por exemplo:
+  - sem fila ativa na janela
+  - sem segmento compatível
+  - todos os corretores do segmento já bloquearam esse lead por timeout/rejeição
+  - sem corretor online/disponível
+  - lead geral sem nenhum corretor ativo na janela
+- Isso corrige o diagnóstico falso de “não há corretores na manhã”.
 
-- **Trigger** (`trg_auto_distribute_lead`): Busca segmento via `roleta_campanhas` → retorna `roleta_segmentos` IDs ✅ (compatível com `roleta_fila`)
-- **RPC** (`distribuir_lead_atomico`): Busca segmento via `pipeline_segmentos` → retorna IDs **incompatíveis** com `roleta_fila` ❌
+3. Criar fallback real para disparo forçado da Fila CEO
+- Quando `p_force = true`, o fluxo será:
+  1. tentar distribuição normal respeitando segmento e bloqueios
+  2. se o lead for geral (`origens_gerais`, `ignorar_segmento`, ou sem empreendimento válido), distribuir para qualquer corretor ativo da janela
+  3. se ainda falhar porque todos já tiveram timeout/rejeição, permitir redistribuição forçada controlada para leads presos na Fila CEO, evitando apenas o corretor mais recente/imediato
+- Isso evita que o lead fique eternamente travado por histórico antigo.
 
-Resultado: quando o CEO tenta disparar da Fila, o RPC encontra `v_segmento_id = c8b24415...` mas nenhum corretor na `roleta_fila` tem esse ID. Retorna `no_broker_available`.
+4. Preservar a regra de proteção sem deixar lead morrer na fila
+- O bloqueio por timeout/rejeição continuará existindo como primeira regra.
+- A diferença é que, no disparo manual do CEO, haverá uma “última camada de recuperação” para leads encalhados.
+- Essa camada será auditada separadamente para rastrear quando o sistema precisou reaproveitar um lead.
 
-Os 12 leads na fila chegaram de madrugada (antes dos credenciamentos serem aprovados ~8:45 BRT), então o trigger corretamente não os distribuiu. Mas agora que há corretores ativos, o despacho manual via RPC falha por causa do mismatch.
+5. Melhorar a edge function de batch
+- Atualizar `supabase/functions/distribute-lead/index.ts` para:
+  - agrupar falhas por motivo real
+  - gravar contexto detalhado em auditoria/ops
+  - retornar resumo útil para a UI
+- Exemplo de retorno:
+  - `dispatched`
+  - `failed`
+  - `failed_by_reason`
+  - `force_recovered`
 
-### Solução
+6. Corrigir a mensagem da interface do CEO
+- Atualizar `src/components/pipeline/FilaCeoDispatchModal.tsx` para não mostrar mais:
+  - “Verifique se há corretores ativos no modo manhã”
+  quando isso não for verdade.
+- Mostrar mensagem precisa, por exemplo:
+  - “8 distribuídos, 4 ficaram sem elegíveis porque já passaram por todos os corretores do segmento”
+  - “2 leads sem mapeamento válido de segmento”
+- Isso evita novo falso alarme operacional.
 
-Uma migration que atualiza o `distribuir_lead_atomico` para buscar o segmento via `roleta_campanhas` (igual ao trigger), em vez de `pipeline_segmentos`:
+7. Reprocessar a fila atual após a correção
+- Depois da lógica nova entrar, reexecutar o dispatch da Fila CEO para destravar os leads já presos.
+- Se algum lead continuar falhando, ele já aparecerá com motivo exato, sem ambiguidade.
 
-```sql
--- ANTES (quebrado — usa pipeline_segmentos com IDs incompatíveis):
-SELECT id INTO v_segmento_id
-FROM public.pipeline_segmentos
-WHERE ativo = true
-  AND v_emp_lower = ANY(SELECT lower(trim(unnest(empreendimentos))))
-LIMIT 1;
+Arquivos/áreas a ajustar
 
--- DEPOIS (correto — usa roleta_campanhas com roleta_segmentos IDs):
-SELECT segmento_id, COALESCE(ignorar_segmento, false)
-INTO v_segmento_id, v_ignora_segmento_camp
-FROM public.roleta_campanhas
-WHERE ativo = true
-  AND (
-    lower(trim(empreendimento)) = v_emp_lower
-    OR v_emp_lower LIKE '%' || lower(trim(empreendimento)) || '%'
-    OR lower(trim(empreendimento)) LIKE '%' || v_emp_lower || '%'
-  )
-LIMIT 1;
+- `supabase/migrations/...`
+  - nova função compartilhada de elegibilidade/seleção
+  - refactor de `distribuir_lead_atomico`
+  - refactor de `trg_auto_distribute_lead`
+- `supabase/functions/distribute-lead/index.ts`
+  - agregação de motivos e resposta detalhada
+- `src/components/pipeline/FilaCeoDispatchModal.tsx`
+  - mensagens corretas de sucesso/falha
+- Opcionalmente a tela da roleta/observabilidade
+  - para exibir por que leads ficaram retidos
 
-IF v_ignora_segmento_camp THEN
-  v_segmento_id := NULL;
-  v_ignora_segmento := TRUE;
-END IF;
-```
+Detalhes técnicos
 
-Isso alinha a lógica do RPC com a do trigger — ambos usam `roleta_campanhas` → `roleta_segmentos` IDs → match correto com `roleta_fila.segmento_id`.
+- Manter uso de `profiles.user_id` como ID final do corretor no `pipeline_leads.corretor_id`.
+- Manter round-robin com `roleta_fila.ultima_distribuicao_at`.
+- Não remover a exclusão por timeout/rejeição; apenas criar fallback controlado no fluxo forçado do CEO.
+- Tratar como “lead geral” os casos já previstos:
+  - origem em `origens_gerais`
+  - campanha com `ignorar_segmento = true`
+  - empreendimento vazio/indefinido
 
-### Resultado
-- Despacho manual da Fila do CEO volta a funcionar imediatamente
-- Os 12 leads pendentes poderão ser distribuídos
-- Lógica fica consistente entre trigger e RPC
+Resultado esperado
 
+- Leads da Fila CEO não ficarão mais presos com mensagem falsa de “sem corretor”.
+- Distribuição automática e manual passarão a usar a mesma regra.
+- Leads antigos com timeout/rejeição deixarão de ficar eternamente encalhados.
+- O CEO verá o motivo real de cada falha quando houver exceção operacional de verdade.
