@@ -2,16 +2,28 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Auto-update service worker — no manual cache clearing needed
-if ("serviceWorker" in navigator) {
+// Guard: never register SW inside iframes or preview hosts
+const isInIframe = (() => {
+  try { return window.self !== window.top; } catch { return true; }
+})();
+const isPreviewHost =
+  window.location.hostname.includes("id-preview--") ||
+  window.location.hostname.includes("lovableproject.com");
+
+if ("serviceWorker" in navigator && !isInIframe && !isPreviewHost) {
   window.addEventListener("load", async () => {
     try {
       const reg = await navigator.serviceWorker.register("/sw.js", {
-        updateViaCache: "none", // always check for new SW from network
+        updateViaCache: "none",
       });
 
-      // Check for updates every 30 minutes
-      setInterval(() => reg.update(), 30 * 60 * 1000);
+      // Check for updates every 5 minutes
+      setInterval(() => reg.update(), 5 * 60 * 1000);
+
+      // Check when user returns to the app
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") reg.update();
+      });
 
       // When a new SW is found, activate it immediately
       reg.addEventListener("updatefound", () => {
@@ -31,6 +43,11 @@ if ("serviceWorker" in navigator) {
     } catch {
       // ignore
     }
+  });
+} else if ("serviceWorker" in navigator && (isInIframe || isPreviewHost)) {
+  // Unregister any existing SWs in preview/iframe to avoid stale cache
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((r) => r.unregister());
   });
 }
 
