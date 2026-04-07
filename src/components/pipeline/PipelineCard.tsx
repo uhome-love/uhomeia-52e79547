@@ -92,8 +92,6 @@ const PipelineCard = memo(function PipelineCard({
   const [transferOpen, setTransferOpen] = useState(false);
   const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
   const [whatsappTemplatesOpen, setWhatsappTemplatesOpen] = useState(false);
-  const [criandoNegocio, setCriandoNegocio] = useState(false);
-  const [negocioCriado, setNegocioCriado] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [isWhatsAppFlowOpen, setIsWhatsAppFlowOpen] = useState(false);
 
@@ -206,49 +204,6 @@ const PipelineCard = memo(function PipelineCard({
     onClick();
   };
 
-  const handleCreateNegocio = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user || criandoNegocio) return;
-    setCriandoNegocio(true);
-    try {
-      const corretorUserId = lead.corretor_id;
-      const gerenteUserId = lead.gerente_id || user.id;
-      const { data: profileRows } = await supabase
-        .from("profiles")
-        .select("id, user_id")
-        .in("user_id", [corretorUserId, gerenteUserId].filter(Boolean) as string[]);
-      const profileMap = new Map((profileRows || []).map(p => [p.user_id, p.id]));
-
-      const { data: negocio, error } = await supabase
-        .from("negocios")
-        .insert({
-          nome_cliente: lead.nome,
-          pipeline_lead_id: lead.id,
-          corretor_id: corretorUserId ? profileMap.get(corretorUserId) || null : null,
-          gerente_id: profileMap.get(gerenteUserId) || null,
-          empreendimento: lead.empreendimento || null,
-          telefone: lead.telefone || null,
-          fase: "novo_negocio",
-          origem: "visita_realizada",
-          vgv_estimado: lead.valor_estimado || null,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      if (negocio) {
-        await supabase.from("pipeline_leads").update({ negocio_id: negocio.id } as any).eq("id", lead.id);
-        setNegocioCriado(true);
-        toast.success(`🎉 Negócio criado para ${lead.nome}!`, { description: "🎯 Lead movido para Negócio Criado" });
-        const convertidoStage = stages.find(s => s.tipo === "convertido");
-        if (convertidoStage && onMoveLead) onMoveLead(lead.id, convertidoStage.id);
-      }
-    } catch (err: any) {
-      console.error("Erro ao criar negócio:", err);
-      toast.error("Erro ao criar negócio: " + (err?.message || "Erro desconhecido"));
-    } finally {
-      setCriandoNegocio(false);
-    }
-  };
 
   // Origin tag
   const originTag = useMemo(() => {
@@ -453,39 +408,6 @@ const PipelineCard = memo(function PipelineCard({
         <CardStatusLine status={status} stageChangedAt={lead.stage_changed_at} />
       </div>
 
-      {/* Create Negócio button — only on Visita Realizada without linked deal */}
-      {stage?.nome?.toLowerCase().includes("visita realizada") && !lead.negocio_id && !negocioCriado && (
-        <div data-actions-area style={{ padding: "0 14px 8px" }}>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={criandoNegocio}
-            className="w-full h-7 text-[11px] gap-1.5 font-semibold"
-            style={{
-              borderColor: "#A7F3D0", color: "#059669",
-              borderRadius: 8,
-            }}
-            onClick={handleCreateNegocio}
-          >
-            {criandoNegocio ? (
-              <><span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> Criando...</>
-            ) : (
-              <><FileText className="h-3 w-3" /> Criar Negócio</>
-            )}
-          </Button>
-        </div>
-      )}
-
-      {negocioCriado && (
-        <div data-actions-area style={{ padding: "0 14px 8px" }}>
-          <div style={{
-            width: "100%", height: 28, display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 600, color: "#059669", background: "#ECFDF5", borderRadius: 8,
-          }}>
-            ✅ Negócio criado com sucesso!
-          </div>
-        </div>
-      )}
 
       {/* Negócio Criado stage — show deal info + regression */}
       {stage?.tipo === "convertido" && (
