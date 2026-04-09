@@ -237,7 +237,29 @@ Deno.serve(async (req) => {
           }
         }
 
-        // ── FALLBACK: only call Jetimob for codes NOT found locally ──
+        // ── FALLBACK 1: site `imoveis` table for codes NOT found in CRM ──
+        const missingAfterCRM = ids.filter((id: string) => !foundCodes.has(id));
+
+        const siteResults: any[] = [];
+        if (missingAfterCRM.length > 0) {
+          try {
+            const { data: siteProps } = await supabaseSiteClient
+              .from("imoveis")
+              .select("id, jetimob_id, titulo, tipo, bairro, cidade, preco, area_total, quartos, suites, vagas, banheiros, fotos, foto_principal, condominio_nome, latitude, longitude")
+              .in("jetimob_id", missingAfterCRM)
+              .eq("status", "disponivel");
+            if (siteProps) {
+              for (const row of siteProps) {
+                siteResults.push(mapSiteImovelRow(row));
+                foundCodes.add(row.jetimob_id || String(row.id));
+              }
+            }
+          } catch (e) {
+            console.error("Site imoveis fallback error:", e);
+          }
+        }
+
+        // ── FALLBACK 2: Jetimob API for codes still missing ──
         const missingIds = ids.filter((id: string) => !foundCodes.has(id));
 
         let jetimobResults: any[] = [];
