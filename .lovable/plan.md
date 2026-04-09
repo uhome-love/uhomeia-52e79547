@@ -1,39 +1,30 @@
 
-# Plano: Corrigir título de atividade para leads Meta Ads
+
+# Plano: Corrigir acesso do Corretor à Oferta Ativa
 
 ## Problema
-O form ID `1253040266458947` (Casa Tua) não está no `META_FORM_ID_MAP`, então o título da atividade fica "Lead gerado via meta_ads — 1253040266458947" — inútil para o corretor.
+Redirect circular: corretor clica "Oferta Ativa" → vai para `/oferta-ativa` → `OfertaAtiva.tsx` linha 31-32 detecta que é corretor e redireciona de volta para `/corretor`. O mesmo acontece pelo sidebar (`/corretor/call` → redirect para `/oferta-ativa` → redirect para `/corretor`).
 
-## Correções
+## Solução
+Restaurar a rota `/corretor/call` para renderizar diretamente o componente `CorretorCall` (a Arena de discagem), e apontar todos os links do corretor para essa rota.
 
-### Arquivo: `supabase/functions/receive-meta-lead/index.ts`
+### Alterações
 
-**1. Adicionar form ID faltante ao mapa (linha ~225)**
+**1. `src/App.tsx` — linha 225**
+Trocar o redirect por renderização direta do `CorretorCall`:
+```tsx
+// De:
+<Route path="/corretor/call" element={<Navigate to="/oferta-ativa" replace />} />
+// Para:
+<Route path="/corretor/call" element={<ProtectedPage><ErrorBoundary module="corretor-call"><CorretorCall /></ErrorBoundary></ProtectedPage>} />
 ```
-"1253040266458947": "Casa Tua",
-```
+Adicionar o lazy import de `CorretorCall` no topo.
 
-**2. Melhorar o título da atividade (linha 571)**
-Trocar de:
-```
-titulo: `Lead gerado via ${plataformaLabel}${formName ? ` — ${formName}` : ""}`
-```
-Para:
-```
-titulo: `Lead gerado via ${plataformaLabel}${empreendimento ? ` — ${empreendimento}` : ""}`
-```
-Assim o título fica: **"Lead gerado via Meta Ads — Casa Tua"** em vez do ID numérico.
+**2. `src/pages/CorretorDashboard.tsx` — linha 171**
+Trocar o `navigate("/oferta-ativa")` por `navigate("/corretor/call")` no botão "CALL / Oferta Ativa".
 
-**3. Manter formName na descrição (linha 564)**
-O `formName` já aparece na `descricao` como "Formulário: Casa Tua" — isso continua. Mas se o formName for um ID numérico puro (não mapeado), filtrar para não poluir:
-```
-if (formName && !/^\d{10,}$/.test(formName)) entradaParts.push(`Formulário: ${formName}`);
-```
-
-## Resultado esperado
-- Título: "Lead gerado via Meta Ads — Casa Tua"
-- Descrição: "Meta Ads • Formulário: Casa Tua • Empreendimento: Casa Tua"
-- Se formName for ID numérico não mapeado, ele não aparece na descrição
+**3. Sidebar** — manter `/corretor/call` no sidebar do corretor (já está correto na linha 529 do `AppSidebar.tsx`). Verificar no `Sidebar.tsx` se o corretor aponta para `/oferta-ativa` e corrigir para `/corretor/call`.
 
 ## Risco
-Zero — só muda texto de exibição da atividade, nenhuma lógica de negócio alterada.
+Zero. A rota `/oferta-ativa` continua existindo para gestores e admins. O corretor passa a usar `/corretor/call` que já tem o componente Arena completo.
+
