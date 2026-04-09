@@ -725,9 +725,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const LeadColumn = (
     <div className="space-y-3 min-w-0">
       {/* Lead card — compact */}
-      <div className="rounded-xl p-5 space-y-3" style={{ background: "#1C2128", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
+      <div className="rounded-xl p-5 space-y-3" style={{ background: "var(--arena-card-bg)", border: "1px solid var(--arena-card-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
         {/* Badge row */}
-        <div className="flex items-center gap-2 text-xs flex-wrap" style={{ color: "#6B7280" }}>
+        <div className="flex items-center gap-2 text-xs flex-wrap" style={{ color: "var(--arena-text-muted)" }}>
           <span className={freshness.color}>{freshness.emoji} {freshness.label}</span>
           <span>·</span>
           <span className={isHotLead ? "text-yellow-400 font-semibold" : ""}>🎯 Score: {leadScore}</span>
@@ -737,8 +737,8 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
         {/* Name — text-2xl */}
         <div>
-          <h2 className="text-2xl font-bold text-white leading-tight">{lead.nome}</h2>
-          <div className="flex items-center gap-2 mt-0.5" style={{ fontSize: "14px", color: "#94A3B8" }}>
+          <h2 className="text-2xl font-bold leading-tight" style={{ color: "var(--arena-text)" }}>{lead.nome}</h2>
+          <div className="flex items-center gap-2 mt-0.5" style={{ fontSize: "14px", color: "var(--arena-text-muted)" }}>
             <Building2 className="h-3.5 w-3.5" /> {lead.empreendimento}
             {lead.campanha && <span>· {lead.campanha}</span>}
           </div>
@@ -748,36 +748,36 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         <div>
           {lead.telefone && (
             <div
-              className="flex items-center justify-between py-1 cursor-pointer transition-colors hover:bg-white/5 active:scale-[0.98]"
+              className="flex items-center justify-between py-1 cursor-pointer transition-colors hover:bg-accent active:scale-[0.98]"
               onClick={() => copyToClipboard(lead.telefone!, "Telefone")}
             >
               <span className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5" style={{ color: "#6B7280" }} />
-                <span className="font-mono font-bold text-white" style={{ fontSize: "15px" }}>{formatPhone(lead.telefone)}</span>
+                <Phone className="h-3.5 w-3.5" style={{ color: "var(--arena-text-muted)" }} />
+                <span className="font-mono font-bold" style={{ fontSize: "15px", color: "var(--arena-text)" }}>{formatPhone(lead.telefone)}</span>
               </span>
-              <Copy className="h-3 w-3" style={{ color: "#4B5563" }} />
+              <Copy className="h-3 w-3" style={{ color: "var(--arena-text-muted)" }} />
             </div>
           )}
           {lead.telefone2 && (
             <div
-              className="flex items-center justify-between py-1 cursor-pointer transition-colors hover:bg-white/5"
+              className="flex items-center justify-between py-1 cursor-pointer transition-colors hover:bg-accent"
               onClick={() => copyToClipboard(lead.telefone2!, "Telefone 2")}
             >
               <span className="flex items-center gap-2">
-                <Phone className="h-3 w-3" style={{ color: "#4B5563" }} />
-                <span className="font-mono text-neutral-400" style={{ fontSize: "13px" }}>{formatPhone(lead.telefone2)}</span>
+                <Phone className="h-3 w-3" style={{ color: "var(--arena-text-muted)" }} />
+                <span className="font-mono text-muted-foreground" style={{ fontSize: "13px" }}>{formatPhone(lead.telefone2)}</span>
               </span>
               <Copy className="h-3 w-3" style={{ color: "#374151" }} />
             </div>
           )}
           {lead.email && (
             <div
-              className="flex items-center justify-between py-1 cursor-pointer transition-colors hover:bg-white/5"
+              className="flex items-center justify-between py-1 cursor-pointer transition-colors hover:bg-accent"
               onClick={() => copyToClipboard(lead.email!, "E-mail")}
             >
               <span className="flex items-center gap-2">
-                <Mail className="h-3 w-3" style={{ color: "#4B5563" }} />
-                <span className="text-neutral-400 truncate" style={{ fontSize: "13px" }}>{lead.email}</span>
+                <Mail className="h-3 w-3" style={{ color: "var(--arena-text-muted)" }} />
+                <span className="text-muted-foreground truncate" style={{ fontSize: "13px" }}>{lead.email}</span>
               </span>
               <Copy className="h-3 w-3" style={{ color: "#374151" }} />
             </div>
@@ -799,7 +799,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               <Button size="sm" variant="ghost" className="h-6 text-[11px] text-green-400 hover:bg-green-500/10" onClick={handleWhatsAppDuringCall}>
                 <MessageCircle className="h-3 w-3 mr-0.5" /> WhatsApp
               </Button>
-              <Button size="sm" className="h-6 text-[11px] bg-red-600 hover:bg-red-700 text-white gap-1" onClick={handleOpenResultPopup}>
+              <Button size="sm" className="h-6 text-[11px] bg-red-600 hover:bg-red-700 text-foreground gap-1" onClick={handleOpenResultPopup}>
                 <Phone className="h-3 w-3 rotate-[135deg]" /> Finalizar
               </Button>
             </div>
@@ -820,7 +820,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             <div className="grid grid-cols-2 gap-2">
               <Button
                 size="sm"
-                className="gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                className="gap-1 bg-blue-600 hover:bg-blue-700 text-foreground"
                 style={{ height: "36px", fontSize: "13px" }}
                 onClick={() => setComunicacaoOpen(true)}
                 disabled={showModal || showResultPopup}
@@ -830,7 +830,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1 text-neutral-400 hover:text-white hover:bg-white/5"
+                className="gap-1 text-muted-foreground hover:text-foreground hover:bg-accent"
                 style={{ height: "36px", fontSize: "13px", border: "1px solid rgba(255,255,255,0.1)" }}
                 onClick={() => handleAction("email")}
                 disabled={!lead.email || showModal || showResultPopup}
@@ -884,7 +884,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
               >
                 <button
                   onClick={() => setOpenObjections(prev => prev.filter(x => x !== i))}
-                  className="absolute top-2 right-2 text-neutral-500 hover:text-white transition-colors"
+                  className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
                   style={{ fontSize: 12, lineHeight: 1 }}
                 >
                   ✕
@@ -893,7 +893,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                   <Sparkles className="h-3 w-3 shrink-0" style={{ color: "#FBBF24" }} />
                   <span className="text-xs font-bold" style={{ color: "#FBBF24" }}>✨ {objections[i].label}</span>
                 </div>
-                <p className="text-sm leading-snug line-clamp-3" style={{ color: "#D1D5DB" }}>{objections[i].answer}</p>
+                <p className="text-sm leading-snug line-clamp-3" style={{ color: "var(--arena-text)" }}>{objections[i].answer}</p>
               </div>
             ))}
           </div>
@@ -904,7 +904,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
 
       {/* Recent calls — collapsed, outside card */}
       <Collapsible>
-        <CollapsibleTrigger className="flex items-center gap-1.5 text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors w-full px-1">
+        <CollapsibleTrigger className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-neutral-300 transition-colors w-full px-1">
           <History className="h-3 w-3" />
           <span>Últimas Ligações ({lead.tentativas_count})</span>
           <ChevronDown className="h-3 w-3 ml-auto" />
@@ -921,13 +921,13 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   const ToolsColumn = (
     <div className="min-w-0 h-full flex flex-col">
       {/* Script Tabs — flush with content */}
-      <div className="flex shrink-0 rounded-t-xl overflow-hidden" style={{ background: "#161B22" }}>
+      <div className="flex shrink-0 rounded-t-xl overflow-hidden" style={{ background: "var(--arena-card-bg)" }}>
         <button
           onClick={() => setScriptTab("ligacao")}
           className="flex-1 py-2.5 text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
           style={{
-            background: scriptTab === "ligacao" ? "#1a2332" : "transparent",
-            color: scriptTab === "ligacao" ? "#86EFAC" : "#6B7280",
+            background: scriptTab === "ligacao" ? "var(--arena-subtle-bg)" : "transparent",
+            color: scriptTab === "ligacao" ? "#86EFAC" : "var(--arena-text-muted)",
             borderBottom: scriptTab === "ligacao" ? "2px solid rgba(34,197,94,0.6)" : "2px solid transparent",
           }}
         >
@@ -937,8 +937,8 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           onClick={() => setScriptTab("whatsapp")}
           className="flex-1 py-2.5 text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
           style={{
-            background: scriptTab === "whatsapp" ? "#0d1f0d" : "transparent",
-            color: scriptTab === "whatsapp" ? "#86EFAC" : "#6B7280",
+            background: scriptTab === "whatsapp" ? "var(--arena-subtle-bg)" : "transparent",
+            color: scriptTab === "whatsapp" ? "#86EFAC" : "var(--arena-text-muted)",
             borderBottom: scriptTab === "whatsapp" ? "2px solid rgba(34,197,94,0.6)" : "2px solid transparent",
           }}
         >
@@ -951,7 +951,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         ref={objScrollRef}
         className="flex-1 min-h-0 overflow-y-auto"
         style={{
-          background: scriptTab === "ligacao" ? "#1a2332" : "#0d1f0d",
+          background: "var(--arena-bg-from)",
           scrollbarWidth: "thin",
         }}
       >
@@ -959,7 +959,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       </div>
 
       {/* Ficha Rápida — between script and CTA */}
-      <div className="shrink-0 px-2 py-2" style={{ background: "#161B22" }}>
+      <div className="shrink-0 px-2 py-2" style={{ background: "var(--arena-card-bg)" }}>
         <FichaRapida empreendimento={selectedEmp} onEmpChange={setSelectedEmp} />
       </div>
 
@@ -989,11 +989,11 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md mx-4 rounded-xl p-6 space-y-5"
-        style={{ background: "#1C2128", border: "1px solid rgba(255,255,255,0.1)" }}
+        style={{ background: "var(--arena-card-bg)", border: "1px solid var(--arena-card-border)" }}
       >
         <div className="text-center space-y-1">
-          <h3 className="text-lg font-bold text-white">📊 Resultado da Ligação</h3>
-          <p className="text-sm" style={{ color: "#94A3B8" }}>Lead: {lead.nome} · {lead.empreendimento}</p>
+          <h3 className="text-lg font-bold" style={{ color: "var(--arena-text)" }}>📊 Resultado da Ligação</h3>
+          <p className="text-sm" style={{ color: "var(--arena-text-muted)" }}>Lead: {lead.nome} · {lead.empreendimento}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -1025,13 +1025,13 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           onChange={(e) => setInlineObs(e.target.value)}
           rows={2}
           className="resize-none text-xs"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#E2E8F0", borderRadius: 10 }}
+          style={{ background: "var(--arena-subtle-bg)", border: "1px solid var(--arena-card-border)", color: "var(--arena-text)", borderRadius: 10 }}
         />
 
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            className="flex-1 text-neutral-400 hover:text-white hover:bg-white/5"
+            className="flex-1 text-muted-foreground hover:text-foreground hover:bg-accent"
             style={{ height: 44, border: "1px solid rgba(255,255,255,0.08)" }}
             onClick={() => { setShowResultPopup(false); setSelectedResult(null); }}
           >
@@ -1039,7 +1039,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           </Button>
           {selectedResult && (
             <Button
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-foreground font-semibold"
               style={{ height: 44 }}
               onClick={handlePopupConfirm}
             >
@@ -1052,7 +1052,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
   );
 
   return (
-    <div className="relative overflow-hidden" style={{ background: "#0A0F1E" }}>
+    <div className="relative overflow-hidden" style={{ background: "var(--arena-bg-from)" }}>
       {/* ═══ ARENA OVERLAYS ═══ */}
       {showFlash && <div className="round-flash" />}
       {showRound && (
@@ -1087,7 +1087,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
             className="text-center p-3 rounded-2xl border-2"
             style={{ background: "rgba(99,102,241,0.15)", borderColor: "rgba(99,102,241,0.3)" }}
           >
-            <p className="text-lg font-bold text-white">{showMilestone}</p>
+            <p className="text-lg font-bold text-foreground">{showMilestone}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1098,13 +1098,13 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 gap-1 text-neutral-500 hover:text-white hover:bg-white/5 text-[11px]"
+            className="h-6 gap-1 text-muted-foreground hover:text-foreground hover:bg-accent text-[11px]"
             onClick={onBack}
           >
             <ArrowLeft className="h-3 w-3" /> Listas
           </Button>
-          <span className="text-neutral-500">
-            Lead <strong className="text-white">#{sessionLeadsServed + 1}</strong> · ROUND {sessionLeadsServed + 1} · {lead.empreendimento}
+          <span className="text-muted-foreground">
+            Lead <strong style={{ color: "var(--arena-text)" }}>#{sessionLeadsServed + 1}</strong> · ROUND {sessionLeadsServed + 1} · {lead.empreendimento}
           </span>
           {/* Empreendimento filter for campaign mode */}
           {isCampaign && campaignEmpreendimentos.length > 1 && (
@@ -1119,9 +1119,9 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
                 className="h-6 px-2 rounded text-[11px] font-medium bg-transparent text-blue-300 border border-blue-500/30 outline-none cursor-pointer hover:border-blue-400/60 transition-colors"
                 style={{ appearance: "auto" }}
               >
-                <option value="todos" style={{ background: "#1C2128", color: "#93C5FD" }}>Todos empreendimentos</option>
+                <option value="todos" style={{ background: "var(--arena-card-bg)", color: "#93C5FD" }}>Todos empreendimentos</option>
                 {campaignEmpreendimentos.map(emp => (
-                  <option key={emp} value={emp} style={{ background: "#1C2128", color: "#93C5FD" }}>{emp}</option>
+                  <option key={emp} value={emp} style={{ background: "var(--arena-card-bg)", color: "#93C5FD" }}>{emp}</option>
                 ))}
               </select>
             </div>
@@ -1139,7 +1139,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 gap-1 text-neutral-500 hover:text-white hover:bg-white/5 text-[11px]"
+            className="h-6 gap-1 text-muted-foreground hover:text-foreground hover:bg-accent text-[11px]"
             disabled={callActive}
             onClick={async () => {
               if (lead && user) {
@@ -1189,7 +1189,7 @@ export default function DialingModeWithScript({ lista, onBack }: Props) {
       {/* ═══ MOBILE: Tabs ═══ */}
       {isMobile ? (
         <div className="space-y-2">
-          <div className="flex gap-1 p-1 rounded-lg" style={{ background: "#161B22" }}>
+          <div className="flex gap-1 p-1 rounded-lg" style={{ background: "var(--arena-card-bg)" }}>
             {([
               { key: "lead" as const, label: "Lead", emoji: "👤" },
               { key: "script" as const, label: "Script", emoji: "📋" },

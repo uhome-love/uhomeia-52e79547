@@ -25,7 +25,6 @@ interface Props {
   onDashboard: () => void;
 }
 
-/* ─── Animated counter ─── */
 function useCountUp(target: number, duration: number, startDelay: number) {
   const [value, setValue] = useState(0);
   useEffect(() => {
@@ -34,7 +33,7 @@ function useCountUp(target: number, duration: number, startDelay: number) {
       const tick = (now: number) => {
         const elapsed = now - start;
         const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const eased = 1 - Math.pow(1 - progress, 3);
         setValue(Math.round(eased * target));
         if (progress < 1) requestAnimationFrame(tick);
       };
@@ -45,7 +44,6 @@ function useCountUp(target: number, duration: number, startDelay: number) {
   return value;
 }
 
-/* ─── Confetti particle ─── */
 function Confetti({ count }: { count: number }) {
   const colors = ["#22C55E", "#3B82F6", "#F59E0B", "#FFFFFF", "#A78BFA", "#F97316"];
   return (
@@ -70,34 +68,17 @@ function Confetti({ count }: { count: number }) {
   );
 }
 
-/* ─── Stat Card ─── */
-function StatCard({
-  emoji,
-  label,
-  value,
-  meta,
-  metaLabel,
-  delay,
-}: {
-  emoji: string;
-  label: string;
-  value: number;
-  meta?: number;
-  metaLabel?: string;
-  delay: number;
+function StatCard({ emoji, label, value, meta, metaLabel, delay }: {
+  emoji: string; label: string; value: number; meta?: number; metaLabel?: string; delay: number;
 }) {
   const animatedValue = useCountUp(value, 1200, delay);
   const metPct = meta ? Math.min(100, Math.round((value / Math.max(1, meta)) * 100)) : null;
   const color =
-    metPct === null
-      ? "text-blue-400"
-      : metPct >= 100
-        ? "text-emerald-400"
-        : metPct >= 50
-          ? "text-amber-400"
-          : value === 0
-            ? "text-red-400"
-            : "text-amber-400";
+    metPct === null ? "text-blue-400"
+      : metPct >= 100 ? "text-emerald-400"
+      : metPct >= 50 ? "text-amber-400"
+      : value === 0 ? "text-red-400"
+      : "text-amber-400";
 
   return (
     <motion.div
@@ -106,16 +87,16 @@ function StatCard({
       transition={{ delay: delay / 1000, duration: 0.4, type: "spring", stiffness: 200 }}
       className="rounded-2xl p-6 text-center"
       style={{
-        background: "#1C2128",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "var(--arena-card-bg)",
+        border: "1px solid var(--arena-card-border)",
       }}
     >
-      <p className="text-sm text-neutral-400 mb-2">
+      <p className="text-sm mb-2" style={{ color: "var(--arena-text-muted)" }}>
         {emoji} {label}
       </p>
       <p className={`text-5xl font-black ${color}`}>{animatedValue}</p>
       {meta !== undefined && (
-        <p className="text-xs text-neutral-500 mt-2">
+        <p className="text-xs mt-2" style={{ color: "var(--arena-text-muted)" }}>
           de {meta} {metaLabel || "meta"}
         </p>
       )}
@@ -123,7 +104,6 @@ function StatCard({
   );
 }
 
-/* ─── HOMI Message ─── */
 function getHomiMessage(data: ArenaSessionData): string {
   const ligPct = (data.tentativas / Math.max(1, data.metaLigacoes)) * 100;
   const aprvPct = (data.aproveitados / Math.max(1, data.metaAproveitados)) * 100;
@@ -136,7 +116,6 @@ function getHomiMessage(data: ArenaSessionData): string {
   return `⚡ Todo campeão tem dias difíceis.\nO importante é ter entrado na arena. Volta amanhã!`;
 }
 
-/* ─── CSS ─── */
 const summaryStyles = `
 @keyframes confettiFall {
   0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
@@ -162,15 +141,14 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
     data.aproveitados >= data.metaAproveitados ||
     data.visitasMarcadas >= data.metaVisitas;
 
-  // Phase progression
   useEffect(() => {
     const timers = [
-      setTimeout(() => setPhase(1), 100),   // title
-      setTimeout(() => setPhase(2), 600),   // stats
-      setTimeout(() => setPhase(3), 2000),  // xp bar
-      setTimeout(() => setPhase(4), 2800),  // achievements
-      setTimeout(() => setPhase(5), 3200),  // homi
-      setTimeout(() => setPhase(6), 4000),  // buttons
+      setTimeout(() => setPhase(1), 100),
+      setTimeout(() => setPhase(2), 600),
+      setTimeout(() => setPhase(3), 2000),
+      setTimeout(() => setPhase(4), 2800),
+      setTimeout(() => setPhase(5), 3200),
+      setTimeout(() => setPhase(6), 4000),
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -183,14 +161,12 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-y-auto"
-      style={{ background: "#0A0F1E" }}
+      style={{ background: "var(--arena-bg-from)" }}
     >
       <style>{summaryStyles}</style>
 
-      {/* Confetti if met any goal */}
       {metAny && phase >= 2 && <Confetti count={60} />}
 
-      {/* Radial glow */}
       <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none"
         style={{ background: "radial-gradient(circle, rgba(34,197,94,0.12) 0%, transparent 70%)" }}
       />
@@ -215,7 +191,7 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
               >
                 SESSÃO ENCERRADA
               </h1>
-              <p className="text-sm text-neutral-500 mt-2">
+              <p className="text-sm mt-2" style={{ color: "var(--arena-text-muted)" }}>
                 {data.empreendimento} · {new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </p>
             </motion.div>
@@ -241,12 +217,12 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
             className="space-y-2"
           >
             <div className="flex items-center justify-between text-xs">
-              <span className="text-neutral-400 font-semibold">XP GANHO HOJE</span>
+              <span className="font-semibold" style={{ color: "var(--arena-text-muted)" }}>XP GANHO HOJE</span>
               <span className="text-blue-400 font-bold">
                 +{xpAnimated} XP → {level.emoji} {level.label}
               </span>
             </div>
-            <div className="h-3 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <div className="h-3 rounded-full overflow-hidden" style={{ background: "var(--arena-subtle-bg)" }}>
               <div
                 className="h-full rounded-full"
                 style={{
@@ -269,10 +245,7 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
             className="flex flex-wrap gap-2 justify-center"
           >
             {data.tentativas >= data.metaLigacoes && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1, type: "spring" }}
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, type: "spring" }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
                 style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)" }}
               >
@@ -280,10 +253,7 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
               </motion.div>
             )}
             {data.aproveitados >= data.metaAproveitados && data.metaAproveitados > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, type: "spring" }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
                 style={{ background: "rgba(59,130,246,0.15)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.3)" }}
               >
@@ -291,10 +261,7 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
               </motion.div>
             )}
             {data.visitasMarcadas >= data.metaVisitas && data.metaVisitas > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, type: "spring" }}
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, type: "spring" }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
                 style={{ background: "rgba(249,115,22,0.15)", color: "#fdba74", border: "1px solid rgba(249,115,22,0.3)" }}
               >
@@ -302,10 +269,7 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
               </motion.div>
             )}
             {(data.streak || 0) >= 3 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4, type: "spring" }}
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4, type: "spring" }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
                 style={{ background: "rgba(239,68,68,0.15)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}
               >
@@ -323,7 +287,7 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
             transition={{ duration: 0.5, type: "spring" }}
             className="flex items-start gap-3 rounded-2xl p-4"
             style={{
-              background: "#1C2128",
+              background: "var(--arena-card-bg)",
               border: "1px solid rgba(99,179,237,0.2)",
             }}
           >
@@ -335,7 +299,7 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
             />
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">HOMI AI</p>
-              <p className="text-sm text-neutral-200 whitespace-pre-line leading-relaxed">{homiMsg}</p>
+              <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: "var(--arena-text)" }}>{homiMsg}</p>
             </div>
           </motion.div>
         )}
@@ -361,10 +325,11 @@ export default function ArenaSessionSummary({ data, onNewSession, onDashboard }:
             </button>
             <button
               onClick={onDashboard}
-              className="h-12 px-6 rounded-xl text-sm font-bold text-neutral-300 flex items-center gap-2 transition-colors hover:text-white"
+              className="h-12 px-6 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors"
               style={{
                 background: "transparent",
-                border: "1px solid rgba(255,255,255,0.15)",
+                border: "1px solid var(--arena-card-border)",
+                color: "var(--arena-text-muted)",
               }}
             >
               <Home className="h-4 w-4" /> Ir para Dashboard
