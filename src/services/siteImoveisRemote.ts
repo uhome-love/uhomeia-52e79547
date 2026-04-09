@@ -81,8 +81,8 @@ function applyFilters(query: any, filters: BuscaFilters = {}) {
   // Only show available properties
   let q = query.eq("status", "disponivel");
 
-  // Price > 0
-  q = q.gt("preco", 0);
+  // Price > 1 (some records have preco=0.1 as placeholder)
+  q = q.gt("preco", 1);
 
   // Cidade
   const cidades = filters.cidades?.length ? filters.cidades : filters.cidade ? [filters.cidade] : [];
