@@ -560,22 +560,22 @@ function NegocioCriadoSection({ lead, stages, onMoveLead }: {
   const vgvLabel = fmtVGV(negocio?.vgv_estimado ?? null);
 
   return (
-    <div data-actions-area style={{ padding: "0 14px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
+    <div data-actions-area style={{ padding: "0 12px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
       {/* Deal info */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "#F5F3FF", borderRadius: 8, padding: "6px 10px",
+        background: "hsl(var(--purple-50))", borderRadius: 8, padding: "6px 10px",
       }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <span style={{ fontSize: 10, fontWeight: 600, color: "#7C3AED", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: "hsl(var(--purple-500))", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Negócio
           </span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#0a0a0a" }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "hsl(var(--pipeline-text-primary))" }}>
             {faseLabel}
           </span>
         </div>
         {vgvLabel && (
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#10b981" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "hsl(var(--success-500))" }}>
             {vgvLabel}
           </span>
         )}
@@ -587,14 +587,14 @@ function NegocioCriadoSection({ lead, stages, onMoveLead }: {
           size="sm"
           variant="outline"
           className="w-full h-7 text-[11px] gap-1.5 font-semibold"
-          style={{ borderColor: "#FDE68A", color: "#D97706", borderRadius: 8 }}
+          style={{ borderColor: "hsl(var(--warning-100))", color: "hsl(var(--warning-600))", borderRadius: 8 }}
           onClick={(e) => { e.stopPropagation(); setShowStageSelector(true); }}
         >
           <Undo2 className="h-3 w-3" /> Regredir ao Pipeline
         </Button>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B", textAlign: "center" }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: "hsl(var(--pipeline-text-muted))", textAlign: "center" }}>
             Escolha a etapa de retorno:
           </span>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>
@@ -605,13 +605,13 @@ function NegocioCriadoSection({ lead, stages, onMoveLead }: {
                 onClick={(e) => { e.stopPropagation(); handleRegress(s.id); }}
                 style={{
                   fontSize: 10, fontWeight: 500, padding: "3px 8px",
-                  borderRadius: 6, border: "1px solid #e8e8f0",
-                  background: "#fff", color: "#334155",
+                  borderRadius: 6, border: "1px solid hsl(var(--border))",
+                  background: "hsl(var(--pipeline-card-bg))", color: "hsl(var(--pipeline-text-secondary))",
                   cursor: regressing ? "wait" : "pointer",
                   transition: "all 0.15s",
                 }}
                 onMouseEnter={(e) => { (e.target as HTMLElement).style.borderColor = "#4F46E5"; (e.target as HTMLElement).style.color = "#4F46E5"; }}
-                onMouseLeave={(e) => { (e.target as HTMLElement).style.borderColor = "#e8e8f0"; (e.target as HTMLElement).style.color = "#334155"; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.borderColor = "hsl(var(--border))"; (e.target as HTMLElement).style.color = "hsl(var(--pipeline-text-secondary))"; }}
               >
                 {s.nome}
               </button>
@@ -619,7 +619,7 @@ function NegocioCriadoSection({ lead, stages, onMoveLead }: {
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); setShowStageSelector(false); }}
-            style={{ fontSize: 10, color: "#94A3B8", textDecoration: "underline", cursor: "pointer", textAlign: "center", marginTop: 2 }}
+            style={{ fontSize: 10, color: "hsl(var(--pipeline-text-muted))", textDecoration: "underline", cursor: "pointer", textAlign: "center", marginTop: 2 }}
           >
             Cancelar
           </button>
