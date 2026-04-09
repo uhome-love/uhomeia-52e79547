@@ -222,6 +222,7 @@ Deno.serve(async (req) => {
       "921991273926020": "Orygem (Vídeo Gabrielle)",
       "924855113517986": "Las Casas (Video Gabrielle)",
       "966583865699014": "Orygem (Vídeo Lucas)",
+      "1253040266458947": "Casa Tua",
     };
 
     // Resolve form name from ID map, then fallback to raw ID
@@ -561,14 +562,14 @@ Deno.serve(async (req) => {
     const entradaParts: string[] = [];
     const plataformaLabel = isJetimobSite ? "Site Uhome" : (platform || "Meta Ads");
     entradaParts.push(plataformaLabel);
-    if (formName) entradaParts.push(`Formulário: ${formName}`);
+    if (formName && !/^\d{10,}$/.test(formName)) entradaParts.push(`Formulário: ${formName}`);
     if (campaignName && campaignName !== formName) entradaParts.push(`Campanha: ${campaignName}`);
     if (empreendimento) entradaParts.push(`Empreendimento: ${empreendimento}`);
 
     await supabase.from("pipeline_atividades").insert({
       pipeline_lead_id: insertedLead.id,
       tipo: "entrada",
-      titulo: `Lead gerado via ${plataformaLabel}${formName ? ` — ${formName}` : ""}`,
+      titulo: `Lead gerado via ${plataformaLabel}${empreendimento ? ` — ${empreendimento}` : ""}`,
       descricao: entradaParts.join(" • "),
       status: "concluida",
       created_by: "00000000-0000-0000-0000-000000000000",
