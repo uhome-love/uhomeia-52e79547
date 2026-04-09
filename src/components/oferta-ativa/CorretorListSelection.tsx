@@ -78,26 +78,26 @@ function ListaRow({
     <div
       className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 group"
       style={{
-        background: "#161B22",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--arena-card-bg)",
+        border: "1px solid var(--arena-card-border)",
       }}
       onMouseEnter={(e) => {
         if (hasLeads) e.currentTarget.style.borderColor = "rgba(34,197,94,0.4)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderColor = "var(--arena-card-border)";
       }}
     >
       {/* Name */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           {isCustom && <Sparkles className="h-3 w-3 text-purple-400 shrink-0" />}
-          <p className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+          <p className="text-sm font-semibold truncate group-hover:text-blue-400 transition-colors" style={{ color: "var(--arena-text)" }}>
             {lista.empreendimento}
           </p>
         </div>
         {lista.campanha && (
-          <p className="text-[11px] text-neutral-500 truncate">{lista.campanha}</p>
+          <p className="text-[11px] truncate" style={{ color: "var(--arena-text-subtle)" }}>{lista.campanha}</p>
         )}
       </div>
 
@@ -105,21 +105,21 @@ function ListaRow({
       {stats ? (
         <div className="hidden sm:flex items-center gap-3 text-xs shrink-0">
           <span style={{ color: "#60A5FA", fontWeight: 700 }}>{stats.naFila}</span>
-          <span className="text-neutral-600">na fila</span>
-          <span className="text-neutral-700">·</span>
+          <span style={{ color: "var(--arena-text-subtle)" }}>na fila</span>
+          <span style={{ color: "var(--arena-text-subtle)", opacity: 0.5 }}>·</span>
           <span style={{ color: "#4ADE80", fontWeight: 700 }}>{stats.aproveitados}</span>
-          <span className="text-neutral-600">aprov.</span>
-          <span className="text-neutral-700">·</span>
-          <span style={{ color: "#9CA3AF", fontWeight: 600 }}>{stats.total}</span>
-          <span className="text-neutral-600">total</span>
+          <span style={{ color: "var(--arena-text-subtle)" }}>aprov.</span>
+          <span style={{ color: "var(--arena-text-subtle)", opacity: 0.5 }}>·</span>
+          <span style={{ color: "var(--arena-text-muted)", fontWeight: 600 }}>{stats.total}</span>
+          <span style={{ color: "var(--arena-text-subtle)" }}>total</span>
         </div>
       ) : (
-        <Skeleton className="h-4 w-32 rounded" style={{ background: "rgba(255,255,255,0.06)" }} />
+        <Skeleton className="h-4 w-32 rounded" style={{ background: "var(--arena-subtle-bg)" }} />
       )}
 
       {/* Mini progress bar */}
       <div className="hidden md:block w-20 shrink-0">
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--arena-progress-track)" }}>
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -128,7 +128,7 @@ function ListaRow({
             }}
           />
         </div>
-        <p className="text-[10px] text-neutral-500 text-right mt-0.5" style={{ fontFamily: "monospace" }}>
+        <p className="text-[10px] text-right mt-0.5" style={{ fontFamily: "monospace", color: "var(--arena-text-subtle)" }}>
           {stats?.pct ?? 0}%
         </p>
       </div>
@@ -147,9 +147,9 @@ function ListaRow({
         className={`h-8 px-3 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1.5 transition-all ${
           hasLeads
             ? "arena-btn-call"
-            : "text-neutral-600 cursor-not-allowed"
+            : "cursor-not-allowed"
         }`}
-        style={!hasLeads ? { background: "rgba(255,255,255,0.03)" } : {}}
+        style={!hasLeads ? { background: "var(--arena-subtle-bg)", color: "var(--arena-text-subtle)" } : {}}
       >
         <Phone className="h-3.5 w-3.5" />
         {hasLeads ? "Iniciar" : "Esgotada"}
@@ -181,40 +181,40 @@ function CampaignRow({
     <div
       className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 group"
       style={{
-        background: "#161B22",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--arena-card-bg)",
+        border: "1px solid var(--arena-card-border)",
       }}
       onMouseEnter={(e) => {
         if (hasLeads) e.currentTarget.style.borderColor = "rgba(59,130,246,0.4)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderColor = "var(--arena-card-border)";
       }}
     >
       <FolderOpen className="h-4 w-4 text-blue-400 shrink-0" />
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+        <p className="text-sm font-semibold truncate group-hover:text-blue-400 transition-colors" style={{ color: "var(--arena-text)" }}>
           {campanha}
         </p>
-        <p className="text-[11px] text-neutral-500 truncate">
+        <p className="text-[11px] truncate" style={{ color: "var(--arena-text-subtle)" }}>
           {listas.length} lista{listas.length > 1 ? "s" : ""} · {empreendimentos.join(", ")}
         </p>
       </div>
 
       <div className="hidden sm:flex items-center gap-3 text-xs shrink-0">
         <span style={{ color: "#60A5FA", fontWeight: 700 }}>{totalNaFila}</span>
-        <span className="text-neutral-600">na fila</span>
-        <span className="text-neutral-700">·</span>
+        <span style={{ color: "var(--arena-text-subtle)" }}>na fila</span>
+        <span style={{ color: "var(--arena-text-subtle)", opacity: 0.5 }}>·</span>
         <span style={{ color: "#4ADE80", fontWeight: 700 }}>{totalAproveitados}</span>
-        <span className="text-neutral-600">aprov.</span>
-        <span className="text-neutral-700">·</span>
-        <span style={{ color: "#9CA3AF", fontWeight: 600 }}>{totalLeads}</span>
-        <span className="text-neutral-600">total</span>
+        <span style={{ color: "var(--arena-text-subtle)" }}>aprov.</span>
+        <span style={{ color: "var(--arena-text-subtle)", opacity: 0.5 }}>·</span>
+        <span style={{ color: "var(--arena-text-muted)", fontWeight: 600 }}>{totalLeads}</span>
+        <span style={{ color: "var(--arena-text-subtle)" }}>total</span>
       </div>
 
       <div className="hidden md:block w-20 shrink-0">
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--arena-progress-track)" }}>
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -223,16 +223,16 @@ function CampaignRow({
             }}
           />
         </div>
-        <p className="text-[10px] text-neutral-500 text-right mt-0.5" style={{ fontFamily: "monospace" }}>{pct}%</p>
+        <p className="text-[10px] text-right mt-0.5" style={{ fontFamily: "monospace", color: "var(--arena-text-subtle)" }}>{pct}%</p>
       </div>
 
       <button
         onClick={hasLeads ? onStart : undefined}
         disabled={!hasLeads}
         className={`h-8 px-3 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1.5 transition-all ${
-          hasLeads ? "arena-btn-call" : "text-neutral-600 cursor-not-allowed"
+          hasLeads ? "arena-btn-call" : "cursor-not-allowed"
         }`}
-        style={!hasLeads ? { background: "rgba(255,255,255,0.03)" } : {}}
+        style={!hasLeads ? { background: "var(--arena-subtle-bg)", color: "var(--arena-text-subtle)" } : {}}
       >
         <Phone className="h-3.5 w-3.5" />
         {hasLeads ? "Iniciar" : "Esgotada"}
