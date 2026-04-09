@@ -71,7 +71,7 @@ const ReferralPage = lazyRetry(() => import("./pages/ReferralPage"));
 const Conquistas = lazyRetry(() => import("./pages/Conquistas"));
 const Onboarding = lazyRetry(() => import("./pages/Onboarding"));
 const MarketplaceScripts = lazyRetry(() => import("./pages/MarketplaceScripts"));
-// (removed: CorretorCall — /corretor/call redirects to /oferta-ativa)
+const CorretorCall = lazyRetry(() => import("./pages/CorretorCall"));
 const CorretorProgresso = lazyRetry(() => import("./pages/CorretorProgresso"));
 const AceiteLeads = lazyRetry(() => import("./pages/AceiteLeads"));
 
@@ -222,7 +222,7 @@ const App = () => (
             <Route path="/aceite" element={<ProtectedPage><ErrorBoundary module="aceite-leads"><AceiteLeads /></ErrorBoundary></ProtectedPage>} />
             <Route path="/minhas-tarefas" element={<ProtectedPage><ErrorBoundary module="minhas-tarefas"><MinhasTarefas /></ErrorBoundary></ProtectedPage>} />
             <Route path="/minhas-vitrines" element={<ProtectedPage><ErrorBoundary module="minhas-vitrines"><MinhasVitrines /></ErrorBoundary></ProtectedPage>} />
-            <Route path="/corretor/call" element={<Navigate to="/oferta-ativa" replace />} />
+            <Route path="/corretor/call" element={<ProtectedPage><ErrorBoundary module="corretor-call"><CorretorCall /></ErrorBoundary></ProtectedPage>} />
             <Route path="/agenda-visitas" element={<ProtectedPage><ErrorBoundary module="agenda-visitas"><AgendaVisitas /></ErrorBoundary></ProtectedPage>} />
             <Route path="/corretor/resumo" element={<Navigate to="/corretor" replace />} />
             <Route path="/corretor/ranking-equipes" element={<Navigate to="/ranking" replace />} />
