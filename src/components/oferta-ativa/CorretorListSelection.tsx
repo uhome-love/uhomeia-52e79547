@@ -246,16 +246,16 @@ function SavedListRow({ list, onStart, onDelete }: { list: CustomList; onStart: 
     <div
       className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150"
       style={{
-        background: "#161B22",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--arena-card-bg)",
+        border: "1px solid var(--arena-card-border)",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(168,85,247,0.4)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--arena-card-border)"; }}
     >
       <Sparkles className="h-3.5 w-3.5 text-purple-400 shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white truncate">{list.nome}</p>
-        <p className="text-[10px] text-neutral-500">
+        <p className="text-sm font-semibold truncate" style={{ color: "var(--arena-text)" }}>{list.nome}</p>
+        <p className="text-[10px]" style={{ color: "var(--arena-text-subtle)" }}>
           {list.ultima_usada_at
             ? `Usada ${formatDistanceToNow(new Date(list.ultima_usada_at), { addSuffix: true, locale: ptBR })}`
             : "Nunca usada"
@@ -265,7 +265,7 @@ function SavedListRow({ list, onStart, onDelete }: { list: CustomList; onStart: 
       </div>
       <button
         onClick={onStart}
-        className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-bold text-white transition-colors arena-btn-call shrink-0"
+        className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-bold transition-colors arena-btn-call shrink-0"
       >
         <Phone className="h-3.5 w-3.5" /> Iniciar
       </button>
@@ -417,13 +417,13 @@ export default function CorretorListSelection() {
 
   if (isLoading) {
     return (
-      <div className="space-y-2" style={{ background: "#0A0F1E" }}>
+      <div className="space-y-2">
         {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg" style={{ background: "#161B22" }}>
-            <Skeleton className="h-4 w-32 rounded" style={{ background: "rgba(255,255,255,0.06)" }} />
+          <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg" style={{ background: "var(--arena-card-bg)" }}>
+            <Skeleton className="h-4 w-32 rounded" style={{ background: "var(--arena-subtle-bg)" }} />
             <div className="flex-1" />
-            <Skeleton className="h-4 w-40 rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
-            <Skeleton className="h-8 w-20 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <Skeleton className="h-4 w-40 rounded" style={{ background: "var(--arena-subtle-bg)" }} />
+            <Skeleton className="h-8 w-20 rounded-lg" style={{ background: "var(--arena-subtle-bg)" }} />
           </div>
         ))}
       </div>
@@ -431,7 +431,7 @@ export default function CorretorListSelection() {
   }
 
   return (
-    <div className="space-y-3" style={{ background: "#0A0F1E" }}>
+    <div className="space-y-3">
       {/* View mode toggle + search */}
       <div className="flex items-center gap-2 flex-wrap">
         {([
@@ -444,9 +444,9 @@ export default function CorretorListSelection() {
             onClick={() => setViewMode(tab.key)}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
             style={{
-              background: viewMode === tab.key ? "rgba(59,130,246,0.2)" : "rgba(255,255,255,0.04)",
-              color: viewMode === tab.key ? "#60A5FA" : "#9CA3AF",
-              border: viewMode === tab.key ? "1px solid rgba(59,130,246,0.4)" : "1px solid rgba(255,255,255,0.06)",
+              background: viewMode === tab.key ? "rgba(59,130,246,0.2)" : "var(--arena-subtle-bg)",
+              color: viewMode === tab.key ? "#60A5FA" : "var(--arena-text-muted)",
+              border: viewMode === tab.key ? "1px solid rgba(59,130,246,0.4)" : "1px solid var(--arena-card-border)",
             }}
           >
             {tab.icon} {tab.label}
@@ -459,19 +459,20 @@ export default function CorretorListSelection() {
         {/* Search inline */}
         {viewMode !== "personalizadas" && liberadas.length > 3 && (
           <div className="relative flex-1 min-w-[180px]">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--arena-text-subtle)" }} />
             <input
               type="text"
               placeholder="Buscar..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 rounded-lg text-xs text-white placeholder-neutral-500 outline-none transition-colors"
+              className="w-full h-8 pl-8 pr-3 rounded-lg text-xs placeholder-opacity-50 outline-none transition-colors"
               style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "var(--arena-subtle-bg)",
+                border: "1px solid var(--arena-card-border)",
+                color: "var(--arena-text)",
               }}
               onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.6)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--arena-card-border)"; }}
             />
           </div>
         )}
