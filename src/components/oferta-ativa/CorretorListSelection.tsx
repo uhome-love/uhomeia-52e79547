@@ -482,10 +482,10 @@ export default function CorretorListSelection() {
       {viewMode === "campanhas" && (
         <>
           {liberadas.length === 0 ? (
-            <div className="rounded-xl py-12 text-center" style={{ background: "#161B22", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <Phone className="h-10 w-10 mx-auto mb-3 text-neutral-600" />
-              <p className="font-medium text-neutral-300">Nenhuma lista liberada</p>
-              <p className="text-sm mt-1 text-neutral-500">Aguarde o Admin liberar uma campanha para começar.</p>
+            <div className="rounded-xl py-12 text-center" style={{ background: "var(--arena-card-bg)", border: "1px solid var(--arena-card-border)" }}>
+              <Phone className="h-10 w-10 mx-auto mb-3" style={{ color: "var(--arena-text-subtle)" }} />
+              <p className="font-medium" style={{ color: "var(--arena-text-muted)" }}>Nenhuma lista liberada</p>
+              <p className="text-sm mt-1" style={{ color: "var(--arena-text-subtle)" }}>Aguarde o Admin liberar uma campanha para começar.</p>
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -502,7 +502,7 @@ export default function CorretorListSelection() {
               {ungroupedListas.length > 0 && (
                 <>
                   {Object.keys(campaignGroups).length > 0 && (
-                    <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider pt-2 pb-0.5 px-1">Listas individuais</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider pt-2 pb-0.5 px-1" style={{ color: "var(--arena-text-subtle)" }}>Listas individuais</p>
                   )}
                   {ungroupedListas.map(lista => {
                     const stats = statsMap?.[lista.id];
@@ -520,7 +520,7 @@ export default function CorretorListSelection() {
 
               {/* Empty search state */}
               {Object.keys(campaignGroups).length === 0 && ungroupedListas.length === 0 && search && (
-                <p className="text-sm text-neutral-500 text-center py-4">Nenhuma lista encontrada para "{search}"</p>
+                <p className="text-sm text-center py-4" style={{ color: "var(--arena-text-subtle)" }}>Nenhuma lista encontrada para "{search}"</p>
               )}
             </div>
           )}
