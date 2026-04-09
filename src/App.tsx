@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 // @ts-ignore - QueryClient is exported in @tanstack/react-query v5
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -36,7 +36,7 @@ const NotFound = lazyRetry(() => import("./pages/NotFound"));
 
 // Lazy load all pages
 const HomeDashboard = lazyRetry(() => import("./pages/HomeDashboard"));
-const GestorDashboard = lazyRetry(() => import("./pages/GestorDashboard"));
+// (removed: GestorDashboard — /gestao redirects to /gerente/dashboard)
 const CorretorDashboard = lazyRetry(() => import("./pages/CorretorDashboard"));
 const AdminPanel = lazyRetry(() => import("./pages/AdminPanel"));
 const CheckpointGerente = lazyRetry(() => import("./pages/CheckpointGerente"));
@@ -50,7 +50,7 @@ const MarketingDashboard = lazyRetry(() => import("./pages/MarketingDashboard"))
 const AuditDashboard = lazyRetry(() => import("./pages/AuditDashboard"));
 const OfertaAtiva = lazyRetry(() => import("./pages/OfertaAtiva"));
 const MeuTime = lazyRetry(() => import("./pages/MeuTime"));
-const CorretorResumo = lazyRetry(() => import("./pages/CorretorResumo"));
+// (removed: CorretorResumo — /corretor/resumo redirects to /corretor)
 const RankingEquipe = lazyRetry(() => import("./pages/RankingEquipe"));
 const HomiAssistant = lazyRetry(() => import("./pages/HomiAssistant"));
 const HomiGerencial = lazyRetry(() => import("./pages/HomiGerencial"));
@@ -71,7 +71,7 @@ const ReferralPage = lazyRetry(() => import("./pages/ReferralPage"));
 const Conquistas = lazyRetry(() => import("./pages/Conquistas"));
 const Onboarding = lazyRetry(() => import("./pages/Onboarding"));
 const MarketplaceScripts = lazyRetry(() => import("./pages/MarketplaceScripts"));
-const CorretorCall = lazyRetry(() => import("./pages/CorretorCall"));
+// (removed: CorretorCall — /corretor/call redirects to /oferta-ativa)
 const CorretorProgresso = lazyRetry(() => import("./pages/CorretorProgresso"));
 const AceiteLeads = lazyRetry(() => import("./pages/AceiteLeads"));
 
@@ -194,7 +194,7 @@ const App = () => (
               <Route path="/privacidade" element={<Suspense fallback={<PageLoader />}><PrivacidadePage /></Suspense>} />
               <Route path="/casatua" element={<Suspense fallback={<PageLoader />}><CasaTuaLanding /></Suspense>} />
               <Route path="/placar-do-dia" element={<Suspense fallback={<PageLoader />}><PlacarDoDia /></Suspense>} />
-              <Route path="/fechamento-day" element={<Suspense fallback={<PageLoader />}><PlacarDoDia /></Suspense>} />
+              <Route path="/fechamento-day" element={<Navigate to="/placar-do-dia" replace />} />
             {/* Acessível a todos os autenticados */}
             <Route path="/" element={<ProtectedPage><ErrorBoundary module="home-dashboard"><HomeDashboard /></ErrorBoundary></ProtectedPage>} />
 
@@ -204,7 +204,7 @@ const App = () => (
             
             <Route path="/central-dados" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="central-dados"><CentralDados /></ErrorBoundary></ProtectedPage>} />
             <Route path="/scripts" element={<ProtectedPage><ErrorBoundary module="scripts"><ScriptsGenerator /></ErrorBoundary></ProtectedPage>} />
-            <Route path="/gestao" element={<ProtectedPage roles={["admin"]}><ErrorBoundary module="gestao"><GestorDashboard /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/gestao" element={<Navigate to="/gerente/dashboard" replace />} />
             <Route path="/relatorios" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="relatorios"><RelatorioCorretor /></ErrorBoundary></ProtectedPage>} />
             <Route path="/ranking" element={<ProtectedPage><ErrorBoundary module="ranking"><RankingEquipe /></ErrorBoundary></ProtectedPage>} />
             <Route path="/meu-time" element={<ProtectedPage roles={["gestor", "admin"]}><ErrorBoundary module="meu-time"><MeuTime /></ErrorBoundary></ProtectedPage>} />
@@ -222,10 +222,10 @@ const App = () => (
             <Route path="/aceite" element={<ProtectedPage><ErrorBoundary module="aceite-leads"><AceiteLeads /></ErrorBoundary></ProtectedPage>} />
             <Route path="/minhas-tarefas" element={<ProtectedPage><ErrorBoundary module="minhas-tarefas"><MinhasTarefas /></ErrorBoundary></ProtectedPage>} />
             <Route path="/minhas-vitrines" element={<ProtectedPage><ErrorBoundary module="minhas-vitrines"><MinhasVitrines /></ErrorBoundary></ProtectedPage>} />
-            <Route path="/corretor/call" element={<ProtectedPage><ErrorBoundary module="corretor-call"><CorretorCall /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/corretor/call" element={<Navigate to="/oferta-ativa" replace />} />
             <Route path="/agenda-visitas" element={<ProtectedPage><ErrorBoundary module="agenda-visitas"><AgendaVisitas /></ErrorBoundary></ProtectedPage>} />
-            <Route path="/corretor/resumo" element={<ProtectedPage><ErrorBoundary module="corretor-resumo"><CorretorResumo /></ErrorBoundary></ProtectedPage>} />
-            <Route path="/corretor/ranking-equipes" element={<ProtectedPage><ErrorBoundary module="corretor-ranking"><RankingEquipe /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/corretor/resumo" element={<Navigate to="/corretor" replace />} />
+            <Route path="/corretor/ranking-equipes" element={<Navigate to="/ranking" replace />} />
             <Route path="/conquistas" element={<ProtectedPage><ErrorBoundary module="conquistas"><Conquistas /></ErrorBoundary></ProtectedPage>} />
             <Route path="/progresso" element={<ProtectedPage><ErrorBoundary module="progresso"><CorretorProgresso /></ErrorBoundary></ProtectedPage>} />
             <Route path="/academia" element={<ProtectedPage><ErrorBoundary module="academia"><AcademiaPage /></ErrorBoundary></ProtectedPage>} />
