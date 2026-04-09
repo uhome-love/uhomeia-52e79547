@@ -22,7 +22,7 @@ import {
   Heart, Copy, Phone, MapPin, CalendarClock, Share2, Building2,
   Loader2, UserCircle, Mail, BedDouble, Bath, Car,
   Maximize2, ChevronLeft, ChevronRight, RulerIcon, DoorOpen,
-  MessageCircle,
+  MessageCircle, ExternalLink,
 } from "lucide-react";
 import PhotoLightbox from "@/components/imoveis/PhotoLightbox";
 import { useBrokerSlug } from "@/hooks/useBrokerSlug";
@@ -491,6 +491,14 @@ export default function PropertyPreviewDrawer({
                 </a>
               )}
             </div>
+          )}
+
+          {propertyUrl && (
+            <a href={propertyUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <Button className="w-full h-11 text-sm font-bold gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 rounded-xl">
+                <ExternalLink className="h-5 w-5" /> Abrir no uhome.com.br
+              </Button>
+            </a>
           )}
 
           <a href={`https://wa.me/?text=${whatsappText}`} target="_blank" rel="noopener noreferrer" className="block">
