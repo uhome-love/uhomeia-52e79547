@@ -531,12 +531,12 @@ export default function CorretorListSelection() {
       {viewMode === "listas" && (
         <>
           {allListasFlat.length === 0 && !search ? (
-            <div className="rounded-xl py-12 text-center" style={{ background: "#161B22", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <Phone className="h-10 w-10 mx-auto mb-3 text-neutral-600" />
-              <p className="font-medium text-neutral-300">Nenhuma lista liberada</p>
+            <div className="rounded-xl py-12 text-center" style={{ background: "var(--arena-card-bg)", border: "1px solid var(--arena-card-border)" }}>
+              <Phone className="h-10 w-10 mx-auto mb-3" style={{ color: "var(--arena-text-subtle)" }} />
+              <p className="font-medium" style={{ color: "var(--arena-text-muted)" }}>Nenhuma lista liberada</p>
             </div>
           ) : allListasFlat.length === 0 && search ? (
-            <p className="text-sm text-neutral-500 text-center py-4">Nenhuma lista encontrada para "{search}"</p>
+            <p className="text-sm text-center py-4" style={{ color: "var(--arena-text-subtle)" }}>Nenhuma lista encontrada para "{search}"</p>
           ) : (
             <div className="space-y-1.5">
               {allListasFlat.map(lista => {
@@ -572,8 +572,8 @@ export default function CorretorListSelection() {
               <Sparkles className="h-4 w-4 text-indigo-400 arena-sparkle-pulse" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">Criar lista personalizada</p>
-              <p className="text-xs text-neutral-400">Filtre seus leads e trabalhe do seu jeito</p>
+              <p className="text-sm font-semibold" style={{ color: "var(--arena-text)" }}>Criar lista personalizada</p>
+              <p className="text-xs" style={{ color: "var(--arena-text-muted)" }}>Filtre seus leads e trabalhe do seu jeito</p>
             </div>
             <ArrowLeft className="h-4 w-4 text-blue-400 rotate-180 group-hover:translate-x-1 transition-transform" />
           </button>
@@ -618,10 +618,10 @@ export default function CorretorListSelection() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl py-8 text-center" style={{ background: "#161B22", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <Sparkles className="h-8 w-8 mx-auto mb-2 text-neutral-600" />
-              <p className="text-sm text-neutral-400">Nenhuma lista salva ainda</p>
-              <p className="text-xs text-neutral-500 mt-1">Crie uma lista personalizada para começar</p>
+            <div className="rounded-xl py-8 text-center" style={{ background: "var(--arena-card-bg)", border: "1px solid var(--arena-card-border)" }}>
+              <Sparkles className="h-8 w-8 mx-auto mb-2" style={{ color: "var(--arena-text-subtle)" }} />
+              <p className="text-sm" style={{ color: "var(--arena-text-muted)" }}>Nenhuma lista salva ainda</p>
+              <p className="text-xs mt-1" style={{ color: "var(--arena-text-subtle)" }}>Crie uma lista personalizada para começar</p>
             </div>
           )}
         </div>
@@ -631,7 +631,7 @@ export default function CorretorListSelection() {
       {viewMode !== "personalizadas" && exhaustedCount > 0 && (
         <button
           onClick={() => setShowExhausted(v => !v)}
-          className="flex items-center gap-1.5 text-[11px] text-neutral-500 hover:text-neutral-400 transition-colors mx-auto"
+          className="flex items-center gap-1.5 text-[11px] hover:opacity-80 transition-colors mx-auto"
         >
           {showExhausted ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
           {showExhausted ? "Ocultar" : "Mostrar"} {exhaustedCount} lista{exhaustedCount > 1 ? "s" : ""} esgotada{exhaustedCount > 1 ? "s" : ""}
