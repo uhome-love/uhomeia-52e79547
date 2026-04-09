@@ -252,7 +252,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
         {/* ════════════ HEADER COMPACTO ════════════ */}
         <div className="shrink-0 border-b border-border/50 bg-card px-5 pt-4 pb-3 space-y-2.5">
           {/* Row 1: Name + Stage + Temp + Score + Days */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 pr-8">
             {editingName ? (
               <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 <Input value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") { setEditingName(false); setEditName(lead.nome); } }} className="h-8 text-lg font-bold flex-1" autoFocus disabled={saving} />
@@ -299,15 +299,19 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
               if (!nextTask) motivosDesat.push('sem tarefa futura');
               if (noContactAlert) motivosDesat.push(`${diasSemContato}d sem contato`);
               return (
-                <>
-                  <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full shrink-0" style={{ background: chipColor.bg, color: chipColor.color }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: chipColor.dot, flexShrink: 0 }} />
-                    {chipColor.text}
-                  </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full shrink-0 cursor-default" style={{ background: chipColor.bg, color: chipColor.color }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: chipColor.dot, flexShrink: 0 }} />
+                      {chipColor.text}
+                    </span>
+                  </TooltipTrigger>
                   {!nextTask && motivosDesat.length > 0 && (
-                    <span className="text-[10px] text-muted-foreground shrink-0">{motivosDesat.join(' · ')}</span>
+                    <TooltipContent side="bottom" className="text-xs">
+                      {motivosDesat.join(' · ')}
+                    </TooltipContent>
                   )}
-                </>
+                </Tooltip>
               );
             })()}
 
