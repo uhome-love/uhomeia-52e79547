@@ -632,6 +632,7 @@ export default function CorretorListSelection() {
         <button
           onClick={() => setShowExhausted(v => !v)}
           className="flex items-center gap-1.5 text-[11px] hover:opacity-80 transition-colors mx-auto"
+          style={{ color: "var(--arena-text-subtle)" }}
         >
           {showExhausted ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
           {showExhausted ? "Ocultar" : "Mostrar"} {exhaustedCount} lista{exhaustedCount > 1 ? "s" : ""} esgotada{exhaustedCount > 1 ? "s" : ""}
