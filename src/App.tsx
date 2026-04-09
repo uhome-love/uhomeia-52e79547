@@ -46,7 +46,7 @@ const RelatorioCorretor = lazyRetry(() => import("./pages/RelatorioCorretor"));
 const CentralDados = lazyRetry(() => import("./pages/CentralDados"));
 
 const MarketingDashboard = lazyRetry(() => import("./pages/MarketingDashboard"));
-const RankingComercial = lazyRetry(() => import("./pages/RankingComercial"));
+// (removed: RankingComercial — no route)
 const AuditDashboard = lazyRetry(() => import("./pages/AuditDashboard"));
 const OfertaAtiva = lazyRetry(() => import("./pages/OfertaAtiva"));
 const MeuTime = lazyRetry(() => import("./pages/MeuTime"));
@@ -190,7 +190,7 @@ const App = () => (
              <Route path="/md" element={<Suspense fallback={<PageLoader />}><MelnickDayLanding /></Suspense>} />
               <Route path="/wa" element={<Suspense fallback={<PageLoader />}><WhatsAppLanding /></Suspense>} />
               <Route path="/wa/*" element={<Suspense fallback={<PageLoader />}><WhatsAppLanding /></Suspense>} />
-             <Route path="/import-brevo-contacts" element={<Suspense fallback={<PageLoader />}><ImportBrevoContacts /></Suspense>} />
+             <Route path="/import-brevo-contacts" element={<ProtectedPage roles={["admin"]}><ImportBrevoContacts /></ProtectedPage>} />
               <Route path="/privacidade" element={<Suspense fallback={<PageLoader />}><PrivacidadePage /></Suspense>} />
               <Route path="/casatua" element={<Suspense fallback={<PageLoader />}><CasaTuaLanding /></Suspense>} />
               <Route path="/placar-do-dia" element={<Suspense fallback={<PageLoader />}><PlacarDoDia /></Suspense>} />
