@@ -482,7 +482,7 @@ export default function CeoDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`space-y-2.5 ${showAllCorretorLeads ? "max-h-96" : "max-h-56"} overflow-y-auto`}>
+              <div className={`space-y-2.5 ${showAllCorretorLeads ? "" : ""}`}>
                 {(showAllCorretorLeads ? leadsPorCorretor : leadsPorCorretor.slice(0, 6)).map((c, idx) => {
                   const max = Math.max(...leadsPorCorretor.map(x => x.count), 1);
                   const color = FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
