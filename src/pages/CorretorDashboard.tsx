@@ -168,7 +168,7 @@ export default function CorretorDashboard() {
           <Button
             size="lg"
             className="h-14 gap-2 text-sm font-bold rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_4px_20px_hsl(152_60%_42%/0.3)]"
-            onClick={() => navigate("/corretor/call")}
+            onClick={() => navigate("/oferta-ativa")}
           >
             <Phone className="h-5 w-5" />
             CALL / Oferta Ativa
