@@ -30,7 +30,6 @@ interface Props {
   leadEmpreendimento?: string;
   selectedEmp: string;
   onEmpChange: (emp: string) => void;
-  /** Callback to inject a response block into the left column */
   onResponseGenerated?: (response: HomiResponse) => void;
 }
 
@@ -44,7 +43,6 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
 
   const handleGenerate = async () => {
     if (!situacao.trim() || loading) return;
-
     setLoading(true);
     try {
       const { data: { session } } = await (supabase.auth as any).getSession();
@@ -67,7 +65,6 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
 
       if (!res.ok) throw new Error("Erro na resposta");
 
-      // The edge function returns SSE stream — parse it
       let reply = "";
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No reader");
@@ -140,9 +137,9 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
         <DialogContent
           className="sm:max-w-md border-0"
           style={{
-            background: "#1C2128",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#E2E8F0",
+            background: "var(--arena-card-bg)",
+            border: "1px solid var(--arena-card-border)",
+            color: "var(--arena-text)",
           }}
         >
           <DialogHeader>
@@ -155,7 +152,7 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
           <div className="space-y-3">
             {/* Empreendimento dropdown */}
             <div>
-              <label className="text-[10px] uppercase tracking-wider" style={{ color: "#6B7280" }}>
+              <label className="text-[10px] uppercase tracking-wider" style={{ color: "var(--arena-text-muted)" }}>
                 Empreendimento:
               </label>
               <select
@@ -163,9 +160,9 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
                 onChange={e => onEmpChange(e.target.value)}
                 className="w-full mt-0.5 text-sm rounded-md px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
                 style={{
-                  background: "#0f1628",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "#E2E8F0",
+                  background: "var(--arena-bg-from)",
+                  border: "1px solid var(--arena-card-border)",
+                  color: "var(--arena-text)",
                   height: 32,
                 }}
               >
@@ -183,9 +180,9 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
               rows={3}
               className="w-full text-sm rounded-md px-2.5 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
               style={{
-                background: "#0f1628",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#E2E8F0",
+                background: "var(--arena-bg-from)",
+                border: "1px solid var(--arena-card-border)",
+                color: "var(--arena-text)",
                 lineHeight: 1.5,
               }}
             />
@@ -235,13 +232,13 @@ export default function HomiObjectionHelper({ leadNome, leadEmpreendimento, sele
                         </button>
                         <button
                           onClick={() => removeResponse(r.id)}
-                          className="text-neutral-500 hover:text-white transition-colors p-0.5"
+                          className="text-neutral-500 hover:text-foreground transition-colors p-0.5"
                         >
                           <X className="h-3 w-3" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-sm leading-snug" style={{ color: "#D1D5DB" }}>
+                    <p className="text-sm leading-snug" style={{ color: "var(--arena-text)" }}>
                       {r.text}
                     </p>
                   </div>

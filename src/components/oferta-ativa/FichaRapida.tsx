@@ -113,8 +113,8 @@ export default function FichaRapida({ empreendimento, onEmpChange }: Props) {
     <div
       className="rounded-lg p-3 space-y-2"
       style={{
-        background: "rgba(28,33,40,0.8)",
-        border: "1px solid rgba(6,182,212,0.1)",
+        background: "var(--arena-card-bg)",
+        border: "1px solid var(--arena-card-border)",
       }}
     >
       {/* Header */}
@@ -132,9 +132,9 @@ export default function FichaRapida({ empreendimento, onEmpChange }: Props) {
               onChange={e => onEmpChange(e.target.value)}
               className="text-sm font-bold rounded-md px-1.5 ml-1 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 min-w-0"
               style={{
-                background: "#0f1628",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#E2E8F0",
+                background: "var(--arena-bg-from)",
+                border: "1px solid var(--arena-card-border)",
+                color: "var(--arena-text)",
                 height: 26,
                 maxWidth: 160,
               }}
@@ -145,7 +145,7 @@ export default function FichaRapida({ empreendimento, onEmpChange }: Props) {
               ))}
             </select>
           ) : (
-            <span className="text-sm font-bold text-white">· {empreendimento}</span>
+            <span className="text-sm font-bold" style={{ color: "var(--arena-text)" }}>· {empreendimento}</span>
           )}
         </div>
         <button
@@ -153,8 +153,8 @@ export default function FichaRapida({ empreendimento, onEmpChange }: Props) {
             if (editing) saveAll();
             else setEditing(true);
           }}
-          className="p-1 rounded hover:bg-white/5 transition-colors"
-          style={{ color: editing ? "#22D3EE" : "#6B7280" }}
+          className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          style={{ color: editing ? "#22D3EE" : "var(--arena-text-muted)" }}
         >
           {saving ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -169,10 +169,10 @@ export default function FichaRapida({ empreendimento, onEmpChange }: Props) {
       {/* Empty state */}
       {!hasAnyData && !editing ? (
         <div className="py-3 text-center space-y-1">
-          <p className="text-sm italic" style={{ color: "#6B7280" }}>
+          <p className="text-sm italic" style={{ color: "var(--arena-text-muted)" }}>
             📝 Nenhuma informação cadastrada ainda.
           </p>
-          <p className="text-xs" style={{ color: "#4B5563" }}>
+          <p className="text-xs" style={{ color: "var(--arena-text-muted)" }}>
             Clique em{" "}
             <button
               onClick={() => setEditing(true)}
@@ -190,19 +190,19 @@ export default function FichaRapida({ empreendimento, onEmpChange }: Props) {
           {FIELDS.map(f => (
             <div key={f.key} className="flex items-center gap-1.5 py-0.5">
               <span style={{ fontSize: 13 }}>{f.icon}</span>
-              <span className="text-xs shrink-0" style={{ color: "#9CA3AF", minWidth: 76 }}>
+              <span className="text-xs shrink-0" style={{ color: "var(--arena-text-muted)", minWidth: 76 }}>
                 {f.label}:
               </span>
               {editing ? (
                 <input
                   value={data[f.key]}
                   onChange={e => updateField(f.key, e.target.value)}
-                  className="flex-1 text-sm bg-transparent border-b border-white/10 focus:border-cyan-500/50 outline-none px-0.5 py-0"
-                  style={{ color: "#E5E7EB" }}
+                  className="flex-1 text-sm bg-transparent border-b outline-none px-0.5 py-0"
+                  style={{ color: "var(--arena-text)", borderColor: "var(--arena-card-border)" }}
                   placeholder="—"
                 />
               ) : (
-                <span className="text-sm" style={{ color: data[f.key] ? "#E5E7EB" : "#4B5563" }}>
+                <span className="text-sm" style={{ color: data[f.key] ? "var(--arena-text)" : "var(--arena-text-muted)" }}>
                   {data[f.key] || "—"}
                 </span>
               )}
@@ -213,7 +213,7 @@ export default function FichaRapida({ empreendimento, onEmpChange }: Props) {
 
       {/* Notas pessoais */}
       <div className="space-y-1">
-        <span className="text-xs" style={{ color: "#9CA3AF" }}>
+        <span className="text-xs" style={{ color: "var(--arena-text-muted)" }}>
           📝 Notas pessoais:
         </span>
         <textarea
@@ -223,9 +223,9 @@ export default function FichaRapida({ empreendimento, onEmpChange }: Props) {
           placeholder="Anote pontos importantes pra não esquecer durante a ligação..."
           className="w-full text-sm rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500/30"
           style={{
-            background: "#0f1628",
-            border: "1px solid rgba(255,255,255,0.05)",
-            color: "#E5E7EB",
+            background: "var(--arena-bg-from)",
+            border: "1px solid var(--arena-card-border)",
+            color: "var(--arena-text)",
             lineHeight: 1.5,
             scrollbarWidth: "thin",
           }}

@@ -13,7 +13,7 @@ interface Props {
   onClose: () => void;
   onSubmit: (resultado: string, feedback: string, visitaMarcada?: boolean, interesseTipo?: string, retirarDoSistema?: boolean) => Promise<void> | void;
   leadName: string;
-  callDuration?: number; // seconds
+  callDuration?: number;
 }
 
 const RESULTS = [
@@ -77,7 +77,6 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
   const RETIRAR_FEEDBACK = "🚫 Retirar do sistema — não quer ser mais contatado";
   const isRetirar = feedback === RETIRAR_FEEDBACK;
 
-  // Keyboard shortcuts: 1-4 for results, Enter to submit
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.target instanceof HTMLTextAreaElement) {
       if (e.key === "Enter" && e.ctrlKey) {
@@ -107,7 +106,6 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
     if (!resultado || submitting) return;
     if (feedback.trim().length < 10) { toast.error("Feedback mínimo de 10 caracteres"); return; }
     if (resultado === "com_interesse" && !interesseTipo) { toast.error("Selecione o tipo de interesse"); return; }
-    // If "retirar do sistema" selected, show confirmation first
     if (isRetirar && !confirmedRetirar.current) {
       setShowRetirarConfirm(true);
       return;
@@ -130,7 +128,6 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
   };
 
   const handleClose = () => {
-    // If user has started filling, confirm exit
     if (resultado || feedback.trim().length > 0) {
       setShowExitConfirm(true);
     } else {
@@ -143,13 +140,20 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden" style={{ background: "#1C2128", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20 }}>
+        <DialogContent
+          className="sm:max-w-lg max-h-[85vh] max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden"
+          style={{
+            background: "var(--arena-card-bg)",
+            border: "1px solid var(--arena-card-border)",
+            borderRadius: 20,
+          }}
+        >
           <DialogHeader className="shrink-0">
-            <DialogTitle style={{ fontSize: 20, fontWeight: 700, color: "white" }}>Resultado da tentativa</DialogTitle>
-            <div className="flex items-center gap-3" style={{ fontSize: 14, color: "#94A3B8" }}>
+            <DialogTitle style={{ fontSize: 20, fontWeight: 700, color: "var(--arena-text)" }}>Resultado da tentativa</DialogTitle>
+            <div className="flex items-center gap-3" style={{ fontSize: 14, color: "var(--arena-text-muted)" }}>
               <span>Lead: <strong>{leadName}</strong></span>
               {callDuration != null && callDuration > 0 && (
-                <Badge variant="outline" className="gap-1 border-emerald-500/30" style={{ fontSize: 12, color: "#94A3B8" }}>
+                <Badge variant="outline" className="gap-1 border-emerald-500/30" style={{ fontSize: 12, color: "var(--arena-text-muted)" }}>
                   <Timer className="h-3 w-3" /> {formatDuration(callDuration)}
                 </Badge>
               )}
@@ -166,12 +170,19 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
                     key={r.key}
                     onClick={() => { setResultado(r.key); setFeedback(QUICK_FEEDBACKS[r.key]?.[0] || ""); setInteresseTipo(""); }}
                     className={`flex flex-col items-center gap-2 transition-all ${
-                      selected ? r.selectedBorder : `border-[rgba(255,255,255,0.15)] ${r.hoverBorder}`
+                      selected ? r.selectedBorder : `border-[var(--arena-card-border)] ${r.hoverBorder}`
                     }`}
-                    style={{ background: "#1C2128", border: selected ? undefined : "1px solid rgba(255,255,255,0.15)", borderWidth: selected ? 2 : 1, borderStyle: "solid", borderRadius: 12, padding: "16px 12px" }}
+                    style={{
+                      background: "var(--arena-card-bg)",
+                      border: selected ? undefined : "1px solid var(--arena-card-border)",
+                      borderWidth: selected ? 2 : 1,
+                      borderStyle: "solid",
+                      borderRadius: 12,
+                      padding: "16px 12px",
+                    }}
                   >
                     <span style={{ fontSize: 28 }}>{r.emoji}</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "#E2E8F0", textAlign: "center", lineHeight: 1.3 }}>{r.label}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "var(--arena-text)", textAlign: "center", lineHeight: 1.3 }}>{r.label}</span>
                   </button>
                 );
               })}
@@ -192,11 +203,14 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
                       className={`flex flex-col items-start gap-0.5 p-2.5 rounded-lg border-2 transition-all text-left ${
                         interesseTipo === opt.key
                           ? "border-emerald-500/60 bg-emerald-500/15 ring-1 ring-emerald-500/30"
-                          : "border-[rgba(255,255,255,0.2)] bg-[#1C2128] hover:border-emerald-500/30 hover:bg-[#232a34]"
+                          : "border-[var(--arena-card-border)] hover:border-emerald-500/30"
                       }`}
+                      style={{
+                        background: interesseTipo === opt.key ? undefined : "var(--arena-card-bg)",
+                      }}
                     >
-                      <span className="text-sm font-medium text-[#E2E8F0]">{opt.emoji} {opt.label}</span>
-                      <span className="text-[10px] text-[#94A3B8]">{opt.desc}</span>
+                      <span className="text-sm font-medium" style={{ color: "var(--arena-text)" }}>{opt.emoji} {opt.label}</span>
+                      <span className="text-[10px]" style={{ color: "var(--arena-text-muted)" }}>{opt.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -232,12 +246,19 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
                 value={feedback}
                 onChange={e => setFeedback(e.target.value)}
                 rows={2}
-                style={{ background: "#0A0F1E", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "white", fontSize: 15, padding: 12 }}
-                className="placeholder:text-[#64748B] focus-visible:ring-blue-500/40 focus-visible:border-blue-500"
+                style={{
+                  background: "var(--arena-bg-from)",
+                  border: "1px solid var(--arena-card-border)",
+                  borderRadius: 10,
+                  color: "var(--arena-text)",
+                  fontSize: 15,
+                  padding: 12,
+                }}
+                className="placeholder:text-muted-foreground focus-visible:ring-blue-500/40 focus-visible:border-blue-500"
               />
               <div className="flex items-center justify-between mt-1">
-                <p style={{ fontSize: 10, color: "#64748B" }}>Mín. 10 chars · Ctrl+Enter enviar</p>
-                <p style={{ fontSize: 10, color: feedback.trim().length >= 10 ? "#10B981" : "#64748B" }}>
+                <p style={{ fontSize: 10, color: "var(--arena-text-muted)" }}>Mín. 10 chars · Ctrl+Enter enviar</p>
+                <p style={{ fontSize: 10, color: feedback.trim().length >= 10 ? "#10B981" : "var(--arena-text-muted)" }}>
                   {feedback.trim().length}/10
                 </p>
               </div>
@@ -266,7 +287,7 @@ export default function AttemptModal({ open, onClose, onSubmit, leadName, callDu
           </div>
 
           {/* Submit button fixed at bottom */}
-          <div className="shrink-0 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="shrink-0 pt-2" style={{ borderTop: "1px solid var(--arena-card-border)" }}>
             <button
               id="attempt-submit-btn"
               className="w-full gap-2 flex items-center justify-center"
