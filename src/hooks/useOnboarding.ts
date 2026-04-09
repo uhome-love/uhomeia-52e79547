@@ -27,7 +27,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   // Semana 1
   { id: "meta_batida", phase: "week1", phaseLabel: "Semana 1", label: "Bata sua meta diária", description: "Cumpra todas as metas de um dia", route: "/corretor", autoDetect: true },
   { id: "conversa_homi", phase: "week1", phaseLabel: "Semana 1", label: "Converse com o HOMI", description: "Use o assistente IA para preparar uma visita ou tirar dúvidas", route: "/homi", autoDetect: true },
-  { id: "resumo_semanal", phase: "week1", phaseLabel: "Semana 1", label: "Veja seu Resumo Semanal", description: "Acesse o painel de resumo da sua semana", route: "/corretor/resumo", autoDetect: false },
+  { id: "resumo_semanal", phase: "week1", phaseLabel: "Semana 1", label: "Veja seu Resumo Semanal", description: "Acesse o painel de resumo da sua semana", route: "/corretor", autoDetect: false },
 ];
 
 export function useOnboarding() {
