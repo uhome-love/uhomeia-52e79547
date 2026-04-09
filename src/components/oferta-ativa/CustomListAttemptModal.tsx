@@ -200,13 +200,13 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden" style={{ background: "#1C2128", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20 }}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden" style={{ background: "var(--arena-card-bg)", border: "1px solid var(--arena-card-border)", borderRadius: 20 }}>
           <DialogHeader className="shrink-0">
-            <DialogTitle style={{ fontSize: 20, fontWeight: 700, color: "white" }}>Resultado da ligação</DialogTitle>
-            <div className="flex items-center gap-3" style={{ fontSize: 14, color: "#94A3B8" }}>
+            <DialogTitle style={{ fontSize: 20, fontWeight: 700, color: "var(--arena-text)" }}>Resultado da ligação</DialogTitle>
+            <div className="flex items-center gap-3" style={{ fontSize: 14, color: "var(--arena-text-muted)" }}>
               <span>Lead: <strong>{leadName}</strong></span>
               {callDuration != null && callDuration > 0 && (
-                <Badge variant="outline" className="gap-1 border-emerald-500/30" style={{ fontSize: 12, color: "#94A3B8" }}>
+                <Badge variant="outline" className="gap-1 border-emerald-500/30" style={{ fontSize: 12, color: "var(--arena-text-muted)" }}>
                   <Timer className="h-3 w-3" /> {formatDuration(callDuration)}
                 </Badge>
               )}
@@ -223,12 +223,12 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                     key={r.key}
                     onClick={() => { setResultado(r.key); setSubOption(""); setFeedback(QUICK_FEEDBACKS[r.key]?.[0] || ""); }}
                     className={`flex flex-col items-center gap-2 transition-all ${
-                      selected ? r.selectedBorder : `border-[rgba(255,255,255,0.15)] ${r.hoverBorder}`
+                      selected ? r.selectedBorder : `border-[var(--arena-card-border)] ${r.hoverBorder}`
                     }`}
-                    style={{ background: "#1C2128", border: selected ? undefined : "1px solid rgba(255,255,255,0.15)", borderWidth: selected ? 2 : 1, borderStyle: "solid", borderRadius: 12, padding: "14px 8px" }}
+                    style={{ background: "var(--arena-card-bg)", border: selected ? undefined : "1px solid rgba(255,255,255,0.15)", borderWidth: selected ? 2 : 1, borderStyle: "solid", borderRadius: 12, padding: "14px 8px" }}
                   >
                     <span style={{ fontSize: 24 }}>{r.emoji}</span>
-                    <span style={{ fontSize: 12, fontWeight: 500, color: "#E2E8F0", textAlign: "center", lineHeight: 1.3 }}>{r.label}</span>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--arena-text)", textAlign: "center", lineHeight: 1.3 }}>{r.label}</span>
                   </button>
                 );
               })}
@@ -246,11 +246,11 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                       className={`flex flex-col items-start gap-0.5 p-2.5 rounded-lg border-2 transition-all text-left ${
                         subOption === opt.key
                           ? "border-emerald-500/60 bg-emerald-500/15 ring-1 ring-emerald-500/30"
-                          : "border-[rgba(255,255,255,0.2)] bg-[#1C2128] hover:border-emerald-500/30 hover:bg-[#232a34]"
+                          : "border-[var(--arena-card-border)] bg-[var(--arena-card-bg)] hover:border-emerald-500/30 hover:bg-[var(--arena-subtle-bg)]"
                       }`}
                     >
-                      <span className="text-sm font-medium text-[#E2E8F0]">{opt.emoji} {opt.label}</span>
-                      <span className="text-[10px] text-[#94A3B8]">{opt.desc}</span>
+                      <span className="text-sm font-medium text-[var(--arena-text)]">{opt.emoji} {opt.label}</span>
+                      <span className="text-[10px] text-[var(--arena-text-muted)]">{opt.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -269,11 +269,11 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                       className={`flex flex-col items-start gap-0.5 p-2.5 rounded-lg border-2 transition-all text-left ${
                         subOption === opt.key
                           ? "border-rose-500/60 bg-rose-500/15 ring-1 ring-rose-500/30"
-                          : "border-[rgba(255,255,255,0.2)] bg-[#1C2128] hover:border-rose-500/30 hover:bg-[#232a34]"
+                          : "border-[var(--arena-card-border)] bg-[var(--arena-card-bg)] hover:border-rose-500/30 hover:bg-[var(--arena-subtle-bg)]"
                       }`}
                     >
-                      <span className="text-sm font-medium text-[#E2E8F0]">{opt.emoji} {opt.label}</span>
-                      <span className="text-[10px] text-[#94A3B8]">{opt.desc}</span>
+                      <span className="text-sm font-medium text-[var(--arena-text)]">{opt.emoji} {opt.label}</span>
+                      <span className="text-[10px] text-[var(--arena-text-muted)]">{opt.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -309,7 +309,7 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                 value={feedback}
                 onChange={e => setFeedback(e.target.value)}
                 rows={2}
-                style={{ background: "#0A0F1E", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "white", fontSize: 15, padding: 12 }}
+                style={{ background: "var(--arena-bg-from)", border: "1px solid var(--arena-card-border)", borderRadius: 10, color: "var(--arena-text)", fontSize: 15, padding: 12 }}
                 className="placeholder:text-[#64748B] focus-visible:ring-blue-500/40 focus-visible:border-blue-500"
               />
               <div className="flex items-center justify-between mt-1">
@@ -322,7 +322,7 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
 
             {/* ═══ CRIAR PRÓXIMA AÇÃO ═══ */}
             {resultado && resultado !== "descarte_oa" && (
-              <div className="rounded-xl border border-[rgba(255,255,255,0.12)] overflow-hidden" style={{ background: "#161B22" }}>
+              <div className="rounded-xl border border-[var(--arena-card-border)] overflow-hidden" style={{ background: "var(--arena-card-bg)" }}>
                 <button
                   type="button"
                   onClick={() => setCriarAcao(!criarAcao)}
@@ -330,7 +330,7 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                 >
                   <div className="flex items-center gap-2">
                     <CalendarPlus className="h-4 w-4 text-amber-400" />
-                    <span className="text-sm font-semibold text-[#E2E8F0]">Criar próxima ação</span>
+                    <span className="text-sm font-semibold text-[var(--arena-text)]">Criar próxima ação</span>
                     {criarAcao && (
                       <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 py-0">
                         Ativada
@@ -358,7 +358,7 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
                               acaoTipo === t.key
                                 ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
-                                : "border-[rgba(255,255,255,0.15)] text-[#94A3B8] hover:border-amber-500/30 hover:bg-[rgba(255,255,255,0.03)]"
+                                : "border-[var(--arena-card-border)] text-[var(--arena-text-muted)] hover:border-amber-500/30 hover:bg-[rgba(255,255,255,0.03)]"
                             }`}
                           >
                             <span>{t.emoji}</span>
@@ -379,7 +379,7 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                             className={`px-2.5 py-1 rounded-md border text-[11px] font-medium transition-all ${
                               acaoData === qd.fn()
                                 ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
-                                : "border-[rgba(255,255,255,0.12)] text-[#94A3B8] hover:border-amber-500/30"
+                                : "border-[var(--arena-card-border)] text-[var(--arena-text-muted)] hover:border-amber-500/30"
                             }`}
                           >
                             {qd.label}
@@ -392,14 +392,14 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                           value={acaoData}
                           onChange={e => setAcaoData(e.target.value)}
                           className="flex-1 h-8 text-xs"
-                          style={{ background: "#0A0F1E", border: "1px solid rgba(255,255,255,0.12)", color: "white" }}
+                          style={{ background: "var(--arena-bg-from)", border: "1px solid var(--arena-card-border)", color: "var(--arena-text)" }}
                         />
                         <Input
                           type="time"
                           value={acaoHora}
                           onChange={e => setAcaoHora(e.target.value)}
                           className="w-24 h-8 text-xs"
-                          style={{ background: "#0A0F1E", border: "1px solid rgba(255,255,255,0.12)", color: "white" }}
+                          style={{ background: "var(--arena-bg-from)", border: "1px solid var(--arena-card-border)", color: "var(--arena-text)" }}
                         />
                       </div>
                     </div>
@@ -411,7 +411,7 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                         value={acaoDesc}
                         onChange={e => setAcaoDesc(e.target.value)}
                         className="h-8 text-xs"
-                        style={{ background: "#0A0F1E", border: "1px solid rgba(255,255,255,0.12)", color: "white" }}
+                        style={{ background: "var(--arena-bg-from)", border: "1px solid var(--arena-card-border)", color: "var(--arena-text)" }}
                       />
                     </div>
 
@@ -459,7 +459,7 @@ export default function CustomListAttemptModal({ open, onClose, onSubmit, leadNa
                 fontSize: 16,
                 fontWeight: 700,
                 borderRadius: 12,
-                color: "white",
+                color: "var(--arena-text)",
                 ...(!canSubmit || submitting
                   ? { background: "#374151", color: "#6B7280", cursor: "not-allowed" }
                   : { background: "#22C55E", boxShadow: "0 0 20px rgba(34,197,94,0.3)" })
