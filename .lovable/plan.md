@@ -1,33 +1,26 @@
 
 
-## Plano: Corrigir filtros do + Filtros para funcionar com dados reais
+## Plano: Substituir filtros SLA e Score por filtro de Status do Lead
 
-### Problemas identificados
+### O que muda
 
-1. **"Dias sem ação"** usa `stage_changed_at` em vez de `ultima_acao_at`. O campo `ultima_acao_at` já existe na tabela `pipeline_leads` e já é carregado pelo `usePipeline`. Deve ser a referência primária (com fallback para `stage_changed_at`).
+1. **Remover "Status do SLA"** (ok/warning/breach) — não é usado no fluxo real.
+2. **Remover "Score mínimo"** (slider 0-100) — não é utilizado.
+3. **Adicionar "Status do lead"** com as opções reais do sistema:
+   - ✅ Em dia
+   - 🔴 Atrasado
+   - 🟡 Desatualizado
 
-2. **"Visita marcada"** filtra apenas por leads que estão em etapas do tipo "visita" no funil — não verifica se o lead tem visita real agendada na tabela `visitas`. Deve consultar visitas reais vinculadas ao `pipeline_lead_id`.
+### Alterações técnicas
 
-### Alterações
+**`src/components/pipeline/PipelineAdvancedFilters.tsx`**
 
-**Arquivo: `src/components/pipeline/PipelineAdvancedFilters.tsx`**
+- Na interface `PipelineFilters`: remover `scoreMin` e `slaStatus`, adicionar `statusLead: string` (valores: `""` | `"em_dia"` | `"tarefa_atrasada"` | `"desatualizado"`).
+- Em `EMPTY_FILTERS`: remover `scoreMin: 0` e `slaStatus: ""`, adicionar `statusLead: ""`.
+- No `applyFilters`: remover bloco do `scoreMin` e do `slaStatus`. Adicionar bloco que usa `getLeadStatusFilter()` (importado de `CardStatusLine.tsx`) para filtrar pelo status real do lead.
+- Na UI: remover seção "Score mínimo" (slider) e "Status do SLA" (3 botões). Adicionar seção "Status do lead" com 3 botões toggle (Em dia / Atrasado / Desatualizado).
+- Atualizar preset "🚨 SLA expirado" para usar `statusLead: "tarefa_atrasada"` com label "🔴 Leads atrasados".
+- Atualizar `countActive` para contar `statusLead` em vez de `scoreMin` e `slaStatus`.
 
-**1. Corrigir filtro "Dias sem ação" (linhas 159-165)**
-- Trocar `l.stage_changed_at` por `l.ultima_acao_at || l.stage_changed_at` na função `applyFilters`, alinhando com a mesma lógica já usada em `useLeadsParados` e `useFocusLeads`.
-- Adicionar opções `> 15 dias` e `> 30 dias` na UI (linhas 525-528) para identificar leads de longo prazo parados.
-
-**2. Corrigir filtro "Visita marcada" (linhas 187-194)**
-- Adicionar prop `visitaLeadIds: Set<string>` ao componente (um Set de `pipeline_lead_id` com visitas agendadas/confirmadas).
-- No `applyFilters`, ao invés de filtrar por tipo de etapa, verificar se o lead.id está no Set de visitas reais.
-- Na UI, manter as opções "Sim" / "Não" como estão.
-
-**Arquivo: `src/pages/PipelineKanban.tsx`**
-- Fazer uma query à tabela `visitas` filtrando `status != 'cancelada'` e `data_visita >= hoje`, coletando os `pipeline_lead_id`.
-- Passar o Set resultante como prop `visitaLeadIds` para o `PipelineAdvancedFilters`.
-
-### Detalhes técnicos
-
-- `ultima_acao_at` já está no `PipelineLead` type e é carregado no select do `usePipeline`.
-- A tabela `visitas` tem campos `pipeline_lead_id`, `status` e `data_visita` que permitem a consulta.
-- Nenhuma migração de banco necessária — todos os campos já existem.
+**Impacto**: o componente já recebe `proximaTarefas` (ou pode derivar o status) — vou verificar se `getLeadStatusFilter` precisa de `proximaTarefa` e garantir que os dados estejam disponíveis no contexto do filtro.
 
