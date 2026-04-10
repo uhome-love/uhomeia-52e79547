@@ -988,36 +988,22 @@ export default function PipelineKanban() {
 
       {selectionMode && selectedLeads.size > 0 && (
         <div
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3"
-          style={{
-            padding: "12px 20px", borderRadius: 14, background: "#fff",
-            border: "1px solid #E2E8F0",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-          }}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-[14px] bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 shadow-lg"
         >
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#1E293B" }}>
+          <span className="text-[13px] font-bold text-slate-800 dark:text-slate-100">
             {selectedLeads.size} selecionado{selectedLeads.size !== 1 ? "s" : ""}
           </span>
           <button
             onClick={() => setBulkActionOpen(true)}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              background: "#2563EB", color: "#fff", borderRadius: 10,
-              padding: "8px 16px", fontWeight: 700, fontSize: 12, border: "none",
-              cursor: "pointer",
-            }}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-[10px] px-4 py-2 font-bold text-xs border-none cursor-pointer"
           >
-            <Send style={{ height: 14, width: 14 }} /> Ações em Massa
+            <Send className="h-3.5 w-3.5" /> Ações em Massa
           </button>
           <button
             onClick={clearSelection}
-            style={{
-              display: "flex", alignItems: "center", gap: 4,
-              background: "none", color: "#DC2626", border: "none",
-              fontWeight: 600, fontSize: 12, cursor: "pointer",
-            }}
+            className="flex items-center gap-1 bg-transparent text-red-600 border-none font-semibold text-xs cursor-pointer"
           >
-            <X style={{ height: 14, width: 14 }} /> Cancelar
+            <X className="h-3.5 w-3.5" /> Cancelar
           </button>
         </div>
       )}
