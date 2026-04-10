@@ -123,15 +123,22 @@ export default function PipelineKanban() {
     queryFn: async () => {
       if (leadIds.length === 0) return {};
       const map: Record<string, ProximaTarefa> = {};
+      // Build all chunk queries and run in parallel
+      const chunkPromises = [];
       for (let i = 0; i < leadIds.length; i += 200) {
         const chunk = leadIds.slice(i, i + 200);
-        const { data } = await supabase
-          .from("pipeline_tarefas")
-          .select("pipeline_lead_id, tipo, vence_em, hora_vencimento")
-          .in("pipeline_lead_id", chunk)
-          .eq("status", "pendente")
-          .order("vence_em", { ascending: true })
-          .order("hora_vencimento", { ascending: true });
+        chunkPromises.push(
+          supabase
+            .from("pipeline_tarefas")
+            .select("pipeline_lead_id, tipo, vence_em, hora_vencimento")
+            .in("pipeline_lead_id", chunk)
+            .eq("status", "pendente")
+            .order("vence_em", { ascending: true })
+            .order("hora_vencimento", { ascending: true })
+        );
+      }
+      const results = await Promise.all(chunkPromises);
+      for (const { data } of results) {
         if (data) {
           for (const row of data) {
             const nextTask: ProximaTarefa = { tipo: row.tipo, vence_em: row.vence_em, hora_vencimento: row.hora_vencimento };
