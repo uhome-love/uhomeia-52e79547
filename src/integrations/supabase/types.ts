@@ -5474,6 +5474,7 @@ export type Database = {
           aceite_expira_em: string | null
           aceite_status: string
           aceito_em: string | null
+          ai_replied: boolean | null
           anuncio: string | null
           arquivado: boolean
           bairro_regiao: string | null
@@ -5548,6 +5549,7 @@ export type Database = {
           aceite_expira_em?: string | null
           aceite_status?: string
           aceito_em?: string | null
+          ai_replied?: boolean | null
           anuncio?: string | null
           arquivado?: boolean
           bairro_regiao?: string | null
@@ -5622,6 +5624,7 @@ export type Database = {
           aceite_expira_em?: string | null
           aceite_status?: string
           aceito_em?: string | null
+          ai_replied?: boolean | null
           anuncio?: string | null
           arquivado?: boolean
           bairro_regiao?: string | null
@@ -8167,6 +8170,62 @@ export type Database = {
           total?: number | null
         }
         Relationships: []
+      }
+      whatsapp_ai_log: {
+        Row: {
+          corretor_nome: string | null
+          created_at: string | null
+          erro_detalhe: string | null
+          filtro_motivo: string | null
+          filtro_resultado: string | null
+          id: string
+          lead_id: string | null
+          mensagem_recebida: string | null
+          nome_contato: string | null
+          resposta_ia: string | null
+          status: string | null
+          telefone: string | null
+          tipo_mensagem: string | null
+        }
+        Insert: {
+          corretor_nome?: string | null
+          created_at?: string | null
+          erro_detalhe?: string | null
+          filtro_motivo?: string | null
+          filtro_resultado?: string | null
+          id?: string
+          lead_id?: string | null
+          mensagem_recebida?: string | null
+          nome_contato?: string | null
+          resposta_ia?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_mensagem?: string | null
+        }
+        Update: {
+          corretor_nome?: string | null
+          created_at?: string | null
+          erro_detalhe?: string | null
+          filtro_motivo?: string | null
+          filtro_resultado?: string | null
+          id?: string
+          lead_id?: string | null
+          mensagem_recebida?: string | null
+          nome_contato?: string | null
+          resposta_ia?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_mensagem?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_ai_log_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_campaign_batches: {
         Row: {

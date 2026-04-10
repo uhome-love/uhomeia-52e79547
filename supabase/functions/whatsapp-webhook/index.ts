@@ -6,6 +6,30 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// ── Call whatsapp-ai-reply for new leads ──
+async function callAIReply(supabaseUrl: string, serviceKey: string, telefone: string, nome_contato: string, mensagem: string, lead_id: string, tipo_mensagem: string) {
+  try {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/whatsapp-ai-reply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+      body: JSON.stringify({ telefone, nome_contato, mensagem, lead_id, tipo_mensagem }),
+    });
+    const result = await resp.json();
+    console.log(`🤖 AI reply result for ${telefone}:`, result?.ok ? "sent" : result?.error || "unknown");
+  } catch (e) {
+    console.error("AI reply call failed:", e);
+  }
+}
+
+// ── Log to whatsapp_ai_log ──
+async function logWhatsAppEntry(supabase: any, data: Record<string, unknown>) {
+  try {
+    await supabase.from("whatsapp_ai_log").insert(data);
+  } catch (e) {
+    console.error("whatsapp_ai_log insert failed:", e);
+  }
+}
+
 // ── Notify orchestrator for lead scoring ──
 async function notifyOrchestrator(supabaseUrl: string, serviceKey: string, event_type: string, pipeline_lead_id: string, canal: string) {
   try {
@@ -333,6 +357,30 @@ async function handleUnknownReply(
       responsavel_id: lead.corretor_id || null,
     });
 
+    // Log + AI reply for existing lead without campaign send
+    await logWhatsAppEntry(supabase, {
+      telefone: from,
+      nome_contato: contactName,
+      mensagem_recebida: msgText,
+      tipo_mensagem: "texto",
+      filtro_resultado: "aprovado",
+      lead_id: lead.id,
+      corretor_nome: null,
+      status: "lead_criado",
+    });
+
+    // If lead has no ai_replied yet and no active conversation window, call AI
+    const { data: leadDetail } = await supabase
+      .from("pipeline_leads")
+      .select("ai_replied, conversation_window_until")
+      .eq("id", lead.id)
+      .maybeSingle();
+
+    const hasActiveWindow = leadDetail?.conversation_window_until && new Date(leadDetail.conversation_window_until) > new Date();
+    if (!leadDetail?.ai_replied && !hasActiveWindow) {
+      callAIReply(supabaseUrl, serviceKey, from, contactName || "", msgText, lead.id, "texto");
+    }
+
     notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_respondeu", lead.id, "whatsapp");
     console.log(`📩 Found existing lead ${lead.id} by phone, 24h window set`);
     return;
@@ -394,6 +442,9 @@ async function handleUnknownReply(
     // Distribute via roleta
     await distributeViroleta(supabaseUrl, serviceKey, newLead.id);
 
+    // AI reply for reactivated lead
+    callAIReply(supabaseUrl, serviceKey, from, contactName || oaLead.nome || "", msgText, newLead.id, "texto");
+
     // Notify orchestrator
     notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_respondeu", newLead.id, "whatsapp");
     return;
@@ -426,6 +477,10 @@ async function handleUnknownReply(
 
   if (!createErr && newLead) {
     await distributeViroleta(supabaseUrl, serviceKey, newLead.id);
+
+    // AI reply for new lead
+    callAIReply(supabaseUrl, serviceKey, from, contactName || "", msgText, newLead.id, "texto");
+
     notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_respondeu", newLead.id, "whatsapp");
   }
 }
