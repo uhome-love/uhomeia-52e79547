@@ -6,6 +6,30 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// ── Call whatsapp-ai-reply for new leads ──
+async function callAIReply(supabaseUrl: string, serviceKey: string, telefone: string, nome_contato: string, mensagem: string, lead_id: string, tipo_mensagem: string) {
+  try {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/whatsapp-ai-reply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+      body: JSON.stringify({ telefone, nome_contato, mensagem, lead_id, tipo_mensagem }),
+    });
+    const result = await resp.json();
+    console.log(`🤖 AI reply result for ${telefone}:`, result?.ok ? "sent" : result?.error || "unknown");
+  } catch (e) {
+    console.error("AI reply call failed:", e);
+  }
+}
+
+// ── Log to whatsapp_ai_log ──
+async function logWhatsAppEntry(supabase: any, data: Record<string, unknown>) {
+  try {
+    await supabase.from("whatsapp_ai_log").insert(data);
+  } catch (e) {
+    console.error("whatsapp_ai_log insert failed:", e);
+  }
+}
+
 // ── Notify orchestrator for lead scoring ──
 async function notifyOrchestrator(supabaseUrl: string, serviceKey: string, event_type: string, pipeline_lead_id: string, canal: string) {
   try {
