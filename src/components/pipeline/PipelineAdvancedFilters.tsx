@@ -109,6 +109,7 @@ export function applyFilters(
   leads: PipelineLead[],
   filters: PipelineFilters,
   stages: PipelineStage[],
+  visitaLeadIds?: Set<string>,
 ): PipelineLead[] {
   let result = leads;
 
@@ -159,7 +160,8 @@ export function applyFilters(
   if (filters.diasSemAcao) {
     const minDays = parseInt(filters.diasSemAcao);
     result = result.filter(l => {
-      const days = differenceInDaysSafe(l.stage_changed_at);
+      const refDate = l.ultima_acao_at || l.stage_changed_at;
+      const days = differenceInDaysSafe(refDate);
       return days !== null && days >= minDays;
     });
   }
@@ -185,12 +187,20 @@ export function applyFilters(
   }
 
   if (filters.comVisita === "sim") {
-    // leads in "visita" type stages
-    const visitaStageIds = stages.filter(s => s.tipo === "visita" || s.nome.toLowerCase().includes("visita")).map(s => s.id);
-    result = result.filter(l => visitaStageIds.includes(l.stage_id));
+    if (visitaLeadIds && visitaLeadIds.size > 0) {
+      result = result.filter(l => visitaLeadIds.has(l.id));
+    } else {
+      // Fallback: filter by stage type if no real visit data available
+      const visitaStageIds = stages.filter(s => s.tipo === "visita" || s.nome.toLowerCase().includes("visita")).map(s => s.id);
+      result = result.filter(l => visitaStageIds.includes(l.stage_id));
+    }
   } else if (filters.comVisita === "nao") {
-    const visitaStageIds = stages.filter(s => s.tipo === "visita" || s.nome.toLowerCase().includes("visita")).map(s => s.id);
-    result = result.filter(l => !visitaStageIds.includes(l.stage_id));
+    if (visitaLeadIds && visitaLeadIds.size > 0) {
+      result = result.filter(l => !visitaLeadIds.has(l.id));
+    } else {
+      const visitaStageIds = stages.filter(s => s.tipo === "visita" || s.nome.toLowerCase().includes("visita")).map(s => s.id);
+      result = result.filter(l => !visitaStageIds.includes(l.stage_id));
+    }
   }
 
   if (filters.slaStatus) {
@@ -235,10 +245,11 @@ interface Props {
   leads: PipelineLead[];
   corretorNomes: Record<string, string>;
   isManager: boolean;
+  visitaLeadIds?: Set<string>;
 }
 
 export default function PipelineAdvancedFilters({
-  filters, onChange, stages, segmentos, leads, corretorNomes, isManager,
+  filters, onChange, stages, segmentos, leads, corretorNomes, isManager, visitaLeadIds,
 }: Props) {
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => loadSavedFilters());
   const [saveName, setSaveName] = useState("");
@@ -526,6 +537,8 @@ export default function PipelineAdvancedFilters({
                   { value: "1", label: "> 1 dia" },
                   { value: "3", label: "> 3 dias" },
                   { value: "7", label: "> 7 dias" },
+                  { value: "15", label: "> 15 dias" },
+                  { value: "30", label: "> 30 dias" },
                 ].map(d => (
                   <button
                     key={d.value}
