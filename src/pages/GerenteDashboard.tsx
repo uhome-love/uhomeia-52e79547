@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useGerenteDashboard, Period, formatCurrency } from "@/hooks/useGerenteDashboard";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/paginatedFetch";
 import { motion } from "framer-motion";
