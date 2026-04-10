@@ -1,30 +1,53 @@
 
 
-# Correção da Roleta: Fase 1 — Plano Final (com guarda no RPC)
+# Auto-distribuição de leads do site via crm-webhook
 
-## 3 mudanças cirúrgicas
+## O que muda
 
-### 1. Edge Function `distribute-lead/index.ts`
-Linha ~109: trocar `const forceDispatch = true` por `const forceDispatch = (action === "dispatch_fila_ceo")`
+Adicionar ~10 linhas após o INSERT bem-sucedido de lead novo (linha 292) no `crm-webhook/index.ts`. A chamada ao `distribute-lead` com `action: distribute_single` segue o mesmo padrão de `receive-meta-lead`.
 
-### 2. UI `src/hooks/useRoleta.ts`
-Ordenar fila por `ultima_distribuicao_at ASC NULLS FIRST` em vez de contagem agregada do dia. Indicador "Próximo" passa a refletir a ordem real do motor.
+Para leads **existentes** (dedup), não há chamada — o lead já tem corretor ou foi reativado na Fila CEO.
 
-### 3. Migração SQL — Diagnóstico no RPC `distribuir_lead_atomico`
+## Mudança exata
 
-**INSTRUÇÃO CRÍTICA**: Na migração SQL do `distribuir_lead_atomico`, **não alterar nenhuma lógica de seleção de corretor, filtros de elegibilidade ou fluxo de attempt 1/attempt 2**. Apenas adicionar contadores de diagnóstico (`total_fila`, `total_eligible`, `total_blocked_na_roleta`, `failure_reason`) ao objeto de retorno quando `v_chosen_auth_id IS NULL` no attempt 1. O resto da função fica idêntico.
+**Arquivo**: `supabase/functions/crm-webhook/index.ts`
 
-## Arquivos
+Após a linha 292 (`console.log` do new lead), inserir:
 
-| Ação | Arquivo |
-|------|---------|
-| Modificar | `supabase/functions/distribute-lead/index.ts` |
-| Modificar | `src/hooks/useRoleta.ts` |
-| Migração SQL | `distribuir_lead_atomico` (só diagnóstico, zero alteração de lógica) |
+```typescript
+// ── Auto-distribute new lead ──
+try {
+  const distResp = await fetch(
+    `${Deno.env.get('SUPABASE_URL')}/functions/v1/distribute-lead`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify({ action: 'distribute_single', lead_id: newLead.id }),
+    }
+  )
+  const distResult = await distResp.json()
+  console.log(`[crm-webhook] distribute-lead response:`, distResult)
+  if (distResult?.corretor_id) {
+    existingCorretorId = distResult.corretor_id
+  }
+} catch (distErr) {
+  console.error('[crm-webhook] distribute-lead failed (lead stays in fila_ceo):', distErr)
+}
+```
+
+## Comportamento
+
+- **Sucesso**: lead entra na roleta geral, corretor recebe notificação
+- **Falha**: lead permanece com `pendente_distribuicao` → aparece na Fila CEO como fallback natural
+- **Lead existente (dedup)**: sem mudança, fluxo atual mantido
+- **Sem segmento**: distribuição geral (todos os corretores ativos na roleta)
 
 ## O que NÃO muda
-- Nenhuma lógica de seleção/filtro/attempt no RPC
-- Nenhuma alteração em aceite/rejeição
-- Nenhuma aba existente da Roleta
-- Centralização da fila fica para Fase 2
+
+- Zero alteração na lógica de dedup, resolução de imóvel, notificações, sync para `leads`
+- Nenhum outro arquivo modificado
+- Deploy automático da edge function
 
