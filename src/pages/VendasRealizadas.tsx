@@ -212,7 +212,11 @@ export default function VendasRealizadas() {
         });
       }
 
-      // Load profiles and annual VGV in parallel
+      // Collect all profile IDs and auth_user_ids
+      const corretorProfileIds = new Set(rows.map(v => v.corretor_id).filter(Boolean) as string[]);
+      const partnerAuthUserIds = new Set<string>();
+      Object.values(parceriaPartners).forEach(p => p.auth_user_ids.forEach(id => partnerAuthUserIds.add(id)));
+
       const profileIds = [...corretorProfileIds];
       const authIds = [...partnerAuthUserIds];
 
