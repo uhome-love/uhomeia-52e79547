@@ -570,11 +570,11 @@ export default function PipelineKanban() {
             <div className="flex-1" />
 
             {/* CENTER-RIGHT: Filters inline */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
               {(isAdmin || isGestor) && (
                 <Select value={corretorFilter} onValueChange={setCorretorFilter}>
                   <SelectTrigger
-                    className={`h-[32px] text-[12px] w-[155px] shrink-0 rounded-lg font-medium ${
+                    className={`h-[32px] text-[12px] max-w-[170px] min-w-[120px] shrink rounded-lg font-medium truncate ${
                       corretorFilter !== "all"
                         ? "border-[#4F46E5] bg-[#4F46E5]/5 dark:bg-[#4F46E5]/10 text-[#4F46E5]"
                         : "border-[#e8e8f0] dark:border-white/[0.07] bg-[#f7f7fb] dark:bg-white/[0.04] text-[#52525b] dark:text-[#a1a1aa]"
@@ -595,7 +595,7 @@ export default function PipelineKanban() {
               {Object.keys(campaignTagCounts).length > 0 && (
                 <Select value={campaignTagFilter} onValueChange={setCampaignTagFilter}>
                   <SelectTrigger
-                    className={`h-[32px] text-[12px] w-[170px] shrink-0 rounded-lg font-medium ${
+                    className={`h-[32px] text-[12px] max-w-[190px] min-w-[130px] shrink rounded-lg font-medium truncate ${
                       campaignTagFilter !== "all"
                         ? "border-[#4F46E5] bg-[#4F46E5]/5 dark:bg-[#4F46E5]/10 text-[#4F46E5]"
                         : "border-[#e8e8f0] dark:border-white/[0.07] bg-[#f7f7fb] dark:bg-white/[0.04] text-[#52525b] dark:text-[#a1a1aa]"
