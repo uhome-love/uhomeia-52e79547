@@ -335,6 +335,7 @@ export default function PipelineKanban() {
               leads={pipeline.leads}
               corretorNomes={pipeline.corretorNomes}
               isManager={isGestor || isAdmin}
+              visitaLeadIds={visitaLeadIds}
             />
 
             {/* Mobile search toggle */}
@@ -483,6 +484,7 @@ export default function PipelineKanban() {
               leads={pipeline.leads}
               corretorNomes={pipeline.corretorNomes}
               isManager={isGestor || isAdmin}
+              visitaLeadIds={visitaLeadIds}
             />
 
             <div className="relative w-[120px]">
@@ -643,6 +645,7 @@ export default function PipelineKanban() {
                 leads={pipeline.leads}
                 corretorNomes={pipeline.corretorNomes}
                 isManager={isGestor || isAdmin}
+                visitaLeadIds={visitaLeadIds}
               />
 
               {/* Search */}
