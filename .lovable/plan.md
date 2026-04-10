@@ -1,34 +1,39 @@
 
 
-## Diagnóstico: Tarefas "sumindo" da Central de Tarefas
+## Plano: Corrigir Central de Tarefas — mostrar todas tarefas dos leads do corretor
 
-### Causa raiz
+### Problema
+Tarefas criadas por gestores para leads de um corretor não aparecem na Central de Tarefas desse corretor. A query atual filtra por `responsavel_id = user.id OR created_by = user.id`, excluindo tarefas criadas por gestores.
 
-A Central de Tarefas (`MinhasTarefas.tsx`) tem 5 abas de filtro temporal: **Atrasadas**, **Hoje**, **Amanhã**, **Semana** e **Concluídas**. Porém **não existe nenhuma aba para tarefas futuras além da semana atual**.
+### Correções
 
-Dados reais do banco agora:
-- **1045 tarefas pendentes** têm data além desta semana → **invisíveis em todas as abas**
-- 757 atrasadas, 403 hoje, 112 amanhã, 22 semana
+**1. Migração SQL — Nova RLS policy**
 
-Ou seja, **45% das tarefas pendentes não aparecem em lugar nenhum**. Quando um corretor cria uma tarefa com data para a próxima semana ou adiante, ela "desaparece".
+Permitir ao corretor ver qualquer tarefa dos seus próprios leads:
+```sql
+CREATE POLICY "Corretores can view tasks on their leads"
+ON public.pipeline_tarefas FOR SELECT TO authenticated
+USING (
+  pipeline_lead_id IN (
+    SELECT id FROM public.pipeline_leads WHERE corretor_id = auth.uid()
+  )
+);
+```
+Isolamento garantido: só vê tarefas de leads onde `corretor_id = auth.uid()`.
 
-### Correção
+**2. Frontend — `src/pages/MinhasTarefas.tsx`**
 
-**Arquivo: `src/pages/MinhasTarefas.tsx`**
+Alterar a query de tarefas:
+- Buscar IDs dos leads do corretor (`pipeline_leads.select("id").eq("corretor_id", user.id)`)
+- Buscar tarefas com `pipeline_lead_id.in.(leadIds)` em vez de filtrar por `responsavel_id/created_by`
 
-1. Adicionar nova aba **"📋 Todas"** que mostra todas as tarefas pendentes, sem filtro de data, ordenadas por `vence_em`.
+**3. Frontend — Criação de tarefa seta `responsavel_id` para o dono do lead**
 
-2. Atualizar o tipo `TabFilter` para incluir `"todas"`.
+- `CardQuickTaskPopover.tsx`: receber `corretorId` como prop, usar como `responsavel_id`
+- `QuickActionMenu.tsx`: receber `corretorId` como prop para callback task
+- `usePipelineLeadData.ts`: receber `corretorId` e usar como default no `responsavel_id`
 
-3. No `filteredTarefas`, quando `activeTab === "todas"`, retornar `pendentes` (todas as pendentes).
-
-4. Mudar o **tab padrão** de `"hoje"` para `"todas"` — assim o corretor vê tudo ao abrir, e pode filtrar por dia se quiser.
-
-5. Adicionar contador de "Todas" no resumo superior.
-
-### Impacto
-
-- Zero alteração de banco ou RLS
-- Todas as tarefas criadas pelo corretor (via lead detail, ação rápida, ou botão "Nova Tarefa") passam a ser visíveis na central
-- Tabs existentes continuam funcionando como filtros rápidos
+### Segurança
+- Corretor só vê tarefas de leads onde ele é o `corretor_id` — nunca vê tarefas de outros corretores
+- Gestor/admin continua vendo tudo pelas policies existentes
 
