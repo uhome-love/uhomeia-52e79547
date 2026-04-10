@@ -357,6 +357,30 @@ async function handleUnknownReply(
       responsavel_id: lead.corretor_id || null,
     });
 
+    // Log + AI reply for existing lead without campaign send
+    await logWhatsAppEntry(supabase, {
+      telefone: from,
+      nome_contato: contactName,
+      mensagem_recebida: msgText,
+      tipo_mensagem: "texto",
+      filtro_resultado: "aprovado",
+      lead_id: lead.id,
+      corretor_nome: null,
+      status: "lead_criado",
+    });
+
+    // If lead has no ai_replied yet and no active conversation window, call AI
+    const { data: leadDetail } = await supabase
+      .from("pipeline_leads")
+      .select("ai_replied, conversation_window_until")
+      .eq("id", lead.id)
+      .maybeSingle();
+
+    const hasActiveWindow = leadDetail?.conversation_window_until && new Date(leadDetail.conversation_window_until) > new Date();
+    if (!leadDetail?.ai_replied && !hasActiveWindow) {
+      callAIReply(supabaseUrl, serviceKey, from, contactName || "", msgText, lead.id, "texto");
+    }
+
     notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_respondeu", lead.id, "whatsapp");
     console.log(`📩 Found existing lead ${lead.id} by phone, 24h window set`);
     return;
