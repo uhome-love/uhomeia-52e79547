@@ -180,7 +180,7 @@ export default function PipelineKanban() {
 
   // Pre-filter leads (everything except clientStatusFilter) for accurate status counts
   const preFilteredLeads = useMemo(() => {
-    let result = applyFilters(pipeline.leads, filters, pipeline.stages, visitaLeadIds);
+    let result = applyFilters(pipeline.leads, filters, pipeline.stages, visitaLeadIds, kanbanTarefasMap);
     if (filaCeoFilter) {
       result = result.filter(l => !l.corretor_id);
     }
