@@ -442,6 +442,9 @@ async function handleUnknownReply(
     // Distribute via roleta
     await distributeViroleta(supabaseUrl, serviceKey, newLead.id);
 
+    // AI reply for reactivated lead
+    callAIReply(supabaseUrl, serviceKey, from, contactName || oaLead.nome || "", msgText, newLead.id, "texto");
+
     // Notify orchestrator
     notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_respondeu", newLead.id, "whatsapp");
     return;
@@ -474,6 +477,10 @@ async function handleUnknownReply(
 
   if (!createErr && newLead) {
     await distributeViroleta(supabaseUrl, serviceKey, newLead.id);
+
+    // AI reply for new lead
+    callAIReply(supabaseUrl, serviceKey, from, contactName || "", msgText, newLead.id, "texto");
+
     notifyOrchestrator(supabaseUrl, serviceKey, "whatsapp_respondeu", newLead.id, "whatsapp");
   }
 }
