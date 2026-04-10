@@ -245,10 +245,11 @@ interface Props {
   leads: PipelineLead[];
   corretorNomes: Record<string, string>;
   isManager: boolean;
+  visitaLeadIds?: Set<string>;
 }
 
 export default function PipelineAdvancedFilters({
-  filters, onChange, stages, segmentos, leads, corretorNomes, isManager,
+  filters, onChange, stages, segmentos, leads, corretorNomes, isManager, visitaLeadIds,
 }: Props) {
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => loadSavedFilters());
   const [saveName, setSaveName] = useState("");
