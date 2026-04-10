@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, forwardRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2 as Building2Tab } from "lucide-react";
 import TabEmpresa from "@/components/ceo/TabEmpresa";
