@@ -74,13 +74,11 @@ export function usePendingLeadAlert() {
 
   // Check immediately when tab gains focus
   useEffect(() => {
-    const onFocus = () => checkPending();
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") onFocus();
-    });
-    return () => {
-      document.removeEventListener("visibilitychange", onFocus);
+    const handler = () => {
+      if (document.visibilityState === "visible") checkPending();
     };
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
   }, [checkPending]);
 
   return {
