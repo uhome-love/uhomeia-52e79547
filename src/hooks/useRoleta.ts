@@ -521,13 +521,17 @@ export function useRoleta() {
       // Add to fila for each segmento via atomic RPC
       const segmentoIds = [cred.segmento_1_id, cred.segmento_2_id].filter(Boolean) as string[];
       for (const segId of segmentoIds) {
-        await supabase.rpc("upsert_roleta_fila" as any, {
+        const { error: rpcError } = await supabase.rpc("upsert_roleta_fila" as any, {
           p_corretor_id: cred.corretor_id,
           p_segmento_id: segId,
           p_janela: cred.janela,
           p_data: hoje,
           p_credenciamento_id: credId,
         });
+        if (rpcError) {
+          console.error("upsert_roleta_fila error:", rpcError);
+          throw new Error(`Erro ao inserir na fila: ${rpcError.message}`);
+        }
       }
 
       // Belt-and-suspenders: ensure na_roleta = true in corretor_disponibilidade
