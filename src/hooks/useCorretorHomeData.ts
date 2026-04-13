@@ -115,15 +115,16 @@ export function useCorretorHomeData() {
       // Get stages
       const { data: stages } = await supabase
         .from("pipeline_stages")
-        .select("id, nome, cor, ordem")
+        .select("id, nome, cor, ordem, tipo")
         .eq("ativo", true)
         .order("ordem");
 
-      // Get lead counts by stage
+      // Get lead counts by stage — only active leads (not archived)
       const { data: leads } = await supabase
         .from("pipeline_leads")
         .select("stage_id")
-        .eq("corretor_id", user!.id);
+        .eq("corretor_id", user!.id)
+        .eq("arquivado", false);
 
       if (!stages || !leads) return [];
 
