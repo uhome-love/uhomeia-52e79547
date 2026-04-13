@@ -795,6 +795,15 @@ export default function MinhasTarefas() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Task Completion Dialog */}
+      <TaskCompletionDialog
+        open={!!completingTarefa}
+        onOpenChange={(v) => { if (!v) setCompletingTarefa(null); }}
+        tarefaTitulo={completingTarefa?.titulo || ""}
+        leadNome={completingTarefa?.lead_nome}
+        onConfirm={handleCompletionConfirm}
+      />
     </div>
   );
 }

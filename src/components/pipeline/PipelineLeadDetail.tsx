@@ -117,6 +117,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [tipoDescarte, setTipoDescarte] = useState<string>("reengajavel");
   const [inativando, setInativando] = useState(false);
   const [nextActionOpen, setNextActionOpen] = useState(false);
+  const [scheduleVisitOpen, setScheduleVisitOpen] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
 
   const currentStage = stages.find(s => s.id === lead.stage_id);
@@ -660,7 +661,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <MapPin className="h-4 w-4" /> Visitas do Lead
                 </h4>
-                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => { onOpenChange(false); setTimeout(() => { navigate(`/agenda-visitas?lead=${lead.id}&nome=${encodeURIComponent(lead.nome)}&telefone=${encodeURIComponent(lead.telefone || "")}&empreendimento=${encodeURIComponent(lead.empreendimento || "")}`); }, 200); }}>
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setScheduleVisitOpen(true)}>
                   <Calendar className="h-3 w-3" /> + Agendar Visita
                 </Button>
               </div>
