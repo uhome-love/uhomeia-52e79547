@@ -119,6 +119,7 @@ function getThemeForStage(stage: PipelineStage): PhaseTheme {
   if (nome.includes("busca") || nome.includes("qualific")) return PHASE_THEMES.busca;
   if (nome.includes("aquecimento") || nome.includes("possível") || nome.includes("possivel")) return PHASE_THEMES.aquecimento;
   if (nome.includes("marcada")) return PHASE_THEMES.visita;
+  if (nome.includes("pós-visita") || nome.includes("pos-visita") || nome.includes("pos_visita")) return PHASE_THEMES.pos_visita;
   if (nome.includes("realizada") || nome.includes("boss")) return PHASE_THEMES.venda;
   if (nome.includes("descarte") || nome.includes("perdid")) return PHASE_THEMES.descarte;
   return {
