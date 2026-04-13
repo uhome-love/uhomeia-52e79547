@@ -158,6 +158,7 @@ export default function StageCoachBar({
           ],
         };
 
+      case "busca":
       case "qualificacao":
         return {
           diagnostic: "Lead em qualificação — entenda o perfil e apresente opções",
@@ -186,6 +187,7 @@ export default function StageCoachBar({
           ],
         };
 
+      case "aquecimento":
       case "possivel_visita":
         return {
           diagnostic: "Lead aquecido — momento de agendar a visita!",
@@ -210,6 +212,7 @@ export default function StageCoachBar({
           ],
         };
 
+      case "visita":
       case "visita_marcada":
         return {
           diagnostic: "🛡️ Anti No-show: Confirme D-2 (vídeo), D-1 (autoridade), Dia (lembrete+mapa)",
@@ -234,6 +237,7 @@ export default function StageCoachBar({
           ],
         };
 
+      case "pos_visita":
       case "visita_realizada":
         return {
           diagnostic: "⚡ Regra UHOME: Follow-up no MESMO DIA da visita! Não deixe esfriar.",
