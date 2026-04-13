@@ -186,13 +186,22 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
     if (!tipoDescarte) { toast.error("Selecione o tipo de descarte"); return; }
     setInativando(true);
     try {
-      const descarteStage = stages.find(s => s.tipo === "descarte");
       const motivoTexto = inativarMotivo === "outro"
         ? `Inativado: ${inativarObs.trim() || "Outro motivo"}`
         : `Inativado: ${inativarMotivo}`;
-      await onUpdate(lead.id, { motivo_descarte: motivoTexto, tipo_descarte: tipoDescarte } as any);
-      if (descarteStage) await onMove(lead.id, descarteStage.id, motivoTexto);
-      toast.success("Lead inativado com sucesso");
+
+      if (tipoDescarte === "definitivo") {
+        // Definitivo: archive lead in current stage, no moving to descarte
+        await onUpdate(lead.id, { motivo_descarte: motivoTexto, tipo_descarte: "definitivo", arquivado: true } as any);
+        toast.success("Lead inativado definitivamente (arquivado)");
+      } else {
+        // Reengajável: move to descarte stage for nurturing
+        const descarteStage = stages.find(s => s.tipo === "descarte");
+        await onUpdate(lead.id, { motivo_descarte: motivoTexto, tipo_descarte: "reengajavel" } as any);
+        if (descarteStage) await onMove(lead.id, descarteStage.id, motivoTexto);
+        toast.success("Lead movido para descarte (reengajável)");
+      }
+
       setInativarOpen(false);
       onOpenChange(false);
     } catch (err: any) {
