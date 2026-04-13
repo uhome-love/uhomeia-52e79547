@@ -42,12 +42,12 @@ export default function SaudeOperacao() {
 
     // 2. Taxa de aproveitamento — pipeline_leads aproveitados / total
     const { count: totalLeads } = await supabase.from("pipeline_leads").select("id", { count: "exact", head: true }) as any;
-    const { count: aproveitados } = await (supabase.from("pipeline_leads").select("id", { count: "exact", head: true }) as any).in("etapa", ["visita_marcada", "visita_realizada", "proposta", "contrato", "venda"]);
+    const { count: aproveitados } = await (supabase.from("pipeline_leads").select("id", { count: "exact", head: true }) as any).in("etapa", ["visita", "pos_visita", "proposta", "contrato", "venda"]);
     const taxaAprov = totalLeads && totalLeads > 0 ? Math.round(((aproveitados || 0) / totalLeads) * 100) : 0;
     const aprovNivel: Nivel = taxaAprov > 15 ? "bom" : taxaAprov >= 10 ? "atencao" : "critico";
 
     // 3. Conversão Lead → Visita
-    const { count: visitasMarcadas } = await (supabase.from("pipeline_leads").select("id", { count: "exact", head: true }) as any).in("etapa", ["visita_marcada", "visita_realizada", "proposta", "contrato", "venda"]);
+    const { count: visitasMarcadas } = await (supabase.from("pipeline_leads").select("id", { count: "exact", head: true }) as any).in("etapa", ["visita", "pos_visita", "proposta", "contrato", "venda"]);
     const convVisita = totalLeads && totalLeads > 0 ? Math.round(((visitasMarcadas || 0) / totalLeads) * 100) : 0;
     const convNivel: Nivel = convVisita > 8 ? "bom" : convVisita >= 4 ? "atencao" : "critico";
 

@@ -188,7 +188,7 @@ export default function CampanhasVozPage() {
                   <SelectContent>
                     <SelectItem value="descartado" className="text-xs">Descartados</SelectItem>
                     <SelectItem value="sem_contato" className="text-xs">Sem Contato</SelectItem>
-                    <SelectItem value="qualificacao" className="text-xs">Qualificação</SelectItem>
+                    <SelectItem value="busca" className="text-xs">Busca</SelectItem>
                     <SelectItem value="contato_iniciado" className="text-xs">Contato Iniciado</SelectItem>
                   </SelectContent>
                 </Select>

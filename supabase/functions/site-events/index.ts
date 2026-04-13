@@ -130,7 +130,7 @@ async function reativarLead(
   const { data: stageQualificacao } = await supabase
     .from('pipeline_stages')
     .select('id')
-    .eq('tipo', 'qualificacao')
+    .eq('tipo', 'busca')
     .limit(1)
     .single()
 

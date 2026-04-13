@@ -135,7 +135,7 @@ export function useLeadIntelligence(periodo: string) {
   const hasContato = (l: LeadIntelData) => !!l.primeiro_contato_em;
   const isVisita = (l: LeadIntelData) => {
     const s = stageMap.get(l.stage_id);
-    return s && ["visita_marcada", "visita_realizada"].includes(s.tipo);
+    return s && ["visita", "pos_visita", "visita_marcada", "visita_realizada"].includes(s.tipo);
   };
   const isVenda = (l: LeadIntelData) => {
     const s = stageMap.get(l.stage_id);
