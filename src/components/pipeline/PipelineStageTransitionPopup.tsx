@@ -564,16 +564,16 @@ export default function PipelineStageTransitionPopup({ open, onOpenChange, lead,
     if (stageName.includes("contato inic") || stageName.includes("contato iniciado")) {
       return <ContatoInicialForm lead={lead} onConfirm={onConfirm} targetStageId={targetStage.id} />;
     }
-    if (stageName.includes("qualifica")) {
+    if (stageName.includes("qualifica") || stageName.includes("busca")) {
       return <QualificacaoForm lead={lead} onConfirm={onConfirm} targetStageId={targetStage.id} />;
     }
-    if (stageName.includes("poss") && stageName.includes("visita")) {
+    if ((stageName.includes("poss") && stageName.includes("visita")) || stageName.includes("aquecimento")) {
       return <PossivelVisitaForm lead={lead} onConfirm={onConfirm} targetStageId={targetStage.id} />;
     }
-    if (stageName.includes("visita marcada") || (stageName.includes("visita") && stageName.includes("marcad"))) {
+    if (stageName === "visita" || targetStage.tipo === "visita" || stageName.includes("visita marcada") || (stageName.includes("visita") && stageName.includes("marcad"))) {
       return <VisitaMarcadaForm lead={lead} onConfirm={onConfirm} targetStageId={targetStage.id} />;
     }
-    if (stageName.includes("visita realizada") || (stageName.includes("visita") && stageName.includes("realizad"))) {
+    if (stageName.includes("pós-visita") || targetStage.tipo === "pos_visita" || stageName.includes("visita realizada") || (stageName.includes("visita") && stageName.includes("realizad"))) {
       return <VisitaRealizadaForm lead={lead} onConfirm={onConfirm} targetStageId={targetStage.id} />;
     }
     if (stageName.includes("descarte") || targetStage.tipo === "descarte") {
@@ -596,10 +596,10 @@ export function needsTransitionPopup(stageName: string, stageType: string): bool
   const name = stageName.toLowerCase();
   if (name.includes("sem contato")) return true;
   if (name.includes("contato inic") || name.includes("contato iniciado")) return true;
-  if (name.includes("qualifica")) return true;
-  if (name.includes("poss") && name.includes("visita")) return true;
-  if (name.includes("visita marcada") || (name.includes("visita") && name.includes("marcad"))) return true;
-  if (name.includes("visita realizada") || (name.includes("visita") && name.includes("realizad"))) return true;
+  if (name.includes("qualifica") || name.includes("busca")) return true;
+  if ((name.includes("poss") && name.includes("visita")) || name.includes("aquecimento")) return true;
+  if (name === "visita" || stageType === "visita" || name.includes("visita marcada")) return true;
+  if (name.includes("pós-visita") || stageType === "pos_visita" || name.includes("visita realizada")) return true;
   if (name.includes("descarte") || stageType === "descarte") return true;
   return false;
 }

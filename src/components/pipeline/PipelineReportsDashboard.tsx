@@ -29,9 +29,11 @@ interface VisitaStats {
 
 // SLA meta targets (hours) per stage type
 const STAGE_TIME_META: Record<string, number> = {
-  novo_lead: 0.5, sem_contato: 1, atendimento: 4, qualificacao: 24,
-  possibilidade_visita: 48, visita_marcada: 48, visita_realizada: 24,
+  novo_lead: 0.5, sem_contato: 1, atendimento: 4,
+  busca: 24, aquecimento: 48, visita: 48, pos_visita: 24,
   negociacao: 48, proposta: 24, assinatura: 72,
+  // Legacy
+  qualificacao: 24, possibilidade_visita: 48, visita_marcada: 48, visita_realizada: 24,
 };
 
 function EmptyDataMessage({ onExpand }: { onExpand?: () => void }) {

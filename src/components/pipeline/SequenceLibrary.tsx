@@ -58,7 +58,7 @@ const TEMPLATES: SequenceTemplate[] = [
     icon: Home,
     nome: "🏠 Aquecer lead para visita",
     descricao: "Nutrição focada em gerar interesse para visita presencial",
-    stage_gatilho: "possibilidade_visita",
+    stage_gatilho: "aquecimento",
     passos: [
       { dias_apos_inicio: 0, tipo: "mensagem", titulo: "WhatsApp com material do empreendimento", conteudo: "{{nome}}, separei um material especial do {{empreendimento}} para você conhecer melhor o projeto. Dá uma olhada! 📸", canal: "whatsapp" },
       { dias_apos_inicio: 2, tipo: "ligacao", titulo: "Ligar para qualificar interesse", conteudo: "Ligar para {{nome}} e perguntar o que achou do material. Qualificar: objetivo (morar/investir), prazo, orçamento.", canal: "ligacao" },
@@ -71,7 +71,7 @@ const TEMPLATES: SequenceTemplate[] = [
     icon: CalendarCheck,
     nome: "📅 Confirmar visita",
     descricao: "Garantir que o cliente compareça à visita agendada",
-    stage_gatilho: "visita_marcada",
+    stage_gatilho: "visita",
     passos: [
       { dias_apos_inicio: -1, tipo: "mensagem", titulo: "WhatsApp confirmando presença", conteudo: "{{nome}}, tudo certo para amanhã? Sua visita ao {{empreendimento}} está confirmada! Me avise qualquer imprevisto 😊", canal: "whatsapp" },
       { dias_apos_inicio: 0, tipo: "mensagem", titulo: "WhatsApp 2h antes com endereço/link", conteudo: "{{nome}}, daqui a pouco nos vemos! 📍 Segue a localização do {{empreendimento}}. Estou te esperando!", canal: "whatsapp" },
@@ -82,7 +82,7 @@ const TEMPLATES: SequenceTemplate[] = [
     icon: DollarSign,
     nome: "💰 Negociação e fechamento",
     descricao: "Follow-up pós visita focado em fechar negócio",
-    stage_gatilho: "visita_realizada",
+    stage_gatilho: "pos_visita",
     passos: [
       { dias_apos_inicio: 0, tipo: "ligacao", titulo: "Ligar pós-visita", conteudo: "Ligar para {{nome}} e perguntar impressões da visita. Qual unidade gostou mais? Identificar objeções.", canal: "ligacao" },
       { dias_apos_inicio: 1, tipo: "mensagem", titulo: "Enviar proposta por WhatsApp", conteudo: "{{nome}}, preparei uma proposta personalizada para o {{empreendimento}} com base no que conversamos. Segue os detalhes! 💰", canal: "whatsapp" },
@@ -118,13 +118,17 @@ const STAGE_LABELS: Record<string, string> = {
   novo_lead: "Novo Lead",
   sem_contato: "Sem Contato",
   contato_inicial: "Contato Inicial",
-  atendimento: "Atendimento",
-  qualificacao: "Qualificação",
-  possibilidade_visita: "Possibilidade de Visita",
-  visita_marcada: "Visita Marcada",
-  visita_realizada: "Visita Realizada",
+  busca: "Busca",
+  aquecimento: "Aquecimento",
+  visita: "Visita",
+  pos_visita: "Pós-Visita",
   negociacao: "Negociação",
   proposta: "Proposta",
+  atendimento: "Atendimento",
+  qualificacao: "Busca",
+  possibilidade_visita: "Aquecimento",
+  visita_marcada: "Visita",
+  visita_realizada: "Pós-Visita",
 };
 
 const CANAL_ICONS: Record<string, { icon: typeof MessageSquare; label: string; color: string }> = {
