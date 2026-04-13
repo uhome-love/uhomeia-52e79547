@@ -12,11 +12,16 @@ interface Stage {
 
 // Map stage tipo to probability %
 const STAGE_PROBABILITY: Record<string, number> = {
+  novo_lead: 5,
   novo: 10,
+  sem_contato: 10,
+  contato_inicial: 15,
   atendimento: 15,
-  qualificacao: 25,
-  visita_marcada: 40,
-  visita_realizada: 60,
+  boas_vindas: 15,
+  busca: 20,
+  aquecimento: 30,
+  visita: 50,
+  pos_visita: 65,
   negociacao: 75,
   proposta: 85,
   assinatura: 95,

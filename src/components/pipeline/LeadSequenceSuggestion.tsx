@@ -51,7 +51,7 @@ const BUILT_IN_SEQUENCES: BuiltInSequence[] = [
     id: "aquecer-visita",
     nome: "Aquecer para visita",
     descricao: "Enviar materiais e agendar visita",
-    stages: ["possibilidade_visita", "contato_inicial"],
+    stages: ["aquecimento", "busca", "contato_inicial"],
     passos: [
       { titulo: "Enviar material do {{empreendimento}} para {{nome}}", tipo: "whatsapp", diasOffset: 0, icon: <MessageCircle className="h-3 w-3 text-green-500" /> },
       { titulo: "Ligar para {{nome}} — propor visita", tipo: "ligacao", diasOffset: 1, icon: <Phone className="h-3 w-3 text-blue-500" /> },
@@ -62,7 +62,7 @@ const BUILT_IN_SEQUENCES: BuiltInSequence[] = [
     id: "pos-visita",
     nome: "Pós-visita",
     descricao: "Follow-up após visita realizada",
-    stages: ["visita_realizada", "negociacao"],
+    stages: ["pos_visita", "negociacao"],
     passos: [
       { titulo: "WhatsApp pós-visita: {{nome}}, o que achou?", tipo: "whatsapp", diasOffset: 0, icon: <MessageCircle className="h-3 w-3 text-green-500" /> },
       { titulo: "Ligar para {{nome}} — proposta", tipo: "ligacao", diasOffset: 2, icon: <Phone className="h-3 w-3 text-blue-500" /> },
@@ -73,7 +73,7 @@ const BUILT_IN_SEQUENCES: BuiltInSequence[] = [
     id: "reengajamento",
     nome: "Reengajamento",
     descricao: "Reativar lead parado há dias",
-    stages: ["sem_contato", "contato_inicial", "possibilidade_visita"],
+    stages: ["sem_contato", "contato_inicial", "aquecimento", "busca"],
     passos: [
       { titulo: "WhatsApp: Oi {{nome}}, ainda tem interesse no {{empreendimento}}?", tipo: "whatsapp", diasOffset: 0, icon: <MessageCircle className="h-3 w-3 text-green-500" /> },
       { titulo: "Ligar para {{nome}} — reengajar", tipo: "ligacao", diasOffset: 2, icon: <Phone className="h-3 w-3 text-blue-500" /> },

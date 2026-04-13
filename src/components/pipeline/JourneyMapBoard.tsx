@@ -51,23 +51,23 @@ const PHASE_THEMES: Record<string, PhaseTheme> = {
     glow: "0 0 20px rgba(59,130,246,0.15)",
     missionBadge: "⚡ ENGAJAR",
   },
-  qualificacao: {
-    name: "Arena de Qualificação",
-    icon: "🎯",
+  busca: {
+    name: "Missão Busca",
+    icon: "🔍",
     color: "#8B5CF6",
     headerBg: "rgba(76,29,149,0.4)",
     headerBorder: "rgba(139,92,246,0.4)",
     glow: "0 0 20px rgba(139,92,246,0.15)",
-    missionBadge: "🎯 QUALIFICAR",
+    missionBadge: "🔍 BUSCAR",
   },
-  visita_possivel: {
-    name: "Caminho do Troféu",
-    icon: "🏃",
+  aquecimento: {
+    name: "Zona de Aquecimento",
+    icon: "🔥",
     color: "#F59E0B",
     headerBg: "rgba(120,53,15,0.4)",
     headerBorder: "rgba(245,158,11,0.4)",
     glow: "0 0 20px rgba(245,158,11,0.15)",
-    missionBadge: "🏃 AVANÇAR",
+    missionBadge: "🔥 AQUECER",
   },
   visita: {
     name: "Portão da Vitória",
@@ -77,6 +77,15 @@ const PHASE_THEMES: Record<string, PhaseTheme> = {
     headerBorder: "rgba(16,185,129,0.4)",
     glow: "0 0 20px rgba(16,185,129,0.15)",
     missionBadge: "🔑 CONFIRMAR",
+  },
+  pos_visita: {
+    name: "Pós-Visita",
+    icon: "🎯",
+    color: "#6366F1",
+    headerBg: "rgba(67,56,202,0.4)",
+    headerBorder: "rgba(99,102,241,0.4)",
+    glow: "0 0 20px rgba(99,102,241,0.15)",
+    missionBadge: "🎯 CONVERTER",
   },
   venda: {
     name: "Boss Final",
@@ -107,9 +116,10 @@ function getThemeForStage(stage: PipelineStage): PhaseTheme {
   const nome = stage.nome.toLowerCase();
   if (nome.includes("novo")) return PHASE_THEMES.novo_lead;
   if (nome.includes("contato")) return PHASE_THEMES.atendimento;
-  if (nome.includes("qualific")) return PHASE_THEMES.qualificacao;
-  if (nome.includes("possível") || nome.includes("possivel")) return PHASE_THEMES.visita_possivel;
+  if (nome.includes("busca") || nome.includes("qualific")) return PHASE_THEMES.busca;
+  if (nome.includes("aquecimento") || nome.includes("possível") || nome.includes("possivel")) return PHASE_THEMES.aquecimento;
   if (nome.includes("marcada")) return PHASE_THEMES.visita;
+  if (nome.includes("pós-visita") || nome.includes("pos-visita") || nome.includes("pos_visita")) return PHASE_THEMES.pos_visita;
   if (nome.includes("realizada") || nome.includes("boss")) return PHASE_THEMES.venda;
   if (nome.includes("descarte") || nome.includes("perdid")) return PHASE_THEMES.descarte;
   return {

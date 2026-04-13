@@ -2,6 +2,7 @@ import { memo, useMemo } from "react";
 import type { PipelineLead, PipelineStage } from "@/hooks/usePipeline";
 import { differenceInDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import LeadFlagBadges from "./LeadFlagBadges";
 
 interface PhaseTheme {
   name: string;
@@ -103,6 +104,9 @@ const JourneyMissionCard = memo(function JourneyMissionCard({
         {displayEmpreendimento && (
           <p className="text-[11px] text-gray-400 truncate mb-2">{displayEmpreendimento}</p>
         )}
+
+        {/* Flag status badges */}
+        <LeadFlagBadges flagStatus={(lead as any).flag_status as Record<string, string> | null} stageTipo={stages[currentIdx]?.tipo} />
 
         {/* Line 4: Journey progress dots */}
         <div className="flex items-center gap-0.5 mb-2">

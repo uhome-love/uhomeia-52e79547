@@ -78,11 +78,17 @@ export default function WhatsAppTemplatesDialog({ open, onOpenChange, leadNome, 
   const templatesPorEtapa: Record<string, string[]> = {
     sem_contato: ['primeiro_contato', 'nao_atendeu'],
     contato_iniciado: ['follow_up', 'nao_atendeu'],
+    contato_inicial: ['follow_up', 'nao_atendeu'],
+    busca: ['follow_up', 'convite_visita'],
+    aquecimento: ['convite_visita', 'follow_up'],
+    visita: ['convite_visita', 'follow_up'],
+    pos_visita: ['envio_proposta', 'follow_up'],
+    negociacao: ['envio_proposta', 'follow_up'],
+    // Legacy fallbacks
     qualificacao: ['follow_up', 'convite_visita'],
     possivel_visita: ['convite_visita', 'follow_up'],
     visita_marcada: ['convite_visita', 'follow_up'],
     visita_realizada: ['envio_proposta', 'follow_up'],
-    negociacao: ['envio_proposta', 'follow_up'],
   };
 
   const filteredIds = stageTipo ? templatesPorEtapa[stageTipo] || null : null;

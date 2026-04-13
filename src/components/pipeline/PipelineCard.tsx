@@ -14,6 +14,7 @@ import CentralComunicacao from "@/components/comunicacao/CentralComunicacao";
 import WhatsAppTemplatesDialog from "./WhatsAppTemplatesDialog";
 import { CallFocusOverlay } from "./CallFocusOverlay";
 import WhatsAppFocusFlow from "./WhatsAppFocusFlow";
+import LeadFlagBadges from "./LeadFlagBadges";
 
 // Extracted sub-components
 import CardStatusLine, { getCardStatus } from "./CardStatusLine";
@@ -420,6 +421,9 @@ const PipelineCard = memo(function PipelineCard({
         {/* ROW 4: Status */}
         <CardStatusLine status={status} stageChangedAt={lead.stage_changed_at} />
       </div>
+
+        {/* Flag status badges */}
+        <LeadFlagBadges flagStatus={lead.flag_status as Record<string, string> | null} stageTipo={stage?.tipo} />
 
 
       {/* Negócio Criado stage — show deal info + regression */}
