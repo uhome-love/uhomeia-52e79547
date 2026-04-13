@@ -1,105 +1,106 @@
 
 
-## Descoberta Importante
+# Reestruturação do Funil de Leads
 
-**O `cron-nurturing-sequencer` Nao existe como edge function deployada.** Existe um cron job no pg_cron que chama essa function a cada 15 minutos, mas o codigo dela nunca foi criado. Isso significa que os ~1.200 registros `pendente` em `lead_nurturing_sequences` nunca foram processados/enviados.
+## Resumo
 
-A tabela `lead_nurturing_sequences` nao e uma tabela de "definicao de cadencia" — ela armazena **mensagens agendadas por lead** (cada row = 1 envio para 1 lead especifico). Um trigger (`create_nurturing_sequence`) cria essas rows quando o lead muda de etapa.
+Substituir as etapas "Qualificação", "Possível Visita", "Visita Marcada" e "Visita Realizada" por "Busca", "Aquecimento", "Visita" (unificada) e renomear "Em Evolução" para "Pós-Visita". Adicionar coluna `flag_status` para flags visuais nos cards. Migrar ~1.450 leads existentes.
 
-**Implicacao para o plano:** Nao faz sentido "inserir cadencias" nessa tabela — ela e de execucao, nao de template. Precisamos de uma **nova tabela de definicoes de cadencia** e adaptar o trigger de descarte para criar as rows de execucao.
+## Dados atuais de migração
 
----
+| Etapa atual | Leads ativos | Destino |
+|---|---|---|
+| Qualificação | 970 | → Busca |
+| Possível Visita | 273 | → Aquecimento |
+| Visita Marcada | 83 | → Visita (flag: marcada) |
+| Visita Realizada | 127 | → Visita (flag: realizada) |
+| Em Evolução | 17 | → Pós-Visita (renomear) |
 
-## Plano Revisado
+## Novo funil
 
-### Tarefa 1 — Nova tabela `nurturing_cadencias` (definicoes de cadencia)
-
-Criar tabela para armazenar os templates de cadencia:
-
-```
-nurturing_cadencias
-- id (uuid, PK)
-- stage_tipo (text) — ex: 'descarte_reengajamento'
-- step_number (int)
-- delay_dias (int)
-- canal (text) — 'whatsapp' | 'email'
-- template_name (text)
-- descricao (text)
-- is_active (bool, default true)
-- created_at, updated_at
-```
-
-Inserir as 10 rows das 2 cadencias solicitadas (5 passos cada).
-
-### Tarefa 2 — Limpeza do banco
-
-- DELETE `lead_nurturing_state` (apenas 2 registros existem, ambos sem uso real)
-- DELETE `lead_nurturing_sequences` WHERE status = 'pendente' (limpar ~1.200 rows que nunca foram processadas)
-- Manter rows com status 'enviado' ou 'cancelado' como historico
-
-### Tarefa 3 — Criar edge function `cron-nurturing-sequencer`
-
-Esta e a peca que falta. Criar a edge function que:
-1. Consulta `lead_nurturing_sequences` WHERE status = 'pendente' AND scheduled_at <= now()
-2. Para cada row, envia via WhatsApp (chama `whatsapp-send`) ou email (chama `mailgun-send`)
-3. Atualiza status para 'enviado' ou 'erro'
-4. Se for o ultimo passo da cadencia, marca `lead_nurturing_state.status = 'encerrado'`
-
-O cron job no pg_cron ja existe e chama essa function a cada 15 minutos.
-
-### Tarefa 4 — Trigger para descarte: criar rows de execucao
-
-Alterar o trigger `create_nurturing_sequence` (ou criar um novo) para:
-- Quando `pipeline_leads.stage_id` mudar para o stage de Descarte E `tipo_descarte = 'reengajavel'`:
-  - Consultar `nurturing_cadencias` WHERE stage_tipo = 'descarte_reengajamento'
-  - Inserir rows em `lead_nurturing_sequences` com `scheduled_at = now() + (delay_dias * interval '1 day')`
-  - Criar row em `lead_nurturing_state`
-
-### Tarefa 5 — Pagina `/nutricao` com 3 abas
-
-**Rota:** `/nutricao`, acessivel para admin e gestor. Adicionar ao sidebar abaixo de "Central de Nutricao".
-
-**Aba "Cadencias":**
-- Lista cadencias de `nurturing_cadencias` agrupadas por `stage_tipo`
-- Timeline vertical com step_number, delay, icone do canal, template_name
-- Edicao inline de delay e template_name
-- Botao "+ Novo passo"
-
-**Aba "Leads em Nutricao":**
-- Tabela com join de `lead_nurturing_state` + `pipeline_leads` + `team_members`
-- Colunas: nome, corretor, equipe, stage_tipo, passo atual, proximo envio, status
-- Filtros: equipe, status, stage_tipo
-- Acoes: Pausar, Encerrar, Ver historico
-- Contador no topo
-
-**Aba "Historico de Envios":**
-- Query em `lead_nurturing_sequences` WHERE sent_at IS NOT NULL
-- Colunas: data, lead, canal, template, status
-- Filtros por periodo e canal
-
-### Nao sera alterado
-- `nurturing-orchestrator` (continua processando eventos de scoring)
-- `cron-smart-nurturing` (continua como esta)
-- Nenhuma outra pagina ou componente
-
----
-
-## Detalhe Tecnico
-
-**Arquitetura completa:**
 ```text
-nurturing_cadencias (definicoes)
-        |
-        v
-trigger de descarte → lead_nurturing_sequences (execucao por lead)
-                              |
-                              v
-                    cron-nurturing-sequencer (a cada 15min)
-                              |
-                    ┌─────────┴──────────┐
-                    v                    v
-              whatsapp-send        mailgun-send
+Ordem | Etapa           | Tipo             | Flags no card
+0     | Novo Lead       | novo_lead        | ⏱ "Entrou há X min/h"
+1     | Sem Contato     | sem_contato      | ☎️ Tentativa X/7, 🕐 Última tentativa
+2     | Contato Inicial | contato_inicial  | ❤️ Gostou? | 🎯 Intenção | ⏳ Timing
+3     | Busca           | busca            | 🔍 Busca status | 📤 Enviados | ❤️ Interesse
+4     | Aquecimento     | aquecimento      | ⏳ Prazo | 🔁 Último contato | 📩 Fluxo
+5     | Visita          | visita           | 📅 Marcada | ✅ Realizada | ❌ No-show | 🔁 Reagendada
+6     | Pós-Visita      | pos_visita       | 💬 Feedback | 💰 Simulação | 🤔 Objeções | 🔥 Interesse
+7     | Negócio Criado  | convertido       | (sem mudança)
+8     | Descarte        | descarte         | (sem mudança)
 ```
 
-**RLS:** `nurturing_cadencias` — policy para authenticated users com role admin/gestor via `has_role()`.
+## Tarefa 1 — Migration SQL
+
+1. Adicionar coluna `flag_status` (jsonb, nullable, default `{}`) em `pipeline_leads`
+2. Criar stages "Busca" (tipo `busca`, ordem 3) e "Aquecimento" (tipo `aquecimento`, ordem 4)
+3. Criar stage "Visita" (tipo `visita`, ordem 5) e "Pós-Visita" (tipo `pos_visita`, ordem 6)
+4. Migrar leads:
+   - Qualificação → Busca
+   - Possível Visita → Aquecimento
+   - Visita Marcada → Visita + `flag_status = '{"visita": "marcada"}'`
+   - Visita Realizada → Visita + `flag_status = '{"visita": "realizada"}'`
+5. Renomear "Em Evolução" para "Pós-Visita" (tipo `pos_visita`, ordem 6)
+6. Atualizar ordem dos stages restantes (Negócio Criado = 7, Descarte = 8)
+7. Desativar/deletar stages antigos (Qualificação, Possível Visita, Visita Marcada, Visita Realizada)
+8. Atualizar trigger `create_nurturing_sequence` para os novos tipos
+
+## Tarefa 2 — Cards com flags visuais
+
+Atualizar `JourneyMissionCard.tsx` e `PipelineCard.tsx`:
+- Ler `lead.flag_status` (jsonb) e exibir badges/flags contextuais por etapa
+- Sem Contato: contador de tentativas (ler de `pipeline_atividades` tipo ligação)
+- Contato Inicial: badges "Gostou" / "Não gostou" / "Timing"
+- Busca: "Busca pendente" / "Imóveis enviados"
+- Visita: "Marcada" / "Realizada" / "No-show" / "Reagendada"
+- Pós-Visita: "Simulação enviada" / "Objeções"
+
+## Tarefa 3 — Atualizar referências em ~25 arquivos
+
+Todos os arquivos que referenciam `qualificacao`, `possibilidade_visita`, `visita_marcada`, `visita_realizada`:
+- `PipelineBoard.tsx` — cores/temas das colunas
+- `PipelineCard.tsx` — SLA limits
+- `CallFocusOverlay.tsx` — scripts e próximas etapas
+- `StageCoachBar.tsx` — dicas por etapa
+- `ForecastPonderadoPanel.tsx` — pesos de forecast
+- `SequenceBuilder.tsx` / `SequenceTemplates.tsx` — tipos de trigger
+- `AttemptModal.tsx` — opções de resultado
+- `RelatoriosTab.tsx` — contadores de funil
+- `metricDefinitions.ts` — pontos de gestão
+- `useLeadIntelligence.ts`, `useFocusLeads.ts`, `useVisitas.ts`, `useLeadProgression.ts`
+- Edge functions que referenciam esses tipos
+- CSS variables para cores dos novos stages
+
+## Tarefa 4 — Interação de flag no modal do lead
+
+Em `PipelineLeadDetail.tsx`, adicionar seção contextual por etapa para definir flags:
+- Contato Inicial: select "Gostou do imóvel?" + "Intenção" + "Timing"
+- Busca: toggle "Busca iniciada" / "Imóveis enviados" / "Interesse"
+- Visita: select "Marcada/Realizada/No-show/Reagendada"
+- Pós-Visita: toggles "Feedback coletado" / "Simulação enviada" / "Objeções mapeadas" + select "Interesse"
+
+Ao alterar flag, atualiza `flag_status` (jsonb) via `supabase.update()`.
+
+## Tarefa 5 — Regra 48h sem ação em Sem Contato
+
+Implementar na função SQL `get_oportunidades_do_dia` ou como alerta no dashboard:
+- Se lead em "Sem Contato" tem `ultima_acao_at` > 48h → flag de alerta
+- Futuramente: lógica de redistribuição via roleta (não implementar agora, apenas alertar)
+
+## Ordem de execução
+
+1. Migration SQL (stages + coluna + migração de leads + trigger)
+2. Atualizar referências em todos os arquivos do frontend
+3. Cards com flags visuais
+4. Modal do lead com interação de flags
+5. Ajustes de cores CSS
+
+## Impacto
+
+- ~1.450 leads migrados automaticamente
+- 4 stages removidos, 4 criados/renomeados
+- ~25 arquivos frontend atualizados
+- Nenhuma edge function existente alterada (apenas trigger SQL)
+- Retrocompatível: leads existentes mantêm histórico
 
