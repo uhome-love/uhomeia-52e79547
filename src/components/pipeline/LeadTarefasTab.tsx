@@ -484,29 +484,14 @@ export default function LeadTarefasTab({ leadId, leadNome, leadTelefone, leadEma
         </DialogContent>
       </Dialog>
 
-      {/* Completion prompt */}
-      <Dialog open={!!completingId} onOpenChange={() => setCompletingId(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>✅ O que aconteceu?</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">Registre brevemente o resultado (opcional — será salvo no histórico)</p>
-            <Textarea
-              placeholder="Ex: Cliente atendeu, pediu proposta por email"
-              value={completionNote}
-              onChange={e => setCompletionNote(e.target.value)}
-              rows={3}
-            />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => { confirmConcluir(); }}>
-                Pular
-              </Button>
-              <Button size="sm" onClick={confirmConcluir}>
-                💾 Salvar e concluir
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Completion dialog with new task option */}
+      <TaskCompletionDialog
+        open={!!completingTarefa}
+        onOpenChange={(v) => { if (!v) setCompletingTarefa(null); }}
+        tarefaTitulo={completingTarefa?.titulo || ""}
+        leadNome={leadNome}
+        onConfirm={handleCompletionConfirm}
+      />
     </div>
   );
 }
