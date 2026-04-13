@@ -60,15 +60,6 @@ export default function LeadFlagControls({ leadId, stageTipo, flagStatus, onUpda
         </Select>
       </>
     );
-        <Label className="text-xs font-medium text-muted-foreground">Tentativas:</Label>
-        <Select value={flags.tentativas || "0"} onValueChange={(v) => setFlag("tentativas", v)}>
-          <SelectTrigger className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {[0,1,2,3,4,5,6,7].map(n => <SelectItem key={n} value={String(n)} className="text-xs">{n}/7</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-    );
   }
 
   if (stageTipo === "contato_inicial") {
