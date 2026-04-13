@@ -1,43 +1,67 @@
 
 
-# Plano Unificado: Redesign Visual + Nova Cor #4969FF
+# Reestruturação Completa UHomeSales — 10 Fases
 
-## O que será feito
+Todas as verificações foram feitas. Imports, dependências e arquivos confirmados. Nenhum risco de build quebrado.
 
-Redesign completo do CRM com visual moderno e profissional, usando **#4969FF** como cor de destaque, aplicado consistentemente em todas as páginas.
+---
 
-## Alterações
+## FASE 1 — Deletar 6 páginas mortas
+Sem import ativo em nenhum outro arquivo:
+- `GestorDashboard.tsx`, `ImoveisPage.tsx` (antigo), `CorretorResumo.tsx`, `RankingComercial.tsx`, `MelnickMetas.tsx`, `TarefasPage.tsx`
 
-### 1. Nova paleta de cores em `src/index.css`
-Substituir toda a escala `--primary-*` (de `#3B82F6` para `#4969FF`), atualizar `--brand-medium`, e refinar o dark mode com fundos mais profundos e contrastantes.
+## FASE 2 — Renomear 4 páginas + atualizar App.tsx
+- `ImoveisPageNew.tsx` → `ImoveisPage.tsx`
+- `CampanhasVozPage.tsx` → `CampanhasVoz.tsx`
+- `CentralNutricaoPage.tsx` → `CentralNutricao.tsx`
+- `WhatsAppCampaignDispatcherPage.tsx` → `WhatsAppCampaignDispatcher.tsx`
+- Atualizar 4 `lazyRetry` imports no App.tsx
 
-### 2. Substituir cores hardcoded em ~80 arquivos
-Trocar todas as ocorrências de `#4F46E5` e `#3B82F6` por `#4969FF` ou pelo token CSS `hsl(var(--primary-500))` nos componentes. Arquivos principais:
-- `UhomeLogo.tsx` — cor do texto "Sales" e ícones Homi
-- `GlobalDateFilterBar.tsx` — tabs ativas
-- `PageHeader.tsx` — ícone e tabs
-- `CorretorDashboard.tsx` — gradientes do header
-- `PipelineCard.tsx` — badges e labels
-- `CampaignHeader.tsx` — gradiente de fundo
-- `Auth.tsx` — loader e gradientes
-- `TabEmpresa.tsx`, `CeoDashboard.tsx`, `HomiAssistant.tsx`, `WhatsAppFocusFlow.tsx`, `RadarImoveisTab.tsx`, etc.
+## FASE 3 — Corrigir links mortos (5 arquivos)
+- `AppSidebar.tsx`: `/corretor/resumo` → `/corretor`, `/corretor/ranking-equipes` → `/ranking`
+- `QuickLinksGrid.tsx`: `/corretor/resumo` → `/corretor`
+- `DashboardRankingsPreview.tsx`: `/corretor/ranking-equipes` → `/ranking`
+- `NotificationList.tsx`: `/corretor/resumo` → `/corretor`
+- `App.tsx`: remover 2 redirects obsoletos (linhas 228-229)
 
-### 3. Visual moderno global
-- Cards: border-radius 12-16px, sombras mais suaves, padding maior
-- Tipografia: valores de KPI maiores, labels mais leves
-- Espaçamento mais generoso entre seções
-- Botões de ação mais arredondados e limpos
-- Superfícies: fundo off-white com cards brancos puros (light) / deep-slate com cards escuros (dark)
+## FASE 4 — Deletar 4 wrappers Supabase
+Confirmado 0 imports: `supabase-auth-helpers.ts`, `supabase-client-wrapper.ts`, `supabase-typed.ts`, `supabase-types-helpers.ts`
 
-### 4. Dark mode refinado
-- Background principal: `#0A0E1A`
-- Cards: `#12162A`
-- Sidebar: tom mais profundo
-- Melhor contraste com o novo indigo `#4969FF`
+## FASE 5 — Deletar `services/imoveis.ts`
+Só importado por hooks que serão deletados na fase seguinte.
 
-## Resultado esperado
-- Visual sofisticado e profissional (menos "infantil")
-- Cor UHome `#4969FF` como destaque único em todo o sistema
-- Consistência total entre páginas e modos claro/escuro
-- Nenhuma funcionalidade alterada — apenas aparência
+## FASE 6 — Deletar 4 hooks + 1 store órfãos
+- `useImoveisQuery.ts`, `useImoveisSearch.ts`, `useImoveisFilters.ts`, `usePostgRESTFacets.ts`
+- `stores/searchStore.ts`
+
+## FASE 7 — Documentar hooks CEO
+Adicionar comentários de responsabilidade em `useCeoDashboard.ts` e `useCeoData.ts`.
+
+## FASE 8 — Ícones duplicados no Sidebar
+- `Placar do Dia`: Trophy → BarChart2
+- `Integração`: Zap → PlugZap
+- `Diagnóstico Site`: Zap → Activity
+- `Sala de Reunião`: CalendarDays → DoorOpen
+- Renomear "Tarefas & Marketing (Ana)" → "Operacional (Backoffice)"
+
+## FASE 9 — PageHeader em 5 páginas
+Adicionar `PageHeader` padronizado em: `Conquistas.tsx`, `CorretorProgresso.tsx`, `DisponibilidadePage.tsx`, `MarketingDashboard.tsx`, `NutricaoPage.tsx`
+
+## FASE 10 — Limpeza final App.tsx
+Remover 3 comentários mortos (linhas 39, 49, 53) e verificar imports residuais.
+
+---
+
+## Resumo
+
+| Ação | Qtd |
+|------|-----|
+| Páginas deletadas | 6 |
+| Páginas renomeadas | 4 |
+| Hooks/stores deletados | 5 |
+| Serviço deletado | 1 |
+| Wrappers deletados | 4 |
+| Arquivos editados | ~12 |
+
+**Zero lógica de negócio alterada.** Todas as dependências verificadas — chain limpa.
 
