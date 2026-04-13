@@ -55,7 +55,7 @@ const SCRIPTS: Record<string, ScriptLine[]> = {
     { role: "cliente", texto: '"Localização é importante, mas condições também..."' },
     { role: "corretor", texto: "Faz sentido! O {emp} tem justamente essa combinação. Que tal a gente marcar uma visita rápida para você ver pessoalmente? Não precisa ser uma decisão — é só para você ter a referência." },
   ],
-  possivel_visita: [
+  busca: [
     { role: "corretor", texto: "Oi {nome}! [seu nome] da UHome. Estava organizando a agenda de visitas ao {emp} esta semana. Você tem disponibilidade terça ou quinta à tarde?" },
     { role: "dica", texto: "Ofereça duas opções — facilita a decisão." },
     { role: "cliente", texto: '"Quinta pode ser..."' },
@@ -81,22 +81,22 @@ const SCRIPTS: Record<string, ScriptLine[]> = {
 };
 
 const PROXIMAS_ETAPAS: Record<string, string[]> = {
-  sem_contato: ["contato_iniciado", "qualificacao", "possivel_visita"],
-  contato_iniciado: ["qualificacao", "possivel_visita", "visita_marcada"],
-  qualificacao: ["possivel_visita", "visita_marcada"],
-  possivel_visita: ["visita_marcada"],
-  visita_marcada: ["visita_realizada"],
-  visita_realizada: ["negociacao", "proposta"],
+  sem_contato: ["contato_iniciado", "busca", "aquecimento"],
+  contato_iniciado: ["busca", "aquecimento", "visita"],
+  busca: ["aquecimento", "visita"],
+  aquecimento: ["visita"],
+  visita: ["pos_visita"],
+  pos_visita: ["negociacao", "proposta"],
   negociacao: ["proposta", "contrato"],
 };
 
 const STAGE_LABELS: Record<string, string> = {
   sem_contato: "Sem contato",
   contato_iniciado: "Contato iniciado",
-  qualificacao: "Qualificação",
-  possivel_visita: "Possível visita",
-  visita_marcada: "Visita marcada",
-  visita_realizada: "Visita realizada",
+  busca: "Busca",
+  aquecimento: "Aquecimento",
+  visita: "Visita",
+  pos_visita: "Pós-Visita",
   negociacao: "Negociação",
   proposta: "Proposta",
   contrato: "Contrato",
