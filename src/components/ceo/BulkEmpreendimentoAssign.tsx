@@ -46,7 +46,7 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
   const [filterCampanha, setFilterCampanha] = useState("__all__");
   const [filterFormulario, setFilterFormulario] = useState("__all__");
   const [filterPlataforma, setFilterPlataforma] = useState("__all__");
-  const [autoResolving, setAutoResolving] = useState(false);
+  
   const [viewMode, setViewMode] = useState<"list" | "grouped">("list");
 
   const { data: leads = [], isLoading, refetch } = useQuery({
@@ -174,24 +174,8 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
     }
   };
 
-  const handleAutoResolve = async () => {
-    setAutoResolving(true);
-    try {
-      const { data: session } = await (supabase.auth as any).getSession();
-      const { data, error } = await supabase.functions.invoke("jetimob-sync", {
-        body: { backfill_campaign: true },
-        headers: { Authorization: `Bearer ${session.session?.access_token}` },
-      });
-      if (error) throw error;
-      toast.success(data?.message || `${data?.fixed || 0} leads corrigidos automaticamente!`);
-      refetch();
-      onComplete?.();
-    } catch (e: any) {
-      toast.error("Erro no auto-resolve: " + (e.message || "erro desconhecido"));
-    } finally {
-      setAutoResolving(false);
-    }
-  };
+
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -208,16 +192,8 @@ export default function BulkEmpreendimentoAssign({ open, onOpenChange, onComplet
 
         {/* Actions row */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAutoResolve}
-            disabled={autoResolving}
-            className="gap-1.5"
-          >
-            {autoResolving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
-            Auto-resolver via Campanha
-          </Button>
+
+
           <div className="flex-1" />
           <Button
             variant={viewMode === "list" ? "default" : "outline"}
