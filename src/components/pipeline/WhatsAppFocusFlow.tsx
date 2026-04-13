@@ -94,6 +94,10 @@ export default function WhatsAppFocusFlow({ isOpen, onClose, lead, stageTipo, on
     return d.toISOString().split("T")[0];
   });
   const [taskTime, setTaskTime] = useState("10:00");
+  const [showFreeText, setShowFreeText] = useState(false);
+  const [freeText, setFreeText] = useState("");
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editedBody, setEditedBody] = useState("");
 
   const nome = lead.nome?.split(" ")[0] || "cliente";
   const emp = lead.empreendimento || "nosso empreendimento";
