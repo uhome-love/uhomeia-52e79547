@@ -7,7 +7,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
-import { loadEnterpriseKnowledge, formatForList, createServiceClient } from "../_shared/enterprise-knowledge.ts";
+import { loadEnterpriseKnowledge, formatForList, formatForAssistant, createServiceClient } from "../_shared/enterprise-knowledge.ts";
 
 // Generate embedding for RAG search
 async function getQueryEmbedding(text: string, openaiKey: string): Promise<number[] | null> {
@@ -72,6 +72,12 @@ serve(async (req) => {
     const supabase = createServiceClient();
     const knowledge = await loadEnterpriseKnowledge(supabase);
     const allEmpreendimentos = formatForList(knowledge);
+
+    // Build detailed knowledge for each empreendimento
+    const detailedKnowledge = knowledge
+      .filter(r => r.nome || r.codigo)
+      .map(r => formatForAssistant(knowledge, r.nome || r.codigo))
+      .join("\n\n---\n\n");
 
     // ── RAG: search knowledge base ──
     let ragContext = "";
@@ -151,8 +157,11 @@ Sempre utilize gatilhos de venda como: escassez, oportunidade, valorização, qu
 TIPOS DE AJUDA QUE VOCÊ DEVE GERAR:
 Se o corretor pedir ajuda, entregue: Mensagem pronta, ou Script de ligação, ou Pergunta estratégica, ou Estratégia de follow up. Sempre focando na conversão.
 
-EMPREENDIMENTOS QUE VOCÊ CONHECE:
+EMPREENDIMENTOS (RESUMO):
 ${allEmpreendimentos}
+
+CONHECIMENTO DETALHADO DOS EMPREENDIMENTOS:
+${detailedKnowledge}
 
 Use sempre os diferenciais de cada produto quando ajudar o corretor.
 
@@ -173,7 +182,7 @@ REGRAS IMPORTANTES:
 Seu objetivo é simples: ajudar o corretor da Uhome a vender mais imóveis.` + ragContext;
 
     const finalSystemPrompt = customSystem
-      ? customSystem + "\n\nCONTEXTO DOS EMPREENDIMENTOS:\n" + allEmpreendimentos + ragContext
+      ? customSystem + "\n\nCONTEXTO DOS EMPREENDIMENTOS:\n" + allEmpreendimentos + "\n\nDETALHES:\n" + detailedKnowledge + ragContext
       : systemPrompt;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
