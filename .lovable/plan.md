@@ -1,106 +1,80 @@
 
 
-# Reestruturação do Funil de Leads
+# Conclusao da Reestruturacao: Residuais + Flags Visuais
 
 ## Resumo
 
-Substituir as etapas "Qualificação", "Possível Visita", "Visita Marcada" e "Visita Realizada" por "Busca", "Aquecimento", "Visita" (unificada) e renomear "Em Evolução" para "Pós-Visita". Adicionar coluna `flag_status` para flags visuais nos cards. Migrar ~1.450 leads existentes.
+Atualizar ~15 arquivos com referencias residuais aos stages antigos (qualificacao, possivel_visita, visita_marcada, visita_realizada, em_evolucao) e implementar badges visuais de `flag_status` nos cards do pipeline + controles no modal do lead.
 
-## Dados atuais de migração
+## Tarefa 1 — Atualizar referencias residuais (~12 arquivos)
 
-| Etapa atual | Leads ativos | Destino |
-|---|---|---|
-| Qualificação | 970 | → Busca |
-| Possível Visita | 273 | → Aquecimento |
-| Visita Marcada | 83 | → Visita (flag: marcada) |
-| Visita Realizada | 127 | → Visita (flag: realizada) |
-| Em Evolução | 17 | → Pós-Visita (renomear) |
+**Arquivos e mudancas:**
 
-## Novo funil
+| Arquivo | Mudanca |
+|---|---|
+| `WhatsAppTemplatesDialog.tsx` | templatesPorEtapa: `qualificacao` → `busca`, `possivel_visita` → `aquecimento`, `visita_marcada` → `visita`, `visita_realizada` → `pos_visita` |
+| `useLeadIntelligence.ts` | `isVisita`: `["visita_marcada","visita_realizada"]` → `["visita","pos_visita"]` |
+| `LeadSequenceSuggestion.tsx` | stages arrays: `possibilidade_visita` → `aquecimento`, `visita_realizada` → `pos_visita` |
+| `RelatoriosTab.tsx` | Funnel: substituir `qualificacao`, `possivel_visita`, `visita_marcada`, `visita_realizada`, `em_evolucao` → `busca`, `aquecimento`, `visita`, `pos_visita` |
+| `SaudeOperacao.tsx` | `.in("etapa", ...)`: `visita_marcada/realizada` → `visita`, `pos_visita` |
+| `ForecastPonderadoPanel.tsx` | STAGE_PROBABILITY: remover antigos, adicionar `busca: 20`, `aquecimento: 30`, `visita: 50`, `pos_visita: 65` |
+| `JourneyMapBoard.tsx` | PHASE_THEMES: adicionar `busca`, `aquecimento`, `pos_visita`; atualizar `getThemeForStage` fallbacks |
+| `CampanhasVozContent.tsx` | SelectItem: `qualificacao` → `busca` |
+| `SequenceTemplates.tsx` | trigger_config `stage_tipo: "qualificacao"` → `"busca"` |
+| `useLeadProgression.ts` | `fase_destino: "visita_realizada"` → `"pos_visita"` |
+| `site-events/index.ts` | `reativarLead`: `.eq('tipo', 'qualificacao')` → `.eq('tipo', 'busca')` |
+| `NotificationPreferences.tsx` | Label cosmético apenas (manter `visita_marcada` como key de notificacao — nao e stage type) |
 
-```text
-Ordem | Etapa           | Tipo             | Flags no card
-0     | Novo Lead       | novo_lead        | ⏱ "Entrou há X min/h"
-1     | Sem Contato     | sem_contato      | ☎️ Tentativa X/7, 🕐 Última tentativa
-2     | Contato Inicial | contato_inicial  | ❤️ Gostou? | 🎯 Intenção | ⏳ Timing
-3     | Busca           | busca            | 🔍 Busca status | 📤 Enviados | ❤️ Interesse
-4     | Aquecimento     | aquecimento      | ⏳ Prazo | 🔁 Último contato | 📩 Fluxo
-5     | Visita          | visita           | 📅 Marcada | ✅ Realizada | ❌ No-show | 🔁 Reagendada
-6     | Pós-Visita      | pos_visita       | 💬 Feedback | 💰 Simulação | 🤔 Objeções | 🔥 Interesse
-7     | Negócio Criado  | convertido       | (sem mudança)
-8     | Descarte        | descarte         | (sem mudança)
-```
+## Tarefa 2 — Adicionar `flag_status` ao tipo PipelineLead
 
-## Tarefa 1 — Migration SQL
+No `usePipeline.ts`, adicionar `flag_status?: Record<string, string> | null` ao interface `PipelineLead` e incluir na query de select.
 
-1. Adicionar coluna `flag_status` (jsonb, nullable, default `{}`) em `pipeline_leads`
-2. Criar stages "Busca" (tipo `busca`, ordem 3) e "Aquecimento" (tipo `aquecimento`, ordem 4)
-3. Criar stage "Visita" (tipo `visita`, ordem 5) e "Pós-Visita" (tipo `pos_visita`, ordem 6)
-4. Migrar leads:
-   - Qualificação → Busca
-   - Possível Visita → Aquecimento
-   - Visita Marcada → Visita + `flag_status = '{"visita": "marcada"}'`
-   - Visita Realizada → Visita + `flag_status = '{"visita": "realizada"}'`
-5. Renomear "Em Evolução" para "Pós-Visita" (tipo `pos_visita`, ordem 6)
-6. Atualizar ordem dos stages restantes (Negócio Criado = 7, Descarte = 8)
-7. Desativar/deletar stages antigos (Qualificação, Possível Visita, Visita Marcada, Visita Realizada)
-8. Atualizar trigger `create_nurturing_sequence` para os novos tipos
+## Tarefa 3 — Flags visuais no PipelineCard
 
-## Tarefa 2 — Cards com flags visuais
+Adicionar um bloco de badges entre ROW 3 e ROW 4 no `PipelineCard.tsx` que le `(lead as any).flag_status` e exibe:
 
-Atualizar `JourneyMissionCard.tsx` e `PipelineCard.tsx`:
-- Ler `lead.flag_status` (jsonb) e exibir badges/flags contextuais por etapa
-- Sem Contato: contador de tentativas (ler de `pipeline_atividades` tipo ligação)
-- Contato Inicial: badges "Gostou" / "Não gostou" / "Timing"
-- Busca: "Busca pendente" / "Imóveis enviados"
-- Visita: "Marcada" / "Realizada" / "No-show" / "Reagendada"
-- Pós-Visita: "Simulação enviada" / "Objeções"
+- **Visita**: badges coloridos "Marcada" / "Realizada" / "No-show" / "Reagendada"
+- **Sem Contato**: badge "Tentativa X/7" (lido do flag_status)
+- **Contato Inicial**: badges "Gostou" / "Nao gostou" / Timing
+- **Busca**: "Busca pendente" / "Imoveis enviados"
+- **Aquecimento**: prazo de recontato
+- **Pos-Visita**: "Simulacao enviada" / "Objecoes"
 
-## Tarefa 3 — Atualizar referências em ~25 arquivos
+Cada badge: pequeno pill colorido (9-10px font, estilo dos tags existentes).
 
-Todos os arquivos que referenciam `qualificacao`, `possibilidade_visita`, `visita_marcada`, `visita_realizada`:
-- `PipelineBoard.tsx` — cores/temas das colunas
-- `PipelineCard.tsx` — SLA limits
-- `CallFocusOverlay.tsx` — scripts e próximas etapas
-- `StageCoachBar.tsx` — dicas por etapa
-- `ForecastPonderadoPanel.tsx` — pesos de forecast
-- `SequenceBuilder.tsx` / `SequenceTemplates.tsx` — tipos de trigger
-- `AttemptModal.tsx` — opções de resultado
-- `RelatoriosTab.tsx` — contadores de funil
-- `metricDefinitions.ts` — pontos de gestão
-- `useLeadIntelligence.ts`, `useFocusLeads.ts`, `useVisitas.ts`, `useLeadProgression.ts`
-- Edge functions que referenciam esses tipos
-- CSS variables para cores dos novos stages
+## Tarefa 4 — Flags visuais no JourneyMissionCard
 
-## Tarefa 4 — Interação de flag no modal do lead
+Mesmo conceito simplificado: 1 badge contextual abaixo do nome do lead, lendo `flag_status`.
 
-Em `PipelineLeadDetail.tsx`, adicionar seção contextual por etapa para definir flags:
-- Contato Inicial: select "Gostou do imóvel?" + "Intenção" + "Timing"
-- Busca: toggle "Busca iniciada" / "Imóveis enviados" / "Interesse"
-- Visita: select "Marcada/Realizada/No-show/Reagendada"
-- Pós-Visita: toggles "Feedback coletado" / "Simulação enviada" / "Objeções mapeadas" + select "Interesse"
+## Tarefa 5 — Controles de flag no modal do lead
 
-Ao alterar flag, atualiza `flag_status` (jsonb) via `supabase.update()`.
+Em `PipelineLeadDetail.tsx`, adicionar secao contextual (abaixo do stage coach bar) com controles por etapa:
 
-## Tarefa 5 — Regra 48h sem ação em Sem Contato
+- **Visita**: Select com opcoes Marcada/Realizada/No-show/Reagendada
+- **Sem Contato**: Input numerico "Tentativas" (1-7)
+- **Contato Inicial**: Toggle "Gostou do imovel?" + Select "Intencao" (Morar/Investir) + Select "Timing"
+- **Busca**: Toggles "Busca iniciada" / "Imoveis enviados" / "Interesse"
+- **Aquecimento**: Select prazo (30/60/90 dias)
+- **Pos-Visita**: Toggles "Feedback coletado" / "Simulacao enviada" / "Objecoes mapeadas" + Select "Interesse"
 
-Implementar na função SQL `get_oportunidades_do_dia` ou como alerta no dashboard:
-- Se lead em "Sem Contato" tem `ultima_acao_at` > 48h → flag de alerta
-- Futuramente: lógica de redistribuição via roleta (não implementar agora, apenas alertar)
+Ao alterar, faz `supabase.update({ flag_status: {...} })` no lead.
 
-## Ordem de execução
+## Tarefa 6 — Migration SQL: remover stages antigos vazios
 
-1. Migration SQL (stages + coluna + migração de leads + trigger)
-2. Atualizar referências em todos os arquivos do frontend
-3. Cards com flags visuais
-4. Modal do lead com interação de flags
-5. Ajustes de cores CSS
+Deletar stages com 0 leads: Qualificacao, Possivel Visita, Visita Marcada, Visita Realizada (IDs confirmados vazios no DB).
 
-## Impacto
+## Ordem de execucao
 
-- ~1.450 leads migrados automaticamente
-- 4 stages removidos, 4 criados/renomeados
-- ~25 arquivos frontend atualizados
-- Nenhuma edge function existente alterada (apenas trigger SQL)
-- Retrocompatível: leads existentes mantêm histórico
+1. Migration SQL (remover stages vazios)
+2. Tipo PipelineLead + query
+3. Atualizar 12 arquivos com referencias residuais
+4. Flags visuais nos cards
+5. Controles de flag no modal
+
+## Detalhes tecnicos
+
+- `flag_status` ja existe como coluna jsonb no banco (confirmado)
+- Stages antigos tem 0 leads (migracao anterior funcionou)
+- ~633 linhas no PipelineCard.tsx — flags inseridos na linha ~395
+- ~895 linhas no PipelineLeadDetail.tsx — controles inseridos apos o StageCoachBar
 
