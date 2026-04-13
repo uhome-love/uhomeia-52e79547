@@ -282,52 +282,142 @@ export default function WhatsAppFocusFlow({ isOpen, onClose, lead, stageTipo, on
         <div style={{ flex: 1, overflow: "auto", padding: "16px 20px" }}>
           {phase === 1 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>
-                💬 Escolha a mensagem para enviar:
-              </p>
-              {messages.map((msg, i) => (
-                <div key={i} style={{
-                  border: "1px solid #e8e8f0", borderRadius: 10, padding: "12px 14px",
-                  background: "#fafafa",
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#0a0a0a", marginBottom: 6 }}>
-                    {msg.title}
-                  </div>
-                  <p style={{
-                    fontSize: 12, color: "#52525b", lineHeight: 1.5,
-                    display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}>
-                    {msg.body}
-                  </p>
-                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "#64748b" }}>
+                  💬 {showFreeText ? "Escreva sua mensagem:" : "Escolha ou edite a mensagem:"}
+                </p>
+                <button
+                  onClick={() => { setShowFreeText(!showFreeText); setEditingIdx(null); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    fontSize: 11, fontWeight: 600, color: showFreeText ? "#64748b" : "#4F46E5",
+                    background: "none", border: "none", cursor: "pointer",
+                  }}
+                >
+                  {showFreeText ? (
+                    <><MessageSquarePlus style={{ width: 13, height: 13 }} /> Mensagens prontas</>
+                  ) : (
+                    <><Pencil style={{ width: 13, height: 13 }} /> Mensagem livre</>
+                  )}
+                </button>
+              </div>
+
+              {showFreeText ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <Textarea
+                    className="text-[12px] min-h-[120px]"
+                    placeholder={`Oi ${nome}, escreva sua mensagem aqui...`}
+                    value={freeText}
+                    onChange={(e) => setFreeText(e.target.value)}
+                    autoFocus
+                  />
+                  <div style={{ display: "flex", gap: 8 }}>
                     <button
-                      onClick={() => handleCopy(msg.body)}
+                      onClick={() => freeText.trim() && handleCopy(freeText.trim())}
+                      disabled={!freeText.trim()}
                       style={{
                         flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                         padding: "8px 12px", borderRadius: 8, border: "1px solid #e8e8f0",
-                        background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#52525b",
-                        transition: "all 0.15s",
+                        background: "#fff", cursor: freeText.trim() ? "pointer" : "not-allowed",
+                        fontSize: 12, fontWeight: 600, color: "#52525b",
+                        opacity: freeText.trim() ? 1 : 0.5,
                       }}
                     >
                       <Copy style={{ width: 13, height: 13 }} /> Copiar
                     </button>
                     <button
-                      onClick={() => handleOpenWa(msg.body)}
-                      disabled={!lead.telefone}
+                      onClick={() => freeText.trim() && handleOpenWa(freeText.trim())}
+                      disabled={!lead.telefone || !freeText.trim()}
                       style={{
                         flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                         padding: "8px 12px", borderRadius: 8, border: "none",
-                        background: "#16a34a", cursor: lead.telefone ? "pointer" : "not-allowed",
+                        background: "#16a34a", cursor: (lead.telefone && freeText.trim()) ? "pointer" : "not-allowed",
                         fontSize: 12, fontWeight: 600, color: "#fff",
-                        opacity: lead.telefone ? 1 : 0.5,
-                        transition: "all 0.15s",
+                        opacity: (lead.telefone && freeText.trim()) ? 1 : 0.5,
                       }}
                     >
                       <ExternalLink style={{ width: 13, height: 13 }} /> Abrir WhatsApp
                     </button>
                   </div>
                 </div>
+              ) : (
+                messages.map((msg, i) => (
+                  <div key={i} style={{
+                    border: editingIdx === i ? "1px solid #4F46E5" : "1px solid #e8e8f0",
+                    borderRadius: 10, padding: "12px 14px",
+                    background: editingIdx === i ? "#f5f3ff" : "#fafafa",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0a0a0a" }}>
+                        {msg.title}
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (editingIdx === i) {
+                            setEditingIdx(null);
+                            setEditedBody("");
+                          } else {
+                            setEditingIdx(i);
+                            setEditedBody(msg.body);
+                          }
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 3,
+                          fontSize: 10, fontWeight: 600,
+                          color: editingIdx === i ? "#4F46E5" : "#94a3b8",
+                          background: "none", border: "none", cursor: "pointer",
+                        }}
+                      >
+                        <Pencil style={{ width: 11, height: 11 }} />
+                        {editingIdx === i ? "Cancelar" : "Editar"}
+                      </button>
+                    </div>
+                    {editingIdx === i ? (
+                      <Textarea
+                        className="text-[12px] min-h-[80px] mb-2"
+                        value={editedBody}
+                        onChange={(e) => setEditedBody(e.target.value)}
+                        autoFocus
+                      />
+                    ) : (
+                      <p style={{
+                        fontSize: 12, color: "#52525b", lineHeight: 1.5,
+                        display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}>
+                        {msg.body}
+                      </p>
+                    )}
+                    <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                      <button
+                        onClick={() => handleCopy(editingIdx === i ? editedBody.trim() || msg.body : msg.body)}
+                        style={{
+                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          padding: "8px 12px", borderRadius: 8, border: "1px solid #e8e8f0",
+                          background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#52525b",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <Copy style={{ width: 13, height: 13 }} /> Copiar
+                      </button>
+                      <button
+                        onClick={() => handleOpenWa(editingIdx === i ? editedBody.trim() || msg.body : msg.body)}
+                        disabled={!lead.telefone}
+                        style={{
+                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          padding: "8px 12px", borderRadius: 8, border: "none",
+                          background: "#16a34a", cursor: lead.telefone ? "pointer" : "not-allowed",
+                          fontSize: 12, fontWeight: 600, color: "#fff",
+                          opacity: lead.telefone ? 1 : 0.5,
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <ExternalLink style={{ width: 13, height: 13 }} /> Abrir WhatsApp
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
               ))}
             </div>
           ) : (
