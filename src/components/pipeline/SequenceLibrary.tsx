@@ -129,9 +129,6 @@ const STAGE_LABELS: Record<string, string> = {
   possibilidade_visita: "Aquecimento",
   visita_marcada: "Visita",
   visita_realizada: "Pós-Visita",
-  busca: "Busca",
-  aquecimento: "Aquecimento",
-  pos_visita: "Pós-Visita",
 };
 
 const CANAL_ICONS: Record<string, { icon: typeof MessageSquare; label: string; color: string }> = {
