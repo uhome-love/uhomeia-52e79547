@@ -46,6 +46,9 @@ import {
   Megaphone,
   Terminal,
   Link2,
+  PlugZap,
+  Activity,
+  DoorOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
@@ -360,7 +363,7 @@ export function AppSidebar() {
             items: [
               { title: "Rankings", url: "/ranking", icon: Trophy },
               { title: "Relatórios 1:1", url: "/relatorios", icon: FileBarChart },
-              { title: "Placar do Dia", url: "/placar-do-dia", icon: Trophy },
+              { title: "Placar do Dia", url: "/placar-do-dia", icon: BarChart3 },
             ],
           },
           {
@@ -368,7 +371,7 @@ export function AppSidebar() {
             items: [
               { title: "Central de Marketing", url: "/marketing", icon: TrendingUp },
               { title: "Central de Nutrição", url: "/central-nutricao", icon: MailCheck },
-              { title: "Tarefas & Marketing (Ana)", url: "/backoffice/tarefas", icon: ClipboardCheck },
+              { title: "Operacional (Backoffice)", url: "/backoffice/tarefas", icon: ClipboardCheck },
             ],
           },
           {
@@ -377,7 +380,7 @@ export function AppSidebar() {
               { title: "Candidatos", url: "/rh/recrutamento", icon: Users },
               { title: "Entrevistas", url: "/rh/entrevistas", icon: CalendarDays },
               { title: "Conversas 1:1", url: "/rh/conversas", icon: MessageSquare },
-              { title: "Sala de Reunião", url: "/rh/sala-reuniao", icon: CalendarDays },
+              { title: "Sala de Reunião", url: "/rh/sala-reuniao", icon: DoorOpen },
             ],
           },
           {
@@ -386,8 +389,8 @@ export function AppSidebar() {
               { title: "Meu Time", url: "/meu-time", icon: Users },
               { title: "HOMI CEO", url: "/homi-ceo", icon: Bot },
               { title: "Base HOMI", url: "/homi/base-conhecimento", icon: Brain },
-              { title: "Integração", url: "/integracao", icon: Zap },
-              { title: "Diagnóstico Site", url: "/admin/diagnostico-site", icon: Zap },
+              { title: "Integração", url: "/integracao", icon: PlugZap },
+              { title: "Diagnóstico Site", url: "/admin/diagnostico-site", icon: Activity },
               { title: "Academia", url: "/academia/gerenciar", icon: GraduationCap },
               { title: "Dev AI", url: "/dev-ai", icon: Terminal },
               { title: "Usuários", url: "/admin", icon: Shield },
@@ -534,8 +537,8 @@ export function AppSidebar() {
         {
           label: "Performance",
           items: [
-            { title: "Meu Desempenho", url: "/corretor/resumo", icon: BarChart3 },
-            { title: "Rankings", url: "/corretor/ranking-equipes", icon: Trophy },
+            { title: "Meu Desempenho", url: "/corretor", icon: BarChart3 },
+            { title: "Rankings", url: "/ranking", icon: Trophy },
             { title: "Progresso", url: "/progresso", icon: Award },
           ],
         },

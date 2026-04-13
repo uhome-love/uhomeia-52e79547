@@ -1,3 +1,10 @@
+// ─────────────────────────────────────────────────────────────────
+// useCeoDashboard — KPIs de overview do painel CEO
+// Responsabilidade: métricas de equipe, funil de etapas, SLA,
+// atividade diária e alertas do dashboard principal (/ceo)
+// NÃO usar para dados de rankings ou histórico de vendas
+// ─────────────────────────────────────────────────────────────────
+
 import { useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";

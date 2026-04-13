@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────
+// useCeoData — Dados brutos de produção para componentes CEO
+// Responsabilidade: negocios, comissões, rankings, histórico de
+// vendas — consumido por CeoOverview, CeoRankings, CeoAlerts,
+// HomeDashboard e outros 10+ componentes
+// NÃO usar para KPIs de funil ou atividade diária
+// ─────────────────────────────────────────────────────────────────
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";

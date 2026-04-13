@@ -4,21 +4,18 @@ import { Workflow, Users, History } from "lucide-react";
 import CadenciasTab from "@/components/nutricao/CadenciasTab";
 import LeadsNutricaoTab from "@/components/nutricao/LeadsNutricaoTab";
 import HistoricoEnviosTab from "@/components/nutricao/HistoricoEnviosTab";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function NutricaoPage() {
   const [activeTab, setActiveTab] = useState("cadencias");
 
   return (
     <div className="p-4 md:p-6 space-y-4 max-w-6xl mx-auto">
-      <div>
-        <div className="flex items-center gap-2">
-          <Workflow className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">Nutrição Automática</h1>
-        </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gestão de cadências de reengajamento e acompanhamento de envios
-        </p>
-      </div>
+      <PageHeader
+        title="Nutrição Automática"
+        subtitle="Cadências de reengajamento e acompanhamento de envios"
+        icon={<Workflow size={18} strokeWidth={1.5} />}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="w-full grid grid-cols-3 h-auto">

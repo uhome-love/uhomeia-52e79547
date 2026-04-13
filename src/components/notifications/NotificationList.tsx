@@ -124,7 +124,7 @@ function getNotificationRoute(n: Notification): string | null {
 
   // Performance / conquistas
   if (tipo === "meta_atingida" || tipo === "xp_conquista") return "/conquistas";
-  if (tipo === "relatorio_semanal") return "/corretor/resumo";
+  if (tipo === "relatorio_semanal") return "/corretor";
 
   // Alertas de gestão
   if (categoria === "corretor_parado" || categoria === "corretor_inativo") return "/central-do-gerente";

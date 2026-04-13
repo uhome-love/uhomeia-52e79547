@@ -100,7 +100,7 @@ export default function DashboardRankingsPreview() {
             <Trophy className="h-4 w-4 text-amber-500" />
             <span className="text-sm font-semibold text-foreground">Rankings</span>
           </div>
-          <Button variant="link" size="sm" className="h-auto p-0 text-[10px] text-primary" onClick={() => navigate("/corretor/ranking-equipes")}>
+          <Button variant="link" size="sm" className="h-auto p-0 text-[10px] text-primary" onClick={() => navigate("/ranking")}>
             Ver completo <ChevronRight className="h-3 w-3 inline" />
           </Button>
         </div>
