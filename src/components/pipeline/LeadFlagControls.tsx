@@ -39,9 +39,27 @@ export default function LeadFlagControls({ leadId, stageTipo, flagStatus, onUpda
     save(updated);
   };
 
+  const wrapper = (children: React.ReactNode) => (
+    <div className="mx-5 my-3 rounded-lg border-2 border-primary/20 bg-primary/5 p-3">
+      <p className="text-xs font-semibold text-primary mb-2">📋 Status da Etapa</p>
+      <div className="flex items-center gap-3 flex-wrap">
+        {children}
+      </div>
+    </div>
+  );
+
   if (stageTipo === "sem_contato") {
-    return (
-      <div className="flex items-center gap-3 px-5 py-2 border-b border-border/30 bg-muted/20">
+    return wrapper(
+      <>
+        <Label className="text-xs font-medium text-muted-foreground">Tentativas:</Label>
+        <Select value={flags.tentativas || "0"} onValueChange={(v) => setFlag("tentativas", v)}>
+          <SelectTrigger className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {[0,1,2,3,4,5,6,7].map(n => <SelectItem key={n} value={String(n)} className="text-xs">{n}/7</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </>
+    );
         <Label className="text-xs font-medium text-muted-foreground">Tentativas:</Label>
         <Select value={flags.tentativas || "0"} onValueChange={(v) => setFlag("tentativas", v)}>
           <SelectTrigger className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
