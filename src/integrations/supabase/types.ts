@@ -5541,6 +5541,7 @@ export type Database = {
           telefone2: string | null
           temperatura: string | null
           tipo_acao: string | null
+          tipo_descarte: string | null
           ultima_acao_at: string | null
           updated_at: string
           valor_estimado: number | null
@@ -5616,6 +5617,7 @@ export type Database = {
           telefone2?: string | null
           temperatura?: string | null
           tipo_acao?: string | null
+          tipo_descarte?: string | null
           ultima_acao_at?: string | null
           updated_at?: string
           valor_estimado?: number | null
@@ -5691,6 +5693,7 @@ export type Database = {
           telefone2?: string | null
           temperatura?: string | null
           tipo_acao?: string | null
+          tipo_descarte?: string | null
           ultima_acao_at?: string | null
           updated_at?: string
           valor_estimado?: number | null

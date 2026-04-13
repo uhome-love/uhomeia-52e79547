@@ -113,6 +113,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [inativarOpen, setInativarOpen] = useState(false);
   const [inativarMotivo, setInativarMotivo] = useState("");
   const [inativarObs, setInativarObs] = useState("");
+  const [tipoDescarte, setTipoDescarte] = useState<string>("reengajavel");
   const [inativando, setInativando] = useState(false);
   const [nextActionOpen, setNextActionOpen] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
@@ -181,13 +182,14 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
 
   const handleInativar = useCallback(async () => {
     if (!inativarMotivo) { toast.error("Selecione um motivo"); return; }
+    if (!tipoDescarte) { toast.error("Selecione o tipo de descarte"); return; }
     setInativando(true);
     try {
       const descarteStage = stages.find(s => s.tipo === "descarte");
       const motivoTexto = inativarMotivo === "outro"
         ? `Inativado: ${inativarObs.trim() || "Outro motivo"}`
         : `Inativado: ${inativarMotivo}`;
-      await onUpdate(lead.id, { motivo_descarte: motivoTexto } as any);
+      await onUpdate(lead.id, { motivo_descarte: motivoTexto, tipo_descarte: tipoDescarte } as any);
       if (descarteStage) await onMove(lead.id, descarteStage.id, motivoTexto);
       toast.success("Lead inativado com sucesso");
       setInativarOpen(false);
@@ -195,7 +197,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
     } catch (err: any) {
       toast.error("Erro ao inativar: " + (err.message || ""));
     } finally { setInativando(false); }
-  }, [inativarMotivo, inativarObs, stages, lead.id, onUpdate, onMove, onOpenChange]);
+  }, [inativarMotivo, inativarObs, tipoDescarte, stages, lead.id, onUpdate, onMove, onOpenChange]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -447,7 +449,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                   {((lead as any).tags || []).includes("MELNICK_DAY") ? "🔥 Remover Melnick Day" : "🔥 Marcar Melnick Day"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={() => { setInativarMotivo(""); setInativarObs(""); setInativarOpen(true); }}>
+                <DropdownMenuItem className="text-destructive" onClick={() => { setInativarMotivo(""); setInativarObs(""); setTipoDescarte("reengajavel"); setInativarOpen(true); }}>
                   <Ban className="h-3.5 w-3.5 mr-2" /> Inativar Lead
                 </DropdownMenuItem>
                 {isAdmin && onDelete && (
@@ -805,10 +807,25 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 <Textarea value={inativarObs} onChange={e => setInativarObs(e.target.value)} placeholder="Descreva..." className="resize-none" rows={3} />
               </div>
             )}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Tipo de descarte *</Label>
+              <Select value={tipoDescarte} onValueChange={setTipoDescarte}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reengajavel">🔄 Temporário (pode reengajar)</SelectItem>
+                  <SelectItem value="definitivo">⛔ Definitivo (não contactar)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {tipoDescarte === "definitivo" 
+                  ? "O lead não receberá mais nenhuma comunicação." 
+                  : "O lead poderá ser reengajado por nutrição automática."}
+              </p>
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setInativarOpen(false)} disabled={inativando}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleInativar} disabled={inativando || !inativarMotivo || (inativarMotivo === "outro" && !inativarObs.trim())} className="gap-2">
+            <Button variant="destructive" onClick={handleInativar} disabled={inativando || !inativarMotivo || !tipoDescarte || (inativarMotivo === "outro" && !inativarObs.trim())} className="gap-2">
               {inativando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
               Confirmar
             </Button>

@@ -1,0 +1,1 @@
+ALTER TABLE public.pipeline_leads ADD COLUMN tipo_descarte text;
