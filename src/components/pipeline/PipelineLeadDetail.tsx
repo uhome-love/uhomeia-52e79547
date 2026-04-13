@@ -113,6 +113,7 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [inativarOpen, setInativarOpen] = useState(false);
   const [inativarMotivo, setInativarMotivo] = useState("");
   const [inativarObs, setInativarObs] = useState("");
+  const [tipoDescarte, setTipoDescarte] = useState<string>("reengajavel");
   const [inativando, setInativando] = useState(false);
   const [nextActionOpen, setNextActionOpen] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
