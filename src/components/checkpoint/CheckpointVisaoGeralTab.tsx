@@ -23,10 +23,10 @@ const PIPELINE_STAGES = [
   { key: "novo_lead", label: "Novo", emoji: "🆕" },
   { key: "sem_contato", label: "S/Contato", emoji: "📵" },
   { key: "contato_iniciado", label: "Contato", emoji: "📞" },
-  { key: "qualificacao", label: "Qualif.", emoji: "🎯" },
-  { key: "possivel_visita", label: "P.Visita", emoji: "🏠" },
-  { key: "visita_marcada", label: "V.Marcada", emoji: "📅" },
-  { key: "visita_realizada", label: "V.Realiz.", emoji: "✅" },
+  { key: "busca", label: "Busca", emoji: "🔍" },
+  { key: "aquecimento", label: "Aquecim.", emoji: "🔥" },
+  { key: "visita", label: "Visita", emoji: "🏠" },
+  { key: "pos_visita", label: "Pós-Visita", emoji: "💰" },
 ];
 
 const NEGOCIO_FASES = [

@@ -49,8 +49,10 @@ function computeRadarScore(lead: PipelineLead, stage: PipelineStage): { score: n
 
   // Base score boost by stage advancement
   const stageBonus: Record<string, number> = {
-    visita_marcada: 15, visita_realizada: 25, negociacao: 30, proposta: 35, assinatura: 40,
-    possibilidade_visita: 10, qualificacao: 5,
+    visita: 20, pos_visita: 25, negociacao: 30, proposta: 35, assinatura: 40,
+    aquecimento: 10, busca: 5,
+    // Legacy
+    visita_marcada: 15, visita_realizada: 25, possibilidade_visita: 10, qualificacao: 5,
   };
   if (stageBonus[stage.tipo]) {
     score += stageBonus[stage.tipo];
@@ -103,7 +105,7 @@ export default function OpportunityRadar({ leads, stages, corretorNomes, onSelec
       let category: "hot" | "warm" | "reengage";
       if (score >= 70 && hoursInStage <= 2) {
         category = "hot";
-      } else if (score >= 50 || ["visita_marcada", "visita_realizada"].includes(stage.tipo)) {
+      } else if (score >= 50 || ["visita", "visita_marcada", "visita_realizada", "pos_visita"].includes(stage.tipo)) {
         category = score >= 70 ? "hot" : "warm";
       } else if (hoursInStage >= 72) {
         category = "reengage";
