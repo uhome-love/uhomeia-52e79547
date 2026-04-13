@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
 
       const { data: existing } = await supabase
         .from("pipeline_leads")
-        .select("id, corretor_id, nome, empreendimento, observacoes")
+        .select("id, corretor_id, nome, empreendimento, observacoes, stage_id, arquivado")
         .eq("telefone", telefone)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -228,27 +228,28 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Lead exists with corretor — reactivate
         const todayStamp = new Date().toISOString().slice(0, 10);
         const interestLabel = empreendimento || existing.empreendimento || "mesmo imóvel";
-
-        // Build detailed description with all available context
-        const detailParts: string[] = [];
-        detailParts.push(`Lead demonstrou novo interesse em ${interestLabel} (ImovelWeb).`);
-        if (codigoAnuncio) detailParts.push(`Código anúncio: ${codigoAnuncio}`);
-        if (mensagem) detailParts.push(`Mensagem: "${mensagem}"`);
-        if (telefone2) detailParts.push(`Tel. adicional: ${telefone2}`);
-        const fullDesc = detailParts.join("\n");
-
-        // Append to observacoes instead of overwriting
         const prevObs = existing.observacoes || "";
         const separator = prevObs ? "\n---\n" : "";
         const newObs = `${prevObs}${separator}[NOVO INTERESSE ${todayStamp}] ${interestLabel} (ImovelWeb)${codigoAnuncio ? ` | Cód: ${codigoAnuncio}` : ""}${mensagem ? ` — "${mensagem}"` : ""}`;
 
-        await supabase.from("pipeline_leads").update({
+        const DESCARTE_STAGE_ID = "1dd66c25-3848-4053-9f66-82e902989b4d";
+        const SEM_CONTATO_STAGE_ID = "2fcba9be-1188-4a54-9452-394beefdc330";
+        const isDiscarded = existing.stage_id === DESCARTE_STAGE_ID || existing.arquivado === true;
+
+        const updatePayload: Record<string, unknown> = {
           updated_at: new Date().toISOString(),
           observacoes: newObs,
-        }).eq("id", existing.id);
+        };
+        if (isDiscarded) {
+          updatePayload.stage_id = SEM_CONTATO_STAGE_ID;
+          updatePayload.stage_changed_at = new Date().toISOString();
+          updatePayload.arquivado = false;
+          updatePayload.motivo_descarte = null;
+        }
+
+        await supabase.from("pipeline_leads").update(updatePayload).eq("id", existing.id);
 
         // Notification message also includes codigo
         const notifMsg = `${existing.nome || name} demonstrou novo interesse em ${interestLabel} (ImovelWeb).${codigoAnuncio ? ` Cód: ${codigoAnuncio}` : ""}${mensagem ? ` Msg: "${mensagem.slice(0, 100)}"` : ""}`;

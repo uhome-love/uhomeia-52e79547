@@ -365,7 +365,7 @@ Deno.serve(async (req) => {
 
     const { data: existing } = await supabase
       .from("pipeline_leads")
-      .select("id, corretor_id, nome, empreendimento, aceite_status")
+      .select("id, corretor_id, nome, empreendimento, aceite_status, stage_id, arquivado")
       .eq("telefone", telefone)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -385,10 +385,23 @@ Deno.serve(async (req) => {
       const todayStamp = new Date().toISOString().slice(0, 10);
       const interestLabel = empreendimento || existing.empreendimento || "mesmo imóvel";
 
-      await supabase.from("pipeline_leads").update({
+      // Determine if lead needs to be moved out of Descarte/archived
+      const DESCARTE_STAGE_ID = "1dd66c25-3848-4053-9f66-82e902989b4d";
+      const SEM_CONTATO_STAGE_ID = "2fcba9be-1188-4a54-9452-394beefdc330";
+      const isDiscarded = existing.stage_id === DESCARTE_STAGE_ID || existing.arquivado === true;
+
+      const updatePayload: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
         observacoes: `[NOVO INTERESSE ${todayStamp}] ${interestLabel} (Meta Ads direto)${message ? ` — "${message}"` : ""}`,
-      }).eq("id", existing.id);
+      };
+      if (isDiscarded) {
+        updatePayload.stage_id = SEM_CONTATO_STAGE_ID;
+        updatePayload.stage_changed_at = new Date().toISOString();
+        updatePayload.arquivado = false;
+        updatePayload.motivo_descarte = null;
+      }
+
+      await supabase.from("pipeline_leads").update(updatePayload).eq("id", existing.id);
 
       await Promise.all([
         supabase.from("notifications").insert({
