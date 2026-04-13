@@ -36,7 +36,6 @@ const NotFound = lazyRetry(() => import("./pages/NotFound"));
 
 // Lazy load all pages
 const HomeDashboard = lazyRetry(() => import("./pages/HomeDashboard"));
-// (removed: GestorDashboard — /gestao redirects to /gerente/dashboard)
 const CorretorDashboard = lazyRetry(() => import("./pages/CorretorDashboard"));
 const AdminPanel = lazyRetry(() => import("./pages/AdminPanel"));
 const CheckpointGerente = lazyRetry(() => import("./pages/CheckpointGerente"));
@@ -46,11 +45,9 @@ const RelatorioCorretor = lazyRetry(() => import("./pages/RelatorioCorretor"));
 const CentralDados = lazyRetry(() => import("./pages/CentralDados"));
 
 const MarketingDashboard = lazyRetry(() => import("./pages/MarketingDashboard"));
-// (removed: RankingComercial — no route)
 const AuditDashboard = lazyRetry(() => import("./pages/AuditDashboard"));
 const OfertaAtiva = lazyRetry(() => import("./pages/OfertaAtiva"));
 const MeuTime = lazyRetry(() => import("./pages/MeuTime"));
-// (removed: CorretorResumo — /corretor/resumo redirects to /corretor)
 const RankingEquipe = lazyRetry(() => import("./pages/RankingEquipe"));
 const HomiAssistant = lazyRetry(() => import("./pages/HomiAssistant"));
 const HomiGerencial = lazyRetry(() => import("./pages/HomiGerencial"));
@@ -82,7 +79,6 @@ const PagadoriaSolicitacoes = lazyRetry(() => import("./pages/PagadoriaSolicitac
 const ComissoesPage = lazyRetry(() => import("./pages/ComissoesPage"));
 const MarketingCentral = lazyRetry(() => import("./pages/MarketingCentral"));
 const HomiAna = lazyRetry(() => import("./pages/HomiAna"));
-const TarefasPage = lazyRetry(() => import("./pages/TarefasPage"));
 const BackofficeCentral = lazyRetry(() => import("./pages/BackofficeCentral"));
 const MinhasTarefas = lazyRetry(() => import("./pages/MinhasTarefas"));
 const MinhasVitrines = lazyRetry(() => import("./pages/MinhasVitrines"));
@@ -94,12 +90,12 @@ const AcademiaAulaPage = lazyRetry(() => import("./pages/AcademiaAulaPage"));
 const AcademiaGerenciarPage = lazyRetry(() => import("./pages/AcademiaGerenciarPage"));
 const GerenteDashboard = lazyRetry(() => import("./pages/GerenteDashboard"));
 const RoletaLeads = lazyRetry(() => import("./pages/RoletaLeads"));
-const ImoveisPage = lazyRetry(() => import("./pages/ImoveisPageNew"));
+const ImoveisPage = lazyRetry(() => import("./pages/ImoveisPage"));
 const VitrinePage = lazyRetry(() => import("./pages/VitrinePage"));
 const ImovelPage = lazyRetry(() => import("./pages/ImovelPage"));
 const PosVendas = lazyRetry(() => import("./pages/PosVendas"));
 const MelnickDay = lazyRetry(() => import("./pages/MelnickDay"));
-const MelnickMetas = lazyRetry(() => import("./pages/MelnickMetas"));
+
 const OrygemCampanha = lazyRetry(() => import("./pages/OrygemCampanha"));
 const MegaCyrela = lazyRetry(() => import("./pages/MegaCyrela"));
 const VendasRealizadas = lazyRetry(() => import("./pages/VendasRealizadas"));
@@ -123,11 +119,11 @@ const WhatsAppLanding = lazyRetry(() => import("./pages/WhatsAppLanding"));
 const CampaignAnalyticsPage = lazyRetry(() => import("./pages/CampaignAnalyticsPage"));
 const ImportBrevoContacts = lazyRetry(() => import("./pages/ImportBrevoContacts"));
 const PrivacidadePage = lazyRetry(() => import("./pages/PrivacidadePage"));
-const WhatsAppCampaignDispatcher = lazyRetry(() => import("./pages/WhatsAppCampaignDispatcherPage"));
+const WhatsAppCampaignDispatcher = lazyRetry(() => import("./pages/WhatsAppCampaignDispatcher"));
 const EmailMarketingPage = lazyRetry(() => import("./pages/EmailMarketingPage"));
 const DisparadorLigacoesIA = lazyRetry(() => import("./pages/DisparadorLigacoesIA"));
-const CampanhasVoz = lazyRetry(() => import("./pages/CampanhasVozPage"));
-const CentralNutricao = lazyRetry(() => import("./pages/CentralNutricaoPage"));
+const CampanhasVoz = lazyRetry(() => import("./pages/CampanhasVoz"));
+const CentralNutricao = lazyRetry(() => import("./pages/CentralNutricao"));
 const NutricaoPage = lazyRetry(() => import("./pages/NutricaoPage"));
 const CasaTuaLanding = lazyRetry(() => import("./pages/CasaTuaLanding"));
 const PlacarDoDia = lazyRetry(() => import("./pages/PlacarDoDia"));
@@ -225,8 +221,6 @@ const App = () => (
             <Route path="/minhas-vitrines" element={<ProtectedPage><ErrorBoundary module="minhas-vitrines"><MinhasVitrines /></ErrorBoundary></ProtectedPage>} />
             <Route path="/corretor/call" element={<ProtectedPage><ErrorBoundary module="corretor-call"><CorretorCall /></ErrorBoundary></ProtectedPage>} />
             <Route path="/agenda-visitas" element={<ProtectedPage><ErrorBoundary module="agenda-visitas"><AgendaVisitas /></ErrorBoundary></ProtectedPage>} />
-            <Route path="/corretor/resumo" element={<Navigate to="/corretor" replace />} />
-            <Route path="/corretor/ranking-equipes" element={<Navigate to="/ranking" replace />} />
             <Route path="/conquistas" element={<ProtectedPage><ErrorBoundary module="conquistas"><Conquistas /></ErrorBoundary></ProtectedPage>} />
             <Route path="/progresso" element={<ProtectedPage><ErrorBoundary module="progresso"><CorretorProgresso /></ErrorBoundary></ProtectedPage>} />
             <Route path="/academia" element={<ProtectedPage><ErrorBoundary module="academia"><AcademiaPage /></ErrorBoundary></ProtectedPage>} />

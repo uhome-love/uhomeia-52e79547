@@ -2,19 +2,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DisponibilidadeGerencialPanel from "@/components/disponibilidade/DisponibilidadeGerencialPanel";
 import PendingLeadsPanel from "@/components/pipeline/PendingLeadsPanel";
 import DistributionDashboard from "@/components/pipeline/DistributionDashboard";
-import { RotateCw, AlertTriangle, BarChart3 } from "lucide-react";
+import { RotateCw, AlertTriangle, BarChart3, CalendarCheck } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function DisponibilidadePage() {
   return (
     <div className="p-4 md:p-6 space-y-4 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">
-          Motor de Distribuição de Leads
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Roleta inteligente, leads pendentes e performance de atendimento
-        </p>
-      </div>
+      <PageHeader
+        title="Motor de Distribuição de Leads"
+        subtitle="Roleta inteligente, leads pendentes e performance de atendimento"
+        icon={<CalendarCheck size={18} strokeWidth={1.5} />}
+      />
 
       <Tabs defaultValue="roleta" className="space-y-4">
         <TabsList>
