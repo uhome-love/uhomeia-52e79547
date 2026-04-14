@@ -1,48 +1,28 @@
 
 
-# Plano: Configurar webhook automaticamente no action="create"
+# Plano: Adicionar "Meu WhatsApp" na Sidebar
 
-## Alteração
+## Arquivo
 
-Arquivo: `supabase/functions/whatsapp-connect/index.ts`
+`src/components/layout/Sidebar.tsx`
 
-Dentro do bloco `if (!existing)`, **após** o insert em `whatsapp_instancias` (linha 96), adicionar chamada para configurar o webhook da Evolution API:
+## Alterações
 
-```typescript
-// Configure webhook (non-blocking)
-try {
-  const webhookRes = await fetch(`${EVOLUTION_URL}/webhook/set/${instanceName}`, {
-    method: "POST",
-    headers: evoHeaders,
-    body: JSON.stringify({
-      webhook: {
-        enabled: true,
-        url: `${supabaseUrl}/functions/v1/evolution-webhook`,
-        webhookByEvents: false,
-        byEvents: false,
-        base64: false,
-        events: ["MESSAGES_UPSERT"],
-      },
-    }),
-  });
-  if (!webhookRes.ok) {
-    console.error("Evolution webhook set error:", await webhookRes.text());
-  }
-} catch (whErr) {
-  console.error("Evolution webhook set exception:", whErr);
-}
-```
+1. **Import**: Adicionar `Smartphone` ao import de `lucide-react` (linha 3-14)
 
-## Regras respeitadas
+2. **Corretor** (seção "Ferramentas", ~linha 194-201): Adicionar item:
+   ```typescript
+   { label: "Meu WhatsApp", path: "/configuracoes/whatsapp", icon: <Smartphone size={15} strokeWidth={1.5} /> },
+   ```
 
-- Executa **somente** quando a instância é recém-criada (`!existing`)
-- Erro no webhook é logado mas **não bloqueia** o fluxo
-- `supabaseUrl` já está disponível na variável declarada na linha 15
-- Nenhuma outra action, função ou tabela é alterada
+3. **Admin** (seção "Ferramentas", ~linha 101-108): Adicionar item:
+   ```typescript
+   { label: "Meu WhatsApp", path: "/configuracoes/whatsapp", icon: <Smartphone size={15} strokeWidth={1.5} /> },
+   ```
 
-## Entrega
+## O que NÃO será alterado
 
-| Arquivo | Ação |
-|---|---|
-| `supabase/functions/whatsapp-connect/index.ts` | Editar (adicionar ~15 linhas no bloco create) |
+- Nenhum outro item de sidebar
+- Nenhuma outra rota, hook ou componente
+- Apenas 3 pontos de edição no mesmo arquivo
 
