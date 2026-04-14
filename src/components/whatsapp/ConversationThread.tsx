@@ -186,6 +186,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       {/* Copilot */}
       {showCopilot && (
         <HomiCopilotCard
+          leadId={leadInfo.id}
           leadName={leadInfo.nome}
           lastMessage={lastMsg?.body || ""}
           onUseSuggestion={(s) => setText(s)}
