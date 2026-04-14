@@ -122,6 +122,7 @@ const CentralNutricao = lazyRetry(() => import("./pages/CentralNutricao"));
 const NutricaoPage = lazyRetry(() => import("./pages/NutricaoPage"));
 const CasaTuaLanding = lazyRetry(() => import("./pages/CasaTuaLanding"));
 const PlacarDoDia = lazyRetry(() => import("./pages/PlacarDoDia"));
+const WhatsAppInbox = lazyRetry(() => import("./pages/WhatsAppInbox"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -237,6 +238,7 @@ const App = () => (
             <Route path="/configuracoes/whatsapp" element={<ProtectedPage roles={["corretor", "admin"]}><ErrorBoundary module="config-whatsapp"><ConfiguracoesWhatsApp /></ErrorBoundary></ProtectedPage>} />
             <Route path="/links-site" element={<ProtectedPage><ErrorBoundary module="links-site"><LinksSite /></ErrorBoundary></ProtectedPage>} />
             <Route path="/notificacoes" element={<ProtectedPage><ErrorBoundary module="notificacoes"><Notificacoes /></ErrorBoundary></ProtectedPage>} />
+            <Route path="/whatsapp" element={<ProtectedPage roles={["corretor", "admin"]}><ErrorBoundary module="whatsapp-inbox"><WhatsAppInbox /></ErrorBoundary></ProtectedPage>} />
 
 
             {/* CEO / Admin only */}
