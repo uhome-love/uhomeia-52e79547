@@ -63,8 +63,19 @@ function groupByDate(messages: Message[]) {
 export default function ConversationThread({ leadId, leadInfo, messages, onMessageSent }: ConversationThreadProps) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Fetch profiles.id once on mount
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
+      if (data) setProfileId(data.id);
+    })();
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
@@ -74,7 +85,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
   }, [messages]);
 
   const handleSend = async () => {
-    if (!text.trim() || !leadInfo) return;
+    if (!text.trim() || !leadInfo || !profileId) return;
     setSending(true);
     try {
       const { error } = await supabase.functions.invoke("whatsapp-send", {
@@ -82,11 +93,10 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       });
       if (error) throw error;
 
-      // Insert local record
-      const { data: { user } } = await supabase.auth.getUser();
+      // Insert local record using profiles.id as corretor_id
       await supabase.from("whatsapp_mensagens").insert({
         lead_id: leadId,
-        corretor_id: user?.id,
+        corretor_id: profileId,
         direction: "sent",
         body: text.trim(),
         timestamp: new Date().toISOString(),
