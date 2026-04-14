@@ -1,49 +1,48 @@
 
 
-# Plano: Página /configuracoes/whatsapp
+# Plano: Configurar webhook automaticamente no action="create"
 
-## Arquivo novo
+## Alteração
 
-`src/pages/ConfiguracoesWhatsApp.tsx`
+Arquivo: `supabase/functions/whatsapp-connect/index.ts`
 
-## Estrutura
-
-1. **Ao montar**: chama `whatsapp-connect` com `action="status"` para obter estado atual
-2. **Card de Status**: ícone WhatsApp, badge animado (conectado/aguardando/desconectado), número se disponível
-3. **Botão "Conectar meu WhatsApp"**: visível se não conectado — chama `action="create"` → `action="qrcode"` → abre modal com QR base64 → polling `action="status"` a cada 3s → fecha modal ao conectar
-4. **Modal QR Code**: Dialog com imagem base64, instruções, timer 60s, botão "Gerar novo QR Code" ao expirar
-5. **Botão "Desconectar"**: visível se conectado, cor vermelha, confirmação via Dialog antes de chamar `action="disconnect"`
-6. **Card de Privacidade**: ícone cadeado + texto explicativo
-
-## Rota
-
-Em `App.tsx`, adicionar:
-- Lazy import de `ConfiguracoesWhatsApp`
-- Rota: `<Route path="/configuracoes/whatsapp" element={<ProtectedPage roles={["corretor", "admin"]}><ConfiguracoesWhatsApp /></ProtectedPage>} />`
-
-## Design
-
-- Fundo `#f7f7fb`, cards brancos `rounded-xl`, accent `#4F46E5`
-- Usa componentes existentes: `Card`, `Button`, `Dialog`, `Badge`
-- Ícones de `lucide-react` (MessageSquare, Shield, QrCode, Loader2)
-
-## Chamadas à Edge Function
+Dentro do bloco `if (!existing)`, **após** o insert em `whatsapp_instancias` (linha 96), adicionar chamada para configurar o webhook da Evolution API:
 
 ```typescript
-const res = await supabase.functions.invoke("whatsapp-connect", {
-  body: { action: "status" | "create" | "qrcode" | "disconnect" }
-});
+// Configure webhook (non-blocking)
+try {
+  const webhookRes = await fetch(`${EVOLUTION_URL}/webhook/set/${instanceName}`, {
+    method: "POST",
+    headers: evoHeaders,
+    body: JSON.stringify({
+      webhook: {
+        enabled: true,
+        url: `${supabaseUrl}/functions/v1/evolution-webhook`,
+        webhookByEvents: false,
+        byEvents: false,
+        base64: false,
+        events: ["MESSAGES_UPSERT"],
+      },
+    }),
+  });
+  if (!webhookRes.ok) {
+    console.error("Evolution webhook set error:", await webhookRes.text());
+  }
+} catch (whErr) {
+  console.error("Evolution webhook set exception:", whErr);
+}
 ```
 
-## O que NÃO será alterado
+## Regras respeitadas
 
-- Sidebar, hooks, componentes existentes, outras páginas
-- Apenas `App.tsx` recebe uma nova rota + lazy import
+- Executa **somente** quando a instância é recém-criada (`!existing`)
+- Erro no webhook é logado mas **não bloqueia** o fluxo
+- `supabaseUrl` já está disponível na variável declarada na linha 15
+- Nenhuma outra action, função ou tabela é alterada
 
 ## Entrega
 
 | Arquivo | Ação |
 |---|---|
-| `src/pages/ConfiguracoesWhatsApp.tsx` | Criar |
-| `src/App.tsx` | Adicionar import + rota |
+| `supabase/functions/whatsapp-connect/index.ts` | Editar (adicionar ~15 linhas no bloco create) |
 
