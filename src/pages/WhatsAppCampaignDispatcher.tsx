@@ -102,17 +102,11 @@ function StageSelect({ value, onChange }: { value: string; onChange: (v: string)
 
 
 const TEMPLATE_DEFAULT_IMAGES: Record<string, string> = {
-  melnick_day_poa_2026: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fmelnick-day-2026-header.png",
-  melnick_day_wa_v2: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fmelnick-day-2026-header.png",
-  ofertas_meday: "https://hunbxqzhvuemgntklyzb.supabase.co/storage/v1/object/public/campaign-images/templates%2Fofertas-meday-header.png",
   casatua_abril2026: "",
 };
 
 /* ─── Template default redirect URLs ─── */
 const TEMPLATE_DEFAULT_URLS: Record<string, string> = {
-  melnick_day_poa_2026: "https://uhomesales.com/wa?origem=whatsapp_api&campanha=melnick_day_2026&bloco=cta1",
-  melnick_day_wa_v2: "https://uhomesales.com/wa?phone={{phone}}&nome={{nome}}&origem=whatsapp_api&campanha=melnick_day_2026&bloco=cta1",
-  ofertas_meday: "https://uhomesales.com/wa?phone={{phone}}&nome={{nome}}&origem=whatsapp_api&campanha=ofertas_meday",
   casatua_abril2026: "https://uhomesales.com/casatua?origem=whatsapp_api&campanha=casa_tua_abril_2026&utm_source=whatsapp&utm_medium=disparo&utm_campaign=casa_tua_abril_2026",
 };
 
@@ -124,7 +118,7 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   const [fonte, setFonte] = useState<"pipeline" | "oferta_ativa">("pipeline");
   const [campanha, setCampanha] = useState("");
   const [empreendimento, setEmpreendimento] = useState("");
-  const [templateName, setTemplateName] = useState("ofertas_meday");
+  const [templateName, setTemplateName] = useState("casatua_abril2026");
   const [templateLang, setTemplateLang] = useState("pt_BR");
   const [periodo, setPeriodo] = useState("90");
   const [limite, setLimite] = useState("3000");
@@ -132,8 +126,8 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
   const [origem, setOrigem] = useState("");
   const [tag, setTag] = useState("");
   const [stageId, setStageId] = useState("");
-  const [redirectUrl, setRedirectUrl] = useState(TEMPLATE_DEFAULT_URLS["ofertas_meday"] || "");
-  const [headerImageUrl, setHeaderImageUrl] = useState(TEMPLATE_DEFAULT_IMAGES["ofertas_meday"] || "");
+  const [redirectUrl, setRedirectUrl] = useState(TEMPLATE_DEFAULT_URLS["casatua_abril2026"] || "");
+  const [headerImageUrl, setHeaderImageUrl] = useState(TEMPLATE_DEFAULT_IMAGES["casatua_abril2026"] || "");
   const [selectedListaIds, setSelectedListaIds] = useState<string[]>([]);
 
   const [eligibleLeads, setEligibleLeads] = useState<EligibleLead[]>([]);
@@ -439,9 +433,6 @@ function NovaCampanhaTab({ onCreated }: { onCreated: (id: string) => void }) {
                   if (defaultUrl) setRedirectUrl(defaultUrl);
                 }}
               >
-                <option value="ofertas_meday">ofertas_meday (MEDAY Ofertas ✅)</option>
-                <option value="melnick_day_poa_2026">melnick_day_poa_2026 (botão estático)</option>
-                <option value="melnick_day_wa_v2">melnick_day_wa_v2 (botão dinâmico)</option>
                 <option value="casatua_abril2026">casatua_abril2026 (Casa Tua Abril 🏡)</option>
               </select>
             </div>

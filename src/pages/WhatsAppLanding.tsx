@@ -53,7 +53,7 @@ export default function WhatsAppLanding() {
     const nome = params.get("nome") || params.get("name") || "";
     const email = params.get("email") || "";
     const origem = params.get("origem") || "whatsapp_api";
-    const campanha = params.get("campanha") || "melnick_day_2026";
+    const campanha = params.get("campanha") || "campanha_whatsapp";
     const bloco = params.get("bloco") || "";
     const send_id = params.get("send_id") || "";
     const batch_id = params.get("batch_id") || "";

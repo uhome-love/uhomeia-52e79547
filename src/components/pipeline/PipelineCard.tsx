@@ -454,9 +454,7 @@ const PipelineCard = memo(function PipelineCard({
 
         {/* Campaign tags - non-empreendimento only */}
         {(lead.tags || []).length > 0 && (() => {
-          const NON_EMP_TAGS: Record<string, { label: string; color: string; bg: string }> = {
-            MELNICK_DAY: { label: "🔥 Melnick Day", color: "#EA580C", bg: "#FFF7ED" },
-          };
+          const NON_EMP_TAGS: Record<string, { label: string; color: string; bg: string }> = {};
           const rendered = (lead.tags || []).map(tag => {
             const cfg = NON_EMP_TAGS[tag];
             if (!cfg) return null;

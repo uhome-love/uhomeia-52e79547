@@ -37,9 +37,7 @@ type UserRole = "admin" | "gestor" | "corretor" | "backoffice" | "rh";
 // ─── CAMPAIGN CONFIG ─────────────────────────────────────────────────────────
 
 const CAMPAIGNS = [
-  { label: "Melnick Day",      path: "/melnick-metas",      color: "#f59e0b" },
-  { label: "Orygem 60 dias",   path: "/campanhas/orygem",   color: "#10b981" },
-  { label: "Mega da Cyrela",   path: "/campanhas/cyrela",   color: "#8b5cf6" },
+  { label: "Orygem 60 dias",   path: "/orygem-60",   color: "#10b981" },
 ];
 
 // ─── NAV CONFIG POR PERFIL ───────────────────────────────────────────────────
@@ -64,7 +62,6 @@ const NAV_BY_ROLE: Record<UserRole, NavGroup[]> = {
         { label: "Imóveis",            path: "/imoveis",           icon: <Home         size={15} strokeWidth={1.5} /> },
 { label: "Oferta ativa",       path: "/corretor/call",     icon: <Phone        size={15} strokeWidth={1.5} /> },
         { label: "Busca de leads",     path: "/busca-leads",       icon: <Search       size={15} strokeWidth={1.5} /> },
-        { label: "Anúncios no ar",     path: "/anuncios",          icon: <Megaphone    size={15} strokeWidth={1.5} /> },
       ],
     },
     {
@@ -123,7 +120,6 @@ const NAV_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       title: "Gestão de Leads",
       items: [
-        { label: "Anúncios no ar",     path: "/anuncios",          icon: <Megaphone    size={15} strokeWidth={1.5} /> },
         { label: "Oferta ativa",       path: "/oferta-ativa",      icon: <Phone        size={15} strokeWidth={1.5} /> },
         { label: "Pipeline de leads",  path: "/pipeline-leads",    icon: <AlignLeft    size={15} strokeWidth={1.5} /> },
         { label: "Agenda de visitas",  path: "/agenda-visitas",    icon: <CalendarDays size={15} strokeWidth={1.5} /> },
@@ -197,7 +193,7 @@ const NAV_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       title: "Ferramentas",
       items: [
-        { label: "Anúncios no ar",     path: "/anuncios",          icon: <Megaphone    size={15} strokeWidth={1.5} /> },
+        
         { label: "HOMI Assistente",    path: "/homi",              icon: <Bot          size={15} strokeWidth={1.5} /> },
         { label: "Meus Links",         path: "/links-site",        icon: <Link2        size={15} strokeWidth={1.5} /> },
         { label: "Minhas vitrines",    path: "/minhas-vitrines",   icon: <Building2    size={15} strokeWidth={1.5} /> },
