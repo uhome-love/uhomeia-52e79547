@@ -431,7 +431,9 @@ export default function Sidebar({
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.badge !== undefined && (
                       <span className={cn("text-[10px] font-semibold rounded-full px-1.5 py-px",
-                        isDark ? "bg-white/10 text-[#71717a]" : "bg-[#f0f0f0] text-[#a1a1aa]")}>
+                        item.path === "/whatsapp"
+                          ? "bg-red-500 text-white"
+                          : isDark ? "bg-white/10 text-[#71717a]" : "bg-[#f0f0f0] text-[#a1a1aa]")}>
                         {item.badge}
                       </span>
                     )}
