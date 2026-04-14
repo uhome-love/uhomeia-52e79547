@@ -62,7 +62,7 @@ export default function MinhasVitrines() {
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-foreground truncate">{v.titulo}</h3>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold uppercase">
-                        {v.tipo === "melnick_day" ? "Melnick Day" : v.tipo === "product_page" ? "Landing" : "Seleção"}
+                        {v.tipo === "product_page" ? "Landing" : "Seleção"}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">

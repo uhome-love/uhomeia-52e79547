@@ -73,7 +73,6 @@ const ORDENS = [
 ];
 
 const CAMPANHAS = [
-  { id: "melnick_day", label: "🏷️ Oferecer Melnick Day" },
   { id: "follow_up", label: "📞 Follow-up" },
   { id: "reengajamento", label: "🔄 Reengajamento de leads" },
   { id: "qualificacao", label: "🎯 Qualificação de leads" },

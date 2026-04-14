@@ -1,6 +1,6 @@
 /* ═══════════ Showcase Types ═══════════ */
 
-export type ShowcaseType = "product_page" | "melnick_day" | "property_selection";
+export type ShowcaseType = "product_page" | "property_selection";
 
 export interface ShowcaseImovel {
   id: number;
