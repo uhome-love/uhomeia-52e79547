@@ -35,6 +35,15 @@ export default function LeadWhatsAppTab({ leadId, telefone }: LeadWhatsAppTabPro
   async function loadData() {
     setLoading(true);
     try {
+      // Fetch profiles.id for the logged-in user
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user!.id)
+        .single();
+
+      const profileId = profile?.id;
+
       const [msgRes, instRes] = await Promise.all([
         supabase
           .from("whatsapp_mensagens")
@@ -42,12 +51,14 @@ export default function LeadWhatsAppTab({ leadId, telefone }: LeadWhatsAppTabPro
           .eq("lead_id", leadId)
           .order("timestamp", { ascending: false })
           .limit(3),
-        supabase
-          .from("whatsapp_instancias")
-          .select("id")
-          .eq("corretor_id", user!.id)
-          .eq("status", "connected")
-          .limit(1),
+        profileId
+          ? supabase
+              .from("whatsapp_instancias")
+              .select("id")
+              .eq("corretor_id", profileId)
+              .eq("status", "conectado")
+              .limit(1)
+          : Promise.resolve({ data: [] }),
       ]);
 
       setMessages(msgRes.data ?? []);

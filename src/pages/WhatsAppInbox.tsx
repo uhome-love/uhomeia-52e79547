@@ -31,6 +31,7 @@ interface Message {
 export default function WhatsAppInbox() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(searchParams.get("lead"));
   const [leadInfo, setLeadInfo] = useState<LeadInfo | null>(null);
@@ -38,11 +39,27 @@ export default function WhatsAppInbox() {
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [mobileView, setMobileView] = useState<"list" | "thread">("list");
 
+  // Fetch profiles.id on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setProfileId(data.id);
+      });
+  }, [user?.id]);
+
   // Load conversations list
   const loadConversations = useCallback(async () => {
+    if (!profileId) return;
+
     const { data } = await supabase
       .from("whatsapp_mensagens")
       .select("lead_id, body, direction, timestamp")
+      .eq("corretor_id", profileId)
       .order("timestamp", { ascending: false })
       .limit(1000);
 
@@ -92,7 +109,7 @@ export default function WhatsAppInbox() {
     items.sort((a, b) => new Date(b.lastTimestamp).getTime() - new Date(a.lastTimestamp).getTime());
     setConversations(items);
     setLoadingConvs(false);
-  }, []);
+  }, [profileId]);
 
   // Load thread for selected lead
   const loadThread = useCallback(async (leadId: string) => {
