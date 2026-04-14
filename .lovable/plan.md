@@ -1,137 +1,79 @@
 
 
-# Plano: Tabelas WhatsApp por Corretor
+# Plano: Edge Function `evolution-webhook`
 
-## Contexto
+## Arquivo
 
-Já existem 4 tabelas `whatsapp_*` no schema (`whatsapp_ai_log`, `whatsapp_campaign_batches`, `whatsapp_campaign_sends`, `whatsapp_respostas`). As novas tabelas são **independentes** — nenhuma tabela existente será alterada.
+`supabase/functions/evolution-webhook/index.ts`
 
-O projeto já possui as funções `has_role()` e `is_lead_in_my_team()` como SECURITY DEFINER, que serão reutilizadas nas policies.
+## Configuração
 
-## Migration SQL proposta
-
-```sql
--- 1. whatsapp_instancias
-CREATE TABLE public.whatsapp_instancias (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  corretor_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  instance_name text NOT NULL UNIQUE,
-  status text NOT NULL DEFAULT 'aguardando_qr',
-  phone_number text,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.whatsapp_instancias ENABLE ROW LEVEL SECURITY;
-
--- Corretor vê apenas sua instância
-CREATE POLICY "Corretor sees own instance"
-  ON public.whatsapp_instancias FOR SELECT TO authenticated
-  USING (corretor_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
--- Gestor vê instâncias do time
-CREATE POLICY "Gestor sees team instances"
-  ON public.whatsapp_instancias FOR SELECT TO authenticated
-  USING (
-    has_role(auth.uid(), 'gestor')
-    AND EXISTS (
-      SELECT 1 FROM team_members
-      WHERE user_id = (SELECT user_id FROM profiles WHERE id = corretor_id)
-        AND gerente_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-        AND status = 'ativo'
-    )
-  );
-
--- Admin vê tudo
-CREATE POLICY "Admin sees all instances"
-  ON public.whatsapp_instancias FOR SELECT TO authenticated
-  USING (has_role(auth.uid(), 'admin'));
-
--- Corretor pode inserir/atualizar sua instância
-CREATE POLICY "Corretor manages own instance"
-  ON public.whatsapp_instancias FOR ALL TO authenticated
-  USING (corretor_id = (SELECT id FROM profiles WHERE user_id = auth.uid()))
-  WITH CHECK (corretor_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
--- Admin gerencia todas
-CREATE POLICY "Admin manages all instances"
-  ON public.whatsapp_instancias FOR ALL TO authenticated
-  USING (has_role(auth.uid(), 'admin'))
-  WITH CHECK (has_role(auth.uid(), 'admin'));
-
--- Trigger auto-update updated_at
-CREATE TRIGGER set_updated_at
-  BEFORE UPDATE ON public.whatsapp_instancias
-  FOR EACH ROW EXECUTE FUNCTION public.moddatetime('updated_at');
-
-
--- 2. whatsapp_mensagens
-CREATE TABLE public.whatsapp_mensagens (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  lead_id uuid NOT NULL REFERENCES public.pipeline_leads(id) ON DELETE CASCADE,
-  corretor_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  instance_name text NOT NULL,
-  direction text NOT NULL CHECK (direction IN ('sent', 'received')),
-  body text NOT NULL DEFAULT '',
-  media_url text,
-  whatsapp_message_id text NOT NULL,
-  timestamp timestamptz NOT NULL DEFAULT now(),
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.whatsapp_mensagens ENABLE ROW LEVEL SECURITY;
-
--- Corretor vê suas mensagens
-CREATE POLICY "Corretor sees own messages"
-  ON public.whatsapp_mensagens FOR SELECT TO authenticated
-  USING (corretor_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
--- Gestor vê mensagens do time
-CREATE POLICY "Gestor sees team messages"
-  ON public.whatsapp_mensagens FOR SELECT TO authenticated
-  USING (
-    has_role(auth.uid(), 'gestor')
-    AND EXISTS (
-      SELECT 1 FROM team_members
-      WHERE user_id = (SELECT user_id FROM profiles WHERE id = corretor_id)
-        AND gerente_id = (SELECT id FROM profiles WHERE user_id = auth.uid())
-        AND status = 'ativo'
-    )
-  );
-
--- Admin vê tudo
-CREATE POLICY "Admin sees all messages"
-  ON public.whatsapp_mensagens FOR SELECT TO authenticated
-  USING (has_role(auth.uid(), 'admin'));
-
--- Inserção: corretor insere suas próprias ou sistema (admin)
-CREATE POLICY "Corretor inserts own messages"
-  ON public.whatsapp_mensagens FOR INSERT TO authenticated
-  WITH CHECK (corretor_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
-
-CREATE POLICY "Admin inserts any message"
-  ON public.whatsapp_mensagens FOR INSERT TO authenticated
-  WITH CHECK (has_role(auth.uid(), 'admin'));
-
--- Índices de performance
-CREATE INDEX idx_whatsapp_mensagens_lead ON public.whatsapp_mensagens(lead_id);
-CREATE INDEX idx_whatsapp_mensagens_corretor ON public.whatsapp_mensagens(corretor_id);
-CREATE INDEX idx_whatsapp_mensagens_timestamp ON public.whatsapp_mensagens(timestamp DESC);
-CREATE INDEX idx_whatsapp_instancias_corretor ON public.whatsapp_instancias(corretor_id);
+Adicionar em `supabase/config.toml`:
+```toml
+[functions.evolution-webhook]
+verify_jwt = false
 ```
 
-## Notas técnicas
+## Lógica
 
-- **corretor_id → profiles.id** (não auth.users.id): Segue o padrão do schema existente. Nas policies, o mapeamento `profiles.user_id = auth.uid()` resolve a conversão.
-- **CHECK constraint em `direction`**: Imutável, seguro — são valores fixos, não temporais.
-- **moddatetime trigger**: Reutiliza a extensão já instalada no projeto para `updated_at` automático.
-- **Sem realtime habilitado**: Pode ser adicionado depois se necessário para chat ao vivo.
-- **Nenhuma tabela existente alterada.**
+```text
+POST payload (Evolution API v2)
+  │
+  ├─ Filtrar: ignorar @g.us, status@broadcast, body vazio
+  │
+  ├─ Extrair número de data.key.remoteJid (remover @s.whatsapp.net)
+  │
+  ├─ Normalizar: remover +, espaços, traços → formato 55DDNNNNNNNNN
+  │   Gerar variantes: com/sem 9 do celular
+  │
+  ├─ Buscar pipeline_leads WHERE telefone ILIKE '%{variante}%'
+  │   └─ Não encontrou → return 200 OK (ignorar)
+  │
+  ├─ Buscar corretor_id em whatsapp_instancias WHERE instance_name = payload.instance
+  │
+  ├─ Inserir em whatsapp_mensagens:
+  │   - lead_id, corretor_id, instance_name
+  │   - direction: fromMe ? 'sent' : 'received'
+  │   - body: conversation || extendedTextMessage.text
+  │   - whatsapp_message_id: data.key.id
+  │   - timestamp: unix → ISO
+  │
+  └─ Atualizar pipeline_leads.updated_at = now()
+```
 
-## Resumo
+## Campos extraídos do payload
 
-| Tabela | Colunas | Policies | Índices |
-|--------|---------|----------|---------|
-| whatsapp_instancias | 7 | 5 | 1 |
-| whatsapp_mensagens | 10 | 5 | 3 |
+| Campo Evolution | Destino |
+|---|---|
+| `instance` | `instance_name` |
+| `data.key.id` | `whatsapp_message_id` |
+| `data.key.fromMe` | `direction` (true→sent, false→received) |
+| `data.message.conversation` OU `data.message.extendedTextMessage.text` | `body` |
+| `data.messageTimestamp` | `timestamp` (unix→ISO) |
+| `data.key.remoteJid` | número do contato (após limpeza) |
+
+## Normalização de telefone
+
+```text
+remoteJid: "5511999887766@s.whatsapp.net"
+  → strip @s.whatsapp.net → "5511999887766"
+  → remover +, espaços, traços
+  → variantes: ["5511999887766", "551199887766"] (com/sem 9)
+  → buscar: telefone ILIKE '%99887766%' (últimos 8 dígitos)
+```
+
+## Supabase client
+
+Service role key para bypass RLS em todas as operações.
+
+## O que NÃO será alterado
+
+- Nenhuma tabela existente
+- Nenhuma edge function existente (whatsapp-webhook permanece intacta)
+
+## Entrega
+
+1. Criar `supabase/functions/evolution-webhook/index.ts`
+2. Adicionar config no `config.toml`
+3. Deploy automático
 
