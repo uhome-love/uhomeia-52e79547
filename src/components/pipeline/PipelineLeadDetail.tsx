@@ -744,6 +744,10 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
                 </div>
               </div>
             </TabsContent>
+
+            <TabsContent value="whatsapp" className="mt-0">
+              <LeadWhatsAppTab leadId={lead.id} telefone={lead.telefone} />
+            </TabsContent>
           </ScrollArea>
         </Tabs>
 
