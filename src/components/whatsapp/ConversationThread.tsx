@@ -148,6 +148,11 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isNoteMode, setIsNoteMode] = useState(false);
+
+  // Reset note mode when switching leads
+  useEffect(() => {
+    setIsNoteMode(false);
+  }, [leadId]);
   const [stages, setStages] = useState<StageInfo[]>([]);
 
   // Dialog/popover states
@@ -548,10 +553,11 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
               <Button
                 size="icon"
                 variant={isNoteMode ? "default" : "ghost"}
-                className={`h-7 w-7 ${isNoteMode ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                className={`h-7 ${isNoteMode ? "bg-amber-500 hover:bg-amber-600 text-white px-2 gap-1" : "w-7"}`}
                 onClick={() => setIsNoteMode(!isNoteMode)}
               >
                 <StickyNote size={14} />
+                {isNoteMode && <span className="text-[10px] font-medium">Nota ON</span>}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top"><p className="text-xs">{isNoteMode ? "Desativar nota" : "Nota Interna"}</p></TooltipContent>
