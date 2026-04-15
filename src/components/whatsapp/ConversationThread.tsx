@@ -377,6 +377,8 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
     );
   }
 
+  const sorted = [...messages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  const groups = groupByDate(sorted);
   const lastReceivedOrSent = sorted.length > 0 ? sorted[sorted.length - 1] : null;
   const lastReceived = [...sorted].reverse().find(m => m.direction === "received");
   const showCopilot = sorted.length > 0 && sorted.slice(-8).some(m => m.direction === "received");
