@@ -126,6 +126,7 @@ export default function HomiCopilotCard({ leadId, leadName, lastMessage, onUseSu
   };
 
   const tom = data ? TOM_CONFIG[data.tom_detectado] || TOM_CONFIG.hesitante : null;
+  const momento = data?.momento_detectado ? MOMENTO_CONFIG[data.momento_detectado] || null : null;
 
   return (
     <Card className="border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800 mx-4 mb-3">
@@ -136,6 +137,11 @@ export default function HomiCopilotCard({ leadId, leadName, lastMessage, onUseSu
             <span className="text-xs font-semibold">HOMI Copilot</span>
           </div>
           <div className="flex items-center gap-2">
+            {momento && (
+              <span className="text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                {momento.emoji} {momento.label}
+              </span>
+            )}
             {tom && data && (
               <span className={`text-xs font-medium ${tom.className}`}>
                 {tom.emoji} {data.tom_detectado}
@@ -155,6 +161,12 @@ export default function HomiCopilotCard({ leadId, leadName, lastMessage, onUseSu
         ) : data ? (
           <>
             <p className="text-[11px] italic text-muted-foreground">{data.briefing}</p>
+            {data.proxima_acao && (
+              <div className="text-[11px]">
+                <span className="font-medium text-muted-foreground">Objetivo: </span>
+                <span className="text-accent-foreground font-medium">{data.proxima_acao}</span>
+              </div>
+            )}
             <Textarea
               value={editedSuggestion}
               onChange={(e) => setEditedSuggestion(e.target.value)}
