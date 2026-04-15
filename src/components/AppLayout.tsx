@@ -23,7 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePendingLeadAlert } from "@/hooks/usePendingLeadAlert";
 import { useVendaRealtimeNotification } from "@/hooks/useVendaRealtimeNotification";
 import { useWhatsAppNotifications } from "@/hooks/useWhatsAppNotifications";
-import { useWhatsAppSLABadge } from "@/hooks/useWhatsAppSLABadge";
+
 import LeadAcceptanceDialog from "@/components/pipeline/LeadAcceptanceDialog";
 
 import NewLeadBanner from "@/components/notifications/NewLeadBanner";
@@ -90,7 +90,7 @@ export default function AppLayout() {
   const { theme, toggle: onThemeToggle } = useTheme();
   useVendaRealtimeNotification();
   useWhatsAppNotifications();
-  useWhatsAppSLABadge();
+  
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
