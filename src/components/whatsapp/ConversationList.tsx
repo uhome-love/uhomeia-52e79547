@@ -497,7 +497,7 @@ export default function ConversationList({
             )}
 
             {/* Empty state */}
-            {filteredConversations.length === 0 && filteredFollowUp.length === 0 && filteredNew.length === 0 && msgResults.length === 0 && (
+            {filteredConversations.length === 0 && filteredNew.length === 0 && msgResults.length === 0 && (
               <div className="text-center py-12 px-4">
                 <MessageSquare size={24} className="mx-auto text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground">Nenhum resultado encontrado</p>
