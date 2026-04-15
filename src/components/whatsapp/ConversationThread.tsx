@@ -11,8 +11,10 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Send, Eye, CalendarPlus, MessageSquare,
-  FileText, Calendar, CheckSquare, ArrowRight, StickyNote, Lock, Paperclip, Loader2,
+  FileText, Calendar, CheckSquare, ArrowRight, StickyNote, Lock, Paperclip, Loader2, Smile,
 } from "lucide-react";
+import data from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, isToday, isYesterday, addDays, addHours, setHours, setMinutes } from "date-fns";
@@ -357,6 +359,9 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
         reader.readAsDataURL(file);
       });
 
+      // Create a local object URL for immediate display
+      const localBlobUrl = URL.createObjectURL(file);
+
       const { error, data: sendResult } = await supabase.functions.invoke("whatsapp-send-media", {
         body: {
           telefone: leadInfo.telefone,
@@ -370,13 +375,16 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       if (error) throw error;
       if (sendResult?.error) throw new Error(sendResult.error);
 
+      // Use media_url from API, or construct a data URL as fallback for display
+      const mediaUrlToStore = sendResult?.media_url || `data:${file.type};base64,${base64}`;
+
       // Insert in whatsapp_mensagens
       const { error: msgErr } = await supabase.from("whatsapp_mensagens").insert({
         lead_id: leadId,
         corretor_id: profileId,
         direction: "sent",
         body: text.trim() || null,
-        media_url: sendResult?.media_url || null,
+        media_url: mediaUrlToStore,
         timestamp: new Date().toISOString(),
         instance_name: sendResult?.instance_name || "evolution",
         whatsapp_message_id: sendResult?.message_id || crypto.randomUUID(),
@@ -387,6 +395,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
         toast.warning("Mídia enviada mas não salva localmente.");
       }
 
+      URL.revokeObjectURL(localBlobUrl);
       setText("");
       toast.success("Mídia enviada!");
       onMessageSent();
@@ -841,7 +850,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       )}
 
       {/* Input */}
-      <div className="p-3 border-t border-border bg-card flex gap-2 flex-shrink-0">
+      <div className="p-3 border-t border-border bg-card flex gap-2 items-end flex-shrink-0">
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -861,6 +870,30 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
           >
             {sendingMedia ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
           </Button>
+        )}
+        {/* Emoji picker */}
+        {!isReadOnly && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="icon" variant="ghost" className="h-10 w-10 shrink-0">
+                <Smile size={16} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="start" className="w-auto p-0 border-none shadow-xl">
+              <Picker
+                data={data}
+                onEmojiSelect={(emoji: any) => {
+                  setText(prev => prev + emoji.native);
+                  textareaRef.current?.focus();
+                }}
+                theme="light"
+                locale="pt"
+                previewPosition="none"
+                skinTonePosition="none"
+                maxFrequentRows={2}
+              />
+            </PopoverContent>
+          </Popover>
         )}
         <Textarea
           ref={textareaRef}

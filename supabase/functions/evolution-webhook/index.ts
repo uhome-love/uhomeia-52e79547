@@ -11,9 +11,43 @@ function normalizePhone(raw: string): string {
 
 function getSearchVariants(phone: string): string[] {
   const clean = normalizePhone(phone);
-  // Get last 8 digits for broad match
   const last8 = clean.slice(-8);
   return [last8];
+}
+
+function extractBody(message: any): string | null {
+  return (
+    message?.conversation ||
+    message?.extendedTextMessage?.text ||
+    message?.imageMessage?.caption ||
+    message?.videoMessage?.caption ||
+    message?.documentMessage?.caption ||
+    message?.audioMessage?.caption ||
+    null
+  );
+}
+
+function extractMediaUrl(message: any): string | null {
+  // Evolution API v2 may include media URL in various message types
+  if (message?.imageMessage?.url) return message.imageMessage.url;
+  if (message?.imageMessage?.mediaUrl) return message.imageMessage.mediaUrl;
+  if (message?.videoMessage?.url) return message.videoMessage.url;
+  if (message?.videoMessage?.mediaUrl) return message.videoMessage.mediaUrl;
+  if (message?.audioMessage?.url) return message.audioMessage.url;
+  if (message?.audioMessage?.mediaUrl) return message.audioMessage.mediaUrl;
+  if (message?.documentMessage?.url) return message.documentMessage.url;
+  if (message?.documentMessage?.mediaUrl) return message.documentMessage.mediaUrl;
+  if (message?.stickerMessage?.url) return message.stickerMessage.url;
+  return null;
+}
+
+function getMediaType(message: any): string | null {
+  if (message?.imageMessage) return "image";
+  if (message?.videoMessage) return "video";
+  if (message?.audioMessage) return "audio";
+  if (message?.documentMessage) return "document";
+  if (message?.stickerMessage) return "sticker";
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -45,15 +79,18 @@ Deno.serve(async (req) => {
       return new Response("ok", { status: 200, headers: corsHeaders });
     }
 
-    // Extract body
-    const body =
-      data.message?.conversation ||
-      data.message?.extendedTextMessage?.text ||
-      null;
+    // Extract body and media
+    const body = extractBody(data.message);
+    const mediaUrl = extractMediaUrl(data.message);
+    const mediaType = getMediaType(data.message);
 
-    if (!body) {
+    // Skip if no body AND no media (e.g. reactions, read receipts)
+    if (!body && !mediaUrl && !mediaType) {
       return new Response("ok", { status: 200, headers: corsHeaders });
     }
+
+    // For media without URL, create a placeholder body
+    const finalBody = body || (mediaType ? `📎 ${mediaType}` : null);
 
     // Extract phone from remoteJid
     const phoneRaw = remoteJid.replace("@s.whatsapp.net", "");
@@ -73,7 +110,6 @@ Deno.serve(async (req) => {
       .limit(1);
 
     if (leadErr || !leads || leads.length === 0) {
-      // No lead found — ignore
       return new Response("ok", { status: 200, headers: corsHeaders });
     }
 
@@ -96,18 +132,33 @@ Deno.serve(async (req) => {
       ? new Date(Number(data.messageTimestamp) * 1000).toISOString()
       : new Date().toISOString();
 
+    // Try to get base64 media from Evolution if available
+    let storedMediaUrl = mediaUrl || null;
+
+    // If Evolution sends media as base64 in the payload
+    if (!storedMediaUrl && data.message?.base64) {
+      const mimeType = data.message?.mimetype || "application/octet-stream";
+      storedMediaUrl = `data:${mimeType};base64,${data.message.base64}`;
+    }
+
     // Insert message
+    const insertData: Record<string, unknown> = {
+      lead_id: leadId,
+      corretor_id: corretorId,
+      instance_name: instanceName,
+      direction,
+      body: finalBody,
+      whatsapp_message_id: data.key.id || null,
+      timestamp,
+    };
+
+    if (storedMediaUrl) {
+      insertData.media_url = storedMediaUrl;
+    }
+
     const { error: insertErr } = await supabase
       .from("whatsapp_mensagens")
-      .insert({
-        lead_id: leadId,
-        corretor_id: corretorId,
-        instance_name: instanceName,
-        direction,
-        body,
-        whatsapp_message_id: data.key.id || null,
-        timestamp,
-      });
+      .insert(insertData);
 
     if (insertErr) {
       console.error("Insert error:", insertErr);
