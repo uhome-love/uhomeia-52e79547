@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -238,12 +238,25 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
   // Scroll to bottom button
   const [showScrollDown, setShowScrollDown] = useState(false);
 
+  // Profile picture
+  const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null);
+
   useEffect(() => {
     setIsNoteMode(false);
     setReplyingTo(null);
     setSearchOpen(false);
     setSearchQuery("");
-  }, [leadId]);
+    setProfilePicUrl(null);
+
+    // Fetch WhatsApp profile picture
+    if (leadInfo?.telefone) {
+      supabase.functions.invoke("whatsapp-profile-picture", {
+        body: { telefone: leadInfo.telefone },
+      }).then(({ data }) => {
+        if (data?.picture_url) setProfilePicUrl(data.picture_url);
+      }).catch(() => {});
+    }
+  }, [leadId, leadInfo?.telefone]);
 
   const [stages, setStages] = useState<StageInfo[]>([]);
 
@@ -804,6 +817,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-card flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <Avatar className="h-8 w-8">
+            {profilePicUrl && <AvatarImage src={profilePicUrl} alt={leadInfo.nome} />}
             <AvatarFallback className="bg-primary text-primary-foreground text-xs">
               {getInitials(leadInfo.nome)}
             </AvatarFallback>
