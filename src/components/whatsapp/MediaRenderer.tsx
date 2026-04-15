@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { FileText, Download, Film } from "lucide-react";
+import { FileText, Download, Film, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface MediaRendererProps {
   mediaUrl: string;
   body?: string | null;
   direction: string;
+  mediaType?: string | null;
 }
 
 const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
@@ -24,13 +26,30 @@ function getExtension(url: string): string {
   }
 }
 
-function getMediaType(url: string): "image" | "audio" | "video" | "document" | "unknown" {
+function detectMediaType(url: string, explicitType?: string | null): "image" | "audio" | "video" | "document" | "unknown" {
+  // Use explicit media_type from DB if available
+  if (explicitType) {
+    if (explicitType === "image") return "image";
+    if (explicitType === "audio") return "audio";
+    if (explicitType === "video") return "video";
+    if (explicitType === "document") return "document";
+    if (explicitType === "sticker") return "image";
+  }
+
+  // Check data: URLs
+  if (url.startsWith("data:")) {
+    if (url.startsWith("data:image/")) return "image";
+    if (url.startsWith("data:audio/")) return "audio";
+    if (url.startsWith("data:video/")) return "video";
+    if (url.startsWith("data:application/")) return "document";
+    return "unknown";
+  }
+
   const ext = getExtension(url);
   if (IMAGE_EXTS.includes(ext)) return "image";
   if (AUDIO_EXTS.includes(ext)) return "audio";
   if (VIDEO_EXTS.includes(ext)) return "video";
   if (DOC_EXTS.includes(ext)) return "document";
-  // Check common patterns in URLs
   if (/image/i.test(url)) return "image";
   if (/audio|voice|ptt/i.test(url)) return "audio";
   if (/video/i.test(url)) return "video";
@@ -38,30 +57,51 @@ function getMediaType(url: string): "image" | "audio" | "video" | "document" | "
 }
 
 function getFileName(url: string): string {
+  if (url.startsWith("data:")) return "arquivo";
   try {
     const path = new URL(url).pathname;
-    return path.substring(path.lastIndexOf("/") + 1) || "arquivo";
+    return decodeURIComponent(path.substring(path.lastIndexOf("/") + 1)) || "arquivo";
   } catch {
     return "arquivo";
   }
 }
 
-export default function MediaRenderer({ mediaUrl, body, direction }: MediaRendererProps) {
+function handleDownload(url: string, filename?: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || getFileName(url);
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+export default function MediaRenderer({ mediaUrl, body, direction, mediaType }: MediaRendererProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const type = getMediaType(mediaUrl);
+  const type = detectMediaType(mediaUrl, mediaType);
   const isSent = direction === "sent";
 
   return (
     <div className="space-y-1">
       {type === "image" && (
         <>
-          <img
-            src={mediaUrl}
-            alt="Mídia"
-            className="max-w-[240px] max-h-[240px] rounded cursor-pointer object-cover hover:opacity-90 transition-opacity"
-            onClick={() => setLightboxOpen(true)}
-            loading="lazy"
-          />
+          <div className="relative group/media">
+            <img
+              src={mediaUrl}
+              alt="Mídia"
+              className="max-w-[240px] max-h-[240px] rounded cursor-pointer object-cover hover:opacity-90 transition-opacity"
+              onClick={() => setLightboxOpen(true)}
+              loading="lazy"
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDownload(mediaUrl, "imagem"); }}
+              className="absolute top-1.5 right-1.5 opacity-0 group-hover/media:opacity-100 transition-opacity bg-black/50 hover:bg-black/70 text-white rounded-full p-1"
+              title="Baixar"
+            >
+              <Download size={12} />
+            </button>
+          </div>
           <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
             <DialogContent className="max-w-[90vw] max-h-[90vh] p-2 flex items-center justify-center bg-black/95 border-none">
               <img
@@ -69,20 +109,38 @@ export default function MediaRenderer({ mediaUrl, body, direction }: MediaRender
                 alt="Mídia ampliada"
                 className="max-w-full max-h-[85vh] object-contain rounded"
               />
+              <button
+                onClick={() => handleDownload(mediaUrl, "imagem")}
+                className="absolute bottom-4 right-4 bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+                title="Baixar"
+              >
+                <Download size={16} />
+              </button>
             </DialogContent>
           </Dialog>
         </>
       )}
 
       {type === "audio" && (
-        <audio controls preload="none" className="max-w-[240px] h-8">
-          <source src={mediaUrl} />
-          Seu navegador não suporta áudio.
-        </audio>
+        <div className="flex items-center gap-1.5">
+          <audio controls preload="none" className="max-w-[220px] h-8">
+            <source src={mediaUrl} />
+            Seu navegador não suporta áudio.
+          </audio>
+          <button
+            onClick={() => handleDownload(mediaUrl, "audio")}
+            className={`p-1 rounded transition-colors ${
+              isSent ? "hover:bg-primary-foreground/10" : "hover:bg-muted"
+            }`}
+            title="Baixar áudio"
+          >
+            <Download size={12} className="opacity-60" />
+          </button>
+        </div>
       )}
 
       {type === "video" && (
-        <div className="relative">
+        <div className="relative group/media">
           <video
             controls
             preload="none"
@@ -91,6 +149,13 @@ export default function MediaRenderer({ mediaUrl, body, direction }: MediaRender
             <source src={mediaUrl} />
             Seu navegador não suporta vídeo.
           </video>
+          <button
+            onClick={() => handleDownload(mediaUrl, "video")}
+            className="absolute top-1.5 right-1.5 opacity-0 group-hover/media:opacity-100 transition-opacity bg-black/50 hover:bg-black/70 text-white rounded-full p-1"
+            title="Baixar vídeo"
+          >
+            <Download size={12} />
+          </button>
         </div>
       )}
 
@@ -128,7 +193,9 @@ export default function MediaRenderer({ mediaUrl, body, direction }: MediaRender
         </a>
       )}
 
-      {body && <p className="mt-0.5">{body}</p>}
+      {body && body !== "📎 image" && body !== "📎 video" && body !== "📎 audio" && body !== "📎 document" && body !== "📎 sticker" && body !== "🎤 Áudio" && (
+        <p className="mt-0.5">{body}</p>
+      )}
     </div>
   );
 }
