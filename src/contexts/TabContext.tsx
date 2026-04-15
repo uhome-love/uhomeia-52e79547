@@ -202,7 +202,7 @@ export function TabProvider({ children }: { children: ReactNode }) {
 
     // Reset sync guard after this render
     requestAnimationFrame(() => { syncingRef.current = false; });
-  }, [location.pathname, openTab]);
+  }, [location.pathname, openTab, roleLoading, hasAccess]);
 
   return (
     <TabContext.Provider value={{ tabs, activeTabId, openTab, closeTab, activateTab }}>
