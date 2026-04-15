@@ -208,6 +208,8 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
 
   const handleSend = async () => {
     if (!text.trim() || !leadInfo || !profileId) return;
+    if (sendingRef.current) return; // Prevent double-send
+    sendingRef.current = true;
     setSending(true);
     try {
       if (isNoteMode) {
@@ -220,10 +222,17 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
           timestamp: new Date().toISOString(),
         });
       } else {
-        const { error } = await supabase.functions.invoke("whatsapp-send", {
+        const { error, data: sendResult } = await supabase.functions.invoke("whatsapp-send", {
           body: { telefone: leadInfo.telefone, mensagem: text.trim() },
         });
-        if (error) throw error;
+        if (error) {
+          console.error("whatsapp-send invoke error:", error);
+          throw error;
+        }
+        if (sendResult?.error) {
+          console.error("whatsapp-send returned error:", sendResult.error);
+          throw new Error(sendResult.error);
+        }
         await supabase.from("whatsapp_mensagens").insert({
           lead_id: leadId,
           corretor_id: profileId,
@@ -249,9 +258,11 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       if (isNoteMode) setIsNoteMode(false);
       onMessageSent();
     } catch (err: any) {
+      console.error("handleSend error:", err);
       toast.error("Erro ao enviar: " + (err.message || "Tente novamente"));
     } finally {
       setSending(false);
+      sendingRef.current = false;
     }
   };
 
