@@ -245,10 +245,17 @@ export default function WhatsAppInbox() {
 
       let lastReceivedTs: string | null = null;
       const sorted = [...info.msgs];
-      if (sorted[0]?.direction === "received") {
-        lastReceivedTs = sorted[0].timestamp;
-        unreadTotal++;
+      // Count consecutive received messages from top (most recent) before a sent
+      let unread = 0;
+      for (const msg of sorted) {
+        if (msg.direction === "received") {
+          unread++;
+          if (!lastReceivedTs) lastReceivedTs = msg.timestamp;
+        } else {
+          break;
+        }
       }
+      if (unread > 0) unreadTotal += 1;
 
       items.push({
         leadId,
@@ -257,7 +264,7 @@ export default function WhatsAppInbox() {
         lastMessage: lastMsg.body || "",
         lastTimestamp: lastMsg.timestamp,
         totalMessages: info.msgs.length,
-        unreadCount: lastReceivedTs ? 1 : 0,
+        unreadCount: unread,
         lastReceivedTs,
         corretorId: info.corretorId || undefined,
       });
