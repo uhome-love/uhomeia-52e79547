@@ -20,6 +20,7 @@ export interface ConversationItem {
   unreadCount: number;
   lastReceivedTs: string | null;
   corretorId?: string;
+  telefone?: string;
 }
 
 
@@ -47,6 +48,7 @@ interface ConversationListProps {
   userId?: string | null;
   corretorMap?: Map<string, string>;
   corretorIds?: string[];
+  profilePicCache?: Map<string, string | null>;
 }
 
 function getInitials(name: string) {
