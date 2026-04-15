@@ -166,6 +166,9 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
 
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDeadline, setTaskDeadline] = useState("amanha");
+  const [taskType, setTaskType] = useState("follow_up");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [taskPriority, setTaskPriority] = useState("media");
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
