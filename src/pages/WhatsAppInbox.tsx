@@ -504,17 +504,7 @@ export default function WhatsAppInbox() {
         </div>
 
         {!isMobile && (
-          <div className={`relative transition-all duration-200 ease-in-out ${panelCollapsed ? "w-0 overflow-hidden" : "w-[240px]"}`}>
-            {!panelCollapsed && (
-              <LeadPanel
-                lead={leadInfo}
-                leadId={selectedLeadId}
-                profileId={profileId}
-                messages={messages}
-                onOpenFullModal={(id) => setModalLeadId(id)}
-                isReadOnly={isReadOnly}
-              />
-            )}
+          <div className="relative flex-shrink-0">
             <button
               onClick={() => setPanelCollapsed(!panelCollapsed)}
               className="absolute top-2 -left-7 z-10 h-6 w-6 rounded-md bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
@@ -522,6 +512,18 @@ export default function WhatsAppInbox() {
             >
               {panelCollapsed ? <PanelRightOpen size={14} /> : <PanelRightClose size={14} />}
             </button>
+            <div className={`transition-all duration-200 ease-in-out overflow-hidden ${panelCollapsed ? "w-0" : "w-[240px]"}`}>
+              <div className="w-[240px]">
+                <LeadPanel
+                  lead={leadInfo}
+                  leadId={selectedLeadId}
+                  profileId={profileId}
+                  messages={messages}
+                  onOpenFullModal={(id) => setModalLeadId(id)}
+                  isReadOnly={isReadOnly}
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>
