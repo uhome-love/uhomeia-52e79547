@@ -99,6 +99,7 @@ export default function ConversationList({
   userId,
   corretorMap,
   corretorIds,
+  profilePicCache,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("all");
