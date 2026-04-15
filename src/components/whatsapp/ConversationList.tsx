@@ -174,6 +174,62 @@ export default function ConversationList({
     }
   }, [newConvOpen]);
 
+  // Message search effect
+  useEffect(() => {
+    if (!debouncedMsgSearch.trim() || !corretorIds?.length) {
+      setMsgResults([]);
+      return;
+    }
+
+    setMsgSearchLoading(true);
+    const term = debouncedMsgSearch.trim();
+
+    (async () => {
+      let query = supabase
+        .from("whatsapp_mensagens")
+        .select("lead_id, body, timestamp, corretor_id")
+        .ilike("body", `%${term}%`)
+        .order("timestamp", { ascending: false })
+        .limit(20);
+
+      if (corretorIds.length === 1) {
+        query = query.eq("corretor_id", corretorIds[0]);
+      } else {
+        query = query.in("corretor_id", corretorIds);
+      }
+
+      const { data: msgs } = await query;
+      if (!msgs || msgs.length === 0) {
+        setMsgResults([]);
+        setMsgSearchLoading(false);
+        return;
+      }
+
+      // Get lead names
+      const leadIds = [...new Set(msgs.map(m => m.lead_id))];
+      const { data: leads } = await supabase
+        .from("pipeline_leads")
+        .select("id, nome, empreendimento")
+        .in("id", leadIds);
+
+      const leadMap = new Map((leads || []).map(l => [l.id, l]));
+
+      const results: MessageSearchResult[] = msgs.map(m => {
+        const lead = leadMap.get(m.lead_id);
+        return {
+          leadId: m.lead_id,
+          leadName: lead?.nome || "Lead",
+          empreendimento: lead?.empreendimento || null,
+          body: m.body || "",
+          timestamp: m.timestamp,
+        };
+      });
+
+      setMsgResults(results);
+      setMsgSearchLoading(false);
+    })();
+  }, [debouncedMsgSearch, corretorIds]);
+
   const q = search.toLowerCase();
 
   const filteredConversations = useMemo(() => {
