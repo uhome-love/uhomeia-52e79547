@@ -66,15 +66,22 @@ function getFileName(url: string): string {
   }
 }
 
-function handleDownload(url: string, filename?: string) {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename || getFileName(url);
-  a.target = "_blank";
-  a.rel = "noopener noreferrer";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+async function handleDownload(url: string, filename?: string) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Download failed");
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename || getFileName(url);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    window.open(url, "_blank");
+  }
 }
 
 export default function MediaRenderer({ mediaUrl, body, direction, mediaType }: MediaRendererProps) {
