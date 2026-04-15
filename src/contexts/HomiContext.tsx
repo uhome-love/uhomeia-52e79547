@@ -169,11 +169,15 @@ export function HomiProvider({ children }: { children: ReactNode }) {
         body.context = { page: currentPage, userName };
       }
 
+      // Use the user's session JWT for authenticated edge function calls
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const resp = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
       });
