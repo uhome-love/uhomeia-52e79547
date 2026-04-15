@@ -238,13 +238,19 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
     try {
       if (isNoteMode) {
         // Internal note — do NOT call whatsapp-send
-        await supabase.from("whatsapp_mensagens").insert({
+        const { error: noteErr } = await supabase.from("whatsapp_mensagens").insert({
           lead_id: leadId,
           corretor_id: profileId,
           direction: "note",
           body: text.trim(),
           timestamp: new Date().toISOString(),
+          instance_name: "internal",
+          whatsapp_message_id: crypto.randomUUID(),
         });
+        if (noteErr) {
+          console.error("Note insert error:", noteErr);
+          throw new Error(noteErr.message || "Erro ao salvar nota");
+        }
       } else {
         const { error, data: sendResult } = await supabase.functions.invoke("whatsapp-send", {
           body: { telefone: leadInfo.telefone, mensagem: text.trim() },
@@ -257,13 +263,20 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
           console.error("whatsapp-send returned error:", sendResult.error);
           throw new Error(sendResult.error);
         }
-        await supabase.from("whatsapp_mensagens").insert({
+        const { error: msgErr } = await supabase.from("whatsapp_mensagens").insert({
           lead_id: leadId,
           corretor_id: profileId,
           direction: "sent",
           body: text.trim(),
           timestamp: new Date().toISOString(),
+          instance_name: "meta",
+          whatsapp_message_id: sendResult?.message_id || crypto.randomUUID(),
         });
+        if (msgErr) {
+          console.error("Message insert error:", msgErr);
+          // Message was sent via WhatsApp but DB insert failed - warn user
+          toast.warning("Mensagem enviada mas não salva localmente. Recarregue.");
+        }
         // Log activity
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
