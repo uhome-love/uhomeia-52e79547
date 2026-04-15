@@ -426,8 +426,10 @@ Responda APENAS com JSON válido, sem markdown, sem explicação:
     console.error("homi-copilot: failed to parse AI response:", cleaned);
     return jsonResponse({
       sugestao_resposta: raw.trim(),
+      opcoes_resposta: [raw.trim()],
       briefing: "Resposta gerada sem estrutura",
       tom_detectado: "hesitante",
+      temperatura_detectada: "morno",
       momento_detectado: "qualificacao",
       proxima_acao: "Analisar contexto manualmente",
       sugestao_followup: null,
