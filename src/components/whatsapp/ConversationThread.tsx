@@ -11,13 +11,14 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Send, Eye, CalendarPlus, MessageSquare,
-  FileText, Calendar, CheckSquare, ArrowRight, StickyNote, Lock,
+  FileText, Calendar, CheckSquare, ArrowRight, StickyNote, Lock, Paperclip, Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, isToday, isYesterday, addDays, addHours, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import HomiCopilotCard from "./HomiCopilotCard";
+import MediaRenderer from "./MediaRenderer";
 
 interface Message {
   id: string;
