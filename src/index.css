@@ -689,7 +689,22 @@ main[class*="flex-1"],
   --arena-tab-active-bg: rgba(255,255,255,0.15);
 }
 
-/* Background imersivo */
+/* Force dark arena vars inside immersive screens (always dark bg) */
+.immersive-force-dark {
+  --arena-text: #FFFFFF;
+  --arena-text-muted: #9CA3AF;
+  --arena-text-subtle: #6B7280;
+  --arena-subtle-bg: rgba(255,255,255,0.06);
+  --arena-card-bg: #161B22;
+  --arena-card-border: rgba(255,255,255,0.08);
+  --arena-card-hover-border: rgba(73,105,255,0.4);
+  --arena-scoreboard-bg: rgba(15,23,42,0.85);
+  --arena-scoreboard-border: rgba(255,255,255,0.08);
+  --arena-progress-track: rgba(255,255,255,0.1);
+  --arena-tab-bg: rgba(255,255,255,0.06);
+  --arena-tab-active-bg: rgba(255,255,255,0.15);
+}
+
 .arena-bg {
   background: linear-gradient(180deg, hsl(var(--arena-bg-from)) 0%, hsl(var(--arena-bg-to)) 100%);
   color: var(--arena-text);
