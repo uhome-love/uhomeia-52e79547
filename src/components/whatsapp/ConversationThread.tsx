@@ -477,12 +477,12 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       </div>
 
       {/* Copilot */}
-      {showCopilot && lastReceived && (
+      {showCopilot && (lastReceived || lastReceivedOrSent) && (
         <div className="flex-shrink-0 max-h-[180px] overflow-y-auto">
           <HomiCopilotCard
             leadId={leadInfo.id}
             leadName={leadInfo.nome}
-            lastMessage={lastReceived.body || ""}
+            lastMessage={(lastReceivedOrSent?.body) || ""}
             onUseSuggestion={(s) => setText(s)}
             isReadOnly={isReadOnly}
           />
