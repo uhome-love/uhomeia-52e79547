@@ -306,7 +306,73 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
     }
   };
 
-  const handleUseTemplate = (tpl: string) => {
+  // --- Media send handler ---
+  const handleMediaSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !leadInfo || !profileId) return;
+    // Reset input so same file can be selected again
+    e.target.value = "";
+
+    if (file.size > 16 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx 16MB)");
+      return;
+    }
+
+    setSendingMedia(true);
+    try {
+      // Convert to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]); // strip data:...;base64,
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const { error, data: sendResult } = await supabase.functions.invoke("whatsapp-send-media", {
+        body: {
+          telefone: leadInfo.telefone,
+          media_base64: base64,
+          media_type: file.type,
+          filename: file.name,
+          caption: text.trim() || undefined,
+        },
+      });
+
+      if (error) throw error;
+      if (sendResult?.error) throw new Error(sendResult.error);
+
+      // Insert in whatsapp_mensagens
+      const { error: msgErr } = await supabase.from("whatsapp_mensagens").insert({
+        lead_id: leadId,
+        corretor_id: profileId,
+        direction: "sent",
+        body: text.trim() || null,
+        media_url: sendResult?.media_url || null,
+        timestamp: new Date().toISOString(),
+        instance_name: "media",
+        whatsapp_message_id: sendResult?.message_id || crypto.randomUUID(),
+      });
+
+      if (msgErr) {
+        console.error("Media message insert error:", msgErr);
+        toast.warning("Mídia enviada mas não salva localmente.");
+      }
+
+      setText("");
+      toast.success("Mídia enviada!");
+      onMessageSent();
+    } catch (err: any) {
+      console.error("handleMediaSelect error:", err);
+      toast.error("Erro ao enviar mídia: " + (err.message || "Tente novamente"));
+    } finally {
+      setSendingMedia(false);
+    }
+  };
+
+
     if (!leadInfo) return;
     setText(replaceVars(tpl, leadInfo.nome, leadInfo.empreendimento));
     setTimeout(() => textareaRef.current?.focus(), 100);
