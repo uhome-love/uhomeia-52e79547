@@ -1,154 +1,78 @@
 
 
-# Auditoria Completa — WhatsApp Inbox
+# Plano: 4 Melhorias — Sidebar, Modal Lead, Kanban Badge, Toast Global
 
-## BLOCO 1 — CONEXÃO E INSTÂNCIA
+## 1. Sidebar — Mover "WhatsApp Inbox" + Badge dinâmico
 
-| # | Item | Status |
-|---|------|--------|
-| 1.1 | Tabela `whatsapp_instancias` existe com campos corretos | ✅ OK |
-| 1.2 | Edge Function `whatsapp-connect` deployada (4 actions) | ✅ OK |
-| 1.3 | Página `/configuracoes/whatsapp` com QR Code | ✅ OK |
-| 1.4 | Status `conectado` salvo corretamente | ✅ OK — statusMap mapeia `open` → `conectado` |
-| 1.5 | Webhook configurado automaticamente ao criar instância | ✅ OK |
+**Arquivo**: `src/components/layout/Sidebar.tsx`
 
-## BLOCO 2 — RECEBIMENTO DE MENSAGENS
+**Alterações**:
+- **Admin** (linha 107): Remover "WhatsApp Inbox" da seção "Ferramentas" e adicionar na seção "Principal" (após "Relatório semanal")
+- **Corretor** (linha 202): Remover "WhatsApp Inbox" da seção "Ferramentas" e adicionar na seção "Principal" (após "Aceite de leads", linha 164)
+- O badge dinâmico já existe (linhas 284-308, lê `localStorage` e escuta `storage` event, renderiza badge vermelho). Apenas garantir que o `> 9` → `"9+"` está implementado no render (linha 433-438). Atualmente mostra o número direto — adicionar `whatsappUnread > 9 ? "9+" : whatsappUnread` na injeção do badge (linha 306).
 
-| # | Item | Status |
-|---|------|--------|
-| 2.1 | `evolution-webhook` deployada com `verify_jwt = false` | ✅ OK |
-| 2.2 | Filtragem por número do lead | ✅ OK — ILIKE últimos 8 dígitos |
-| 2.3 | Normalização de número | ✅ OK — remove caracteres, usa últimos 8 dígitos |
-| 2.4 | Mensagens salvas com campos corretos | ✅ OK |
-| 2.5 | `pipeline_leads.updated_at` atualizado | ✅ OK |
+## 2. "Ver ficha completa" — Modal overlay no Inbox
 
-## BLOCO 3 — WHATSAPP INBOX — LISTA
+**Arquivos**: `src/pages/WhatsAppInbox.tsx`, `src/components/whatsapp/LeadPanel.tsx`
 
-| # | Item | Status |
-|---|------|--------|
-| 3.1 | Conversas ativas filtradas por corretor (profileId) | ✅ OK |
-| 3.2 | Follow-up sugerido populando | ✅ OK — leads >3 dias sem contato, sem mensagens |
-| 3.3 | Novos leads (Sem Contato sem WhatsApp) | ✅ OK |
-| 3.4 | Filtros Todas/Ativas/Follow-up/Novos | ✅ OK |
-| 3.5 | Busca de lead por nome | ✅ OK |
-| 3.6 | Badge de não lidas por conversa | ✅ OK — mas conta apenas 0 ou 1 (última msg received) |
-| 3.7 | SLA badge (tempo sem resposta) | ✅ OK — amarelo >2h, vermelho >24h |
-| 3.8 | Realtime — lista atualiza | ❌ **QUEBRADO** |
-| 3.9 | Dialog "Nova conversa" com chips de etapa | ✅ OK |
+O `PipelineLeadDetail` é um Sheet (drawer) que recebe `lead` (objeto completo `PipelineLead`), `stages`, `segmentos`, etc. Para reutilizá-lo no WhatsApp Inbox:
 
-**3.8 — Problema**: A tabela `whatsapp_mensagens` **NÃO está na publicação `supabase_realtime`**. O canal `postgres_changes` em `WhatsAppInbox.tsx` (linha 263) nunca dispara. Nenhuma nova mensagem aparece em tempo real, nenhuma notificação de navegador funciona, nenhum som toca.
+**WhatsAppInbox.tsx**:
+- Adicionar state `modalLeadId: string | null`
+- Quando `modalLeadId` está definido, buscar o lead completo + stages + segmentos via queries rápidas
+- Renderizar `PipelineLeadDetail` com `open={!!modalLeadId}` e `onOpenChange` para fechar
+- Passar `onOpenFullModal={(id) => setModalLeadId(id)}` ao `LeadPanel` (substituindo o `navigate`)
 
-**Correção**: Executar migração SQL:
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.whatsapp_mensagens;
-```
+**LeadPanel.tsx**: Nenhuma alteração necessária — já chama `onOpenFullModal(localLead.id)`.
 
-## BLOCO 4 — WHATSAPP INBOX — THREAD
+## 3. Kanban — Badge WhatsApp não respondido
 
-| # | Item | Status |
-|---|------|--------|
-| 4.1 | Thread carregando mensagens ASC | ✅ OK |
-| 4.2 | Balões sent/received com cores corretas | ✅ OK — `bg-primary` / `bg-card` |
-| 4.3 | Notas internas (direction='note') fundo amarelo | ✅ OK |
-| 4.4 | Envio chama `whatsapp-send` + salva em `whatsapp_mensagens` | ✅ OK |
-| 4.5 | Realtime — nova mensagem aparece | ❌ **QUEBRADO** — mesma causa de 3.8 |
-| 4.6 | Auto-scroll para última mensagem | ✅ OK |
-| 4.7 | Enter envia, Shift+Enter quebra linha | ✅ OK |
+**Arquivos**: `src/components/pipeline/PipelineBoard.tsx`, `src/components/pipeline/PipelineCard.tsx`
 
-## BLOCO 5 — BARRA DE AÇÕES RÁPIDAS
+**PipelineBoard.tsx** — Adicionar query batch (padrão igual `tarefasMap`):
+- `useQuery` que busca todos os `lead_id` com última mensagem `direction='received'` em `whatsapp_mensagens` para os `leadIds` visíveis
+- Retorna `Set<string>` de leads com mensagem não respondida
+- Passa `hasUnreadWhatsApp={whatsappUnreadSet.has(lead.id)}` ao `PipelineCard`
 
-| # | Item | Status |
-|---|------|--------|
-| 5.1 | Templates filtrados por etapa | ✅ OK |
-| 5.2 | `{nome}` e `{empreendimento}` substituídos | ✅ OK |
-| 5.3 | Agendar Visita — insert + move etapa | ✅ OK |
-| 5.4 | Criar Tarefa — `pipeline_lead_id` correto | ✅ OK |
-| 5.5 | Mover Etapa — update `stage_id` | ✅ OK |
-| 5.6 | Nota Interna — NÃO chama `whatsapp-send` | ✅ OK |
-| 5.7 | Nota Interna — reset ao trocar lead | ✅ OK |
+**PipelineCard.tsx**:
+- Adicionar prop `hasUnreadWhatsApp?: boolean`
+- Quando `true`: renderizar ícone `MessageSquare` (12px, cor `#25D366`) no canto superior direito do card
+- Tooltip "Mensagem não respondida"
+- Click no ícone: `navigate('/whatsapp?lead=' + lead.id)` com `e.stopPropagation()`
 
-## BLOCO 6 — HOMI COPILOT
+## 4. Toast global de mensagem recebida
 
-| # | Item | Status |
-|---|------|--------|
-| 6.1 | Edge Function deployada, retorna JSON | ✅ OK |
-| 6.2 | Aparece quando última msg é received | ✅ OK — condição ampliada para últimas 5 |
-| 6.3 | Briefing em itálico verde | ✅ OK |
-| 6.4 | Badge de tom correto | ✅ OK |
-| 6.5 | Botão "Usar" preenche textarea | ✅ OK |
-| 6.6 | Botão "Ignorar" esconde card | ✅ OK |
-| 6.7 | "+ Follow-up" insere em `pipeline_tarefas` | ✅ OK |
-| 6.8 | Usa `valor_estimado` (não `orcamento`) | ✅ OK — Edge Function usa `valor_estimado` |
+**Arquivos**: `src/hooks/useWhatsAppNotifications.ts` (novo), `src/components/AppLayout.tsx`
 
-## BLOCO 7 — PAINEL DO LEAD (DIREITO)
+**useWhatsAppNotifications.ts**:
+- Busca `profileId` do usuário logado (query `profiles` por `user_id`)
+- Subscribe em `whatsapp_mensagens` via Supabase Realtime (canal separado do Inbox)
+- Filtra: `direction === 'received'` + `corretor_id === profileId`
+- Verifica `document.visibilityState === 'visible'` (se não visível, o browser notification já cobre)
+- Verifica que não estamos na rota `/whatsapp` (para não duplicar com o Inbox)
+- Busca nome do lead em `pipeline_leads`
+- Exibe toast via `sonner`:
+  ```ts
+  toast(leadName, {
+    description: preview.slice(0, 50),
+    duration: 5000,
+    action: { label: "Responder", onClick: () => navigate('/whatsapp?lead=' + leadId) }
+  })
+  ```
 
-| # | Item | Status |
-|---|------|--------|
-| 7.1 | Dados do lead carregando | ✅ OK |
-| 7.2 | Edição inline de Etapa | ✅ OK |
-| 7.3 | Edição inline de Empreendimento | ✅ OK |
-| 7.4 | Edição inline de Orçamento | ❌ **QUEBRADO** |
-| 7.5 | Score HOMI calculando | ✅ OK |
-| 7.6 | Tarefas pendentes carregando | ✅ OK |
-| 7.7 | Botão ✓ concluindo tarefa | ✅ OK |
-| 7.8 | Histórico carregando de `pipeline_atividades` | ✅ OK |
-| 7.9 | Botão "Ver ficha completa" navega para `/pipeline` | ✅ OK |
+**AppLayout.tsx**:
+- Importar e chamar `useWhatsAppNotifications()` dentro do componente (linha ~86)
 
-**7.4 — Problema**: `LeadPanel.tsx` usa o campo `orcamento` em 3 locais (linhas 174, 288, 290), mas a tabela `pipeline_leads` **não tem coluna `orcamento`** — apenas `valor_estimado`. O campo sempre mostra "—" e o save gera erro silencioso.
+## Resumo de arquivos
 
-**Correção** em `LeadPanel.tsx`:
-- Linha 174: `updateData.orcamento` → `updateData.valor_estimado`
-- Linha 288: `localLead.orcamento` → `localLead.valor_estimado`
-- Linha 290: `localLead.orcamento` → `localLead.valor_estimado`
-- Interface `LeadInfo` (linha 26): remover `orcamento`, já tem `valor_estimado`
+| Arquivo | Tipo |
+|---|---|
+| `src/components/layout/Sidebar.tsx` | Editar |
+| `src/pages/WhatsAppInbox.tsx` | Editar |
+| `src/components/pipeline/PipelineBoard.tsx` | Editar |
+| `src/components/pipeline/PipelineCard.tsx` | Editar |
+| `src/hooks/useWhatsAppNotifications.ts` | Criar |
+| `src/components/AppLayout.tsx` | Editar |
 
-## BLOCO 8 — INTEGRAÇÃO COM PIPELINE
-
-| # | Item | Status |
-|---|------|--------|
-| 8.1 | Aba WhatsApp no modal do lead mostra histórico | ✅ OK |
-| 8.2 | Botão "Iniciar conversa" navega para `/whatsapp?lead=id` | ✅ OK |
-| 8.3 | Mudança de etapa no Inbox reflete no Pipeline | ✅ OK |
-| 8.4 | Visita agendada aparece na Agenda | ✅ OK |
-| 8.5 | Tarefa criada aparece na Central | ✅ OK |
-| 8.6 | Atividades registradas no histórico | ⚠️ **PARCIAL** |
-
-**8.6 — Problema**: Nenhuma ação no Inbox (envio de mensagem, agendamento de visita, mudança de etapa) faz insert em `pipeline_atividades`. O histórico só mostra atividades criadas por outros módulos.
-
-**Correção**: Adicionar inserts em `pipeline_atividades` após ações-chave:
-- Após enviar mensagem (tipo: `mensagem`)
-- Após agendar visita (tipo: `visita`)
-- Após mover etapa (tipo: `etapa`)
-
-## BLOCO 9 — SIDEBAR E NAVEGAÇÃO
-
-| # | Item | Status |
-|---|------|--------|
-| 9.1 | Link "WhatsApp Inbox" na sidebar (corretor e admin) | ✅ OK |
-| 9.2 | Link "Meu WhatsApp" na sidebar | ✅ OK |
-| 9.3 | Badge de não lidas na sidebar | ✅ OK — via localStorage |
-| 9.4 | Rota `/whatsapp` protegida (corretor e admin) | ✅ OK |
-| 9.5 | Rota `/configuracoes/whatsapp` protegida | ✅ OK |
-
-## BLOCO 10 — LAYOUT E UX
-
-| # | Item | Status |
-|---|------|--------|
-| 10.1 | Página sem scroll externo | ✅ OK — margem negativa aplicada |
-| 10.2 | Lista com scroll interno | ✅ OK |
-| 10.3 | Thread com scroll interno | ✅ OK |
-| 10.4 | Painel direito com scroll interno | ✅ OK |
-| 10.5 | HOMI card com max-height | ✅ OK — `max-h-[180px] overflow-y-auto` |
-
----
-
-## RESUMO DE PROBLEMAS (Priorizado)
-
-| Prioridade | Item | Problema | Arquivo | Correção |
-|---|---|---|---|---|
-| 🔴 P0 | 3.8 + 4.5 | **Realtime não funciona** — tabela não está na publicação | Migração SQL | `ALTER PUBLICATION supabase_realtime ADD TABLE public.whatsapp_mensagens;` |
-| 🔴 P1 | 7.4 | **Orçamento quebrado** — usa campo `orcamento` que não existe, deveria ser `valor_estimado` | `LeadPanel.tsx` linhas 174, 288, 290 | Substituir `orcamento` por `valor_estimado` |
-| 🟡 P2 | 8.6 | **Atividades não registradas** — ações do Inbox não geram registro em `pipeline_atividades` | `ConversationThread.tsx` | Adicionar inserts em `pipeline_atividades` após envio, visita e mudança de etapa |
-
-**Total: 37 itens auditados — 34 ✅ OK, 1 ⚠️ Parcial, 3 ❌ Quebrados (2 problemas raiz)**
+Nenhuma alteração em Edge Functions, tabelas ou migrações SQL.
 
