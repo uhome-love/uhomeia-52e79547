@@ -65,8 +65,12 @@ export default function HomeDashboard() {
   const [period, setPeriod] = useState<Period>("semana");
 
   // Route by role: admin→/ceo, gestor→/gerente/dashboard, backoffice→/backoffice, rh→/rh, corretor→/corretor
+  // Only redirect when this component's tab ("/") is actually the active URL,
+  // not when mounted but hidden in the tab system.
   useEffect(() => {
     if (roleLoading) return;
+    const currentPath = window.location.pathname;
+    if (currentPath !== "/" && currentPath !== "/index.html" && currentPath !== "/index") return;
     if (isAdmin) {
       navigate("/ceo", { replace: true });
     } else if (isBackoffice) {
