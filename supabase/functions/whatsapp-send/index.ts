@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,156 +7,160 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Não autenticado" }, 401);
     }
-    // Validate JWT using getUser (reliable across all supabase-js versions)
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-    const _sbAuth = createClient(
+
+    const sb = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
-    const { data: { user: _authUser }, error: _userErr } = await _sbAuth.auth.getUser();
-    if (_userErr || !_authUser) {
-      console.error("Auth failed:", _userErr?.message || "no user");
-      return new Response(JSON.stringify({ error: "Não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
-    const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-    const PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-
-    if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
-      throw new Error("WhatsApp credentials not configured");
+    const { data: { user }, error: userErr } = await sb.auth.getUser();
+    if (userErr || !user) {
+      return json({ error: "Não autenticado" }, 401);
     }
 
     const { telefone, mensagem, nome, template } = await req.json();
 
     if (!telefone) {
-      return new Response(
-        JSON.stringify({ error: "telefone é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({ error: "telefone é obrigatório" }, 400);
     }
 
+    if (!mensagem && !template) {
+      return json({ error: "mensagem ou template é obrigatório" }, 400);
+    }
+
+    // Normalize phone
     let cleanPhone = telefone.replace(/\D/g, "");
     if (cleanPhone.startsWith("0")) cleanPhone = cleanPhone.substring(1);
     if (!cleanPhone.startsWith("55")) cleanPhone = "55" + cleanPhone;
 
-    let body;
+    // Get profile id
+    const { data: profile } = await sb
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!profile?.id) {
+      return json({ error: "Perfil não encontrado" }, 404);
+    }
+
+    // Get Evolution instance
+    const { data: instance } = await sb
+      .from("whatsapp_instancias")
+      .select("instance_name, status")
+      .eq("corretor_id", profile.id)
+      .eq("status", "conectado")
+      .maybeSingle();
+
+    if (!instance) {
+      return json({
+        error: "WhatsApp não conectado. Conecte seu WhatsApp em Configurações primeiro.",
+        requires_connection: true,
+      }, 422);
+    }
+
+    const evoUrl = Deno.env.get("EVOLUTION_API_URL");
+    const evoKey = Deno.env.get("EVOLUTION_API_KEY");
+
+    if (!evoUrl || !evoKey) {
+      return json({ error: "Evolution API não configurada" }, 500);
+    }
+
+    const instanceName = instance.instance_name;
+    let messageId: string | null = null;
 
     if (template) {
-      const tplName = typeof template === 'string' ? template : template.name;
-      const tplLang = typeof template === 'string' ? 'pt_BR' : (template.language || 'pt_BR');
+      // Templates are not supported via Evolution — send as plain text if possible
+      // For now, just send the mensagem fallback or error
+      const tplText = mensagem || `Template: ${typeof template === 'string' ? template : template.name}`;
       
-      body = {
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: cleanPhone,
-        type: "template",
-        template: {
-          name: tplName,
-          language: { code: tplLang },
-        }
-      };
+      console.log(`Sending template fallback as text via Evolution to: ${cleanPhone}`);
 
-      if (typeof template === "object" && template.parameters && typeof template.parameters === "object" && !Array.isArray(template.parameters)) {
-        body.template.components = [
-          {
-            type: "body",
-            parameters: Object.entries(template.parameters).map(([key, val]) => ({
-              type: "text",
-              parameter_name: key,
-              text: String(val),
-            })),
+      const evoResponse = await fetch(
+        `${evoUrl}/message/sendText/${instanceName}`,
+        {
+          method: "POST",
+          headers: {
+            apikey: evoKey,
+            "Content-Type": "application/json",
           },
-        ];
-      }
-
-      if (typeof template === 'object' && template.components && template.components.length > 0) {
-        body.template.components = template.components;
-      }
-
-    } else if (mensagem) {
-      body = {
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: cleanPhone,
-        type: "text",
-        text: { body: mensagem },
-      };
-    } else {
-      return new Response(
-        JSON.stringify({ error: "mensagem ou template é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log("Sending WhatsApp to:", cleanPhone, "body:", JSON.stringify(body));
-
-    const waResponse = await fetch(
-      `https://graph.facebook.com/v21.0/${PHONE_NUMBER_ID}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      }
-    );
-
-    const waResult = await waResponse.json();
-
-    if (!waResponse.ok) {
-      console.error("WhatsApp API error:", JSON.stringify(waResult));
-      const errorCode = waResult?.error?.code;
-      const errorMsg = waResult?.error?.message || "Erro desconhecido";
-
-      if (errorCode === 131047 || errorCode === 131026) {
-        return new Response(
-          JSON.stringify({
-            error: "Fora da janela de 24h. Use template.",
-            requires_template: true,
+          body: JSON.stringify({
+            number: cleanPhone,
+            text: tplText,
           }),
-          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        }
+      );
+
+      const evoResult = await evoResponse.json();
+      console.log("Evolution sendText (template fallback):", JSON.stringify(evoResult));
+
+      if (!evoResponse.ok) {
+        return json({
+          error: "Erro Evolution API: " + (evoResult?.message || JSON.stringify(evoResult)),
+        }, evoResponse.status);
       }
 
-      return new Response(
-        JSON.stringify({ error: "Erro WhatsApp: " + errorMsg, details: waResult }),
-        { status: waResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      messageId = evoResult?.key?.id || evoResult?.messageId || crypto.randomUUID();
+    } else {
+      // Send plain text via Evolution
+      console.log(`Sending text via Evolution to: ${cleanPhone} instance: ${instanceName}`);
+
+      const evoResponse = await fetch(
+        `${evoUrl}/message/sendText/${instanceName}`,
+        {
+          method: "POST",
+          headers: {
+            apikey: evoKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            number: cleanPhone,
+            text: mensagem,
+          }),
+        }
       );
+
+      const evoResult = await evoResponse.json();
+      console.log("Evolution sendText response:", JSON.stringify(evoResult));
+
+      if (!evoResponse.ok) {
+        return json({
+          error: "Erro Evolution API: " + (evoResult?.message || JSON.stringify(evoResult)),
+        }, evoResponse.status);
+      }
+
+      messageId = evoResult?.key?.id || evoResult?.messageId || crypto.randomUUID();
     }
 
-    console.log("WhatsApp sent OK:", JSON.stringify(waResult));
+    console.log("WhatsApp sent OK via Evolution, messageId:", messageId);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message_id: waResult.messages?.[0]?.id,
-        phone: cleanPhone,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({
+      success: true,
+      message_id: messageId,
+      phone: cleanPhone,
+      channel: "evolution",
+    });
   } catch (e) {
     console.error("whatsapp-send error:", e);
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
   }
 });
