@@ -398,8 +398,8 @@ export default function WhatsAppInbox() {
             }]);
           }
 
-          // Notification + sound for received messages from other leads
-          if (newMsg.direction === "received" && newMsg.lead_id !== selectedLeadIdRef.current) {
+          // Notification + sound for received messages from other leads (corretores only)
+          if (newMsg.direction === "received" && newMsg.lead_id !== selectedLeadIdRef.current && !isTeamView) {
             let leadName = "Novo lead";
             const existing = conversationsRef.current.find(c => c.leadId === newMsg.lead_id);
             if (existing) {

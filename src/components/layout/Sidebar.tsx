@@ -283,16 +283,25 @@ export default function Sidebar({
   const { openTab } = useTabNavigation();
   const [campOpen, setCampOpen] = useState(false);
   const isDark    = theme === "dark";
+  const isManagerRole = role === "admin" || role === "gestor";
+
   const [whatsappUnread, setWhatsappUnread] = useState(() => {
     const v = localStorage.getItem("whatsapp_unread");
     return v ? parseInt(v, 10) || 0 : 0;
   });
+  const [whatsappSLA, setWhatsappSLA] = useState(() => {
+    const v = localStorage.getItem("whatsapp_sla_critical");
+    return v ? parseInt(v, 10) || 0 : 0;
+  });
 
-  // Listen for unread count changes
+  // Listen for unread / SLA count changes
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key === "whatsapp_unread") {
         setWhatsappUnread(parseInt(e.newValue || "0", 10) || 0);
+      }
+      if (e.key === "whatsapp_sla_critical") {
+        setWhatsappSLA(parseInt(e.newValue || "0", 10) || 0);
       }
     };
     window.addEventListener("storage", handler);
@@ -300,12 +309,13 @@ export default function Sidebar({
   }, []);
 
   // Inject badge into WhatsApp Inbox nav items
+  const whatsappBadgeCount = isManagerRole ? whatsappSLA : whatsappUnread;
   const rawGroups = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.admin;
   const groups = rawGroups.map(g => ({
     ...g,
     items: g.items.map(item =>
-      item.path === "/whatsapp" && whatsappUnread > 0
-        ? { ...item, badge: whatsappUnread > 9 ? "9+" : whatsappUnread }
+      item.path === "/whatsapp" && whatsappBadgeCount > 0
+        ? { ...item, badge: whatsappBadgeCount > 9 ? "9+" : whatsappBadgeCount }
         : item
     ),
   }));
@@ -434,9 +444,11 @@ export default function Sidebar({
                     {item.badge !== undefined && (
                       <span className={cn("text-[10px] font-semibold rounded-full px-1.5 py-px",
                         item.path === "/whatsapp"
-                          ? "bg-red-500 text-white"
+                          ? isManagerRole
+                            ? "bg-orange-500 text-white"
+                            : "bg-red-500 text-white"
                           : isDark ? "bg-white/10 text-[#71717a]" : "bg-[#f0f0f0] text-[#a1a1aa]")}>
-                        {item.badge}
+                        {item.path === "/whatsapp" && isManagerRole ? `⚠️ ${item.badge}` : item.badge}
                       </span>
                     )}
                   </button>
