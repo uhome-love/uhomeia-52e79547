@@ -1,36 +1,36 @@
 
 
-# Correção: Aba duplicada "Dashboard" + "Dashboard CEO"
+# Correção: Aba "Dashboard" fantasma persistindo no sessionStorage
 
 ## Causa raiz
 
-1. `ROUTE_TO_TAB` em `pageRegistry.ts` tem entrada para `"/"` (key: `home`, label: `Dashboard`, closable: false)
-2. Quando admin acessa `/`, o URL sync do `TabContext` cria a aba `home` **antes** do `useEffect` do `HomeDashboard` redirecionar para `/ceo`
-3. O redirect cria uma segunda aba `ceo` ("Dashboard CEO") — resultado: duas abas
+A entrada `"/"` foi removida do `ROUTE_TO_TAB` e o URL sync já ignora `"/"`, mas o **sessionStorage** (`uhome_tabs_v1`) ainda contém a aba antiga `{ id: "home", path: "/" }` de sessões anteriores. Ao restaurar do storage, essa aba fantasma reaparece.
 
-## Correção
+## Correção (1 arquivo)
 
-### 1. `src/config/pageRegistry.ts` — Remover entrada "/" do ROUTE_TO_TAB
+### `src/contexts/TabContext.tsx` — Sanitizar abas ao carregar do storage
 
-Remover a linha:
-```
-"/": { key: "home", label: "Dashboard", icon: "LayoutGrid", closable: false },
-```
+Na função `loadFromStorage()` (linha 42-50), filtrar abas com `path === "/"` antes de retornar:
 
-A rota `/` passa a não gerar aba — ela só existe para redirecionar.
-
-### 2. `src/contexts/TabContext.tsx` — Ignorar "/" no URL sync
-
-No `useEffect` de URL→Tab sync (linha ~149), adicionar guard:
 ```typescript
-if (pathname === "/" || pathname === "/index.html") return;
+function loadFromStorage(): { tabs: Tab[]; activeTabId: string } | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.tabs) && typeof data.activeTabId === "string") {
+      // Remove ghost tabs from legacy "/" route
+      const cleaned = data.tabs.filter((t: any) => t.path !== "/" && t.path !== "/index.html" && t.path !== "/index");
+      const activeStillExists = cleaned.some((t: any) => t.id === data.activeTabId);
+      return { 
+        tabs: cleaned, 
+        activeTabId: activeStillExists ? data.activeTabId : (cleaned[0]?.id ?? "") 
+      };
+    }
+  } catch {}
+  return null;
+}
 ```
 
-Isso impede que a rota de redirect crie aba antes do redirect executar.
-
-### 3. `src/config/pageRegistry.ts` — Manter componente no PAGE_COMPONENTS
-
-Manter `home` no `PAGE_COMPONENTS` (caso algum código referencia), mas ele não será mais acessível como aba.
-
-**Arquivos alterados**: `pageRegistry.ts`, `TabContext.tsx` (2 edições pequenas, ~3 linhas cada)
+Isso garante que mesmo com dados antigos no sessionStorage, a aba `"/"` nunca será restaurada. Nenhuma outra aba é afetada.
 
