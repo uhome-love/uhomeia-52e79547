@@ -86,7 +86,7 @@ export default function WhatsAppInbox() {
   const isTeamView = isGestor || isAdmin;
 
   // Compute read-only: viewing another corretor's conversation
-  const isReadOnly = isTeamView && selectedCorretorId !== null && selectedCorretorId !== profileId;
+  const isReadOnly = isTeamView && selectedCorretorId !== null && selectedCorretorId !== CORRETOR_UNSELECTED && selectedCorretorId !== profileId;
 
   // Build corretor map for "Todos" view
   const corretorMap = isTeamView && selectedCorretorId === null
