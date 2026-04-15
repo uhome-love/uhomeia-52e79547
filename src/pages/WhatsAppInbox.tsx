@@ -2,10 +2,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthUser } from "@/hooks/useAuthUser";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useQuery } from "@tanstack/react-query";
 import ConversationList, { type ConversationItem, type FollowUpLead, type NewLead } from "@/components/whatsapp/ConversationList";
 import ConversationThread from "@/components/whatsapp/ConversationThread";
 import LeadPanel from "@/components/whatsapp/LeadPanel";
+import CorretorSelector, { type CorretorInfo } from "@/components/whatsapp/CorretorSelector";
 import PipelineLeadDetail from "@/components/pipeline/PipelineLeadDetail";
 import { usePipeline } from "@/hooks/usePipeline";
 import { ArrowLeft } from "lucide-react";
@@ -36,7 +39,6 @@ function playNotificationSound() {
 
 function updateUnreadStorage(count: number) {
   localStorage.setItem("whatsapp_unread", String(count));
-  // Dispatch storage event for same-tab listeners
   window.dispatchEvent(new StorageEvent("storage", { key: "whatsapp_unread", newValue: String(count) }));
 }
 
@@ -50,6 +52,7 @@ interface LeadInfo {
   lead_score: number | null;
   valor_estimado: number | null;
   bairro_regiao: string | null;
+  corretor_id?: string | null;
 }
 
 interface Message {
@@ -63,10 +66,11 @@ interface Message {
 export default function WhatsAppInbox() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { profileId } = useAuthUser();
+  const { isGestor, isAdmin } = useUserRole();
   const navigate = useNavigate();
   const pipeline = usePipeline();
   const [modalLeadId, setModalLeadId] = useState<string | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [followUpLeads, setFollowUpLeads] = useState<FollowUpLead[]>([]);
   const [newLeads, setNewLeads] = useState<NewLead[]>([]);
@@ -75,6 +79,24 @@ export default function WhatsAppInbox() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [mobileView, setMobileView] = useState<"list" | "thread">("list");
+
+  // Team management state
+  const [corretores, setCorretores] = useState<CorretorInfo[]>([]);
+  const [selectedCorretorId, setSelectedCorretorId] = useState<string | null>(null);
+  const isTeamView = isGestor || isAdmin;
+
+  // Compute read-only: viewing another corretor's conversation
+  const isReadOnly = isTeamView && selectedCorretorId !== null && selectedCorretorId !== profileId;
+
+  // Build corretor map for "Todos" view
+  const corretorMap = isTeamView && selectedCorretorId === null
+    ? new Map(corretores.map(c => [c.id, c.nome]))
+    : undefined;
+
+  // Get selected corretor name for banner
+  const selectedCorretorNome = selectedCorretorId
+    ? corretores.find(c => c.id === selectedCorretorId)?.nome || ""
+    : "";
 
   // Ref to access selectedLeadId inside realtime callback without stale closure
   const selectedLeadIdRef = useRef(selectedLeadId);
@@ -90,29 +112,94 @@ export default function WhatsAppInbox() {
     }
   }, []);
 
-  // Fetch profiles.id on mount
+  // Load team corretores for gestor/admin
   useEffect(() => {
-    if (!user?.id) return;
-    supabase
-      .from("profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setProfileId(data.id);
-      });
-  }, [user?.id]);
+    if (!user?.id || !isTeamView) return;
+
+    const loadCorretores = async () => {
+      if (isAdmin) {
+        // Admin: all active team members
+        const { data: members } = await supabase
+          .from("team_members")
+          .select("user_id")
+          .eq("status", "ativo");
+        
+        if (!members || members.length === 0) { setCorretores([]); return; }
+        
+        const userIds = members.map(m => m.user_id).filter(Boolean) as string[];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, user_id, nome")
+          .in("user_id", userIds)
+          .order("nome");
+        
+        setCorretores((profiles || []).map(p => ({
+          id: p.id,
+          nome: p.nome || "Sem nome",
+          userId: p.user_id || "",
+        })));
+      } else {
+        // Gestor: only their team
+        const { data: members } = await supabase
+          .from("team_members")
+          .select("user_id")
+          .eq("gerente_id", user.id)
+          .eq("status", "ativo");
+        
+        if (!members || members.length === 0) { setCorretores([]); return; }
+        
+        const userIds = members.map(m => m.user_id).filter(Boolean) as string[];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, user_id, nome")
+          .in("user_id", userIds)
+          .order("nome");
+        
+        setCorretores((profiles || []).map(p => ({
+          id: p.id,
+          nome: p.nome || "Sem nome",
+          userId: p.user_id || "",
+        })));
+      }
+    };
+
+    loadCorretores();
+  }, [user?.id, isTeamView, isAdmin]);
+
+  // Determine which profile IDs to query for conversations
+  const getTargetProfileIds = useCallback((): string[] | null => {
+    if (!isTeamView) {
+      // Corretor: own profile only
+      return profileId ? [profileId] : null;
+    }
+    if (selectedCorretorId) {
+      // Specific corretor selected
+      return [selectedCorretorId];
+    }
+    // "Todos" — all team corretores + own
+    const ids = corretores.map(c => c.id);
+    if (profileId && !ids.includes(profileId)) ids.push(profileId);
+    return ids.length > 0 ? ids : null;
+  }, [isTeamView, profileId, selectedCorretorId, corretores]);
 
   // Load conversations list + SLA + unread
   const loadConversations = useCallback(async () => {
-    if (!profileId) return;
+    const targetIds = getTargetProfileIds();
+    if (!targetIds) return;
 
-    const { data } = await supabase
+    let query = supabase
       .from("whatsapp_mensagens")
-      .select("lead_id, body, direction, timestamp")
-      .eq("corretor_id", profileId)
+      .select("lead_id, body, direction, timestamp, corretor_id")
       .order("timestamp", { ascending: false })
       .limit(1000);
+
+    if (targetIds.length === 1) {
+      query = query.eq("corretor_id", targetIds[0]);
+    } else {
+      query = query.in("corretor_id", targetIds);
+    }
+
+    const { data } = await query;
 
     if (!data || data.length === 0) {
       setConversations([]);
@@ -121,12 +208,12 @@ export default function WhatsAppInbox() {
       return;
     }
 
-    const map = new Map<string, { msgs: typeof data; lastTs: string }>();
+    const map = new Map<string, { msgs: typeof data; lastTs: string; corretorId: string | null }>();
     for (const m of data) {
       if (!m.lead_id) continue;
       const existing = map.get(m.lead_id);
       if (!existing) {
-        map.set(m.lead_id, { msgs: [m], lastTs: m.timestamp });
+        map.set(m.lead_id, { msgs: [m], lastTs: m.timestamp, corretorId: (m as any).corretor_id || null });
       } else {
         existing.msgs.push(m);
       }
@@ -164,6 +251,7 @@ export default function WhatsAppInbox() {
         totalMessages: info.msgs.length,
         unreadCount: lastReceivedTs ? 1 : 0,
         lastReceivedTs,
+        corretorId: info.corretorId || undefined,
       });
     }
 
@@ -171,11 +259,15 @@ export default function WhatsAppInbox() {
     setConversations(items);
     setLoadingConvs(false);
     updateUnreadStorage(unreadTotal);
-  }, [profileId]);
+  }, [getTargetProfileIds]);
 
-  // Load follow-up and new leads
+  // Load follow-up and new leads (only for own profile, not in team read-only)
   const loadSuggestions = useCallback(async () => {
-    if (!user?.id || !profileId) return;
+    if (!user?.id || !profileId || isReadOnly) {
+      setFollowUpLeads([]);
+      setNewLeads([]);
+      return;
+    }
 
     const { data: msgLeads } = await supabase
       .from("whatsapp_mensagens")
@@ -229,7 +321,7 @@ export default function WhatsAppInbox() {
       }));
 
     setNewLeads(filteredNew);
-  }, [user?.id, profileId]);
+  }, [user?.id, profileId, isReadOnly]);
 
   // Load thread for selected lead
   const loadThread = useCallback(async (leadId: string) => {
@@ -242,7 +334,7 @@ export default function WhatsAppInbox() {
         .limit(200),
       supabase
         .from("pipeline_leads")
-        .select("id, nome, telefone, empreendimento, stage_id, segmento_id, lead_score, valor_estimado, bairro_regiao")
+        .select("id, nome, telefone, empreendimento, stage_id, segmento_id, lead_score, valor_estimado, bairro_regiao, corretor_id")
         .eq("id", leadId)
         .maybeSingle(),
     ]);
@@ -262,6 +354,16 @@ export default function WhatsAppInbox() {
       setMobileView("thread");
     }
   }, [selectedLeadId, loadThread]);
+
+  // Reload conversations when selectedCorretorId changes
+  useEffect(() => {
+    setLoadingConvs(true);
+    setSelectedLeadId(null);
+    setLeadInfo(null);
+    setMessages([]);
+    loadConversations();
+    loadSuggestions();
+  }, [selectedCorretorId]);
 
   // Realtime with notifications
   useEffect(() => {
@@ -286,7 +388,6 @@ export default function WhatsAppInbox() {
 
           // Notification + sound for received messages from other leads
           if (newMsg.direction === "received" && newMsg.lead_id !== selectedLeadIdRef.current) {
-            // Find lead name
             let leadName = "Novo lead";
             const existing = conversationsRef.current.find(c => c.leadId === newMsg.lead_id);
             if (existing) {
@@ -300,7 +401,6 @@ export default function WhatsAppInbox() {
               if (data) leadName = data.nome;
             }
 
-            // Browser notification
             if ("Notification" in window && Notification.permission === "granted") {
               const preview = (newMsg.body || "Nova mensagem").slice(0, 60);
               const notif = new Notification(leadName, {
@@ -314,7 +414,6 @@ export default function WhatsAppInbox() {
               };
             }
 
-            // Sound
             playNotificationSound();
           }
 
@@ -343,15 +442,26 @@ export default function WhatsAppInbox() {
       )}
 
       <div className="flex flex-1 overflow-hidden min-h-0">
-        <div className={`${isMobile ? (mobileView === "list" ? "flex" : "hidden") : "flex"}`}>
+        <div className={`flex flex-col ${isMobile ? (mobileView === "list" ? "flex" : "hidden") : "flex"}`}>
+          {/* Team corretor selector */}
+          {isTeamView && corretores.length > 0 && (
+            <div className="w-[290px]">
+              <CorretorSelector
+                corretores={corretores}
+                selectedCorretorId={selectedCorretorId}
+                onSelect={setSelectedCorretorId}
+              />
+            </div>
+          )}
           <ConversationList
             conversations={conversations}
-            followUpLeads={followUpLeads}
-            newLeads={newLeads}
+            followUpLeads={isReadOnly ? [] : followUpLeads}
+            newLeads={isReadOnly ? [] : newLeads}
             selectedLeadId={selectedLeadId}
             onSelect={handleSelect}
             loading={loadingConvs}
             userId={user?.id || null}
+            corretorMap={corretorMap}
           />
         </div>
 
@@ -364,6 +474,8 @@ export default function WhatsAppInbox() {
               if (selectedLeadId) loadThread(selectedLeadId);
               loadConversations();
             }}
+            isReadOnly={isReadOnly}
+            readOnlyCorretorNome={selectedCorretorNome}
           />
         </div>
 
@@ -374,6 +486,7 @@ export default function WhatsAppInbox() {
             profileId={profileId}
             messages={messages}
             onOpenFullModal={(id) => setModalLeadId(id)}
+            isReadOnly={isReadOnly}
           />
         )}
       </div>
