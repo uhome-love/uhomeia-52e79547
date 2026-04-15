@@ -262,7 +262,14 @@ export default function ConversationList({
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
-                          <span className="text-xs font-medium truncate block">{conv.leadName}</span>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className="text-xs font-medium truncate block">{conv.leadName}</span>
+                            {corretorMap && conv.corretorId && corretorMap.get(conv.corretorId) && (
+                              <span className="inline-flex items-center justify-center h-4 px-1 rounded bg-muted text-[8px] font-bold text-muted-foreground shrink-0">
+                                {getCorretorInitials(corretorMap.get(conv.corretorId)!)}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1 shrink-0 ml-1">
                             <SLABadge lastReceivedTs={conv.lastReceivedTs} />
                             <span className="text-[10px] text-muted-foreground">
