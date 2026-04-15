@@ -285,37 +285,30 @@ export default function Sidebar({
   const isDark    = theme === "dark";
   const isManagerRole = role === "admin" || role === "gestor";
 
+  // WhatsApp unread badge — only for corretores (not managers/admins)
   const [whatsappUnread, setWhatsappUnread] = useState(() => {
+    if (isManagerRole) return 0;
     const v = localStorage.getItem("whatsapp_unread");
     return v ? parseInt(v, 10) || 0 : 0;
   });
-  const [whatsappSLA, setWhatsappSLA] = useState(() => {
-    const v = localStorage.getItem("whatsapp_sla_critical");
-    return v ? parseInt(v, 10) || 0 : 0;
-  });
 
-  // Listen for unread / SLA count changes
   useEffect(() => {
+    if (isManagerRole) return;
     const handler = (e: StorageEvent) => {
       if (e.key === "whatsapp_unread") {
         setWhatsappUnread(parseInt(e.newValue || "0", 10) || 0);
       }
-      if (e.key === "whatsapp_sla_critical") {
-        setWhatsappSLA(parseInt(e.newValue || "0", 10) || 0);
-      }
     };
     window.addEventListener("storage", handler);
     return () => window.removeEventListener("storage", handler);
-  }, []);
+  }, [isManagerRole]);
 
-  // Inject badge into WhatsApp Inbox nav items
-  const whatsappBadgeCount = isManagerRole ? whatsappSLA : whatsappUnread;
   const rawGroups = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.admin;
   const groups = rawGroups.map(g => ({
     ...g,
     items: g.items.map(item =>
-      item.path === "/whatsapp" && whatsappBadgeCount > 0
-        ? { ...item, badge: whatsappBadgeCount > 9 ? "9+" : whatsappBadgeCount }
+      item.path === "/whatsapp" && !isManagerRole && whatsappUnread > 0
+        ? { ...item, badge: whatsappUnread > 9 ? "9+" : whatsappUnread }
         : item
     ),
   }));
