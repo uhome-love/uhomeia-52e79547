@@ -19,6 +19,7 @@ export interface ConversationItem {
   totalMessages: number;
   unreadCount: number;
   lastReceivedTs: string | null;
+  corretorId?: string;
 }
 
 export interface FollowUpLead {
@@ -44,6 +45,7 @@ interface ConversationListProps {
   onSelect: (leadId: string) => void;
   loading: boolean;
   userId?: string | null;
+  corretorMap?: Map<string, string>;
 }
 
 function getInitials(name: string) {
@@ -81,6 +83,10 @@ interface DialogLead {
   pipeline_stages: { nome: string } | null;
 }
 
+function getCorretorInitials(nome: string) {
+  return nome.split(" ").map(w => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
+
 export default function ConversationList({
   conversations,
   followUpLeads,
@@ -89,6 +95,7 @@ export default function ConversationList({
   onSelect,
   loading,
   userId,
+  corretorMap,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("all");

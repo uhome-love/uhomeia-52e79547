@@ -58,6 +58,7 @@ interface LeadPanelProps {
   profileId?: string | null;
   messages?: Message[];
   onOpenFullModal?: (leadId: string) => void;
+  isReadOnly?: boolean;
 }
 
 function getInitials(name: string) {
@@ -89,7 +90,7 @@ function getActivityIcon(tipo: string) {
   }
 }
 
-export default function LeadPanel({ lead, leadId, profileId, messages = [], onOpenFullModal }: LeadPanelProps) {
+export default function LeadPanel({ lead, leadId, profileId, messages = [], onOpenFullModal, isReadOnly = false }: LeadPanelProps) {
   const [stages, setStages] = useState<StageInfo[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);

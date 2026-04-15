@@ -40,6 +40,8 @@ interface ConversationThreadProps {
   leadInfo: LeadInfo | null;
   messages: Message[];
   onMessageSent: () => void;
+  isReadOnly?: boolean;
+  readOnlyCorretorNome?: string;
 }
 
 interface StageInfo {
@@ -143,7 +145,7 @@ function getDeadline(key: string) {
 
 // --- Component ---
 
-export default function ConversationThread({ leadId, leadInfo, messages, onMessageSent }: ConversationThreadProps) {
+export default function ConversationThread({ leadId, leadInfo, messages, onMessageSent, isReadOnly = false, readOnlyCorretorNome }: ConversationThreadProps) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
