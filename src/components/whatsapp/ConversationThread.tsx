@@ -372,7 +372,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
     }
   };
 
-
+  const handleUseTemplate = (tpl: string) => {
     if (!leadInfo) return;
     setText(replaceVars(tpl, leadInfo.nome, leadInfo.empreendimento));
     setTimeout(() => textareaRef.current?.focus(), 100);
