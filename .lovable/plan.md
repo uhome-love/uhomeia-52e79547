@@ -1,45 +1,48 @@
 
 
-# Correção: Envio WhatsApp via Evolution API (número do corretor)
+# Correção do fluxo WhatsApp — instance_name hardcoded
 
-## Problema
-A Edge Function `whatsapp-send` envia **exclusivamente pela Meta Business API** (número da UHome). As mensagens do corretor devem sair pelo **número pessoal dele**, conectado via **Evolution API**. A função precisa ser reescrita para usar Evolution como canal principal.
+## Diagnóstico
+
+Os logs confirmam que o envio via Evolution API **já está funcionando** — a última mensagem "🙏🏻" foi entregue com sucesso (messageId: `3EB08EC1FF854A93316840`, status: PENDING).
+
+Porém encontrei um problema no frontend (`ConversationThread.tsx`):
+
+- **Linha 287**: O `instance_name` salvo no banco está hardcoded como `"meta"` — deveria ser o nome da instância Evolution do corretor (ex: `uhome-c7e64e1f`)
+- **Linha 368**: Para mídia, está hardcoded como `"media"` — mesmo problema
+
+Isso pode causar inconsistências na filtragem e no histórico de mensagens.
 
 ## Plano
 
-### 1. Reescrever `supabase/functions/whatsapp-send/index.ts`
+### 1. Corrigir `ConversationThread.tsx` — usar instance_name real
 
-Lógica nova:
-1. Autenticar o usuário (JWT)
-2. Buscar `profiles.id` via `profiles.user_id = auth_user.id`
-3. Buscar instância Evolution em `whatsapp_instancias` onde `corretor_id = profiles.id` e `status = 'conectado'`
-4. **Enviar via Evolution API**: `POST ${EVOLUTION_API_URL}/message/sendText/${instanceName}` com body `{ number, text }`
-5. Se não tiver instância conectada, retornar erro claro ("Conecte seu WhatsApp primeiro")
-6. Remover toda a lógica Meta Business API (Graph API) desta função
+- Na resposta do `whatsapp-send`, o backend já retorna `channel: "evolution"`. Preciso verificar se também retorna o `instance_name` — se não, adicionar.
+- No frontend, usar o valor retornado em vez do hardcoded `"meta"` / `"media"`
 
-**Importante**: A tabela correta é `whatsapp_instancias` (com "i", não "instances"). O `corretor_id` é o `profiles.id`.
+### Mudanças:
 
-### 2. Corrigir `whatsapp-send-media` (bug silencioso)
-
-A função `whatsapp-send-media` consulta `whatsapp_instances` (tabela que não existe). Corrigir para `whatsapp_instancias` e usar `corretor_id` em vez de `profile_id`. Também remover o fallback Meta API daqui.
-
-### 3. Deploy e validação
-
-- Deploy das duas functions
-- Teste de envio de texto via Inbox
-- Verificar nos logs se a Evolution API foi chamada
-
-### Detalhes técnicos
-
-```text
-whatsapp-send (ANTES):
-  Auth → Meta Graph API → envio pelo número UHome
-
-whatsapp-send (DEPOIS):
-  Auth → profiles.id → whatsapp_instancias (conectado)
-       → Evolution API sendText/{instance} → envio pelo número do corretor
-       → Sem instância? → erro 422 "Conecte seu WhatsApp"
+**`supabase/functions/whatsapp-send/index.ts`** — adicionar `instance_name` no retorno:
+```typescript
+return json({
+  success: true,
+  message_id: messageId,
+  phone: cleanPhone,
+  channel: "evolution",
+  instance_name: instanceName,  // NOVO
+});
 ```
 
-Secrets necessários (já existentes): `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`
+**`supabase/functions/whatsapp-send-media/index.ts`** — mesmo ajuste no retorno
+
+**`src/components/whatsapp/ConversationThread.tsx`**:
+- Linha 287: trocar `instance_name: "meta"` por `instance_name: sendResult?.instance_name || "evolution"`
+- Linha 368: trocar `instance_name: "media"` por `instance_name: sendResult?.instance_name || "evolution"`
+
+### 2. Testar o fluxo completo
+
+Após o deploy, testaremos envio de texto e mídia para confirmar que:
+- A mensagem chega no WhatsApp do cliente
+- Aparece corretamente no Inbox do sistema
+- O `instance_name` correto é salvo no banco
 
