@@ -62,6 +62,7 @@ function loadFromStorage(): { tabs: Tab[]; activeTabId: string } | null {
 export function TabProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { roles, loading: roleLoading } = useUserRole();
 
   // Initialize from storage or empty
   const stored = useRef(loadFromStorage());
@@ -75,6 +76,17 @@ export function TabProvider({ children }: { children: ReactNode }) {
   activeRef.current = activeTabId;
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
+  const rolesRef = useRef(roles);
+  rolesRef.current = roles;
+
+  /** Check if user has access to a route based on its roles config */
+  const hasAccess = useCallback((resolved: ResolvedRoute): boolean => {
+    // No roles defined = open to all authenticated users
+    if (!resolved.roles || resolved.roles.length === 0) return true;
+    // Admin always has access
+    if (rolesRef.current.includes("admin")) return true;
+    return resolved.roles.some((r) => rolesRef.current.includes(r as AppRole));
+  }, []);
 
   // Persist on change
   useEffect(() => {
