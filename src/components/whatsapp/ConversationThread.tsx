@@ -284,7 +284,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
           direction: "sent",
           body: msgBody,
           timestamp: new Date().toISOString(),
-          instance_name: "meta",
+          instance_name: sendResult?.instance_name || "evolution",
           whatsapp_message_id: messageId,
         });
 
@@ -365,7 +365,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
         body: text.trim() || null,
         media_url: sendResult?.media_url || null,
         timestamp: new Date().toISOString(),
-        instance_name: "media",
+        instance_name: sendResult?.instance_name || "evolution",
         whatsapp_message_id: sendResult?.message_id || crypto.randomUUID(),
       });
 
