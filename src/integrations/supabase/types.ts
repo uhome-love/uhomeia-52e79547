@@ -8510,11 +8510,11 @@ export type Database = {
           created_at: string
           direction: string
           id: string
-          instance_name: string
+          instance_name: string | null
           lead_id: string
           media_url: string | null
           timestamp: string
-          whatsapp_message_id: string
+          whatsapp_message_id: string | null
         }
         Insert: {
           body?: string
@@ -8522,11 +8522,11 @@ export type Database = {
           created_at?: string
           direction: string
           id?: string
-          instance_name: string
+          instance_name?: string | null
           lead_id: string
           media_url?: string | null
           timestamp?: string
-          whatsapp_message_id: string
+          whatsapp_message_id?: string | null
         }
         Update: {
           body?: string
@@ -8534,11 +8534,11 @@ export type Database = {
           created_at?: string
           direction?: string
           id?: string
-          instance_name?: string
+          instance_name?: string | null
           lead_id?: string
           media_url?: string | null
           timestamp?: string
-          whatsapp_message_id?: string
+          whatsapp_message_id?: string | null
         }
         Relationships: [
           {

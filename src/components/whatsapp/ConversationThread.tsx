@@ -238,13 +238,19 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
     try {
       if (isNoteMode) {
         // Internal note — do NOT call whatsapp-send
-        await supabase.from("whatsapp_mensagens").insert({
+        const { error: noteErr } = await supabase.from("whatsapp_mensagens").insert({
           lead_id: leadId,
           corretor_id: profileId,
           direction: "note",
           body: text.trim(),
           timestamp: new Date().toISOString(),
+          instance_name: "internal",
+          whatsapp_message_id: crypto.randomUUID(),
         });
+        if (noteErr) {
+          console.error("Note insert error:", noteErr);
+          throw new Error(noteErr.message || "Erro ao salvar nota");
+        }
       } else {
         const { error, data: sendResult } = await supabase.functions.invoke("whatsapp-send", {
           body: { telefone: leadInfo.telefone, mensagem: text.trim() },
@@ -257,13 +263,20 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
           console.error("whatsapp-send returned error:", sendResult.error);
           throw new Error(sendResult.error);
         }
-        await supabase.from("whatsapp_mensagens").insert({
+        const { error: msgErr } = await supabase.from("whatsapp_mensagens").insert({
           lead_id: leadId,
           corretor_id: profileId,
           direction: "sent",
           body: text.trim(),
           timestamp: new Date().toISOString(),
+          instance_name: "meta",
+          whatsapp_message_id: sendResult?.message_id || crypto.randomUUID(),
         });
+        if (msgErr) {
+          console.error("Message insert error:", msgErr);
+          // Message was sent via WhatsApp but DB insert failed - warn user
+          toast.warning("Mensagem enviada mas não salva localmente. Recarregue.");
+        }
         // Log activity
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
@@ -302,16 +315,25 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
     const dt = setMinutes(setHours(new Date(visitDate + "T00:00:00"), h), m);
 
     try {
-      await supabase.from("visitas").insert({
-        lead_id: leadId,
+      const { data: { user: authVisitUser } } = await supabase.auth.getUser();
+      const { error: visitErr } = await supabase.from("visitas").insert({
+        pipeline_lead_id: leadId,
+        nome_cliente: leadInfo.nome,
         corretor_id: profileId,
-        data_visita: dt.toISOString(),
-        empreendimento: visitLocal || leadInfo.empreendimento,
-        status: "agendada",
+        gerente_id: authVisitUser?.id || profileId,
+        created_by: authVisitUser?.id || profileId,
+        data_visita: format(dt, "yyyy-MM-dd"),
+        hora_visita: visitTime,
+        empreendimento: visitLocal || leadInfo.empreendimento || "",
+        status: "marcada",
+        origem: "pipeline",
       });
+      if (visitErr) {
+        console.error("Visit insert error:", visitErr);
+        throw new Error(visitErr.message || "Erro ao agendar visita");
+      }
       // Log activity
-      const { data: { user: visitUser } } = await supabase.auth.getUser();
-      if (visitUser) {
+      if (authVisitUser) {
         await supabase.from("pipeline_atividades").insert({
           pipeline_lead_id: leadId,
           tipo: "visita",
@@ -319,7 +341,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
           data: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
           prioridade: "media",
           status: "concluida",
-          created_by: visitUser.id,
+          created_by: authVisitUser.id,
         });
       }
       // Move to Visita stage
@@ -342,16 +364,22 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
   const handleCreateTask = async () => {
     if (!leadInfo || !profileId || !taskTitle.trim()) return;
     try {
-      await supabase.from("pipeline_tarefas").insert({
+      const deadlineDate = getDeadline(taskDeadline, taskCustomDate);
+      const { error: taskErr } = await supabase.from("pipeline_tarefas").insert({
         pipeline_lead_id: leadId,
         titulo: taskTitle.trim(),
         tipo: taskType,
         descricao: taskDescription.trim() || null,
         prioridade: taskPriority,
         status: "pendente",
-        vence_em: getDeadline(taskDeadline, taskCustomDate).toISOString(),
+        vence_em: format(deadlineDate, "yyyy-MM-dd"),
         created_by: profileId,
+        responsavel_id: profileId,
       });
+      if (taskErr) {
+        console.error("Task insert error:", taskErr);
+        throw new Error(taskErr.message || "Erro ao criar tarefa");
+      }
       toast.success("✅ Tarefa criada!");
       setTaskTitle("");
       setTaskDeadline("amanha");
