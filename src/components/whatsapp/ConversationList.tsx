@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, MessageSquare, Loader2, Clock, UserPlus, RefreshCw, ArrowRight } from "lucide-react";
+import { Search, Plus, MessageSquare, Loader2, Clock, UserPlus, RefreshCw, ArrowRight, X, FileSearch } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, differenceInHours } from "date-fns";
@@ -37,6 +37,14 @@ export interface NewLead {
   createdAt: string;
 }
 
+interface MessageSearchResult {
+  leadId: string;
+  leadName: string;
+  empreendimento: string | null;
+  body: string;
+  timestamp: string;
+}
+
 interface ConversationListProps {
   conversations: ConversationItem[];
   followUpLeads: FollowUpLead[];
@@ -46,6 +54,7 @@ interface ConversationListProps {
   loading: boolean;
   userId?: string | null;
   corretorMap?: Map<string, string>;
+  corretorIds?: string[];
 }
 
 function getInitials(name: string) {
@@ -96,11 +105,20 @@ export default function ConversationList({
   loading,
   userId,
   corretorMap,
+  corretorIds,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("all");
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [newConvSearch, setNewConvSearch] = useState("");
+
+  // Message search state
+  const [msgSearchOpen, setMsgSearchOpen] = useState(false);
+  const [msgSearch, setMsgSearch] = useState("");
+  const [msgResults, setMsgResults] = useState<MessageSearchResult[]>([]);
+  const [msgSearchLoading, setMsgSearchLoading] = useState(false);
+
+  const debouncedMsgSearch = useDebounce(msgSearch, 400);
 
   // Dialog state
   const [stages, setStages] = useState<{ id: string; nome: string }[]>([]);
@@ -156,6 +174,63 @@ export default function ConversationList({
     }
   }, [newConvOpen]);
 
+  // Message search effect
+  useEffect(() => {
+    if (!debouncedMsgSearch.trim() || !corretorIds?.length) {
+      setMsgResults([]);
+      return;
+    }
+
+    setMsgSearchLoading(true);
+    const term = debouncedMsgSearch.trim();
+
+    (async () => {
+      let query = supabase
+        .from("whatsapp_mensagens")
+        .select("lead_id, body, timestamp, corretor_id")
+        .ilike("body", `%${term}%`)
+        .order("timestamp", { ascending: false })
+        .limit(20);
+
+      if (corretorIds.length === 1) {
+        query = query.eq("corretor_id", corretorIds[0]);
+      } else {
+        query = query.in("corretor_id", corretorIds);
+      }
+
+      const { data: msgs } = await query;
+      if (!msgs || msgs.length === 0) {
+        setMsgResults([]);
+        setMsgSearchLoading(false);
+        return;
+      }
+
+      // Get lead names
+      const leadIds = [...new Set(msgs.map(m => m.lead_id))];
+      const { data: leads } = await supabase
+        .from("pipeline_leads")
+        .select("id, nome, empreendimento")
+        .in("id", leadIds);
+
+      const typedLeads = (leads || []) as { id: string; nome: string; empreendimento: string | null }[];
+      const leadMap = new Map(typedLeads.map(l => [l.id, l]));
+
+      const results: MessageSearchResult[] = msgs.map(m => {
+        const lead = leadMap.get(m.lead_id);
+        return {
+          leadId: m.lead_id,
+          leadName: lead?.nome || "Lead",
+          empreendimento: lead?.empreendimento || null,
+          body: m.body || "",
+          timestamp: m.timestamp,
+        };
+      });
+
+      setMsgResults(results);
+      setMsgSearchLoading(false);
+    })();
+  }, [debouncedMsgSearch, corretorIds]);
+
   const q = search.toLowerCase();
 
   const filteredConversations = useMemo(() => {
@@ -201,15 +276,49 @@ export default function ConversationList({
             {conversations.length} ativas · {followUpLeads.length} follow-up · {newLeads.length} novos
           </span>
         </div>
-        <div className="relative">
-          <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
-          <Input
-            placeholder="Buscar lead..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="h-8 pl-8 text-xs"
-          />
+        <div className="flex gap-1.5">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
+            <Input
+              placeholder="Buscar lead..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="h-8 pl-8 text-xs"
+            />
+          </div>
+          <button
+            onClick={() => {
+              setMsgSearchOpen(!msgSearchOpen);
+              if (msgSearchOpen) { setMsgSearch(""); setMsgResults([]); }
+            }}
+            className={`h-8 w-8 rounded-md flex items-center justify-center transition-colors shrink-0 ${
+              msgSearchOpen ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+            title="Buscar em mensagens"
+          >
+            <FileSearch size={14} />
+          </button>
         </div>
+        {msgSearchOpen && (
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
+            <Input
+              placeholder="Buscar em mensagens..."
+              value={msgSearch}
+              onChange={e => setMsgSearch(e.target.value)}
+              className="h-8 pl-8 pr-7 text-xs"
+              autoFocus
+            />
+            {msgSearch && (
+              <button
+                onClick={() => { setMsgSearch(""); setMsgResults([]); }}
+                className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        )}
         <div className="flex gap-1">
           {tabs.map(t => (
             <button
@@ -368,8 +477,72 @@ export default function ConversationList({
               </>
             )}
 
+            {/* Message search results */}
+            {msgSearchOpen && debouncedMsgSearch.trim() && (
+              <>
+                <div className="px-3 pt-3 pb-1 flex items-center gap-1.5">
+                  <FileSearch size={12} className="text-primary" />
+                  <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
+                    Resultados em mensagens ({msgSearchLoading ? "..." : msgResults.length})
+                  </span>
+                </div>
+                {msgSearchLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 size={16} className="animate-spin text-muted-foreground" />
+                  </div>
+                ) : msgResults.length === 0 ? (
+                  <div className="text-center py-4 px-3">
+                    <p className="text-[10px] text-muted-foreground">Nenhuma mensagem encontrada</p>
+                  </div>
+                ) : (
+                  msgResults.map((r, i) => {
+                    const term = debouncedMsgSearch.trim().toLowerCase();
+                    const bodyLower = r.body.toLowerCase();
+                    const idx = bodyLower.indexOf(term);
+                    const start = Math.max(0, idx - 20);
+                    const end = Math.min(r.body.length, idx + term.length + 40);
+                    const snippet = (start > 0 ? "..." : "") + r.body.slice(start, end) + (end < r.body.length ? "..." : "");
+
+                    return (
+                      <button
+                        key={`msg-${i}`}
+                        onClick={() => onSelect(r.leadId)}
+                        className={`w-full text-left px-3 py-2 border-l-2 transition-colors hover:bg-muted/50 ${
+                          selectedLeadId === r.leadId ? "border-l-primary bg-muted/60" : "border-l-transparent"
+                        }`}
+                      >
+                        <div className="flex gap-2.5">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            <AvatarFallback className={`${getAvatarColor(r.leadName)} text-white text-[10px]`}>
+                              {getInitials(r.leadName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-medium truncate">{r.leadName}</span>
+                              <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
+                                {formatDistanceToNow(new Date(r.timestamp), { locale: ptBR, addSuffix: false })}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground truncate mt-0.5"
+                               dangerouslySetInnerHTML={{
+                                 __html: snippet.replace(
+                                   new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"),
+                                   '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">$1</mark>'
+                                 ),
+                               }}
+                            />
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </>
+            )}
+
             {/* Empty state */}
-            {filteredConversations.length === 0 && filteredFollowUp.length === 0 && filteredNew.length === 0 && (
+            {filteredConversations.length === 0 && filteredFollowUp.length === 0 && filteredNew.length === 0 && msgResults.length === 0 && (
               <div className="text-center py-12 px-4">
                 <MessageSquare size={24} className="mx-auto text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground">Nenhum resultado encontrado</p>
