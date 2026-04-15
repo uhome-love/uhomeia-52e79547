@@ -176,6 +176,8 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sendingMedia, setSendingMedia] = useState(false);
   const navigate = useNavigate();
 
   // Fetch profiles.id with retry + stages once on mount
