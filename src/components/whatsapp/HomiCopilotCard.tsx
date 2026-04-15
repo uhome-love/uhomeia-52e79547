@@ -18,16 +18,29 @@ interface HomiCopilotCardProps {
 interface CopilotData {
   sugestao_resposta: string;
   briefing: string;
-  tom_detectado: "interessado" | "hesitante" | "frio" | "pronto";
+  tom_detectado: "interessado" | "hesitante" | "frio" | "pronto" | "curioso" | "com_objecao";
+  momento_detectado?: "primeiro_contato" | "qualificacao" | "apresentacao" | "convite_visita" | "followup" | "objecao";
+  proxima_acao?: string;
   sugestao_followup: string | null;
   sugestao_etapa: string | null;
 }
 
-const TOM_CONFIG = {
+const TOM_CONFIG: Record<string, { emoji: string; className: string }> = {
   interessado: { emoji: "🟢", className: "text-green-600" },
   hesitante: { emoji: "🟡", className: "text-yellow-600" },
   frio: { emoji: "🔵", className: "text-blue-600" },
   pronto: { emoji: "🔥", className: "text-orange-600" },
+  curioso: { emoji: "🔵", className: "text-blue-500" },
+  com_objecao: { emoji: "🟠", className: "text-orange-500" },
+};
+
+const MOMENTO_CONFIG: Record<string, { emoji: string; label: string }> = {
+  primeiro_contato: { emoji: "🤝", label: "Acolhimento" },
+  qualificacao: { emoji: "🔍", label: "Qualificando" },
+  apresentacao: { emoji: "🏠", label: "Apresentando" },
+  convite_visita: { emoji: "📅", label: "Propor visita" },
+  followup: { emoji: "🔔", label: "Reativação" },
+  objecao: { emoji: "⚠️", label: "Objeção detectada" },
 };
 
 export default function HomiCopilotCard({ leadId, leadName, lastMessage, onUseSuggestion, isReadOnly = false }: HomiCopilotCardProps) {
