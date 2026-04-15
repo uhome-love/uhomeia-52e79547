@@ -470,31 +470,52 @@ export default function WhatsAppInbox() {
               />
             </div>
           )}
-          <ConversationList
-            conversations={conversations}
-            followUpLeads={isReadOnly ? [] : followUpLeads}
-            newLeads={isReadOnly ? [] : newLeads}
-            selectedLeadId={selectedLeadId}
-            onSelect={handleSelect}
-            loading={loadingConvs}
-            userId={user?.id || null}
-            corretorMap={corretorMap}
-            corretorIds={getTargetProfileIds() || []}
-          />
+          {isTeamView && selectedCorretorId === CORRETOR_UNSELECTED ? (
+            <div className="w-[290px] flex-1 flex flex-col items-center justify-center px-6 text-center">
+              <MessageSquare size={40} className="text-muted-foreground/40 mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">Selecione um corretor para visualizar as conversas</p>
+            </div>
+          ) : (
+            <ConversationList
+              conversations={conversations}
+              followUpLeads={isReadOnly ? [] : followUpLeads}
+              newLeads={isReadOnly ? [] : newLeads}
+              selectedLeadId={selectedLeadId}
+              onSelect={handleSelect}
+              loading={loadingConvs}
+              userId={user?.id || null}
+              corretorMap={corretorMap}
+              corretorIds={getTargetProfileIds() || []}
+            />
+          )}
         </div>
 
         <div className={`flex-1 flex ${isMobile ? (mobileView === "thread" ? "flex" : "hidden") : "flex"}`}>
-          <ConversationThread
-            leadId={selectedLeadId}
-            leadInfo={leadInfo ? { id: leadInfo.id, nome: leadInfo.nome, empreendimento: leadInfo.empreendimento, stage_id: leadInfo.stage_id, telefone: leadInfo.telefone } : null}
-            messages={messages}
-            onMessageSent={() => {
-              if (selectedLeadId) loadThread(selectedLeadId);
-              loadConversations();
-            }}
-            isReadOnly={isReadOnly}
-            readOnlyCorretorNome={selectedCorretorNome}
-          />
+          {isTeamView && selectedCorretorId === CORRETOR_UNSELECTED ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+              <MessageSquare size={48} className="text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-semibold text-foreground mb-1">WhatsApp Inbox</p>
+              <p className="text-xs text-muted-foreground max-w-[260px]">Selecione um corretor no menu acima para visualizar e acompanhar as conversas da equipe</p>
+            </div>
+          ) : !selectedLeadId && isTeamView ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+              <MessageSquare size={48} className="text-muted-foreground/30 mb-4" />
+              <p className="text-sm font-semibold text-foreground mb-1">Selecione uma conversa</p>
+              <p className="text-xs text-muted-foreground max-w-[260px]">Escolha uma conversa na lista ao lado para visualizar as mensagens</p>
+            </div>
+          ) : (
+            <ConversationThread
+              leadId={selectedLeadId}
+              leadInfo={leadInfo ? { id: leadInfo.id, nome: leadInfo.nome, empreendimento: leadInfo.empreendimento, stage_id: leadInfo.stage_id, telefone: leadInfo.telefone } : null}
+              messages={messages}
+              onMessageSent={() => {
+                if (selectedLeadId) loadThread(selectedLeadId);
+                loadConversations();
+              }}
+              isReadOnly={isReadOnly}
+              readOnlyCorretorNome={selectedCorretorNome}
+            />
+          )}
         </div>
 
         {!isMobile && (
