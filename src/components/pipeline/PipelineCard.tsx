@@ -1,6 +1,7 @@
 import { memo, useState, useMemo, useEffect } from "react";
 import type { PipelineLead, PipelineSegmento, PipelineStage } from "@/hooks/usePipeline";
-import { Phone, MessageCircle, Handshake, ArrowRightLeft, FileText, Undo2, ChevronDown } from "lucide-react";
+import { Phone, MessageCircle, Handshake, ArrowRightLeft, FileText, Undo2, ChevronDown, MessageSquare } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { calculateLeadScore } from "@/lib/leadScoring";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
@@ -79,13 +80,15 @@ interface PipelineCardProps {
   onTransferred?: (leadId: string, corretorId: string, corretorNome: string) => void;
   stageIndexMap?: Map<string, number>;
   proximaTarefa?: ProximaTarefa | null;
+  hasUnreadWhatsApp?: boolean;
 }
 
 const PipelineCard = memo(function PipelineCard({
   lead, stage, stages, segmentos, corretorNome, corretorAvatar, gerenteNome, parceiroNome,
-  onDragStart, onClick, onMoveLead, onTransferred, stageIndexMap, proximaTarefa,
+  onDragStart, onClick, onMoveLead, onTransferred, stageIndexMap, proximaTarefa, hasUnreadWhatsApp,
 }: PipelineCardProps) {
   const { user } = useAuth();
+  const navigateToWhatsApp = useNavigate();
   const { isAdmin, isGestor } = useUserRole();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [partnerOpen, setPartnerOpen] = useState(false);
@@ -222,6 +225,7 @@ const PipelineCard = memo(function PipelineCard({
       onDragEnd={(e) => e.preventDefault()}
       onClick={handleCardClick}
       style={{
+        position: "relative",
         background: "hsl(var(--pipeline-card-bg))",
         border: "1px solid hsl(var(--pipeline-card-border))",
         borderRadius: 8,
@@ -246,6 +250,23 @@ const PipelineCard = memo(function PipelineCard({
     >
       {/* Stripe top 3px */}
       <div style={{ height: 3, background: stripeGradient }} />
+
+      {/* WhatsApp unread indicator */}
+      {hasUnreadWhatsApp && (
+        <div
+          data-no-card-click
+          onClick={(e) => { e.stopPropagation(); navigateToWhatsApp(`/whatsapp?lead=${lead.id}`); }}
+          title="Mensagem não respondida"
+          style={{
+            position: "absolute", top: 8, right: 8, zIndex: 5,
+            width: 22, height: 22, borderRadius: "50%",
+            background: "#25D366", display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+          }}
+        >
+          <MessageSquare size={12} color="#fff" strokeWidth={2.5} />
+        </div>
+      )}
 
       {/* Body */}
       <div className="pipeline-card-body" style={{ padding: "12px 12px 8px", display: "flex", flexDirection: "column", gap: 0 }}>

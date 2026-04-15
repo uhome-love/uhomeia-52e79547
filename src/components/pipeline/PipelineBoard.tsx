@@ -98,7 +98,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
   stageLeads, stage, stages, segmentos, corretorNomes, corretorAvatars, parcerias,
   selectionMode, selectedLeads, arrivedLeadId,
   onToggleSelect, onSelectLead, onMoveLead, onTransferred, stageIndexMap, handleDragStart,
-  tarefasMap,
+  tarefasMap, whatsappUnreadSet,
 }: {
   stageLeads: PipelineLead[];
   stage: PipelineStage;
@@ -117,6 +117,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
   stageIndexMap: Map<string, number>;
   handleDragStart: (leadId: string) => void;
   tarefasMap: Record<string, { tipo: string; vence_em: string | null; hora_vencimento: string | null }>;
+  whatsappUnreadSet: Set<string>;
 }) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_RENDER);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -197,6 +198,7 @@ const VirtualizedCardList = memo(function VirtualizedCardList({
                 onTransferred={onTransferred}
                 stageIndexMap={stageIndexMap}
                 proximaTarefa={tarefasMap[lead.id] || null}
+                hasUnreadWhatsApp={whatsappUnreadSet.has(lead.id)}
               />
             </PipelineCardHover>
           </div>
@@ -276,6 +278,36 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
         }
       }
       return map;
+    },
+    enabled: leadIds.length > 0,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Fetch leads with unread WhatsApp messages (last msg is direction='received')
+  const { data: whatsappUnreadSet = new Set<string>() } = useQuery({
+    queryKey: ["pipeline-whatsapp-unread", leadIdsKey],
+    queryFn: async () => {
+      if (leadIds.length === 0) return new Set<string>();
+      const set = new Set<string>();
+      for (let i = 0; i < leadIds.length; i += 200) {
+        const chunk = leadIds.slice(i, i + 200);
+        const { data } = await supabase
+          .from("whatsapp_mensagens")
+          .select("lead_id, direction")
+          .in("lead_id", chunk)
+          .order("timestamp", { ascending: false })
+          .limit(1000);
+        if (data) {
+          const seen = new Set<string>();
+          for (const m of data) {
+            if (!m.lead_id || seen.has(m.lead_id)) continue;
+            seen.add(m.lead_id);
+            if (m.direction === "received") set.add(m.lead_id);
+          }
+        }
+      }
+      return set;
     },
     enabled: leadIds.length > 0,
     staleTime: 30_000,
@@ -898,6 +930,7 @@ export default function PipelineBoard({ stages, leads, segmentos, corretorNomes,
                   stageIndexMap={stageIndexMap}
                   handleDragStart={handleDragStart}
                   tarefasMap={tarefasMap}
+                  whatsappUnreadSet={whatsappUnreadSet}
                 />
               </div>
             );
