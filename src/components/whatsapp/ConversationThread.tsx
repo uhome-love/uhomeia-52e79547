@@ -817,6 +817,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-card flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <Avatar className="h-8 w-8">
+            {profilePicUrl && <AvatarImage src={profilePicUrl} alt={leadInfo.nome} />}
             <AvatarFallback className="bg-primary text-primary-foreground text-xs">
               {getInitials(leadInfo.nome)}
             </AvatarFallback>
