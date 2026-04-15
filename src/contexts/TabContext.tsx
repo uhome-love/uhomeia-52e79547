@@ -1,0 +1,174 @@
+import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { resolveRoute, type ResolvedRoute } from "@/config/pageRegistry";
+
+const MAX_TABS = 8;
+const STORAGE_KEY = "uhome_tabs_v1";
+
+export interface Tab {
+  id: string;
+  label: string;
+  icon: string;
+  path: string;
+  closable: boolean;
+  componentKey: string;
+  pattern?: string;
+  noPadding?: boolean;
+}
+
+interface TabContextValue {
+  tabs: Tab[];
+  activeTabId: string;
+  openTab: (path: string, skipNav?: boolean) => void;
+  closeTab: (id: string) => void;
+  activateTab: (id: string) => void;
+}
+
+const TabContext = createContext<TabContextValue | null>(null);
+
+export function useTabContext() {
+  const ctx = useContext(TabContext);
+  if (!ctx) throw new Error("useTabContext must be inside TabProvider");
+  return ctx;
+}
+
+// ─── Persistence ─────────────────────────────────────────────────────────────
+function saveToStorage(tabs: Tab[], activeTabId: string) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ tabs, activeTabId }));
+  } catch {}
+}
+
+function loadFromStorage(): { tabs: Tab[]; activeTabId: string } | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.tabs) && typeof data.activeTabId === "string") return data;
+  } catch {}
+  return null;
+}
+
+// ─── Provider ────────────────────────────────────────────────────────────────
+export function TabProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Initialize from storage or empty
+  const stored = useRef(loadFromStorage());
+  const [tabs, setTabs] = useState<Tab[]>(stored.current?.tabs ?? []);
+  const [activeTabId, setActiveTabId] = useState(stored.current?.activeTabId ?? "");
+
+  // Refs for avoiding stale closures
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+  const activeRef = useRef(activeTabId);
+  activeRef.current = activeTabId;
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
+  // Persist on change
+  useEffect(() => {
+    saveToStorage(tabs, activeTabId);
+  }, [tabs, activeTabId]);
+
+  // ── openTab ────────────────────────────────────────────────────────────────
+  const openTab = useCallback((path: string, skipNav = false) => {
+    const pathname = path.split("?")[0].split("#")[0];
+    const resolved = resolveRoute(pathname);
+    if (!resolved) return;
+
+    const currentTabs = tabsRef.current;
+    const existingIdx = currentTabs.findIndex((t) => t.id === resolved.key);
+
+    if (existingIdx >= 0) {
+      // Tab already open — activate it
+      if (activeRef.current !== resolved.key) {
+        setActiveTabId(resolved.key);
+        if (!skipNav) navigateRef.current(path);
+      }
+      return;
+    }
+
+    // Build new tab
+    const newTab: Tab = {
+      id: resolved.key,
+      label: resolved.label,
+      icon: resolved.icon,
+      path,
+      closable: resolved.closable !== false,
+      componentKey: resolved.componentKey,
+      pattern: resolved.pattern,
+      noPadding: resolved.noPadding,
+    };
+
+    let newTabs = [...currentTabs, newTab];
+    // Enforce max
+    while (newTabs.length > MAX_TABS) {
+      const oldest = newTabs.findIndex((t) => t.closable && t.id !== resolved.key);
+      if (oldest >= 0) newTabs.splice(oldest, 1);
+      else break;
+    }
+
+    setTabs(newTabs);
+    setActiveTabId(resolved.key);
+    if (!skipNav) navigateRef.current(path);
+  }, []);
+
+  // ── closeTab ───────────────────────────────────────────────────────────────
+  const closeTab = useCallback((tabId: string) => {
+    const current = tabsRef.current;
+    const idx = current.findIndex((t) => t.id === tabId);
+    if (idx < 0 || !current[idx].closable) return;
+
+    const newTabs = current.filter((t) => t.id !== tabId);
+    setTabs(newTabs);
+
+    if (activeRef.current === tabId && newTabs.length > 0) {
+      const nextIdx = Math.min(idx, newTabs.length - 1);
+      const next = newTabs[nextIdx];
+      setActiveTabId(next.id);
+      navigateRef.current(next.path);
+    }
+  }, []);
+
+  // ── activateTab ────────────────────────────────────────────────────────────
+  const activateTab = useCallback((tabId: string) => {
+    const tab = tabsRef.current.find((t) => t.id === tabId);
+    if (!tab) return;
+    setActiveTabId(tabId);
+    navigateRef.current(tab.path);
+  }, []);
+
+  // ── URL → Tab sync (handles browser back/forward, direct URL entry) ────────
+  const syncingRef = useRef(false);
+  useEffect(() => {
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+
+    const fullPath = location.pathname + location.search;
+    const pathname = location.pathname;
+    const resolved = resolveRoute(pathname);
+
+    if (resolved) {
+      const existing = tabsRef.current.find((t) => t.id === resolved.key);
+      if (existing) {
+        if (activeRef.current !== resolved.key) {
+          setActiveTabId(resolved.key);
+        }
+      } else {
+        // Open as new tab without navigating (URL already correct)
+        openTab(fullPath, true);
+      }
+    }
+
+    // Reset sync guard after this render
+    requestAnimationFrame(() => { syncingRef.current = false; });
+  }, [location.pathname, openTab]);
+
+  return (
+    <TabContext.Provider value={{ tabs, activeTabId, openTab, closeTab, activateTab }}>
+      {children}
+    </TabContext.Provider>
+  );
+}
