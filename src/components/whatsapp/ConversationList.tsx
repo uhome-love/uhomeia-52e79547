@@ -212,7 +212,8 @@ export default function ConversationList({
         .select("id, nome, empreendimento")
         .in("id", leadIds);
 
-      const leadMap = new Map((leads || []).map(l => [l.id, l]));
+      const typedLeads = (leads || []) as { id: string; nome: string; empreendimento: string | null }[];
+      const leadMap = new Map(typedLeads.map(l => [l.id, l]));
 
       const results: MessageSearchResult[] = msgs.map(m => {
         const lead = leadMap.get(m.lead_id);
