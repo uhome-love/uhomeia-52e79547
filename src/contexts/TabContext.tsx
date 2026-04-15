@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { resolveRoute, type ResolvedRoute } from "@/config/pageRegistry";
+import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 
 const MAX_TABS = 8;
 const STORAGE_KEY = "uhome_tabs_v1";
@@ -61,6 +62,7 @@ function loadFromStorage(): { tabs: Tab[]; activeTabId: string } | null {
 export function TabProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { roles, loading: roleLoading } = useUserRole();
 
   // Initialize from storage or empty
   const stored = useRef(loadFromStorage());
@@ -74,6 +76,17 @@ export function TabProvider({ children }: { children: ReactNode }) {
   activeRef.current = activeTabId;
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
+  const rolesRef = useRef(roles);
+  rolesRef.current = roles;
+
+  /** Check if user has access to a route based on its roles config */
+  const hasAccess = useCallback((resolved: ResolvedRoute): boolean => {
+    // No roles defined = open to all authenticated users
+    if (!resolved.roles || resolved.roles.length === 0) return true;
+    // Admin always has access
+    if (rolesRef.current.includes("admin")) return true;
+    return resolved.roles.some((r) => rolesRef.current.includes(r as AppRole));
+  }, []);
 
   // Persist on change
   useEffect(() => {
@@ -85,6 +98,12 @@ export function TabProvider({ children }: { children: ReactNode }) {
     const pathname = path.split("?")[0].split("#")[0];
     const resolved = resolveRoute(pathname);
     if (!resolved) return;
+
+    // Role gate: redirect unauthorized users to their home
+    if (!hasAccess(resolved)) {
+      if (!skipNav) navigateRef.current("/", { replace: true });
+      return;
+    }
 
     const currentTabs = tabsRef.current;
     const existingIdx = currentTabs.findIndex((t) => t.id === resolved.key);
@@ -151,7 +170,7 @@ export function TabProvider({ children }: { children: ReactNode }) {
   // ── URL → Tab sync (handles browser back/forward, direct URL entry) ────────
   const syncingRef = useRef(false);
   useEffect(() => {
-    if (syncingRef.current) return;
+    if (syncingRef.current || roleLoading) return;
     syncingRef.current = true;
 
     const fullPath = location.pathname + location.search;
@@ -163,6 +182,13 @@ export function TabProvider({ children }: { children: ReactNode }) {
     const resolved = resolveRoute(pathname);
 
     if (resolved) {
+      // Role gate on URL sync
+      if (!hasAccess(resolved)) {
+        navigateRef.current("/", { replace: true });
+        requestAnimationFrame(() => { syncingRef.current = false; });
+        return;
+      }
+
       const existing = tabsRef.current.find((t) => t.id === resolved.key);
       if (existing) {
         if (activeRef.current !== resolved.key) {
@@ -176,7 +202,7 @@ export function TabProvider({ children }: { children: ReactNode }) {
 
     // Reset sync guard after this render
     requestAnimationFrame(() => { syncingRef.current = false; });
-  }, [location.pathname, openTab]);
+  }, [location.pathname, openTab, roleLoading, hasAccess]);
 
   return (
     <TabContext.Provider value={{ tabs, activeTabId, openTab, closeTab, activateTab }}>
