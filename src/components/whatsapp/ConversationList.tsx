@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, MessageSquare, Loader2, Clock, UserPlus, RefreshCw, ArrowRight, X, FileSearch } from "lucide-react";
+import { Search, Plus, MessageSquare, Loader2, UserPlus, ArrowRight, X, FileSearch } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, differenceInHours } from "date-fns";
@@ -22,13 +22,6 @@ export interface ConversationItem {
   corretorId?: string;
 }
 
-export interface FollowUpLead {
-  id: string;
-  nome: string;
-  empreendimento: string | null;
-  stageName: string | null;
-  updatedAt: string;
-}
 
 export interface NewLead {
   id: string;
@@ -47,7 +40,6 @@ interface MessageSearchResult {
 
 interface ConversationListProps {
   conversations: ConversationItem[];
-  followUpLeads: FollowUpLead[];
   newLeads: NewLead[];
   selectedLeadId: string | null;
   onSelect: (leadId: string) => void;
@@ -81,7 +73,7 @@ function SLABadge({ lastReceivedTs }: { lastReceivedTs: string | null }) {
   );
 }
 
-type Tab = "all" | "active" | "followup" | "new" | "unread";
+type Tab = "all" | "new" | "unread";
 
 interface DialogLead {
   id: string;
@@ -98,7 +90,6 @@ function getCorretorInitials(nome: string) {
 
 export default function ConversationList({
   conversations,
-  followUpLeads,
   newLeads,
   selectedLeadId,
   onSelect,
@@ -244,11 +235,6 @@ export default function ConversationList({
     return list;
   }, [conversations, q, search, tab]);
 
-  const filteredFollowUp = useMemo(() => {
-    if (!search) return followUpLeads;
-    return followUpLeads.filter(l => l.nome.toLowerCase().includes(q));
-  }, [followUpLeads, q, search]);
-
   const filteredNew = useMemo(() => {
     if (!search) return newLeads;
     return newLeads.filter(l => l.nome.toLowerCase().includes(q));
@@ -259,8 +245,7 @@ export default function ConversationList({
     onSelect(leadId);
   };
 
-  const showActive = tab === "all" || tab === "active" || tab === "unread";
-  const showFollowUp = tab === "all" || tab === "followup";
+  const showActive = tab === "all" || tab === "unread";
   const showNew = tab === "all" || tab === "new";
 
   const unreadCount = conversations.filter(c => c.unreadCount > 0).length;
@@ -268,8 +253,6 @@ export default function ConversationList({
   const tabs: { key: Tab; label: string }[] = [
     { key: "all", label: "Todas" },
     { key: "unread", label: `Não lidas${unreadCount > 0 ? ` (${unreadCount})` : ""}` },
-    { key: "active", label: "Ativas" },
-    { key: "followup", label: "Follow-up" },
     { key: "new", label: "Novos" },
   ];
 
@@ -282,7 +265,7 @@ export default function ConversationList({
             <MessageSquare size={14} /> Conversas
           </h2>
           <span className="text-[10px] text-muted-foreground">
-            {conversations.length} ativas · {unreadCount > 0 ? `${unreadCount} não lidas · ` : ""}{newLeads.length} novos
+            {conversations.length} conversas · {newLeads.length} novos
           </span>
         </div>
         <div className="flex gap-1.5">
@@ -411,43 +394,6 @@ export default function ConversationList({
               </>
             )}
 
-            {/* Group 2: Follow-up sugerido */}
-            {showFollowUp && filteredFollowUp.length > 0 && (
-              <>
-                <div className="px-3 pt-3 pb-1 flex items-center gap-1.5">
-                  <RefreshCw size={12} className="text-yellow-500" />
-                  <span className="text-[10px] font-semibold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">Follow-up sugerido</span>
-                </div>
-                {filteredFollowUp.map(lead => (
-                  <button
-                    key={lead.id}
-                    onClick={() => onSelect(lead.id)}
-                    className={`w-full text-left px-3 py-2 border-l-2 transition-colors hover:bg-muted/50 ${
-                      selectedLeadId === lead.id ? "border-l-yellow-500 bg-muted/60" : "border-l-transparent"
-                    }`}
-                  >
-                    <div className="flex gap-2.5 items-center">
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className={`${getAvatarColor(lead.nome)} text-white text-[10px]`}>
-                          {getInitials(lead.nome)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium truncate block">{lead.nome}</span>
-                        {lead.empreendimento && (
-                          <span className="text-[10px] text-muted-foreground block truncate">{lead.empreendimento}</span>
-                        )}
-                        <span className="text-[10px] text-yellow-600 dark:text-yellow-400">
-                          <Clock size={10} className="inline mr-0.5" />
-                          há {formatDistanceToNow(new Date(lead.updatedAt), { locale: ptBR, addSuffix: false })} sem contato
-                        </span>
-                      </div>
-                      <ArrowRight size={12} className="text-muted-foreground shrink-0" />
-                    </div>
-                  </button>
-                ))}
-              </>
-            )}
 
             {/* Group 3: Novos leads */}
             {showNew && filteredNew.length > 0 && (
@@ -551,7 +497,7 @@ export default function ConversationList({
             )}
 
             {/* Empty state */}
-            {filteredConversations.length === 0 && filteredFollowUp.length === 0 && filteredNew.length === 0 && msgResults.length === 0 && (
+            {filteredConversations.length === 0 && filteredNew.length === 0 && msgResults.length === 0 && (
               <div className="text-center py-12 px-4">
                 <MessageSquare size={24} className="mx-auto text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground">Nenhum resultado encontrado</p>
