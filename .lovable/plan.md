@@ -1,48 +1,68 @@
 
 
-## Plano: Diagnosticar e Corrigir Envio WhatsApp
+## Plano: Atualizar Prompt Master do HOMI Copilot
 
-### Diagnóstico
+### Análise
 
-O código frontend (`ConversationThread.tsx`) está correto:
-- Campos `telefone` e `mensagem` **batem** com o que a Edge Function `whatsapp-send` espera
-- `profileId` carrega com retry (3 tentativas)
-- Toasts de erro já existem para `!profileId` e `!leadInfo`
-- A Edge Function funciona — logs mostram envios bem-sucedidos por outros corretores
+O `homi-copilot/index.ts` já tem ~90% do conteúdo que você enviou (empreendimentos, etapas, gatilhos, cross-sell, contexto dinâmico do CRM). As adições reais do "Prompt Master" são:
 
-### Causa raiz provável
+1. **Multi-perfil** — O prompt diferencia 4 modos (Corretor, Gerente, CEO, Copilot real-time) mas a edge function atual sempre roda como "Copilot real-time" dentro do WhatsApp Inbox. Vou adicionar a seção de detecção automática de temperatura (frio/morno/quente com estratégias) e o output de 3 opções de resposta ao invés de 1.
 
-A Edge Function `whatsapp-send` usa `_sbAuth.auth.getClaims(_token)` para validar JWT. **`getClaims` não é um método padrão do supabase-js v2** — pode funcionar em algumas versões importadas via esm.sh e falhar em outras. Quando falha, retorna 401 silenciosamente. O frontend recebe o erro via `supabase.functions.invoke` mas o comportamento pode variar (erro pode não ser propagado como `throw`).
+2. **Detecção automática de temperatura** — Regras para lead frio (curiosidade + pressão), morno (valor + prova), quente (fechamento + visita).
 
-Além disso, o `sendingRef` pode ficar "travado" em `true` se uma chamada anterior falhou de forma inesperada antes de chegar ao `finally`.
+3. **Contexto operacional Uhome** — 1000+ leads/mês, 30 visitas/semana, problema de leads travados em qualificação/busca.
+
+4. **Pipeline de Negócios** — Adicionar as etapas pós-venda (Proposta → Contrato Assinado) que faltam.
+
+5. **Output expandido** — Gerar 3 opções de resposta (direta, leve, curiosa) + temperatura detectada no JSON.
 
 ### Alterações
 
-**1. `supabase/functions/whatsapp-send/index.ts`** — Substituir `getClaims` por `getUser`
+**Arquivo: `supabase/functions/homi-copilot/index.ts`**
 
-Trocar:
-```typescript
-const { data: _claims, error: _claimsErr } = await _sbAuth.auth.getClaims(_token);
-if (_claimsErr || !_claims?.claims) { ... }
+Substituir apenas o `prompt` string (linhas 140-368) pelo Prompt Master completo, incorporando:
+
+- Seção "CONTEXTO UHOME" com dados operacionais (1000+ leads, 30 visitas/sem, gargalo em qualificação/busca)
+- Pipeline de Negócios (Novo Negócio → Contrato Assinado)  
+- Detecção automática de temperatura com estratégias por tipo (frio, morno, quente)
+- 3 opções de resposta no output JSON (`opcoes_resposta`: array de 3 strings variando abordagem)
+- Campo `temperatura_detectada` no JSON de saída
+- Manter todas as seções existentes (empreendimentos, cross-sell, etapas, gatilhos)
+- Manter todas as variáveis dinâmicas existentes (`${nome}`, `${etapa}`, `${historico}`, etc.)
+
+**Arquivo: `src/components/whatsapp/HomiCopilotCard.tsx`**
+
+Atualizar para exibir as 3 opções de resposta:
+- Mostrar 3 botões "Opção 1", "Opção 2", "Opção 3" ao invés de um único textarea
+- Ao clicar numa opção, preenche o textarea para edição antes de enviar
+- Mostrar temperatura detectada junto ao tom
+- Adicionar `temperatura_detectada` ao interface `CopilotData`
+
+**Deploy: `homi-copilot`**
+
+### Estrutura do novo JSON de saída
+
+```json
+{
+  "momento_detectado": "primeiro_contato|qualificacao|...",
+  "temperatura_detectada": "frio|morno|quente",
+  "opcoes_resposta": [
+    "Opção direta...",
+    "Opção leve...",
+    "Opção curiosa..."
+  ],
+  "sugestao_resposta": "melhor opção (para compatibilidade)",
+  "briefing": "máx 15 palavras",
+  "tom_detectado": "interessado|hesitante|frio|...",
+  "proxima_acao": "ação concreta",
+  "sugestao_followup": "string|null",
+  "sugestao_etapa": "string|null"
+}
 ```
-Por:
-```typescript
-const { data: { user }, error: userErr } = await _sbAuth.auth.getUser();
-if (userErr || !user) { ... }
-```
 
-`getUser()` é o método padrão e confiável do supabase-js v2 para validar JWT e obter o usuário autenticado.
-
-**2. `src/components/whatsapp/ConversationThread.tsx`** — Robustez no envio
-
-- Resetar `sendingRef` no início do `handleSend` se `sending` state for `false` (proteção contra ref travada)
-- Melhorar tratamento do retorno de `supabase.functions.invoke`:
-  - Checar `data?.error` corretamente (o invoke pode retornar `{ data, error }` onde `data` contém o JSON da response)
-- Adicionar log do response completo para debug
-
-### Resultado esperado
-- Auth funciona com `getUser()` para todos os corretores
-- Sem refs travadas impedindo envio
-- Erros sempre visíveis via toast
-- Nenhuma mudança em tabelas
+### O que NÃO muda
+- Lógica de queries (linhas 34-138) permanece intacta
+- Auth e parsing JSON permanecem
+- Nenhuma tabela alterada
+- Nenhum outro arquivo alterado
 
