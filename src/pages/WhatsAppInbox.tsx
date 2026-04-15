@@ -189,7 +189,11 @@ export default function WhatsAppInbox() {
   // Load conversations list + SLA + unread
   const loadConversations = useCallback(async () => {
     const targetIds = getTargetProfileIds();
-    if (!targetIds) return;
+    if (!targetIds) {
+      setConversations([]);
+      setLoadingConvs(false);
+      return;
+    }
 
     let query = supabase
       .from("whatsapp_mensagens")
