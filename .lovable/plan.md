@@ -1,33 +1,45 @@
 
 
-## Plano: Simplificar tabs do WhatsApp Inbox
+# Correção: Envio WhatsApp via Evolution API (número do corretor)
 
-### Mudança
+## Problema
+A Edge Function `whatsapp-send` envia **exclusivamente pela Meta Business API** (número da UHome). As mensagens do corretor devem sair pelo **número pessoal dele**, conectado via **Evolution API**. A função precisa ser reescrita para usar Evolution como canal principal.
 
-Remover os botões **"Ativas"** e **"Follow-up"** da lista de conversas. Manter apenas **Todas**, **Não lidas** e **Novos**.
+## Plano
 
-### Arquivo: `src/components/whatsapp/ConversationList.tsx`
+### 1. Reescrever `supabase/functions/whatsapp-send/index.ts`
 
-1. **Remover tabs** `active` e `followup` do array `tabs` (linhas 268-274)
-2. **Remover tipo** `"active" | "followup"` do type `Tab`
-3. **Simplificar flags**: remover `showFollowUp` e `showActive` — conversas sempre aparecem; "Novos" aparece em `tab === "all"` ou `tab === "new"`
-4. **Remover seção "Follow-up sugerido"** (linhas 414-460) — o grupo inteiro sai do render
-5. **Remover props** `followUpLeads` e `FollowUpLead` do componente (cleanup)
-6. **No header**: remover menção a "ativas", simplificar para `{conversations.length} conversas · {newLeads.length} novos`
+Lógica nova:
+1. Autenticar o usuário (JWT)
+2. Buscar `profiles.id` via `profiles.user_id = auth_user.id`
+3. Buscar instância Evolution em `whatsapp_instancias` onde `corretor_id = profiles.id` e `status = 'conectado'`
+4. **Enviar via Evolution API**: `POST ${EVOLUTION_API_URL}/message/sendText/${instanceName}` com body `{ number, text }`
+5. Se não tiver instância conectada, retornar erro claro ("Conecte seu WhatsApp primeiro")
+6. Remover toda a lógica Meta Business API (Graph API) desta função
 
-### Arquivo: `src/pages/WhatsAppInbox.tsx`
+**Importante**: A tabela correta é `whatsapp_instancias` (com "i", não "instances"). O `corretor_id` é o `profiles.id`.
 
-7. **Aumentar limite de novos leads**: mudar `.slice(0, 5)` para `.slice(0, 15)` (linha 330) para que apareçam mais leads na aba "Novos"
-8. **Remover** `followUpLeads` state e a query de follow-up (linhas 298-318) — código morto
-9. **Remover** prop `followUpLeads` do `<ConversationList>`
+### 2. Corrigir `whatsapp-send-media` (bug silencioso)
 
-### Resultado
+A função `whatsapp-send-media` consulta `whatsapp_instances` (tabela que não existe). Corrigir para `whatsapp_instancias` e usar `corretor_id` em vez de `profile_id`. Também remover o fallback Meta API daqui.
 
-| Tab | Mostra |
-|-----|--------|
-| Todas | Conversas com mensagens + Novos leads (Sem Contato) |
-| Não lidas | Só conversas com unreadCount > 0 |
-| Novos | Só leads "Sem Contato" sem mensagens WhatsApp |
+### 3. Deploy e validação
 
-Nenhuma alteração em Edge Functions ou tabelas.
+- Deploy das duas functions
+- Teste de envio de texto via Inbox
+- Verificar nos logs se a Evolution API foi chamada
+
+### Detalhes técnicos
+
+```text
+whatsapp-send (ANTES):
+  Auth → Meta Graph API → envio pelo número UHome
+
+whatsapp-send (DEPOIS):
+  Auth → profiles.id → whatsapp_instancias (conectado)
+       → Evolution API sendText/{instance} → envio pelo número do corretor
+       → Sem instância? → erro 422 "Conecte seu WhatsApp"
+```
+
+Secrets necessários (já existentes): `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`
 
