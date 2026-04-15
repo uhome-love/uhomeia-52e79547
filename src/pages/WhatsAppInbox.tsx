@@ -231,10 +231,10 @@ export default function WhatsAppInbox() {
     const leadIds = Array.from(map.keys());
     const { data: leads } = await supabase
       .from("pipeline_leads")
-      .select("id, nome, empreendimento")
+      .select("id, nome, empreendimento, telefone")
       .in("id", leadIds);
 
-    const typedLeads = (leads || []) as { id: string; nome: string; empreendimento: string | null }[];
+    const typedLeads = (leads || []) as { id: string; nome: string; empreendimento: string | null; telefone: string | null }[];
     const leadMap = new Map(typedLeads.map(l => [l.id, l]));
 
     const items: ConversationItem[] = [];
@@ -268,6 +268,7 @@ export default function WhatsAppInbox() {
         unreadCount: unread,
         lastReceivedTs,
         corretorId: info.corretorId || undefined,
+        telefone: lead?.telefone || undefined,
       });
     }
 
