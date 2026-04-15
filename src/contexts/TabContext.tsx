@@ -170,7 +170,7 @@ export function TabProvider({ children }: { children: ReactNode }) {
   // ── URL → Tab sync (handles browser back/forward, direct URL entry) ────────
   const syncingRef = useRef(false);
   useEffect(() => {
-    if (syncingRef.current) return;
+    if (syncingRef.current || roleLoading) return;
     syncingRef.current = true;
 
     const fullPath = location.pathname + location.search;
@@ -182,6 +182,13 @@ export function TabProvider({ children }: { children: ReactNode }) {
     const resolved = resolveRoute(pathname);
 
     if (resolved) {
+      // Role gate on URL sync
+      if (!hasAccess(resolved)) {
+        navigateRef.current("/", { replace: true });
+        requestAnimationFrame(() => { syncingRef.current = false; });
+        return;
+      }
+
       const existing = tabsRef.current.find((t) => t.id === resolved.key);
       if (existing) {
         if (activeRef.current !== resolved.key) {
