@@ -157,8 +157,7 @@ export default function AppLayout() {
       <HomiProvider>
         <ArenaAutoCollapse isSession={isSession} />
         <div className="flex h-screen overflow-hidden w-full bg-[#f0f0f5] dark:bg-[#0e1525]">
-          {!isSession && (
-            <Sidebar
+          <Sidebar
               role={sidebarRole}
               userName={nome || user?.email?.split("@")[0] || "Usuário"}
               userRole={cargoLabel}
@@ -167,7 +166,6 @@ export default function AppLayout() {
               onThemeToggle={onThemeToggle}
               showCampaigns={sidebarRole === "admin" || sidebarRole === "gestor"}
             />
-          )}
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <header
               className={cn(
