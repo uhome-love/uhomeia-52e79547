@@ -504,6 +504,7 @@ export default function WhatsAppInbox() {
               userId={user?.id || null}
               corretorMap={corretorMap}
               corretorIds={getTargetProfileIds() || []}
+              profilePicCache={profilePicCache}
             />
           )}
         </div>
