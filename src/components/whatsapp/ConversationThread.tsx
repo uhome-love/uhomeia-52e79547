@@ -923,7 +923,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
                       )}
 
                       {msg.media_url ? (
-                        <MediaRenderer mediaUrl={msg.media_url} body={msg.body} direction={msg.direction} />
+                        <MediaRenderer mediaUrl={msg.media_url} body={msg.body} direction={msg.direction} mediaType={msg.media_type} />
                       ) : (
                         <span>{msg.body ? formatWhatsAppText(msg.body) : "..."}</span>
                       )}
