@@ -150,6 +150,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isNoteMode, setIsNoteMode] = useState(false);
+  const sendingRef = useRef(false);
 
   // Reset note mode when switching leads
   useEffect(() => {
