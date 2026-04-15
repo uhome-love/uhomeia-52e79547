@@ -19,6 +19,7 @@ export interface ConversationItem {
   totalMessages: number;
   unreadCount: number;
   lastReceivedTs: string | null;
+  corretorId?: string;
 }
 
 export interface FollowUpLead {
@@ -44,6 +45,7 @@ interface ConversationListProps {
   onSelect: (leadId: string) => void;
   loading: boolean;
   userId?: string | null;
+  corretorMap?: Map<string, string>;
 }
 
 function getInitials(name: string) {
@@ -81,6 +83,10 @@ interface DialogLead {
   pipeline_stages: { nome: string } | null;
 }
 
+function getCorretorInitials(nome: string) {
+  return nome.split(" ").map(w => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
+
 export default function ConversationList({
   conversations,
   followUpLeads,
@@ -89,6 +95,7 @@ export default function ConversationList({
   onSelect,
   loading,
   userId,
+  corretorMap,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("all");
@@ -255,7 +262,14 @@ export default function ConversationList({
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
-                          <span className="text-xs font-medium truncate block">{conv.leadName}</span>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className="text-xs font-medium truncate block">{conv.leadName}</span>
+                            {corretorMap && conv.corretorId && corretorMap.get(conv.corretorId) && (
+                              <span className="inline-flex items-center justify-center h-4 px-1 rounded bg-muted text-[8px] font-bold text-muted-foreground shrink-0">
+                                {getCorretorInitials(corretorMap.get(conv.corretorId)!)}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1 shrink-0 ml-1">
                             <SLABadge lastReceivedTs={conv.lastReceivedTs} />
                             <span className="text-[10px] text-muted-foreground">

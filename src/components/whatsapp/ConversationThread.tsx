@@ -40,6 +40,8 @@ interface ConversationThreadProps {
   leadInfo: LeadInfo | null;
   messages: Message[];
   onMessageSent: () => void;
+  isReadOnly?: boolean;
+  readOnlyCorretorNome?: string;
 }
 
 interface StageInfo {
@@ -143,7 +145,7 @@ function getDeadline(key: string) {
 
 // --- Component ---
 
-export default function ConversationThread({ leadId, leadInfo, messages, onMessageSent }: ConversationThreadProps) {
+export default function ConversationThread({ leadId, leadInfo, messages, onMessageSent, isReadOnly = false, readOnlyCorretorNome }: ConversationThreadProps) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -370,6 +372,15 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
 
   return (
     <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden min-h-0">
+      {/* Read-only banner */}
+      {isReadOnly && readOnlyCorretorNome && (
+        <div className="px-4 py-1.5 bg-blue-50 dark:bg-blue-950/40 border-b border-blue-200 dark:border-blue-800 flex items-center gap-1.5 flex-shrink-0">
+          <Eye size={12} className="text-blue-600 dark:text-blue-400" />
+          <span className="text-[11px] text-blue-700 dark:text-blue-300 font-medium">
+            Modo leitura — conversa de {readOnlyCorretorNome}
+          </span>
+        </div>
+      )}
       {/* Header */}
       <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-card flex-shrink-0">
         <div className="flex items-center gap-2.5">
@@ -453,11 +464,13 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
             leadName={leadInfo.nome}
             lastMessage={lastReceived.body || ""}
             onUseSuggestion={(s) => setText(s)}
+            isReadOnly={isReadOnly}
           />
         </div>
       )}
 
-      {/* Quick Action Bar */}
+      {/* Quick Action Bar — hidden in read-only */}
+      {!isReadOnly && (
       <TooltipProvider delayDuration={300}>
         <div className="px-3 py-1.5 border-t border-border bg-muted/30 flex items-center gap-1 flex-shrink-0">
           {/* Templates */}
@@ -603,6 +616,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
           </Tooltip>
         </div>
       </TooltipProvider>
+      )}
 
       {/* Input */}
       <div className="p-3 border-t border-border bg-card flex gap-2 flex-shrink-0">
@@ -610,10 +624,11 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
           ref={textareaRef}
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder={isNoteMode ? "Nota interna (não enviada ao lead)..." : "Digite sua mensagem..."}
+          placeholder={isReadOnly ? "Modo leitura — você não pode enviar mensagens" : (isNoteMode ? "Nota interna (não enviada ao lead)..." : "Digite sua mensagem...")}
           className={`min-h-[40px] max-h-[100px] resize-none text-xs flex-1 ${
             isNoteMode ? "bg-amber-50 border-amber-300 focus-visible:ring-amber-400" : ""
           }`}
+          disabled={isReadOnly}
           onKeyDown={e => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -624,7 +639,7 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
         <Button
           size="icon"
           className={`h-10 w-10 shrink-0 ${isNoteMode ? "bg-amber-500 hover:bg-amber-600" : ""}`}
-          disabled={!text.trim() || sending}
+          disabled={isReadOnly || !text.trim() || sending}
           onClick={handleSend}
         >
           {isNoteMode ? <Lock size={16} /> : <Send size={16} />}
