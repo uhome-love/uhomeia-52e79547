@@ -324,7 +324,9 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       await supabase.from("pipeline_tarefas").insert({
         pipeline_lead_id: leadId,
         titulo: taskTitle.trim(),
-        tipo: "follow_up",
+        tipo: taskType,
+        descricao: taskDescription.trim() || null,
+        prioridade: taskPriority,
         status: "pendente",
         vence_em: getDeadline(taskDeadline).toISOString(),
         created_by: profileId,
@@ -332,6 +334,9 @@ export default function ConversationThread({ leadId, leadInfo, messages, onMessa
       toast.success("✅ Tarefa criada!");
       setTaskTitle("");
       setTaskDeadline("amanha");
+      setTaskType("follow_up");
+      setTaskDescription("");
+      setTaskPriority("media");
     } catch (err: any) {
       toast.error("Erro: " + (err.message || ""));
     }
