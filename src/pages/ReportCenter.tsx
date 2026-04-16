@@ -5,6 +5,8 @@ import ReportTabs from "@/components/relatorios/ReportTabs";
 import ReportFilters from "@/components/relatorios/ReportFilters";
 import ReportPlaceholder from "@/components/relatorios/ReportPlaceholder";
 import RelatorioVendas from "@/components/relatorios/RelatorioVendas";
+import RelatorioLeads from "@/components/relatorios/RelatorioLeads";
+import RelatorioConversao from "@/components/relatorios/RelatorioConversao";
 
 const TAB_LABELS: Record<string, string> = {
   vendas: "Vendas",
@@ -53,6 +55,19 @@ export default function ReportCenter() {
   if (loading) return null;
   if (isCorretor && !isGestor && !isAdmin) return <Navigate to="/pipeline-leads" replace />;
 
+  function renderTab() {
+    switch (activeTab) {
+      case "vendas":
+        return <RelatorioVendas filters={filters} userRole={userRole} />;
+      case "leads":
+        return <RelatorioLeads filters={filters} userRole={userRole} />;
+      case "conversao":
+        return <RelatorioConversao filters={filters} userRole={userRole} />;
+      default:
+        return <ReportPlaceholder tabName={TAB_LABELS[activeTab] || activeTab} />;
+    }
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#f0f0f5" }}>
       <ReportTabs
@@ -74,11 +89,7 @@ export default function ReportCenter() {
         userRole={userRole}
       />
       <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
-        {activeTab === "vendas" ? (
-          <RelatorioVendas filters={filters} userRole={userRole} />
-        ) : (
-          <ReportPlaceholder tabName={TAB_LABELS[activeTab] || activeTab} />
-        )}
+        {renderTab()}
       </div>
     </div>
   );
