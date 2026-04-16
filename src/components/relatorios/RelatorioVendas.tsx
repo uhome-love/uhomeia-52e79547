@@ -281,9 +281,10 @@ export default function RelatorioVendas({ filters }: RelatorioVendasProps) {
               .from("roleta_segmentos")
               .select("id, nome")
               .in("id", segIds);
-            const segNameMap = new Map((segs || []).map((s) => [s.id, s.nome]));
+            const segNameMap = new Map<string, string>((segs || []).map((s) => [s.id, s.nome as string]));
             leads.forEach((l) => {
-              if (l.segmento_id) segMap.set(l.id, segNameMap.get(String(l.segmento_id)) || "—");
+              const segId = l.segmento_id as string | null;
+              if (segId) segMap.set(l.id, segNameMap.get(segId) || "—");
             });
           }
         }
@@ -345,9 +346,10 @@ export default function RelatorioVendas({ filters }: RelatorioVendasProps) {
               .from("profiles")
               .select("id, nome, user_id")
               .in("user_id", gerenteIds);
-            const gerenteNameMap = new Map((gerentes || []).map((g) => [g.user_id, g.nome || "—"]));
+            const gerenteNameMap = new Map<string, string>((gerentes || []).map((g) => [g.user_id as string, g.nome || "—"]));
             members.forEach((m) => {
-              equipeMap.set(m.user_id, gerenteNameMap.get(String(m.gerente_id)) || "—");
+              const gId = m.gerente_id as string;
+              equipeMap.set(m.user_id, gerenteNameMap.get(gId) || "—");
             });
           }
         }
