@@ -150,9 +150,19 @@ export default function NotificationPreferences() {
                       Ativo
                     </span>
                   )}
-                  {!pushSupported && (
+                  {pushChecking && (
+                    <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
+                      Verificando...
+                    </span>
+                  )}
+                  {!pushChecking && !pushSupported && !isIOSNotPWA && (
                     <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
                       Não suportado
+                    </span>
+                  )}
+                  {!pushChecking && isIOSNotPWA && (
+                    <span className="text-[10px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded-full">
+                      Instale o app
                     </span>
                   )}
                   {pushPermission === "denied" && (
