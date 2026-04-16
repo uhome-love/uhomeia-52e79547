@@ -1,40 +1,58 @@
 
 
-## Plano: Reimplementar componentes da Central de Relatórios com estilos exatos
+## Plano: Tab Vendas da Central de Relatórios
 
-Os arquivos `pageRegistry.ts` e `Sidebar.tsx` ja possuem as entradas corretas — nao precisam de alteracao.
+### Descobertas do schema (adaptações necessárias vs spec)
 
-### Arquivos a reescrever (4)
+A spec referencia colunas que não existem. Adaptações ao schema real:
 
-**1. `src/pages/ReportCenter.tsx`**
-- Layout flex col, height 100vh, background #f0f0f5
-- useSearchParams para tab/periodo/equipe/corretor/segmento
-- useUserRole() para redirect de corretor para /pipeline-leads
-- Renderiza ReportTabs + ReportFilters + ReportPlaceholder (com scroll na area de conteudo)
+| Spec | Schema real |
+|------|-------------|
+| `valor_vgv` | `vgv_final` (fallback `vgv_estimado`) |
+| `data_venda` | `data_assinatura` |
+| `segmento` (na negocios) | Não existe — buscar via `pipeline_leads.segmento_id` (join por `pipeline_lead_id`) |
+| `empreendimento_id` + tabela `empreendimentos` | Não existe — usar campo texto `negocios.empreendimento` |
+| `pipeline_parcerias.negocio_id` | Não existe — join via `pipeline_lead_id` |
+| Status "Confirmada"/"Pendente" | Usar `fase`: vendido=Confirmada, assinado=Pendente, distrato=Distrato |
+| Equipe (gestor nome) | Via `team_members.gerente_id` → `profiles.nome` |
 
-**2. `src/components/relatorios/ReportTabs.tsx`**
-- Reescrever com inline styles exatos: height 48px, padding 0 20px, font-size 13px
-- Tab ativa: color #4F46E5, border-bottom 2px solid, font-weight 500
-- Tab mega: sempre color #4F46E5
-- Scrollbar oculta via CSS inline + className
+### Arquivos
 
-**3. `src/components/relatorios/ReportFilters.tsx`**
-- Chips de periodo com border 0.5px solid #d1d5db, border-radius 20px, padding 5px 14px
-- Chip ativo: bg #EEF2FF, color #4F46E5, border-color #C7D2FE
-- Chip "Personalizado" ativo mostra dois inputs date
-- Selects estilizados como chips (border-radius 20px) — sem queries Supabase reais, apenas placeholder options
-- Botao "Exportar PDF" com bg #4F46E5, icone Download
-- Botao "Link" copia URL e mostra toast
-- Props: filters object + onFiltersChange + userRole string
-- Select Equipe visivel apenas se userRole === "admin"
+**1. Criar `src/components/relatorios/RelatorioVendas.tsx`** (~450 linhas)
 
-**4. `src/components/relatorios/ReportPlaceholder.tsx`**
-- Prop renomeada para `tabName`
-- Icone Construction, texto "Relatorio {tabName}", subtitulo "Em construcao — disponivel em breve"
-- Centralizado vertical/horizontal com flex
+- Props: `filters` + `userRole`
+- `getDateRange(filters)` — retorna start/end Date em BRT
+- `getPeriodoAnterior(start, end)` — período anterior de mesma duração
+- Fetch vendas do período atual e anterior da tabela `negocios` (fase IN vendido, assinado)
+- Join parcerias via `pipeline_parcerias` usando `pipeline_lead_id`
+- Lookup segmento via `pipeline_leads.segmento_id` dos negócios com `pipeline_lead_id`
+- Lookup equipe/gestor via `team_members` + `profiles`
+- Filtros dinâmicos: corretor, equipe (via team_members.gerente_id → profiles), segmento
+- VGV efetivo: se parceria existe → `vgv * (divisao_principal / 100)`, senão → vgv completo
 
-### Nao alterar
-- pageRegistry.ts (ja tem report-center)
-- Sidebar.tsx (ja tem Central Relatorios)
-- Nenhum outro arquivo
+**KPI Cards** (4 colunas, grid):
+1. VGV Total — soma vgvEfetivo, formato R$ XM/Xk, variação % vs anterior
+2. Nº de Vendas — count, diferença absoluta
+3. Ticket Médio — VGV/count, variação %
+4. Comissão Estimada — VGV × 0.03, subtítulo fixo
+
+**Gráfico de Barras** (recharts):
+- Agrupamento por hora/dia/semana/mês conforme período
+- Bar fill #4F46E5, tooltip branco
+
+**Tabela de Vendas**:
+- Colunas: Corretor, Equipe, Empreendimento, VGV, Segmento, Data, Status
+- Busca por corretor/empreendimento
+- Ordenação clicável em todas as colunas
+- Paginação 20/página
+- Badges de segmento e status com cores específicas
+- Loading shimmer + empty state com ShoppingBag
+
+**2. Modificar `src/pages/ReportCenter.tsx`**
+
+- Import `RelatorioVendas`
+- Quando `activeTab === "vendas"` → renderizar `<RelatorioVendas filters={filters} userRole={userRole} />`
+- Demais tabs → manter `<ReportPlaceholder />`
+
+### Nenhum outro arquivo alterado
 
