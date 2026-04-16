@@ -194,7 +194,12 @@ export default function NotificationPreferences() {
                   Permissão bloqueada. Ative nas configurações do navegador (Configurações → Notificações).
                 </p>
               )}
-              {!pushSupported && (
+              {!pushChecking && !pushSupported && isIOSNotPWA && (
+                <p className="text-xs text-muted-foreground">
+                  📱 <strong>iOS:</strong> Abra no Safari → toque em <strong>Compartilhar</strong> (ícone ⬆️) → <strong>"Adicionar à Tela de Início"</strong>. Depois abra o app pela tela inicial e ative aqui.
+                </p>
+              )}
+              {!pushChecking && !pushSupported && !isIOSNotPWA && (
                 <p className="text-xs text-muted-foreground">
                   Instale o app (PWA) para receber push notifications no celular.
                 </p>
