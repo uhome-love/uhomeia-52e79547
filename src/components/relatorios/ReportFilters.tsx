@@ -1,154 +1,166 @@
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { FileDown, Link2, CalendarDays } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { DateRange } from "react-day-picker";
 
 const PERIOD_CHIPS = [
   { key: "hoje", label: "Hoje" },
   { key: "semana", label: "Esta semana" },
   { key: "mes", label: "Este mês" },
   { key: "custom", label: "Personalizado" },
-] as const;
+];
 
-export type PeriodKey = (typeof PERIOD_CHIPS)[number]["key"];
+const SEGMENTOS = [
+  { value: "", label: "Todos os segmentos" },
+  { value: "mcmv", label: "MCMV" },
+  { value: "medio-alto", label: "Médio-Alto" },
+  { value: "altissimo", label: "Altíssimo" },
+  { value: "investimento", label: "Investimento" },
+];
 
-const SEGMENTOS = ["Todos", "MCMV", "Médio-Alto", "Altíssimo", "Investimento"] as const;
-
-interface ReportFiltersProps {
-  period: PeriodKey;
-  onPeriodChange: (p: PeriodKey) => void;
-  dateRange: DateRange | undefined;
-  onDateRangeChange: (r: DateRange | undefined) => void;
+interface Filters {
+  periodo: string;
+  dataInicio?: string;
+  dataFim?: string;
   equipe: string;
-  onEquipeChange: (v: string) => void;
   corretor: string;
-  onCorretorChange: (v: string) => void;
   segmento: string;
-  onSegmentoChange: (v: string) => void;
-  isAdmin: boolean;
 }
 
-export default function ReportFilters({
-  period,
-  onPeriodChange,
-  dateRange,
-  onDateRangeChange,
-  equipe,
-  onEquipeChange,
-  corretor,
-  onCorretorChange,
-  segmento,
-  onSegmentoChange,
-  isAdmin,
-}: ReportFiltersProps) {
-  const { toast } = useToast();
-  const [calOpen, setCalOpen] = useState(false);
+interface ReportFiltersProps {
+  filters: Filters;
+  onFiltersChange: (f: Filters) => void;
+  userRole: "admin" | "gestor" | "corretor";
+}
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast({ title: "Link copiado!", description: "URL copiada para a área de transferência." });
-  };
+const chipBase: React.CSSProperties = {
+  border: "0.5px solid #d1d5db",
+  color: "#6b7280",
+  backgroundColor: "#fff",
+  borderRadius: 20,
+  padding: "5px 14px",
+  fontSize: 12,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+
+const chipActive: React.CSSProperties = {
+  ...chipBase,
+  backgroundColor: "#EEF2FF",
+  color: "#4F46E5",
+  borderColor: "#C7D2FE",
+  fontWeight: 500,
+};
+
+const selectStyle: React.CSSProperties = {
+  ...chipBase,
+  appearance: "none" as const,
+  paddingRight: 24,
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 8px center",
+};
+
+export default function ReportFilters({ filters, onFiltersChange, userRole }: ReportFiltersProps) {
+  const { toast } = useToast();
+
+  const set = (patch: Partial<Filters>) => onFiltersChange({ ...filters, ...patch });
 
   return (
     <div
-      className="bg-white px-4 py-3 flex flex-wrap items-center gap-3 border-b"
-      style={{ borderBottomWidth: "0.5px", borderColor: "#e5e7eb" }}
+      style={{
+        backgroundColor: "#fff",
+        borderBottom: "0.5px solid #e5e7eb",
+        padding: "10px 20px",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        flexWrap: "wrap",
+      }}
     >
-      {/* Period chips */}
-      <div className="flex items-center gap-1.5">
-        {PERIOD_CHIPS.map((chip) => (
-          <button
-            key={chip.key}
-            onClick={() => onPeriodChange(chip.key)}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-              period === chip.key
-                ? "bg-[#EEF2FF] text-[#4F46E5]"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted"
-            )}
-          >
-            {chip.label}
-          </button>
-        ))}
+      {PERIOD_CHIPS.map((chip) => (
+        <button
+          key={chip.key}
+          onClick={() => set({ periodo: chip.key })}
+          style={filters.periodo === chip.key ? chipActive : chipBase}
+        >
+          {chip.label}
+        </button>
+      ))}
 
-        {period === "custom" && (
-          <Popover open={calOpen} onOpenChange={setCalOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
-                <CalendarDays size={13} />
-                {dateRange?.from
-                  ? `${format(dateRange.from, "dd/MM", { locale: ptBR })} - ${dateRange.to ? format(dateRange.to, "dd/MM", { locale: ptBR }) : "..."}`
-                  : "Selecionar"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={(r) => {
-                  onDateRangeChange(r);
-                  if (r?.to) setCalOpen(false);
-                }}
-                locale={ptBR}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-        )}
-      </div>
-
-      <div className="h-5 w-px bg-border" />
-
-      {/* Equipe select — admin only */}
-      {isAdmin && (
-        <Select value={equipe} onValueChange={onEquipeChange}>
-          <SelectTrigger className="w-[160px] h-8 text-xs">
-            <SelectValue placeholder="Equipe" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas equipes</SelectItem>
-            {/* Placeholder — will be dynamic */}
-          </SelectContent>
-        </Select>
+      {filters.periodo === "custom" && (
+        <>
+          <input
+            type="date"
+            value={filters.dataInicio || ""}
+            onChange={(e) => set({ dataInicio: e.target.value })}
+            style={{ ...chipBase, padding: "4px 10px" }}
+          />
+          <input
+            type="date"
+            value={filters.dataFim || ""}
+            onChange={(e) => set({ dataFim: e.target.value })}
+            style={{ ...chipBase, padding: "4px 10px" }}
+          />
+        </>
       )}
 
-      {/* Corretor select */}
-      <Select value={corretor} onValueChange={onCorretorChange}>
-        <SelectTrigger className="w-[160px] h-8 text-xs">
-          <SelectValue placeholder="Corretor" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="todos">Todos</SelectItem>
-          {/* Placeholder — will be dynamic */}
-        </SelectContent>
-      </Select>
+      <div style={{ width: 1, height: 20, backgroundColor: "#e5e7eb", margin: "0 4px" }} />
 
-      {/* Segmento */}
-      <Select value={segmento} onValueChange={onSegmentoChange}>
-        <SelectTrigger className="w-[140px] h-8 text-xs">
-          <SelectValue placeholder="Segmento" />
-        </SelectTrigger>
-        <SelectContent>
-          {SEGMENTOS.map((s) => (
-            <SelectItem key={s} value={s}>{s}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {userRole === "admin" && (
+        <select
+          value={filters.equipe}
+          onChange={(e) => set({ equipe: e.target.value })}
+          style={selectStyle}
+        >
+          <option value="">Todas as equipes</option>
+        </select>
+      )}
 
-      <div className="ml-auto flex items-center gap-2">
-        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" disabled>
-          <FileDown size={13} /> Exportar PDF
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={copyLink}>
+      <select
+        value={filters.corretor}
+        onChange={(e) => set({ corretor: e.target.value })}
+        style={selectStyle}
+      >
+        <option value="">Todos os corretores</option>
+      </select>
+
+      <select
+        value={filters.segmento}
+        onChange={(e) => set({ segmento: e.target.value })}
+        style={selectStyle}
+      >
+        {SEGMENTOS.map((s) => (
+          <option key={s.value} value={s.value}>{s.label}</option>
+        ))}
+      </select>
+
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+        <button
+          onClick={() => console.log("export PDF — será implementado no Prompt 6")}
+          style={{
+            backgroundColor: "#4F46E5",
+            color: "#fff",
+            borderRadius: 20,
+            padding: "5px 16px",
+            fontSize: 12,
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Download size={13} strokeWidth={1.5} />
+          Exportar PDF
+        </button>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast({ title: "Link copiado!" });
+          }}
+          style={chipBase}
+        >
           🔗 Link
-        </Button>
+        </button>
       </div>
     </div>
   );

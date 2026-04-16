@@ -1,12 +1,11 @@
 import { useCallback } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
-import ReportTabs, { type ReportTabKey } from "@/components/relatorios/ReportTabs";
-import ReportFilters, { type PeriodKey } from "@/components/relatorios/ReportFilters";
+import ReportTabs from "@/components/relatorios/ReportTabs";
+import ReportFilters from "@/components/relatorios/ReportFilters";
 import ReportPlaceholder from "@/components/relatorios/ReportPlaceholder";
-import type { DateRange } from "react-day-picker";
 
-const TAB_LABELS: Record<ReportTabKey, string> = {
+const TAB_LABELS: Record<string, string> = {
   vendas: "Vendas",
   leads: "Leads",
   negocios: "Negócios",
@@ -24,16 +23,17 @@ export default function ReportCenter() {
   const { isAdmin, isGestor, isCorretor, loading } = useUserRole();
   const [params, setParams] = useSearchParams();
 
-  const activeTab = (params.get("tab") as ReportTabKey) || "vendas";
-  const period = (params.get("periodo") as PeriodKey) || "mes";
-  const equipe = params.get("equipe") || "todas";
-  const corretor = params.get("corretor") || "todos";
-  const segmento = params.get("segmento") || "Todos";
+  const activeTab = params.get("tab") || "vendas";
+  const filters = {
+    periodo: params.get("periodo") || "mes",
+    dataInicio: params.get("de") || undefined,
+    dataFim: params.get("ate") || undefined,
+    equipe: params.get("equipe") || "",
+    corretor: params.get("corretor") || "",
+    segmento: params.get("segmento") || "",
+  };
 
-  const dateFrom = params.get("de") || undefined;
-  const dateTo = params.get("ate") || undefined;
-  const dateRange: DateRange | undefined =
-    dateFrom ? { from: new Date(dateFrom), to: dateTo ? new Date(dateTo) : undefined } : undefined;
+  const userRole = isAdmin ? "admin" : isGestor ? "gestor" : "corretor";
 
   const update = useCallback(
     (patch: Record<string, string>) => {
@@ -53,33 +53,27 @@ export default function ReportCenter() {
   if (isCorretor && !isGestor && !isAdmin) return <Navigate to="/pipeline-leads" replace />;
 
   return (
-    <div className="min-h-full" style={{ backgroundColor: "#f0f0f5" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#f0f0f5" }}>
       <ReportTabs
         activeTab={activeTab}
         onTabChange={(tab) => update({ tab })}
       />
-
       <ReportFilters
-        period={period}
-        onPeriodChange={(p) => update({ periodo: p })}
-        dateRange={dateRange}
-        onDateRangeChange={(r) =>
+        filters={filters}
+        onFiltersChange={(f) =>
           update({
-            de: r?.from ? r.from.toISOString().slice(0, 10) : "",
-            ate: r?.to ? r.to.toISOString().slice(0, 10) : "",
+            periodo: f.periodo,
+            de: f.dataInicio || "",
+            ate: f.dataFim || "",
+            equipe: f.equipe,
+            corretor: f.corretor,
+            segmento: f.segmento,
           })
         }
-        equipe={equipe}
-        onEquipeChange={(v) => update({ equipe: v })}
-        corretor={corretor}
-        onCorretorChange={(v) => update({ corretor: v })}
-        segmento={segmento}
-        onSegmentoChange={(v) => update({ segmento: v })}
-        isAdmin={isAdmin}
+        userRole={userRole}
       />
-
-      <div className="p-4">
-        <ReportPlaceholder name={TAB_LABELS[activeTab] || activeTab} />
+      <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
+        <ReportPlaceholder tabName={TAB_LABELS[activeTab] || activeTab} />
       </div>
     </div>
   );

@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 const TABS = [
   { key: "vendas", label: "Vendas" },
   { key: "leads", label: "Leads" },
@@ -11,43 +9,60 @@ const TABS = [
   { key: "interacao", label: "Interação" },
   { key: "visitas", label: "Visitas" },
   { key: "tarefas", label: "Tarefas" },
-  { key: "mega", label: "✦ Mega", special: true },
-] as const;
-
-export type ReportTabKey = (typeof TABS)[number]["key"];
+  { key: "mega", label: "✦ Mega" },
+];
 
 interface ReportTabsProps {
-  activeTab: ReportTabKey;
-  onTabChange: (tab: ReportTabKey) => void;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
 export default function ReportTabs({ activeTab, onTabChange }: ReportTabsProps) {
   return (
-    <div className="bg-white border-b" style={{ borderBottomWidth: "0.5px", borderColor: "#e5e7eb" }}>
-      <nav className="flex overflow-x-auto scrollbar-hide px-4 gap-1" aria-label="Report tabs">
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.key;
-          const isSpecial = "special" in tab && tab.special;
+    <div
+      style={{
+        backgroundColor: "#fff",
+        borderBottom: "0.5px solid #e5e7eb",
+        padding: "0 20px",
+        display: "flex",
+        overflowX: "auto",
+        height: 48,
+        alignItems: "center",
+        scrollbarWidth: "none",
+      }}
+      className="hide-scrollbar"
+    >
+      <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+      {TABS.map((tab) => {
+        const isActive = activeTab === tab.key;
+        const isMega = tab.key === "mega";
 
-          return (
-            <button
-              key={tab.key}
-              onClick={() => onTabChange(tab.key)}
-              className={cn(
-                "whitespace-nowrap px-3 py-2.5 text-sm font-medium transition-colors relative",
-                "hover:text-[#4F46E5]/70",
-                isActive
-                  ? "text-[#4F46E5] border-b-2 border-[#4F46E5]"
-                  : isSpecial
-                    ? "text-[#4F46E5]"
-                    : "text-muted-foreground"
-              )}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </nav>
+        return (
+          <button
+            key={tab.key}
+            onClick={() => onTabChange(tab.key)}
+            style={{
+              padding: "0 16px",
+              height: 48,
+              display: "inline-flex",
+              alignItems: "center",
+              fontSize: 13,
+              cursor: "pointer",
+              borderBottom: isActive ? "2px solid #4F46E5" : "2px solid transparent",
+              whiteSpace: "nowrap",
+              color: isActive || isMega ? "#4F46E5" : "#6b7280",
+              fontWeight: isActive ? 500 : 400,
+              background: "none",
+              border: "none",
+              borderBottomStyle: "solid",
+              borderBottomWidth: 2,
+              borderBottomColor: isActive ? "#4F46E5" : "transparent",
+            }}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
