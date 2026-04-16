@@ -20,6 +20,7 @@ import WhatsAppEntradasTab from "@/components/roleta/WhatsAppEntradasTab";
 import LeadIntelligenceTab from "@/components/roleta/LeadIntelligenceTab";
 import RoletaMetricasTab from "@/components/roleta/RoletaMetricasTab";
 import RoletaConfigTab from "@/components/roleta/RoletaConfigTab";
+import CorretoresBloqueadosPanel from "@/components/roleta/CorretoresBloqueadosPanel";
 import { PageHeader } from "@/components/ui/PageHeader";
 // ─── Countdown Timer ───
 function CountdownTimer({ target }: { target: Date }) {
@@ -242,6 +243,7 @@ function CeoView() {
       {activeTab === "roletagens" && <RoletagensTab view="roletagens" />}
       {activeTab === "perdidos" && <RoletagensTab view="perdidos" />}
       {activeTab === "whatsapp" && <WhatsAppEntradasTab />}
+      {activeTab === "bloqueados" && <CorretoresBloqueadosPanel />}
       {activeTab === "inteligencia" && <LeadIntelligenceTab />}
       {activeTab === "config" && <RoletaConfigTab />}
 
