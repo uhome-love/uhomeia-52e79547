@@ -30,6 +30,8 @@ export default function NotificationPreferences() {
   const { preferences, isLoading, updatePreferences } = useNotificationPreferences();
   const { 
     isSupported: pushSupported, 
+    isCheckingSupport: pushChecking,
+    isIOSNotPWA,
     isSubscribed: pushSubscribed, 
     isLoading: pushLoading, 
     permission: pushPermission,
