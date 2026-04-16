@@ -4,6 +4,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import ReportTabs from "@/components/relatorios/ReportTabs";
 import ReportFilters from "@/components/relatorios/ReportFilters";
 import ReportPlaceholder from "@/components/relatorios/ReportPlaceholder";
+import RelatorioVendas from "@/components/relatorios/RelatorioVendas";
 
 const TAB_LABELS: Record<string, string> = {
   vendas: "Vendas",
