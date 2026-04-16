@@ -203,8 +203,14 @@ export function TabProvider({ children }: { children: ReactNode }) {
     const pathname = location.pathname;
 
     // "/" is a redirect hub — route to role-specific dashboard
+    // Wait for roles to load before redirecting (prevents blank screen race condition)
     if (pathname === "/" || pathname === "/index.html" || pathname === "/index") {
       const r = rolesRef.current;
+      // If roles haven't loaded yet, don't redirect — wait for next render
+      if (r.length === 0) {
+        syncingRef.current = false;
+        return;
+      }
       let dest = "/corretor";
       if (r.includes("admin")) dest = "/ceo";
       else if (r.includes("backoffice")) dest = "/backoffice";
@@ -238,7 +244,7 @@ export function TabProvider({ children }: { children: ReactNode }) {
 
     // Reset sync guard after this render
     requestAnimationFrame(() => { syncingRef.current = false; });
-  }, [location.pathname, openTab, roleLoading, hasAccess]);
+  }, [location.pathname, openTab, roleLoading, roles, hasAccess]);
 
   return (
     <TabContext.Provider value={{ tabs, activeTabId, openTab, closeTab, activateTab }}>
