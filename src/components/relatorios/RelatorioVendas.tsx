@@ -283,7 +283,7 @@ export default function RelatorioVendas({ filters }: RelatorioVendasProps) {
               .in("id", segIds);
             const segNameMap = new Map((segs || []).map((s) => [s.id, s.nome]));
             leads.forEach((l) => {
-              if (l.segmento_id) segMap.set(l.id, segNameMap.get(l.segmento_id as string) || "—");
+              if (l.segmento_id) segMap.set(l.id, segNameMap.get(String(l.segmento_id)) || "—");
             });
           }
         }
@@ -347,7 +347,7 @@ export default function RelatorioVendas({ filters }: RelatorioVendasProps) {
               .in("user_id", gerenteIds);
             const gerenteNameMap = new Map((gerentes || []).map((g) => [g.user_id, g.nome || "—"]));
             members.forEach((m) => {
-              equipeMap.set(m.user_id, gerenteNameMap.get(m.gerente_id as string) || "—");
+              equipeMap.set(m.user_id, gerenteNameMap.get(String(m.gerente_id)) || "—");
             });
           }
         }
