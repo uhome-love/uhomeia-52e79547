@@ -594,11 +594,14 @@ export default function PipelineStageTransitionPopup({ open, onOpenChange, lead,
 // Stages that need a transition popup
 export function needsTransitionPopup(stageName: string, stageType: string, lead?: PipelineLead): boolean {
   const name = stageName.toLowerCase();
-  if (name.includes("sem contato")) return true;
-  if (name.includes("contato inic") || name.includes("contato iniciado")) return true;
-  if (name.includes("qualifica") || name.includes("busca")) return true;
-  if ((name.includes("poss") && name.includes("visita")) || name.includes("aquecimento")) return true;
-  if (name === "visita" || stageType === "visita" || name.includes("visita marcada")) {
+
+  // Use stageType as primary source of truth
+  if (stageType === "sem_contato" || name.includes("sem contato")) return true;
+  if (stageType === "contato_inicial" || name.includes("contato inic") || name.includes("contato iniciado")) return true;
+  if (stageType === "busca" || stageType === "qualificacao" || name.includes("qualifica") || name.includes("busca")) return true;
+  if (stageType === "aquecimento" || stageType === "possibilidade_visita" || (name.includes("poss") && name.includes("visita")) || name.includes("aquecimento")) return true;
+
+  if (stageType === "visita" || name === "visita" || stageType === "visita_marcada" || name.includes("visita marcada")) {
     // Skip popup se o lead já tem visita marcada/agendada (flag definida pelo agendamento na Agenda)
     const flagStatus = (lead as any)?.flag_status as Record<string, any> | undefined;
     const statusVisita = flagStatus?.status_visita;
@@ -607,7 +610,9 @@ export function needsTransitionPopup(stageName: string, stageType: string, lead?
     }
     return true;
   }
-  if (name.includes("pós-visita") || stageType === "pos_visita" || name.includes("visita realizada")) return true;
-  if (name.includes("descarte") || stageType === "descarte") return true;
+
+  if (stageType === "pos_visita" || stageType === "visita_realizada" || name.includes("pós-visita") || name.includes("visita realizada")) return true;
+  if (stageType === "convertido" || name.includes("negócio criado") || name.includes("negocio criado")) return true;
+  if (stageType === "descarte" || name.includes("descarte")) return true;
   return false;
 }
