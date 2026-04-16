@@ -82,6 +82,8 @@ export default function PipelineLeadDetail({ lead, stages, segmentos, corretorNo
   const [savingEmpreendimento, setSavingEmpreendimento] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.nome);
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [editPhone, setEditPhone] = useState(lead.telefone || "");
 
   const handleSaveName = async () => {
     const trimmed = editName.trim();
