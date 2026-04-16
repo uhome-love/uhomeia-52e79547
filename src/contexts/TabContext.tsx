@@ -202,8 +202,18 @@ export function TabProvider({ children }: { children: ReactNode }) {
     const fullPath = location.pathname + location.search;
     const pathname = location.pathname;
 
-    // "/" only exists for redirect — never create a tab for it
-    if (pathname === "/" || pathname === "/index.html" || pathname === "/index") return;
+    // "/" is a redirect hub — route to role-specific dashboard
+    if (pathname === "/" || pathname === "/index.html" || pathname === "/index") {
+      const r = rolesRef.current;
+      let dest = "/corretor";
+      if (r.includes("admin")) dest = "/ceo";
+      else if (r.includes("backoffice")) dest = "/backoffice";
+      else if (r.includes("rh")) dest = "/rh";
+      else if (r.includes("gestor")) dest = "/gerente/dashboard";
+      navigateRef.current(dest, { replace: true });
+      requestAnimationFrame(() => { syncingRef.current = false; });
+      return;
+    }
 
     const resolved = resolveRoute(pathname);
 
