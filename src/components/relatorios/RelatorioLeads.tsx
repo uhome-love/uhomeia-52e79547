@@ -227,12 +227,15 @@ export default function RelatorioLeads({ filters }: RelatorioLeadsProps) {
       const leadIds = filtered.map((r) => r.id);
       const ultimaAtMap = new Map<string, string>();
       if (leadIds.length) {
-        const { data: ats } = await supabase
-          .from("pipeline_atividades")
-          .select("pipeline_lead_id, created_at")
-          .in("pipeline_lead_id", leadIds)
-          .order("created_at", { ascending: false });
-        (ats || []).forEach((a) => {
+        const ats = await fetchAllRows<{ pipeline_lead_id: string; created_at: string }>((from, to) =>
+          supabase
+            .from("pipeline_atividades")
+            .select("pipeline_lead_id, created_at")
+            .in("pipeline_lead_id", leadIds)
+            .order("created_at", { ascending: false })
+            .range(from, to)
+        );
+        ats.forEach((a) => {
           const lid = a.pipeline_lead_id as string;
           if (!ultimaAtMap.has(lid)) ultimaAtMap.set(lid, a.created_at as string);
         });
@@ -240,14 +243,17 @@ export default function RelatorioLeads({ filters }: RelatorioLeadsProps) {
 
       let tempoMedio: number | null = null;
       if (leadIds.length) {
-        const { data: contatos } = await supabase
-          .from("pipeline_atividades")
-          .select("pipeline_lead_id, created_at, tipo")
-          .in("pipeline_lead_id", leadIds)
-          .in("tipo", ["ligacao", "whatsapp"])
-          .order("created_at", { ascending: true });
+        const contatos = await fetchAllRows<{ pipeline_lead_id: string; created_at: string; tipo: string }>((from, to) =>
+          supabase
+            .from("pipeline_atividades")
+            .select("pipeline_lead_id, created_at, tipo")
+            .in("pipeline_lead_id", leadIds)
+            .in("tipo", ["ligacao", "whatsapp"])
+            .order("created_at", { ascending: true })
+            .range(from, to)
+        );
         const primeiroContato = new Map<string, string>();
-        (contatos || []).forEach((c) => {
+        contatos.forEach((c) => {
           const lid = c.pipeline_lead_id as string;
           if (!primeiroContato.has(lid)) primeiroContato.set(lid, c.created_at as string);
         });
