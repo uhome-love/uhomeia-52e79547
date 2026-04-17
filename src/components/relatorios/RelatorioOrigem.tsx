@@ -72,17 +72,16 @@ export default function RelatorioOrigem({ filters }: Props) {
     let cancelled = false;
 
     async function fetchLeads(s: Date, e: Date): Promise<LeadRow[]> {
-      let query = supabase
-        .from("pipeline_leads")
-        .select("id, origem, stage_id, corretor_id, segmento_id, created_at")
-        .gte("created_at", s.toISOString())
-        .lte("created_at", e.toISOString());
-
-      if (filters.corretor) query = query.eq("corretor_id", filters.corretor);
-      if (filters.segmento) query = query.eq("segmento_id", filters.segmento);
-
-      const { data } = await query;
-      let leads = (data || []) as LeadRow[];
+      let leads = await fetchAllRows<LeadRow>((from, to) => {
+        let q = supabase
+          .from("pipeline_leads")
+          .select("id, origem, stage_id, corretor_id, segmento_id, created_at")
+          .gte("created_at", s.toISOString())
+          .lte("created_at", e.toISOString());
+        if (filters.corretor) q = q.eq("corretor_id", filters.corretor);
+        if (filters.segmento) q = q.eq("segmento_id", filters.segmento);
+        return q.range(from, to);
+      });
 
       if (filters.equipe && !filters.corretor) {
         const { data: members } = await supabase

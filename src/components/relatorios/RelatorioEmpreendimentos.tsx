@@ -115,13 +115,16 @@ export default function RelatorioEmpreendimentos({ filters }: Props) {
 
       // Count leads per empreendimento (pipeline_leads.empreendimento text in same period)
       const leadsByEmp = new Map<string, number>();
-      const { data: leadsAll } = await supabase
-        .from("pipeline_leads")
-        .select("empreendimento")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString())
-        .not("empreendimento", "is", null);
-      (leadsAll || []).forEach((l) => {
+      const leadsAll = await fetchAllRows<{ empreendimento: string | null }>((from, to) =>
+        supabase
+          .from("pipeline_leads")
+          .select("empreendimento")
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString())
+          .not("empreendimento", "is", null)
+          .range(from, to)
+      );
+      leadsAll.forEach((l) => {
         const e = (l.empreendimento as string | null) || "";
         if (!e) return;
         leadsByEmp.set(e, (leadsByEmp.get(e) || 0) + 1);
