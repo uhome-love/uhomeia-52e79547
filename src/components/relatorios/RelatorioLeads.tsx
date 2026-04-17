@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Users, ChevronUp, ChevronDown, Search } from "lucide-react";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { ReportFilters, getDateRange, getPeriodoAnterior, fmtDate } from "./reportUtils";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 
 interface RelatorioLeadsProps {
   filters: ReportFilters;
@@ -149,18 +150,18 @@ export default function RelatorioLeads({ filters }: RelatorioLeadsProps) {
     let cancelled = false;
 
     async function fetchLeads(s: Date, e: Date): Promise<{ leads: LeadProcessado[]; tempoMedio: number | null }> {
-      let query = supabase
-        .from("pipeline_leads")
-        .select("id, nome, telefone, origem, stage_id, corretor_id, segmento_id, created_at, updated_at")
-        .gte("created_at", s.toISOString())
-        .lte("created_at", e.toISOString());
+      const rows = await fetchAllRows<LeadRow>((from, to) => {
+        let q = supabase
+          .from("pipeline_leads")
+          .select("id, nome, telefone, origem, stage_id, corretor_id, segmento_id, created_at, updated_at")
+          .gte("created_at", s.toISOString())
+          .lte("created_at", e.toISOString());
+        if (filters.corretor) q = q.eq("corretor_id", filters.corretor);
+        return q.range(from, to);
+      });
 
-      if (filters.corretor) query = query.eq("corretor_id", filters.corretor);
+      if (!rows.length) return { leads: [], tempoMedio: null };
 
-      const { data: rawLeads, error } = await query;
-      if (error || !rawLeads?.length) return { leads: [], tempoMedio: null };
-
-      const rows = rawLeads as LeadRow[];
       let filtered = rows;
 
       if (filters.equipe && !filters.corretor) {
@@ -226,12 +227,15 @@ export default function RelatorioLeads({ filters }: RelatorioLeadsProps) {
       const leadIds = filtered.map((r) => r.id);
       const ultimaAtMap = new Map<string, string>();
       if (leadIds.length) {
-        const { data: ats } = await supabase
-          .from("pipeline_atividades")
-          .select("pipeline_lead_id, created_at")
-          .in("pipeline_lead_id", leadIds)
-          .order("created_at", { ascending: false });
-        (ats || []).forEach((a) => {
+        const ats = await fetchAllRows<{ pipeline_lead_id: string; created_at: string }>((from, to) =>
+          supabase
+            .from("pipeline_atividades")
+            .select("pipeline_lead_id, created_at")
+            .in("pipeline_lead_id", leadIds)
+            .order("created_at", { ascending: false })
+            .range(from, to)
+        );
+        ats.forEach((a) => {
           const lid = a.pipeline_lead_id as string;
           if (!ultimaAtMap.has(lid)) ultimaAtMap.set(lid, a.created_at as string);
         });
@@ -239,14 +243,17 @@ export default function RelatorioLeads({ filters }: RelatorioLeadsProps) {
 
       let tempoMedio: number | null = null;
       if (leadIds.length) {
-        const { data: contatos } = await supabase
-          .from("pipeline_atividades")
-          .select("pipeline_lead_id, created_at, tipo")
-          .in("pipeline_lead_id", leadIds)
-          .in("tipo", ["ligacao", "whatsapp"])
-          .order("created_at", { ascending: true });
+        const contatos = await fetchAllRows<{ pipeline_lead_id: string; created_at: string; tipo: string }>((from, to) =>
+          supabase
+            .from("pipeline_atividades")
+            .select("pipeline_lead_id, created_at, tipo")
+            .in("pipeline_lead_id", leadIds)
+            .in("tipo", ["ligacao", "whatsapp"])
+            .order("created_at", { ascending: true })
+            .range(from, to)
+        );
         const primeiroContato = new Map<string, string>();
-        (contatos || []).forEach((c) => {
+        contatos.forEach((c) => {
           const lid = c.pipeline_lead_id as string;
           if (!primeiroContato.has(lid)) primeiroContato.set(lid, c.created_at as string);
         });

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Building2, ChevronUp, ChevronDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { ReportFilters, getDateRange, fmtMoney } from "./reportUtils";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 
 interface Props {
   filters: ReportFilters;
@@ -66,17 +67,18 @@ export default function RelatorioEmpreendimentos({ filters }: Props) {
       const sISO = startDate.toISOString().slice(0, 10);
       const eISO = endDate.toISOString().slice(0, 10);
 
-      let query = supabase
-        .from("negocios")
-        .select("id, empreendimento, fase, vgv_final, vgv_estimado, data_assinatura, corretor_id, pipeline_lead_id, created_at")
-        .in("fase", ["vendido", "assinado"])
-        .gte("data_assinatura", sISO)
-        .lte("data_assinatura", eISO);
-
-      if (filters.corretor) query = query.eq("corretor_id", filters.corretor);
-
-      const { data: negocios } = await query;
-      let negs = (negocios || []) as NegocioRow[];
+      const sISO_neg = startDate.toISOString().slice(0, 10);
+      const eISO_neg = endDate.toISOString().slice(0, 10);
+      let negs = await fetchAllRows<NegocioRow>((from, to) => {
+        let q = supabase
+          .from("negocios")
+          .select("id, empreendimento, fase, vgv_final, vgv_estimado, data_assinatura, corretor_id, pipeline_lead_id, created_at")
+          .in("fase", ["vendido", "assinado"])
+          .gte("data_assinatura", sISO_neg)
+          .lte("data_assinatura", eISO_neg);
+        if (filters.corretor) q = q.eq("corretor_id", filters.corretor);
+        return q.range(from, to);
+      });
 
       if (filters.equipe && !filters.corretor) {
         const { data: members } = await supabase
@@ -113,13 +115,16 @@ export default function RelatorioEmpreendimentos({ filters }: Props) {
 
       // Count leads per empreendimento (pipeline_leads.empreendimento text in same period)
       const leadsByEmp = new Map<string, number>();
-      const { data: leadsAll } = await supabase
-        .from("pipeline_leads")
-        .select("empreendimento")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString())
-        .not("empreendimento", "is", null);
-      (leadsAll || []).forEach((l) => {
+      const leadsAll = await fetchAllRows<{ empreendimento: string | null }>((from, to) =>
+        supabase
+          .from("pipeline_leads")
+          .select("empreendimento")
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString())
+          .not("empreendimento", "is", null)
+          .range(from, to)
+      );
+      leadsAll.forEach((l) => {
         const e = (l.empreendimento as string | null) || "";
         if (!e) return;
         leadsByEmp.set(e, (leadsByEmp.get(e) || 0) + 1);

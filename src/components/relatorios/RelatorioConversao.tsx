@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp } from "lucide-react";
-import { ReportFilters } from "./reportUtils";
+import { ReportFilters, getDateRange } from "./reportUtils";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 
 interface RelatorioConversaoProps {
   filters: ReportFilters;
@@ -85,6 +86,8 @@ export default function RelatorioConversao({ filters }: RelatorioConversaoProps)
   const [stageNames, setStageNames] = useState<Map<string, string>>(new Map());
   const [negocios, setNegocios] = useState<NegocioRow[]>([]);
 
+  const { startDate, endDate } = useMemo(() => getDateRange(filters), [filters]);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -116,12 +119,15 @@ export default function RelatorioConversao({ filters }: RelatorioConversaoProps)
       const sMap = new Map<string, string>();
       (stages || []).forEach((st) => sMap.set(st.id, st.nome as string));
 
-      let lq = supabase
-        .from("pipeline_leads")
-        .select("id, stage_id, corretor_id, segmento_id, created_at");
-      if (corretorIds) lq = lq.in("corretor_id", corretorIds);
-      const { data: rawLeads } = await lq;
-      let leadRows = (rawLeads || []) as LeadRow[];
+      let leadRows = await fetchAllRows<LeadRow>((from, to) => {
+        let lq = supabase
+          .from("pipeline_leads")
+          .select("id, stage_id, corretor_id, segmento_id, created_at")
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+        if (corretorIds) lq = lq.in("corretor_id", corretorIds);
+        return lq.range(from, to);
+      });
 
       if (filters.segmento && leadRows.length) {
         const segIds = [...new Set(leadRows.map((r) => r.segmento_id).filter(Boolean))] as string[];
@@ -138,12 +144,15 @@ export default function RelatorioConversao({ filters }: RelatorioConversaoProps)
         });
       }
 
-      let nq = supabase
-        .from("negocios")
-        .select("id, fase, corretor_id, created_at, data_assinatura");
-      if (corretorIds) nq = nq.in("corretor_id", corretorIds);
-      const { data: rawNeg } = await nq;
-      const negRows = (rawNeg || []) as NegocioRow[];
+      const negRows = await fetchAllRows<NegocioRow>((from, to) => {
+        let nq = supabase
+          .from("negocios")
+          .select("id, fase, corretor_id, created_at, data_assinatura")
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+        if (corretorIds) nq = nq.in("corretor_id", corretorIds);
+        return nq.range(from, to);
+      });
 
       if (!cancelled) {
         setStageNames(sMap);
@@ -154,7 +163,7 @@ export default function RelatorioConversao({ filters }: RelatorioConversaoProps)
     }
     load();
     return () => { cancelled = true; };
-  }, [filters.corretor, filters.equipe, filters.segmento]);
+  }, [filters.corretor, filters.equipe, filters.segmento, startDate, endDate]);
 
   const funilLeads: FunilEtapaLead[] = useMemo(() => {
     const total = leads.length;

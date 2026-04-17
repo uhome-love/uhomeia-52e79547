@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Briefcase, ChevronUp, ChevronDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { ReportFilters, getDateRange, getPeriodoAnterior, fmtMoney, fmtDate } from "./reportUtils";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 
 interface Props {
   filters: ReportFilters;
@@ -73,16 +74,15 @@ export default function RelatorioNegocios({ filters }: Props) {
     let cancelled = false;
 
     async function fetchNegocios(s: Date, e: Date): Promise<NegocioRow[]> {
-      let query = supabase
-        .from("negocios")
-        .select("id, empreendimento, fase, vgv_final, vgv_estimado, data_assinatura, corretor_id, pipeline_lead_id, nome_cliente, created_at, fase_changed_at")
-        .gte("created_at", s.toISOString())
-        .lte("created_at", e.toISOString());
-
-      if (filters.corretor) query = query.eq("corretor_id", filters.corretor);
-
-      const { data } = await query;
-      let rows = (data || []) as NegocioRow[];
+      let rows = await fetchAllRows<NegocioRow>((from, to) => {
+        let q = supabase
+          .from("negocios")
+          .select("id, empreendimento, fase, vgv_final, vgv_estimado, data_assinatura, corretor_id, pipeline_lead_id, nome_cliente, created_at, fase_changed_at")
+          .gte("created_at", s.toISOString())
+          .lte("created_at", e.toISOString());
+        if (filters.corretor) q = q.eq("corretor_id", filters.corretor);
+        return q.range(from, to);
+      });
 
       if (filters.equipe && !filters.corretor) {
         const { data: members } = await supabase

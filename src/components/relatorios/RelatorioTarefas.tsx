@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckSquare, ChevronUp, ChevronDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { ReportFilters, getDateRange, getPeriodoAnterior } from "./reportUtils";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 
 interface Props {
   filters: ReportFilters;
@@ -72,16 +73,15 @@ export default function RelatorioTarefas({ filters }: Props) {
     let cancelled = false;
 
     async function fetchTarefas(s: Date, e: Date): Promise<TarefaRow[]> {
-      let query = supabase
-        .from("pipeline_tarefas")
-        .select("id, pipeline_lead_id, tipo, status, responsavel_id, vence_em, concluida_em, created_at")
-        .gte("created_at", s.toISOString())
-        .lte("created_at", e.toISOString());
-
-      if (filters.corretor) query = query.eq("responsavel_id", filters.corretor);
-
-      const { data } = await query;
-      let rows = (data || []) as TarefaRow[];
+      let rows = await fetchAllRows<TarefaRow>((from, to) => {
+        let q = supabase
+          .from("pipeline_tarefas")
+          .select("id, pipeline_lead_id, tipo, status, responsavel_id, vence_em, concluida_em, created_at")
+          .gte("created_at", s.toISOString())
+          .lte("created_at", e.toISOString());
+        if (filters.corretor) q = q.eq("responsavel_id", filters.corretor);
+        return q.range(from, to);
+      });
 
       if (filters.equipe && !filters.corretor) {
         const { data: members } = await supabase
