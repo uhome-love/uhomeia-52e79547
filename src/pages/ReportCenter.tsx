@@ -9,6 +9,10 @@ import RelatorioLeads from "@/components/relatorios/RelatorioLeads";
 import RelatorioConversao from "@/components/relatorios/RelatorioConversao";
 import RelatorioEmpreendimentos from "@/components/relatorios/RelatorioEmpreendimentos";
 import RelatorioOrigem from "@/components/relatorios/RelatorioOrigem";
+import RelatorioInteracao from "@/components/relatorios/RelatorioInteracao";
+import RelatorioVisitas from "@/components/relatorios/RelatorioVisitas";
+import RelatorioTarefas from "@/components/relatorios/RelatorioTarefas";
+import RelatorioNegocios from "@/components/relatorios/RelatorioNegocios";
 
 const TAB_LABELS: Record<string, string> = {
   vendas: "Vendas",
