@@ -539,104 +539,129 @@ export default function BuscaLeads() {
 
               <Separator />
 
-              {/* Action buttons */}
+              {/* Action buttons — diferentes por origem */}
               <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white text-xs"
-                  onClick={() => openAction("aproveitado", selectedLead)}
-                  disabled={selectedLead.status === "aproveitado"}
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Aproveitar e Atribuir
-                </Button>
-                {(isAdmin || isGestor) && (
-                  <Button
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
-                    onClick={() => openAction("incluir_pipeline", selectedLead)}
-                  >
-                    <UserPlus className="h-3.5 w-3.5 mr-1" /> Incluir no Pipeline
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs"
-                  onClick={() => openAction("transferir", selectedLead)}
-                >
-                  <ArrowRightLeft className="h-3.5 w-3.5 mr-1" /> Transferir
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs text-orange-400 border-orange-500/30 hover:bg-orange-500/10"
-                  onClick={() => openAction("bloquear", selectedLead)}
-                  disabled={selectedLead.status === "bloqueado"}
-                >
-                  <Lock className="h-3.5 w-3.5 mr-1" /> Bloquear
-                </Button>
-                {selectedLead.status === "bloqueado" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                    onClick={() => openAction("desbloquear", selectedLead)}
-                  >
-                    <Unlock className="h-3.5 w-3.5 mr-1" /> Desbloquear
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs text-red-400 border-red-500/30 hover:bg-red-500/10"
-                  onClick={() => openAction("descartado", selectedLead)}
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Encerrar
-                </Button>
-              </div>
-
-              <Separator />
-
-              {/* Attempt history */}
-              <div>
-                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2">
-                  <History className="h-4 w-4 text-primary" /> Histórico de Tentativas
-                </h3>
-                {loadingTentativas ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : tentativas.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-3">Nenhuma tentativa registrada</p>
+                {selectedLead.source === "pipeline" ? (
+                  <>
+                    <Button
+                      size="sm"
+                      className="bg-[#4969FF] hover:bg-[#3350E6] text-white text-xs"
+                      onClick={() => openAction("repassar_pipeline", selectedLead)}
+                    >
+                      <ArrowRightLeft className="h-3.5 w-3.5 mr-1" /> Repassar para outro corretor
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={() => navigate(`/pipeline?lead=${selectedLead.id}`)}
+                    >
+                      Abrir no Pipeline
+                    </Button>
+                  </>
                 ) : (
-                  <ScrollArea className="max-h-[200px]">
-                    <div className="space-y-2">
-                      {tentativas.map((t) => (
-                        <div key={t.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/20 text-xs">
-                          <div className="shrink-0 mt-0.5">
-                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium">{t.corretor_nome}</span>
-                              <Badge variant="outline" className="text-[9px]">{t.canal}</Badge>
-                              <span className="text-muted-foreground">
-                                {RESULTADO_LABELS[t.resultado] || t.resultado}
-                              </span>
-                              <span className="text-muted-foreground/60 ml-auto">
-                                {formatDate(t.created_at)}
-                              </span>
-                            </div>
-                            {t.feedback && (
-                              <p className="text-muted-foreground mt-1 truncate">{t.feedback}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
+                  <>
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                      onClick={() => openAction("aproveitado", selectedLead)}
+                      disabled={selectedLead.status === "aproveitado"}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Aproveitar e Atribuir
+                    </Button>
+                    {(isAdmin || isGestor) && (
+                      <Button
+                        size="sm"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+                        onClick={() => openAction("incluir_pipeline", selectedLead)}
+                      >
+                        <UserPlus className="h-3.5 w-3.5 mr-1" /> Incluir no Pipeline
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={() => openAction("transferir", selectedLead)}
+                    >
+                      <ArrowRightLeft className="h-3.5 w-3.5 mr-1" /> Transferir
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs text-orange-400 border-orange-500/30 hover:bg-orange-500/10"
+                      onClick={() => openAction("bloquear", selectedLead)}
+                      disabled={selectedLead.status === "bloqueado"}
+                    >
+                      <Lock className="h-3.5 w-3.5 mr-1" /> Bloquear
+                    </Button>
+                    {selectedLead.status === "bloqueado" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => openAction("desbloquear", selectedLead)}
+                      >
+                        <Unlock className="h-3.5 w-3.5 mr-1" /> Desbloquear
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs text-red-400 border-red-500/30 hover:bg-red-500/10"
+                      onClick={() => openAction("descartado", selectedLead)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Encerrar
+                    </Button>
+                  </>
                 )}
               </div>
+
+              {/* Histórico de tentativas só para leads OA */}
+              {selectedLead.source === "oferta_ativa" && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="text-sm font-semibold flex items-center gap-2 mb-2">
+                      <History className="h-4 w-4 text-primary" /> Histórico de Tentativas
+                    </h3>
+                    {loadingTentativas ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : tentativas.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-3">Nenhuma tentativa registrada</p>
+                    ) : (
+                      <ScrollArea className="max-h-[200px]">
+                        <div className="space-y-2">
+                          {tentativas.map((t) => (
+                            <div key={t.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/20 text-xs">
+                              <div className="shrink-0 mt-0.5">
+                                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-medium">{t.corretor_nome}</span>
+                                  <Badge variant="outline" className="text-[9px]">{t.canal}</Badge>
+                                  <span className="text-muted-foreground">
+                                    {RESULTADO_LABELS[t.resultado] || t.resultado}
+                                  </span>
+                                  <span className="text-muted-foreground/60 ml-auto">
+                                    {formatDate(t.created_at)}
+                                  </span>
+                                </div>
+                                {t.feedback && (
+                                  <p className="text-muted-foreground mt-1 truncate">{t.feedback}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    )}
+                  </div>
+                </>
+              )}
             </>
           )}
         </DialogContent>
