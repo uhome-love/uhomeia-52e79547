@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MapPin, ChevronUp, ChevronDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { ReportFilters, getDateRange, getPeriodoAnterior, fmtDate } from "./reportUtils";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 
 interface Props {
   filters: ReportFilters;

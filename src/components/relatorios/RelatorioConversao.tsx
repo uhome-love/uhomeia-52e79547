@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp } from "lucide-react";
-import { ReportFilters } from "./reportUtils";
+import { ReportFilters, getDateRange } from "./reportUtils";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 
 interface RelatorioConversaoProps {
   filters: ReportFilters;
