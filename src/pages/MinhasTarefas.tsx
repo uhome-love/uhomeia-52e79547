@@ -260,53 +260,61 @@ export default function MinhasTarefas() {
         await supabase.from("pipeline_leads").update({ ultima_acao_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any).eq("id", leadId);
       }
 
-    // Register observation in history
-    if (obs.trim() && categoria === "leads") {
-      await supabase.from("pipeline_atividades").insert({
-        pipeline_lead_id: leadId,
-        tipo: "followup",
-        titulo: obs.trim(),
-        descricao: null,
-        data: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
-        hora: new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }),
-        prioridade: "media",
-        status: "concluida",
-        created_by: user.id,
-      } as any);
-    }
+      // Register observation in history
+      if (obs.trim() && categoria === "leads") {
+        await supabase.from("pipeline_atividades").insert({
+          pipeline_lead_id: leadId,
+          tipo: "followup",
+          titulo: obs.trim(),
+          descricao: null,
+          data: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
+          hora: new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }),
+          prioridade: "media",
+          status: "concluida",
+          created_by: user.id,
+        } as any);
+      }
 
-    // Create new task if requested
-    if (novaTarefa && categoria === "leads") {
-      const leadNome = completingTarefa.lead_nome || "Lead";
-      const TIPO_LABELS_MAP: Record<string, string> = {
-        follow_up: "Follow-up", ligar: "Ligar", whatsapp: "WhatsApp", enviar_proposta: "Enviar proposta",
-        enviar_material: "Enviar material", marcar_visita: "Marcar visita",
-      };
-      const titulo = `${TIPO_LABELS_MAP[novaTarefa.tipo] || novaTarefa.tipo}: ${leadNome}`;
-      await supabase.from("pipeline_tarefas").insert({
-        pipeline_lead_id: leadId,
-        tipo: novaTarefa.tipo,
-        titulo,
-        descricao: novaTarefa.obs || null,
-        prioridade: "media",
-        status: "pendente",
-        responsavel_id: user.id,
-        vence_em: novaTarefa.vence_em,
-        hora_vencimento: novaTarefa.hora_vencimento || null,
-        created_by: user.id,
-      } as any);
-    }
+      // Create new task if requested
+      if (novaTarefa && categoria === "leads") {
+        const leadNome = completingTarefa.lead_nome || "Lead";
+        const TIPO_LABELS_MAP: Record<string, string> = {
+          follow_up: "Follow-up", ligar: "Ligar", whatsapp: "WhatsApp", enviar_proposta: "Enviar proposta",
+          enviar_material: "Enviar material", marcar_visita: "Marcar visita",
+        };
+        const titulo = `${TIPO_LABELS_MAP[novaTarefa.tipo] || novaTarefa.tipo}: ${leadNome}`;
+        const { error: insertErr } = await supabase.from("pipeline_tarefas").insert({
+          pipeline_lead_id: leadId,
+          tipo: novaTarefa.tipo,
+          titulo,
+          descricao: novaTarefa.obs || null,
+          prioridade: "media",
+          status: "pendente",
+          responsavel_id: user.id,
+          vence_em: novaTarefa.vence_em,
+          hora_vencimento: novaTarefa.hora_vencimento || null,
+          created_by: user.id,
+        } as any);
+        if (insertErr) throw insertErr;
+      }
 
-    toast.success(novaTarefa ? "Tarefa concluída e nova criada ✅" : "Tarefa concluída ✅");
-    setCompletingTarefa(null);
-    queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
-    queryClient.invalidateQueries({ queryKey: ["minhas-tarefas-negocios"] });
-    queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
+      toast.success(novaTarefa ? "Tarefa concluída e nova criada ✅" : "Tarefa concluída ✅");
+      setCompletingTarefa(null);
+      queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-tarefas-negocios"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao concluir tarefa";
+      toast.error("Não foi possível concluir: " + msg);
+    } finally {
+      setSavingCompletion(false);
+    }
   };
 
   const handleAdiarRapido = async (id: string, horas: number) => {
     const novaData = addHours(new Date(), horas);
-    await supabase.from("pipeline_tarefas").update({ vence_em: dateToBRT(novaData), hora_vencimento: format(novaData, "HH:mm") } as any).eq("id", id);
+    const { error } = await supabase.from("pipeline_tarefas").update({ vence_em: dateToBRT(novaData), hora_vencimento: format(novaData, "HH:mm") } as any).eq("id", id);
+    if (error) { toast.error("Não foi possível adiar: " + error.message); return; }
     toast.success("Tarefa adiada ✅");
     queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
     queryClient.invalidateQueries({ queryKey: ["agenda-widget"] });
@@ -314,7 +322,8 @@ export default function MinhasTarefas() {
 
   const handleAdiarCustom = async () => {
     if (!adiarId || !adiarData) return;
-    await supabase.from("pipeline_tarefas").update({ vence_em: adiarData, hora_vencimento: adiarHora || null } as any).eq("id", adiarId);
+    const { error } = await supabase.from("pipeline_tarefas").update({ vence_em: adiarData, hora_vencimento: adiarHora || null } as any).eq("id", adiarId);
+    if (error) { toast.error("Não foi possível reagendar: " + error.message); return; }
     toast.success("Tarefa reagendada ✅");
     setAdiarId(null);
     queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
