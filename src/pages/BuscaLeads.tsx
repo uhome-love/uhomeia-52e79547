@@ -218,8 +218,8 @@ export default function BuscaLeads() {
   return (
     <div className="bg-[#f0f0f5] dark:bg-[#0e1525] p-6 -m-6 min-h-full space-y-4">
       <PageHeader
-        title="Busca de leads"
-        subtitle="Busque, gerencie e higienize leads da Oferta Ativa"
+        title="Busca unificada de leads"
+        subtitle="Encontre leads no Pipeline (CRM) e na Oferta Ativa — repasse para outro corretor com 1 clique"
         icon={<Search size={18} strokeWidth={1.5} />}
         actions={
           totalResults > 0 ? (
@@ -436,7 +436,7 @@ export default function BuscaLeads() {
         <EmptyState
           icon={<Search size={22} strokeWidth={1.5} />}
           title="Busque um lead"
-          description="Digite o telefone, nome ou email para encontrar leads da Oferta Ativa"
+          description="Digite o telefone, nome ou email para encontrar leads no Pipeline (CRM) e na Oferta Ativa"
         />
       )}
 
@@ -482,16 +482,36 @@ export default function BuscaLeads() {
                   Origem: {selectedLead.origem || "—"}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Lista: {selectedLead.lista_nome}
+                  {selectedLead.source === "pipeline" ? "Fonte" : "Lista"}: {selectedLead.lista_nome}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Tentativas: {selectedLead.tentativas_count}
-                </div>
-                <div>
-                  <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[selectedLead.status] || ""}`}>
-                    {selectedLead.status}
-                  </Badge>
-                </div>
+                {selectedLead.source === "pipeline" ? (
+                  <>
+                    <div className="text-xs text-muted-foreground">
+                      Etapa atual: <span className="text-foreground font-medium">{selectedLead.stage_nome || "—"}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Corretor: <span className={`font-medium ${selectedLead.corretor_nome === "Sem corretor" ? "text-orange-400" : "text-foreground"}`}>
+                        {selectedLead.corretor_nome}
+                      </span>
+                    </div>
+                    <div>
+                      <Badge variant="outline" className="text-[10px] bg-indigo-500/10 text-indigo-300 border-indigo-500/30">
+                        📋 Pipeline CRM
+                      </Badge>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs text-muted-foreground">
+                      Tentativas: {selectedLead.tentativas_count}
+                    </div>
+                    <div>
+                      <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[selectedLead.status] || ""}`}>
+                        {selectedLead.status}
+                      </Badge>
+                    </div>
+                  </>
+                )}
               </div>
 
               {isReservado(selectedLead) && (
