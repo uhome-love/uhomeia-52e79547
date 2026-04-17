@@ -67,16 +67,15 @@ export default function RelatorioVisitas({ filters }: Props) {
     async function fetchVisitas(s: Date, e: Date): Promise<VisitaRow[]> {
       const sISO = s.toISOString().slice(0, 10);
       const eISO = e.toISOString().slice(0, 10);
-      let query = supabase
-        .from("visitas")
-        .select("id, corretor_id, lead_id, empreendimento, data_visita, status, nome_cliente")
-        .gte("data_visita", sISO)
-        .lte("data_visita", eISO);
-
-      if (filters.corretor) query = query.eq("corretor_id", filters.corretor);
-
-      const { data } = await query;
-      let rows = (data || []) as VisitaRow[];
+      let rows = await fetchAllRows<VisitaRow>((from, to) => {
+        let q = supabase
+          .from("visitas")
+          .select("id, corretor_id, lead_id, empreendimento, data_visita, status, nome_cliente")
+          .gte("data_visita", sISO)
+          .lte("data_visita", eISO);
+        if (filters.corretor) q = q.eq("corretor_id", filters.corretor);
+        return q.range(from, to);
+      });
 
       if (filters.equipe && !filters.corretor) {
         const { data: members } = await supabase

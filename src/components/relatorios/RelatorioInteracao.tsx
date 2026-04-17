@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, ChevronUp, ChevronDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { ReportFilters, getDateRange, getPeriodoAnterior, fmtDate } from "./reportUtils";
+import { fetchAllRows } from "@/lib/paginatedFetch";
 
 interface Props {
   filters: ReportFilters;
@@ -66,16 +67,15 @@ export default function RelatorioInteracao({ filters }: Props) {
     let cancelled = false;
 
     async function fetchAtivs(s: Date, e: Date): Promise<AtivRow[]> {
-      let query = supabase
-        .from("pipeline_atividades")
-        .select("id, pipeline_lead_id, tipo, responsavel_id, created_at")
-        .gte("created_at", s.toISOString())
-        .lte("created_at", e.toISOString());
-
-      if (filters.corretor) query = query.eq("responsavel_id", filters.corretor);
-
-      const { data } = await query;
-      let rows = (data || []) as AtivRow[];
+      let rows = await fetchAllRows<AtivRow>((from, to) => {
+        let q = supabase
+          .from("pipeline_atividades")
+          .select("id, pipeline_lead_id, tipo, responsavel_id, created_at")
+          .gte("created_at", s.toISOString())
+          .lte("created_at", e.toISOString());
+        if (filters.corretor) q = q.eq("responsavel_id", filters.corretor);
+        return q.range(from, to);
+      });
 
       if (filters.equipe && !filters.corretor) {
         const { data: members } = await supabase
