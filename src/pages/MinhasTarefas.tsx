@@ -392,13 +392,14 @@ export default function MinhasTarefas() {
 
   const handleEditTarefa = async () => {
     if (!editId) return;
-    await supabase.from("pipeline_tarefas").update({
+    const { error } = await supabase.from("pipeline_tarefas").update({
       tipo: editTipo,
       vence_em: editData || null,
       hora_vencimento: editHora || null,
       descricao: editObs || null,
       updated_at: new Date().toISOString(),
     } as any).eq("id", editId);
+    if (error) { toast.error("Não foi possível salvar: " + error.message); return; }
     toast.success("Tarefa atualizada ✅");
     setEditId(null);
     queryClient.invalidateQueries({ queryKey: ["minhas-tarefas"] });
