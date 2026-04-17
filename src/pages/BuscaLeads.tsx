@@ -27,7 +27,8 @@ import { toast } from "sonner";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
-  { value: "na_fila", label: "Na fila" },
+  { value: "pipeline", label: "📋 No Pipeline (CRM)" },
+  { value: "na_fila", label: "Na fila (OA)" },
   { value: "em_cooldown", label: "Em cooldown" },
   { value: "aproveitado", label: "Aproveitado" },
   { value: "descartado", label: "Descartado" },
@@ -53,7 +54,8 @@ const RESULTADO_LABELS: Record<string, string> = {
 
 export default function BuscaLeads() {
   const { isAdmin, isGestor } = useUserRole();
-  const { results, isSearching, totalResults, buscar, fetchTentativas, executarAcao, fetchCorretores } = useBuscaLeads();
+  const navigate = useNavigate();
+  const { results, isSearching, totalResults, buscar, fetchTentativas, executarAcao, repassarPipelineLead, fetchCorretores } = useBuscaLeads();
 
   // Search state
   const [searchText, setSearchText] = useState("");
