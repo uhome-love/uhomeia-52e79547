@@ -89,7 +89,7 @@ function getDefaultForm(initialData?: Props["initialData"]) {
   };
 }
 
-export default function VisitaForm({ open, onClose, onSubmit, initialData, mode = "create" }: Props) {
+export default function VisitaForm({ open, onClose, onSubmit, onDelete, initialData, mode = "create" }: Props) {
   const { user } = useAuth();
   const { isGestor, isAdmin } = useUserRole();
   const isManager = isGestor || isAdmin;
