@@ -190,7 +190,8 @@ export function usePushSubscription() {
       return true;
     } catch (err: any) {
       console.error("Push subscription error:", err);
-      toast.error("Erro ao ativar push notifications");
+      const detail = err?.message || err?.error_description || String(err);
+      toast.error(`Erro ao ativar push: ${detail.substring(0, 120)}`);
       return false;
     } finally {
       setIsLoading(false);
