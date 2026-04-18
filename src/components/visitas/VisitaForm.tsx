@@ -48,6 +48,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: Partial<Visita>) => Promise<any>;
+  onDelete?: () => Promise<void> | void;
   initialData?: Partial<Visita> & { pipeline_lead_id?: string };
   mode?: "create" | "edit";
 }
